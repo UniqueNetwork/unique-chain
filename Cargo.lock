@@ -2190,7 +2190,7 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder-macros",
@@ -5153,7 +5153,7 @@ checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 
 [[package]]
 name = "opal-runtime"
-version = "0.9.24"
+version = "0.9.25"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -5536,7 +5536,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5683,7 +5683,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-coder-substrate"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5701,7 +5701,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-contract-helpers"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "evm-coder",
  "fp-evm-mapping",
@@ -5722,7 +5722,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-migration"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm",
  "frame-benchmarking",
@@ -5739,7 +5739,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-transaction-payment"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm",
  "fp-evm-mapping",
@@ -5758,7 +5758,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-fungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5870,7 +5870,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-inflation"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5990,7 +5990,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nonfungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -6112,7 +6112,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-refungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6131,7 +6131,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-rmrk-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derivative",
  "frame-benchmarking",
@@ -6152,7 +6152,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-rmrk-equip"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6282,7 +6282,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-structure"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6427,7 +6427,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-unique"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -6450,7 +6450,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-unique-scheduler"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8757,7 +8757,7 @@ dependencies = [
 
 [[package]]
 name = "rmrk-rpc"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "parity-scale-codec 2.3.1",
  "rmrk-traits",
@@ -11605,7 +11605,7 @@ dependencies = [
 
 [[package]]
 name = "tests"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fp-evm-mapping",
  "frame-support",
@@ -12106,7 +12106,7 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "uc-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "jsonrpsee",
@@ -12192,7 +12192,7 @@ checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
 name = "unique-node"
-version = "0.9.24"
+version = "0.9.25"
 dependencies = [
  "clap",
  "cumulus-client-cli",
@@ -12280,7 +12280,7 @@ dependencies = [
 
 [[package]]
 name = "unique-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "fc-db",
  "fc-mapping-sync",
@@ -12411,7 +12411,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime-common"
-version = "0.9.24"
+version = "0.9.25"
 dependencies = [
  "evm-coder",
  "fp-rpc",
@@ -12465,7 +12465,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-data-structs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derivative",
  "frame-support",
@@ -12483,7 +12483,7 @@ dependencies = [
 
 [[package]]
 name = "up-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "pallet-common",
  "pallet-evm",
