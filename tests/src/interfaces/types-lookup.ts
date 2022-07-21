@@ -1629,6 +1629,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsCreateReFungibleData extends Struct {
     readonly constData: Bytes;
     readonly pieces: u128;
+    readonly properties: Vec<UpDataStructsProperty>;
   }
 
   /** @name UpDataStructsCreateItemExData (193) */
@@ -1654,6 +1655,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsCreateRefungibleExData extends Struct {
     readonly constData: Bytes;
     readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
+    readonly properties: Vec<UpDataStructsProperty>;
   }
 
   /** @name PalletUniqueSchedulerCall (204) */
