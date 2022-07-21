@@ -78,7 +78,6 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure, fail,
 	weights::{Weight},
-	transactional,
 	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
 	BoundedVec,
 };
@@ -311,7 +310,6 @@ decl_module! {
 		/// * `mode`: Type of items stored in the collection and type dependent data.
 		// returns collection ID
 		#[weight = <SelfWeightOf<T>>::create_collection()]
-		#[transactional]
 		#[deprecated(note = "`create_collection_ex` is more up-to-date and advanced, prefer it instead")]
 		pub fn create_collection(
 			origin,
@@ -342,7 +340,6 @@ decl_module! {
 		///
 		/// * `data`: Explicit data of a collection used for its creation.
 		#[weight = <SelfWeightOf<T>>::create_collection()]
-		#[transactional]
 		pub fn create_collection_ex(origin, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -363,7 +360,6 @@ decl_module! {
 		///
 		/// * `collection_id`: Collection to destroy.
 		#[weight = <SelfWeightOf<T>>::destroy_collection()]
-		#[transactional]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -399,7 +395,6 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `address`: ID of the address to be added to the allowlist.
 		#[weight = <SelfWeightOf<T>>::add_to_allow_list()]
-		#[transactional]
 		pub fn add_to_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -433,7 +428,6 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `address`: ID of the address to be removed from the allowlist.
 		#[weight = <SelfWeightOf<T>>::remove_from_allow_list()]
-		#[transactional]
 		pub fn remove_from_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -466,7 +460,6 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `new_owner`: ID of the account that will become the owner.
 		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
-		#[transactional]
 		pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -501,8 +494,7 @@ decl_module! {
 		/// * `collection_id`: ID of the Collection to add an admin for.
 		/// * `new_admin`: Address of new admin to add.
 		#[weight = <SelfWeightOf<T>>::add_collection_admin()]
-		#[transactional]
-		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin: T::CrossAccountId) -> DispatchResult {
+		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			collection.check_is_internal()?;
@@ -530,7 +522,6 @@ decl_module! {
 		/// * `collection_id`: ID of the collection to remove the admin for.
 		/// * `account_id`: Address of the admin to remove.
 		#[weight = <SelfWeightOf<T>>::remove_collection_admin()]
-		#[transactional]
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -558,7 +549,6 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `new_sponsor`: ID of the account of the sponsor-to-be.
 		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
-		#[transactional]
 		pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -590,7 +580,6 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection with the pending sponsor.
 		#[weight = <SelfWeightOf<T>>::confirm_sponsorship()]
-		#[transactional]
 		pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
@@ -619,7 +608,6 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection with the sponsor to remove.
 		#[weight = <SelfWeightOf<T>>::remove_collection_sponsor()]
-		#[transactional]
 		pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -654,7 +642,6 @@ decl_module! {
 		/// * `owner`: Address of the initial owner of the item.
 		/// * `data`: Token data describing the item to store on chain.
 		#[weight = T::CommonWeightInfo::create_item()]
-		#[transactional]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
@@ -681,7 +668,6 @@ decl_module! {
 		/// * `owner`: Address of the initial owner of the tokens.
 		/// * `items_data`: Vector of data describing each item to be created.
 		#[weight = T::CommonWeightInfo::create_multiple_items(&items_data)]
-		#[transactional]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -703,7 +689,6 @@ decl_module! {
 		/// * `properties`: Vector of key-value pairs stored as the collection's metadata.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
-		#[transactional]
 		pub fn set_collection_properties(
 			origin,
 			collection_id: CollectionId,
@@ -729,7 +714,6 @@ decl_module! {
 		/// * `property_keys`: Vector of keys of the properties to be deleted.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
-		#[transactional]
 		pub fn delete_collection_properties(
 			origin,
 			collection_id: CollectionId,
@@ -761,7 +745,6 @@ decl_module! {
 		/// * `properties`: Vector of key-value pairs stored as the token's metadata.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
-		#[transactional]
 		pub fn set_token_properties(
 			origin,
 			collection_id: CollectionId,
@@ -792,7 +775,6 @@ decl_module! {
 		/// * `property_keys`: Vector of keys of the properties to be deleted.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
-		#[transactional]
 		pub fn delete_token_properties(
 			origin,
 			collection_id: CollectionId,
@@ -823,7 +805,6 @@ decl_module! {
 		/// * `property_permissions`: Vector of permissions for property keys.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
-		#[transactional]
 		pub fn set_token_property_permissions(
 			origin,
 			collection_id: CollectionId,
@@ -852,7 +833,6 @@ decl_module! {
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `data`: Explicit item creation data.
 		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
-		#[transactional]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
@@ -871,7 +851,6 @@ decl_module! {
 		/// * `collection_id`: ID of the collection.
 		/// * `value`: New value of the flag, are transfers allowed?
 		#[weight = <SelfWeightOf<T>>::set_transfers_enabled_flag()]
-		#[transactional]
 		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -901,7 +880,6 @@ decl_module! {
 		///     * Fungible Mode: The desired number of pieces to burn.
 		///     * Re-Fungible Mode: The desired number of pieces to burn.
 		#[weight = T::CommonWeightInfo::burn_item()]
-		#[transactional]
 		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -940,7 +918,6 @@ decl_module! {
 		///     * Fungible Mode: The desired number of pieces to burn.
 		///     * Re-Fungible Mode: The desired number of pieces to burn.
 		#[weight = T::CommonWeightInfo::burn_from()]
-		#[transactional]
 		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
@@ -970,7 +947,6 @@ decl_module! {
 		///     * Fungible Mode: The desired number of pieces to transfer.
 		///     * Re-Fungible Mode: The desired number of pieces to transfer.
 		#[weight = T::CommonWeightInfo::transfer()]
-		#[transactional]
 		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
@@ -994,7 +970,6 @@ decl_module! {
 		/// * `amount`: Number of pieces of the item approved for a transaction (maximum of 1 for NFTs).
 		/// Set to 0 to revoke the approval.
 		#[weight = T::CommonWeightInfo::approve()]
-		#[transactional]
 		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
@@ -1026,7 +1001,6 @@ decl_module! {
 		///     * Fungible Mode: The desired number of pieces to transfer.
 		///     * Re-Fungible Mode: The desired number of pieces to transfer.
 		#[weight = T::CommonWeightInfo::transfer_from()]
-		#[transactional]
 		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
@@ -1047,7 +1021,6 @@ decl_module! {
 		/// * `new_limit`: New limits of the collection. Fields that are not set (None)
 		/// will not overwrite the old ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
-		#[transactional]
 		pub fn set_collection_limits(
 			origin,
 			collection_id: CollectionId,
@@ -1081,7 +1054,6 @@ decl_module! {
 		/// * `new_permission`: New permissions of the collection. Fields that are not set (None)
 		/// will not overwrite the old ones.
 		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
-		#[transactional]
 		pub fn set_collection_permissions(
 			origin,
 			collection_id: CollectionId,
@@ -1114,7 +1086,6 @@ decl_module! {
 		/// * `token_id`: ID of the RFT.
 		/// * `amount`: New number of parts/pieces into which the token shall be partitioned.
 		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
-		#[transactional]
 		pub fn repartition(
 			origin,
 			collection_id: CollectionId,
