@@ -16,7 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::DispatchResult};
+use frame_support::{pallet_prelude::*, BoundedVec, dispatch::DispatchResult};
 use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::DispatchError;
 use up_data_structs::*;
@@ -98,7 +98,6 @@ pub mod pallet {
 		/// - symbol: arbitrary client-chosen symbol
 		/// - parts: array of Fixed and Slot parts composing the base, confined in length by
 		///   RmrkPartsLimit
-		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
 		pub fn create_base(
 			origin: OriginFor<T>,
@@ -164,7 +163,6 @@ pub mod pallet {
 		///   - key: arbitrary BoundedString, defined by client
 		///   - value: arbitrary BoundedString, defined by client
 		///   - inherit: optional bool
-		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::theme_add(theme.properties.len() as u32))]
 		pub fn theme_add(
 			origin: OriginFor<T>,
@@ -214,7 +212,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::equippable())]
 		pub fn equippable(
 			origin: OriginFor<T>,
