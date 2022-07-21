@@ -51,13 +51,16 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Unique: pallet_unique::{Pallet, Call, Storage},
-		Balances: pallet_balances::{Pallet, Call, Storage},
+		System: frame_system,
+		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Common: pallet_common::{Pallet, Storage, Event<T>},
 		Fungible: pallet_fungible::{Pallet, Storage},
 		Refungible: pallet_refungible::{Pallet, Storage},
 		Nonfungible: pallet_nonfungible::{Pallet, Storage},
+		Structure: pallet_structure::{Pallet, Storage, Event<T>},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
+		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin},
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 	}
 );
@@ -68,6 +71,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
+	type Event = Event;
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -81,7 +85,6 @@ impl system::Config for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -100,10 +103,10 @@ parameter_types! {
 }
 //frame_system::Module<Test>;
 impl pallet_balances::Config for Test {
+	type Event = Event;
 	type AccountStore = System;
 	type Balance = u64;
 	type DustRemoval = ();
-	type Event = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
@@ -116,6 +119,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Test {
+	type Event = Event;
 	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Pallet<Test>, ()>;
 	type LengthToFee = IdentityFee<u64>;
 	type WeightToFee = IdentityFee<u64>;
@@ -188,8 +192,13 @@ parameter_types! {
 	pub BlockGasLimit: U256 = 0u32.into();
 }
 
+impl pallet_ethereum::Config for Test {
+	type Event = Event;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+}
+
 impl pallet_evm::Config for Test {
-	type Event = ();
+	type Event = Event;
 	type FeeCalculator = ();
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressNever<Self::CrossAccountId>;
@@ -212,7 +221,7 @@ impl pallet_evm_coder_substrate::Config for Test {}
 
 impl pallet_common::Config for Test {
 	type WeightInfo = ();
-	type Event = ();
+	type Event = Event;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -230,8 +239,8 @@ impl pallet_evm::account::Config for Test {
 }
 
 impl pallet_structure::Config for Test {
+	type Event = Event;
 	type WeightInfo = ();
-	type Event = ();
 	type Call = Call;
 }
 impl pallet_fungible::Config for Test {
@@ -252,7 +261,7 @@ parameter_types! {
 }
 
 impl pallet_unique::Config for Test {
-	type Event = ();
+	type Event = Event;
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;

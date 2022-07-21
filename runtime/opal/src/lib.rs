@@ -194,7 +194,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 924010,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 	state_version: 0,
 };
 
@@ -516,6 +516,7 @@ where
 }
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
@@ -1127,6 +1128,8 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
+		System: frame_system = 0,
+
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
@@ -1136,10 +1139,9 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 32,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 33,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 33,
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
 		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
 		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
 		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
