@@ -137,6 +137,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @dev Throws error if key not found
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
+	/// @return Property value bytes
 	fn property(&self, token_id: uint256, key: string) -> Result<bytes> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)

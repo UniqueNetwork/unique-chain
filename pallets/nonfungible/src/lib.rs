@@ -86,7 +86,6 @@
 //!
 //! ## Assumptions
 //!
-//! * Total number of tokens of all types shouldn't be greater than `up_data_structs::MAX_TOKEN_PREFIX_LENGTH`.
 //! * Sender should be in collection's allow list to perform operations on tokens.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -845,6 +844,7 @@ impl<T: Config> Pallet<T> {
 	/// If `to` is token than `to` becomes owner of the token and the token become nested.
 	/// Unnests token from previous parent if it was nested before.
 	/// Removes allowance for the token if there was any.
+	/// Throws if transfers aren't allowed for collection or if receiver reached token ownership limit.
 	///
 	/// - `nesting_budget`: Limit for token nesting depth
 	pub fn transfer(
@@ -942,8 +942,11 @@ impl<T: Config> Pallet<T> {
 	///
 	/// The sender should be the owner/admin of the collection or collection should be configured
 	/// to allow public minting.
+	/// Throws if amount of tokens reached it's limit for the collection or if caller reached
+	/// token ownership limit.
 	///
-	/// - `data`: Contains list of token properties and users who will become the owners of the corresponging tokens.
+	/// - `data`: Contains list of token properties and users who will become the owners of the
+	///   corresponging tokens.
 	/// - `nesting_budget`: Limit for token nesting depth
 	pub fn create_multiple_items(
 		collection: &NonfungibleHandle<T>,
