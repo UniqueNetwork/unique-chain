@@ -4,10 +4,10 @@ version = "0.1.1"
 edition = "2021"
 
 [dependencies]
-frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.25' }
-frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.25' }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.25' }
-sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.25' }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.26' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.26' }
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.26' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.26' }
 pallet-common = { path = "../common", default-features = false }
 parity-scale-codec = { version = "3.1.2", default-features = false, features = [
 	"derive",
@@ -16,7 +16,7 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 	"derive",
 ] }
 up-data-structs = { path = "../../primitives/data-structs", default-features = false }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.25" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
