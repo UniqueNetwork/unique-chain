@@ -5,7 +5,7 @@
 1. Checkout polkadot in sibling folder with this project
 ```bash
 git clone https://github.com/paritytech/polkadot.git && cd polkadot
-git checkout release-v0.9.25
+git checkout release-v0.9.26
 ```
 
 2. Build with nightly-2022-05-11

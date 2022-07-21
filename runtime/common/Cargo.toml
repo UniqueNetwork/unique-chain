@@ -36,17 +36,17 @@ runtime-benchmarks = [
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.25"
+branch = "polkadot-v0.9.26"
 
 [dependencies.sp-std]
 default-features = false
 git = 'https://github.com/paritytech/substrate'
-branch = 'polkadot-v0.9.25'
+branch = 'polkadot-v0.9.26'
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.25"
+branch = "polkadot-v0.9.26"
 
 [dependencies.codec]
 default-features = false
@@ -62,12 +62,12 @@ version = "2.0.1"
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.25"
+branch = "polkadot-v0.9.26"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.25"
+branch = "polkadot-v0.9.26"
 
 [dependencies.pallet-common]
 default-features = false
@@ -100,16 +100,16 @@ path = "../../primitives/data-structs"
 [dependencies.sp-consensus-aura]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.25"
+branch = "polkadot-v0.9.26"
 
 [dependencies.fp-rpc]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-branch = "unique-polkadot-v0.9.25"
+branch = "unique-polkadot-v0.9.26"
 
 [dependencies]
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.25" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.26" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.25' }
+up-sponsorship = { default-features = false, git = "https://github.com/UniqueNetwork/pallet-sponsoring", branch = 'polkadot-v0.9.26' }
 
 rmrk-rpc = { default-features = false, path = "../../primitives/rmrk-rpc" }
