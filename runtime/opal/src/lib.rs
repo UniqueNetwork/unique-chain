@@ -651,76 +651,6 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-pub struct OnlySelfCurrency;
-impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
-	fn matches_fungible(a: &MultiAsset) -> Option<B> {
-		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
-			_ => None,
-		}
-	}
-}
-
-// impl<T: TryFrom<u32>, B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency<T> {
-// 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
-// 		match (&a.id, &a.fun) {
-// 			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
-// 			_ => None,
-// 		}
-// 	}
-// }
-
-// impl<T: Get<MultiLocation>, B: TryFrom<u128>> MatchesFungible<B> for IsConcrete<T> {
-// 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
-// 		match (&a.id, &a.fun) {
-// 			(Concrete(ref id), Fungible(ref amount)) if id == &T::get() =>
-// 				CheckedConversion::checked_from(*amount),
-// 			_ => None,
-// 		}
-// 	}
-// }
-
-
-/// A `MatchesFungible` implementation. It matches concrete fungible assets
-/// whose `id` could be converted into `CurrencyId`.
-/// 
-pub struct IsNativeConcrete<CurrencyId, CurrencyIdConvert>(PhantomData<(CurrencyId, CurrencyIdConvert)>);
-impl<CurrencyId, CurrencyIdConvert, Amount> MatchesFungible<Amount> for IsNativeConcrete<CurrencyId, CurrencyIdConvert>
-where
-	CurrencyIdConvert: TryFrom<u64>,// Convert<MultiLocation, Option<CurrencyId>>,
-	Amount: TryFrom<u128>,
-{
-	fn matches_fungible(a: &MultiAsset) -> Option<Amount> {
-
-		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
-			_ => None,
-		}
-
-		// if let (Fungible(ref amount), Concrete(ref location)) = (&a.fun, &a.id) {
-		// 	if CurrencyIdConvert::convert(location.clone()).is_some() {
-		// 		return CheckedConversion::checked_from(*amount);
-		// 	}
-		// }
-		// None
-	}
-}
-
-
-/// Means for transacting assets on this chain.
-pub type LocalAssetTransactor = CurrencyAdapter<
-	// Use this currency:
-	Balances,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	OnlySelfCurrency,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-	AccountId,
-	// We don't track any teleports.
-	(),
->;
-
 parameter_types! {
 	pub StatemintLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(1000)));
 	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
@@ -819,21 +749,25 @@ impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128
 		log::info!(
 			target: "xcm::AsIndex::Convert",
 			"AsIndex {:?}",
-			id.interior().at(prefix.interior().len()) //.interior(), 
+			id
 		);
 
 		let parent = MultiLocation::parent();
 		let here = MultiLocation::here();
+
+		if *id == parent {
+			return ConvertAssetId::convert_ref(999);
+		}
+
+		if *id == here {
+			return ConvertAssetId::convert_ref(9999);
+		}
 		
 		// TODO: Fix it. Need to make correct relay chain currency conversion
 		// Native currencies conversion should be first 		
-		match id {
-			here => ConvertAssetId::convert_ref(9999),
-			parent => ConvertAssetId::convert_ref(999),
-			_ => match id.interior().at(prefix.interior().len()) {
-					Some(Junction::GeneralIndex(id)) => ConvertAssetId::convert_ref(id),
-					_ => ConvertAssetId::convert_ref(888),
-			}
+		match XcmForeignAssetIdMapping::<Runtime>::get_currency_id(id.clone()) {
+			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => ConvertAssetId::convert_ref(foreign_asset_id as u128),
+			_ => ConvertAssetId::convert_ref(888),
 		}
 	}
 
@@ -955,189 +889,6 @@ pub type Barrier = (
 
 
 
-//use xcm::opaque::latest::{prelude::XcmError, Fungibility::Fungible as XcmFungible};
-
-pub struct UsingAnyCurrencyComponents<
-	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
-	AccountId,
-	Currency: CurrencyT<AccountId>,
-	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
->(
-	Weight,
-	Currency::Balance,
-	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
-);
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> WeightTrader
-	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn new() -> Self {
-		Self(0, Zero::zero(), PhantomData)
-	}
-
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::weight_to_fee(&weight);
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		let asset_id = payment
-			.fungible
-			.iter()
-			.next()
-			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
-
-		// // location to this parachain through relay chain
-		// let option1: xcm::v1::AssetId = Concrete(MultiLocation {
-		// 	parents: 1,
-		// 	interior: X1(Parachain(ParachainInfo::parachain_id().into())),
-		// });
-		// // direct location
-		// let option2: xcm::v1::AssetId = Concrete(MultiLocation {
-		// 	parents: 0,
-		// 	interior: Here,
-		// });
-
-		// let required = if payment.fungible.contains_key(&option1) {
-		// 	(option1, u128_amount).into()
-		// } else if payment.fungible.contains_key(&option2) {
-		// 	(option2, u128_amount).into()
-		// } else {
-		// 	(Concrete(MultiLocation::default()), u128_amount).into()
-		// };
-
-		// let first_asset: xcm::v1::AssetId = payment.fungible.iter().next().unwrap().0.into();
-
-		// First fungible pays fee
-		let required = MultiAsset {
-			id: asset_id.clone(),
-			fun: XcmFungible(u128_amount),
-		};
-
-//		let required: MultiAsset = (first_asset, u128_amount).into();
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
-		}
-	}
-}
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop
-	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn drop(&mut self) {
-		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
-	}
-}
-
-
-pub struct UsingOnlySelfCurrencyComponents<
-	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
-	AccountId,
-	Currency: CurrencyT<AccountId>,
-	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
->(
-	Weight,
-	Currency::Balance,
-	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
-);
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> WeightTrader
-	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn new() -> Self {
-		Self(0, Zero::zero(), PhantomData)
-	}
-
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::weight_to_fee(&weight);
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		// location to this parachain through relay chain
-		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
-		});
-		// direct location
-		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 0,
-			interior: Here,
-		});
-
-		let required = if payment.fungible.contains_key(&option1) {
-			(option1, u128_amount).into()
-		} else if payment.fungible.contains_key(&option2) {
-			(option2, u128_amount).into()
-		} else {
-			(Concrete(MultiLocation::default()), u128_amount).into()
-		};
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
-		}
-	}
-}
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop
-	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn drop(&mut self) {
-		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
-	}
-}
-
 use xcm_executor::traits::FilterAssetLocation;
 pub struct AllAsset;
 impl FilterAssetLocation for AllAsset {
@@ -1146,6 +897,7 @@ impl FilterAssetLocation for AllAsset {
 	}
 }
 
+use pallet_foreing_assets::UsingAnyCurrencyComponents;
 pub struct XcmConfig;
 impl Config for XcmConfig {
 	type Call = Call;
@@ -1484,7 +1236,16 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 }
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		// TODO: Add native curr
+
+		// native stubs
+		if location ==  MultiLocation::here() {
+			return Some(AssetIds::NativeAssetId(NativeCurrency::This))
+		}
+
+		if location ==  MultiLocation::parent() {
+			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent))
+		}
+
 		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone()) {
 			return Some(currency_id);
 		}
@@ -1501,8 +1262,7 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		
+	fn contains(a: &AccountId) -> bool {	
 		get_all_module_accounts().contains(a)
 	}
 }

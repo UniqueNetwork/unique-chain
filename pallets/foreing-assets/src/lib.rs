@@ -35,41 +35,25 @@
 #![allow(clippy::unused_unit)]
 
 use frame_support::{
-	assert_ok,
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
 	traits::{fungible, fungibles, Currency, EnsureOrigin},
 	transactional,
-	weights::constants::WEIGHT_PER_SECOND,
 	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
 use up_data_structs::{CollectionMode};
-use pallet_common::{Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
-use pallet_fungible::{Pallet as PalletFungible};
-
-
-// use module_support::{AssetIdMapping, EVMBridge, Erc20InfoMapping, InvokeContext};
-// use primitives::{
-// 	currency::{CurrencyIdType, DexShare, DexShareType, Erc20Id, ForeignAssetId, Lease, StableAssetPoolId, TokenInfo},
-// 	evm::{
-// 		is_system_contract, EvmAddress, H160_POSITION_CURRENCY_ID_TYPE, H160_POSITION_DEXSHARE_LEFT_FIELD,
-// 		H160_POSITION_DEXSHARE_LEFT_TYPE, H160_POSITION_DEXSHARE_RIGHT_FIELD, H160_POSITION_DEXSHARE_RIGHT_TYPE,
-// 		H160_POSITION_FOREIGN_ASSET, H160_POSITION_LIQUID_CROADLOAN, H160_POSITION_STABLE_ASSET, H160_POSITION_TOKEN,
-// 	},
-// 	CurrencyId,
-// };
-use scale_info::{prelude::format, TypeInfo};
-use sp_runtime::{traits::{One, Zero}, ArithmeticError, FixedPointNumber, FixedU128};
+use pallet_common::{Pallet as PalletCommon};
+use scale_info::{TypeInfo};
+use sp_runtime::{traits::{One, Zero}, ArithmeticError};
 use sp_std::{boxed::Box, vec::Vec};
-use up_data_structs::{AccessMode, CollectionId, TokenId, CreateCollectionData};
+use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-use xcm::opaque::latest::{prelude::XcmError, AssetId, Fungibility::Fungible, MultiAsset};
+use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
-use xcm_builder::TakeRevenue;
 use xcm_executor::{traits::WeightTrader, Assets};
 
 use pallet_common::erc::CrossAccountId;
@@ -107,6 +91,7 @@ pub type CurrencyId = AssetIds;
 // mod mock;
 // mod tests;
 mod impl_fungibles;
+mod currency_components;
 mod weights;
 
 pub use module::*;
@@ -140,42 +125,11 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
 	}
 
-	// fn get_multi_location2(foreign_asset_id: AssetIds) -> Option<MultiLocation> {
-	// 	log::info!(target: "get_multi_location2", "call");
-
-	// 	match foreign_asset_id {
-	// 		AssetIds::ForeignAssetId(id) =>  Pallet::<T>::foreign_asset_locations(id),
-	// 	}
-	// }
-
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
 		Some(AssetIds::ForeignAssetId(Pallet::<T>::location_to_currency_ids(multi_location).unwrap_or(0)))
 	}
 }
-
-// pub struct AssetIdMaps<T>(sp_std::marker::PhantomData<T>);
-
-// impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
-// 	for AssetIdMaps<T>
-// {
-// 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
-// 		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
-// 	}
-
-// 	fn get_asset_metadata2(foreign_asset_id: AssetIds) -> Option<AssetMetadata<BalanceOf<T>>> {
-// 		Pallet::<T>::asset_metadatas(foreign_asset_id)
-// 	}
-
-// 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
-// 		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
-// 	}
-
-// 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
-// 		Pallet::<T>::location_to_currency_ids(multi_location)
-// 	}
-// }
-
 
 #[frame_support::pallet]
 pub mod module {
@@ -183,22 +137,12 @@ pub mod module {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_common::Config + pallet_fungible::Config + orml_tokens::Config + pallet_balances::Config
-	// + 
-	// fungibles::Mutate<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>>	+ 
-	// fungibles::Transfer<Self::AccountId, AssetId = CurrencyId, Balance = BalanceOf<Self>> 
 	{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// Currency type for withdraw and balance storage.
 		type Currency: Currency<Self::AccountId>;
-
-		/// The Currency ID for the staking currency
-		// #[pallet::constant]
-		// type StakingCurrencyId: Get<CurrencyId>;
-
-		/// Evm Bridge for getting info of contracts from the EVM.
-		// type EVMBridge: EVMBridge<Self::AccountId, BalanceOf<Self>>;
 
 		/// Required origin for registering asset.
 		type RegisterOrigin: EnsureOrigin<Self::Origin>;
@@ -468,128 +412,102 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-/// Simple fee calculator that requires payment in a single fungible at a fixed rate.
-///
-/// The constant `FixedRate` type parameter should be the concrete fungible ID and the amount of it
-/// required for one second of weight.
-pub struct FixedRateOfForeignAsset<T, FixedRate: Get<u128>, R: TakeRevenue> {
-	weight: Weight,
-	amount: u128,
-	ed_ratio: FixedU128,
-	multi_location: Option<MultiLocation>,
-	_marker: PhantomData<(T, FixedRate, R)>,
-}
+use sp_runtime::SaturatedConversion;
+use sp_runtime::traits::Saturating;
+pub use frame_support::{
+	traits::{
+		fungibles::{Balanced, CreditOf},
+		tokens::currency::Currency as CurrencyT, 
+		OnUnbalanced as OnUnbalancedT,
+	},
+	weights::{
+		WeightToFeePolynomial, WeightToFee,
+	},
+};
 
-impl<T: Config, FixedRate: Get<u128>, R: TakeRevenue> WeightTrader for FixedRateOfForeignAsset<T, FixedRate, R>
-where
-	BalanceOf<T>: Into<u128>,
+use xcm::latest::{
+	Fungibility::Fungible as XcmFungible,
+};
+
+pub struct UsingAnyCurrencyComponents<
+	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+	AssetId: Get<MultiLocation>,
+	AccountId,
+	Currency: CurrencyT<AccountId>,
+	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+>(
+	Weight,
+	Currency::Balance,
+	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
+);
+
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> WeightTrader
+	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn new() -> Self {
-		Self {
-			weight: 0,
-			amount: 0,
-			ed_ratio: Default::default(),
-			multi_location: None,
-			_marker: PhantomData,
-		}
+		Self(0, Zero::zero(), PhantomData)
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
 		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
 
-		// only support first fungible assets now.
+		let amount = WeightToFee::weight_to_fee(&weight);
+		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
+
 		let asset_id = payment
 			.fungible
 			.iter()
 			.next()
 			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
 
-		if let AssetId::Concrete(ref multi_location) = asset_id {
-			log::debug!(target: "fassets::weight", "buy_weight multi_location: {:?}", multi_location);
+		// First fungible pays fee
+		let required = MultiAsset {
+			id: asset_id.clone(),
+			fun: XcmFungible(u128_amount),
+		};
 
-			// if let Some(CurrencyId::ForeignAsset(foreign_asset_id)) =
-			// 	Pallet::<T>::location_to_currency_ids(multi_location.clone())
-			
-			if let Some(foreign_asset_id) =
-				Pallet::<T>::location_to_currency_ids(multi_location.clone())
-			{
-				if let Some(asset_metadatas) = Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
-				{
-					// The integration tests can ensure the ed is non-zero.
-					let ed_ratio = FixedU128::saturating_from_rational(
-						asset_metadatas.minimal_balance.into(),
-						<T as module::Config>::Currency::minimum_balance().into(),
-					);
-					// The WEIGHT_PER_SECOND is non-zero.
-					let weight_ratio = FixedU128::saturating_from_rational(weight as u128, WEIGHT_PER_SECOND as u128);
-					let amount = ed_ratio.saturating_mul_int(weight_ratio.saturating_mul_int(FixedRate::get()));
+		log::trace!(
+			target: "fassets::weight", "buy_weight payment: {:?}, required: {:?}",
+			payment, required,
+		);
 
-					let required = MultiAsset {
-						id: asset_id.clone(),
-						fun: Fungible(amount),
-					};
-
-					log::trace!(
-						target: "fassets::weight", "buy_weight payment: {:?}, required: {:?}, fixed_rate: {:?}, ed_ratio: {:?}, weight_ratio: {:?}",
-						payment, required, FixedRate::get(), ed_ratio, weight_ratio
-					);
-					let unused = payment
-						.clone()
-						.checked_sub(required)
-						.map_err(|_| XcmError::TooExpensive)?;
-					self.weight = self.weight.saturating_add(weight);
-					self.amount = self.amount.saturating_add(amount);
-					self.ed_ratio = ed_ratio;
-					self.multi_location = Some(multi_location.clone());
-					return Ok(unused);
-				}
-			}
-		}
-
-		log::trace!(target: "fassets::weight", "no concrete fungible asset");
-		Err(XcmError::TooExpensive)
+		let unused = payment
+			.checked_sub(required)
+			.map_err(|_| XcmError::TooExpensive)?;
+		self.0 = self.0.saturating_add(weight);
+		self.1 = self.1.saturating_add(amount);
+		Ok(unused)
 	}
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		log::trace!(
-			target: "fassets::weight", "refund_weight weight: {:?}, weight: {:?}, amount: {:?}, ed_ratio: {:?}, multi_location: {:?}",
-			weight, self.weight, self.amount, self.ed_ratio, self.multi_location
-		);
-		let weight = weight.min(self.weight);
-		let weight_ratio = FixedU128::saturating_from_rational(weight as u128, WEIGHT_PER_SECOND as u128);
-		let amount = self
-			.ed_ratio
-			.saturating_mul_int(weight_ratio.saturating_mul_int(FixedRate::get()));
-
-		self.weight = self.weight.saturating_sub(weight);
-		self.amount = self.amount.saturating_sub(amount);
-
-		log::trace!(target: "fassets::weight", "refund_weight amount: {:?}", amount);
-		if amount > 0 && self.multi_location.is_some() {
-			Some(
-				(
-					self.multi_location.as_ref().expect("checked is non-empty; qed").clone(),
-					amount,
-				)
-					.into(),
-			)
+		let weight = weight.min(self.0);
+		let amount = WeightToFee::weight_to_fee(&weight);
+		self.0 -= weight;
+		self.1 = self.1.saturating_sub(amount);
+		let amount: u128 = amount.saturated_into();
+		if amount > 0 {
+			Some((AssetId::get(), amount).into())
 		} else {
 			None
 		}
 	}
 }
-
-impl<T, FixedRate: Get<u128>, R: TakeRevenue> Drop for FixedRateOfForeignAsset<T, FixedRate, R> {
+impl<
+		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
+		AssetId: Get<MultiLocation>,
+		AccountId,
+		Currency: CurrencyT<AccountId>,
+		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
+	> Drop
+	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+{
 	fn drop(&mut self) {
-		log::trace!(target: "fassets::weight", "take revenue, weight: {:?}, amount: {:?}, multi_location: {:?}", self.weight, self.amount, self.multi_location);
-		if self.amount > 0 && self.multi_location.is_some() {
-			R::take_revenue(
-				(
-					self.multi_location.as_ref().expect("checked is non-empty; qed").clone(),
-					self.amount,
-				)
-					.into(),
-			);
-		}
+		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
 	}
 }

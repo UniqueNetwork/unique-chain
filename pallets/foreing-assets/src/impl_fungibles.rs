@@ -20,7 +20,6 @@ use super::*;
 use frame_system::Config as SystemConfig;
 
 use frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
-use up_data_structs::{ CollectionId };
 use pallet_common::CollectionHandle;
 use pallet_fungible::FungibleHandle;
 use pallet_common::CommonCollectionOperations;
@@ -213,25 +212,6 @@ impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 	}
 }
 
-// impl<T: Config<I>, I: 'static> fungibles::InspectMetadata<<T as SystemConfig>::AccountId>
-// 	for Pallet<T, I>
-// {
-// 	/// Return the name of an asset.
-// 	fn name(asset: &Self::AssetId) -> Vec<u8> {
-// 		Metadata::<T, I>::get(asset).name.to_vec()
-// 	}
-
-// 	/// Return the symbol of an asset.
-// 	fn symbol(asset: &Self::AssetId) -> Vec<u8> {
-// 		Metadata::<T, I>::get(asset).symbol.to_vec()
-// 	}
-
-// 	/// Return the decimals of an asset.
-// 	fn decimals(asset: &Self::AssetId) -> u8 {
-// 		Metadata::<T, I>::get(asset).decimals
-// 	}
-// }
-
 impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T>
 where 
    T: orml_tokens::Config<CurrencyId = AssetIds>
@@ -242,7 +222,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		//Self::do_mint(asset, who, amount, None)
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible mint_into");
+		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible mint_into {:?}", asset);
 
 		let value: u128 = match amount.try_into() { 
 			Ok(val) => val, 
@@ -455,146 +435,3 @@ where
         Ok(amount)
 	}
 }
-
-// impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T, I> {
-// 	fn set_balance(_: Self::AssetId, _: &T::AccountId, _: Self::Balance) -> DispatchResult {
-// 		unreachable!("set_balance is not used if other functions are impl'd");
-// 	}
-// 	fn set_total_issuance(id: T::AssetId, amount: Self::Balance) {
-// 		Asset::<T, I>::mutate_exists(id, |maybe_asset| {
-// 			if let Some(ref mut asset) = maybe_asset {
-// 				asset.supply = amount
-// 			}
-// 		});
-// 	}
-// 	fn decrease_balance(
-// 		asset: T::AssetId,
-// 		who: &T::AccountId,
-// 		amount: Self::Balance,
-// 	) -> Result<Self::Balance, DispatchError> {
-// 		let f = DebitFlags { keep_alive: false, best_effort: false };
-// 		Self::decrease_balance(asset, who, amount, f, |_, _| Ok(()))
-// 	}
-// 	fn decrease_balance_at_most(
-// 		asset: T::AssetId,
-// 		who: &T::AccountId,
-// 		amount: Self::Balance,
-// 	) -> Self::Balance {
-// 		let f = DebitFlags { keep_alive: false, best_effort: true };
-// 		Self::decrease_balance(asset, who, amount, f, |_, _| Ok(())).unwrap_or(Zero::zero())
-// 	}
-// 	fn increase_balance(
-// 		asset: T::AssetId,
-// 		who: &T::AccountId,
-// 		amount: Self::Balance,
-// 	) -> Result<Self::Balance, DispatchError> {
-// 		Self::increase_balance(asset, who, amount, |_| Ok(()))?;
-// 		Ok(amount)
-// 	}
-// 	fn increase_balance_at_most(
-// 		asset: T::AssetId,
-// 		who: &T::AccountId,
-// 		amount: Self::Balance,
-// 	) -> Self::Balance {
-// 		match Self::increase_balance(asset, who, amount, |_| Ok(())) {
-// 			Ok(()) => amount,
-// 			Err(_) => Zero::zero(),
-// 		}
-// 	}
-// }
-
-// impl<T: Config<I>, I: 'static> fungibles::Create<T::AccountId> for Pallet<T, I> {
-// 	fn create(
-// 		id: T::AssetId,
-// 		admin: T::AccountId,
-// 		is_sufficient: bool,
-// 		min_balance: Self::Balance,
-// 	) -> DispatchResult {
-// 		Self::do_force_create(id, admin, is_sufficient, min_balance)
-// 	}
-// }
-
-// impl<T: Config<I>, I: 'static> fungibles::Destroy<T::AccountId> for Pallet<T, I> {
-// 	type DestroyWitness = DestroyWitness;
-
-// 	fn get_destroy_witness(asset: &T::AssetId) -> Option<Self::DestroyWitness> {
-// 		Asset::<T, I>::get(asset).map(|asset_details| asset_details.destroy_witness())
-// 	}
-
-// 	fn destroy(
-// 		id: T::AssetId,
-// 		witness: Self::DestroyWitness,
-// 		maybe_check_owner: Option<T::AccountId>,
-// 	) -> Result<Self::DestroyWitness, DispatchError> {
-// 		Self::do_destroy(id, witness, maybe_check_owner)
-// 	}
-// }
-
-// impl<T: Config<I>, I: 'static> fungibles::metadata::Inspect<<T as SystemConfig>::AccountId>
-// 	for Pallet<T, I>
-// {
-// 	fn name(asset: T::AssetId) -> Vec<u8> {
-// 		Metadata::<T, I>::get(asset).name.to_vec()
-// 	}
-
-// 	fn symbol(asset: T::AssetId) -> Vec<u8> {
-// 		Metadata::<T, I>::get(asset).symbol.to_vec()
-// 	}
-
-// 	fn decimals(asset: T::AssetId) -> u8 {
-// 		Metadata::<T, I>::get(asset).decimals
-// 	}
-// }
-
-// impl<T: Config<I>, I: 'static> fungibles::metadata::Mutate<<T as SystemConfig>::AccountId>
-// 	for Pallet<T, I>
-// {
-// 	fn set(
-// 		asset: T::AssetId,
-// 		from: &<T as SystemConfig>::AccountId,
-// 		name: Vec<u8>,
-// 		symbol: Vec<u8>,
-// 		decimals: u8,
-// 	) -> DispatchResult {
-// 		Self::do_set_metadata(asset, from, name, symbol, decimals)
-// 	}
-// }
-
-// impl<T: Config<I>, I: 'static> fungibles::approvals::Inspect<<T as SystemConfig>::AccountId>
-// 	for Pallet<T, I>
-// {
-// 	// Check the amount approved to be spent by an owner to a delegate
-// 	fn allowance(
-// 		asset: T::AssetId,
-// 		owner: &<T as SystemConfig>::AccountId,
-// 		delegate: &<T as SystemConfig>::AccountId,
-// 	) -> T::Balance {
-// 		Approvals::<T, I>::get((asset, &owner, &delegate))
-// 			.map(|x| x.amount)
-// 			.unwrap_or_else(Zero::zero)
-// 	}
-// }
-
-// impl<T: Config<I>, I: 'static> fungibles::approvals::Mutate<<T as SystemConfig>::AccountId>
-// 	for Pallet<T, I>
-// {
-// 	fn approve(
-// 		asset: T::AssetId,
-// 		owner: &<T as SystemConfig>::AccountId,
-// 		delegate: &<T as SystemConfig>::AccountId,
-// 		amount: T::Balance,
-// 	) -> DispatchResult {
-// 		Self::do_approve_transfer(asset, owner, delegate, amount)
-// 	}
-
-// 	// Aprove spending tokens from a given account
-// 	fn transfer_from(
-// 		asset: T::AssetId,
-// 		owner: &<T as SystemConfig>::AccountId,
-// 		delegate: &<T as SystemConfig>::AccountId,
-// 		dest: &<T as SystemConfig>::AccountId,
-// 		amount: T::Balance,
-// 	) -> DispatchResult {
-// 		Self::do_transfer_approved(asset, owner, delegate, dest, amount)
-// 	}
-// }
