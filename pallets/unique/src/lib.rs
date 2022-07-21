@@ -237,9 +237,7 @@ decl_module! {
 		}
 
 		fn on_runtime_upgrade() -> Weight {
-			let limit = None;
-
-			<VariableMetaDataBasket<T>>::remove_all(limit);
+			let _ = <VariableMetaDataBasket<T>>::clear(u32::MAX, None);
 
 			0
 		}
@@ -313,13 +311,16 @@ decl_module! {
 
 			T::CollectionDispatch::destroy(sender, collection)?;
 
-			<NftTransferBasket<T>>::remove_prefix(collection_id, None);
-			<FungibleTransferBasket<T>>::remove_prefix(collection_id, None);
-			<ReFungibleTransferBasket<T>>::remove_prefix((collection_id,), None);
+			// TODO: basket cleanup should be moved elsewhere
+			// Maybe runtime dispatch.rs should perform it?
 
-			<NftApproveBasket<T>>::remove_prefix(collection_id, None);
-			<FungibleApproveBasket<T>>::remove_prefix(collection_id, None);
-			<RefungibleApproveBasket<T>>::remove_prefix((collection_id,), None);
+			let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
+
+			let _ = <NftApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <FungibleApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
 
 			Ok(())
 		}

@@ -878,8 +878,8 @@ impl<T: Config> Pallet<T> {
 		<DestroyedCollectionCount<T>>::put(destroyed_collections);
 		<CollectionById<T>>::remove(collection.id);
 		<AdminAmount<T>>::remove(collection.id);
-		<IsAdmin<T>>::remove_prefix((collection.id,), None);
-		<Allowlist<T>>::remove_prefix((collection.id,), None);
+		let _ = <IsAdmin<T>>::clear_prefix((collection.id,), u32::MAX, None);
+		let _ = <Allowlist<T>>::clear_prefix((collection.id,), u32::MAX, None);
 		<CollectionProperties<T>>::remove(collection.id);
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
