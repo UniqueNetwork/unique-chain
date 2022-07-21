@@ -46,7 +46,6 @@ use crate::{
 };
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-///
 #[solidity_interface(name = "TokenProperties")]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Set permissions for token property.
