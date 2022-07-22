@@ -389,7 +389,9 @@ pub struct CollectionLimits {
 	/// Maximum amount of tokens inside the collection. Chain default: [`COLLECTION_TOKEN_LIMIT`]
 	pub token_limit: Option<u32>,
 
-	/// Timeout for sponsoring a token transfer in passed blocks. Chain default: [`MAX_SPONSOR_TIMEOUT`]
+	/// Timeout for sponsoring a token transfer in passed blocks. Chain default:
+	/// either [`NFT_SPONSOR_TRANSFER_TIMEOUT`], [`FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT`], or [`REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT`],
+	/// depending on the collection type.
 	pub sponsor_transfer_timeout: Option<u32>,
 	/// Timeout for sponsoring an approval in passed blocks. Chain default: [`SPONSOR_APPROVE_TIMEOUT`]
 	pub sponsor_approve_timeout: Option<u32>,
