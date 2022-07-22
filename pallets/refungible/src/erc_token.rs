@@ -14,6 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # Refungible Pallet EVM API for token pieces
+//!
+//! Provides ERC-20 standart support implementation and EVM API for unique extensions for Refungible Pallet.
+//! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
+
 extern crate alloc;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
@@ -40,6 +45,10 @@ pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId
 
 #[derive(ToLog)]
 pub enum ERC20Events {
+	/// @dev This event is emitted when the amount of tokens (value) is sent
+	/// from the from address to the to address. In the case of minting new 
+	/// tokens, the transfer is usually from the 0 address while in the case
+	/// of burning tokens the transfer is to 0.
 	Transfer {
 		#[indexed]
 		from: address,
@@ -47,6 +56,8 @@ pub enum ERC20Events {
 		to: address,
 		value: uint256,
 	},
+	/// @dev This event is emitted when the amount of tokens (value) is approved
+	/// by the owner to be used by the spender.
 	Approval {
 		#[indexed]
 		owner: address,
@@ -56,32 +67,49 @@ pub enum ERC20Events {
 	},
 }
 
+/// @title Standard ERC20 token
+/// 
+/// @dev Implementation of the basic standard token.
+/// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 #[solidity_interface(name = "ERC20", events(ERC20Events))]
 impl<T: Config> RefungibleTokenHandle<T> {
+	/// @return the name of the token.
 	fn name(&self) -> Result<string> {
 		Ok(decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
 			.collect::<string>())
 	}
+
+	/// @return the symbol of the token.
 	fn symbol(&self) -> Result<string> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
+
+	/// @dev Total number of tokens in existence
 	fn total_supply(&self) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		Ok(<TotalSupply<T>>::get((self.id, self.1)).into())
 	}
 
+	/// @dev Not supported
 	fn decimals(&self) -> Result<uint8> {
 		// Decimals aren't supported for refungible tokens
 		Ok(0)
 	}
 
+	/// @dev Gets the balance of the specified address.
+	/// @param owner The address to query the balance of.
+	/// @return An uint256 representing the amount owned by the passed address.
 	fn balance_of(&self, owner: address) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <Balance<T>>::get((self.id, self.1, owner));
 		Ok(balance.into())
 	}
+
+	/// @dev Transfer token for a specified address
+	/// @param to The address to transfer to.
+	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer(&mut self, caller: caller, to: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -95,6 +123,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 			.map_err(|_| "transfer error")?;
 		Ok(true)
 	}
+
+	/// @dev Transfer tokens from one address to another
+	/// @param from address The address which you want to send tokens from
+	/// @param to address The address which you want to transfer to
+	/// @param amount uint256 the amount of tokens to be transferred
 	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
@@ -115,6 +148,14 @@ impl<T: Config> RefungibleTokenHandle<T> {
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
+	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
+	/// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+	/// race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+	/// https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+	/// @param spender The address which will spend the funds.
+	/// @param amount The amount of tokens to be spent.
 	#[weight(<SelfWeightOf<T>>::approve())]
 	fn approve(&mut self, caller: caller, spender: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -125,6 +166,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner address The address which owns the funds.
+	/// @param spender address The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
 	fn allowance(&self, owner: address, spender: address) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
@@ -136,6 +182,10 @@ impl<T: Config> RefungibleTokenHandle<T> {
 
 #[solidity_interface(name = "ERC20UniqueExtensions")]
 impl<T: Config> RefungibleTokenHandle<T> {
+	/// @dev Function that burns an amount of the token of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -150,6 +200,9 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		Ok(true)
 	}
 
+	/// @dev Function that changes total amount of the tokens.
+	///  Throws if `msg.sender` doesn't owns all of the tokens.
+	/// @param amount New total amount of the tokens.
 	#[weight(<SelfWeightOf<T>>::repartition_item())]
 	fn repartition(&mut self, caller: caller, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
