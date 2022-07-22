@@ -19,8 +19,8 @@
 use super::*;
 use codec::{Encode, Decode, Error};
 
-/// Match errors from one type to another and return an error
-/// if a match is successful. This macro expects a pattern matcher
+/// Match an error to a provided pattern matcher and get
+/// the corresponding error of another type if a match is successful.
 #[macro_export]
 macro_rules! map_unique_err_to_proxy {
     (match $err:ident { $($unique_err_ty:ident :: $unique_err:ident => $proxy_err:ident),+ $(,)? }) => {
