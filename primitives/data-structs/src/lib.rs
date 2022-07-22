@@ -55,20 +55,28 @@ pub mod budget;
 pub mod mapping;
 mod migration;
 
+/// Maximum of decimal points.
 pub const MAX_DECIMAL_POINTS: DecimalPoints = 30;
+
+/// Maximum pieces for refungible token.
 pub const MAX_REFUNGIBLE_PIECES: u128 = 1_000_000_000_000_000_000_000;
 pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 
+/// Maximum tokens for user.
 pub const MAX_TOKEN_OWNERSHIP: u32 = if cfg!(not(feature = "limit-testing")) {
 	100_000
 } else {
 	10
 };
+
+/// Maximum for collections can be created.
 pub const COLLECTION_NUMBER_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 	100_000
 } else {
 	10
 };
+
+/// Maximum for various custom data of token.
 pub const CUSTOM_DATA_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
 	2048
 } else {
@@ -113,8 +121,10 @@ pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
 /// create_many call
 pub const MAX_ITEMS_PER_BATCH: u32 = 200;
 
+/// Used for limit bounded types of token custom data.
 pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
 
+/// Collection id.
 #[derive(
 	Encode,
 	Decode,
@@ -134,6 +144,7 @@ pub struct CollectionId(pub u32);
 impl EncodeLike<u32> for CollectionId {}
 impl EncodeLike<CollectionId> for u32 {}
 
+/// Token id
 #[derive(
 	Encode,
 	Decode,
@@ -154,6 +165,9 @@ impl EncodeLike<u32> for TokenId {}
 impl EncodeLike<TokenId> for u32 {}
 
 impl TokenId {
+	/// Try to get next token id.
+	/// 
+	/// If next id cause overflow, then [`ArithmeticError::Overflow`] returned.
 	pub fn try_next(self) -> Result<TokenId, ArithmeticError> {
 		self.0
 			.checked_add(1)
@@ -184,6 +198,7 @@ pub struct TokenData<CrossAccountId> {
 	pub pieces: u128,
 }
 
+// TODO: unused type
 pub struct OverflowError;
 impl From<OverflowError> for &'static str {
 	fn from(_: OverflowError) -> Self {
@@ -191,17 +206,27 @@ impl From<OverflowError> for &'static str {
 	}
 }
 
+/// Alias for decimal points type.
 pub type DecimalPoints = u8;
 
+/// Collection mode.
+/// 
+/// Collection can represent various types of tokens.
+/// Each collection can contain only one type of tokens at a time.
+/// This type helps to understand which tokens the collection contains.
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
+	/// Non fungible tokens.
 	NFT,
+	/// Fungible tokens.
 	Fungible(DecimalPoints),
+	/// Refungible tokens.
 	ReFungible,
 }
 
 impl CollectionMode {
+	/// Get collection mod as number.
 	pub fn id(&self) -> u8 {
 		match self {
 			CollectionMode::NFT => 1,
@@ -211,14 +236,18 @@ impl CollectionMode {
 	}
 }
 
+// TODO: unused trait
 pub trait SponsoringResolve<AccountId, Call> {
 	fn resolve(who: &AccountId, call: &Call) -> Option<AccountId>;
 }
 
+/// Access mode for token.
 #[derive(Encode, Decode, Eq, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
 	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
 	AllowList,
 }
 impl Default for AccessMode {
@@ -227,6 +256,7 @@ impl Default for AccessMode {
 	}
 }
 
+// TODO: remove in future.
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SchemaVersion {
@@ -239,6 +269,7 @@ impl Default for SchemaVersion {
 	}
 }
 
+// TODO: unused type
 #[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct Ownership<AccountId> {
@@ -246,19 +277,21 @@ pub struct Ownership<AccountId> {
 	pub fraction: u128,
 }
 
+/// The state of collection sponsorship.
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum SponsorshipState<AccountId> {
-	/// The fees are applied to the transaction sender
+	/// The fees are applied to the transaction sender.
 	Disabled,
-	/// Pending confirmation from a sponsor-to-be
+	/// The sponsor is under consideration. Until the sponsor gives his consent,
+	/// the fee will still be charged to sender.
 	Unconfirmed(AccountId),
-	/// Transactions are sponsored by specified account
+	/// Transactions are sponsored by specified account.
 	Confirmed(AccountId),
 }
 
 impl<AccountId> SponsorshipState<AccountId> {
-	/// Get the acting sponsor account, if present
+	/// Get a sponsor of the collection who has confirmed his status.
 	pub fn sponsor(&self) -> Option<&AccountId> {
 		match self {
 			Self::Confirmed(sponsor) => Some(sponsor),
@@ -266,7 +299,7 @@ impl<AccountId> SponsorshipState<AccountId> {
 		}
 	}
 
-	/// Get the sponsor account currently pending confirmation, if present
+	/// Get a sponsor of the collection who has pending or confirmed status.
 	pub fn pending_sponsor(&self) -> Option<&AccountId> {
 		match self {
 			Self::Unconfirmed(sponsor) | Self::Confirmed(sponsor) => Some(sponsor),
@@ -274,7 +307,7 @@ impl<AccountId> SponsorshipState<AccountId> {
 		}
 	}
 
-	/// Is sponsorship set and acting
+	/// Whether the sponsorship is confirmed.
 	pub fn confirmed(&self) -> bool {
 		matches!(self, Self::Confirmed(_))
 	}
@@ -290,16 +323,32 @@ pub type CollectionName = BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>;
 pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>;
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
+/// Base structure for represent collection.
+/// 
+/// Used to provide basic functionality for all types of collections.
+/// 
+/// #### Note
 /// Collection parameters, used in storage (see [`RpcCollection`] for the RPC version).
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 pub struct Collection<AccountId> {
+	/// Collection owner account.
 	pub owner: AccountId,
+
+	/// Collection mode.
 	pub mode: CollectionMode,
+
+	/// Access mode.
 	#[version(..2)]
 	pub access: AccessMode,
+
+	/// Collection name.
 	pub name: CollectionName,
+
+	/// Collection description.
 	pub description: CollectionDescription,
+
+	/// Token prefix.
 	pub token_prefix: CollectionTokenPrefix,
 
 	#[version(..2)]
@@ -310,10 +359,14 @@ pub struct Collection<AccountId> {
 
 	#[version(..2)]
 	pub schema_version: SchemaVersion,
+
+	/// The state of sponsorship of the collection.
 	pub sponsorship: SponsorshipState<AccountId>,
 
+	/// Collection limits.
 	pub limits: CollectionLimits,
 
+	/// Collection permissions.
 	#[version(2.., upper(Default::default()))]
 	pub permissions: CollectionPermissions,
 
@@ -335,52 +388,103 @@ pub struct Collection<AccountId> {
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct RpcCollection<AccountId> {
+	/// Collection owner account.
 	pub owner: AccountId,
+
+	/// Collection mode.
 	pub mode: CollectionMode,
+
+	/// Collection name.
 	pub name: Vec<u16>,
+
+	/// Collection description.
 	pub description: Vec<u16>,
+
+	/// Token prefix.
 	pub token_prefix: Vec<u8>,
+
+	/// The state of sponsorship of the collection.
 	pub sponsorship: SponsorshipState<AccountId>,
+
+	/// Collection limits.
 	pub limits: CollectionLimits,
+
+	/// Collection permissions.
 	pub permissions: CollectionPermissions,
+
+	/// Token property permissions.
 	pub token_property_permissions: Vec<PropertyKeyPermission>,
+
+	/// Collection properties.
 	pub properties: Vec<Property>,
+
+	/// Is collection read only.
 	pub read_only: bool,
 }
 
+/// Data used for create collection.
+/// 
+/// All fields are wrapped in [`Option`], where `None` means chain default.
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
 #[derivative(Debug, Default(bound = ""))]
 pub struct CreateCollectionData<AccountId> {
+	/// Collection mode.
 	#[derivative(Default(value = "CollectionMode::NFT"))]
 	pub mode: CollectionMode,
+
+	/// Access mode.
 	pub access: Option<AccessMode>,
+
+	/// Collection name.
 	pub name: CollectionName,
+
+	/// Collection description.
 	pub description: CollectionDescription,
+
+	/// Token prefix.
 	pub token_prefix: CollectionTokenPrefix,
+
+	/// Pending collection sponsor.
 	pub pending_sponsor: Option<AccountId>,
+
+	/// Collection limits.
 	pub limits: Option<CollectionLimits>,
+
+	/// Collection permissions.
 	pub permissions: Option<CollectionPermissions>,
+
+	/// Token property permissions.
 	pub token_property_permissions: CollectionPropertiesPermissionsVec,
+
+	/// Collection properties.
 	pub properties: CollectionPropertiesVec,
 }
 
+/// Bounded vector of properties permissions. Max length is [`MAX_PROPERTIES_PER_ITEM`].
+// TODO: maybe rename to PropertiesPermissionsVec
 pub type CollectionPropertiesPermissionsVec =
 	BoundedVec<PropertyKeyPermission, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
+/// Bounded vector of properties. Max length is [`MAX_PROPERTIES_PER_ITEM`].
 pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_PER_ITEM>>;
 
 /// Limits and restrictions of a collection.
-/// All fields are wrapped in `Option`s, where None means chain default.
 ///
-/// todo:doc links to chain defaults
+/// All fields are wrapped in [`Option`], where `None` means chain default.
+/// 
+/// Update with `pallet_common::Pallet::clamp_limits`.
 // IMPORTANT: When adding/removing fields from this struct - don't forget to also
-// update clamp_limits() in pallet-common.
+// TODO: move `pallet_common::Pallet::clamp_limits() in pallet-common.` into `impl CollectionLimits`.
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionLimits {
-	/// Maximum number of owned tokens per account. Chain default: [`ACCOUNT_TOKEN_OWNERSHIP_LIMIT`]
+	/// How many tokens can a user have on one account.
+	/// * Default - [`ACCOUNT_TOKEN_OWNERSHIP_LIMIT`].
+	/// * Limit - [`MAX_TOKEN_OWNERSHIP`].
 	pub account_token_ownership_limit: Option<u32>,
-	/// Maximum size of data in bytes of a sponsored transaction. Chain default: [`CUSTOM_DATA_LIMIT`]
+
+	/// Maximum size of data in bytes of a sponsored transaction.
+	/// * Default - [`CUSTOM_DATA_LIMIT`].
 	pub sponsored_data_size: Option<u32>,
 
 	/// FIXME should we delete this or repurpose it?
