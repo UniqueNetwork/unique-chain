@@ -103,6 +103,15 @@ interface CreateItemResult {
   collectionId: number;
   itemId: number;
   recipient?: CrossAccountId;
+  amount?: number;
+}
+
+interface DestroyItemResult {
+  success: boolean;
+  collectionId: number;
+  itemId: number;
+  owner: CrossAccountId;
+  amount: number;
 }
 
 interface TransferResult {
@@ -220,12 +229,14 @@ export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] 
     const collectionId = parseInt(data[0].toString(), 10);
     const itemId = parseInt(data[1].toString(), 10);
     const recipient = normalizeAccountId(data[2].toJSON() as any);
+    const amount = parseInt(data[3].toString(), 10);
 
     const itemRes: CreateItemResult = {
       success: true,
       collectionId,
       itemId,
       recipient,
+      amount,
     };
 
     results.push(itemRes);
@@ -253,6 +264,31 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   };
   
   return result;
+}
+
+export function getDestroyItemsResult(events: EventRecord[]): DestroyItemResult[] {
+  const results: DestroyItemResult[] = [];
+  
+  const genericResult = getGenericResult<DestroyItemResult[]>(events, 'common', 'ItemDestroyed', (data) => {
+    const collectionId = parseInt(data[0].toString(), 10);
+    const itemId = parseInt(data[1].toString(), 10);
+    const owner = normalizeAccountId(data[2].toJSON() as any);
+    const amount = parseInt(data[3].toString(), 10);
+
+    const itemRes: DestroyItemResult = {
+      success: true,
+      collectionId,
+      itemId,
+      owner,
+      amount,
+    };
+
+    results.push(itemRes);
+    return results;
+  });
+
+  if (!genericResult.success) return [];
+  return results;
 }
 
 export function getTransferResult(api: ApiPromise, events: EventRecord[]): TransferResult {
