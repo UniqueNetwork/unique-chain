@@ -1269,7 +1269,7 @@ export default {
       },
       add_collection_admin: {
         collectionId: 'u32',
-        newAdminId: 'PalletEvmAccountBasicCrossAccountIdRepr',
+        newAdmin: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
       remove_collection_admin: {
         collectionId: 'u32',
@@ -1361,11 +1361,11 @@ export default {
       },
       set_collection_permissions: {
         collectionId: 'u32',
-        newLimit: 'UpDataStructsCollectionPermissions',
+        newPermission: 'UpDataStructsCollectionPermissions',
       },
       repartition: {
         collectionId: 'u32',
-        token: 'u32',
+        tokenId: 'u32',
         amount: 'u128'
       }
     }

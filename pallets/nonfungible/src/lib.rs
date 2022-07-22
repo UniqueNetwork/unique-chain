@@ -21,7 +21,7 @@
 //! - [`Config`]
 //! - [`NonfungibleHandle`]
 //! - [`Pallet`]
-//! - [`CommonWeights`]
+//! - [`CommonWeights`](common::CommonWeights)
 //!
 //! ## Overview
 //!
@@ -130,6 +130,8 @@ pub mod weights;
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+/// Token data, stored independently from other data used to describe it
+/// for the convenience of database access. Notably contains the owner account address.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct ItemData<CrossAccountId> {
@@ -176,17 +178,17 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// Amount of tokens minted for collection.
+	/// Total amount of minted tokens in a collection.
 	#[pallet::storage]
 	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
-	/// Amount of burnt tokens for collection.
+	/// Amount of burnt tokens in a collection.
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
-	/// Custom data serialized to bytes for token.
+	/// Token data, used to partially describe a token.
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -194,7 +196,7 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
-	/// Key-Value map stored for token.
+	/// Map of key-value pairs, describing the metadata of a token.
 	#[pallet::storage]
 	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
@@ -204,7 +206,14 @@ pub mod pallet {
 		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
-	/// Custom data that is serialized to bytes and attached to a token property.
+	/// Custom data of a token that is serialized to bytes,
+	/// primarily reserved for on-chain operations,
+	/// normally obscured from the external users.
+	///
+	/// Auxiliary properties are slightly different from
+	/// usual [`TokenProperties`] due to an unlimited number
+	/// and separately stored and written-to key-value pairs.
+	///
 	/// Currently used to store RMRK data.
 	#[pallet::storage]
 	#[pallet::getter(fn token_aux_property)]
@@ -244,7 +253,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Amount of tokens owned by account.
+	/// Amount of tokens owned by an account in a collection.
 	#[pallet::storage]
 	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
@@ -255,7 +264,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Allowance set by an owner for a spender for a token.
+	/// Allowance set by a token owner for another user to perform one of certain transactions on a token.
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -263,6 +272,7 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Upgrade from the old schema to properties.
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {

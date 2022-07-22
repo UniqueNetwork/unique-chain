@@ -24,7 +24,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+// 	<http://www.apache.org/licenses/LICENSE-2.0>
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,7 @@
 //! Also possible to book a call with a certain frequency.
 //!
 //! Key differences from the original pallet:
-//! https://crates.io/crates/pallet-scheduler
+//! <https://crates.io/crates/pallet-scheduler>
 //! Schedule Id restricted by 16 bytes. Identificator for booked call.
 //! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block.
 //! The maximum weight that may be scheduled per block for any dispatchables of less priority than `schedule::HARD_DEADLINE`.
@@ -267,6 +267,7 @@ pub mod pallet {
 
 	/// A Scheduler-Runtime interface for finer payment handling.
 	pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+		/// Reserve (lock) the maximum spendings on a call, calculated from its weight and the repetition count.
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -274,7 +275,7 @@ pub mod pallet {
 			count: u32,
 		) -> Result<(), DispatchError>;
 
-		/// Unlock centain amount from payer
+		/// Unreserve (unlock) a certain amount from the payer's reserved funds, returning the change.
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -290,6 +291,7 @@ pub mod pallet {
 			TransactionValidityError,
 		>;
 
+		/// Release unspent reserved funds in case of a schedule cancel.
 		fn cancel_reserve(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -494,9 +496,8 @@ pub mod pallet {
 					Agenda::<T>::append(wake, Some(s));
 				}
 			}
-			/// Weight should be 0, because transaction already paid
+			// Total weight should be 0, because the transaction is already paid for
 			0
-			//total_weight
 		}
 	}
 

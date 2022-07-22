@@ -629,47 +629,47 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
     };
     unique: {
       /**
-       * Get amount of different user tokens
+       * Get the amount of any user tokens owned by an account
        **/
       accountBalance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
       /**
-       * Get tokens owned by account
+       * Get tokens owned by an account in a collection
        **/
       accountTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
       /**
-       * Get admin list
+       * Get the list of admin accounts of a collection
        **/
       adminlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
-       * Get allowed amount
+       * Get the amount of currently possible sponsored transactions on a token for the fee to be taken off a sponsor
        **/
       allowance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, sender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
-       * Check if user is allowed to use collection
+       * Check if a user is allowed to operate within a collection
        **/
       allowed: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
       /**
-       * Get allowlist
+       * Get the list of accounts allowed to operate within a collection
        **/
       allowlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
-       * Get amount of specific account token
+       * Get the amount of a specific token owned by an account
        **/
       balance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
-       * Get collection by specified id
+       * Get a collection by the specified ID
        **/
       collectionById: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRpcCollection>>>;
       /**
-       * Get collection properties
+       * Get collection properties, optionally limited to the provided keys
        **/
       collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
-       * Get collection stats
+       * Get chain stats about collections
        **/
       collectionStats: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<UpDataStructsCollectionStats>>;
       /**
-       * Get tokens contained in collection
+       * Get tokens contained within a collection
        **/
       collectionTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
       /**
@@ -681,15 +681,15 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
       /**
-       * Get last token id
+       * Get the last token ID created in a collection
        **/
       lastTokenId: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
       /**
-       * Get number of blocks when sponsored transaction is available
+       * Get the number of blocks until sponsoring a transaction is available
        **/
       nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
       /**
-       * Get property permissions
+       * Get property permissions, optionally limited to the provided keys
        **/
       propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
       /**
@@ -697,15 +697,15 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       tokenChildren: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsTokenChild>>>;
       /**
-       * Get token data
+       * Get token data, including properties, optionally limited to the provided keys, and total pieces for an RFT
        **/
       tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
       /**
-       * Check if token exists
+       * Check if the token exists
        **/
       tokenExists: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
       /**
-       * Get token owner
+       * Get the token owner
        **/
       tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
@@ -713,19 +713,19 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       tokenOwners: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
-       * Get token properties
+       * Get token properties, optionally limited to the provided keys
        **/
       tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
-       * Get token owner, in case of nested token - find parent recursive
+       * Get the topmost token owner in the hierarchy of a possibly nested token
        **/
       topmostTokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
-       * Get total pieces of token
+       * Get the total amount of pieces of an RFT
        **/
       totalPieces: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u128>>>;
       /**
-       * Get amount of unique collection tokens
+       * Get the amount of distinctive tokens present in a collection
        **/
       totalSupply: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
       /**

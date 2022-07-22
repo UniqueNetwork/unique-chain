@@ -42,6 +42,7 @@ pub use rmrk_unique_rpc::RmrkApiServer;
 #[rpc(server)]
 #[async_trait]
 pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
+	/// Get tokens owned by account.
 	#[method(name = "unique_accountTokens")]
 	fn account_tokens(
 		&self,
@@ -49,12 +50,16 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
+
+	/// Get tokens contained within a collection.
 	#[method(name = "unique_collectionTokens")]
 	fn collection_tokens(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenId>>;
+
+	/// Check if the token exists.
 	#[method(name = "unique_tokenExists")]
 	fn token_exists(
 		&self,
@@ -63,6 +68,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<bool>;
 
+	/// Get the token owner.
 	#[method(name = "unique_tokenOwner")]
 	fn token_owner(
 		&self,
@@ -80,6 +86,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
 
+	/// Get the topmost token owner in the hierarchy of a possibly nested token.
 	#[method(name = "unique_topmostTokenOwner")]
 	fn topmost_token_owner(
 		&self,
@@ -87,6 +94,8 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
+
+	/// Get tokens nested directly into the token.
 	#[method(name = "unique_tokenChildren")]
 	fn token_children(
 		&self,
@@ -95,6 +104,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<TokenChild>>;
 
+	/// Get collection properties, optionally limited to the provided keys.
 	#[method(name = "unique_collectionProperties")]
 	fn collection_properties(
 		&self,
@@ -103,6 +113,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
+	/// Get token properties, optionally limited to the provided keys.
 	#[method(name = "unique_tokenProperties")]
 	fn token_properties(
 		&self,
@@ -112,6 +123,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<Property>>;
 
+	/// Get property permissions, optionally limited to the provided keys.
 	#[method(name = "unique_propertyPermissions")]
 	fn property_permissions(
 		&self,
@@ -120,6 +132,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<PropertyKeyPermission>>;
 
+	/// Get token data, including properties, optionally limited to the provided keys, and total pieces for an RFT.
 	#[method(name = "unique_tokenData")]
 	fn token_data(
 		&self,
@@ -129,8 +142,11 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<TokenData<CrossAccountId>>;
 
+	/// Get the amount of distinctive tokens present in a collection.
 	#[method(name = "unique_totalSupply")]
 	fn total_supply(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<u32>;
+
+	/// Get the amount of any user tokens owned by an account.
 	#[method(name = "unique_accountBalance")]
 	fn account_balance(
 		&self,
@@ -138,6 +154,8 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		account: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<u32>;
+
+	/// Get the amount of a specific token owned by an account.
 	#[method(name = "unique_balance")]
 	fn balance(
 		&self,
@@ -146,6 +164,8 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<String>;
+
+	/// Get the amount of currently possible sponsored transactions on a token for the fee to be taken off a sponsor.
 	#[method(name = "unique_allowance")]
 	fn allowance(
 		&self,
@@ -156,18 +176,23 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<String>;
 
+	/// Get the list of admin accounts of a collection.
 	#[method(name = "unique_adminlist")]
 	fn adminlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
+
+	/// Get the list of accounts allowed to operate within a collection.
 	#[method(name = "unique_allowlist")]
 	fn allowlist(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Vec<CrossAccountId>>;
+
+	/// Check if a user is allowed to operate within a collection.
 	#[method(name = "unique_allowed")]
 	fn allowed(
 		&self,
@@ -175,17 +200,24 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		user: CrossAccountId,
 		at: Option<BlockHash>,
 	) -> Result<bool>;
+
+	/// Get the last token ID created in a collection.
 	#[method(name = "unique_lastTokenId")]
 	fn last_token_id(&self, collection: CollectionId, at: Option<BlockHash>) -> Result<TokenId>;
+
+	/// Get collection info by the specified ID.
 	#[method(name = "unique_collectionById")]
 	fn collection_by_id(
 		&self,
 		collection: CollectionId,
 		at: Option<BlockHash>,
 	) -> Result<Option<RpcCollection<AccountId>>>;
+
+	/// Get chain stats about collections.
 	#[method(name = "unique_collectionStats")]
 	fn collection_stats(&self, at: Option<BlockHash>) -> Result<CollectionStats>;
 
+	/// Get the number of blocks until sponsoring a transaction is available.
 	#[method(name = "unique_nextSponsored")]
 	fn next_sponsored(
 		&self,
@@ -195,6 +227,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Option<u64>>;
 
+	/// Get effective collection limits. If not explicitly set, get the chain defaults.
 	#[method(name = "unique_effectiveCollectionLimits")]
 	fn effective_collection_limits(
 		&self,
@@ -202,6 +235,7 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Option<CollectionLimits>>;
 
+	/// Get the total amount of pieces of an RFT.
 	#[method(name = "unique_totalPieces")]
 	fn total_pieces(
 		&self,
@@ -228,20 +262,20 @@ mod rmrk_unique_rpc {
 		Theme,
 	>
 	{
+		/// Get the latest created collection ID.
 		#[method(name = "rmrk_lastCollectionIdx")]
-		/// Get the latest created collection id
 		fn last_collection_idx(&self, at: Option<BlockHash>) -> Result<RmrkCollectionId>;
 
+		/// Get collection info by ID.
 		#[method(name = "rmrk_collectionById")]
-		/// Get collection by id
 		fn collection_by_id(
 			&self,
 			id: RmrkCollectionId,
 			at: Option<BlockHash>,
 		) -> Result<Option<CollectionInfo>>;
 
+		/// Get NFT info by collection and NFT IDs.
 		#[method(name = "rmrk_nftById")]
-		/// Get NFT by collection id and NFT id
 		fn nft_by_id(
 			&self,
 			collection_id: RmrkCollectionId,
@@ -249,8 +283,8 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Option<NftInfo>>;
 
+		/// Get tokens owned by an account in a collection.
 		#[method(name = "rmrk_accountTokens")]
-		/// Get tokens owned by an account in a collection
 		fn account_tokens(
 			&self,
 			account_id: AccountId,
@@ -258,8 +292,8 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkNftId>>;
 
+		/// Get tokens nested in an NFT - its direct children (not the children's children).
 		#[method(name = "rmrk_nftChildren")]
-		/// Get NFT children
 		fn nft_children(
 			&self,
 			collection_id: RmrkCollectionId,
@@ -267,8 +301,8 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkNftChild>>;
 
+		/// Get collection properties, created by the user - not the proxy-specific properties.
 		#[method(name = "rmrk_collectionProperties")]
-		/// Get collection properties
 		fn collection_properties(
 			&self,
 			collection_id: RmrkCollectionId,
@@ -276,8 +310,8 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<PropertyInfo>>;
 
+		/// Get NFT properties, created by the user - not the proxy-specific properties.
 		#[method(name = "rmrk_nftProperties")]
-		/// Get NFT properties
 		fn nft_properties(
 			&self,
 			collection_id: RmrkCollectionId,
@@ -286,8 +320,8 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<PropertyInfo>>;
 
+		/// Get data of resources of an NFT.
 		#[method(name = "rmrk_nftResources")]
-		/// Get NFT resources
 		fn nft_resources(
 			&self,
 			collection_id: RmrkCollectionId,
@@ -295,8 +329,8 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<ResourceInfo>>;
 
+		/// Get the priority of a resource in an NFT.
 		#[method(name = "rmrk_nftResourcePriority")]
-		/// Get NFT resource priority
 		fn nft_resource_priority(
 			&self,
 			collection_id: RmrkCollectionId,
@@ -305,14 +339,15 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Option<u32>>;
 
+		/// Get base info by its ID.
 		#[method(name = "rmrk_base")]
-		/// Get base info
 		fn base(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Option<BaseInfo>>;
 
+		/// Get all parts of a base.
 		#[method(name = "rmrk_baseParts")]
-		/// Get all Base's parts
 		fn base_parts(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Vec<PartType>>;
 
+		/// Get the theme names belonging to a base.
 		#[method(name = "rmrk_themeNames")]
 		fn theme_names(
 			&self,
@@ -320,6 +355,7 @@ mod rmrk_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<RmrkThemeName>>;
 
+		/// Get theme info, including properties, optionally limited to the provided keys.
 		#[method(name = "rmrk_themes")]
 		fn theme(
 			&self,

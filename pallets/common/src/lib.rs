@@ -441,7 +441,7 @@ pub mod pallet {
 			u128,
 		),
 
-		/// The colletion property has been set.
+		/// The colletion property has been added or edited.
 		CollectionPropertySet(
 			/// Id of collection to which property has been set.
 			CollectionId,
@@ -457,7 +457,7 @@ pub mod pallet {
 			PropertyKey,
 		),
 
-		/// The token property has been set.
+		/// The token property has been added or edited.
 		TokenPropertySet(
 			/// Identifier of the collection whose token has the property set.
 			CollectionId,
@@ -477,9 +477,9 @@ pub mod pallet {
 			PropertyKey,
 		),
 
-		/// The colletion property permission has been set.
+		/// The token property permission of a collection has been set.
 		PropertyPermissionSet(
-			/// Id of collection to which property permission has been set.
+			/// ID of collection to which property permission has been set.
 			CollectionId,
 			/// The property permission that was set.
 			PropertyKey,
@@ -524,26 +524,26 @@ pub mod pallet {
 		/// Metadata flag frozen
 		MetadataFlagFrozen,
 
-		/// Item not exists.
+		/// Item does not exist
 		TokenNotFound,
-		/// Item balance not enough.
+		/// Item is balance not enough
 		TokenValueTooLow,
-		/// Requested value more than approved.
+		/// Requested value is more than the approved
 		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
 
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
-		/// Target collection doesn't supports this operation
+		/// Target collection doesn't support this operation
 		UnsupportedOperation,
 
-		/// Not sufficient funds to perform action
+		/// Insufficient funds to perform an action
 		NotSufficientFounds,
 
-		/// User not passed nesting rule
+		/// User does not satisfy the nesting rule
 		UserIsNotAllowedToNest,
-		/// Only tokens from specific collections may nest tokens under this
+		/// Only tokens from specific collections may nest tokens under this one
 		SourceCollectionIsNotAllowedToNest,
 
 		/// Tried to store more data than allowed in collection field
@@ -558,7 +558,7 @@ pub mod pallet {
 		/// Property key is too long
 		PropertyKeyIsTooLong,
 
-		/// Only ASCII letters, digits, and '_', '-' are allowed
+		/// Only ASCII letters, digits, and symbols `_`, `-`, and `.` are allowed
 		InvalidCharacterInPropertyKey,
 
 		/// Empty property keys are forbidden
@@ -571,7 +571,7 @@ pub mod pallet {
 		CollectionIsInternal,
 	}
 
-	/// Storage of the count of created collections.
+	/// Storage of the count of created collections. Essentially contains the last collection ID.
 	#[pallet::storage]
 	pub type CreatedCollectionCount<T> = StorageValue<Value = CollectionId, QueryKind = ValueQuery>;
 
@@ -600,7 +600,7 @@ pub mod pallet {
 		OnEmpty = up_data_structs::CollectionProperties,
 	>;
 
-	/// Storage of collection properties permissions.
+	/// Storage of token property permissions of a collection.
 	#[pallet::storage]
 	#[pallet::getter(fn property_permissions)]
 	pub type CollectionPropertyPermissions<T> = StorageMap<
@@ -610,7 +610,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Storage of collection admins count.
+	/// Storage of the amount of collection admins.
 	#[pallet::storage]
 	pub type AdminAmount<T> = StorageMap<
 		Hasher = Blake2_128Concat,
@@ -619,7 +619,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// List of collection admins
+	/// List of collection admins.
 	#[pallet::storage]
 	pub type IsAdmin<T: Config> = StorageNMap<
 		Key = (
@@ -630,7 +630,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Allowlisted collection users
+	/// Allowlisted collection users.
 	#[pallet::storage]
 	pub type Allowlist<T: Config> = StorageNMap<
 		Key = (

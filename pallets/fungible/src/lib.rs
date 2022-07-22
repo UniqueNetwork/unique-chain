@@ -119,8 +119,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Not default id passed as TokenId argument.
-		/// The default value of TokenId for Fungible collection is 0.
+		/// Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
 		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
@@ -157,7 +156,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Storage for delegated assets.
+	/// Storage for assets delegated to a limited extent to other users.
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
@@ -172,7 +171,6 @@ pub mod pallet {
 
 /// Wrapper around untyped collection handle, asserting inner collection is of fungible type.
 /// Required for interaction with Fungible collections, type safety and implementation [`solidity_interface`][`evm_coder::solidity_interface`].
-
 pub struct FungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
 
 /// Implementation of methods required for dispatching during runtime.

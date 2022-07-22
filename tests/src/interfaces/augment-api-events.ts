@@ -75,7 +75,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
-       * The colletion property has been set.
+       * The colletion property has been added or edited.
        **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
@@ -87,7 +87,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
-       * The colletion property permission has been set.
+       * The token property permission of a collection has been set.
        **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
@@ -95,7 +95,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
-       * The token property has been set.
+       * The token property has been added or edited.
        **/
       TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
@@ -407,7 +407,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     structure: {
       /**
-       * Executed call on behalf of token
+       * Executed call on behalf of the token.
        **/
       Executed: AugmentedEvent<ApiType, [Result<Null, SpRuntimeDispatchError>]>;
       /**
@@ -499,90 +499,80 @@ declare module '@polkadot/api-base/types/events' {
     };
     unique: {
       /**
-       * Address was add to allow list
+       * Address was added to the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the added account.
        **/
       AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Address was remove from allow list
+       * Address was removed from the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the removed account.
        **/
       AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was added
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Admin address.
        **/
       CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Removed admin address.
        **/
       CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Collection limits was set
+       * Collection limits were set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
       /**
-       * Collection owned was change
+       * Collection owned was changed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New owner address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New owner address.
        **/
       CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Collection permissions were set
+       * 
+       * # Arguments
+       * * collection_id: ID of the affected collection.
+       **/
       CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionSponsorRemoved: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New sponsor address.
        **/
       CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * New sponsor was confirm
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * sponsor:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * sponsor: New sponsor address.
        **/
       SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**

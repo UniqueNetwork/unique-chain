@@ -21,7 +21,7 @@
 //! - [`Config`]
 //! - [`RefungibleHandle`]
 //! - [`Pallet`]
-//! - [`CommonWeights`]
+//! - [`CommonWeights`](common::CommonWeights)
 //!
 //! ## Overview
 //!
@@ -119,6 +119,8 @@ pub mod erc_token;
 pub mod weights;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+/// Token data, stored independently from other data used to describe it
+/// for the convenience of database access. Notably contains the token metadata.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
 pub struct ItemData {
@@ -143,13 +145,13 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not Refungible item data used to mint in Refungible collection.
 		NotRefungibleDataUsedToMintFungibleCollectionToken,
-		/// Maximum refungibility exceeded
+		/// Maximum refungibility exceeded.
 		WrongRefungiblePieces,
-		/// Refungible token can't be repartitioned by user who isn't owns all pieces
+		/// Refungible token can't be repartitioned by user who isn't owns all pieces.
 		RepartitionWhileNotOwningAllPieces,
-		/// Refungible token can't nest other tokens
+		/// Refungible token can't nest other tokens.
 		RefungibleDisallowsNesting,
-		/// Setting item properties is not allowed
+		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
 	}
 
@@ -167,17 +169,17 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// Amount of tokens minted for collection
+	/// Total amount of minted tokens in a collection.
 	#[pallet::storage]
 	pub type TokensMinted<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
-	/// Amount of burnt tokens for collection
+	/// Amount of tokens burnt in a collection.
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
-	/// Custom data serialized to bytes for token
+	/// Token data, used to partially describe a token.
 	#[pallet::storage]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
@@ -185,6 +187,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of pieces a refungible token is split into.
 	#[pallet::storage]
 	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
@@ -202,7 +205,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Used to enumerate tokens owned by account
+	/// Used to enumerate tokens owned by account.
 	#[pallet::storage]
 	pub type Owned<T: Config> = StorageNMap<
 		Key = (
@@ -214,7 +217,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Amount of tokens owned by account
+	/// Amount of tokens (not pieces) partially owned by an account within a collection.
 	#[pallet::storage]
 	pub type AccountBalance<T: Config> = StorageNMap<
 		Key = (
@@ -226,7 +229,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Amount of token pieces owned by account
+	/// Amount of token pieces owned by account.
 	#[pallet::storage]
 	pub type Balance<T: Config> = StorageNMap<
 		Key = (
@@ -239,7 +242,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Allowance set by an owner for a spender for a token
+	/// Allowance set by a token owner for another user to perform one of certain transactions on a number of pieces of a token.
 	#[pallet::storage]
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
