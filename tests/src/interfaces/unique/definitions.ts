@@ -66,7 +66,7 @@ export default {
     tokenOwners: fun(
       'Returns 10 tokens owners in no particular order', 
       [collectionParam, tokenParam], 
-      `Vec<${CROSS_ACCOUNT_ID_TYPE}>`
+      `Vec<${CROSS_ACCOUNT_ID_TYPE}>`,
     ),
     tokenChildren: fun(
       'Get tokens nested directly into the token', 
