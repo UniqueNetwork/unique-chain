@@ -1151,6 +1151,47 @@ impl<T: Config> Pallet<T> {
 
 		<Balance<T>>::insert((collection.id, token, owner), amount);
 		<TotalSupply<T>>::insert((collection.id, token), amount);
+
+		if amount > total_pieces {
+			let mint_amount = amount - total_pieces;
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: H160::default(),
+					to: *owner.as_eth(),
+					value: mint_amount.into(),
+				}
+				.to_log(T::EvmTokenAddressMapping::token_to_address(
+					collection.id,
+					token,
+				)),
+			);
+			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
+				collection.id,
+				token,
+				owner.clone(),
+				mint_amount,
+			));
+		} else if total_pieces > amount {
+			let burn_amount = total_pieces - amount;
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: *owner.as_eth(),
+					to: H160::default(),
+					value: burn_amount.into(),
+				}
+				.to_log(T::EvmTokenAddressMapping::token_to_address(
+					collection.id,
+					token,
+				)),
+			);
+			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
+				collection.id,
+				token,
+				owner.clone(),
+				burn_amount,
+			));
+		}
+
 		Ok(())
 	}
 
