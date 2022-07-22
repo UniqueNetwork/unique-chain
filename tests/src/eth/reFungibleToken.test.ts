@@ -239,9 +239,68 @@ describe('Refungible: Plain calls', () => {
     expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(0);
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(200);
 
-    await contract.methods.repartition(150).send({from: receiver});
+    const result = await contract.methods.repartition(150).send({from: receiver});
+    console.log(result.events);
     await expect(contract.methods.transfer(owner, 160).send({from: receiver})).to.eventually.be.rejected;
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(150);
+  });
+
+  itWeb3('Can repartition with increased amount', async ({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+
+    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
+
+    const owner = createEthAccount(web3);
+    await transferBalanceToEth(api, alice, owner);
+
+    const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n, {Ethereum: owner})).itemId;
+
+    const address = tokenIdToAddress(collectionId, tokenId);
+    const contract = new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: owner, ...GAS_ARGS});
+
+    const result = await contract.methods.repartition(200).send();
+    const events = normalizeEvents(result.events);
+
+    expect(events).to.include.deep.members([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: owner,
+          value: '100',
+        },
+      },
+    ]);
+  });
+
+  itWeb3('Can repartition with decreased amount', async ({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+
+    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
+
+    const owner = createEthAccount(web3);
+    await transferBalanceToEth(api, alice, owner);
+
+    const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n, {Ethereum: owner})).itemId;
+
+    const address = tokenIdToAddress(collectionId, tokenId);
+    const contract = new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: owner, ...GAS_ARGS});
+
+    const result = await contract.methods.repartition(50).send();
+    const events = normalizeEvents(result.events);
+
+    expect(events).to.include.deep.members([
+      {
+        address,
+        event: 'Transfer',
+        args: {
+          from: owner,
+          to: '0x0000000000000000000000000000000000000000',
+          value: '50',
+        },
+      },
+    ]);
   });
 });
 

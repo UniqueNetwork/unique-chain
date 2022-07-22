@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi, executeTransaction} from './substrate/substrate-api';
+import {default as usingApi, submitTransactionAsync} from './substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   createCollectionExpectSuccess,
@@ -32,6 +32,8 @@ import {
   repartitionRFT,
   createCollectionWithPropsExpectSuccess,
   getDetailedCollectionInfo,
+  getCreateItemsResult,
+  getDestroyItemsResult,
 } from './util/helpers';
 
 import chai from 'chai';
@@ -186,6 +188,46 @@ describe('integration test: Refungible functionality:', () => {
 
       expect(await repartitionRFT(api, collectionId, bob, tokenId, 150n)).to.be.true;
       await expect(transfer(api, collectionId, tokenId, bob, alice, 160n)).to.eventually.be.rejected;
+    });
+  });
+
+  it('Repartition with increased amount', async () => {
+    await usingApi(async api => {
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
+
+      const tx = api.tx.unique.repartition(collectionId, tokenId, 200n);
+      const events = await submitTransactionAsync(alice, tx);
+      const substrateEvents = getCreateItemsResult(events);
+      expect(substrateEvents).to.include.deep.members([
+        {
+          success: true,
+          collectionId,
+          itemId: tokenId,
+          recipient: {Substrate: alice.address},
+          amount: 100,
+        },
+      ]);
+    });
+  });
+
+  it('Repartition with decreased amount', async () => {
+    await usingApi(async api => {
+      const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+      const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n)).itemId;
+
+      const tx = api.tx.unique.repartition(collectionId, tokenId, 50n);
+      const events = await submitTransactionAsync(alice, tx);
+      const substrateEvents = getDestroyItemsResult(events);
+      expect(substrateEvents).to.include.deep.members([
+        {
+          success: true,
+          collectionId,
+          itemId: tokenId,
+          owner: {Substrate: alice.address},
+          amount: 50,
+        },
+      ]);
     });
   });
 });
