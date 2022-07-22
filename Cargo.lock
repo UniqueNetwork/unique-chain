@@ -12682,7 +12682,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime-common"
-version = "0.9.25"
+version = "0.9.24"
 dependencies = [
  "evm-coder",
  "fp-rpc",
