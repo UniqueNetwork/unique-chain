@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! ERC-20 standart support implementation.
+
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};

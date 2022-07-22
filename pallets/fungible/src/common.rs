@@ -105,6 +105,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -358,6 +360,11 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
 		None
+	}
+
+	/// Returns 10 tokens owners in no particular order.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {

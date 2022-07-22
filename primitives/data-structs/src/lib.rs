@@ -563,8 +563,14 @@ pub struct CreateReFungibleData {
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
+
 	/// Number of pieces the RFT is split into
 	pub pieces: u128,
+
+	/// Key-value pairs used to describe the token as metadata
+	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -601,6 +607,8 @@ pub struct CreateRefungibleExData<CrossAccountId> {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 	#[derivative(Debug(format_with = "bounded::map_debug"))]
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
 }
 
 /// Explicit item creation data with meta parameters, namely the owner.

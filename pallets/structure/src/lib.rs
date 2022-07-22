@@ -1,3 +1,56 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+//! # Structure Pallet
+//!
+//! The Structure pallet provides functionality for handling tokens nesting an unnesting.
+//!
+//! - [`Config`]
+//! - [`Pallet`]
+//!
+//! ## Overview
+//!
+//! The Structure pallet provides functions for:
+//!
+//! - Searching for token parents, children and owners. Actual implementation of searching for
+//!   parent/child is done by pallets corresponding to token's collection type.
+//! - Nesting and unnesting tokens. Actual implementation of nesting is done by pallets corresponding
+//!   to token's collection type.
+//!
+//! ### Terminology
+//!
+//! - **Nesting:** Setting up parent-child relationship between tokens. Nested tokens are inhereting
+//!   owner from their parent. There could be multiple levels of nesting. Token couldn't be nested in
+//!   it's child token i.e. parent-child relationship graph shouldn't have
+//!
+//! - **Parent:** Token that current token is nested in.
+//!
+//! - **Owner:** Account that owns the token and all nested tokens.
+//!
+//! ## Interface
+//!
+//! ### Available Functions
+//!
+//! - `find_parent` - Find parent of the token. It could be an account or another token.
+//! - `parent_chain` - Find chain of parents of the token.
+//! - `find_topmost_owner` - Find account or token in the end of the chain of parents.
+//! - `check_nesting` - Check if the token could be nested in the other token
+//! - `nest_if_sent_to_token` - Nest the token in the other token
+//! - `unnest_if_nested` - Unnest the token from the other token
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use pallet_common::CommonCollectionOperations;
@@ -82,6 +135,12 @@ pub enum Parent<CrossAccountId> {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Find account owning the `token` or a token that the `token` is nested in.
+	///
+	/// Returns the enum that have three variants:
+	/// - [`User`](crate::Parent<T>::User): Contains account.
+	/// - [`Token`](crate::Parent<T>::Token): Contains token id and collection id.
+	/// - [`TokenNotFound`](crate::Parent<T>::TokenNotFound): Indicates that parent was not found
 	pub fn find_parent(
 		collection: CollectionId,
 		token: TokenId,
@@ -103,6 +162,11 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	/// Get the chain of parents of a token in the nesting hierarchy
+	///
+	/// Returns an iterator of addresses of the owning tokens and the owning account,
+	/// starting from the immediate parent token, ending with the account.
+	/// Returns error if cycle is detected.
 	pub fn parent_chain(
 		mut collection: CollectionId,
 		mut token: TokenId,
@@ -133,6 +197,8 @@ impl<T: Config> Pallet<T> {
 	/// Try to dereference address, until finding top level owner
 	///
 	/// May return token address if parent token not yet exists
+	///
+	/// - `budget`: Limit for searching parents in depth.
 	pub fn find_topmost_owner(
 		collection: CollectionId,
 		token: TokenId,
@@ -149,6 +215,10 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	/// Find the topmost parent and check that assigning `for_nest` token as a child for
+	/// `token` wouldn't create a cycle.
+	///
+	/// - `budget`: Limit for searching parents in depth.
 	pub fn get_checked_topmost_owner(
 		collection: CollectionId,
 		token: TokenId,
@@ -177,6 +247,10 @@ impl<T: Config> Pallet<T> {
 		Err(<Error<T>>::DepthLimit.into())
 	}
 
+	/// Burn token and all of it's nested tokens
+	///
+	/// - `self_budget`: Limit for searching children in depth.
+	/// - `breadth_budget`: Limit of breadth of searching children.
 	pub fn burn_item_recursively(
 		from: T::CrossAccountId,
 		collection: CollectionId,
@@ -190,7 +264,13 @@ impl<T: Config> Pallet<T> {
 		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
 	}
 
-	/// Check if token indirectly owned by specified user
+	/// Check if `token` indirectly owned by `user`
+	///
+	/// Returns `true` if `user` is `token`'s owner. Or If token is provided as `user` then
+	/// check that `user` and `token` have same owner.
+	/// Checks that assigning `for_nest` token as a child for `token` wouldn't create a cycle.
+	///
+	/// - `budget`: Limit for searching parents in depth.
 	pub fn check_indirectly_owned(
 		user: T::CrossAccountId,
 		collection: CollectionId,
@@ -207,6 +287,12 @@ impl<T: Config> Pallet<T> {
 			.map(|indirect_owner| indirect_owner == target_parent)
 	}
 
+	/// Checks that `under` is valid token and that `token_id` could be nested under it
+	/// and that `from` is `under`'s owner
+	///
+	/// Returns OK if `under` is not a token
+	///
+	/// - `nesting_budget`: Limit for searching parents in depth.
 	pub fn check_nesting(
 		from: T::CrossAccountId,
 		under: &T::CrossAccountId,
@@ -219,6 +305,11 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	/// Nests `token_id` under `under` token
+	///
+	/// Returns OK if `under` is not a token. Checks that nesting is possible.
+	///
+	/// - `nesting_budget`: Limit for searching parents in depth.
 	pub fn nest_if_sent_to_token(
 		from: T::CrossAccountId,
 		under: &T::CrossAccountId,
@@ -235,6 +326,9 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	/// Nests `token_id` under `owner` token
+	///
+	/// Caller should check that nesting wouldn't cause recursion in nesting
 	pub fn nest_if_sent_to_token_unchecked(
 		owner: &T::CrossAccountId,
 		collection_id: CollectionId,
@@ -245,6 +339,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
+	/// Unnests `token_id` from `owner`.
 	pub fn unnest_if_nested(
 		owner: &T::CrossAccountId,
 		collection_id: CollectionId,

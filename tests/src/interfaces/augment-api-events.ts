@@ -59,114 +59,47 @@ declare module '@polkadot/api-base/types/events' {
     };
     common: {
       /**
-       * Sponsoring allowance was approved.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - todo:doc flesh out
-       * * item_id
-       * * sender
-       * * spender
-       * * amount
+       * Amount pieces of token owned by `sender` was approved for `spender`.
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * New collection was created
-       * 
-       * # Arguments
-       * 
-       * * collection_id - Globally unique identifier of newly created collection.
-       * * mode - [CollectionMode] converted into u8.
-       * * account_id - Collection owner.
        **/
       CollectionCreated: AugmentedEvent<ApiType, [u32, u8, AccountId32]>;
       /**
        * New collection was destroyed
-       * 
-       * # Arguments
-       * 
-       * * collection_id - Globally unique identifier of collection that has been destroyed.
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
       /**
-       * Collection property was deleted.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection, whose property was just deleted.
-       * * property_key - Key of the property that was just deleted.
+       * The property has been deleted.
        **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
-       * Collection property was added or edited.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection, whose property was just set.
-       * * property_key - Key of the property that was just set.
+       * The colletion property has been added or edited.
        **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
        * New item was created.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection where the item was created.
-       * * item_id - ID of the item. Unique within the collection.
-       * * recipient - Owner of the newly created item.
-       * * amount - The amount of tokens that were created (always 1 for NFT).
        **/
       ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Collection item was burned.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - Identifier of the collection to which the burned NFT belonged.
-       * * item_id - Identifier of burned NFT.
-       * * owner - Which user has destroyed their tokens.
-       * * amount - Amount of tokens that were destroyed (always 1 for NFT).
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
-       * Token property permission was added or updated for a collection.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection, whose permissions were just set/updated.
-       * * property_key - Key of the property of the set/updated permission.
+       * The token property permission of a collection has been set.
        **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
-       * Item property was deleted.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection, whose token's property was just deleted.
-       * * item_id - ID of the item, whose property was just deleted.
-       * * property_key - Key of the property that was just deleted.
+       * The token property has been deleted.
        **/
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
-       * Item property was added or edited.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection, whose token's property was just set.
-       * * item_id - ID of the item, whose property was just set.
-       * * property_key - Key of the property that was just set.
+       * The token property has been added or edited.
        **/
       TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
-       * Item was transferred.
-       * 
-       * # Arguments
-       * 
-       * * collection_id - ID of the collection to which the item belongs.
-       * * item_id - ID of the item transferred.
-       * * sender - Original owner of the item.
-       * * recipient - New owner of the item.
-       * * amount - Amount of tokens that were transferred (always 1 for NFT).
+       * Item was transferred
        **/
       Transfer: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
@@ -569,94 +502,77 @@ declare module '@polkadot/api-base/types/events' {
        * Address was added to the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the added account.
        **/
       AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Address was removed from the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the removed account.
        **/
       AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was added
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Admin address.
        **/
       CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Removed admin address.
        **/
       CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection limits were set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection owned was changed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New owner address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New owner address.
        **/
       CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * Collection permissions were set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionSponsorRemoved: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New sponsor address.
        **/
       CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * New sponsor was confirm
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * sponsor:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * sponsor: New sponsor address.
        **/
       SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**

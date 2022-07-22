@@ -376,14 +376,26 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       // ReFungible
       const collectionIdReFungible =
         await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      const argsReFungible = [
-        {ReFungible: ['1'.repeat(2049), 10]},
-        {ReFungible: ['2'.repeat(2049), 10]},
-        {ReFungible: ['3'.repeat(2049), 10]},
-      ];
-      const createMultipleItemsTxFungible = api.tx.unique
-        .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
-      await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTxFungible)).to.be.rejected;
+      {
+        const argsReFungible = [
+          {ReFungible: ['1'.repeat(2049), 10, []]},
+          {ReFungible: ['2'.repeat(2049), 10, []]},
+          {ReFungible: ['3'.repeat(2049), 10, []]},
+        ];
+        const createMultipleItemsTxFungible = api.tx.unique
+          .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
+        await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTxFungible)).to.be.rejected;
+      }
+      {
+        const argsReFungible = [
+          {ReFungible: {properties: [{key: 'key', value: 'A'.repeat(32769)}]}},
+          {ReFungible: {properties: [{key: 'key', value: 'B'.repeat(32769)}]}},
+          {ReFungible: {properties: [{key: 'key', value: 'C'.repeat(32769)}]}},
+        ];
+        const createMultipleItemsTxFungible = api.tx.unique
+          .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
+        await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTxFungible)).to.be.rejected;
+      }
     });
   });
 

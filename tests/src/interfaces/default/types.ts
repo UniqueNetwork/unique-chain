@@ -2461,12 +2461,14 @@ export interface UpDataStructsCreateNftExData extends Struct {
 export interface UpDataStructsCreateReFungibleData extends Struct {
   readonly constData: Bytes;
   readonly pieces: u128;
+  readonly properties: Vec<UpDataStructsProperty>;
 }
 
 /** @name UpDataStructsCreateRefungibleExData */
 export interface UpDataStructsCreateRefungibleExData extends Struct {
   readonly constData: Bytes;
   readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
+  readonly properties: Vec<UpDataStructsProperty>;
 }
 
 /** @name UpDataStructsNestingPermissions */

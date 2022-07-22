@@ -673,6 +673,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       collectionTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
       /**
+       * Get token constant metadata
+       **/
+      constMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
+      /**
        * Get effective collection limits
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
@@ -705,6 +709,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
       /**
+       * Returns 10 tokens owners in no particular order
+       **/
+      tokenOwners: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
+      /**
        * Get token properties, optionally limited to the provided keys
        **/
       tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
@@ -720,6 +728,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get the amount of distinctive tokens present in a collection
        **/
       totalSupply: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
+      /**
+       * Get token variable metadata
+       **/
+      variableMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
     };
     web3: {
       /**

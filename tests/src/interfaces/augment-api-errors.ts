@@ -285,7 +285,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FungibleItemsDontHaveData: AugmentedError<ApiType>;
       /**
-       * Not default id passed as TokenId argument.
+       * Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
       /**
@@ -596,7 +596,7 @@ declare module '@polkadot/api-base/types/errors' {
     };
     unique: {
       /**
-       * Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
+       * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
       /**
@@ -608,7 +608,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EmptyArgument: AugmentedError<ApiType>;
       /**
-       * Repertition is only supported by refungible collection
+       * Repertition is only supported by refungible collection.
        **/
       RepartitionCalledOnNonRefungibleCollection: AugmentedError<ApiType>;
       /**

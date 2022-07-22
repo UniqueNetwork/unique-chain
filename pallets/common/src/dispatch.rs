@@ -1,3 +1,5 @@
+//! Module with interfaces for dispatching collections.
+
 use frame_support::{
 	dispatch::{
 		DispatchResultWithPostInfo, PostDispatchInfo, Weight, DispatchErrorWithPostInfo,
@@ -20,7 +22,10 @@ pub fn dispatch_weight<T: Config>() -> Weight {
 	// submit_logs is measured as part of collection pallets
 }
 
-/// Helper function to implement substrate calls for common collection methods
+/// Helper function to implement substrate calls for common collection methods.
+///
+/// * `collection` - The collection on which to call the method.
+/// * `call` - The function in which to call the corresponding method from [`CommonCollectionOperations`].
 pub fn dispatch_tx<
 	T: Config,
 	C: FnOnce(&dyn CommonCollectionOperations<T>) -> DispatchResultWithPostInfo,
@@ -64,15 +69,31 @@ pub fn dispatch_tx<
 	result
 }
 
+/// Interface for working with different collections through the dispatcher.
 pub trait CollectionDispatch<T: Config> {
+	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
+	///
+	/// * `sender` - The user who will become the owner of the collection.
+	/// * `data` - Description of the created collection.
 	fn create(
 		sender: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> DispatchResult;
+
+	/// Delete the collection.
+	///
+	/// * `sender` - The owner of the collection.
+	/// * `handle` - Collection handle.
 	fn destroy(sender: T::CrossAccountId, handle: CollectionHandle<T>) -> DispatchResult;
 
+	/// Get a specialized collection from the handle.
+	///
+	/// * `handle` - Collection handle.
 	fn dispatch(handle: CollectionHandle<T>) -> Self;
+
+	/// Get the collection handle for the corresponding implementation.
 	fn into_inner(self) -> CollectionHandle<T>;
 
+	/// Get the implementation of [`CommonCollectionOperations`].
 	fn as_dyn(&self) -> &dyn CommonCollectionOperations<T>;
 }

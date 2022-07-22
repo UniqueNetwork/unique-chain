@@ -63,6 +63,11 @@ export default {
       [collectionParam, tokenParam], 
       `Option<${CROSS_ACCOUNT_ID_TYPE}>`,
     ),
+    tokenOwners: fun(
+      'Returns 10 tokens owners in no particular order', 
+      [collectionParam, tokenParam], 
+      `Vec<${CROSS_ACCOUNT_ID_TYPE}>`
+    ),
     tokenChildren: fun(
       'Get tokens nested directly into the token', 
       [collectionParam, tokenParam], 
@@ -83,6 +88,17 @@ export default {
       'Get property permissions, optionally limited to the provided keys',
       [collectionParam, propertyKeysParam],
       'Vec<UpDataStructsPropertyKeyPermission>',
+    ),
+
+    constMetadata: fun(
+      'Get token constant metadata', 
+      [collectionParam, tokenParam], 
+      'Vec<u8>',
+    ),
+    variableMetadata: fun(
+      'Get token variable metadata', 
+      [collectionParam, tokenParam], 
+      'Vec<u8>',
     ),
 
     tokenData: fun(
@@ -128,7 +144,11 @@ export default {
       'bool',
     ),
 
-    lastTokenId: fun('Get the last token ID created in a collection', [collectionParam], 'u32'),
+    lastTokenId: fun(
+      'Get the last token ID created in a collection', 
+      [collectionParam], 
+      'u32',
+    ),
     collectionById: fun(
       'Get a collection by the specified ID', 
       [collectionParam], 

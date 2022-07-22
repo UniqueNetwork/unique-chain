@@ -1502,7 +1502,8 @@ export default {
    **/
   UpDataStructsCreateReFungibleData: {
     constData: 'Bytes',
-    pieces: 'u128'
+    pieces: 'u128',
+    properties: 'Vec<UpDataStructsProperty>'
   },
   /**
    * Lookup193: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
@@ -1527,7 +1528,8 @@ export default {
    **/
   UpDataStructsCreateRefungibleExData: {
     constData: 'Bytes',
-    users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>'
+    users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>',
+    properties: 'Vec<UpDataStructsProperty>'
   },
   /**
    * Lookup204: pallet_unique_scheduler::pallet::Call<T>

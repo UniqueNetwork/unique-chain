@@ -77,6 +77,15 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Option<CrossAccountId>>;
 
+	/// Returns 10 tokens owners in no particular order.
+	#[method(name = "unique_tokenOwners")]
+	fn token_owners(
+		&self,
+		collection: CollectionId,
+		token: TokenId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<CrossAccountId>>;
+
 	/// Get the topmost token owner in the hierarchy of a possibly nested token.
 	#[method(name = "unique_topmostTokenOwner")]
 	fn topmost_token_owner(
@@ -510,6 +519,7 @@ where
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128>, unique_api);
+	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
 }
 
 #[allow(deprecated)]
