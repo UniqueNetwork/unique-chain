@@ -39,14 +39,16 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{fungible, fungibles, Currency, EnsureOrigin},
-	transactional,
-	RuntimeDebug,
+	transactional, RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
 use up_data_structs::{CollectionMode};
 use pallet_common::{Pallet as PalletCommon};
 use scale_info::{TypeInfo};
-use sp_runtime::{traits::{One, Zero}, ArithmeticError};
+use sp_runtime::{
+	traits::{One, Zero},
+	ArithmeticError,
+};
 use sp_std::{boxed::Box, vec::Vec};
 use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
@@ -67,38 +69,55 @@ pub type ForeignAssetId = u32;
 // Id of native currency.
 // 0 - QTZ\UNQ
 // 1 - KSM\DOT
-#[derive(Clone, Copy, Eq, PartialEq, PartialOrd, Ord, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(
+	Clone,
+	Copy,
+	Eq,
+	PartialEq,
+	PartialOrd,
+	Ord,
+	MaxEncodedLen,
+	RuntimeDebug,
+	Encode,
+	Decode,
+	TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum NativeCurrency {
 	This = 0,
 	Parent = 1,
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, PartialOrd, Ord, MaxEncodedLen, RuntimeDebug, Encode, Decode, TypeInfo)]
+#[derive(
+	Clone,
+	Copy,
+	Eq,
+	PartialEq,
+	PartialOrd,
+	Ord,
+	MaxEncodedLen,
+	RuntimeDebug,
+	Encode,
+	Decode,
+	TypeInfo,
+)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum AssetIds {
-//	Erc20(EvmAddress),
-//	StableAssetId(StableAssetPoolId),
 	ForeignAssetId(ForeignAssetId),
 	NativeAssetId(NativeCurrency),
 }
 
+pub type CurrencyId = AssetIds;
 
-pub type CurrencyId = AssetIds; 
-
-// pub type CurrencyId = ForeignAssetId;
-
-// mod mock;
-// mod tests;
 mod impl_fungibles;
-mod currency_components;
 mod weights;
 
 pub use module::*;
 pub use weights::WeightInfo;
 
 /// Type alias for currency balance.
-pub type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub type BalanceOf<T> =
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 /// A mapping between ForeignAssetId and AssetMetadata.
 pub trait AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
@@ -127,7 +146,9 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
-		Some(AssetIds::ForeignAssetId(Pallet::<T>::location_to_currency_ids(multi_location).unwrap_or(0)))
+		Some(AssetIds::ForeignAssetId(
+			Pallet::<T>::location_to_currency_ids(multi_location).unwrap_or(0),
+		))
 	}
 }
 
@@ -136,7 +157,12 @@ pub mod module {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_common::Config + pallet_fungible::Config + orml_tokens::Config + pallet_balances::Config
+	pub trait Config:
+		frame_system::Config
+		+ pallet_common::Config
+		+ pallet_fungible::Config
+		+ orml_tokens::Config
+		+ pallet_balances::Config
 	{
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -210,14 +236,16 @@ pub mod module {
 	/// ForeignAssetLocations: map ForeignAssetId => Option<MultiLocation>
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_locations)]
-	pub type ForeignAssetLocations<T: Config> = StorageMap<_, Twox64Concat, ForeignAssetId, MultiLocation, OptionQuery>;
+	pub type ForeignAssetLocations<T: Config> =
+		StorageMap<_, Twox64Concat, ForeignAssetId, MultiLocation, OptionQuery>;
 
 	/// The storages for CurrencyIds.
 	///
 	/// LocationToCurrencyIds: map MultiLocation => Option<ForeignAssetId>
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
-	pub type LocationToCurrencyIds<T: Config> = StorageMap<_, Twox64Concat, MultiLocation, ForeignAssetId, OptionQuery>;
+	pub type LocationToCurrencyIds<T: Config> =
+		StorageMap<_, Twox64Concat, MultiLocation, ForeignAssetId, OptionQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
@@ -232,42 +260,11 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_binding)]
 	pub type AssetBinding<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, CollectionId, OptionQuery>;		
+		StorageMap<_, Twox64Concat, ForeignAssetId, CollectionId, OptionQuery>;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
-
-	// #[pallet::genesis_config]
-	// pub struct GenesisConfig<T: Config> {
-	// 	pub assets: Vec<(CurrencyId, BalanceOf<T>)>,
-	// }
-
-	// #[cfg(feature = "std")]
-	// impl<T: Config> Default for GenesisConfig<T> {
-	// 	fn default() -> Self {
-	// 		GenesisConfig {
-	// 			assets: Default::default(),
-	// 		}
-	// 	}
-	// }
-
-	// #[pallet::genesis_build]
-	// impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-	// 	fn build(&self) {
-	// 		self.assets.iter().for_each(|(asset, ed)| {
-	// 			assert_ok!(Pallet::<T>::do_register_native_asset(
-	// 				*asset,
-	// 				&AssetMetadata {
-	// 					name: asset.name().unwrap().as_bytes().to_vec(),
-	// 					symbol: asset.symbol().unwrap().as_bytes().to_vec(),
-	// 					decimals: asset.decimals().unwrap(),
-	// 					minimal_balance: *ed,
-	// 				}
-	// 			));
-	// 		});
-	// 	}
-	// }
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -281,13 +278,17 @@ pub mod module {
 		) -> DispatchResult {
 			T::RegisterOrigin::ensure_origin(origin.clone())?;
 
-			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
+			let location: MultiLocation = (*location)
+				.try_into()
+				.map_err(|()| Error::<T>::BadLocation)?;
 
-			// TODO: Get token name from metadata
-			let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
-			let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
-			
-			// token_prefix: data.token_prefix,
+			let md = metadata.clone();
+			let name: Vec<u16> = md.name.into_iter().map(|x| x as u16).collect::<Vec<u16>>();
+			let mut description: Vec<u16> = "Foreing assets collection for "
+				.encode_utf16()
+				.collect::<Vec<u16>>();
+			description.append(&mut name.clone());
+
 			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: name.try_into().unwrap(),
 				description: description.try_into().unwrap(),
@@ -296,9 +297,10 @@ pub mod module {
 			};
 
 			// throw an error on bad result
-			let bounded_collection_id = <PalletCommon<T>>::init_collection(CrossAccountId::from_sub(owner), data, true)?;//.unwrap();
-			//let bounded_collection_id = CollectionId(0);
-			let foreign_asset_id = Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
+			let bounded_collection_id =
+				<PalletCommon<T>>::init_collection(CrossAccountId::from_sub(owner), data, true)?;
+			let foreign_asset_id =
+				Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 				asset_id: foreign_asset_id,
@@ -318,7 +320,9 @@ pub mod module {
 		) -> DispatchResult {
 			T::RegisterOrigin::ensure_origin(origin)?;
 
-			let location: MultiLocation = (*location).try_into().map_err(|()| Error::<T>::BadLocation)?;
+			let location: MultiLocation = (*location)
+				.try_into()
+				.map_err(|()| Error::<T>::BadLocation)?;
 			Self::do_update_foreign_asset(foreign_asset_id, &location, &metadata)?;
 
 			Self::deposit_event(Event::<T>::ForeignAssetUpdated {
@@ -332,11 +336,12 @@ pub mod module {
 }
 
 impl<T: Config> Pallet<T> {
-
 	fn get_next_foreign_asset_id() -> Result<ForeignAssetId, DispatchError> {
 		NextForeignAssetId::<T>::try_mutate(|current| -> Result<ForeignAssetId, DispatchError> {
 			let id = *current;
-			*current = current.checked_add(One::one()).ok_or(ArithmeticError::Overflow)?;
+			*current = current
+				.checked_add(One::one())
+				.ok_or(ArithmeticError::Overflow)?;
 			Ok(id)
 		})
 	}
@@ -348,28 +353,34 @@ impl<T: Config> Pallet<T> {
 	) -> Result<ForeignAssetId, DispatchError> {
 		let foreign_asset_id = Self::get_next_foreign_asset_id()?;
 		LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
-			ensure!(maybe_currency_ids.is_none(), Error::<T>::MultiLocationExisted);
+			ensure!(
+				maybe_currency_ids.is_none(),
+				Error::<T>::MultiLocationExisted
+			);
 			*maybe_currency_ids = Some(foreign_asset_id);
 			// *maybe_currency_ids = Some(CurrencyId::ForeignAsset(foreign_asset_id));
 
-			ForeignAssetLocations::<T>::try_mutate(foreign_asset_id, |maybe_location| -> DispatchResult {
-				ensure!(maybe_location.is_none(), Error::<T>::MultiLocationExisted);
-				*maybe_location = Some(location.clone());
+			ForeignAssetLocations::<T>::try_mutate(
+				foreign_asset_id,
+				|maybe_location| -> DispatchResult {
+					ensure!(maybe_location.is_none(), Error::<T>::MultiLocationExisted);
+					*maybe_location = Some(location.clone());
 
-				AssetMetadatas::<T>::try_mutate(
-					AssetIds::ForeignAssetId(foreign_asset_id),
-					|maybe_asset_metadatas| -> DispatchResult {
-						ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
+					AssetMetadatas::<T>::try_mutate(
+						AssetIds::ForeignAssetId(foreign_asset_id),
+						|maybe_asset_metadatas| -> DispatchResult {
+							ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
 
-						// insert bounded collection in metadata
-						//let mut md = metadata.clone();
-						//md.mapped_collection = bounded_collection_id;
+							// insert bounded collection in metadata
+							//let mut md = metadata.clone();
+							//md.mapped_collection = bounded_collection_id;
 
-						*maybe_asset_metadatas = Some(metadata.clone());
-						Ok(())
-					},
-				)
-			})?;
+							*maybe_asset_metadatas = Some(metadata.clone());
+							Ok(())
+						},
+					)
+				},
+			)?;
 
 			AssetBinding::<T>::try_mutate(foreign_asset_id, |collection_id| -> DispatchResult {
 				*collection_id = Some(bounded_collection_id);
@@ -385,30 +396,44 @@ impl<T: Config> Pallet<T> {
 		location: &MultiLocation,
 		metadata: &AssetMetadata<BalanceOf<T>>,
 	) -> DispatchResult {
-		ForeignAssetLocations::<T>::try_mutate(foreign_asset_id, |maybe_multi_locations| -> DispatchResult {
-			let old_multi_locations = maybe_multi_locations.as_mut().ok_or(Error::<T>::AssetIdNotExists)?;
+		ForeignAssetLocations::<T>::try_mutate(
+			foreign_asset_id,
+			|maybe_multi_locations| -> DispatchResult {
+				let old_multi_locations = maybe_multi_locations
+					.as_mut()
+					.ok_or(Error::<T>::AssetIdNotExists)?;
 
-			AssetMetadatas::<T>::try_mutate(
-				AssetIds::ForeignAssetId(foreign_asset_id),
-				|maybe_asset_metadatas| -> DispatchResult {
-					ensure!(maybe_asset_metadatas.is_some(), Error::<T>::AssetIdNotExists);
+				AssetMetadatas::<T>::try_mutate(
+					AssetIds::ForeignAssetId(foreign_asset_id),
+					|maybe_asset_metadatas| -> DispatchResult {
+						ensure!(
+							maybe_asset_metadatas.is_some(),
+							Error::<T>::AssetIdNotExists
+						);
 
-					// modify location
-					if location != old_multi_locations {
-						LocationToCurrencyIds::<T>::remove(old_multi_locations.clone());
-						LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
-							ensure!(maybe_currency_ids.is_none(), Error::<T>::MultiLocationExisted);
-							// *maybe_currency_ids = Some(CurrencyId::ForeignAsset(foreign_asset_id));
-							*maybe_currency_ids = Some(foreign_asset_id);
-							Ok(())
-						})?;
-					}
-					*maybe_asset_metadatas = Some(metadata.clone());
-					*old_multi_locations = location.clone();
-					Ok(())
-				},
-			)
-		})
+						// modify location
+						if location != old_multi_locations {
+							LocationToCurrencyIds::<T>::remove(old_multi_locations.clone());
+							LocationToCurrencyIds::<T>::try_mutate(
+								location,
+								|maybe_currency_ids| -> DispatchResult {
+									ensure!(
+										maybe_currency_ids.is_none(),
+										Error::<T>::MultiLocationExisted
+									);
+									// *maybe_currency_ids = Some(CurrencyId::ForeignAsset(foreign_asset_id));
+									*maybe_currency_ids = Some(foreign_asset_id);
+									Ok(())
+								},
+							)?;
+						}
+						*maybe_asset_metadatas = Some(metadata.clone());
+						*old_multi_locations = location.clone();
+						Ok(())
+					},
+				)
+			},
+		)
 	}
 }
 
@@ -417,17 +442,13 @@ use sp_runtime::traits::Saturating;
 pub use frame_support::{
 	traits::{
 		fungibles::{Balanced, CreditOf},
-		tokens::currency::Currency as CurrencyT, 
+		tokens::currency::Currency as CurrencyT,
 		OnUnbalanced as OnUnbalancedT,
 	},
-	weights::{
-		WeightToFeePolynomial, WeightToFee,
-	},
+	weights::{WeightToFeePolynomial, WeightToFee},
 };
 
-use xcm::latest::{
-	Fungibility::Fungible as XcmFungible,
-};
+use xcm::latest::{Fungibility::Fungible as XcmFungible};
 
 pub struct UsingAnyCurrencyComponents<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
@@ -504,8 +525,7 @@ impl<
 		AccountId,
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop
-	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+	> Drop for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn drop(&mut self) {
 		OnUnbalanced::on_unbalanced(Currency::issue(self.1));

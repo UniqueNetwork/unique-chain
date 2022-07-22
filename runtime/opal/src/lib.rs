@@ -59,10 +59,10 @@ pub use frame_support::{
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
 		fungibles::{self, Balanced, CreditOf},
-		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
-		Contains,
-		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor, ConstU32, Imbalance, PrivilegeCmp,
+		tokens::currency::Currency as CurrencyT,
+		OnUnbalanced as OnUnbalancedT, Everything, Contains, Currency, ExistenceRequirement, Get,
+		IsInVec, KeyOwnerProofSystem, LockIdentifier, OnUnbalanced, Randomness, FindAuthor,
+		ConstU32, Imbalance, PrivilegeCmp,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -113,9 +113,9 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, AsPrefixedGeneralIndex, 
-	CurrencyAdapter, ConvertedConcreteAssetId,
-	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+	AsPrefixedGeneralIndex, CurrencyAdapter, ConvertedConcreteAssetId, EnsureXcmOrigin,
+	FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 	ParentIsPreset,
@@ -132,7 +132,9 @@ use xcm::latest::{
 	Error as XcmError,
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
-use pallet_foreing_assets::{AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency};
+use pallet_foreing_assets::{
+	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
+};
 //use xcm_executor::traits::MatchesFungible;
 
 use unique_runtime_common::{
@@ -662,7 +664,7 @@ parameter_types! {
 	// 	MultiLocation::new(1, X2(Parachain(2000), PalletInstance(50)));
 
 	pub KaruraPalletLocation: MultiLocation =
-		MultiLocation::new(1, X1(Parachain(2000)));	
+		MultiLocation::new(1, X1(Parachain(2000)));
 
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
 }
@@ -679,7 +681,9 @@ where
 	}
 }
 
-use xcm_executor::traits::{Convert as ConvertXcm, Error as MatchError, MatchesFungibles, TransactAsset};
+use xcm_executor::traits::{
+	Convert as ConvertXcm, Error as MatchError, MatchesFungibles, TransactAsset,
+};
 use sp_runtime::traits::Convert;
 
 pub struct ConvertedConcreteAssetId2<AssetId, Balance, ConvertAssetId, ConvertBalance>(
@@ -710,7 +714,7 @@ impl<
 			// ConvertAssetId::convert_ref(id).map_err(|_| MatchError::AssetIdConversionFailed)?;AssetNotFound
 			ConvertAssetId::convert_ref(id).map_err(|_| MatchError::AssetIdConversionFailed)?;
 		let amount = ConvertBalance::convert_ref(amount)
-		 	.map_err(|_| MatchError::AmountToBalanceConversionFailed)?;
+			.map_err(|_| MatchError::AmountToBalanceConversionFailed)?;
 		Ok((what, amount))
 	}
 }
@@ -727,22 +731,17 @@ impl<
 // 	}
 // }
 
-
 /// Converter struct implementing `AssetIdConversion` converting a numeric asset ID (must be `TryFrom/TryInto<u128>`) into
 /// a `GeneralIndex` junction, prefixed by some `MultiLocation` value. The `MultiLocation` value will typically be a
 /// `PalletInstance` junction.
-
 use xcm::opaque::latest::Junction;
 use sp_std::{borrow::Borrow};
- 
-pub struct AsIndex<Prefix, AssetId, ConvertAssetId>(
-	PhantomData<(Prefix, AssetId, ConvertAssetId)>,
-);
+
+pub struct AsIndex<Prefix, AssetId, ConvertAssetId>(PhantomData<(Prefix, AssetId, ConvertAssetId)>);
 impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128, AssetId>>
 	ConvertXcm<MultiLocation, AssetId> for AsIndex<Prefix, AssetId, ConvertAssetId>
 {
 	fn convert_ref(id: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-
 		let prefix = Prefix::get();
 		let id = id.borrow();
 
@@ -762,11 +761,13 @@ impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128
 		if *id == here {
 			return ConvertAssetId::convert_ref(9999);
 		}
-		
+
 		// TODO: Fix it. Need to make correct relay chain currency conversion
-		// Native currencies conversion should be first 		
+		// Native currencies conversion should be first
 		match XcmForeignAssetIdMapping::<Runtime>::get_currency_id(id.clone()) {
-			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => ConvertAssetId::convert_ref(foreign_asset_id as u128),
+			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => {
+				ConvertAssetId::convert_ref(foreign_asset_id as u128)
+			}
 			_ => ConvertAssetId::convert_ref(888),
 		}
 	}
@@ -774,12 +775,12 @@ impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<u128
 	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
 		let mut location = Prefix::get();
 		let id = ConvertAssetId::reverse_ref(what)?;
-		location.push_interior(Junction::GeneralIndex(id)).map_err(|_| ())?;
+		location
+			.push_interior(Junction::GeneralIndex(id))
+			.map_err(|_| ())?;
 		Ok(location)
 	}
 }
-
-
 
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
@@ -797,8 +798,6 @@ pub type FungiblesTransactor = FungiblesAdapter<
 		AsIndex<StatemintAssetsPalletLocation, AssetId, JustTry>,
 		JustTry,
 	>,
-
-
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -811,7 +810,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 >;
 
 /// Means for transacting assets on this chain.
-pub type AssetTransactors = FungiblesTransactor;// (LocalAssetTransactor, FungiblesTransactor);
+pub type AssetTransactors = FungiblesTransactor; // (LocalAssetTransactor, FungiblesTransactor);
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -853,7 +852,6 @@ match_types! {
 	};
 }
 
-
 use xcm_executor::traits::{ShouldExecute};
 use xcm::latest::{Xcm};
 /// Execution barrier that just takes `max_weight` from `weight_credit`.
@@ -887,8 +885,6 @@ pub type Barrier = (
 	AllowAllDebug,
 );
 
-
-
 use xcm_executor::traits::FilterAssetLocation;
 pub struct AllAsset;
 impl FilterAssetLocation for AllAsset {
@@ -905,7 +901,7 @@ impl Config for XcmConfig {
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = AllAsset;//NativeAsset;
+	type IsReserve = AllAsset; //NativeAsset;
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
@@ -1212,21 +1208,16 @@ impl pallet_foreing_assets::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type RegisterOrigin = frame_system::EnsureRoot<AccountId>; //EnsureRootOrHalfGeneralCouncil;
-	type WeightInfo = ();//weights::module_asset_registry::WeightInfo<Runtime>;
+	type WeightInfo = (); //weights::module_asset_registry::WeightInfo<Runtime>;
 }
 
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: AssetIds) -> Option<MultiLocation> {
-
 		// TODO: Add native curr
 		match id {
-			AssetIds::NativeAssetId(NativeCurrency::This) => {
-				Some(MultiLocation::here())
-			},
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				Some(MultiLocation::parent())
-			},
+			AssetIds::NativeAssetId(NativeCurrency::This) => Some(MultiLocation::here()),
+			AssetIds::NativeAssetId(NativeCurrency::Parent) => Some(MultiLocation::parent()),
 			AssetIds::ForeignAssetId(foreign_asset_id) => {
 				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
 			}
@@ -1236,17 +1227,18 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 }
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-
 		// native stubs
-		if location ==  MultiLocation::here() {
-			return Some(AssetIds::NativeAssetId(NativeCurrency::This))
+		if location == MultiLocation::here() {
+			return Some(AssetIds::NativeAssetId(NativeCurrency::This));
 		}
 
-		if location ==  MultiLocation::parent() {
-			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent))
+		if location == MultiLocation::parent() {
+			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent));
 		}
 
-		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone()) {
+		if let Some(currency_id) =
+			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone())
+		{
 			return Some(currency_id);
 		}
 
@@ -1255,14 +1247,12 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 }
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![
-		TreasuryModuleId::get().into_account_truncating(),
-	]
+	vec![TreasuryModuleId::get().into_account_truncating()]
 }
 
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {	
+	fn contains(a: &AccountId) -> bool {
 		get_all_module_accounts().contains(a)
 	}
 }
@@ -1284,7 +1274,7 @@ impl orml_tokens::Config for Runtime {
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
-	type WeightInfo = ();//weights::orml_tokens::WeightInfo<Runtime>;
+	type WeightInfo = (); //weights::orml_tokens::WeightInfo<Runtime>;
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
 	type MaxLocks = MaxLocks;
