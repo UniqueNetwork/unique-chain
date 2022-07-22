@@ -113,7 +113,7 @@
 //! is an unacceptable symbol in user-defined properties, which, along with other safeguards,
 //! makes them impossible to tamper with.
 //!
-//! ### Collection and NFT Types, and Base, Parts and Themes Handling
+//! ### Collection and NFT Types, or Base, Parts and Themes Handling
 //!
 //! RMRK introduces the concept of a Base, which is a catalogue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality

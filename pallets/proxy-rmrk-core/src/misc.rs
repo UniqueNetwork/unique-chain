@@ -20,7 +20,7 @@ use super::*;
 use codec::{Encode, Decode, Error};
 
 /// Match errors from one type to another and return an error
-/// if a match is successful.
+/// if a match is successful. This macro expects a pattern matcher
 #[macro_export]
 macro_rules! map_unique_err_to_proxy {
     (match $err:ident { $($unique_err_ty:ident :: $unique_err:ident => $proxy_err:ident),+ $(,)? }) => {
@@ -34,9 +34,10 @@ macro_rules! map_unique_err_to_proxy {
     };
 }
 
-/// Interface to decode bytes from a bounded vector into an arbitrary type.
+/// Interface to decode some serialized bytes into an arbitrary type `T`,
+/// preferably if these bytes were originally encoded from `T`.
 pub trait RmrkDecode<T: Decode, S> {
-	/// Try to decode bytes from a bounded vector into an arbitrary type.
+	/// Try to decode self into an arbitrary type `T`.
 	fn decode(&self) -> Result<T, Error>;
 }
 
@@ -48,7 +49,7 @@ impl<T: Decode, S> RmrkDecode<T, S> for BoundedVec<u8, S> {
 	}
 }
 
-/// Interface to "rebind", change the limit of a bounded byte vector.
+/// Interface to "rebind" - change the limit of a bounded byte vector.
 pub trait RmrkRebind<T, S> {
 	/// Try to change the limit of a bounded byte vector.
 	fn rebind(&self) -> Result<BoundedVec<u8, S>, Error>;

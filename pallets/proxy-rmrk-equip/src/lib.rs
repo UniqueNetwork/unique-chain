@@ -116,7 +116,7 @@
 //! is an unacceptable symbol in user-defined properties, which, along with other safeguards,
 //! makes them impossible to tamper with.
 //!
-//! ### Collection and NFT Types, and Base, Parts and Themes Handling
+//! ### Collection and NFT Types, or Base, Parts and Themes Handling
 //!
 //! RMRK introduces the concept of a Base, which is a catalogue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
@@ -414,7 +414,8 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// Create or renew an NFT serving as a Part inside a collection serving as a Base.
+	/// Create (or overwrite) a Part in a Base.
+	/// The Part and the Base are represented as an NFT and a Collection.
 	fn create_part(
 		sender: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
