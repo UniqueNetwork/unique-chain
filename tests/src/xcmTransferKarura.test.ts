@@ -28,7 +28,7 @@ import getBalance from './substrate/get-balance';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const UNIQUE_CHAIN = 1000;
+const UNIQUE_CHAIN = 5000;
 const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 

@@ -72,7 +72,7 @@
 			"balance": "1000000000000000000000",
 			"nodes": [
 				{
-					"wsPort": 9944,
+					"wsPort": 9946,
 					"port": 11202,
                     "rpcPort": 29932,
 					"name": "alice",
@@ -84,7 +84,7 @@
                     ]
 				},
                 {
-					"wsPort": 9943,
+					"wsPort": 9947,
 					"port": 11203,
                     "rpcPort": 29933,
 					"name": "bob",
@@ -98,33 +98,34 @@
 			]
 		},
         {
-            "bin": "../cumulus/target/release/polkadot-collator",
-            "id": "1000",
-            "chain": "statemint-local",
+            "bin": "../unique-chain/target/release/unique-collator",
+            "id": "5000",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
                     "port": 41200,
-                    "wsPort": 19944,
-                    "rpcPort": 19933,
+                    "wsPort": 9944,
+                    "rpcPort": 9933,
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace"
+                        "-lxcm=trace",
+                        "-lfassets=trace"
                     ]
                 },
                 {
                     "port": 41201,
-                    "wsPort": 19945,
-                    "rpcPort": 19934,
+                    "wsPort": 9945,
+                    "rpcPort": 9934,
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace"
+                        "-lxcm=trace",
+                        "-lfassets=trace"
                     ]
                 }
             ]
@@ -134,12 +135,12 @@
     "hrmpChannels": [
         {
             "sender": 2000,
-            "recipient": 1000,
+            "recipient": 5000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
-            "sender": 1000,
+            "sender": 5000,
             "recipient": 2000,
             "maxCapacity": 8,
             "maxMessageSize": 512
