@@ -29,11 +29,11 @@ use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_std::vec::Vec;
-use up_data_structs::{CollectionMode, TokenId};
+use up_data_structs::TokenId;
 
 use crate::{
-	Allowance, Balance, common::CommonWeights, Config, erc721::UniqueRFTCall, Pallet,
-	RefungibleHandle, SelfWeightOf, weights::WeightInfo, TotalSupply,
+	Allowance, Balance, common::CommonWeights, Config, Pallet, RefungibleHandle, SelfWeightOf,
+	weights::WeightInfo, TotalSupply,
 };
 
 pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
@@ -72,12 +72,10 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	}
 
 	fn decimals(&self) -> Result<uint8> {
-		Ok(if let CollectionMode::Fungible(decimals) = &self.mode {
-			*decimals
-		} else {
-			unreachable!()
-		})
+		// Decimals aren't supported for refungible tokens
+		Ok(0)
 	}
+
 	fn balance_of(&self, owner: address) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
@@ -179,14 +177,7 @@ impl<T: Config> Deref for RefungibleTokenHandle<T> {
 	}
 }
 
-#[solidity_interface(
-	name = "UniqueRefungibleToken",
-	is(
-		ERC20,
-		ERC20UniqueExtensions,
-		via("RefungibleHandle<T>", common_mut, UniqueRFT)
-	)
-)]
+#[solidity_interface(name = "UniqueRefungibleToken", is(ERC20, ERC20UniqueExtensions,))]
 impl<T: Config> RefungibleTokenHandle<T> where T::AccountId: From<[u8; 32]> {}
 
 generate_stubgen!(gen_impl, UniqueRefungibleTokenCall<()>, true);

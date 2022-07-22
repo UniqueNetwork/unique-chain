@@ -36,8 +36,8 @@ UniqueNFT.sol:
 	PACKAGE=pallet-nonfungible NAME=erc::gen_impl OUTPUT=$(NONFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 	
 UniqueRefungibleToken.sol:
-	PACKAGE=pallet-refungible NAME=erc20::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
-	PACKAGE=pallet-refungible NAME=erc20::gen_impl OUTPUT=$(REFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-refungible NAME=erc_token::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-refungible NAME=erc_token::gen_impl OUTPUT=$(REFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
 ContractHelpers.sol:
 	PACKAGE=pallet-evm-contract-helpers NAME=eth::contract_helpers_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh

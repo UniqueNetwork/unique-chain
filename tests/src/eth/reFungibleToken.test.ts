@@ -55,6 +55,22 @@ describe('Refungible token: Information getting', () => {
 
     expect(balance).to.equal('200');
   });
+
+  itWeb3('decimals', async ({api, web3, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+
+    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
+
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: caller})).itemId;
+
+    const address = tokenIdToAddress(collectionId, tokenId);
+    const contract = new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: caller, ...GAS_ARGS});
+    const decimals = await contract.methods.decimals().call();
+
+    expect(decimals).to.equal('0');
+  });
 });
 
 describe('Refungible: Plain calls', () => {

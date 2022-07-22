@@ -87,7 +87,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use crate::erc20::ERC20Events;
+use crate::erc_token::ERC20Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
@@ -110,8 +110,8 @@ pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
-pub mod erc20;
-pub mod erc721;
+pub mod erc;
+pub mod erc_token;
 pub mod weights;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
