@@ -23,7 +23,7 @@ use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId, PrecompileHandle};
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue, CollectionTokenPrefix,
+	CollectionMode, PropertyValue,
 };
 use frame_support::traits::Get;
 use pallet_common::{
@@ -150,7 +150,10 @@ fn make_data<T: Config>(
 
 /// @title Contract, which allows users to operate with collections
 #[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
-impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
+impl<T> EvmCollectionHelpers<T>
+where
+	T: Config + pallet_nonfungible::Config + pallet_refungible::Config 
+{
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
@@ -218,9 +221,16 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix) =
-			convert_data::<T>(caller, name, description, token_prefix)?;
-		let data = make_data::<T>(name, CollectionMode::ReFungible, description, token_prefix)?;
+		let (caller, name, description, token_prefix, _base_uri) =
+			convert_data::<T>(caller, name, description, token_prefix, "".into())?;
+		let data = make_data::<T>(
+			name,
+			CollectionMode::ReFungible,
+			description,
+			token_prefix,
+			Default::default(),
+			false,
+		)?;
 		let collection_id = <pallet_refungible::Pallet<T>>::init_collection(caller.clone(), data)
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
