@@ -151,8 +151,8 @@ pub enum ResourceTypes<BoundedString, BoundedParts> {
 		"#)
 )]
 pub struct ResourceInfo<BoundedString, BoundedParts> {
-	/// ID a unique identifier for a resource across all those of a single NFT.
-	/// The combination of a collection ID, an NFT ID, and the resource ID must be 
+	/// ID is a unique identifier for a resource across all those of a single NFT.
+	/// The combination of a collection ID, an NFT ID, and the resource ID must be
 	/// unique across the entire RMRK ecosystem.
 	//#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
 	pub id: ResourceId,

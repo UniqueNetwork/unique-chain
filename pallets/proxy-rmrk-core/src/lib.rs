@@ -49,41 +49,41 @@
 //! - FAQ: <https://coda.io/@rmrk/faq>
 //! - Substrate code repository: <https://github.com/rmrk-team/rmrk-substrate>
 //! - RMRK specification repository: <https://github.com/rmrk-team/rmrk-spec>
-//! 
+//!
 //! ## Terminology
-//! 
+//!
 //! For more information on RMRK, see RMRK's own documentation.
-//! 
+//!
 //! ### Intro to RMRK
-//! 
-//! - **Resource:** Additional piece of metadata of an NFT usually serving to add 
-//! a piece of media on top of the root metadata (NFT's own), be it a different wing 
+//!
+//! - **Resource:** Additional piece of metadata of an NFT usually serving to add
+//! a piece of media on top of the root metadata (NFT's own), be it a different wing
 //! on the root template bird or something entirely unrelated.
-//! 
-//! - **Base:** A list of possible "components" - Parts, a combination of which can 
+//!
+//! - **Base:** A list of possible "components" - Parts, a combination of which can
 //! be appended/equipped to/on an NFT.
-//! 
-//! - **Part:** Something that, together with other Parts, can constitute an NFT. 
-//! Parts are defined in the Base to which they belong. Parts can be either 
+//!
+//! - **Part:** Something that, together with other Parts, can constitute an NFT.
+//! Parts are defined in the Base to which they belong. Parts can be either
 //! of the `slot` type or `fixed` type. Slots are intended for equippables.
-//! Note that "part of something" and "Part of a Base" can be easily confused, 
+//! Note that "part of something" and "Part of a Base" can be easily confused,
 //! and in this documentation these words are distinguished by the capital letter.
-//! 
-//! - **Theme:** Named objects of variable => value pairs which get interpolated into 
-//! the Base's `themable` Parts. Themes can hold any value, but are often represented 
+//!
+//! - **Theme:** Named objects of variable => value pairs which get interpolated into
+//! the Base's `themable` Parts. Themes can hold any value, but are often represented
 //! in RMRK's examples as colors applied to visible Parts.
-//! 
+//!
 //! ### Peculiarities in Unique
-//! 
-//! - **Scoped properties:** Properties that are normally obscured from users. 
-//! Their purpose is to contain structured metadata that was not included in the Unique standard 
-//! for collections and tokens, meant to be operated on by proxies and other outliers. 
-//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is 
-//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined 
+//!
+//! - **Scoped properties:** Properties that are normally obscured from users.
+//! Their purpose is to contain structured metadata that was not included in the Unique standard
+//! for collections and tokens, meant to be operated on by proxies and other outliers.
+//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is
+//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined
 //! properties, which, along with other safeguards, makes them impossible to tamper with.
-//! 
-//! - **Auxiliary properties:** A slightly different structure of properties, 
-//! trading universality of use for more convenient storage, writes and access. 
+//!
+//! - **Auxiliary properties:** A slightly different structure of properties,
+//! trading universality of use for more convenient storage, writes and access.
 //! Meant to be inaccessible to end users.
 //!
 //! ## Proxy Implementation
@@ -118,9 +118,8 @@
 //! RMRK introduces the concept of a Base, which is a catalgoue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
 //! of a token collection, a Base is stored and handled as one, and the Base's Parts and Themes
-//! are the collection's NFTs. See [`CollectionType`](pallet_rmrk_core::misc::CollectionType) and
-//! [`NftType`](pallet_rmrk_core::misc::NftType).
-//! 
+//! are the collection's NFTs. See [`CollectionType`] and [`NftType`].
+//!
 //! ## Interface
 //!
 //! ### Dispatchables
@@ -788,7 +787,7 @@ pub mod pallet {
 
 		/// Accept an NFT sent from another account to self or an owned NFT.
 		///
-		/// The NFT in question must be pending, and, thus, be [sent](`crate::pallet::Call::send`) first.
+		/// The NFT in question must be pending, and, thus, be [sent](`Pallet::send`) first.
 		///
 		/// # Permissions:
 		/// - Token-owner-to-be
@@ -880,7 +879,7 @@ pub mod pallet {
 		/// Reject an NFT sent from another account to self or owned NFT.
 		/// The NFT in question will not be sent back and burnt instead.
 		///
-		/// The NFT in question must be pending, and, thus, be [sent](`crate::pallet::Call::send`) first.
+		/// The NFT in question must be pending, and, thus, be [sent](`Pallet::send`) first.
 		///
 		/// # Permissions:
 		/// - Token-owner-to-be-not
@@ -945,7 +944,7 @@ pub mod pallet {
 		///
 		/// This transaction is needed when a resource is created and assigned to an NFT
 		/// by a non-owner, i.e. the collection issuer, with one of the
-		/// [`add_...` transactions](crate::pallet::Call::add_basic_resource).
+		/// [`add_...` transactions](Pallet::add_basic_resource).
 		///
 		/// # Permissions:
 		/// - Token owner
@@ -999,7 +998,7 @@ pub mod pallet {
 		/// Accept the removal of a removal-pending resource from an NFT.
 		///
 		/// This transaction is needed when a non-owner, i.e. the collection issuer,
-		/// requests a [removal](`crate::pallet::Call::remove_resource`) of a resource from an NFT.
+		/// requests a [removal](`Pallet::remove_resource`) of a resource from an NFT.
 		///
 		/// # Permissions:
 		/// - Token owner
@@ -1207,7 +1206,7 @@ pub mod pallet {
 		///
 		/// # Permissions:
 		/// - Collection issuer - if not the token owner, adding the resource will warrant
-		/// the owner's [acceptance](crate::pallet::Call::accept_resource).
+		/// the owner's [acceptance](Pallet::accept_resource).
 		///
 		/// # Arguments:
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
@@ -1249,7 +1248,7 @@ pub mod pallet {
 		///
 		/// # Permissions:
 		/// - Collection issuer - if not the token owner, adding the resource will warrant
-		/// the owner's [acceptance](crate::pallet::Call::accept_resource).
+		/// the owner's [acceptance](Pallet::accept_resource).
 		///
 		/// # Arguments:
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
@@ -1311,7 +1310,7 @@ pub mod pallet {
 		///
 		/// # Permissions:
 		/// - Collection issuer - if not the token owner, adding the resource will warrant
-		/// the owner's [acceptance](crate::pallet::Call::accept_resource).
+		/// the owner's [acceptance](Pallet::accept_resource).
 		///
 		/// # Arguments:
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
@@ -1349,7 +1348,7 @@ pub mod pallet {
 		/// Remove and erase a resource from an NFT.
 		///
 		/// If the sender does not own the NFT, then it will be pending confirmation,
-		/// and will have to be [accepted](crate::pallet::Call::accept_resource_removal) by the token owner.
+		/// and will have to be [accepted](Pallet::accept_resource_removal) by the token owner.
 		///
 		/// # Permissions
 		/// - Collection issuer
@@ -1600,7 +1599,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get incremented resource ID from within an NFT's properties and store the new latest ID.
 	/// Thus, the returned resource ID should be used.
-	/// 
+	///
 	/// Resource IDs are unique only across an NFT.
 	fn acquire_next_resource_id(
 		collection_id: CollectionId,
@@ -1720,7 +1719,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Remove a Base ID from an NFT if they are associated. 
+	/// Remove a Base ID from an NFT if they are associated.
 	/// The Base itself is deleted if the number of associated NFTs reaches 0.
 	fn remove_associated_base_id(
 		collection_id: CollectionId,

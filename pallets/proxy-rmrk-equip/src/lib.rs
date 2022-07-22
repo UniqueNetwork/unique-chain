@@ -52,41 +52,41 @@
 //! - FAQ: <https://coda.io/@rmrk/faq>
 //! - Substrate code repository: <https://github.com/rmrk-team/rmrk-substrate>
 //! - RMRK spec repository: <https://github.com/rmrk-team/rmrk-spec>
-//! 
+//!
 //! ## Terminology
-//! 
+//!
 //! For more information on RMRK, see RMRK's own documentation.
-//! 
+//!
 //! ### Intro to RMRK
-//! 
-//! - **Resource:** Additional piece of metadata of an NFT usually serving to add 
-//! a piece of media on top of the root metadata (NFT's own), be it a different wing 
+//!
+//! - **Resource:** Additional piece of metadata of an NFT usually serving to add
+//! a piece of media on top of the root metadata (NFT's own), be it a different wing
 //! on the root template bird or something entirely unrelated.
-//! 
-//! - **Base:** A list of possible "components" - Parts, a combination of which can 
+//!
+//! - **Base:** A list of possible "components" - Parts, a combination of which can
 //! be appended/equipped to/on an NFT.
-//! 
-//! - **Part:** Something that, together with other Parts, can constitute an NFT. 
-//! Parts are defined in the Base to which they belong. Parts can be either 
+//!
+//! - **Part:** Something that, together with other Parts, can constitute an NFT.
+//! Parts are defined in the Base to which they belong. Parts can be either
 //! of the `slot` type or `fixed` type. Slots are intended for equippables.
-//! Note that "part of something" and "Part of a Base" can be easily confused, 
+//! Note that "part of something" and "Part of a Base" can be easily confused,
 //! and in this documentation these words are distinguished by the capital letter.
-//! 
-//! - **Theme:** Named objects of variable => value pairs which get interpolated into 
-//! the Base's `themable` Parts. Themes can hold any value, but are often represented 
+//!
+//! - **Theme:** Named objects of variable => value pairs which get interpolated into
+//! the Base's `themable` Parts. Themes can hold any value, but are often represented
 //! in RMRK's examples as colors applied to visible Parts.
-//! 
+//!
 //! ### Peculiarities in Unique
-//! 
-//! - **Scoped properties:** Properties that are normally obscured from users. 
-//! Their purpose is to contain structured metadata that was not included in the Unique standard 
-//! for collections and tokens, meant to be operated on by proxies and other outliers. 
-//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is 
-//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined 
+//!
+//! - **Scoped properties:** Properties that are normally obscured from users.
+//! Their purpose is to contain structured metadata that was not included in the Unique standard
+//! for collections and tokens, meant to be operated on by proxies and other outliers.
+//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is
+//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined
 //! properties, which, along with other safeguards, makes them impossible to tamper with.
-//! 
-//! - **Auxiliary properties:** A slightly different structure of properties, 
-//! trading universality of use for more convenient storage, writes and access. 
+//!
+//! - **Auxiliary properties:** A slightly different structure of properties,
+//! trading universality of use for more convenient storage, writes and access.
 //! Meant to be inaccessible to end users.
 //!
 //! ## Proxy Implementation
@@ -121,8 +121,7 @@
 //! RMRK introduces the concept of a Base, which is a catalgoue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
 //! of a token collection, a Base is stored and handled as one, and the Base's Parts and Themes
-//! are the collection's NFTs. See [`CollectionType`](pallet_rmrk_core::misc::CollectionType) and
-//! [`NftType`](pallet_rmrk_core::misc::NftType).
+//! are the collection's NFTs. See [`CollectionType`] and [`NftType`].
 //!
 //! ## Interface
 //!
@@ -415,7 +414,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// Create or renew an NFT serving as a Part.
+	/// Create or renew an NFT serving as a Part inside a collection serving as a Base.
 	fn create_part(
 		sender: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
