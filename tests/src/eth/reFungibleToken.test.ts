@@ -239,8 +239,7 @@ describe('Refungible: Plain calls', () => {
     expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(0);
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(200);
 
-    const result = await contract.methods.repartition(150).send({from: receiver});
-    console.log(result.events);
+    await contract.methods.repartition(150).send({from: receiver});
     await expect(contract.methods.transfer(owner, 160).send({from: receiver})).to.eventually.be.rejected;
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(150);
   });
@@ -261,7 +260,7 @@ describe('Refungible: Plain calls', () => {
     const result = await contract.methods.repartition(200).send();
     const events = normalizeEvents(result.events);
 
-    expect(events).to.include.deep.members([
+    expect(events).to.deep.equal([
       {
         address,
         event: 'Transfer',
@@ -289,8 +288,7 @@ describe('Refungible: Plain calls', () => {
 
     const result = await contract.methods.repartition(50).send();
     const events = normalizeEvents(result.events);
-
-    expect(events).to.include.deep.members([
+    expect(events).to.deep.equal([
       {
         address,
         event: 'Transfer',
