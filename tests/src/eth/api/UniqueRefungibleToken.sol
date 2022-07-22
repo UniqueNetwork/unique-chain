@@ -22,12 +22,6 @@ interface ERC20Events {
 	);
 }
 
-// Selector: 79cc6790
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-}
-
 // Selector: 942e8b22
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
@@ -63,6 +57,15 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 		external
 		view
 		returns (uint256);
+}
+
+// Selector: ab8deb37
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
+
+	// Selector: repartition(uint256) d2418ca7
+	function repartition(uint256 amount) external returns (bool);
 }
 
 interface UniqueRefungibleToken is

@@ -149,6 +149,15 @@ impl<T: Config> RefungibleTokenHandle<T> {
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	#[weight(<SelfWeightOf<T>>::repartition_item())]
+	fn repartition(&mut self, caller: caller, amount: uint256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+
+		<Pallet<T>>::repartition(self, &caller, self.1, amount).map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
 }
 
 impl<T: Config> RefungibleTokenHandle<T> {

@@ -210,6 +210,39 @@ describe('Refungible: Plain calls', () => {
       expect(+balance).to.equal(50);
     }
   });
+
+  itWeb3('Can perform repartition()', async ({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+
+    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
+
+    const owner = createEthAccount(web3);
+    await transferBalanceToEth(api, alice, owner);
+
+    const receiver = createEthAccount(web3);
+    await transferBalanceToEth(api, alice, receiver);
+
+    const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n, {Ethereum: owner})).itemId;
+
+    const address = tokenIdToAddress(collectionId, tokenId);
+    const contract = new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: owner, ...GAS_ARGS});
+
+    await contract.methods.repartition(200).send({from: owner});
+    expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(200);
+    await contract.methods.transfer(receiver, 110).send({from: owner});
+    expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(90);
+    expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(110);
+    
+    await expect(contract.methods.repartition(80).send({from: owner})).to.eventually.be.rejected;
+
+    await contract.methods.transfer(receiver, 90).send({from: owner});
+    expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(0);
+    expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(200);
+
+    await contract.methods.repartition(150).send({from: receiver});
+    await expect(contract.methods.transfer(owner, 160).send({from: receiver})).to.eventually.be.rejected;
+    expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(150);
+  });
 });
 
 describe('Refungible: Fees', () => {

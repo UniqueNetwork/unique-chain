@@ -31,18 +31,6 @@ contract ERC20Events {
 	);
 }
 
-// Selector: 79cc6790
-contract ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) public returns (bool) {
-		require(false, stub_error);
-		from;
-		amount;
-		dummy = 0;
-		return false;
-	}
-}
-
 // Selector: 942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
@@ -124,6 +112,26 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		spender;
 		dummy;
 		return 0;
+	}
+}
+
+// Selector: ab8deb37
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: repartition(uint256) d2418ca7
+	function repartition(uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		amount;
+		dummy = 0;
+		return false;
 	}
 }
 
