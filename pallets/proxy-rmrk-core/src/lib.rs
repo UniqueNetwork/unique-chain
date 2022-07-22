@@ -67,7 +67,7 @@
 //! Parts are defined in the Base to which they belong. Parts can be either
 //! of the `slot` type or `fixed` type. Slots are intended for equippables.
 //! Note that "part of something" and "Part of a Base" can be easily confused,
-//! and in this documentation these words are distinguished by the capital letter.
+//! and so in this documentation these words are distinguished by the capital letter.
 //!
 //! - **Theme:** Named objects of variable => value pairs which get interpolated into
 //! the Base's `themable` Parts. Themes can hold any value, but are often represented
@@ -78,9 +78,9 @@
 //! - **Scoped properties:** Properties that are normally obscured from users.
 //! Their purpose is to contain structured metadata that was not included in the Unique standard
 //! for collections and tokens, meant to be operated on by proxies and other outliers.
-//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is
-//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined
-//! properties, which, along with other safeguards, makes them impossible to tamper with.
+//! Scoped property keys are prefixed with `some-scope:`, where `some-scope` is
+//! an arbitrary keyword, like "rmrk". `:` is considered an unacceptable symbol in user-defined
+//! properties, which, along with other safeguards, makes scoped ones impossible to tamper with.
 //!
 //! - **Auxiliary properties:** A slightly different structure of properties,
 //! trading universality of use for more convenient storage, writes and access.
@@ -91,7 +91,7 @@
 //! An external user is supposed to be able to utilize this proxy as they would
 //! utilize RMRK, and get exactly the same results. Normally, Unique transactions
 //! are off-limits to RMRK collections and tokens, and vice versa. However,
-//! the information stored on chain can be freely interpreted by storage reads and RPCs.
+//! the information stored on chain can be freely interpreted by storage reads and Unique RPCs.
 //!
 //! ### ID Mapping
 //!
@@ -115,10 +115,10 @@
 //!
 //! ### Collection and NFT Types, and Base, Parts and Themes Handling
 //!
-//! RMRK introduces the concept of a Base, which is a catalgoue of Parts,
+//! RMRK introduces the concept of a Base, which is a catalogue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
 //! of a token collection, a Base is stored and handled as one, and the Base's Parts and Themes
-//! are the collection's NFTs. See [`CollectionType`] and [`NftType`].
+//! are this collection's NFTs. See [`CollectionType`] and [`NftType`].
 //!
 //! ## Interface
 //!
