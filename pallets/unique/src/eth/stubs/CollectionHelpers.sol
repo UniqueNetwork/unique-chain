@@ -29,7 +29,7 @@ contract CollectionHelpersEvents {
 	);
 }
 
-// Selector: 86a0d929
+// Selector: c20653fc
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	// Selector: createNonfungibleCollection(string,string,string) e34a6844
 	function createNonfungibleCollection(
@@ -58,6 +58,20 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		tokenPrefix;
 		baseUri;
 		dummy = 0;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: createRefungibleCollection(string,string,string) 44a68ad5
+	function createRefungibleCollection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix
+	) public view returns (address) {
+		require(false, stub_error);
+		name;
+		description;
+		tokenPrefix;
+		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
 

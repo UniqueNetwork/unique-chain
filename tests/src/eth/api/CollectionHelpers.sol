@@ -20,7 +20,7 @@ interface CollectionHelpersEvents {
 	);
 }
 
-// Selector: 86a0d929
+// Selector: c20653fc
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	// Selector: createNonfungibleCollection(string,string,string) e34a6844
 	function createNonfungibleCollection(
@@ -36,6 +36,13 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory tokenPrefix,
 		string memory baseUri
 	) external returns (address);
+
+	// Selector: createRefungibleCollection(string,string,string) 44a68ad5
+	function createRefungibleCollection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix
+	) external view returns (address);
 
 	// Selector: isCollectionExist(address) c3de1494
 	function isCollectionExist(address collectionAddress)
