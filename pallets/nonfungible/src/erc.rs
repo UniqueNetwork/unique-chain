@@ -238,8 +238,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			}
 		} else if !is_erc721() {
 			return Err("tokenURI not set".into());
-		} else if !is_erc721() {
-			return Err("tokenURI not set".into());
 		}
 
 		if let Some(base_uri) =
@@ -499,7 +497,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key = u_key();
+		let key = url_key();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());

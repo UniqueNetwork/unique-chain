@@ -38,7 +38,7 @@ impl<T: Config> CommonEvmHandler for RefungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
-	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueRefungible.raw");
+	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueRFT.raw");
 	fn call(
 		self,
 		handle: &mut impl PrecompileHandle,
