@@ -1150,7 +1150,7 @@ impl<T: Config> Pallet<T> {
 			.take(10)
 			.collect();
 
-		if res.len() == 0 {
+		if res.is_empty() {
 			None
 		} else {
 			Some(res)

@@ -23,7 +23,7 @@ describe('integration test: RPC methods', () => {
     });
   });
   
-  it('RPC method tokenOnewrs for fungible collection and token', async () => {
+  it('RPC method tokenOwners for fungible collection and token', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
       const facelessCrowd = Array.from(Array(7).keys()).map(i => normalizeAccountId(privateKeyWrapper(i.toString())));

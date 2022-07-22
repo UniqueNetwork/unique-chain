@@ -364,7 +364,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	/// Returns 10 tokens owners in no particular order.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
-		<Pallet<T>>::token_owners(self.id, token).unwrap_or_else(|| vec![])
+		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {

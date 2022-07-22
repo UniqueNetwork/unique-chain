@@ -100,7 +100,7 @@ describe('integration test: Refungible functionality:', () => {
       // What to expect
       // tslint:disable-next-line:no-unused-expression
       expect(ids).to.deep.include.members([aliceID, ethAcc, bobId, ...facelessCrowd]);
-      expect(owners.length == 10).to.be.true;
+      expect(owners.length).to.be.equal(10);
       
       const eleven = privateKeyWrapper('11');
       expect(await transfer(api, collectionId, aliceTokenId, alice, eleven, 10n)).to.be.true;
