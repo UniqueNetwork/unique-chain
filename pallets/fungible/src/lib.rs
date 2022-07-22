@@ -95,7 +95,7 @@ use pallet_structure::Pallet as PalletStructure;
 use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::{collections::btree_map::BTreeMap};
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub use pallet::*;
 
@@ -612,5 +612,27 @@ impl<T: Config> Pallet<T> {
 			[(data.0, data.1)].into_iter().collect(),
 			nesting_budget,
 		)
+	}
+
+	/// Returns 10 tokens owners in no particular order
+	///
+	/// There is no direct way to get token holders in ascending order,
+	/// since `iter_prefix` returns values in no particular order.
+	/// Therefore, getting the 10 largest holders with a large value of holders
+	/// can lead to impact memory allocation + sorting with  `n * log (n)`.
+	pub fn token_owners(
+		collection: CollectionId,
+		_token: TokenId,
+	) -> Option<Vec<T::CrossAccountId>> {
+		let res: Vec<T::CrossAccountId> = <Balance<T>>::iter_prefix((collection,))
+			.map(|(owner, _amount)| owner)
+			.take(10)
+			.collect();
+
+		if res.is_empty() {
+			None
+		} else {
+			Some(res)
+		}
 	}
 }

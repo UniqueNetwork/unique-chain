@@ -1235,4 +1235,26 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
+
+	/// Returns 10 token in no particular order.
+	///
+	/// There is no direct way to get token holders in ascending order,
+	/// since `iter_prefix` returns values in no particular order.
+	/// Therefore, getting the 10 largest holders with a large value of holders
+	/// can lead to impact memory allocation + sorting with  `n * log (n)`.
+	pub fn token_owners(
+		collection_id: CollectionId,
+		token: TokenId,
+	) -> Option<Vec<T::CrossAccountId>> {
+		let res: Vec<T::CrossAccountId> = <Balance<T>>::iter_prefix((collection_id, token))
+			.map(|(owner, _amount)| owner)
+			.take(10)
+			.collect();
+
+		if res.is_empty() {
+			None
+		} else {
+			Some(res)
+		}
+	}
 }

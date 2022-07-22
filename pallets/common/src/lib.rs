@@ -1748,6 +1748,11 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// * `token` - The token for which you need to find out the owner.
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
 
+	/// Returns 10 tokens owners in no particular order.
+	///
+	/// * `token` - The token for which you need to find out the owners.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId>;
+
 	/// Get the value of the token property by key.
 	///
 	/// * `token` - Token with the property to get.

@@ -32,6 +32,8 @@ import {
   repartitionRFT,
   createCollectionWithPropsExpectSuccess,
   getDetailedCollectionInfo,
+  normalizeAccountId,
+  CrossAccountId,
   getCreateItemsResult,
   getDestroyItemsResult,
 } from './util/helpers';
@@ -55,14 +57,14 @@ describe('integration test: Refungible functionality:', () => {
   it('Create refungible collection and token', async () => {
     await usingApi(async api => {
       const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
-      expect(createCollectionResult.success).to.be.true;    
+      expect(createCollectionResult.success).to.be.true;
       const collectionId  = createCollectionResult.collectionId;
-
+      
       const itemCountBefore = await getLastTokenId(api, collectionId);
       const result = await createRefungibleToken(api, alice, collectionId, 100n);
-
+      
       const itemCountAfter = await getLastTokenId(api, collectionId);
-
+      
       // What to expect
       // tslint:disable-next-line:no-unused-expression
       expect(result.success).to.be.true;
@@ -71,7 +73,43 @@ describe('integration test: Refungible functionality:', () => {
       expect(itemCountAfter.toString()).to.be.equal(result.itemId.toString());
     });
   });
-
+  
+  it('RPC method tokenOnewrs for refungible collection and token', async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
+      const facelessCrowd = Array.from(Array(7).keys()).map(i => normalizeAccountId(privateKeyWrapper(i.toString())));
+      
+      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
+      const collectionId = createCollectionResult.collectionId;
+      
+      const result = await createRefungibleToken(api, alice, collectionId, 10_000n);
+      const aliceTokenId = result.itemId;
+      
+      
+      await transfer(api, collectionId, aliceTokenId, alice, bob, 1000n);
+      await transfer(api, collectionId, aliceTokenId, alice, ethAcc, 900n);
+      
+      for (let i = 0; i < 7; i++) {
+        await transfer(api, collectionId, aliceTokenId, alice, facelessCrowd[i], 50*(i+1));
+      } 
+      
+      const owners = await api.rpc.unique.tokenOwners(collectionId, aliceTokenId);
+      const ids = (owners.toJSON() as CrossAccountId[]).map(s => normalizeAccountId(s));
+      
+      const aliceID = normalizeAccountId(alice);
+      const bobId = normalizeAccountId(bob);
+      
+      // What to expect
+      // tslint:disable-next-line:no-unused-expression
+      expect(ids).to.deep.include.members([aliceID, ethAcc, bobId, ...facelessCrowd]);
+      expect(owners.length).to.be.equal(10);
+      
+      const eleven = privateKeyWrapper('11');
+      expect(await transfer(api, collectionId, aliceTokenId, alice, eleven, 10n)).to.be.true;
+      expect((await api.rpc.unique.tokenOwners(collectionId, aliceTokenId)).length).to.be.equal(10);
+    });
+  });
+  
   it('Transfer token pieces', async () => {
     await usingApi(async api => {
       const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;

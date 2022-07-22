@@ -59,82 +59,47 @@ declare module '@polkadot/api-base/types/events' {
     };
     common: {
       /**
-       * * collection_id
-       * 
-       * * item_id
-       * 
-       * * sender
-       * 
-       * * spender
-       * 
-       * * amount
+       * Amount pieces of token owned by `sender` was approved for `spender`.
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * New collection was created
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique identifier of newly created collection.
-       * 
-       * * mode: [CollectionMode] converted into u8.
-       * 
-       * * account_id: Collection owner.
        **/
       CollectionCreated: AugmentedEvent<ApiType, [u32, u8, AccountId32]>;
       /**
        * New collection was destroyed
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique identifier of collection.
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
+      /**
+       * The property has been deleted.
+       **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * The colletion property has been set.
+       **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
        * New item was created.
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Id of the collection where item was created.
-       * 
-       * * item_id: Id of an item. Unique within the collection.
-       * 
-       * * recipient: Owner of newly created item
-       * 
-       * * amount: Always 1 for NFT
        **/
       ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Collection item was burned.
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * item_id: Identifier of burned NFT.
-       * 
-       * * owner: which user has destroyed its tokens
-       * 
-       * * amount: Always 1 for NFT
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
+      /**
+       * The colletion property permission has been set.
+       **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * The token property has been deleted.
+       **/
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
+      /**
+       * The token property has been set.
+       **/
       TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
        * Item was transferred
-       * 
-       * * collection_id: Id of collection to which item is belong
-       * 
-       * * item_id: Id of an item
-       * 
-       * * sender: Original owner of item
-       * 
-       * * recipient: New owner of item
-       * 
-       * * amount: Always 1 for NFT
        **/
       Transfer: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
