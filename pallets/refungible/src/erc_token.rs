@@ -46,7 +46,7 @@ pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId
 #[derive(ToLog)]
 pub enum ERC20Events {
 	/// @dev This event is emitted when the amount of tokens (value) is sent
-	/// from the from address to the to address. In the case of minting new 
+	/// from the from address to the to address. In the case of minting new
 	/// tokens, the transfer is usually from the 0 address while in the case
 	/// of burning tokens the transfer is to 0.
 	Transfer {
@@ -68,7 +68,7 @@ pub enum ERC20Events {
 }
 
 /// @title Standard ERC20 token
-/// 
+///
 /// @dev Implementation of the basic standard token.
 /// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 #[solidity_interface(name = "ERC20", events(ERC20Events))]

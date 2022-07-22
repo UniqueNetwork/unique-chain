@@ -95,15 +95,19 @@ use evm_coder::ToLog;
 use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transactional};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
-use pallet_common::{CommonCollectionOperations, Error as CommonError, Event as CommonEvent, Pallet as PalletCommon};
+use pallet_common::{
+	CommonCollectionOperations, Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
+};
 use pallet_structure::Pallet as PalletStructure;
 use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CreateCollectionData, CreateRefungibleExData, CustomDataLimit, mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, TokenId,
-	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue, TrySetProperty
+	AccessMode, budget::Budget, CollectionId, CreateCollectionData, CreateRefungibleExData,
+	CustomDataLimit, mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, TokenId, Property,
+	PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	TrySetProperty,
 };
 
 pub use pallet::*;
