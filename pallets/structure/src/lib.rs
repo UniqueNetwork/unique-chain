@@ -78,11 +78,11 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// While searching for the owner, encountered an already checked account, detecting a loop.
+		/// While nesting, encountered an already checked account, detecting a loop.
 		OuroborosDetected,
-		/// While searching for the owner, reached the depth limit.
+		/// While nesting, reached the depth limit of nesting, exceeding the provided budget.
 		DepthLimit,
-		/// While iterating over children, reached the breadth limit.
+		/// While nesting, reached the breadth limit of nesting, exceeding the provided budget.
 		BreadthLimit,
 		/// Couldn't find the token owner that is itself a token.
 		TokenNotFound,

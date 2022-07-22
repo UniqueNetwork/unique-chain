@@ -206,14 +206,14 @@ pub mod pallet {
 		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
-	/// Custom data of a token that is serialized to bytes, 
-	/// primarily reserved for on-chain operations, 
+	/// Custom data of a token that is serialized to bytes,
+	/// primarily reserved for on-chain operations,
 	/// normally obscured from the external users.
-	/// 
-	/// Auxiliary properties are slightly different from 
-	/// usual [`TokenProperties`] due to an unlimited number 
+	///
+	/// Auxiliary properties are slightly different from
+	/// usual [`TokenProperties`] due to an unlimited number
 	/// and separately stored and written-to key-value pairs.
-	/// 
+	///
 	/// Currently used to store RMRK data.
 	#[pallet::storage]
 	#[pallet::getter(fn token_aux_property)]
