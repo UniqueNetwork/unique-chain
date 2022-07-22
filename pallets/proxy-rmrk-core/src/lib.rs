@@ -48,7 +48,43 @@
 //! - Docs: <https://docs.rmrk.app/getting-started/>
 //! - FAQ: <https://coda.io/@rmrk/faq>
 //! - Substrate code repository: <https://github.com/rmrk-team/rmrk-substrate>
-//! - RMRK spec repository: <https://github.com/rmrk-team/rmrk-spec>
+//! - RMRK specification repository: <https://github.com/rmrk-team/rmrk-spec>
+//! 
+//! ## Terminology
+//! 
+//! For more information on RMRK, see RMRK's own documentation.
+//! 
+//! ### Intro to RMRK
+//! 
+//! - **Resource:** Additional piece of metadata of an NFT usually serving to add 
+//! a piece of media on top of the root metadata (NFT's own), be it a different wing 
+//! on the root template bird or something entirely unrelated.
+//! 
+//! - **Base:** A list of possible "components" - Parts, a combination of which can 
+//! be appended/equipped to/on an NFT.
+//! 
+//! - **Part:** Something that, together with other Parts, can constitute an NFT. 
+//! Parts are defined in the Base to which they belong. Parts can be either 
+//! of the `slot` type or `fixed` type. Slots are intended for equippables.
+//! Note that "part of something" and "Part of a Base" can be easily confused, 
+//! and in this documentation these words are distinguished by the capital letter.
+//! 
+//! - **Theme:** Named objects of variable => value pairs which get interpolated into 
+//! the Base's `themable` Parts. Themes can hold any value, but are often represented 
+//! in RMRK's examples as colors applied to visible Parts.
+//! 
+//! ### Peculiarities in Unique
+//! 
+//! - **Scoped properties:** Properties that are normally obscured from users. 
+//! Their purpose is to contain structured metadata that was not included in the Unique standard 
+//! for collections and tokens, meant to be operated on by proxies and other outliers. 
+//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is 
+//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined 
+//! properties, which, along with other safeguards, makes them impossible to tamper with.
+//! 
+//! - **Auxiliary properties:** A slightly different structure of properties, 
+//! trading universality of use for more convenient storage, writes and access. 
+//! Meant to be inaccessible to end users.
 //!
 //! ## Proxy Implementation
 //!
@@ -74,17 +110,17 @@
 //!
 //! Many of RMRK's native parameters are stored as scoped properties of a collection
 //! or an NFT on the chain. Scoped properties are prefixed with `rmrk:`, where `:`
-//! is an unacceptable symbol in user-defined proeprties, which, along with other safeguards,
+//! is an unacceptable symbol in user-defined properties, which, along with other safeguards,
 //! makes them impossible to tamper with.
 //!
-//! ### Collection and NFT Types
+//! ### Collection and NFT Types, and Base, Parts and Themes Handling
 //!
 //! RMRK introduces the concept of a Base, which is a catalgoue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
 //! of a token collection, a Base is stored and handled as one, and the Base's Parts and Themes
 //! are the collection's NFTs. See [`CollectionType`](pallet_rmrk_core::misc::CollectionType) and
 //! [`NftType`](pallet_rmrk_core::misc::NftType).
-//!
+//! 
 //! ## Interface
 //!
 //! ### Dispatchables
@@ -276,9 +312,9 @@ pub mod pallet {
 		/* RMRK compatible events */
 		/// Only destroying collections without tokens is allowed.
 		CollectionNotEmpty,
-		/// Could not find an ID for a collection. It is likely there were too many collections created on the chain.
+		/// Could not find an ID for a collection. It is likely there were too many collections created on the chain, causing an overflow.
 		NoAvailableCollectionId,
-		/// Token does not exist, or there is no suitable ID for it, likely too many tokens were created in a collection.
+		/// Token does not exist, or there is no suitable ID for it, likely too many tokens were created in a collection, causing an overflow.
 		NoAvailableNftId,
 		/// Collection does not exist, has a wrong type, or does not map to a Unique ID.
 		CollectionUnknown,
@@ -301,7 +337,7 @@ pub mod pallet {
 		CannotRejectNonPendingNft,
 		/// Resource is not pending for the operation.
 		ResourceNotPending,
-		/// Could not find an ID for the resource. Is is likely there were too many resources created on an NFT.
+		/// Could not find an ID for the resource. It is likely there were too many resources created on an NFT, causing an overflow.
 		NoAvailableResourceId,
 	}
 
@@ -587,8 +623,9 @@ pub mod pallet {
 		/// # Arguments:
 		/// - `collection_id`: RMRK ID of the collection in which the NFT to burn belongs to.
 		/// - `nft_id`: ID of the NFT to be destroyed.
-		/// - `max_burns`: Maximum number of tokens to burn, used for nesting. The transaction
+		/// - `max_burns`: Maximum number of tokens to burn, assuming nesting. The transaction
 		/// is reverted if there are more tokens to burn in the nesting tree than this number.
+		/// This is primarily a mechanism of transaction weight control.
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::burn_nft(*max_burns))]
 		pub fn burn_nft(
@@ -1165,11 +1202,7 @@ pub mod pallet {
 
 		/// Create and set/propose a basic resource for an NFT.
 		///
-		/// A resource is considered a part of an NFT, an additional piece of metadata
-		/// usually serving to add a piece of media on top of the root metadata, be it
-		/// a different wing on the root template bird or something entirely unrelated.
-		/// A basic resource is the simplest, lacking a base or composables.
-		///
+		/// A basic resource is the simplest, lacking a Base and anything that comes with it.
 		/// See RMRK docs for more information and examples.
 		///
 		/// # Permissions:
@@ -1211,11 +1244,7 @@ pub mod pallet {
 
 		/// Create and set/propose a composable resource for an NFT.
 		///
-		/// A resource is considered a part of an NFT, an additional piece of metadata
-		/// usually serving to add a piece of media on top of the root metadata, be it
-		/// a different wing on the root template bird or something entirely unrelated.
-		/// A composable resource links to a base and has a subset of its parts it is composed of.
-		///
+		/// A composable resource links to a Base and has a subset of its Parts it is composed of.
 		/// See RMRK docs for more information and examples.
 		///
 		/// # Permissions:
@@ -1277,11 +1306,7 @@ pub mod pallet {
 
 		/// Create and set/propose a slot resource for an NFT.
 		///
-		/// A resource is considered a part of an NFT, an additional piece of metadata
-		/// usually serving to add a piece of media on top of the root metadata, be it
-		/// a different wing on the root template bird or something entirely unrelated.
-		/// A slot resource links to a base and a slot in it which it now occupies.
-		///
+		/// A slot resource links to a Base and a slot ID in it which it can fit into.
 		/// See RMRK docs for more information and examples.
 		///
 		/// # Permissions:
@@ -1575,6 +1600,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Get incremented resource ID from within an NFT's properties and store the new latest ID.
 	/// Thus, the returned resource ID should be used.
+	/// 
+	/// Resource IDs are unique only across an NFT.
 	fn acquire_next_resource_id(
 		collection_id: CollectionId,
 		nft_id: TokenId,
@@ -1693,8 +1720,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Remove one usage of a base from an NFT's property of associated bases. The base will stay, however,
-	/// if the count of resources using the base is still non-zero.
+	/// Remove a Base ID from an NFT if they are associated. 
+	/// The Base itself is deleted if the number of associated NFTs reaches 0.
 	fn remove_associated_base_id(
 		collection_id: CollectionId,
 		nft_id: TokenId,
@@ -1837,9 +1864,9 @@ impl<T: Config> Pallet<T> {
 		Self::decode_property_value(&Self::get_collection_property(collection_id, key)?)
 	}
 
-	/// Get the type of a collection stored in it as a scoped property.
+	/// Get the type of a collection stored as a scoped property.
 	///
-	/// RMRK Core proxy differentiates between regular collections as well as RMRK bases as collections.
+	/// RMRK Core proxy differentiates between regular collections as well as RMRK Bases as collections.
 	pub fn get_collection_type(
 		collection_id: CollectionId,
 	) -> Result<misc::CollectionType, DispatchError> {
@@ -1921,9 +1948,9 @@ impl<T: Config> Pallet<T> {
 		<TokenData<T>>::contains_key((collection_id, nft_id))
 	}
 
-	/// Get the type of an NFT stored in it as a scoped property.
+	/// Get the type of an NFT stored as a scoped property.
 	///
-	/// RMRK Core proxy differentiates between regular NFTs, and RMRK parts and themes.
+	/// RMRK Core proxy differentiates between regular NFTs, and RMRK Parts and Themes.
 	pub fn get_nft_type(
 		collection_id: CollectionId,
 		token_id: TokenId,
@@ -2013,8 +2040,8 @@ impl<T: Config> Pallet<T> {
 			})
 	}
 
-	/// Get all non-scoped properties from a collection or a token, and apply some transformation
-	/// to each key-value pair.
+	/// Get all non-scoped properties from a collection or a token, and apply some transformation,
+	/// supplied by `mapper`, to each key-value pair.
 	pub fn iterate_user_properties<Key, Value, R, Mapper>(
 		collection_id: CollectionId,
 		token_id: Option<TokenId>,

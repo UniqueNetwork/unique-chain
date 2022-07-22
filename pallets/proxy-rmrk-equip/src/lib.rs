@@ -30,7 +30,7 @@
 //! of solutions based on RMRK.
 //!
 //! RMRK Equip itself contains functionality to equip NFTs, and work with Bases,
-//! Parts, and Themes.
+//! Parts, and Themes. See [Proxy Implementation](#proxy-implementation) for details.
 //!
 //! Equip Proxy is responsible for a more specific area of RMRK, and heavily relies on the Core.
 //! For a more foundational description of proxy implementation, please refer to [`pallet_rmrk_core`].
@@ -52,6 +52,42 @@
 //! - FAQ: <https://coda.io/@rmrk/faq>
 //! - Substrate code repository: <https://github.com/rmrk-team/rmrk-substrate>
 //! - RMRK spec repository: <https://github.com/rmrk-team/rmrk-spec>
+//! 
+//! ## Terminology
+//! 
+//! For more information on RMRK, see RMRK's own documentation.
+//! 
+//! ### Intro to RMRK
+//! 
+//! - **Resource:** Additional piece of metadata of an NFT usually serving to add 
+//! a piece of media on top of the root metadata (NFT's own), be it a different wing 
+//! on the root template bird or something entirely unrelated.
+//! 
+//! - **Base:** A list of possible "components" - Parts, a combination of which can 
+//! be appended/equipped to/on an NFT.
+//! 
+//! - **Part:** Something that, together with other Parts, can constitute an NFT. 
+//! Parts are defined in the Base to which they belong. Parts can be either 
+//! of the `slot` type or `fixed` type. Slots are intended for equippables.
+//! Note that "part of something" and "Part of a Base" can be easily confused, 
+//! and in this documentation these words are distinguished by the capital letter.
+//! 
+//! - **Theme:** Named objects of variable => value pairs which get interpolated into 
+//! the Base's `themable` Parts. Themes can hold any value, but are often represented 
+//! in RMRK's examples as colors applied to visible Parts.
+//! 
+//! ### Peculiarities in Unique
+//! 
+//! - **Scoped properties:** Properties that are normally obscured from users. 
+//! Their purpose is to contain structured metadata that was not included in the Unique standard 
+//! for collections and tokens, meant to be operated on by proxies and other outliers. 
+//! Scoped properties are prefixed with `some-scope:`, where `some-scope` is 
+//! an arbitrary keyword, like "rmrk", and `:` is an unacceptable symbol in user-defined 
+//! properties, which, along with other safeguards, makes them impossible to tamper with.
+//! 
+//! - **Auxiliary properties:** A slightly different structure of properties, 
+//! trading universality of use for more convenient storage, writes and access. 
+//! Meant to be inaccessible to end users.
 //!
 //! ## Proxy Implementation
 //!
@@ -77,10 +113,10 @@
 //!
 //! Many of RMRK's native parameters are stored as scoped properties of a collection
 //! or an NFT on the chain. Scoped properties are prefixed with `rmrk:`, where `:`
-//! is an unacceptable symbol in user-defined proeprties, which, along with other safeguards,
+//! is an unacceptable symbol in user-defined properties, which, along with other safeguards,
 //! makes them impossible to tamper with.
 //!
-//! ### Collection and NFT Types
+//! ### Collection and NFT Types, and Base, Parts and Themes Handling
 //!
 //! RMRK introduces the concept of a Base, which is a catalgoue of Parts,
 //! possible components of an NFT. Due to its similarity with the functionality
@@ -134,13 +170,13 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	/// Map of a base ID and a part ID to an NFT in the base collection serving as the part.
+	/// Map of a Base ID and a Part ID to an NFT in the Base collection serving as the Part.
 	#[pallet::storage]
 	#[pallet::getter(fn internal_part_id)]
 	pub type InernalPartId<T: Config> =
 		StorageDoubleMap<_, Twox64Concat, CollectionId, Twox64Concat, RmrkPartId, TokenId>;
 
-	/// Checkmark that a base has a Theme NFT named "default".
+	/// Checkmark that a Base has a Theme NFT named "default".
 	#[pallet::storage]
 	#[pallet::getter(fn base_has_default_theme)]
 	pub type BaseHasDefaultTheme<T: Config> =
@@ -167,17 +203,17 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// No permission to perform action.
 		PermissionError,
-		/// Could not find an ID for a base collection. It is likely there were too many collections created on the chain.
+		/// Could not find an ID for a Base collection. It is likely there were too many collections created on the chain, causing an overflow.
 		NoAvailableBaseId,
-		/// Could not find a suitable ID for a part, likely too many part tokens were created in the base.
+		/// Could not find a suitable ID for a Part, likely too many Part tokens were created in the Base, causing an overflow
 		NoAvailablePartId,
 		/// Base collection linked to this ID does not exist.
 		BaseDoesntExist,
-		/// No theme named "default" is associated with the Base.
+		/// No Theme named "default" is associated with the Base.
 		NeedsDefaultThemeFirst,
 		/// Part linked to this ID does not exist.
 		PartDoesntExist,
-		/// Cannot assign equippables to a fixed part.
+		/// Cannot assign equippables to a fixed Part.
 		NoEquippableOnFixedPart,
 	}
 
@@ -185,15 +221,15 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Create a new Base.
 		///
-		/// Modeled after the [base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+		/// Modeled after the [Base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
 		///
 		/// # Permissions
-		/// - Anyone - will be assigned as the issuer of the base.
+		/// - Anyone - will be assigned as the issuer of the Base.
 		///
 		/// # Arguments:
 		/// - `base_type`: Arbitrary media type, e.g. "svg".
 		/// - `symbol`: Arbitrary client-chosen symbol.
-		/// - `parts`: Array of Fixed and Slot parts composing the base,
+		/// - `parts`: Array of Fixed and Slot Parts composing the Base,
 		/// confined in length by [`RmrkPartsLimit`](up_data_structs::RmrkPartsLimit).
 		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
@@ -254,7 +290,7 @@ pub mod pallet {
 		/// Add a Theme to a Base.
 		/// A Theme named "default" is required prior to adding other Themes.
 		///
-		/// Modeled after [themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md).
+		/// Modeled after [Themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md).
 		///
 		/// # Permissions:
 		/// - Base issuer
@@ -379,8 +415,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// Create or renew an NFT serving as a part, setting its properties
-	/// to those of the part.
+	/// Create or renew an NFT serving as a Part.
 	fn create_part(
 		sender: &T::CrossAccountId,
 		collection: &NonfungibleHandle<T>,
@@ -444,7 +479,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Ensure that the collection under the base ID is a base collection,
+	/// Ensure that the collection under the Base ID is a Base collection,
 	/// and fetch it.
 	fn get_base(base_id: CollectionId) -> Result<NonfungibleHandle<T>, DispatchError> {
 		let collection =

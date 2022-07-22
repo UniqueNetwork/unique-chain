@@ -224,7 +224,7 @@ pub fn nft_properties<T: Config>(
 	Ok(properties)
 }
 
-/// Get data of resources of an NFT.
+/// Get full information on each resource of an NFT, including pending.
 pub fn nft_resources<T: Config>(
 	collection_id: RmrkCollectionId,
 	nft_id: RmrkNftId,
