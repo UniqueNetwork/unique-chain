@@ -87,30 +87,35 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{ensure, fail, BoundedVec, transactional, storage::with_transaction};
-use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, MAX_REFUNGIBLE_PIECES, TokenId,
-	CreateCollectionData, CreateRefungibleExData, mapping::TokenAddressMapping, budget::Budget,
-	Property, PropertyScope, TrySetProperty, PropertyKey, PropertyValue, PropertyPermission,
-	PropertyKeyPermission,
-};
-use pallet_evm::account::CrossAccountId;
+use crate::erc_token::ERC20Events;
+
+use codec::{Encode, Decode, MaxEncodedLen};
+use core::ops::Deref;
+use evm_coder::ToLog;
+use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transactional};
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
+use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
-	CommonCollectionOperations as _,
+	CommonCollectionOperations, Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
+use scale_info::TypeInfo;
+use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
-use core::ops::Deref;
-use codec::{Encode, Decode, MaxEncodedLen};
-use scale_info::TypeInfo;
+use up_data_structs::{
+	AccessMode, budget::Budget, CollectionId, CreateCollectionData, CreateRefungibleExData,
+	CustomDataLimit, mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, TokenId, Property,
+	PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	TrySetProperty,
+};
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
 pub mod erc;
+pub mod erc_token;
 pub mod weights;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
@@ -271,12 +276,25 @@ impl<T: Config> RefungibleHandle<T> {
 	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
 		self.0
 	}
+	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
+		&mut self.0
+	}
 }
+
 impl<T: Config> Deref for RefungibleHandle<T> {
 	type Target = pallet_common::CollectionHandle<T>;
 
 	fn deref(&self) -> &Self::Target {
 		&self.0
+	}
+}
+
+impl<T: Config> WithRecorder<T> for RefungibleHandle<T> {
+	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
+		self.0.recorder()
+	}
+	fn into_recorder(self) -> pallet_evm_coder_substrate::SubstrateRecorder<T> {
+		self.0.into_recorder()
 	}
 }
 
@@ -460,7 +478,18 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::insert((collection.id, token, owner), balance);
 		}
 		<TotalSupply<T>>::insert((collection.id, token), total_supply);
-		// TODO: ERC20 transfer event
+
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				value: amount.into(),
+			}
+			.to_log(T::EvmTokenAddressMapping::token_to_address(
+				collection.id,
+				token,
+			)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
 			token,
@@ -736,7 +765,17 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		// TODO: ERC20 transfer event
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *from.as_eth(),
+				to: *to.as_eth(),
+				value: amount.into(),
+			}
+			.to_log(T::EvmTokenAddressMapping::token_to_address(
+				collection.id,
+				token,
+			)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Transfer(
 			collection.id,
 			token,
@@ -889,7 +928,17 @@ impl<T: Config> Pallet<T> {
 					continue;
 				}
 
-				// TODO: ERC20 transfer event
+				<PalletEvm<T>>::deposit_log(
+					ERC20Events::Transfer {
+						from: H160::default(),
+						to: *user.as_eth(),
+						value: amount.into(),
+					}
+					.to_log(T::EvmTokenAddressMapping::token_to_address(
+						collection.id,
+						TokenId(token_id),
+					)),
+				);
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,
 					TokenId(token_id),
@@ -913,7 +962,18 @@ impl<T: Config> Pallet<T> {
 		} else {
 			<Allowance<T>>::insert((collection.id, token, sender, spender), amount);
 		}
-		// TODO: ERC20 approval event
+
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Approval {
+				owner: *sender.as_eth(),
+				spender: *spender.as_eth(),
+				value: amount.into(),
+			}
+			.to_log(T::EvmTokenAddressMapping::token_to_address(
+				collection.id,
+				token,
+			)),
+		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::Approved(
 			collection.id,
 			token,
@@ -1091,6 +1151,47 @@ impl<T: Config> Pallet<T> {
 
 		<Balance<T>>::insert((collection.id, token, owner), amount);
 		<TotalSupply<T>>::insert((collection.id, token), amount);
+
+		if amount > total_pieces {
+			let mint_amount = amount - total_pieces;
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: H160::default(),
+					to: *owner.as_eth(),
+					value: mint_amount.into(),
+				}
+				.to_log(T::EvmTokenAddressMapping::token_to_address(
+					collection.id,
+					token,
+				)),
+			);
+			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
+				collection.id,
+				token,
+				owner.clone(),
+				mint_amount,
+			));
+		} else if total_pieces > amount {
+			let burn_amount = total_pieces - amount;
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: *owner.as_eth(),
+					to: H160::default(),
+					value: burn_amount.into(),
+				}
+				.to_log(T::EvmTokenAddressMapping::token_to_address(
+					collection.id,
+					token,
+				)),
+			);
+			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
+				collection.id,
+				token,
+				owner.clone(),
+				burn_amount,
+			));
+		}
+
 		Ok(())
 	}
 
