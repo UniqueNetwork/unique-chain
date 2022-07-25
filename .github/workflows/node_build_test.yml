@@ -65,19 +65,15 @@ jobs:
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-        with:
+        #with:
           #repository: ${{ src_repo_url }}
-          path: ${{ env.opal_chain_workdir }}
+          #path: ${{ env.opal_chain_workdir }}
 
-      - name: Build docker
-        run: |
-          echo ---Building and starting up docker---
-          docker-compose -f ./${env.GITHUB_REPOSITORY}/docker-compose-tests-parachain.yml -p testing up -d
-
+      - name: Build the stack
+        run: docker-compose -f docker-compose.test-github.yml up -d --build
 
   #    - name: Run test
   #      run: |
   #        echo --- Running test cases ---
   #        docker-compose -f ./<REPO_NAME>/docker-compose.test-github.yml -p testing up --build --exit-code-from api-test
   #        echo --- Completed test cases ---
-
