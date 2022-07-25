@@ -88,6 +88,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::erc_token::ERC20Events;
+use crate::erc::ERC721Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
@@ -96,7 +97,8 @@ use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transac
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CommonCollectionOperations, Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
+	CommonCollectionOperations, Error as CommonError, Event as CommonEvent,
+	eth::collection_id_to_address, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
 use scale_info::TypeInfo;
@@ -117,6 +119,9 @@ pub mod common;
 pub mod erc;
 pub mod erc_token;
 pub mod weights;
+
+pub type CreateItemData<T> =
+	CreateRefungibleExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
@@ -779,6 +784,7 @@ impl<T: Config> Pallet<T> {
 				token,
 			)),
 		);
+
 		<PalletCommon<T>>::deposit_event(CommonEvent::Transfer(
 			collection.id,
 			token,
@@ -797,7 +803,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateRefungibleExData<T::CrossAccountId>>,
+		data: Vec<CreateItemData<T>>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
@@ -941,6 +947,14 @@ impl<T: Config> Pallet<T> {
 						collection.id,
 						TokenId(token_id),
 					)),
+				);
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: H160::default(),
+						to: *user.as_eth(),
+						token_id: token_id.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
 				);
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,
@@ -1120,7 +1134,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateRefungibleExData<T::CrossAccountId>,
+		data: CreateItemData<T>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)

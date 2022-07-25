@@ -348,103 +348,259 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     rmrkCore: {
       /**
-       * Accepts an NFT sent from another account to self or owned NFT
+       * Accept an NFT sent from another account to self or an owned NFT.
        * 
-       * Parameters:
-       * - `origin`: sender of the transaction
-       * - `rmrk_collection_id`: collection id of the nft to be accepted
-       * - `rmrk_nft_id`: nft id of the nft to be accepted
-       * - `new_owner`: either origin's account ID or origin-owned NFT, whichever the NFT was
-       * sent to
+       * The NFT in question must be pending, and, thus, be [sent](`Pallet::send`) first.
+       * 
+       * # Permissions:
+       * - Token-owner-to-be
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT to be accepted.
+       * - `rmrk_nft_id`: ID of the NFT to be accepted.
+       * - `new_owner`: Either the sender's account ID or a sender-owned NFT,
+       * whichever the accepted NFT was sent to.
        **/
       acceptNft: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
       /**
-       * accept the addition of a new resource to an existing NFT
+       * Accept the addition of a newly created pending resource to an existing NFT.
+       * 
+       * This transaction is needed when a resource is created and assigned to an NFT
+       * by a non-owner, i.e. the collection issuer, with one of the
+       * [`add_...` transactions](Pallet::add_basic_resource).
+       * 
+       * # Permissions:
+       * - Token owner
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT.
+       * - `rmrk_nft_id`: ID of the NFT with a pending resource to be accepted.
+       * - `resource_id`: ID of the newly created pending resource.
        **/
       acceptResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
       /**
-       * accept the removal of a resource of an existing NFT
+       * Accept the removal of a removal-pending resource from an NFT.
+       * 
+       * This transaction is needed when a non-owner, i.e. the collection issuer,
+       * requests a [removal](`Pallet::remove_resource`) of a resource from an NFT.
+       * 
+       * # Permissions:
+       * - Token owner
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT.
+       * - `rmrk_nft_id`: ID of the NFT with a resource to be removed.
+       * - `resource_id`: ID of the removal-pending resource.
        **/
       acceptResourceRemoval: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
       /**
-       * Create basic resource
+       * Create and set/propose a basic resource for an NFT.
+       * 
+       * A basic resource is the simplest, lacking a Base and anything that comes with it.
+       * See RMRK docs for more information and examples.
+       * 
+       * # Permissions:
+       * - Collection issuer - if not the token owner, adding the resource will warrant
+       * the owner's [acceptance](Pallet::accept_resource).
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT.
+       * - `nft_id`: ID of the NFT to assign a resource to.
+       * - `resource`: Data of the resource to be created.
        **/
       addBasicResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceBasicResource | { src?: any; metadata?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceBasicResource]>;
       /**
-       * Create composable resource
+       * Create and set/propose a composable resource for an NFT.
+       * 
+       * A composable resource links to a Base and has a subset of its Parts it is composed of.
+       * See RMRK docs for more information and examples.
+       * 
+       * # Permissions:
+       * - Collection issuer - if not the token owner, adding the resource will warrant
+       * the owner's [acceptance](Pallet::accept_resource).
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT.
+       * - `nft_id`: ID of the NFT to assign a resource to.
+       * - `resource`: Data of the resource to be created.
        **/
       addComposableResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceComposableResource | { parts?: any; base?: any; src?: any; metadata?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceComposableResource]>;
       /**
-       * Create slot resource
+       * Create and set/propose a slot resource for an NFT.
+       * 
+       * A slot resource links to a Base and a slot ID in it which it can fit into.
+       * See RMRK docs for more information and examples.
+       * 
+       * # Permissions:
+       * - Collection issuer - if not the token owner, adding the resource will warrant
+       * the owner's [acceptance](Pallet::accept_resource).
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT.
+       * - `nft_id`: ID of the NFT to assign a resource to.
+       * - `resource`: Data of the resource to be created.
        **/
       addSlotResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resource: RmrkTraitsResourceSlotResource | { base?: any; src?: any; metadata?: any; slot?: any; license?: any; thumb?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsResourceSlotResource]>;
       /**
-       * burn nft
+       * Burn an NFT, destroying it and its nested tokens up to the specified limit.
+       * If the burning budget is exceeded, the transaction is reverted.
+       * 
+       * This is the way to burn a nested token as well.
+       * 
+       * For more information, see [`burn_recursively`](pallet_nonfungible::pallet::Pallet::burn_recursively).
+       * 
+       * # Permissions:
+       * * Token owner
+       * 
+       * # Arguments:
+       * - `collection_id`: RMRK ID of the collection in which the NFT to burn belongs to.
+       * - `nft_id`: ID of the NFT to be destroyed.
+       * - `max_burns`: Maximum number of tokens to burn, assuming nesting. The transaction
+       * is reverted if there are more tokens to burn in the nesting tree than this number.
+       * This is primarily a mechanism of transaction weight control.
        **/
       burnNft: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, maxBurns: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
       /**
-       * Change the issuer of a collection
+       * Change the issuer of a collection. Analogous to Unique's collection's [`owner`](up_data_structs::Collection).
        * 
-       * Parameters:
-       * - `origin`: sender of the transaction
-       * - `collection_id`: collection id of the nft to change issuer of
-       * - `new_issuer`: Collection's new issuer
+       * # Permissions:
+       * * Collection issuer
+       * 
+       * # Arguments:
+       * - `collection_id`: RMRK collection ID to change the issuer of.
+       * - `new_issuer`: Collection's new issuer.
        **/
       changeCollectionIssuer: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newIssuer: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, MultiAddress]>;
       /**
-       * Create a collection
+       * Create a new collection of NFTs.
+       * 
+       * # Permissions:
+       * * Anyone - will be assigned as the issuer of the collection.
+       * 
+       * # Arguments:
+       * - `metadata`: Metadata describing the collection, e.g. IPFS hash. Cannot be changed.
+       * - `max`: Optional maximum number of tokens.
+       * - `symbol`: UTF-8 string with token prefix, by which to represent the token in wallets and UIs.
+       * Analogous to Unique's [`token_prefix`](up_data_structs::Collection). Cannot be changed.
        **/
       createCollection: AugmentedSubmittable<(metadata: Bytes | string | Uint8Array, max: Option<u32> | null | object | string | Uint8Array, symbol: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, Option<u32>, Bytes]>;
       /**
-       * destroy collection
+       * Destroy a collection.
+       * 
+       * Only empty collections can be destroyed. If it has any tokens, they must be burned first.
+       * 
+       * # Permissions:
+       * * Collection issuer
+       * 
+       * # Arguments:
+       * - `collection_id`: RMRK ID of the collection to destroy.
        **/
       destroyCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**
-       * lock collection
+       * "Lock" the collection and prevent new token creation. Cannot be undone.
+       * 
+       * # Permissions:
+       * * Collection issuer
+       * 
+       * # Arguments:
+       * - `collection_id`: RMRK ID of the collection to lock.
        **/
       lockCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**
-       * Mints an NFT in the specified collection
-       * Sets metadata and the royalty attribute
+       * Mint an NFT in a specified collection.
        * 
-       * Parameters:
-       * - `collection_id`: The class of the asset to be minted.
-       * - `nft_id`: The nft value of the asset to be minted.
-       * - `recipient`: Receiver of the royalty
-       * - `royalty`: Permillage reward from each trade for the Recipient
-       * - `metadata`: Arbitrary data about an nft, e.g. IPFS hash
-       * - `transferable`: Ability to transfer this NFT
+       * # Permissions:
+       * * Collection issuer
+       * 
+       * # Arguments:
+       * - `owner`: Owner account of the NFT. If set to None, defaults to the sender (collection issuer).
+       * - `collection_id`: RMRK collection ID for the NFT to be minted within. Cannot be changed.
+       * - `recipient`: Receiver account of the royalty. Has no effect if the `royalty_amount` is not set. Cannot be changed.
+       * - `royalty_amount`: Optional permillage reward from each trade for the `recipient`. Cannot be changed.
+       * - `metadata`: Arbitrary data about an NFT, e.g. IPFS hash. Cannot be changed.
+       * - `transferable`: Can this NFT be transferred? Cannot be changed.
+       * - `resources`: Resource data to be added to the NFT immediately after minting.
        **/
       mintNft: AugmentedSubmittable<(owner: Option<AccountId32> | null | object | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, recipient: Option<AccountId32> | null | object | string | Uint8Array, royaltyAmount: Option<Permill> | null | object | string | Uint8Array, metadata: Bytes | string | Uint8Array, transferable: bool | boolean | Uint8Array, resources: Option<Vec<RmrkTraitsResourceResourceTypes>> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, u32, Option<AccountId32>, Option<Permill>, Bytes, bool, Option<Vec<RmrkTraitsResourceResourceTypes>>]>;
       /**
-       * Rejects an NFT sent from another account to self or owned NFT
+       * Reject an NFT sent from another account to self or owned NFT.
+       * The NFT in question will not be sent back and burnt instead.
        * 
-       * Parameters:
-       * - `origin`: sender of the transaction
-       * - `rmrk_collection_id`: collection id of the nft to be accepted
-       * - `rmrk_nft_id`: nft id of the nft to be accepted
+       * The NFT in question must be pending, and, thus, be [sent](`Pallet::send`) first.
+       * 
+       * # Permissions:
+       * - Token-owner-to-be-not
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK ID of the NFT to be rejected.
+       * - `rmrk_nft_id`: ID of the NFT to be rejected.
        **/
       rejectNft: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32]>;
       /**
-       * remove resource
+       * Remove and erase a resource from an NFT.
+       * 
+       * If the sender does not own the NFT, then it will be pending confirmation,
+       * and will have to be [accepted](Pallet::accept_resource_removal) by the token owner.
+       * 
+       * # Permissions
+       * - Collection issuer
+       * 
+       * # Arguments
+       * - `collection_id`: RMRK ID of a collection to which the NFT making use of the resource belongs to.
+       * - `nft_id`: ID of the NFT with a resource to be removed.
+       * - `resource_id`: ID of the resource to be removed.
        **/
       removeResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, nftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
       /**
-       * Transfers a NFT from an Account or NFT A to another Account or NFT B
+       * Transfer an NFT from an account/NFT A to another account/NFT B.
+       * The token must be transferable. Nesting cannot occur deeper than the [`NESTING_BUDGET`].
        * 
-       * Parameters:
-       * - `origin`: sender of the transaction
-       * - `rmrk_collection_id`: collection id of the nft to be transferred
-       * - `rmrk_nft_id`: nft id of the nft to be transferred
-       * - `new_owner`: new owner of the nft which can be either an account or a NFT
+       * If the target owner is an NFT owned by another account, then the NFT will enter
+       * the pending state and will have to be accepted by the other account.
+       * 
+       * # Permissions:
+       * - Token owner
+       * 
+       * # Arguments:
+       * - `collection_id`: RMRK ID of the collection of the NFT to be transferred.
+       * - `nft_id`: ID of the NFT to be transferred.
+       * - `new_owner`: New owner of the nft which can be either an account or a NFT.
        **/
       send: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
       /**
-       * set a different order of resource priority
+       * Set a different order of resource priorities for an NFT. Priorities can be used,
+       * for example, for order of rendering.
+       * 
+       * Note that the priorities are not updated automatically, and are an empty vector
+       * by default. There is no pre-set definition for the order to be particular,
+       * it can be interpreted arbitrarily use-case by use-case.
+       * 
+       * # Permissions:
+       * - Token owner
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID of the NFT.
+       * - `rmrk_nft_id`: ID of the NFT to rearrange resource priorities for.
+       * - `priorities`: Ordered vector of resource IDs.
        **/
       setPriority: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, priorities: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [u32, u32, Vec<u32>]>;
       /**
-       * set a custom value on an NFT
+       * Add or edit a custom user property, a key-value pair, describing the metadata
+       * of a token or a collection, on either one of these.
+       * 
+       * Note that in this proxy implementation many details regarding RMRK are stored
+       * as scoped properties prefixed with "rmrk:", normally inaccessible
+       * to external transactions and RPCs.
+       * 
+       * # Permissions:
+       * - Collection issuer - in case of collection property
+       * - Token owner - in case of NFT property
+       * 
+       * # Arguments:
+       * - `rmrk_collection_id`: RMRK collection ID.
+       * - `maybe_nft_id`: Optional ID of the NFT. If left empty, then the property is set for the collection.
+       * - `key`: Key of the custom property to be referenced by.
+       * - `value`: Value of the custom property to be stored.
        **/
       setProperty: AugmentedSubmittable<(rmrkCollectionId: Compact<u32> | AnyNumber | Uint8Array, maybeNftId: Option<u32> | null | object | string | Uint8Array, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, Option<u32>, Bytes, Bytes]>;
       /**
@@ -454,32 +610,50 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     rmrkEquip: {
       /**
-       * Creates a new Base.
-       * Modeled after [base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+       * Create a new Base.
        * 
-       * Parameters:
-       * - origin: Caller, will be assigned as the issuer of the Base
-       * - base_type: media type, e.g. "svg"
-       * - symbol: arbitrary client-chosen symbol
-       * - parts: array of Fixed and Slot parts composing the base, confined in length by
-       * RmrkPartsLimit
+       * Modeled after the [Base interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/base.md)
+       * 
+       * # Permissions
+       * - Anyone - will be assigned as the issuer of the Base.
+       * 
+       * # Arguments:
+       * - `base_type`: Arbitrary media type, e.g. "svg".
+       * - `symbol`: Arbitrary client-chosen symbol.
+       * - `parts`: Array of Fixed and Slot Parts composing the Base,
+       * confined in length by [`RmrkPartsLimit`](up_data_structs::RmrkPartsLimit).
        **/
       createBase: AugmentedSubmittable<(baseType: Bytes | string | Uint8Array, symbol: Bytes | string | Uint8Array, parts: Vec<RmrkTraitsPartPartType> | (RmrkTraitsPartPartType | { FixedPart: any } | { SlotPart: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Bytes, Bytes, Vec<RmrkTraitsPartPartType>]>;
+      /**
+       * Update the array of Collections allowed to be equipped to a Base's specified Slot Part.
+       * 
+       * Modeled after [equippable interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/equippable.md).
+       * 
+       * # Permissions:
+       * - Base issuer
+       * 
+       * # Arguments:
+       * - `base_id`: Base containing the Slot Part to be updated.
+       * - `part_id`: Slot Part whose Equippable List is being updated.
+       * - `equippables`: List of equippables that will override the current Equippables list.
+       **/
       equippable: AugmentedSubmittable<(baseId: u32 | AnyNumber | Uint8Array, slotId: u32 | AnyNumber | Uint8Array, equippables: RmrkTraitsPartEquippableList | { All: any } | { Empty: any } | { Custom: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsPartEquippableList]>;
       /**
-       * Adds a Theme to a Base.
-       * Modeled after [themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md)
-       * Themes are stored in the Themes storage
+       * Add a Theme to a Base.
        * A Theme named "default" is required prior to adding other Themes.
        * 
-       * Parameters:
-       * - origin: The caller of the function, must be issuer of the base
-       * - base_id: The Base containing the Theme to be updated
-       * - theme: The Theme to add to the Base.  A Theme has a name and properties, which are an
+       * Modeled after [Themeadd interaction](https://github.com/rmrk-team/rmrk-spec/blob/master/standards/rmrk2.0.0/interactions/themeadd.md).
+       * 
+       * # Permissions:
+       * - Base issuer
+       * 
+       * # Arguments:
+       * - `base_id`: Base ID containing the Theme to be updated.
+       * - `theme`: Theme to add to the Base.  A Theme has a name and properties, which are an
        * array of [key, value, inherit].
-       * - key: arbitrary BoundedString, defined by client
-       * - value: arbitrary BoundedString, defined by client
-       * - inherit: optional bool
+       * - `key`: Arbitrary BoundedString, defined by client.
+       * - `value`: Arbitrary BoundedString, defined by client.
+       * - `inherit`: Optional bool.
        **/
       themeAdd: AugmentedSubmittable<(baseId: u32 | AnyNumber | Uint8Array, theme: RmrkTraitsTheme | { name?: any; properties?: any; inherit?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, RmrkTraitsTheme]>;
       /**

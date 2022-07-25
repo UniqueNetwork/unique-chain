@@ -15,8 +15,9 @@ REFUNGIBLE_EVM_ABI=./tests/src/eth/refungibleAbi.json
 NONFUNGIBLE_EVM_STUBS=./pallets/nonfungible/src/stubs
 NONFUNGIBLE_EVM_ABI=./tests/src/eth/nonFungibleAbi.json
 
-RENFUNGIBLE_EVM_ABI=./tests/src/eth/reFungibleAbi.json
-RENFUNGIBLE_TOKEN_EVM_ABI=./tests/src/eth/reFungibleTokenAbi.json
+REFUNGIBLE_EVM_STUBS=./pallets/refungible/src/stubs
+REFUNGIBLE_EVM_ABI=./tests/src/eth/reFungibleAbi.json
+REFUNGIBLE_TOKEN_EVM_ABI=./tests/src/eth/reFungibleTokenAbi.json
 
 CONTRACT_HELPERS_STUBS=./pallets/evm-contract-helpers/src/stubs/
 CONTRACT_HELPERS_ABI=./tests/src/eth/util/contractHelpersAbi.json
@@ -36,6 +37,10 @@ UniqueFungible.sol:
 UniqueNFT.sol:
 	PACKAGE=pallet-nonfungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
 	PACKAGE=pallet-nonfungible NAME=erc::gen_impl OUTPUT=$(NONFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+
+UniqueRefungible.sol:
+	PACKAGE=pallet-refungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-refungible NAME=erc::gen_impl OUTPUT=$(REFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 	
 UniqueRefungible.sol:
 	PACKAGE=pallet-refungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
@@ -61,9 +66,13 @@ UniqueNFT: UniqueNFT.sol
 	INPUT=$(NONFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(NONFUNGIBLE_EVM_STUBS)/UniqueNFT.raw ./.maintain/scripts/compile_stub.sh
 	INPUT=$(NONFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(NONFUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh
 
+UniqueRefungible: UniqueRefungible.sol
+	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_STUBS)/UniqueRefungible.raw ./.maintain/scripts/compile_stub.sh
+	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh
+
 UniqueRefungibleToken: UniqueRefungibleToken.sol
 	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_STUBS)/UniqueRefungibleToken.raw ./.maintain/scripts/compile_stub.sh
-	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(RENFUNGIBLE_TOKEN_EVM_ABI) ./.maintain/scripts/generate_abi.sh
+	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_TOKEN_EVM_ABI) ./.maintain/scripts/generate_abi.sh
 
 UniqueRefungible: UniqueRefungible.sol
 	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_STUBS)/UniqueRefungible.raw ./.maintain/scripts/compile_stub.sh
