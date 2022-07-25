@@ -2,25 +2,12 @@
 FROM phusion/baseimage:focal-1.1.0 as rust-builder
 LABEL maintainer="Unique.Network"
 
-ARG RUST_TOOLCHAIN=nightly-2022-05-11
-#ARG RUST_C=1.62.0-nightly
+ARG RUST_TOOLCHAIN={{ actual_toolchain }}
 ARG POLKA_VERSION=release-v0.9.24
-ARG UNIQUE_BRANCH=develop
-
-#ARG USER=***
-#ARG PASS=***
 
 
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
-#ENV RUST_C $RUST_C
 ENV POLKA_VERSION $POLKA_VERSION
-ENV UNIQUE_BRANCH $UNIQUE_BRANCH
-
-
-#RUN echo $RUST_TOOLCHAIN
-#RUN echo $RUST_C
-#RUN echo $POLKA_VERSION
-#RUN echo $UNIQUE_BRANCH
 
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
@@ -38,29 +25,19 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN cargo install cargo-chef
+####works inside repo folder###
 
-RUN mkdir unique_parachain
-WORKDIR /unique_parachain
-
-# ===== Chef =====
-FROM rust-builder as chef
-
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
 
 # ===== BUILD ======
-FROM rust-builder as builder
+FROM rust-builder as builder-unique
 
 RUN mkdir unique_parachain
 WORKDIR /unique_parachain
 
-COPY --from=chef /unique_parachain/recipe.json recipe.json
-ARG PROFILE=release
-RUN cargo chef cook "--$PROFILE" --recipe-path recipe.json
+ARG PROFILE='features=quartz-runtime --release'
 
 COPY . .
-RUN cargo build "--$PROFILE"
+RUN cargo build --features=quartz-runtime --release
    # && \
    # cargo test
 
@@ -79,7 +56,7 @@ RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot
 
 FROM phusion/baseimage:focal-1.1.0
 
-ARG PROFILE=release
+#ARG PROFILE='--features=quartz-runtime --release'
 
 RUN apt-get -y update && \
       apt-get -y upgrade && \
@@ -90,7 +67,9 @@ RUN apt-get -y update && \
       nvm install v15.5.0 && \
       nvm use v15.5.0
 
-RUN git clone https://github.com/paritytech/polkadot-launch
+RUN git clone https://github.com/UniqueNetwork/polkadot-launch.git && \
+    cd ./polkadot-launch && \
+    git checkout feature/runtime-upgrade-testing
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -98,8 +77,18 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn
 
-COPY --from=builder /unique_parachain/target/$PROFILE/unique-collator /unique-chain/target/$PROFILE/
-COPY --from=builder-polkadot /unique_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
+COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+
+COPY ["./launch-config.json", "/polkadot-launch/launch-config.json"]
+
+
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9933
+EXPOSE 9833
+EXPOSE 40333
+EXPOSE 30333
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
