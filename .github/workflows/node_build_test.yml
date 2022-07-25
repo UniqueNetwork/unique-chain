@@ -83,7 +83,9 @@ jobs:
           yarn install
 
       - name: Run tests
-        run: yarn testNesting
+        run: |
+          cd tests
+          yarn testNesting
 
       - name: Stop containers
         if: always()
