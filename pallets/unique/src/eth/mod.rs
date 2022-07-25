@@ -237,6 +237,33 @@ where
 		Ok(address)
 	}
 
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
+	fn create_refungible_collection_with_properties(
+		&mut self,
+		caller: caller,
+		name: string,
+		description: string,
+		token_prefix: string,
+		base_uri: string,
+	) -> Result<address> {
+		let (caller, name, description, token_prefix, base_uri_value) =
+			convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
+		let data = make_data::<T>(
+			name,
+			CollectionMode::NFT,
+			description,
+			token_prefix,
+			base_uri_value,
+			true,
+		)?;
+		let collection_id = <pallet_refungible::Pallet<T>>::init_collection(caller.clone(), data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+
+		let address = pallet_common::eth::collection_id_to_address(collection_id);
+		Ok(address)
+	}
+
 	/// Check if a collection exists
 	/// @param collection_address Address of the collection in question
 	/// @return bool Does the collection exist?
