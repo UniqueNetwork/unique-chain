@@ -28,7 +28,10 @@ use up_data_structs::{
 use frame_support::traits::Get;
 use pallet_common::{
 	CollectionById,
-	erc::{static_property::{key, value as property_value}, CollectionHelpersEvents},
+	erc::{
+		static_property::{key, value as property_value},
+		CollectionHelpersEvents,
+	},
 };
 use crate::{SelfWeightOf, Config, weights::WeightInfo};
 
