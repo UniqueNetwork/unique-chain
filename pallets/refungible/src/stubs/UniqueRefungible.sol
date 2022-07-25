@@ -248,4 +248,4 @@ contract Collection is Dummy, ERC165 {
 	}
 }
 
-contract UniqueRFT is Dummy, ERC165, Collection {}
+contract UniqueRefungible is Dummy, ERC165, Collection {}

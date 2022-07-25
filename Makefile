@@ -37,7 +37,7 @@ UniqueNFT.sol:
 	PACKAGE=pallet-nonfungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
 	PACKAGE=pallet-nonfungible NAME=erc::gen_impl OUTPUT=$(NONFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 	
-UniqueRFT.sol:
+UniqueRefungible.sol:
 	PACKAGE=pallet-refungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
 	PACKAGE=pallet-refungible NAME=erc::gen_impl OUTPUT=$(REFUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
@@ -65,8 +65,8 @@ UniqueRefungibleToken: UniqueRefungibleToken.sol
 	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_STUBS)/UniqueRefungibleToken.raw ./.maintain/scripts/compile_stub.sh
 	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(RENFUNGIBLE_TOKEN_EVM_ABI) ./.maintain/scripts/generate_abi.sh
 
-UniqueRefungible: UniqueRFT.sol
-	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_STUBS)/UniqueRFT.raw ./.maintain/scripts/compile_stub.sh
+UniqueRefungible: UniqueRefungible.sol
+	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_STUBS)/UniqueRefungible.raw ./.maintain/scripts/compile_stub.sh
 	INPUT=$(REFUNGIBLE_EVM_STUBS)/$< OUTPUT=$(REFUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh
 
 ContractHelpers: ContractHelpers.sol

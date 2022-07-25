@@ -430,7 +430,8 @@ fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	Ok(())
 }
 
-pub mod static_property_key_value {
+/// Contains static property keys and values.
+pub mod static_property {
 	use evm_coder::{
 		execution::{Result, Error},
 	};
@@ -438,27 +439,45 @@ pub mod static_property_key_value {
 
 	const EXPECT_CONVERT_ERROR: &str = "length < limit";
 
-	pub fn schema_name_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
+	/// Keys.
+	pub mod key {
+		use super::*;
+
+		/// Key "schemaName".
+		pub fn schema_name() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "baseURI".
+		pub fn base_uri() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "url".
+		pub fn url() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "suffix".
+		pub fn suffix() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
+		}
 	}
 
-	pub fn base_uri_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
+	/// Values.
+	pub mod value {
+		use super::*;
+
+		/// Value "ERC721Metadata".
+		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
+
+		/// Value for [`ERC721_METADATA`].
+		pub fn erc721() -> up_data_structs::PropertyValue {
+			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
+		}
 	}
 
-	pub fn url_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
-	}
-
-	pub fn suffix_key() -> up_data_structs::PropertyKey {
-		property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
-	}
-
-	pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
-	pub fn erc721_value() -> up_data_structs::PropertyValue {
-		property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
-	}
-
+	/// Convert `byte` to [`PropertyKey`].
 	pub fn property_key_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyKey> {
 		bytes.to_vec().try_into().map_err(|_| {
 			Error::Revert(format!(
@@ -468,6 +487,7 @@ pub mod static_property_key_value {
 		})
 	}
 
+	/// Convert `bytes` to [`PropertyValue`].
 	pub fn property_value_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyValue> {
 		bytes.to_vec().try_into().map_err(|_| {
 			Error::Revert(format!(

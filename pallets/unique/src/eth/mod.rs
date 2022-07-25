@@ -28,7 +28,7 @@ use up_data_structs::{
 use frame_support::traits::Get;
 use pallet_common::{
 	CollectionById,
-	erc::{static_property_key_value::*, CollectionHelpersEvents},
+	erc::{static_property::{key, value as property_value}, CollectionHelpersEvents},
 };
 use crate::{SelfWeightOf, Config, weights::WeightInfo};
 
@@ -83,7 +83,6 @@ fn convert_data<T: Config>(
 	Ok((caller, name, description, token_prefix, base_uri_value))
 }
 
-//
 fn make_data<T: Config>(
 	name: CollectionName,
 	mode: CollectionMode,
@@ -98,7 +97,7 @@ fn make_data<T: Config>(
 
 	token_property_permissions
 		.try_push(up_data_structs::PropertyKeyPermission {
-			key: url_key(),
+			key: key::url(),
 			permission: up_data_structs::PropertyPermission {
 				mutable: false,
 				collection_admin: true,
@@ -110,7 +109,7 @@ fn make_data<T: Config>(
 	if add_properties {
 		token_property_permissions
 			.try_push(up_data_structs::PropertyKeyPermission {
-				key: suffix_key(),
+				key: key::suffix(),
 				permission: up_data_structs::PropertyPermission {
 					mutable: false,
 					collection_admin: true,
@@ -121,15 +120,15 @@ fn make_data<T: Config>(
 
 		properties
 			.try_push(up_data_structs::Property {
-				key: schema_name_key(),
-				value: erc721_value(),
+				key: key::schema_name(),
+				value: property_value::erc721(),
 			})
 			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 
 		if !base_uri_value.is_empty() {
 			properties
 				.try_push(up_data_structs::Property {
-					key: base_uri_key(),
+					key: key::base_uri(),
 					value: base_uri_value,
 				})
 				.map_err(|e| Error::Revert(format!("{:?}", e)))?;
@@ -152,7 +151,7 @@ fn make_data<T: Config>(
 #[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
 impl<T> EvmCollectionHelpers<T>
 where
-	T: Config + pallet_nonfungible::Config + pallet_refungible::Config 
+	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
 {
 	/// Create an NFT collection
 	/// @param name Name of the collection

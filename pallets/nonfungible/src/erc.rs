@@ -33,7 +33,7 @@ use up_data_structs::{
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property_key_value::*},
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::{key, value as property_value}},
 	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
@@ -221,10 +221,10 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		let is_erc721 = || {
 			if let Some(shema_name) =
-				pallet_common::Pallet::<T>::get_collection_property(self.id, &schema_name_key())
+				pallet_common::Pallet::<T>::get_collection_property(self.id, &key::schema_name())
 			{
 				let shema_name = shema_name.into_inner();
-				shema_name == ERC721_METADATA
+				shema_name == property_value::ERC721_METADATA
 			} else {
 				false
 			}
@@ -232,7 +232,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
-		if let Ok(url) = get_token_property(self, token_id_u32, &url_key()) {
+		if let Ok(url) = get_token_property(self, token_id_u32, &key::url()) {
 			if !url.is_empty() {
 				return Ok(url);
 			}
@@ -241,7 +241,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		}
 
 		if let Some(base_uri) =
-			pallet_common::Pallet::<T>::get_collection_property(self.id, &base_uri_key())
+			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::base_uri())
 		{
 			if !base_uri.is_empty() {
 				let base_uri = string::from_utf8(base_uri.into_inner()).map_err(|e| {
@@ -250,7 +250,7 @@ impl<T: Config> NonfungibleHandle<T> {
 						e
 					))
 				})?;
-				if let Ok(suffix) = get_token_property(self, token_id_u32, &suffix_key()) {
+				if let Ok(suffix) = get_token_property(self, token_id_u32, &key::suffix()) {
 					if !suffix.is_empty() {
 						return Ok(base_uri + suffix.as_str());
 					}
@@ -497,7 +497,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key = url_key();
+		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
@@ -702,7 +702,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		let key = url_key();
+		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
