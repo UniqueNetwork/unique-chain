@@ -72,8 +72,8 @@ jobs:
       - name: Build docker
         run: |
           echo ---Building and starting up docker---
-          docker-compose -f ./${{ GITHUB_WORKSPACE }}/docker-compose-tests-parachain.yml -p testing up -d
-          echo ---Containers up---
+          docker-compose -f ./${env.GITHUB_REPOSITORY}/docker-compose-tests-parachain.yml -p testing up -d
+
 
   #    - name: Run test
   #      run: |
