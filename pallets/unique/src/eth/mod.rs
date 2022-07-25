@@ -69,21 +69,21 @@ fn convert_data<T: Config>(
 		.encode_utf16()
 		.collect::<Vec<u16>>()
 		.try_into()
-		.map_err(|_| error_feild_too_long(stringify!(name), CollectionName::bound()))?;
+		.map_err(|_| error_field_too_long(stringify!(name), CollectionName::bound()))?;
 	let description = description
 		.encode_utf16()
 		.collect::<Vec<u16>>()
 		.try_into()
 		.map_err(|_| {
-			error_feild_too_long(stringify!(description), CollectionDescription::bound())
+			error_field_too_long(stringify!(description), CollectionDescription::bound())
 		})?;
 	let token_prefix = token_prefix.into_bytes().try_into().map_err(|_| {
-		error_feild_too_long(stringify!(token_prefix), CollectionTokenPrefix::bound())
+		error_field_too_long(stringify!(token_prefix), CollectionTokenPrefix::bound())
 	})?;
 	let base_uri_value = base_uri
 		.into_bytes()
 		.try_into()
-		.map_err(|_| error_feild_too_long(stringify!(token_prefix), PropertyValue::bound()))?;
+		.map_err(|_| error_field_too_long(stringify!(token_prefix), PropertyValue::bound()))?;
 	Ok((caller, name, description, token_prefix, base_uri_value))
 }
 
@@ -311,6 +311,6 @@ impl<T: Config + pallet_nonfungible::Config + pallet_refungible::Config> OnMetho
 generate_stubgen!(collection_helper_impl, CollectionHelpersCall<()>, true);
 generate_stubgen!(collection_helper_iface, CollectionHelpersCall<()>, false);
 
-fn error_feild_too_long(feild: &str, bound: usize) -> Error {
+fn error_field_too_long(feild: &str, bound: usize) -> Error {
 	Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))
 }
