@@ -85,9 +85,9 @@ jobs:
       - name: Run tests
         run: yarn testNesting
 
-    - name: Stop containers
-      if: always()
-      run: docker-compose -f "docker-compose-tests-parachain.yml" down
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f "docker-compose-tests-parachain.yml" down
 
 
   #    - name: Run test
