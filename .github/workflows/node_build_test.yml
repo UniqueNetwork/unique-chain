@@ -69,100 +69,14 @@ jobs:
           #repository: ${{ src_repo_url }}
           path: ${{ env.opal_chain_workdir }}
 
-
-      - name: Building code Opal
+      - name: Build docker
         run: |
-          pwd
-          . $HOME/.cargo/env && cargo build
+          echo ---Building and starting up docker---
+          docker-compose -f ./${{ GITHUB_WORKSPACE }}/docker-compose-tests-parachain.yml -p testing up -d
+          echo ---Containers up---
 
-      - name: Upload Opal Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Opal-artifacts
-          path: |
-            ./target/release/unique-collator
-            ./target/release/wbuild/opal-runtime/opal_runtime.compact.compressed.wasm
-
-
-  build-Quartz:
-    # The type of runner that the job will run on
-    runs-on: ci-01
-
-    needs: pre-requisites
-    name: Build Quartz
-
-    steps:
-      - name: delete workdir
-        run: rm -rf ${{ env.quartz_chain_workdir }}
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          #repository: ${{ src_repo_url }}
-          path: ${{ env.quartz_chain_workdir }}
-
-      - name: Building code Quartz
-        run: |
-          . $HOME/.cargo/env && cargo build --features=quartz-runtime
-
-      - name: Upload Quartz Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Quartz-artifacts
-          path: |
-            ./target/release/unique-collator
-            ./target/release/wbuild/quartz-runtime/quartz_runtime.compact.compressed.wasm
-
-  build-Unique:
-    # The type of runner that the job will run on
-    runs-on: ci-01
-
-    needs: pre-requisites
-    name: Build Unique
-
-    steps:
-      - name: delete workdir
-        run: rm -rf ${{ env.unique_quartz_workdir }}
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          #repository: ${{ src_repo_url }}
-          path: ${{ env.unique_chain_workdir }}
-
-      - name: Building code Unique
-        run: |
-          . $HOME/.cargo/env && cargo build --features=unique-runtime
-
-      - name: Upload Unique Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Unique-artifacts
-          path: |
-            ./target/release/unique-collator
-            ./target/release/wbuild/unique-runtime/unique_runtime.compact.compressed.wasm
-
-  Test-Opal:
-    # The type of runner that the job will run on
-    runs-on: ci-01
-
-    needs: build-Opal
-    name: Test Opal
-
-    steps:
-      - name: Run Opal Node in dev mode
-        run: |
-          pwd
-          ./target/release/unique-collator --dev
-
-      - name: Run test Opal
-        run: |
-          pwd
-          ./tests/yarn install
-          ./tests/yarn test
+  #    - name: Run test
+  #      run: |
+  #        echo --- Running test cases ---
+  #        docker-compose -f ./<REPO_NAME>/docker-compose.test-github.yml -p testing up --build --exit-code-from api-test
+  #        echo --- Completed test cases ---
