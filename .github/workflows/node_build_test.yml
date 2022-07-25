@@ -72,6 +72,12 @@ jobs:
       - name: Build the stack
         run: docker-compose -f docker-compose-tests-parachain.yml up -d --build
 
+      - name: Runn Neting test
+        run: |
+          cd tests
+          yarn install
+          yarn testNesting 
+
       - name: Shutingdown the stack
         run: docker-compose -f docker-compose-tests-parachain.yml down
 
