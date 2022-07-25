@@ -70,7 +70,7 @@ jobs:
           #path: ${{ env.opal_chain_workdir }}
 
       - name: Build the stack
-        run: docker-compose -f docker-compose.test-github.yml up -d --build
+        run: docker-compose -f docker-compose-tests-parachain.yml up -d --build
 
 
   #    - name: Run test
