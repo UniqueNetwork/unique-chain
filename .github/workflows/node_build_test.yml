@@ -72,6 +72,10 @@ jobs:
       - name: Build the stack
         run: docker-compose -f docker-compose-tests-parachain.yml up -d --build
 
+
+      - name: Shutingdown the stack
+        run: docker-compose -f docker-compose-tests-parachain.yml down
+
   #    - name: Run test
   #      run: |
   #        echo --- Running test cases ---
