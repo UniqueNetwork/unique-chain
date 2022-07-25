@@ -249,7 +249,6 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
         Limited: 5000000000,
       };
 
-      console.log(dest);
       const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(dest, beneficiary, assets, feeAssetItem, weightLimit);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);

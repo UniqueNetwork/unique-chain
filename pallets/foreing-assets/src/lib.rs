@@ -57,13 +57,12 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
+use sp_std::borrow::Borrow;
 
 use pallet_common::erc::CrossAccountId;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-pub type ForeignAssetId = u32;
 
 // TODO: Move to primitives
 // Id of native currency.
@@ -84,7 +83,7 @@ pub type ForeignAssetId = u32;
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum NativeCurrency {
-	This = 0,
+	Here = 0,
 	Parent = 1,
 }
 
@@ -107,6 +106,7 @@ pub enum AssetIds {
 	NativeAssetId(NativeCurrency),
 }
 
+pub type ForeignAssetId = u32;
 pub type CurrencyId = AssetIds;
 
 mod impl_fungibles;
