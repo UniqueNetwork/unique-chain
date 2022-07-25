@@ -32,6 +32,7 @@ use pallet_common::{
 		static_property::{key, value as property_value},
 		CollectionHelpersEvents,
 	},
+	dispatch::CollectionDispatch,
 };
 use crate::{SelfWeightOf, Config, weights::WeightInfo};
 
@@ -179,9 +180,8 @@ where
 			Default::default(),
 			false,
 		)?;
-		let collection_id =
-			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, false)
-				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let collection_id = T::CollectionDispatch::create(caller, data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -207,9 +207,8 @@ where
 			base_uri_value,
 			true,
 		)?;
-		let collection_id =
-			<pallet_nonfungible::Pallet<T>>::init_collection(caller.clone(), data, true)
-				.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let collection_id = T::CollectionDispatch::create(caller, data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -233,7 +232,7 @@ where
 			Default::default(),
 			false,
 		)?;
-		let collection_id = <pallet_refungible::Pallet<T>>::init_collection(caller.clone(), data)
+		let collection_id = T::CollectionDispatch::create(caller, data)
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
@@ -260,7 +259,7 @@ where
 			base_uri_value,
 			true,
 		)?;
-		let collection_id = <pallet_refungible::Pallet<T>>::init_collection(caller.clone(), data)
+		let collection_id = T::CollectionDispatch::create(caller, data)
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
