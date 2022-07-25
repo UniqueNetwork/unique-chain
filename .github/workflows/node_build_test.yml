@@ -72,7 +72,6 @@ jobs:
       - name: Build the stack
         run: docker-compose -f docker-compose.test-github.yml up -d --build
 
-
   #    - name: Run test
   #      run: |
   #        echo --- Running test cases ---
