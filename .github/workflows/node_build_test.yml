@@ -90,7 +90,7 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          ./scripts/wait_for_first_block.sh && NOW=$(date +%s) && yarn testNesting --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn testNesting --reporter mochawesome --reporter-options reportFilename=test-${NOW}
           ls -la
 
       - name: Stop containers
