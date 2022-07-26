@@ -94,6 +94,7 @@ jobs:
         run: |
           cd tests
           export RPC_URL="http://127.0.0.1:9944/"
+          echo $(RPC_URL)
           ./scripts/wait_for_first_block.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
 
