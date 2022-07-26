@@ -93,8 +93,10 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          RPC_URL="http://127.0.0.1:9944/" && ./scripts/wait_for_first_block.sh
+          ./scripts/wait_for_first_block.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9944
 
       - name: Wait / Sleep
         uses: jakejarvis/wait-action@v0.1.1
