@@ -102,9 +102,7 @@ jobs:
           name: Tests            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
-
-          tests/mochawesome-report/test-1658818554.html
-
+          
       - name: Stop containers
         if: always()
         run: docker-compose -f "docker-compose-tests-parachain.yml" down
