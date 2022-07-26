@@ -328,4 +328,8 @@ runtime-benchmarks = [
     'opal-runtime/runtime-benchmarks',
     'polkadot-service/runtime-benchmarks',
 ]
-try-runtime = []
+try-runtime = [
+    'unique-runtime?/try-runtime',
+    'quartz-runtime?/try-runtime',
+    'opal-runtime?/try-runtime',
+]
