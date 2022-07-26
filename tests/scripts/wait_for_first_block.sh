@@ -20,7 +20,6 @@ function is_started {
 
 while ! is_started; do
 	echo "Waiting for first block..."
-	echo "$RPC_URL"
 	sleep 12
 done
 echo "Chain is running!"

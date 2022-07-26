@@ -75,7 +75,7 @@ jobs:
       - name: Wait / Sleep
         uses: jakejarvis/wait-action@v0.1.1
         with:
-          time: '90s'
+          time: '900s'
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -92,8 +92,7 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          export RPC_URL=http://127.0.0.1:9933/
-          ./scripts/wait_for_first_block.sh && NOW=$(date +%s) && yarn testConnection --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn testConnection --reporter mochawesome --reporter-options reportFilename=test-${NOW}
 
 
       - name: Wait / Sleep
