@@ -101,6 +101,13 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 COPY --from=builder /unique_parachain/target/$PROFILE/unique-collator /unique-chain/target/$PROFILE/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
 
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9933
+EXPOSE 9833
+EXPOSE 40333
+EXPOSE 30333
+
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
