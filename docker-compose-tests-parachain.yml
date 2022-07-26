@@ -12,6 +12,8 @@ services:
         - UNIQUE_BRANCH=${UNIQUE_BRANCH:?err}
     volumes:
       - ./launch-config.json:/polkadot-launch/launch-config.json
+    ports:
+      - "127.0.0.1:9944:9944"
     env_file:
       - ./.env
 
