@@ -60,8 +60,8 @@ jobs:
     name: Build Opal
 
     steps:
-      - name: delete workdir
-        run: rm -rf ${{ env.opal_chain_workdir }}
+    #  - name: delete workdir
+    #    run: rm -rf ${{ env.opal_chain_workdir }}
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
@@ -92,7 +92,13 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          NOW=$(date +%s) && yarn testConnection --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          ./scripts/wait_for_first_block.sh && NOW=$(date +%s) && yarn testConnection --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+                
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '90s'
 
       - name: Wait / Sleep
         uses: jakejarvis/wait-action@v0.1.1
@@ -108,9 +114,9 @@ jobs:
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
 
-      - name: Stop containers
-        if: always()
-        run: docker-compose -f "docker-compose-dev.yaml" down
+#      - name: Stop containers
+#        if: always()
+#        run: docker-compose -f "docker-compose-dev.yaml" down
 
 
 
