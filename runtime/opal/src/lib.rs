@@ -137,8 +137,8 @@ use xcm::latest::{
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
+	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
 };
-//use xcm_executor::traits::MatchesFungible;
 
 use unique_runtime_common::{
 	impl_common_runtime_apis,
@@ -182,8 +182,6 @@ pub type Hash = sp_core::H256;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem;
-
-pub type AssetId = AssetIds;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -621,11 +619,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
 	type SelfParaId = parachain_info::Pallet<Self>;
 	type OnSystemEvent = ();
-	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
-	// 	MaxDownwardMessageWeight,
-	// 	XcmExecutor<XcmConfig>,
-	// 	Call,
-	// >;
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type DmpMessageHandler = DmpQueue;
 	type ReservedDmpWeight = ReservedDmpWeight;
@@ -642,6 +635,7 @@ parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -657,18 +651,6 @@ pub type LocationToAccountId = (
 );
 
 parameter_types! {
-	pub StatemintLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(1000)));
-	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
-	// Statemint's Assets pallet index
-	pub StatemintAssetsPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(1000), PalletInstance(50)));
-
-	// pub KaruraPalletLocation: MultiLocation =
-	// 	MultiLocation::new(1, X2(Parachain(2000), PalletInstance(50)));
-
-	pub KaruraPalletLocation: MultiLocation =
-		MultiLocation::new(1, X1(Parachain(2000)));
-
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
 }
 
@@ -691,20 +673,20 @@ use sp_runtime::traits::Convert;
 use xcm::opaque::latest::Junction;
 use sp_std::{borrow::Borrow};
 
-pub struct AsInnerId<Prefix, AssetId, ConvertAssetId>(
-	PhantomData<(Prefix, AssetId, ConvertAssetId)>,
+pub struct AsInnerId<AssetId, ConvertAssetId>(
+	PhantomData<(AssetId, ConvertAssetId)>,
 );
-impl<Prefix: Get<MultiLocation>, AssetId: Clone, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
-	ConvertXcm<MultiLocation, AssetId> for AsInnerId<Prefix, AssetId, ConvertAssetId>
+impl<AssetId: Clone, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
+	ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
 where
 	AssetId: Borrow<AssetId>,
+	AssetId: TryAsForeing<AssetId, ForeignAssetId>,
 	AssetIds: Borrow<AssetId>,
 {
 	fn convert_ref(id: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-		let prefix = Prefix::get();
 		let id = id.borrow();
 
-		log::info!(
+		log::trace!(
 			target: "xcm::AsInnerId::Convert",
 			"AsInnerId {:?}",
 			id
@@ -712,33 +694,46 @@ where
 
 		let parent = MultiLocation::parent();
 		let here = MultiLocation::here();
+		let self_location = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 
 		if *id == parent {
 			return ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent));
 		}
 
-		if *id == here {
+		if *id == here || *id == self_location {
 			return ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here));
 		}
 
-		// TODO: Fix it. Need to make correct relay chain currency conversion
-		// Native currencies conversion should be first
 		match XcmForeignAssetIdMapping::<Runtime>::get_currency_id(id.clone()) {
 			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => {
-				//AssetIds::ForeignAssetId(foreign_asset_id)
 				ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(foreign_asset_id))
 			}
 			_ => ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(0)),
 		}
 	}
 
-	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
-		let mut location = Prefix::get();
-		let id = ConvertAssetId::reverse_ref(what)?;
-		location
-			.push_interior(Junction::GeneralIndex(0))
-			.map_err(|_| ())?;
-		Ok(location)
+	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> 
+	{
+		log::trace!(
+			target: "xcm::AsInnerId::Reverse",
+			"AsInnerId",
+		);
+
+		let asset_id = what.borrow();
+
+		let parent = MultiLocation::parent();
+		let here = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+
+		let parent_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent));
+		let here_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here));
+
+		match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(
+			<AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(asset_id.clone())) {
+				parent_id => Ok(parent),
+				here_id => Ok(here),
+				Some(location) => Ok(location),
+				None => Err(())
+		}
 	}
 }
 
@@ -748,9 +743,9 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	ForeingAssets,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	ConvertedConcreteAssetId<
-		AssetId,
+		AssetIds,
 		Balance,
-		AsInnerId<StatemintAssetsPalletLocation, AssetId, JustTry>,
+		AsInnerId<AssetIds, JustTry>,
 		JustTry,
 	>,
 	// Convert an XCM MultiLocation into a local account id:
@@ -822,12 +817,6 @@ impl ShouldExecute for AllowAllDebug {
 		max_weight: Weight,
 		weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-		// log::trace!(
-		// 	target: "xcm::barriers",
-		// 	"TakeWeightCredit origin: {:?}, message: {:?}, max_weight: {:?}, weight_credit: {:?}",
-		// 	_origin, _message, max_weight, weight_credit,
-		// );
-		// *weight_credit = weight_credit.checked_sub(max_weight).ok_or(())?;
 		Ok(())
 	}
 }
@@ -848,7 +837,6 @@ impl FilterAssetLocation for AllAsset {
 	}
 }
 
-use pallet_foreing_assets::UsingAnyCurrencyComponents;
 pub struct XcmConfig;
 impl Config for XcmConfig {
 	type Call = Call;
@@ -1155,23 +1143,19 @@ impl pallet_charge_transaction::Config for Runtime {
 	type SponsorshipHandler = SponsorshipHandler;
 }
 
-// impl pallet_contract_helpers::Config for Runtime {
-//	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
-// }
-
 impl pallet_foreing_assets::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type RegisterOrigin = frame_system::EnsureRoot<AccountId>; //EnsureRootOrHalfGeneralCouncil;
-	type WeightInfo = (); //weights::module_asset_registry::WeightInfo<Runtime>;
+	type RegisterOrigin = frame_system::EnsureRoot<AccountId>;
+	type WeightInfo = ();
 }
 
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: AssetIds) -> Option<MultiLocation> {
-		// TODO: Add native curr
+		
 		match id {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::here()),
+			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())))),
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => Some(MultiLocation::parent()),
 			AssetIds::ForeignAssetId(foreign_asset_id) => {
 				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
@@ -1182,8 +1166,7 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 }
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		// native stubs
-		if location == MultiLocation::here() {
+		if location == MultiLocation::here() || location == MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into()))) {
 			return Some(AssetIds::NativeAssetId(NativeCurrency::Here));
 		}
 
@@ -1238,10 +1221,6 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	/// The id type for named reserves.
 	type ReserveIdentifier = ();
-}
-
-parameter_types! {
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
 parameter_types! {

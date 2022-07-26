@@ -106,6 +106,19 @@ pub enum AssetIds {
 	NativeAssetId(NativeCurrency),
 }
 
+pub trait TryAsForeing<T, F> {
+	fn try_as_foreing(asset: T) -> F;
+} 
+
+impl TryAsForeing<AssetIds, ForeignAssetId> for AssetIds {
+	fn try_as_foreing(asset: AssetIds) -> ForeignAssetId {
+		match asset {
+			AssetIds::ForeignAssetId(id) => id,
+			_ => 0,
+		}
+	}
+}
+
 pub type ForeignAssetId = u32;
 pub type CurrencyId = AssetIds;
 
