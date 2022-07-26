@@ -217,12 +217,12 @@ impl<T: Config> NonfungibleHandle<T> {
 
 	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
 	///
-	/// @dev If the collection has a `url` property and it is not empty, it is returned.
+	/// @dev If the token has a `url` property and it is not empty, it is returned.
 	///      Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
-	///      If the property `baseURI` is empty or absent, return "" (empty string)
-	///      otherwise, if property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	///      If the collection property `baseURI` is empty or absent, return "" (empty string)
+	///      otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
 	///      otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
-	/// 
+	///
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
