@@ -24,4 +24,11 @@ WORKDIR /dev_chain
 
 RUN cargo build --release
 
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9933
+EXPOSE 9833
+EXPOSE 40333
+EXPOSE 30333
+
 CMD cargo run --release --features $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
