@@ -12,7 +12,7 @@ function is_started {
 	block_id_hex=$(do_rpc chain_getHeader "\"$block_hash\"" | jq -r .result.number)
 	block_id=$((${block_id_hex}))
 	echo Id = $block_id
-	if (( $block_id = 0 )); then
+	if (( $block_id > 1 )); then
 		return 0
 	fi
 	return 1
@@ -20,7 +20,6 @@ function is_started {
 
 while ! is_started; do
 	echo "Waiting for first block..."
-	echo "$RPC_URL"
 	sleep 12
 done
 echo "Chain is running!"
