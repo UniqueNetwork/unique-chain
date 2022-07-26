@@ -70,7 +70,7 @@ jobs:
           #path: ${{ env.opal_chain_workdir }}
 
       - name: Build the stack
-        run: docker-compose -f docker-compose-dev.yaml up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
 
       - name: Wait / Sleep
         uses: jakejarvis/wait-action@v0.1.1
@@ -107,4 +107,4 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: docker-compose -f "docker-compose-dev.yaml" down
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" down
