@@ -302,10 +302,6 @@ where
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible burn_from");
-		let value: u128 = match amount.try_into() {
-			Ok(val) => val,
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")),
-		};
 
 		let value: u128 = match amount.try_into() {
 			Ok(val) => val,

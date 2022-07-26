@@ -674,7 +674,7 @@ use xcm::opaque::latest::Junction;
 use sp_std::{borrow::Borrow};
 
 pub struct AsInnerId<AssetId, ConvertAssetId>(PhantomData<(AssetId, ConvertAssetId)>);
-impl<AssetId: Clone, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
+impl<AssetId: Clone + PartialEq, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
 	ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
 where
 	AssetId: Borrow<AssetId>,
@@ -718,22 +718,27 @@ where
 
 		let asset_id = what.borrow();
 
-		let parent = MultiLocation::parent();
-		let here = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-
 		let parent_id =
-			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent));
-		let here_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here));
+			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent)).unwrap();
+		let here_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here)).unwrap();
 
-		match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(<AssetId as TryAsForeing<
-			AssetId,
-			ForeignAssetId,
-		>>::try_as_foreing(
-			asset_id.clone()
-		)) {
-			parent_id => Ok(parent),
-			here_id => Ok(here),
-			Some(location) => Ok(location),
+		if asset_id.clone() == parent_id
+		{
+			return Ok(MultiLocation::parent());
+		}
+
+		if asset_id.clone() == here_id
+		{
+			return Ok(MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into()))));
+		}
+
+		match <AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(
+			asset_id.clone()) 
+		{
+			Some(fid) => match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(fid){
+				Some(location) => Ok(location),
+				None => Err(())
+			} ,
 			None => Err(()),
 		}
 	}
@@ -1159,7 +1164,6 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 			AssetIds::ForeignAssetId(foreign_asset_id) => {
 				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
 			}
-			_ => None,
 		}
 	}
 }

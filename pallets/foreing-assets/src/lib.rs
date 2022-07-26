@@ -57,7 +57,6 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
-use sp_std::borrow::Borrow;
 
 use pallet_common::erc::CrossAccountId;
 
@@ -107,14 +106,14 @@ pub enum AssetIds {
 }
 
 pub trait TryAsForeing<T, F> {
-	fn try_as_foreing(asset: T) -> F;
+	fn try_as_foreing(asset: T) -> Option<F>;
 }
 
 impl TryAsForeing<AssetIds, ForeignAssetId> for AssetIds {
-	fn try_as_foreing(asset: AssetIds) -> ForeignAssetId {
+	fn try_as_foreing(asset: AssetIds) -> Option<ForeignAssetId> {
 		match asset {
-			AssetIds::ForeignAssetId(id) => id,
-			_ => 0,
+			AssetIds::ForeignAssetId(id) => Some(id),
+			_ => None,
 		}
 	}
 }
