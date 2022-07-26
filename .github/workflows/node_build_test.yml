@@ -92,18 +92,9 @@ jobs:
       - name: Run tests
         run: |
           cd tests
+          ./scripts/wait_for_first_block.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
 
-
-      - name: Wait / Sleep
-        uses: jakejarvis/wait-action@v0.1.1
-        with:
-          time: '90s'
-
-      - name: Wait / Sleep
-        uses: jakejarvis/wait-action@v0.1.1
-        with:
-          time: '90s'
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
@@ -114,14 +105,6 @@ jobs:
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
 
-#      - name: Stop containers
-#        if: always()
-#        run: docker-compose -f "docker-compose-dev.yaml" down
-
-
-
-  #    - name: Run test
-  #      run: |
-  #        echo --- Running test cases ---
-  #        docker-compose -f ./<REPO_NAME>/docker-compose.test-github.yml -p testing up --build --exit-code-from api-test
-  #        echo --- Completed test cases ---
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f "docker-compose-dev.yaml" down
