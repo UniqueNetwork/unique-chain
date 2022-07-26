@@ -70,7 +70,7 @@ jobs:
           #path: ${{ env.opal_chain_workdir }}
 
       - name: Build the stack
-        run: docker-compose -f docker-compose-tests-parachain.yml up -d --build
+        run: docker-compose -f docker-compose-dev.yaml up -d --build
 
       - name: Wait / Sleep
         uses: jakejarvis/wait-action@v0.1.1
@@ -102,10 +102,10 @@ jobs:
           name: Tests            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
-          
+
       - name: Stop containers
         if: always()
-        run: docker-compose -f "docker-compose-tests-parachain.yml" down
+        run: docker-compose -f "docker-compose-dev.yaml" down
 
 
 
