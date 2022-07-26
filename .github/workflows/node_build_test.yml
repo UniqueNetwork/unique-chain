@@ -77,6 +77,7 @@ jobs:
         with:
           time: '60s'
 
+
       - name: Install node
         uses: actions/setup-node@v1
         with:
@@ -95,6 +96,17 @@ jobs:
           ./scripts/wait_for_first_block.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
 
+
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '90s'
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '90s'
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
