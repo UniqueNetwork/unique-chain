@@ -96,7 +96,7 @@ jobs:
           ./scripts/wait_for_first_block.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944
+          RPC_URL: http://127.0.0.1:9933/
  
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
