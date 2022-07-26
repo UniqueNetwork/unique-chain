@@ -4,7 +4,7 @@ services:
   blockchain_nodes:
     build:
       context: ./
-      dockerfile: Dockerfile-parachain-v2
+      dockerfile: Dockerfile-chain-dev
       args:
         - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
         - RUST_C=${RUST_C:?err}
