@@ -75,7 +75,7 @@ jobs:
       - name: Wait / Sleep
         uses: jakejarvis/wait-action@v0.1.1
         with:
-          time: '30s'
+          time: '90s'
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -93,6 +93,11 @@ jobs:
         run: |
           cd tests
           NOW=$(date +%s) && yarn testConnection --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '90s'
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
