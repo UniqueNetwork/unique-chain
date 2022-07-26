@@ -86,6 +86,8 @@ jobs:
         run: |
           cd tests
           yarn install
+          yarn add mochawesome
+          yarn --pure-lockfile
 
       - name: Run tests
         run: |
