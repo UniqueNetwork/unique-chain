@@ -72,6 +72,7 @@
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
     "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.test.ts",
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
+    "testXcmTransferAcala": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferAcala.test.ts",
     "testXcmTransferKarura": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferKarura.test.ts",
     "testXcmTransferStatemine": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferStatemine.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",

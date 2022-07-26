@@ -1,0 +1,150 @@
+{
+    "relaychain": {
+        "bin": "../polkadot/target/release/polkadot",
+        "chain": "rococo-local",
+        "nodes": [
+            {
+                "name": "alice",
+                "wsPort": 9844,
+                "rpcPort": 9843,
+                "port": 30444,
+                "flags": [
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
+                ]
+            },
+            {
+                "name": "bob",
+                "wsPort": 9855,
+                "rpcPort": 9854,
+                "port": 30555,
+                "flags": [
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
+                ]
+            },
+            {
+                "name": "charlie",
+                "wsPort": 9866,
+                "rpcPort": 9865,
+                "port": 30666,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "dave",
+                "wsPort": 9877,
+                "rpcPort": 9876,
+                "port": 30777,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "eve",
+                "wsPort": 9888,
+                "rpcPort": 9887,
+                "port": 30888,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            }
+        ],
+        "genesis": {
+            "runtime": {
+                "runtime_genesis_config": {
+                    "parachainsConfiguration": {
+                        "config": {
+                            "validation_upgrade_frequency": 1,
+                            "validation_upgrade_delay": 1
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "parachains": [
+        {
+            "bin": "../Acala2/Acala/target/production/acala",
+            "id": "2000",
+            "chain":  "acala-dev",
+			"balance": "1000000000000000000000",
+			"nodes": [
+				{
+					"wsPort": 9946,
+					"port": 11202,
+                    "rpcPort": 29932,
+					"name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+				},
+                {
+					"wsPort": 9947,
+					"port": 11203,
+                    "rpcPort": 29933,
+					"name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+				}
+			]
+		},
+        {
+            "bin": "../unique-chain/target/release/unique-collator",
+            "id": "5000",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 41200,
+                    "wsPort": 9944,
+                    "rpcPort": 9933,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace",
+                        "-lfassets=trace"
+                    ]
+                },
+                {
+                    "port": 41201,
+                    "wsPort": 9945,
+                    "rpcPort": 9934,
+                    "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace",
+                        "-lfassets=trace"
+                    ]
+                }
+            ]
+        }
+    ],
+    "simpleParachains": [],
+    "hrmpChannels": [
+        {
+            "sender": 2000,
+            "recipient": 5000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 5000,
+            "recipient": 2000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }
+    ],
+    "finalization": false
+}

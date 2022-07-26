@@ -175,7 +175,7 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
       const feeAssetItem = 0;
 
       const weightLimit = {
-        Limited: 5000000000,
+        Limited: 5_000_000_000,
       };
 
       const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
@@ -307,7 +307,6 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
       const feeItem = 1;
       const destWeight = 500000000000;
 
-      // ansferMulticurrencies(currencies, feeItem, dest, destWeight)
       const tx = api.tx.xTokens.transferMulticurrencies(currencies, feeItem, destination, destWeight);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);

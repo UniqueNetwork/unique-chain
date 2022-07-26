@@ -67,6 +67,7 @@ std = [
     # 'pallet-contracts-primitives/std',
     # 'pallet-contracts-rpc-runtime-api/std',
     # 'pallet-contract-helpers/std',
+    'pallet-foreing-assets/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-timestamp/std',
@@ -117,6 +118,8 @@ std = [
     'unique-runtime-common/std',
 
     "orml-vesting/std",
+    "orml-xtokens/std",
+    "orml-tokens/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 unique-runtime = []
@@ -392,6 +395,24 @@ branch = "unique-polkadot-v0.9.23"
 version = "0.4.1-dev"
 default-features = false
 
+[dependencies.orml-xtokens]
+git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
+branch = 'unique-polkadot-v0.9.23'
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-tokens]
+git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
+branch = 'unique-polkadot-v0.9.23'
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-traits]
+git = 'https://github.com/UniqueNetwork/open-runtime-module-library'
+branch = 'unique-polkadot-v0.9.23'
+version = "0.4.1-dev"
+default-features = false
+
 ################################################################################
 # local dependencies
 
@@ -409,6 +430,7 @@ pallet-inflation = { path = '../../pallets/inflation', default-features = false 
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
 pallet-common = { default-features = false, path = "../../pallets/common" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }
+pallet-foreing-assets = { default-features = false, path = "../../pallets/foreing-assets" }
 pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
 pallet-refungible = { default-features = false, path = "../../pallets/refungible" }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }

@@ -29,10 +29,10 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const UNIQUE_CHAIN = 5000;
-const KARURA_CHAIN = 2000;
-const KARURA_PORT = '9946';
+const ACALA_CHAIN = 2000;
+const ACALA_PORT = '9946';
 
-describe('Integration test: Exchanging QTZ with Karura', () => {
+describe('Integration test: Exchanging UNQ with ACALA', () => {
   let alice: IKeyringPair;
   
   before(async () => {
@@ -40,8 +40,8 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
       alice = privateKeyWrapper('//Alice');
     });
 
-    const karuraApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT),
+    const acalaApiOptions: ApiOptions = {
+      provider: new WsProvider('ws://127.0.0.1:' + ACALA_PORT),
     };
 
     await usingApi(async (api) => {
@@ -58,8 +58,8 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
 
       const metadata =
       {
-        name: 'QTZ',
-        symbol: 'QTZ',
+        name: 'UNQ',
+        symbol: 'UNQ',
         decimals: 18,
         minimalBalance: 1,
       };
@@ -69,16 +69,16 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
       const events = await submitTransactionAsync(alice, sudoTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
-    }, karuraApiOptions);
+    }, acalaApiOptions);
   });
 
-  it('Should connect and send QTZ to Karura', async () => {
-    let balanceOnKaruraBefore: bigint;
+  it('Should connect and send UNQ to Acala', async () => {
+    let balanceOnAcalaBefore: bigint;
     
     await usingApi(async (api) => {
       const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-      balanceOnKaruraBefore = free;
-    }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
+      balanceOnAcalaBefore = free;
+    }, {provider: new WsProvider('ws://127.0.0.1:' + ACALA_PORT)});
 
     await usingApi(async (api) => {
       const destination = {
@@ -86,7 +86,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
           X2: [
             'Parent',
             {
-              Parachain: KARURA_CHAIN,
+              Parachain: ACALA_CHAIN,
             },
           ],
         },
@@ -135,11 +135,11 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
       const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-      expect(free > balanceOnKaruraBefore).to.be.true;
-    }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
+      expect(free > balanceOnAcalaBefore).to.be.true;
+    }, {provider: new WsProvider('ws://127.0.0.1:' + ACALA_PORT)});
   });
 
-  it('Should connect to Karura and send QTZ back', async () => {
+  it('Should connect to Acala and send UNQ back', async () => {
     let balanceBefore: bigint;
     
     await usingApi(async (api) => {
@@ -175,7 +175,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
-    }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
+    }, {provider: new WsProvider('ws://127.0.0.1:' + ACALA_PORT)});
 
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks

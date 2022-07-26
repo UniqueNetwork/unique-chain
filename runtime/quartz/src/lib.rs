@@ -21,121 +21,94 @@
 #![recursion_limit = "1024"]
 #![allow(clippy::from_over_into, clippy::identity_op)]
 #![allow(clippy::fn_to_numeric_cast_with_truncation)]
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
-use sp_runtime::DispatchError;
+use codec::{Decode, Encode};
+use fp_rpc::TransactionStatus;
 use fp_self_contained::*;
-// #[cfg(any(feature = "std", test))]
-// pub use sp_runtime::BuildStorage;
-
-use sp_runtime::{
-	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, RuntimeAppPublic,
-};
-
-use sp_std::prelude::*;
-
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
-pub use pallet_transaction_payment::{
-	Multiplier, TargetedFeeAdjustment, FeeDetails, RuntimeDispatchInfo,
-};
-// A few exports that help ease life for downstream crates.
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_evm::{
-	EnsureAddressTruncated, HashedAddressMapping, Runner, account::CrossAccountId as _,
-	OnMethodCall, Account as EVMAccount, FeeCalculator, GasWeightMapping,
-};
 pub use frame_support::{
-	construct_runtime, match_types,
+	ConsensusEngineId, construct_runtime,
 	dispatch::DispatchResult,
-	PalletId, parameter_types, StorageValue, ConsensusEngineId,
+	match_types, PalletId, parameter_types, StorageValue,
 	traits::{
-		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Everything,
-		Currency, ExistenceRequirement, Get, IsInVec, KeyOwnerProofSystem, LockIdentifier,
-		OnUnbalanced, Randomness, FindAuthor, ConstU32, Imbalance, PrivilegeCmp,
+		ConstU32, Currency, Everything, ExistenceRequirement, FindAuthor, Get, Imbalance, IsInVec,
+		KeyOwnerProofSystem, LockIdentifier, OnUnbalanced as OnUnbalancedT, OnUnbalanced,
+		PrivilegeCmp, Randomness, tokens::currency::Currency as CurrencyT,
 	},
 	weights::{
+		ConstantMultiplier,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, DispatchInfo, GetDispatchInfo, IdentityFee, Pays, PostDispatchInfo, Weight,
-		WeightToFeePolynomial, WeightToFeeCoefficient, WeightToFeeCoefficients, ConstantMultiplier,
-		WeightToFee,
+		WeightToFee, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
 };
-use pallet_unique_scheduler::DispatchCall;
-use up_data_structs::{
-	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
-	CollectionStats, RpcCollection,
-	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
-	TokenChild, RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo,
-	RmrkBaseInfo, RmrkPartType, RmrkTheme, RmrkThemeName, RmrkCollectionId, RmrkNftId,
-	RmrkNftChild, RmrkPropertyKey, RmrkResourceId, RmrkBaseId,
-};
-
+use frame_support::traits::NamedReservableCurrency;
 // use pallet_contracts::weights::WeightInfo;
 // #[cfg(any(feature = "std", test))]
 use frame_system::{
 	self as frame_system, EnsureRoot, EnsureSigned,
-	limits::{BlockWeights, BlockLength},
+	limits::{BlockLength, BlockWeights},
 };
+// A few exports that help ease life for downstream crates.
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_evm::{
+	Account as EVMAccount, account::CrossAccountId as _, EnsureAddressTruncated, FeeCalculator,
+	GasWeightMapping, HashedAddressMapping, OnMethodCall, Runner,
+};
+pub use pallet_transaction_payment::{
+	FeeDetails, Multiplier, RuntimeDispatchInfo, TargetedFeeAdjustment,
+};
+// Polkadot imports
+use smallvec::smallvec;
+use sp_api::impl_runtime_apis;
 use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
-use smallvec::smallvec;
-use codec::{Encode, Decode};
-use fp_rpc::TransactionStatus;
-use sp_runtime::{
-	traits::{
-		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
-		Saturating, CheckedConversion,
-	},
-	generic::Era,
-	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, SaturatedConversion,
-};
-
 // pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-
-// Polkadot imports
-use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
-use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
-use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	ParentIsPreset,
+use sp_core::{crypto::KeyTypeId, H160, H256, OpaqueMetadata, U256};
+use sp_runtime::{
+	ApplyExtrinsicResult, create_runtime_str, DispatchError, DispatchErrorWithPostInfo, generic,
+	generic::Era,
+	impl_opaque_keys, Perbill, Percent, Permill, RuntimeAppPublic,
+	traits::{
+		AccountIdConversion, AccountIdLookup, Applyable, BlakeTwo256, Block as BlockT,
+		BlockNumberProvider, Dispatchable, DispatchInfoOf, Member, PostDispatchInfoOf,
+	},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
 };
-use xcm_executor::{Config, XcmExecutor, Assets};
-use sp_std::{cmp::Ordering, marker::PhantomData};
+use sp_std::{cmp::Ordering, prelude::*};
+#[cfg(feature = "std")]
+use sp_version::NativeVersion;
+use sp_version::RuntimeVersion;
+pub use xcm_config::*;
 
-use xcm::latest::{
-	//	Xcm,
-	AssetId::{Concrete},
-	Fungibility::Fungible as XcmFungible,
-	MultiAsset,
-	Error as XcmError,
-};
-use xcm_executor::traits::{MatchesFungible, WeightTrader};
-
+use pallet_unique_scheduler::DispatchCall;
 use unique_runtime_common::{
-	impl_common_runtime_apis,
-	types::*,
 	constants::*,
-	dispatch::{CollectionDispatchT, CollectionDispatch},
-	sponsoring::UniqueSponsorshipHandler,
+	dispatch::{CollectionDispatch, CollectionDispatchT},
 	eth_sponsoring::UniqueEthSponsorshipHandler,
+	impl_common_runtime_apis,
+	sponsoring::UniqueSponsorshipHandler,
+	types::*,
 	weights::CommonWeights,
 };
+use up_data_structs::{
+	CollectionId, CollectionLimits, CollectionStats,
+	mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping},
+	Property, PropertyKeyPermission, RmrkBaseId, RmrkBaseInfo, RmrkCollectionId,
+	RmrkCollectionInfo, RmrkInstanceInfo, RmrkNftChild, RmrkNftId, RmrkPartType, RmrkPropertyInfo,
+	RmrkPropertyKey, RmrkResourceId, RmrkResourceInfo, RmrkTheme, RmrkThemeName, RpcCollection,
+	TokenChild, TokenData, TokenId,
+};
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+// #[cfg(any(feature = "std", test))]
+// pub use sp_runtime::BuildStorage;
+
+pub mod xcm_config;
 
 pub const RUNTIME_NAME: &str = "quartz";
 pub const TOKEN_SYMBOL: &str = "QTZ";
@@ -173,11 +146,12 @@ pub type DigestItem = generic::DigestItem;
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	use sp_std::prelude::*;
 	use sp_runtime::impl_opaque_keys;
-	use super::Aura;
+	use sp_std::prelude::*;
 
 	pub use unique_runtime_common::types::*;
+
+	use super::Aura;
 
 	impl_opaque_keys! {
 		pub struct SessionKeys {
@@ -216,6 +190,7 @@ pub fn native_version() -> NativeVersion {
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub struct DealWithFees;
+
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
 		if let Some(fees) = fees_then_tips.next() {
@@ -264,6 +239,7 @@ parameter_types! {
 }
 
 pub struct FixedFee;
+
 impl FeeCalculator for FixedFee {
 	fn min_gas_price() -> (U256, u64) {
 		(MIN_GAS_PRICE.into(), 0)
@@ -288,6 +264,7 @@ parameter_types! {
 }
 
 pub enum FixedGasWeightMapping {}
+
 impl GasWeightMapping for FixedGasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight {
 		gas.saturating_mul(WeightPerGas::get())
@@ -334,6 +311,7 @@ impl pallet_evm_migration::Config for Runtime {
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
+
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	fn find_author<'a, I>(digests: I) -> Option<H160>
 	where
@@ -595,280 +573,7 @@ impl orml_vesting::Config for Runtime {
 	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
-parameter_types! {
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-}
-
-impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
-	type SelfParaId = parachain_info::Pallet<Self>;
-	type OnSystemEvent = ();
-	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
-	// 	MaxDownwardMessageWeight,
-	// 	XcmExecutor<XcmConfig>,
-	// 	Call,
-	// >;
-	type OutboundXcmpMessageSource = XcmpQueue;
-	type DmpMessageHandler = DmpQueue;
-	type ReservedDmpWeight = ReservedDmpWeight;
-	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type XcmpMessageHandler = XcmpQueue;
-}
-
-impl parachain_info::Config for Runtime {}
-
-impl cumulus_pallet_aura_ext::Config for Runtime {}
-
-parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
-	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
-}
-
-/// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
-/// when determining ownership of accounts for asset transacting and when attempting to use XCM
-/// `Transact` in order to determine the dispatch Origin.
-pub type LocationToAccountId = (
-	// The parent (Relay-chain) origin converts to the default `AccountId`.
-	ParentIsPreset<AccountId>,
-	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
-	SiblingParachainConvertsVia<Sibling, AccountId>,
-	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
-	AccountId32Aliases<RelayNetwork, AccountId>,
-);
-
-pub struct OnlySelfCurrency;
-impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
-	fn matches_fungible(a: &MultiAsset) -> Option<B> {
-		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
-			_ => None,
-		}
-	}
-}
-
-/// Means for transacting assets on this chain.
-pub type LocalAssetTransactor = CurrencyAdapter<
-	// Use this currency:
-	Balances,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	OnlySelfCurrency,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-	AccountId,
-	// We don't track any teleports.
-	(),
->;
-
-/// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
-/// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
-/// biases the kind of local `Origin` it will become.
-pub type XcmOriginToTransactDispatchOrigin = (
-	// Sovereign account converter; this attempts to derive an `AccountId` from the origin location
-	// using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
-	// foreign chains who want to have a local sovereign account on this chain which they control.
-	SovereignSignedViaLocation<LocationToAccountId, Origin>,
-	// Native converter for Relay-chain (Parent) location; will converts to a `Relay` origin when
-	// recognised.
-	RelayChainAsNative<RelayOrigin, Origin>,
-	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
-	// recognised.
-	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, Origin>,
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	ParentAsSuperuser<Origin>,
-	// Native signed account converter; this just converts an `AccountId32` origin into a normal
-	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<RelayNetwork, Origin>,
-	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
-	XcmPassthrough<Origin>,
-);
-
-parameter_types! {
-	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
-	// 1200 UNIQUEs buy 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), 1_200 * UNIQUE);
-	pub const MaxInstructions: u32 = 100;
-	pub const MaxAuthorities: u32 = 100_000;
-}
-
-match_types! {
-	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
-	};
-}
-
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
-	// ^^^ Parent & its unit plurality gets free execution
-);
-
-pub struct UsingOnlySelfCurrencyComponents<
-	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
-	AccountId,
-	Currency: CurrencyT<AccountId>,
-	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
->(
-	Weight,
-	Currency::Balance,
-	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
-);
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> WeightTrader
-	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn new() -> Self {
-		Self(0, Zero::zero(), PhantomData)
-	}
-
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::weight_to_fee(&weight);
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		// location to this parachain through relay chain
-		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
-		});
-		// direct location
-		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 0,
-			interior: Here,
-		});
-
-		let required = if payment.fungible.contains_key(&option1) {
-			(option1, u128_amount).into()
-		} else if payment.fungible.contains_key(&option2) {
-			(option2, u128_amount).into()
-		} else {
-			(Concrete(MultiLocation::default()), u128_amount).into()
-		};
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
-		}
-	}
-}
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop
-	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn drop(&mut self) {
-		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
-	}
-}
-
-pub struct XcmConfig;
-impl Config for XcmConfig {
-	type Call = Call;
-	type XcmSender = XcmRouter;
-	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
-	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
-	type IsTeleporter = (); // Teleportation is disabled
-	type LocationInverter = LocationInverter<Ancestry>;
-	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader =
-		UsingOnlySelfCurrencyComponents<LinearFee<Balance>, RelayLocation, AccountId, Balances, ()>;
-	type ResponseHandler = (); // Don't handle responses for now.
-	type SubscriptionService = PolkadotXcm;
-
-	type AssetTrap = PolkadotXcm;
-	type AssetClaims = PolkadotXcm;
-}
-
-// parameter_types! {
-// 	pub const MaxDownwardMessageWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 10;
-// }
-
-/// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation = (SignedToAccountId32<Origin, AccountId, RelayNetwork>,);
-
-/// The means for routing XCM messages which are not for local execution into the right message
-/// queues.
-pub type XcmRouter = (
-	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
-	// ..and XCMP to communicate with the sibling chains.
-	XcmpQueue,
-);
-
 impl pallet_evm_coder_substrate::Config for Runtime {}
-
-impl pallet_xcm::Config for Runtime {
-	type Event = Event;
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmRouter = XcmRouter;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type XcmExecuteFilter = Everything;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = Everything;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type LocationInverter = LocationInverter<Ancestry>;
-	type Origin = Origin;
-	type Call = Call;
-	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
-	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
-}
-
-impl cumulus_pallet_xcm::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-}
-
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type WeightInfo = ();
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
-	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
-	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
-}
-
-impl cumulus_pallet_dmp_queue::Config for Runtime {
-	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
-}
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
@@ -903,9 +608,11 @@ impl pallet_structure::Config for Runtime {
 impl pallet_fungible::Config for Runtime {
 	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
 }
+
 impl pallet_refungible::Config for Runtime {
 	type WeightInfo = pallet_refungible::weights::SubstrateWeight<Self>;
 }
+
 impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
@@ -945,7 +652,6 @@ parameter_types! {
 }
 
 type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
-use frame_support::traits::NamedReservableCurrency;
 
 fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
 	(
@@ -962,6 +668,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 }
 
 pub struct SchedulerPaymentExecutor;
+
 impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
@@ -1097,6 +804,13 @@ impl pallet_charge_transaction::Config for Runtime {
 	type SponsorshipHandler = SponsorshipHandler;
 }
 
+impl pallet_foreing_assets::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type RegisterOrigin = frame_system::EnsureRoot<AccountId>;
+	type WeightInfo = ();
+}
+
 // impl pallet_contract_helpers::Config for Runtime {
 //	 type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 // }
@@ -1138,8 +852,8 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
 		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
-		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
-		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
+		XTokens: orml_xtokens = 38,
+		Tokens: orml_tokens = 40,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
@@ -1161,6 +875,8 @@ construct_runtime!(
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
 		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
+
+		ForeingAssets: pallet_foreing_assets::{Pallet, Call, Storage, Event<T>} = 80,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
