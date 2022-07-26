@@ -90,11 +90,12 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          yarn testNesting
+          ./scripts/wait_for_first_block.sh && NOW=$(date +%s) && yarn testNesting --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          ls -la
 
-#      - name: Stop containers
-#        if: always()
-#        run: docker-compose -f "docker-compose-tests-parachain.yml" down
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f "docker-compose-tests-parachain.yml" down
 
 
 
