@@ -19,6 +19,7 @@ function is_started {
 }
 
 while ! is_started; do
+    echo "RPC_URL: $RPC_URL"
 	echo "Waiting for first block..."
 	sleep 12
 done
