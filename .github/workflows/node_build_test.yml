@@ -72,6 +72,11 @@ jobs:
       - name: Build the stack
         run: docker-compose -f docker-compose-tests-parachain.yml up -d --build
 
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '30s'
+
       - name: Install node
         uses: actions/setup-node@v1
         with:
