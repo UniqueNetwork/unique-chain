@@ -97,7 +97,7 @@ jobs:
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
- 
+
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
         id: test-report               # Set ID reference for step
