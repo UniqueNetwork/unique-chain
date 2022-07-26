@@ -108,7 +108,7 @@ pub enum AssetIds {
 
 pub trait TryAsForeing<T, F> {
 	fn try_as_foreing(asset: T) -> F;
-} 
+}
 
 impl TryAsForeing<AssetIds, ForeignAssetId> for AssetIds {
 	fn try_as_foreing(asset: AssetIds) -> ForeignAssetId {

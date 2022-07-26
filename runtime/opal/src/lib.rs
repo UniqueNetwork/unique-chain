@@ -673,9 +673,7 @@ use sp_runtime::traits::Convert;
 use xcm::opaque::latest::Junction;
 use sp_std::{borrow::Borrow};
 
-pub struct AsInnerId<AssetId, ConvertAssetId>(
-	PhantomData<(AssetId, ConvertAssetId)>,
-);
+pub struct AsInnerId<AssetId, ConvertAssetId>(PhantomData<(AssetId, ConvertAssetId)>);
 impl<AssetId: Clone, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
 	ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
 where
@@ -712,8 +710,7 @@ where
 		}
 	}
 
-	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> 
-	{
+	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
 		log::trace!(
 			target: "xcm::AsInnerId::Reverse",
 			"AsInnerId",
@@ -724,15 +721,20 @@ where
 		let parent = MultiLocation::parent();
 		let here = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 
-		let parent_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent));
+		let parent_id =
+			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent));
 		let here_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here));
 
-		match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(
-			<AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(asset_id.clone())) {
-				parent_id => Ok(parent),
-				here_id => Ok(here),
-				Some(location) => Ok(location),
-				None => Err(())
+		match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(<AssetId as TryAsForeing<
+			AssetId,
+			ForeignAssetId,
+		>>::try_as_foreing(
+			asset_id.clone()
+		)) {
+			parent_id => Ok(parent),
+			here_id => Ok(here),
+			Some(location) => Ok(location),
+			None => Err(()),
 		}
 	}
 }
@@ -742,12 +744,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
 	ForeingAssets,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteAssetId<
-		AssetIds,
-		Balance,
-		AsInnerId<AssetIds, JustTry>,
-		JustTry,
-	>,
+	ConvertedConcreteAssetId<AssetIds, Balance, AsInnerId<AssetIds, JustTry>, JustTry>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -1153,9 +1150,11 @@ impl pallet_foreing_assets::Config for Runtime {
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: AssetIds) -> Option<MultiLocation> {
-		
 		match id {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())))),
+			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(
+				1,
+				X1(Parachain(ParachainInfo::get().into())),
+			)),
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => Some(MultiLocation::parent()),
 			AssetIds::ForeignAssetId(foreign_asset_id) => {
 				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
@@ -1166,7 +1165,9 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
 }
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		if location == MultiLocation::here() || location == MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into()))) {
+		if location == MultiLocation::here()
+			|| location == MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())))
+		{
 			return Some(AssetIds::NativeAssetId(NativeCurrency::Here));
 		}
 
