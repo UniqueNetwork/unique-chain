@@ -74,7 +74,7 @@ describe('Refungible token: Information getting', () => {
 });
 
 // FIXME: Need erc721 for ReFubgible.
-describe.skip('Check ERC721 token URI for ReFungible', () => {
+describe('Check ERC721 token URI for ReFungible', () => {
   itWeb3('Empty tokenURI', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
