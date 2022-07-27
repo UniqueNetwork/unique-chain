@@ -107,7 +107,7 @@ jobs:
           name: Tests            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
-          fail-on-error: 'true'
+          fail-on-error: 'false'
 
 
       - name: Stop containers
