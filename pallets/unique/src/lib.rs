@@ -285,10 +285,6 @@ decl_module! {
 		}
 
 		fn on_runtime_upgrade() -> Weight {
-			let limit = None;
-
-			<VariableMetaDataBasket<T>>::remove_all(limit);
-
 			0
 		}
 
