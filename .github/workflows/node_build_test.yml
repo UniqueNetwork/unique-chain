@@ -110,6 +110,7 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'true'
 
+
       - name: Stop containers
         if: always()
         run: docker-compose -f ".docker/docker-compose-dev.yaml" down
