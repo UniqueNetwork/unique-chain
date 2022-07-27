@@ -57,26 +57,14 @@ jobs:
     runs-on: ci-01
 
     needs: pre-requisites
-    name: Build Opal
+    name: Build and Test Opal
 
     steps:
-    #  - name: delete workdir
-    #    run: rm -rf ${{ env.opal_chain_workdir }}
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-        #with:
-          #repository: ${{ src_repo_url }}
-          #path: ${{ env.opal_chain_workdir }}
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
-
-      - name: Wait / Sleep
-        uses: jakejarvis/wait-action@v0.1.1
-        with:
-          time: '60s'
-
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -96,18 +84,7 @@ jobs:
           ./scripts/wait_for_first_block.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944
-
-
-      - name: Wait / Sleep
-        uses: jakejarvis/wait-action@v0.1.1
-        with:
-          time: '90s'
-
-      - name: Wait / Sleep
-        uses: jakejarvis/wait-action@v0.1.1
-        with:
-          time: '90s'
+          RPC_URL: http://127.0.0.1:9944/
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
