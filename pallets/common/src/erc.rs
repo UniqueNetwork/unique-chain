@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! This module contains the implementation of pallet methods for evm.
+
 use evm_coder::{
 	solidity_interface, solidity, ToLog,
 	types::*,
@@ -29,29 +31,40 @@ use alloc::format;
 
 use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
 
+/// Events for ethereum collection helper.
 #[derive(ToLog)]
 pub enum CollectionHelpersEvents {
+	/// The collection has been created.
 	CollectionCreated {
+		/// Collection owner.
 		#[indexed]
 		owner: address,
+
+		/// Collection ID.
 		#[indexed]
 		collection_id: address,
 	},
 }
 
 /// Does not always represent a full collection, for RFT it is either
-/// collection (Implementing ERC721), or specific collection token (Implementing ERC20)
+/// collection (Implementing ERC721), or specific collection token (Implementing ERC20).
 pub trait CommonEvmHandler {
 	const CODE: &'static [u8];
 
+	/// Call precompiled handle.
 	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult>;
 }
 
+/// @title A contract that allows you to work with collections.
 #[solidity_interface(name = "Collection")]
 impl<T: Config> CollectionHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// Set collection property.
+	///
+	/// @param key Property key.
+	/// @param value Propery value.
 	fn set_collection_property(
 		&mut self,
 		caller: caller,
@@ -68,6 +81,9 @@ where
 			.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// Delete collection property.
+	///
+	/// @param key Property key.
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
@@ -77,7 +93,12 @@ where
 		<Pallet<T>>::delete_collection_property(self, &caller, key).map_err(dispatch_to_evm::<T>)
 	}
 
-	/// Throws error if key not found
+	/// Get collection property.
+	///
+	/// @dev Throws error if key not found.
+	///
+	/// @param key Property key.
+	/// @return bytes The property corresponding to the key.
 	fn collection_property(&self, key: string) -> Result<bytes> {
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -89,6 +110,11 @@ where
 		Ok(prop.to_vec())
 	}
 
+	/// Set the sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 
@@ -98,6 +124,9 @@ where
 		save(self)
 	}
 
+	/// Collection sponsorship confirmation.
+	///
+	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		if !self
@@ -109,6 +138,16 @@ where
 		save(self)
 	}
 
+	/// Set limits for the collection.
+	/// @dev Throws error if limit not found.
+	/// @param limit Name of the limit. Valid names:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
@@ -145,6 +184,13 @@ where
 		save(self)
 	}
 
+	/// Set limits for the collection.
+	/// @dev Throws error if limit not found.
+	/// @param limit Name of the limit. Valid names:
+	/// 	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
@@ -172,22 +218,15 @@ where
 		save(self)
 	}
 
+	/// Get contract address.
 	fn contract_address(&self, _caller: caller) -> Result<address> {
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
 
-	fn add_collection_admin_substrate(&self, caller: caller, new_admin: uint256) -> Result<void> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let mut new_admin_arr: [u8; 32] = Default::default();
-		new_admin.to_big_endian(&mut new_admin_arr);
-		let account_id = T::AccountId::from(new_admin_arr);
-		let new_admin = T::CrossAccountId::from_sub(account_id);
-		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
-
-	fn remove_collection_admin_substrate(
-		&self,
+	/// Add collection admin by substrate address.
+	/// @param new_admin Substrate administrator address.
+	fn add_collection_admin_substrate(
+		&mut self,
 		caller: caller,
 		new_admin: uint256,
 	) -> Result<void> {
@@ -196,25 +235,48 @@ where
 		new_admin.to_big_endian(&mut new_admin_arr);
 		let account_id = T::AccountId::from(new_admin_arr);
 		let new_admin = T::CrossAccountId::from_sub(account_id);
-		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, false)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
-	fn add_collection_admin(&self, caller: caller, new_admin: address) -> Result<void> {
+	/// Remove collection admin by substrate address.
+	/// @param admin Substrate administrator address.
+	fn remove_collection_admin_substrate(
+		&mut self,
+		caller: caller,
+		admin: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let mut admin_arr: [u8; 32] = Default::default();
+		admin.to_big_endian(&mut admin_arr);
+		let account_id = T::AccountId::from(admin_arr);
+		let admin = T::CrossAccountId::from_sub(account_id);
+		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// Add collection admin.
+	/// @param new_admin Address of the added administrator.
+	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
-	fn remove_collection_admin(&self, caller: caller, admin: address) -> Result<void> {
+	/// Remove collection admin.
+	///
+	/// @param new_admin Address of the removed administrator.
+	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
+	/// Toggle accessibility of collection nesting.
+	///
+	/// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
 	#[solidity(rename_selector = "setCollectionNesting")]
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
@@ -235,6 +297,10 @@ where
 		save(self)
 	}
 
+	/// Toggle accessibility of collection nesting.
+	///
+	/// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
+	/// @param collections Addresses of collections that will be available for nesting.
 	#[solidity(rename_selector = "setCollectionNesting")]
 	fn set_nesting(
 		&mut self,
@@ -280,6 +346,10 @@ where
 		save(self)
 	}
 
+	/// Set the collection access method.
+	/// @param mode Access mode
+	/// 	0 for Normal
+	/// 	1 for AllowList
 	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 		let permissions = CollectionPermissions {
@@ -300,20 +370,29 @@ where
 		save(self)
 	}
 
-	fn add_to_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
+	/// Add the user to the allowed list.
+	///
+	/// @param user Address of a trusted user.
+	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
-	fn remove_from_collection_allow_list(&self, caller: caller, user: address) -> Result<void> {
+	/// Remove the user from the allowed list.
+	///
+	/// @param user Address of a removed user.
+	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
+	/// Switch permission for minting.
+	///
+	/// @param mode Enable if "true".
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 		let permissions = CollectionPermissions {
@@ -351,9 +430,70 @@ fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	Ok(())
 }
 
-pub fn token_uri_key() -> up_data_structs::PropertyKey {
-	b"tokenURI"
-		.to_vec()
-		.try_into()
-		.expect("length < limit; qed")
+/// Contains static property keys and values.
+pub mod static_property {
+	use evm_coder::{
+		execution::{Result, Error},
+	};
+	use alloc::format;
+
+	const EXPECT_CONVERT_ERROR: &str = "length < limit";
+
+	/// Keys.
+	pub mod key {
+		use super::*;
+
+		/// Key "schemaName".
+		pub fn schema_name() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "baseURI".
+		pub fn base_uri() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "url".
+		pub fn url() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "suffix".
+		pub fn suffix() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
+		}
+	}
+
+	/// Values.
+	pub mod value {
+		use super::*;
+
+		/// Value "ERC721Metadata".
+		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
+
+		/// Value for [`ERC721_METADATA`].
+		pub fn erc721() -> up_data_structs::PropertyValue {
+			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
+		}
+	}
+
+	/// Convert `byte` to [`PropertyKey`].
+	pub fn property_key_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyKey> {
+		bytes.to_vec().try_into().map_err(|_| {
+			Error::Revert(format!(
+				"Property key is too long. Max length is {}.",
+				up_data_structs::PropertyKey::bound()
+			))
+		})
+	}
+
+	/// Convert `bytes` to [`PropertyValue`].
+	pub fn property_value_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyValue> {
+		bytes.to_vec().try_into().map_err(|_| {
+			Error::Revert(format!(
+				"Property key is too long. Max length is {}.",
+				up_data_structs::PropertyKey::bound()
+			))
+		})
+	}
 }

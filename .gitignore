@@ -12,6 +12,7 @@ einstein_key_file
 
 /.idea/
 /.cargo/
+/.vscode/
 
 tests/.vscode
 cumulus-parachain/

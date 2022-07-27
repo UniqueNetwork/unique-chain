@@ -14,34 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use up_data_structs::TokenId;
-use pallet_common::erc::CommonEvmHandler;
+extern crate alloc;
+use evm_coder::{generate_stubgen, solidity_interface, types::*};
+
+use pallet_common::{CollectionHandle, erc::CollectionCall, erc::CommonEvmHandler};
+
 use pallet_evm::PrecompileHandle;
+use pallet_evm_coder_substrate::call;
 
 use crate::{Config, RefungibleHandle};
 
-impl<T: Config> CommonEvmHandler for RefungibleHandle<T> {
+#[solidity_interface(
+	name = "UniqueRefungible",
+	is(via("CollectionHandle<T>", common_mut, Collection),)
+)]
+impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
+
+// Not a tests, but code generators
+generate_stubgen!(gen_impl, UniqueRefungibleCall<()>, true);
+generate_stubgen!(gen_iface, UniqueRefungibleCall<()>, false);
+
+impl<T: Config> CommonEvmHandler for RefungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueRefungible.raw");
-
 	fn call(
 		self,
-		_handle: &mut impl PrecompileHandle,
+		handle: &mut impl PrecompileHandle,
 	) -> Option<pallet_common::erc::PrecompileResult> {
-		// TODO: Implement RFT variant of ERC721
-		None
-	}
-}
-
-pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
-
-impl<T: Config> CommonEvmHandler for RefungibleTokenHandle<T> {
-	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueRefungibleToken.raw");
-
-	fn call(
-		self,
-		_handle: &mut impl PrecompileHandle,
-	) -> Option<pallet_common::erc::PrecompileResult> {
-		// TODO: Implement RFT variant of ERC20
-		None
+		call::<T, UniqueRefungibleCall<T>, _, _>(handle, self)
 	}
 }

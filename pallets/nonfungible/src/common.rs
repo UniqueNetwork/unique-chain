@@ -22,10 +22,11 @@ use up_data_structs::{
 	PropertyKeyPermission, PropertyValue,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, with_weight, weights::WeightInfo as _,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	weights::WeightInfo as _,
 };
 use sp_runtime::DispatchError;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
@@ -132,6 +133,8 @@ fn map_create_data<T: Config>(
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `NonfungibleHandle`. It wraps Nonfungible Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -219,11 +222,19 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		properties: Vec<Property>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::set_token_properties(self, &sender, token_id, properties, false),
+			<Pallet<T>>::set_token_properties(
+				self,
+				&sender,
+				token_id,
+				properties.into_iter(),
+				false,
+				nesting_budget,
+			),
 			weight,
 		)
 	}
@@ -233,11 +244,18 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		sender: T::CrossAccountId,
 		token_id: TokenId,
 		property_keys: Vec<PropertyKey>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
 
 		with_weight(
-			<Pallet<T>>::delete_token_properties(self, &sender, token_id, property_keys),
+			<Pallet<T>>::delete_token_properties(
+				self,
+				&sender,
+				token_id,
+				property_keys.into_iter(),
+				nesting_budget,
+			),
 			weight,
 		)
 	}
@@ -367,9 +385,9 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		sender: T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
-		budget: &dyn Budget,
+		nesting_budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
-		<Pallet<T>>::check_nesting(self, sender, from, under, budget)
+		<Pallet<T>>::check_nesting(self, sender, from, under, nesting_budget)
 	}
 
 	fn nest(&self, under: TokenId, to_nest: (CollectionId, TokenId)) {
@@ -402,6 +420,11 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
 		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
+	}
+
+	/// Returns token owners.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
@@ -465,6 +488,18 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			1
 		} else {
 			0
+		}
+	}
+
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		None
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		if <TokenData<T>>::contains_key((self.id, token)) {
+			Some(1)
+		} else {
+			None
 		}
 	}
 }

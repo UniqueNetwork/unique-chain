@@ -17,6 +17,7 @@
 use frame_support::{dispatch::DispatchResult, ensure};
 use pallet_evm::{PrecompileHandle, PrecompileResult};
 use sp_core::H160;
+use sp_runtime::DispatchError;
 use sp_std::{borrow::ToOwned, vec::Vec};
 use pallet_common::{
 	CollectionById, CollectionHandle, CommonCollectionOperations, erc::CommonEvmHandler,
@@ -25,9 +26,12 @@ use pallet_common::{
 pub use pallet_common::dispatch::CollectionDispatch;
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
-use pallet_refungible::{Pallet as PalletRefungible, RefungibleHandle, erc::RefungibleTokenHandle};
+use pallet_refungible::{
+	Pallet as PalletRefungible, RefungibleHandle, erc_token::RefungibleTokenHandle,
+};
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, MAX_DECIMAL_POINTS, mapping::TokenAddressMapping,
+	CollectionId,
 };
 
 pub enum CollectionDispatchT<T>
@@ -49,8 +53,8 @@ where
 	fn create(
 		sender: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
-	) -> DispatchResult {
-		let _id = match data.mode {
+	) -> Result<CollectionId, DispatchError> {
+		let id = match data.mode {
 			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, data, false)?,
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
@@ -62,7 +66,7 @@ where
 			}
 			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, data)?,
 		};
-		Ok(())
+		Ok(id)
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection: CollectionHandle<T>) -> DispatchResult {

@@ -1,9 +1,29 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+//! Realizations of RMRK RPCs (remote procedure calls) related to the Core pallet.
+
 use super::*;
 
+/// Get the latest created collection ID.
 pub fn last_collection_idx<T: Config>() -> Result<RmrkCollectionId, DispatchError> {
 	Ok(<Pallet<T>>::last_collection_idx())
 }
 
+/// Get collection info by ID.
 pub fn collection_by_id<T: Config>(
 	collection_id: RmrkCollectionId,
 ) -> Result<Option<RmrkCollectionInfo<T::AccountId>>, DispatchError> {
@@ -29,6 +49,7 @@ pub fn collection_by_id<T: Config>(
 	}))
 }
 
+/// Get NFT info by collection and NFT IDs.
 pub fn nft_by_id<T: Config>(
 	collection_id: RmrkCollectionId,
 	nft_by_id: RmrkNftId,
@@ -83,6 +104,7 @@ pub fn nft_by_id<T: Config>(
 	}))
 }
 
+/// Get tokens owned by an account in a collection.
 pub fn account_tokens<T: Config>(
 	account_id: T::AccountId,
 	collection_id: RmrkCollectionId,
@@ -116,6 +138,7 @@ pub fn account_tokens<T: Config>(
 	Ok(tokens)
 }
 
+/// Get tokens nested in an NFT - its direct children (not the children's children).
 pub fn nft_children<T: Config>(
 	collection_id: RmrkCollectionId,
 	nft_id: RmrkNftId,
@@ -132,17 +155,6 @@ pub fn nft_children<T: Config>(
 	Ok(
 		pallet_nonfungible::TokenChildren::<T>::iter_prefix((collection_id, nft_id))
 			.filter_map(|((child_collection, child_token), _)| {
-				let is_pending = <Pallet<T>>::get_nft_property_decoded(
-					child_collection,
-					child_token,
-					RmrkProperty::PendingNftAccept,
-				)
-				.ok()?;
-
-				if is_pending {
-					return None;
-				}
-
 				let rmrk_child_collection =
 					<Pallet<T>>::rmrk_collection_id(child_collection).ok()?;
 
@@ -151,10 +163,19 @@ pub fn nft_children<T: Config>(
 					nft_id: child_token.0,
 				})
 			})
+			.chain(
+				<Pallet<T>>::iterate_pending_children(collection_id, nft_id)?.map(
+					|(child_collection, child_nft_id)| RmrkNftChild {
+						collection_id: child_collection,
+						nft_id: child_nft_id,
+					},
+				),
+			)
 			.collect(),
 	)
 }
 
+/// Get collection properties, created by the user - not the proxy-specific properties.
 pub fn collection_properties<T: Config>(
 	collection_id: RmrkCollectionId,
 	filter_keys: Option<Vec<RmrkPropertyKey>>,
@@ -177,6 +198,7 @@ pub fn collection_properties<T: Config>(
 	Ok(properties)
 }
 
+/// Get NFT properties, created by the user - not the proxy-specific properties.
 pub fn nft_properties<T: Config>(
 	collection_id: RmrkCollectionId,
 	nft_id: RmrkNftId,
@@ -202,6 +224,7 @@ pub fn nft_properties<T: Config>(
 	Ok(properties)
 }
 
+/// Get full information on each resource of an NFT, including pending.
 pub fn nft_resources<T: Config>(
 	collection_id: RmrkCollectionId,
 	nft_id: RmrkNftId,
@@ -224,8 +247,12 @@ pub fn nft_resources<T: Config>(
 		nft_id,
 		PropertyScope::Rmrk,
 	)
-	.filter_map(|(_, value)| {
-		let resource_info: RmrkResourceInfo = <Pallet<T>>::decode_property(&value).ok()?;
+	.filter_map(|(key, value)| {
+		if !is_valid_key_prefix(&key, RESOURCE_ID_PREFIX) {
+			return None;
+		}
+
+		let resource_info: RmrkResourceInfo = <Pallet<T>>::decode_property_value(&value).ok()?;
 
 		Some(resource_info)
 	})
@@ -234,6 +261,7 @@ pub fn nft_resources<T: Config>(
 	Ok(resources)
 }
 
+/// Get the priority of a resource in an NFT.
 pub fn nft_resource_priority<T: Config>(
 	collection_id: RmrkCollectionId,
 	nft_id: RmrkNftId,

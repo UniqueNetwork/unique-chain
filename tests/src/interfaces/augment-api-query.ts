@@ -5,7 +5,7 @@ import type { ApiTypes } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumLog, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletNonfungibleItemData, PalletRefungibleItemData, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletUniqueSchedulerScheduledV3, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpRuntimeDigest, SpTrieStorageProof, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsProperties, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsPropertyPermission, UpDataStructsTokenChild } from '@polkadot/types/lookup';
+import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumLog, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletNonfungibleItemData, PalletRefungibleItemData, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletUniqueSchedulerScheduledV3, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpRuntimeDigest, SpTrieStorageProof, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsProperties, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsPropertyPermission, UpDataStructsPropertyScope, UpDataStructsTokenChild } from '@polkadot/types/lookup';
 import type { Observable } from '@polkadot/types/types';
 
 declare module '@polkadot/api-base/types/storage' {
@@ -69,28 +69,40 @@ declare module '@polkadot/api-base/types/storage' {
       [key: string]: QueryableStorageEntry<ApiType>;
     };
     common: {
+      /**
+       * Storage of the amount of collection admins.
+       **/
       adminAmount: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u32>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
-       * Allowlisted collection users
+       * Allowlisted collection users.
        **/
       allowlist: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Collection info
+       * Storage of collection info.
        **/
       collectionById: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<UpDataStructsCollection>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
-       * Collection properties
+       * Storage of collection properties.
        **/
       collectionProperties: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<UpDataStructsProperties>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Storage of token property permissions of a collection.
+       **/
       collectionPropertyPermissions: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<BTreeMap<Bytes, UpDataStructsPropertyPermission>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Storage of the count of created collections. Essentially contains the last collection ID.
+       **/
       createdCollectionCount: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Storage of the count of deleted collections.
+       **/
       destroyedCollectionCount: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
-       * Not used by code, exists only to provide some types to metadata
+       * Not used by code, exists only to provide some types to metadata.
        **/
       dummyStorageValue: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[UpDataStructsCollectionStats, u32, u32, UpDataStructsTokenChild, PhantomTypeUpDataStructs]>>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
-       * List of collection admins
+       * List of collection admins.
        **/
       isAdmin: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
@@ -187,8 +199,17 @@ declare module '@polkadot/api-base/types/storage' {
       [key: string]: QueryableStorageEntry<ApiType>;
     };
     fungible: {
+      /**
+       * Storage for assets delegated to a limited extent to other users.
+       **/
       allowance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg3: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u128>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Amount of tokens owned by an account inside a collection.
+       **/
       balance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u128>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Total amount of fungible tokens inside a collection.
+       **/
       totalSupply: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u128>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
        * Generic query
@@ -222,19 +243,49 @@ declare module '@polkadot/api-base/types/storage' {
       [key: string]: QueryableStorageEntry<ApiType>;
     };
     nonfungible: {
+      /**
+       * Amount of tokens owned by an account in a collection.
+       **/
       accountBalance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u32>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Allowance set by a token owner for another user to perform one of certain transactions on a token.
+       **/
       allowance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
       /**
-       * Used to enumerate tokens owned by account
+       * Used to enumerate tokens owned by account.
        **/
       owned: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg3: u32 | AnyNumber | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32]>;
       /**
-       * Used to enumerate token's children
+       * Custom data of a token that is serialized to bytes,
+       * primarily reserved for on-chain operations,
+       * normally obscured from the external users.
+       * 
+       * Auxiliary properties are slightly different from
+       * usual [`TokenProperties`] due to an unlimited number
+       * and separately stored and written-to key-value pairs.
+       * 
+       * Currently used to store RMRK data.
+       **/
+      tokenAuxProperties: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: UpDataStructsPropertyScope | 'None' | 'Rmrk' | number | Uint8Array, arg4: Bytes | string | Uint8Array) => Observable<Option<Bytes>>, [u32, u32, UpDataStructsPropertyScope, Bytes]> & QueryableStorageEntry<ApiType, [u32, u32, UpDataStructsPropertyScope, Bytes]>;
+      /**
+       * Used to enumerate token's children.
        **/
       tokenChildren: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array]) => Observable<bool>, [u32, u32, ITuple<[u32, u32]>]> & QueryableStorageEntry<ApiType, [u32, u32, ITuple<[u32, u32]>]>;
+      /**
+       * Token data, used to partially describe a token.
+       **/
       tokenData: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<Option<PalletNonfungibleItemData>>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
+      /**
+       * Map of key-value pairs, describing the metadata of a token.
+       **/
       tokenProperties: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<UpDataStructsProperties>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
+      /**
+       * Amount of burnt tokens in a collection.
+       **/
       tokensBurnt: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u32>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Total amount of minted tokens in a collection.
+       **/
       tokensMinted: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u32>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
        * Generic query
@@ -399,16 +450,41 @@ declare module '@polkadot/api-base/types/storage' {
       [key: string]: QueryableStorageEntry<ApiType>;
     };
     refungible: {
+      /**
+       * Amount of tokens (not pieces) partially owned by an account within a collection.
+       **/
       accountBalance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u32>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Allowance set by a token owner for another user to perform one of certain transactions on a number of pieces of a token.
+       **/
       allowance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg4: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u128>, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Amount of token pieces owned by account.
+       **/
       balance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u128>, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Used to enumerate tokens owned by account
+       * Used to enumerate tokens owned by account.
        **/
       owned: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg3: u32 | AnyNumber | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32]>;
+      /**
+       * Token data, used to partially describe a token.
+       **/
       tokenData: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<PalletRefungibleItemData>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
+      /**
+       * Amount of pieces a refungible token is split into.
+       **/
+      tokenProperties: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<UpDataStructsProperties>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
+      /**
+       * Amount of tokens burnt in a collection.
+       **/
       tokensBurnt: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u32>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Total amount of minted tokens in a collection.
+       **/
       tokensMinted: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u32>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Total amount of pieces for token
+       **/
       totalSupply: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<u128>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
       /**
        * Generic query
@@ -597,24 +673,33 @@ declare module '@polkadot/api-base/types/storage' {
        * TODO: Off chain worker should remove from this map when collection gets removed
        **/
       createItemBasket: AugmentedQuery<ApiType, (arg: ITuple<[u32, AccountId32]> | [u32 | AnyNumber | Uint8Array, AccountId32 | string | Uint8Array]) => Observable<Option<u32>>, [ITuple<[u32, AccountId32]>]> & QueryableStorageEntry<ApiType, [ITuple<[u32, AccountId32]>]>;
+      /**
+       * Last sponsoring of fungible tokens approval in a collection
+       **/
       fungibleApproveBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: AccountId32 | string | Uint8Array) => Observable<Option<u32>>, [u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, AccountId32]>;
       /**
        * Collection id (controlled?2), owning user (real)
        **/
       fungibleTransferBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: AccountId32 | string | Uint8Array) => Observable<Option<u32>>, [u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, AccountId32]>;
       /**
-       * Approval sponsoring
+       * Last sponsoring of NFT approval in a collection
        **/
       nftApproveBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<Option<u32>>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
       /**
        * Collection id (controlled?2), token id (controlled?2)
        **/
       nftTransferBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<Option<u32>>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
+      /**
+       * Last sponsoring of RFT approval in a collection
+       **/
       refungibleApproveBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: AccountId32 | string | Uint8Array) => Observable<Option<u32>>, [u32, u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, u32, AccountId32]>;
       /**
        * Collection id (controlled?2), token id (controlled?2)
        **/
       reFungibleTransferBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: AccountId32 | string | Uint8Array) => Observable<Option<u32>>, [u32, u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, u32, AccountId32]>;
+      /**
+       * Last sponsoring of token property setting // todo:doc rephrase this and the following
+       **/
       tokenPropertyBasket: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<Option<u32>>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
       /**
        * Variable metadata sponsoring

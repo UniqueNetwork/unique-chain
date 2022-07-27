@@ -57,7 +57,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AddressNotInAllowlist: AugmentedError<ApiType>;
       /**
-       * Requested value more than approved.
+       * Requested value is more than the approved
        **/
       ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
@@ -113,7 +113,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
       /**
-       * Only ASCII letters, digits, and '_', '-' are allowed
+       * Only ASCII letters, digits, and symbols `_`, `-`, and `.` are allowed
        **/
       InvalidCharacterInPropertyKey: AugmentedError<ApiType>;
       /**
@@ -133,7 +133,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoSpaceForProperty: AugmentedError<ApiType>;
       /**
-       * Not sufficient funds to perform action
+       * Insufficient funds to perform an action
        **/
       NotSufficientFounds: AugmentedError<ApiType>;
       /**
@@ -153,15 +153,15 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       PublicMintingNotAllowed: AugmentedError<ApiType>;
       /**
-       * Only tokens from specific collections may nest tokens under this
+       * Only tokens from specific collections may nest tokens under this one
        **/
       SourceCollectionIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
-       * Item not exists.
+       * Item does not exist
        **/
       TokenNotFound: AugmentedError<ApiType>;
       /**
-       * Item balance not enough.
+       * Item is balance not enough
        **/
       TokenValueTooLow: AugmentedError<ApiType>;
       /**
@@ -173,11 +173,11 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TransferNotAllowed: AugmentedError<ApiType>;
       /**
-       * Target collection doesn't supports this operation
+       * Target collection doesn't support this operation
        **/
       UnsupportedOperation: AugmentedError<ApiType>;
       /**
-       * User not passed nesting rule
+       * User does not satisfy the nesting rule
        **/
       UserIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
@@ -277,15 +277,15 @@ declare module '@polkadot/api-base/types/errors' {
     };
     fungible: {
       /**
-       * Fungible token does not support nested
+       * Fungible token does not support nesting.
        **/
       FungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
-       * Tried to set data for fungible item
+       * Tried to set data for fungible item.
        **/
       FungibleItemsDontHaveData: AugmentedError<ApiType>;
       /**
-       * Not default id passed as TokenId argument
+       * Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
       /**
@@ -293,7 +293,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Setting item properties is not allowed
+       * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
@@ -425,15 +425,19 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotRefungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Refungible token can't nest other tokens
+       * Refungible token can't nest other tokens.
        **/
       RefungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
-       * Setting item properties is not allowed
+       * Refungible token can't be repartitioned by user who isn't owns all pieces.
+       **/
+      RepartitionWhileNotOwningAllPieces: AugmentedError<ApiType>;
+      /**
+       * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
-       * Maximum refungibility exceeded
+       * Maximum refungibility exceeded.
        **/
       WrongRefungiblePieces: AugmentedError<ApiType>;
       /**
@@ -444,6 +448,7 @@ declare module '@polkadot/api-base/types/errors' {
     rmrkCore: {
       CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
       CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      CannotRejectNonPendingNft: AugmentedError<ApiType>;
       CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
       CollectionFullOrLocked: AugmentedError<ApiType>;
       CollectionNotEmpty: AugmentedError<ApiType>;
@@ -452,10 +457,12 @@ declare module '@polkadot/api-base/types/errors' {
       NftTypeEncodeError: AugmentedError<ApiType>;
       NoAvailableCollectionId: AugmentedError<ApiType>;
       NoAvailableNftId: AugmentedError<ApiType>;
+      NoAvailableResourceId: AugmentedError<ApiType>;
       NonTransferable: AugmentedError<ApiType>;
       NoPermission: AugmentedError<ApiType>;
       ResourceDoesntExist: AugmentedError<ApiType>;
       ResourceNotPending: AugmentedError<ApiType>;
+      RmrkPropertyIsNotFound: AugmentedError<ApiType>;
       RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
       RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
       UnableToDecodeRmrkData: AugmentedError<ApiType>;
@@ -469,6 +476,8 @@ declare module '@polkadot/api-base/types/errors' {
       NeedsDefaultThemeFirst: AugmentedError<ApiType>;
       NoAvailableBaseId: AugmentedError<ApiType>;
       NoAvailablePartId: AugmentedError<ApiType>;
+      NoEquippableOnFixedPart: AugmentedError<ApiType>;
+      PartDoesntExist: AugmentedError<ApiType>;
       PermissionError: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -499,19 +508,19 @@ declare module '@polkadot/api-base/types/errors' {
     };
     structure: {
       /**
-       * While iterating over children, encountered breadth limit
+       * While iterating over children, reached the breadth limit.
        **/
       BreadthLimit: AugmentedError<ApiType>;
       /**
-       * While searched for owner, encountered depth limit
+       * While searching for the owner, reached the depth limit.
        **/
       DepthLimit: AugmentedError<ApiType>;
       /**
-       * While searched for owner, got already checked account
+       * While searching for the owner, encountered an already checked account, detecting a loop.
        **/
       OuroborosDetected: AugmentedError<ApiType>;
       /**
-       * While searched for owner, found token owner by not-yet-existing token
+       * Couldn't find the token owner that is itself a token.
        **/
       TokenNotFound: AugmentedError<ApiType>;
       /**
@@ -587,7 +596,7 @@ declare module '@polkadot/api-base/types/errors' {
     };
     unique: {
       /**
-       * Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
+       * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
       /**
@@ -598,6 +607,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Length of items properties must be greater than 0.
        **/
       EmptyArgument: AugmentedError<ApiType>;
+      /**
+       * Repertition is only supported by refungible collection.
+       **/
+      RepartitionCalledOnNonRefungibleCollection: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

@@ -42,7 +42,7 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
-sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
 curl https://sh.rustup.rs -sSf | sh
 ```
 
@@ -83,7 +83,8 @@ Note: checkout this project and all related projects (see below) in the sibling 
 ### Polkadot launch utility
 
 ```
-git clone https://github.com/paritytech/polkadot-launch
+git clone https://github.com/UniqueNetwork/polkadot-launch.git
+git checkout feature/runtime-upgrade-testing
 ```
 
 ### Build relay
@@ -91,7 +92,7 @@ git clone https://github.com/paritytech/polkadot-launch
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.23
+git checkout release-v0.9.24
 cargo build --release
 ```
 

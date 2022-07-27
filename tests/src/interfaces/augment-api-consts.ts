@@ -2,10 +2,10 @@
 /* eslint-disable */
 
 import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Option, Vec, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSupportWeightsWeightToFeeCoefficient, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion } from '@polkadot/types/lookup';
 
 declare module '@polkadot/api-base/types/consts' {
   export interface AugmentedConsts<ApiType extends ApiTypes> {
@@ -29,7 +29,13 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     common: {
+      /**
+       * Maximum admins per collection.
+       **/
       collectionAdminsLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Set price to create a collection.
+       **/
       collectionCreationPrice: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -111,10 +117,6 @@ declare module '@polkadot/api-base/types/consts' {
     };
     transactionPayment: {
       /**
-       * The polynomial that is applied in order to derive fee from length.
-       **/
-      lengthToFee: Vec<FrameSupportWeightsWeightToFeeCoefficient> & AugmentedConst<ApiType>;
-      /**
        * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
        * `priority`
        * 
@@ -138,10 +140,6 @@ declare module '@polkadot/api-base/types/consts' {
        * transactions.
        **/
       operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
-      /**
-       * The polynomial that is applied in order to derive fee from weight.
-       **/
-      weightToFee: Vec<FrameSupportWeightsWeightToFeeCoefficient> & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

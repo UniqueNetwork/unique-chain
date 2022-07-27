@@ -20,11 +20,14 @@ use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
-	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
+	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData, CollectionPropertiesVec,
 };
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_common::{
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	weights::WeightInfo as _,
+};
 use pallet_structure::Error as StructureError;
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError};
 use sp_std::{vec::Vec, vec};
 
 use crate::{
@@ -41,6 +44,14 @@ macro_rules! max_weight_of {
 	};
 }
 
+fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> u64 {
+	if properties.len() > 0 {
+		<CommonWeights<T>>::set_token_properties(properties.len() as u32)
+	} else {
+		0
+	}
+}
+
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_item() -> Weight {
@@ -48,16 +59,31 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
+			data.iter()
+				.map(|data| match data {
+					CreateItemData::ReFungible(rft_data) => {
+						properties_weight::<T>(&rft_data.properties)
+					}
+					_ => 0,
+				})
+				.fold(0, |a, b| a.saturating_add(b)),
+		)
 	}
 
 	fn create_multiple_items_ex(call: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match call {
 			CreateItemExData::RefungibleMultipleOwners(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(i.users.len() as u32)
+					.saturating_add(properties_weight::<T>(&i.properties))
 			}
 			CreateItemExData::RefungibleMultipleItems(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(i.len() as u32)
+					.saturating_add(
+						i.iter()
+							.map(|d| properties_weight::<T>(&d.properties))
+							.fold(0, |a, b| a.saturating_add(b)),
+					)
 			}
 			_ => 0,
 		}
@@ -67,29 +93,24 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		max_weight_of!(burn_item_partial(), burn_item_fully())
 	}
 
-	fn set_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn set_collection_properties(amount: u32) -> Weight {
+		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
 	}
 
-	fn set_token_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
 	}
 
-	fn delete_token_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
 	}
 
-	fn set_token_property_permissions(_amount: u32) -> Weight {
-		// Error
-		0
+	fn set_token_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -140,11 +161,14 @@ fn map_create_data<T: Config>(
 				out.insert(to.clone(), data.pieces);
 				out.try_into().expect("limit > 0")
 			},
+			properties: data.properties,
 		}),
 		_ => fail!(<Error<T>>::NotRefungibleDataUsedToMintFungibleCollectionToken),
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `RefungibleHandle`. It wraps Refungible Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -295,44 +319,85 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn set_collection_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_property: Vec<Property>,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_collection_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_collection_properties(self, &sender, properties),
+			weight,
+		)
 	}
 
 	fn delete_collection_properties(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_keys: Vec<PropertyKey>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_collection_properties(self, sender, property_keys),
+			weight,
+		)
 	}
 
 	fn set_token_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_token_id: TokenId,
-		_property: Vec<Property>,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_properties(
+				self,
+				&sender,
+				token_id,
+				properties.into_iter(),
+				false,
+				nesting_budget,
+			),
+			weight,
+		)
 	}
 
 	fn set_token_property_permissions(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_permissions: Vec<PropertyKeyPermission>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight =
+			<CommonWeights<T>>::set_token_property_permissions(property_permissions.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_property_permissions(self, sender, property_permissions),
+			weight,
+		)
 	}
 
 	fn delete_token_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_token_id: TokenId,
-		_property_keys: Vec<PropertyKey>,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_token_properties(
+				self,
+				&sender,
+				token_id,
+				property_keys.into_iter(),
+				nesting_budget,
+			),
+			weight,
+		)
 	}
 
 	fn check_nesting(
@@ -340,7 +405,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		_sender: <T>::CrossAccountId,
 		_from: (CollectionId, TokenId),
 		_under: TokenId,
-		_budget: &dyn Budget,
+		_nesting_budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
 		fail!(<Error<T>>::RefungibleDisallowsNesting)
 	}
@@ -369,8 +434,13 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
-		None
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
+		<Pallet<T>>::token_owner(self.id, token)
+	}
+
+	/// Returns 10 token in no particular order.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
@@ -404,5 +474,27 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		token: TokenId,
 	) -> u128 {
 		<Allowance<T>>::get((self.id, token, sender, spender))
+	}
+
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		Some(self)
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		<Pallet<T>>::total_pieces(self.id, token)
+	}
+}
+
+impl<T: Config> RefungibleExtensions<T> for RefungibleHandle<T> {
+	fn repartition(
+		&self,
+		owner: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::repartition(self, owner, token, amount),
+			<SelfWeightOf<T>>::repartition_item(),
+		)
 	}
 }

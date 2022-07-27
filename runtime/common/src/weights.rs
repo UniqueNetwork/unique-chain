@@ -16,11 +16,13 @@
 
 use core::marker::PhantomData;
 use frame_support::{weights::Weight};
-use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight};
+use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight, RefungibleExtensionsWeightInfo};
 
 use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
-use pallet_refungible::{Config as RefungibleConfig, common::CommonWeights as RefungibleWeights};
+use pallet_refungible::{
+	Config as RefungibleConfig, weights::WeightInfo, common::CommonWeights as RefungibleWeights,
+};
 use up_data_structs::{CreateItemExData, CreateItemData};
 
 macro_rules! max_weight_of {
@@ -96,5 +98,14 @@ where
 
 	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
 		max_weight_of!(burn_recursively_breadth_raw(amount))
+	}
+}
+
+impl<T> RefungibleExtensionsWeightInfo for CommonWeights<T>
+where
+	T: FungibleConfig + NonfungibleConfig + RefungibleConfig,
+{
+	fn repartition() -> Weight {
+		dispatch_weight::<T>() + <<T as RefungibleConfig>::WeightInfo>::repartition_item()
 	}
 }

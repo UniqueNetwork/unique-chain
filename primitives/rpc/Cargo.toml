@@ -1,6 +1,6 @@
 [package]
 name = "up-rpc"
-version = "0.1.0"
+version = "0.1.1"
 license = "GPLv3"
 edition = "2021"
 
@@ -10,11 +10,11 @@ up-data-structs = { default-features = false, path = '../data-structs' }
 codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = [
 	"derive",
 ] }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.23" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 
 [features]
 default = ["std"]

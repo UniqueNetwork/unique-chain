@@ -59,82 +59,47 @@ declare module '@polkadot/api-base/types/events' {
     };
     common: {
       /**
-       * * collection_id
-       * 
-       * * item_id
-       * 
-       * * sender
-       * 
-       * * spender
-       * 
-       * * amount
+       * Amount pieces of token owned by `sender` was approved for `spender`.
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * New collection was created
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique identifier of newly created collection.
-       * 
-       * * mode: [CollectionMode] converted into u8.
-       * 
-       * * account_id: Collection owner.
        **/
       CollectionCreated: AugmentedEvent<ApiType, [u32, u8, AccountId32]>;
       /**
        * New collection was destroyed
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique identifier of collection.
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
+      /**
+       * The property has been deleted.
+       **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * The colletion property has been added or edited.
+       **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
        * New item was created.
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Id of the collection where item was created.
-       * 
-       * * item_id: Id of an item. Unique within the collection.
-       * 
-       * * recipient: Owner of newly created item
-       * 
-       * * amount: Always 1 for NFT
        **/
       ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Collection item was burned.
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * item_id: Identifier of burned NFT.
-       * 
-       * * owner: which user has destroyed its tokens
-       * 
-       * * amount: Always 1 for NFT
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
+      /**
+       * The token property permission of a collection has been set.
+       **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * The token property has been deleted.
+       **/
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
+      /**
+       * The token property has been added or edited.
+       **/
       TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
        * Item was transferred
-       * 
-       * * collection_id: Id of collection to which item is belong
-       * 
-       * * item_id: Id of an item
-       * 
-       * * sender: Original owner of item
-       * 
-       * * recipient: New owner of item
-       * 
-       * * amount: Always 1 for NFT
        **/
       Transfer: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
@@ -166,34 +131,28 @@ declare module '@polkadot/api-base/types/events' {
     dmpQueue: {
       /**
        * Downward message executed with the given outcome.
-       * \[ id, outcome \]
        **/
-      ExecutedDownward: AugmentedEvent<ApiType, [U8aFixed, XcmV2TraitsOutcome]>;
+      ExecutedDownward: AugmentedEvent<ApiType, [messageId: U8aFixed, outcome: XcmV2TraitsOutcome], { messageId: U8aFixed, outcome: XcmV2TraitsOutcome }>;
       /**
        * Downward message is invalid XCM.
-       * \[ id \]
        **/
-      InvalidFormat: AugmentedEvent<ApiType, [U8aFixed]>;
+      InvalidFormat: AugmentedEvent<ApiType, [messageId: U8aFixed], { messageId: U8aFixed }>;
       /**
        * Downward message is overweight and was placed in the overweight queue.
-       * \[ id, index, required \]
        **/
-      OverweightEnqueued: AugmentedEvent<ApiType, [U8aFixed, u64, u64]>;
+      OverweightEnqueued: AugmentedEvent<ApiType, [messageId: U8aFixed, overweightIndex: u64, requiredWeight: u64], { messageId: U8aFixed, overweightIndex: u64, requiredWeight: u64 }>;
       /**
        * Downward message from the overweight queue was executed.
-       * \[ index, used \]
        **/
-      OverweightServiced: AugmentedEvent<ApiType, [u64, u64]>;
+      OverweightServiced: AugmentedEvent<ApiType, [overweightIndex: u64, weightUsed: u64], { overweightIndex: u64, weightUsed: u64 }>;
       /**
        * Downward message is unsupported version of XCM.
-       * \[ id \]
        **/
-      UnsupportedVersion: AugmentedEvent<ApiType, [U8aFixed]>;
+      UnsupportedVersion: AugmentedEvent<ApiType, [messageId: U8aFixed], { messageId: U8aFixed }>;
       /**
        * The weight limit for handling downward messages was reached.
-       * \[ id, remaining, required \]
        **/
-      WeightExhausted: AugmentedEvent<ApiType, [U8aFixed, u64, u64]>;
+      WeightExhausted: AugmentedEvent<ApiType, [messageId: U8aFixed, remainingWeight: u64, requiredWeight: u64], { messageId: U8aFixed, remainingWeight: u64, requiredWeight: u64 }>;
       /**
        * Generic event
        **/
@@ -246,22 +205,20 @@ declare module '@polkadot/api-base/types/events' {
     parachainSystem: {
       /**
        * Downward messages were processed using the given weight.
-       * \[ weight_used, result_mqc_head \]
        **/
-      DownwardMessagesProcessed: AugmentedEvent<ApiType, [u64, H256]>;
+      DownwardMessagesProcessed: AugmentedEvent<ApiType, [weightUsed: u64, dmqHead: H256], { weightUsed: u64, dmqHead: H256 }>;
       /**
        * Some downward messages have been received and will be processed.
-       * \[ count \]
        **/
-      DownwardMessagesReceived: AugmentedEvent<ApiType, [u32]>;
+      DownwardMessagesReceived: AugmentedEvent<ApiType, [count: u32], { count: u32 }>;
       /**
        * An upgrade has been authorized.
        **/
-      UpgradeAuthorized: AugmentedEvent<ApiType, [H256]>;
+      UpgradeAuthorized: AugmentedEvent<ApiType, [codeHash: H256], { codeHash: H256 }>;
       /**
        * The validation function was applied as of the contained relay chain block number.
        **/
-      ValidationFunctionApplied: AugmentedEvent<ApiType, [u32]>;
+      ValidationFunctionApplied: AugmentedEvent<ApiType, [relayChainBlockNum: u32], { relayChainBlockNum: u32 }>;
       /**
        * The relay-chain aborted the upgrade process.
        **/
@@ -420,6 +377,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     rmrkEquip: {
       BaseCreated: AugmentedEvent<ApiType, [issuer: AccountId32, baseId: u32], { issuer: AccountId32, baseId: u32 }>;
+      EquippablesUpdated: AugmentedEvent<ApiType, [baseId: u32, slotId: u32], { baseId: u32, slotId: u32 }>;
       /**
        * Generic event
        **/
@@ -449,7 +407,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     structure: {
       /**
-       * Executed call on behalf of token
+       * Executed call on behalf of the token.
        **/
       Executed: AugmentedEvent<ApiType, [Result<Null, SpRuntimeDispatchError>]>;
       /**
@@ -541,90 +499,80 @@ declare module '@polkadot/api-base/types/events' {
     };
     unique: {
       /**
-       * Address was add to allow list
+       * Address was added to the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the added account.
        **/
       AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Address was remove from allow list
+       * Address was removed from the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the removed account.
        **/
       AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was added
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Admin address.
        **/
       CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Removed admin address.
        **/
       CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Collection limits was set
+       * Collection limits were set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
       /**
-       * Collection owned was change
+       * Collection owned was changed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New owner address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New owner address.
        **/
       CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Collection permissions were set
+       * 
+       * # Arguments
+       * * collection_id: ID of the affected collection.
+       **/
       CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionSponsorRemoved: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New sponsor address.
        **/
       CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * New sponsor was confirm
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * sponsor:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * sponsor: New sponsor address.
        **/
       SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
