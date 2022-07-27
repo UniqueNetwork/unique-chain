@@ -55,12 +55,12 @@ jobs:
         run: mkdir -p ${{ env.chains_release_dir }}
 
 
-  build-Opal:
+  build:
     # The type of runner that the job will run on
     runs-on: ci-01
 
     needs: pre-requisites
-    name: Build and Test Opal
+    name: Build Container and Spin it Up
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -68,6 +68,15 @@ jobs:
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
+
+  test:
+    # The type of runner that the job will run on
+    runs-on: ci-01
+
+    needs: pre-requisites
+    name: Tests
+
+    steps:
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -97,7 +106,8 @@ jobs:
           name: Tests            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
-          fail-on-error: 'false'
+          fail-on-error: 'true'
+
 
       - name: Stop containers
         if: always()
