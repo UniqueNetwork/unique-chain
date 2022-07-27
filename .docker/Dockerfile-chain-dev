@@ -1,0 +1,34 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+ARG RUST_TOOLCHAIN=nightly-2022-04-07
+ARG BRANCH=develop
+ARG FEATURE=opal
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install $RUST_TOOLCHAIN && \
+    rustup default $RUST_TOOLCHAIN && \
+    rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
+
+RUN mkdir /dev_chain && git clone https://github.com/UniqueNetwork/unique-chain.git /dev_chain && cd /dev_chain && git checkout $BRANCH
+WORKDIR /dev_chain
+
+RUN cargo build --release
+
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9933
+EXPOSE 9833
+EXPOSE 40333
+EXPOSE 30333
+
+CMD cargo run --release --features $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

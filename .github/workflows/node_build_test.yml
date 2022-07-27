@@ -1,44 +1,123 @@
 name: Build & test
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
+  #push:
+  #  branches: [ develop ]
+  pull_request:
+    types:
+      - closed
     branches: [ develop ]
  # pull_request:
  #   branches: [ develop ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+#Define Workflow variables
+env:
+  ubuntu_version: focal
+  chains_release_dir: /opt/runner/chains_release
+  opal_chain_workdir: ./src_opal_chain
+  quartz_chain_workdir: ./src_quartz_chain
+  unique_chain_workdir: ./src_unique_chain
+  src_repo_url: https://github.com/lzadjsf/unique-chain.git
+  version: v924010
+  actual_toolchain: nightly-2022-05-11
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  pre-requisites:
     # The type of runner that the job will run on
-    runs-on: ubuntu-20.04
-
-  #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    runs-on: ci-01
     steps:
+      #runs ssh connection
+      - name: Install dependencies
+        run: |
+          sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
+          sudo apt autoremove
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+          . $HOME/.cargo/env && cargo install --locked --git https://github.com/chevdor/subwasm
+          rustup toolchain install nightly-2022-05-11
+          rustup default nightly-2022-05-11
+          rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
+
+
+      # Re-create release directory
+      - name: delete release dir
+        run: rm -rf ${{ env.chains_release_dir }}
+
+
+      - name: create release dir
+        run: mkdir -p ${{ env.chains_release_dir }}
+
+
+  build-Opal:
+    # The type of runner that the job will run on
+    runs-on: ci-01
+
+    needs: pre-requisites
+    name: Build Opal
+
+    steps:
+    #  - name: delete workdir
+    #    run: rm -rf ${{ env.opal_chain_workdir }}
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-          
-     #runs ssh connection
-      - name: Go to server
-        uses: appleboy/ssh-action@master
+      - uses: actions/checkout@v3
+        #with:
+          #repository: ${{ src_repo_url }}
+          #path: ${{ env.opal_chain_workdir }}
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          command_timeout: 300m
-          script: |
-            eval $(ssh-agent -s)
-            ssh-add /home/devops/.ssh/git_hub
-            git clone git@github.com:UniqueNetwork/unique-chain.git
-            cd unique-chain
-            git checkout develop
-            # git pull --all
-            chmod +x ci_node.sh
-            ./ci_node.sh
-            rm -rf /home/polkadot/unique-chain
+          time: '60s'
+
+
+      - name: Install node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+
+      - name: Install dependencies
+        run: |
+          cd tests
+          yarn install
+          yarn add mochawesome
+          yarn --pure-lockfile
+
+      - name: Run tests
+        run: |
+          cd tests
+          ./scripts/wait_for_first_block.sh
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9944
+
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '90s'
+
+      - name: Wait / Sleep
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          time: '90s'
+
+      - name: Test Report
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report               # Set ID reference for step
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Tests            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-*.json    # Path to test results
+          reporter: mochawesome-json
+
+      - name: Stop containers
+        if: always()
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" down
