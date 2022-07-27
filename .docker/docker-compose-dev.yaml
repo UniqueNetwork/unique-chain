@@ -17,6 +17,11 @@ services:
     ports:
       - 127.0.0.1:9944:9944
       - 127.0.0.1:9933:9933
+    healthcheck:
+      test: curl --fail -s http://localhost:9933/ || exit 1
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
     logging:
       options:
         max-size: "1m"
