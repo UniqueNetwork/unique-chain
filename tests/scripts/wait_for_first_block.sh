@@ -18,9 +18,9 @@ function is_started {
 	return 1
 }
 
-while ! is_started; do
-	echo "$RPC_URL"
-	echo "Waiting for first block..."
-	sleep 12
+while ! is_started; 
+do
+  echo "Waiting for first block..."
+  sleep 12
 done
 echo "Chain is running!"
