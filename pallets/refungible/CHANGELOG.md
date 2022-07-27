@@ -10,6 +10,8 @@ feat(refungible-pallet): add ERC-20 EVM API for RFT token pieces ([#413](https:/
 test(refungible-pallet): add tests for ERC-20 EVM API for RFT token pieces ([#413](https://github.com/UniqueNetwork/unique-chain/pull/413))
 
 ## [v0.1.1] - 2022-07-14
+### Added
+- Support for properties for RFT collections and tokens.
 
 ### Other changes
 

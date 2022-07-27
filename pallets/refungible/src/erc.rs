@@ -25,14 +25,14 @@ use pallet_evm_coder_substrate::call;
 use crate::{Config, RefungibleHandle};
 
 #[solidity_interface(
-	name = "UniqueRFT",
+	name = "UniqueRefungible",
 	is(via("CollectionHandle<T>", common_mut, Collection),)
 )]
 impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
 
 // Not a tests, but code generators
-generate_stubgen!(gen_impl, UniqueRFTCall<()>, true);
-generate_stubgen!(gen_iface, UniqueRFTCall<()>, false);
+generate_stubgen!(gen_impl, UniqueRefungibleCall<()>, true);
+generate_stubgen!(gen_iface, UniqueRefungibleCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for RefungibleHandle<T>
 where
@@ -43,6 +43,6 @@ where
 		self,
 		handle: &mut impl PrecompileHandle,
 	) -> Option<pallet_common::erc::PrecompileResult> {
-		call::<T, UniqueRFTCall<T>, _, _>(handle, self)
+		call::<T, UniqueRefungibleCall<T>, _, _>(handle, self)
 	}
 }

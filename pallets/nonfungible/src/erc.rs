@@ -33,12 +33,16 @@ use up_data_structs::{
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, token_uri_key},
+	erc::{
+		CommonEvmHandler, PrecompileResult, CollectionCall,
+		static_property::{key, value as property_value},
+	},
 	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use alloc::string::ToString;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -212,27 +216,47 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
-	/// @dev Throws if `tokenId` is not a valid NFT. URIs are defined in RFC
-	///  3986. The URI may point to a JSON file that conforms to the "ERC721
-	///  Metadata JSON Schema".
+	///
+	/// @dev If the token has a `url` property and it is not empty, it is returned.
+	///  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
+	///  If the collection property `baseURI` is empty or absent, return "" (empty string)
+	///  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	///  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
+	///
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		let key = token_uri_key();
-		if !has_token_permission::<T>(self.id, &key) {
-			return Err("No tokenURI permission".into());
+		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		if let Ok(url) = get_token_property(self, token_id_u32, &key::url()) {
+			if !url.is_empty() {
+				return Ok(url);
+			}
+		} else if !is_erc721_metadata_compatible::<T>(self.id) {
+			return Err("tokenURI not set".into());
 		}
 
-		self.consume_store_reads(1)?;
-		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		if let Some(base_uri) =
+			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::base_uri())
+		{
+			if !base_uri.is_empty() {
+				let base_uri = string::from_utf8(base_uri.into_inner()).map_err(|e| {
+					Error::Revert(alloc::format!(
+						"Can not convert value \"baseURI\" to string with error \"{}\"",
+						e
+					))
+				})?;
+				if let Ok(suffix) = get_token_property(self, token_id_u32, &key::suffix()) {
+					if !suffix.is_empty() {
+						return Ok(base_uri + suffix.as_str());
+					}
+				}
 
-		let properties = <TokenProperties<T>>::try_get((self.id, token_id))
-			.map_err(|_| Error::Revert("Token properties not found".into()))?;
-		if let Some(property) = properties.get(&key) {
-			return Ok(string::from_utf8_lossy(property).into());
+				return Ok(base_uri + token_id.to_string().as_str());
+			}
 		}
 
-		Err("Property tokenURI not found".into())
+		Ok("".into())
 	}
 }
 
@@ -469,7 +493,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_id: uint256,
 		token_uri: string,
 	) -> Result<bool> {
-		let key = token_uri_key();
+		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
 			return Err("Operation is not allowed".into());
@@ -520,6 +544,32 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
+fn get_token_property<T: Config>(
+	collection: &CollectionHandle<T>,
+	token_id: u32,
+	key: &up_data_structs::PropertyKey,
+) -> Result<string> {
+	collection.consume_store_reads(1)?;
+	let properties = <TokenProperties<T>>::try_get((collection.id, token_id))
+		.map_err(|_| Error::Revert("Token properties not found".into()))?;
+	if let Some(property) = properties.get(key) {
+		return Ok(string::from_utf8_lossy(property).into());
+	}
+
+	Err("Property tokenURI not found".into())
+}
+
+fn is_erc721_metadata_compatible<T: Config>(collection_id: CollectionId) -> bool {
+	if let Some(shema_name) =
+		pallet_common::Pallet::<T>::get_collection_property(collection_id, &key::schema_name())
+	{
+		let shema_name = shema_name.into_inner();
+		shema_name == property_value::ERC721_METADATA
+	} else {
+		false
+	}
+}
+
 fn get_token_permission<T: Config>(
 	collection_id: CollectionId,
 	key: &PropertyKey,
@@ -528,8 +578,11 @@ fn get_token_permission<T: Config>(
 		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
 	let a = token_property_permissions
 		.get(key)
-		.map(|p| p.clone())
-		.ok_or_else(|| Error::Revert("No permission".into()))?;
+		.map(Clone::clone)
+		.ok_or_else(|| {
+			let key = string::from_utf8(key.clone().into_inner()).unwrap_or_default();
+			Error::Revert(alloc::format!("No permission for key {}", key))
+		})?;
 	Ok(a)
 }
 
@@ -656,7 +709,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		to: address,
 		tokens: Vec<(uint256, string)>,
 	) -> Result<bool> {
-		let key = token_uri_key();
+		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)

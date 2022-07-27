@@ -352,7 +352,7 @@ decl_module! {
 
 			// =========
 
-			T::CollectionDispatch::create(T::CrossAccountId::from_sub(sender), data)?;
+			let _id = T::CollectionDispatch::create(T::CrossAccountId::from_sub(sender), data)?;
 
 			Ok(())
 		}
