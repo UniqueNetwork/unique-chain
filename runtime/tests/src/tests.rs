@@ -64,6 +64,12 @@ fn default_re_fungible_data() -> CreateReFungibleData {
 	CreateReFungibleData {
 		const_data: vec![1, 2, 3].try_into().unwrap(),
 		pieces: 1023,
+		properties: vec![Property {
+			key: b"test-prop".to_vec().try_into().unwrap(),
+			value: b"test-nft-prop".to_vec().try_into().unwrap(),
+		}]
+		.try_into()
+		.unwrap(),
 	}
 }
 

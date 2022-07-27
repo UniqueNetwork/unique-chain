@@ -29,7 +29,13 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     common: {
+      /**
+       * Maximum admins per collection.
+       **/
       collectionAdminsLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Set price to create a collection.
+       **/
       collectionCreationPrice: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const

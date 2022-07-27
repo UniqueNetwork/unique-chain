@@ -1269,7 +1269,7 @@ export default {
       },
       add_collection_admin: {
         collectionId: 'u32',
-        newAdminId: 'PalletEvmAccountBasicCrossAccountIdRepr',
+        newAdmin: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
       remove_collection_admin: {
         collectionId: 'u32',
@@ -1361,11 +1361,11 @@ export default {
       },
       set_collection_permissions: {
         collectionId: 'u32',
-        newLimit: 'UpDataStructsCollectionPermissions',
+        newPermission: 'UpDataStructsCollectionPermissions',
       },
       repartition: {
         collectionId: 'u32',
-        token: 'u32',
+        tokenId: 'u32',
         amount: 'u128'
       }
     }
@@ -1502,7 +1502,8 @@ export default {
    **/
   UpDataStructsCreateReFungibleData: {
     constData: 'Bytes',
-    pieces: 'u128'
+    pieces: 'u128',
+    properties: 'Vec<UpDataStructsProperty>'
   },
   /**
    * Lookup193: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
@@ -1527,7 +1528,8 @@ export default {
    **/
   UpDataStructsCreateRefungibleExData: {
     constData: 'Bytes',
-    users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>'
+    users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>',
+    properties: 'Vec<UpDataStructsProperty>'
   },
   /**
    * Lookup204: pallet_unique_scheduler::pallet::Call<T>
@@ -2859,7 +2861,8 @@ export default {
    **/
   UpDataStructsTokenData: {
     properties: 'Vec<UpDataStructsProperty>',
-    owner: 'Option<PalletEvmAccountBasicCrossAccountIdRepr>'
+    owner: 'Option<PalletEvmAccountBasicCrossAccountIdRepr>',
+    pieces: 'u128'
   },
   /**
    * Lookup376: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>

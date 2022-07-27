@@ -1385,7 +1385,7 @@ declare module '@polkadot/types/lookup' {
     readonly isAddCollectionAdmin: boolean;
     readonly asAddCollectionAdmin: {
       readonly collectionId: u32;
-      readonly newAdminId: PalletEvmAccountBasicCrossAccountIdRepr;
+      readonly newAdmin: PalletEvmAccountBasicCrossAccountIdRepr;
     } & Struct;
     readonly isRemoveCollectionAdmin: boolean;
     readonly asRemoveCollectionAdmin: {
@@ -1497,12 +1497,12 @@ declare module '@polkadot/types/lookup' {
     readonly isSetCollectionPermissions: boolean;
     readonly asSetCollectionPermissions: {
       readonly collectionId: u32;
-      readonly newLimit: UpDataStructsCollectionPermissions;
+      readonly newPermission: UpDataStructsCollectionPermissions;
     } & Struct;
     readonly isRepartition: boolean;
     readonly asRepartition: {
       readonly collectionId: u32;
-      readonly token: u32;
+      readonly tokenId: u32;
       readonly amount: u128;
     } & Struct;
     readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition';
@@ -1629,6 +1629,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsCreateReFungibleData extends Struct {
     readonly constData: Bytes;
     readonly pieces: u128;
+    readonly properties: Vec<UpDataStructsProperty>;
   }
 
   /** @name UpDataStructsCreateItemExData (193) */
@@ -1654,6 +1655,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsCreateRefungibleExData extends Struct {
     readonly constData: Bytes;
     readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
+    readonly properties: Vec<UpDataStructsProperty>;
   }
 
   /** @name PalletUniqueSchedulerCall (204) */
@@ -2977,6 +2979,7 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsTokenData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
     readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
+    readonly pieces: u128;
   }
 
   /** @name UpDataStructsRpcCollection (376) */

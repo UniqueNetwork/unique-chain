@@ -5722,7 +5722,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-common"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5944,7 +5944,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-fungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -6189,7 +6189,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nonfungible"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -6311,13 +6311,16 @@ dependencies = [
 
 [[package]]
 name = "pallet-refungible"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
+ "ethereum",
+ "evm-coder",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-common",
  "pallet-evm",
+ "pallet-evm-coder-substrate",
  "pallet-structure",
  "parity-scale-codec 3.1.5",
  "scale-info",
@@ -12369,7 +12372,7 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "uc-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "jsonrpsee",
@@ -12728,7 +12731,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-data-structs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derivative",
  "frame-support",
@@ -12746,7 +12749,7 @@ dependencies = [
 
 [[package]]
 name = "up-rpc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "pallet-common",
  "pallet-evm",
