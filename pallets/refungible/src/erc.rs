@@ -14,6 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # Refungible Pallet EVM API for tokens
+//!
+//! Provides ERC-721 standart support implementation and EVM API for unique extensions for Refungible Pallet.
+//! Method implementations are mostly doing parameter conversion and calling Refungible Pallet methods.
+
 extern crate alloc;
 
 use alloc::string::ToString;
@@ -45,8 +50,15 @@ use crate::{
 	TokenProperties, TokensMinted, weights::WeightInfo,
 };
 
+/// @title A contract that allows to set and delete token properties and change token property permissions.
 #[solidity_interface(name = "TokenProperties")]
 impl<T: Config> RefungibleHandle<T> {
+	/// @notice Set permissions for token property.
+	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	/// @param key Property key.
+	/// @param is_mutable Permission to mutate property.
+	/// @param collection_admin Permission to mutate property by collection admin if property is mutable.
+	/// @param token_owner Permission to mutate property by token owner if property is mutable.
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
@@ -73,6 +85,11 @@ impl<T: Config> RefungibleHandle<T> {
 		.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// @notice Set token property value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param key Property key.
+	/// @param value Property value.
 	fn set_property(
 		&mut self,
 		caller: caller,
@@ -101,6 +118,10 @@ impl<T: Config> RefungibleHandle<T> {
 		.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// @notice Delete token property value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param key Property key.
 	fn delete_property(&mut self, token_id: uint256, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -116,7 +137,11 @@ impl<T: Config> RefungibleHandle<T> {
 			.map_err(dispatch_to_evm::<T>)
 	}
 
-	/// Throws error if key not found
+	/// @notice Get token property value.
+	/// @dev Throws error if key not found
+	/// @param tokenId ID of the token.
+	/// @param key Property key.
+	/// @return Property value bytes
 	fn property(&self, token_id: uint256, key: string) -> Result<bytes> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
@@ -132,6 +157,9 @@ impl<T: Config> RefungibleHandle<T> {
 
 #[derive(ToLog)]
 pub enum ERC721Events {
+	/// @dev This event emits when NFTs are created (`from` == 0) and destroyed
+	///  (`to` == 0). Exception: during contract creation, any number of RFTs
+	///  may be created and assigned without emitting Transfer.
 	Transfer {
 		#[indexed]
 		from: address,
@@ -169,12 +197,14 @@ pub enum ERC721MintableEvents {
 
 #[solidity_interface(name = "ERC721Metadata")]
 impl<T: Config> RefungibleHandle<T> {
+	/// @notice A descriptive name for a collection of RFTs in this contract
 	fn name(&self) -> Result<string> {
 		Ok(decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
 			.collect::<string>())
 	}
 
+	/// @notice An abbreviated name for RFTs in this contract
 	fn symbol(&self) -> Result<string> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
@@ -224,8 +254,14 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 }
 
+/// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
+/// @dev See https://eips.ethereum.org/EIPS/eip-721
 #[solidity_interface(name = "ERC721Enumerable")]
 impl<T: Config> RefungibleHandle<T> {
+	/// @notice Enumerate valid RFTs
+	/// @param index A counter less than `totalSupply()`
+	/// @return The token identifier for the `index`th NFT,
+	///  (sort order not specified)
 	fn token_by_index(&self, index: uint256) -> Result<uint256> {
 		Ok(index)
 	}
@@ -236,14 +272,24 @@ impl<T: Config> RefungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
+	/// @notice Count RFTs tracked by this contract
+	/// @return A count of valid RFTs tracked by this contract, where each one of
+	///  them has an assigned and queryable owner not equal to the zero address
 	fn total_supply(&self) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		Ok(<Pallet<T>>::total_supply(self).into())
 	}
 }
 
+/// @title ERC-721 Non-Fungible Token Standard
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
 #[solidity_interface(name = "ERC721", events(ERC721Events))]
 impl<T: Config> RefungibleHandle<T> {
+	/// @notice Count all RFTs assigned to an owner
+	/// @dev RFTs assigned to the zero address are considered invalid, and this
+	///  function throws for queries about the zero address.
+	/// @param owner An address for whom to query the balance
+	/// @return The number of RFTs owned by `owner`, possibly zero
 	fn balance_of(&self, owner: address) -> Result<uint256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
@@ -332,6 +378,7 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 }
 
+/// @title ERC721 Token that can be irreversibly burned (destroyed).
 #[solidity_interface(name = "ERC721Burnable")]
 impl<T: Config> RefungibleHandle<T> {
 	/// @dev Not implemented
@@ -340,14 +387,18 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 }
 
+/// @title ERC721 minting logic.
 #[solidity_interface(name = "ERC721Mintable", events(ERC721MintableEvents))]
 impl<T: Config> RefungibleHandle<T> {
 	fn minting_finished(&self) -> Result<bool> {
 		Ok(false)
 	}
 
-	/// `token_id` should be obtained with `next_token_id` method,
-	/// unlike standard, you can't specify it manually
+	/// @notice Function to mint token.
+	/// @dev `tokenId` should be obtained with `nextTokenId` method,
+	///  unlike standard, you can't specify it manually
+	/// @param to The new owner
+	/// @param tokenId ID of the minted RFT
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -386,8 +437,12 @@ impl<T: Config> RefungibleHandle<T> {
 		Ok(true)
 	}
 
-	/// `token_id` should be obtained with `next_token_id` method,
-	/// unlike standard, you can't specify it manually
+	/// @notice Function to mint token with the given tokenUri.
+	/// @dev `tokenId` should be obtained with `nextTokenId` method,
+	///  unlike standard, you can't specify it manually
+	/// @param to The new owner
+	/// @param tokenId ID of the minted RFT
+	/// @param tokenUri Token URI that would be stored in the RFT properties
 	#[solidity(rename_selector = "mintWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint_with_token_uri(
@@ -497,6 +552,7 @@ fn get_token_permission<T: Config>(
 	Ok(a)
 }
 
+/// @title Unique extensions for ERC721.
 #[solidity_interface(name = "ERC721UniqueExtensions")]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Returns next free RFT ID.
@@ -508,6 +564,11 @@ impl<T: Config> RefungibleHandle<T> {
 			.into())
 	}
 
+	/// @notice Function to mint multiple tokens.
+	/// @dev `tokenIds` should be an array of consecutive numbers and first number
+	///  should be obtained with `nextTokenId` method
+	/// @param to The new owner
+	/// @param tokenIds IDs of the minted RFTs
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -547,6 +608,11 @@ impl<T: Config> RefungibleHandle<T> {
 		Ok(true)
 	}
 
+	/// @notice Function to mint multiple tokens with the given tokenUris.
+	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	///  numbers and first number should be obtained with `nextTokenId` method
+	/// @param to The new owner
+	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	#[solidity(rename_selector = "mintBulkWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
