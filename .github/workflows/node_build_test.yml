@@ -75,7 +75,6 @@ jobs:
 
     if: ${{ always() }}
     needs: [ build, pre-requisites ]
-
     name: Tests
 
     steps:
