@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! Implementation of CollectionHelpers contract.
+
 use core::marker::PhantomData;
 use evm_coder::{execution::*, generate_stubgen, solidity_interface, weight, types::*};
 use ethereum as _;
@@ -33,7 +35,8 @@ use crate::{SelfWeightOf, Config, weights::WeightInfo};
 use sp_std::vec::Vec;
 use alloc::format;
 
-struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
+/// See [`CollectionHelpersCall`]
+pub struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		&self.0
@@ -44,8 +47,14 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 	}
 }
 
+/// @title Contract, which allows users to operate with collections
 #[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
 impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
+	/// Create an NFT collection
+	/// @param name Name of the collection
+	/// @param description Informative description of the collection
+	/// @param token_prefix Token prefix to represent the collection tokens in UI and user applications
+	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_nonfungible_collection(
 		&mut self,
@@ -100,6 +109,9 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 		Ok(address)
 	}
 
+	/// Check if a collection exists
+	/// @param collection_address Address of the collection in question
+	/// @return bool Does the collection exist?
 	fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
 			let collection_id = id;
@@ -110,6 +122,7 @@ impl<T: Config + pallet_nonfungible::Config> EvmCollectionHelpers<T> {
 	}
 }
 
+/// Implements [`OnMethodCall`], which delegates call to [`EvmCollectionHelpers`]
 pub struct CollectionHelpersOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config + pallet_nonfungible::Config> OnMethodCall<T> for CollectionHelpersOnMethodCall<T> {
 	fn is_reserved(contract: &sp_core::H160) -> bool {

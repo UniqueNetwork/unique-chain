@@ -80,6 +80,8 @@
     "testLimits": "mocha --timeout 9999999 -r ts-node/register ./**/limits.test.ts",
     "testEthCreateCollection": "mocha --timeout 9999999 -r ts-node/register ./**/eth/createCollection.test.ts",
     "testRFT": "mocha --timeout 9999999 -r ts-node/register ./**/refungible.test.ts",
+    "testFT": "mocha --timeout 9999999 -r ts-node/register ./**/fungible.test.ts",
+    "testRPC": "mocha --timeout 9999999 -r ts-node/register ./**/rpc.test.ts",
     "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > src/interfaces/metadata.json",
     "polkadot-types-from-defs": "ts-node ./node_modules/.bin/polkadot-types-from-defs --endpoint src/interfaces/metadata.json --input src/interfaces/ --package .",
     "polkadot-types-from-chain": "ts-node ./node_modules/.bin/polkadot-types-from-chain --endpoint src/interfaces/metadata.json --output src/interfaces/ --package .",

@@ -25,7 +25,8 @@ use sp_std::{vec::Vec, vec};
 use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
 
 use crate::{
-	Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf, weights::WeightInfo,
+	Allowance, TotalSupply, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
+	weights::WeightInfo,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -104,6 +105,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -359,6 +362,11 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		None
 	}
 
+	/// Returns 10 tokens owners in no particular order.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
+	}
+
 	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
 		None
 	}
@@ -404,5 +412,12 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		None
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		if token != TokenId::default() {
+			return None;
+		}
+		<TotalSupply<T>>::try_get(self.id).ok()
 	}
 }
