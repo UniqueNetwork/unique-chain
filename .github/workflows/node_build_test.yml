@@ -6,9 +6,10 @@ on:
   #push:
   #  branches: [ develop ]
   pull_request:
+    branches:
+      - develop
     types:
       - closed
-    branches: [ develop ]
  # pull_request:
  #   branches: [ develop ]
   # Allows you to run this workflow manually from the Actions tab
@@ -22,7 +23,6 @@ env:
   quartz_chain_workdir: ./src_quartz_chain
   unique_chain_workdir: ./src_unique_chain
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
-  version: v924010
   actual_toolchain: nightly-2022-05-11
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -30,6 +30,9 @@ jobs:
   pre-requisites:
     # The type of runner that the job will run on
     runs-on: ci-01
+
+    if: github.event.pull_request.merged == true
+
     steps:
       #runs ssh connection
       - name: Install dependencies
@@ -38,9 +41,9 @@ jobs:
           sudo apt autoremove
           curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
           . $HOME/.cargo/env && cargo install --locked --git https://github.com/chevdor/subwasm
-          rustup toolchain install nightly-2022-05-11
-          rustup default nightly-2022-05-11
-          rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
+          rustup toolchain install ${{ env.actual_toolchain }}
+          rustup default ${{ env.actual_toolchain }}
+          rustup target add wasm32-unknown-unknown --toolchain ${{ env.actual_toolchain }}
 
 
       # Re-create release directory
