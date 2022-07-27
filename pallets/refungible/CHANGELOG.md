@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.1.3] - 2022-07-27
+
+### Other changes
+
+feat(refungible-pallet): ERC-721 EVM API ([#452](https://github.com/UniqueNetwork/unique-chain/pull/452))
+
 ## [v0.1.2] - 2022-07-14
 
 ### Other changes
