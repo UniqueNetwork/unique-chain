@@ -24,6 +24,7 @@ use pallet_common::CollectionHandle;
 use pallet_fungible::FungibleHandle;
 use pallet_common::CommonCollectionOperations;
 use up_data_structs::budget::Unlimited;
+use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 where
@@ -193,8 +194,47 @@ where
 		keep_alive: bool,
 	) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible reducible_balance");
-		// TODO: check correctness
-		Self::balance(asset, who)
+
+		match asset {
+			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+				let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<
+					T::AccountId,
+				>>::reducible_balance(who, keep_alive);
+
+				let value: u128 = match parent_amount.try_into() {
+					Ok(val) => val,
+					Err(_) => return Zero::zero(),
+				};
+
+				let ti: Self::Balance = match value.try_into() {
+					Ok(val) => val,
+					Err(_) => return Zero::zero(),
+				};
+
+				ti
+			}
+			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+				let amount =
+					<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::reducible_balance(
+						AssetIds::NativeAssetId(NativeCurrency::Parent),
+						who,
+						keep_alive,
+					);
+
+				let value: u128 = match amount.try_into() {
+					Ok(val) => val,
+					Err(_) => return Zero::zero(),
+				};
+
+				let ti: Self::Balance = match value.try_into() {
+					Ok(val) => val,
+					Err(_) => return Zero::zero(),
+				};
+
+				ti
+			}
+			_ => Self::balance(asset, who),
+		}
 	}
 
 	fn can_deposit(
@@ -204,8 +244,67 @@ where
 		mint: bool,
 	) -> DepositConsequence {
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible can_deposit");
-		// TODO: check correctness
-		DepositConsequence::Success
+
+		let value: u128 = match amount.try_into() {
+			Ok(val) => val,
+			Err(_) => return DepositConsequence::CannotCreate,
+		};
+
+		match asset {
+			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
+					Ok(val) => val,
+					Err(_) => {
+						return DepositConsequence::CannotCreate;
+					}
+				};
+				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::can_deposit(
+					who,
+					this_amount,
+					mint,
+				)
+			}
+			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
+					Ok(val) => val,
+					Err(_) => {
+						return DepositConsequence::CannotCreate;
+					}
+				};
+				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::can_deposit(
+					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					who,
+					parent_amount,
+					mint,
+				)
+			}
+			_ => {
+				if amount.is_zero() {
+					return DepositConsequence::Success;
+				}
+
+				let extential_deposit_value = T::ExistentialDeposit::get();
+				let ed_value: u128 = match extential_deposit_value.try_into() {
+					Ok(val) => val,
+					Err(_) => return DepositConsequence::CannotCreate,
+				};
+				let extential_deposit: Self::Balance = match ed_value.try_into() {
+					Ok(val) => val,
+					Err(_) => return DepositConsequence::CannotCreate,
+				};
+
+				let new_total_balance = match Self::balance(asset, who).checked_add(&amount) {
+					Some(x) => x,
+					None => return DepositConsequence::Overflow,
+				};
+
+				if new_total_balance < extential_deposit {
+					return DepositConsequence::BelowMinimum;
+				}
+
+				DepositConsequence::Success
+			}
+		}
 	}
 
 	fn can_withdraw(
@@ -214,8 +313,60 @@ where
 		amount: Self::Balance,
 	) -> WithdrawConsequence<Self::Balance> {
 		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible can_withdraw");
-		// TODO: check correctness
-		WithdrawConsequence::Success
+		let value: u128 = match amount.try_into() {
+			Ok(val) => val,
+			Err(_) => return WithdrawConsequence::UnknownAsset,
+		};
+
+		match asset {
+			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
+					Ok(val) => val,
+					Err(_) => {
+						return WithdrawConsequence::UnknownAsset;
+					}
+				};
+				match <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::can_withdraw(
+					who,
+					this_amount,
+				) {
+					WithdrawConsequence::NoFunds => WithdrawConsequence::NoFunds,
+					WithdrawConsequence::WouldDie => WithdrawConsequence::WouldDie,
+					WithdrawConsequence::UnknownAsset => WithdrawConsequence::UnknownAsset,
+					WithdrawConsequence::Underflow => WithdrawConsequence::Underflow,
+					WithdrawConsequence::Overflow => WithdrawConsequence::Overflow,
+					WithdrawConsequence::Frozen => WithdrawConsequence::Frozen,
+					WithdrawConsequence::Success => WithdrawConsequence::Success,
+					_ => WithdrawConsequence::NoFunds,
+				}
+			}
+			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
+					Ok(val) => val,
+					Err(_) => {
+						return WithdrawConsequence::UnknownAsset;
+					}
+				};
+				match <orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::can_withdraw(
+					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					who,
+					parent_amount,
+				) {
+					WithdrawConsequence::NoFunds => WithdrawConsequence::NoFunds,
+					WithdrawConsequence::WouldDie => WithdrawConsequence::WouldDie,
+					WithdrawConsequence::UnknownAsset => WithdrawConsequence::UnknownAsset,
+					WithdrawConsequence::Underflow => WithdrawConsequence::Underflow,
+					WithdrawConsequence::Overflow => WithdrawConsequence::Overflow,
+					WithdrawConsequence::Frozen => WithdrawConsequence::Frozen,
+					WithdrawConsequence::Success => WithdrawConsequence::Success,
+					_ => WithdrawConsequence::NoFunds,
+				}
+			}
+			_ => match Self::balance(asset, who).checked_sub(&amount) {
+				Some(_) => WithdrawConsequence::Success,
+				None => WithdrawConsequence::NoFunds,
+			},
+		}
 	}
 }
 
