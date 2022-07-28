@@ -19,6 +19,12 @@ services:
     ports:
       - 127.0.0.1:9944:9944
       - 127.0.0.1:9933:9933
+    environment:
+      - RUST_TOOLCHAIN=${RUST_TOOLCHAIN}
+      - BRANCH=${BRANCH}
+      - FEATURE=${FEATURE}
+      - REPO_URL=${REPO_URL}
+
     logging:
       options:
         max-size: "1m"

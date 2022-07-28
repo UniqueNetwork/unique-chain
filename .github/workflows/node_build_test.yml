@@ -71,6 +71,8 @@ jobs:
 
       - name: Echo variables
         run: |
+          ls -la
+          cat .env
           echo "github.repositoryUrl: ${{ github.repositoryUrl }}"
           echo "env.features: ${{ env.features }}"
           echo "env.RUST_TOOLCHAIN: ${{ env.RUST_TOOLCHAIN }}"
@@ -80,6 +82,7 @@ jobs:
           echo "- RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}" >> .env
           echo "- BRANCH=${{ github.head_ref }}" >> .env
           echo "- FEATURE=${{ env.features }}" >> .env
+          cat .env
 
 
       - name: Build the stack
