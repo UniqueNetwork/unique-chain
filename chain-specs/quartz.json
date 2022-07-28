@@ -2,9 +2,9 @@
    "name": "QUARTZ by UNIQUE",
    "id": "qtz",
    "bootNodes": [
-      "/dns/p2p-us-gateway-quartz.unique.network/tcp/30333/p2p/12D3KooWMNrHmaXYgohJRBJEkxia5GB2PquBBxAWbCUME3spytdE",
-      "/dns/p2p-asia-gateway-quartz.unique.network/tcp/30333/p2p/12D3KooWLfCkVJHnzKBprUXs3iKn1EnXRXGrPaCSUjGnUFbTh9im",
-      "/dns/p2p-ie-gateway-quartz.unique.network/tcp/30333/p2p/12D3KooWFhZky1kUMhc2AYbxsxhQhQXf7Ezv5LKkA5Q2qGXFGrXz"
+      "/dns/p2p-us-gateway-quartz.unique.network/tcp/30333/ws/p2p/12D3KooWMNrHmaXYgohJRBJEkxia5GB2PquBBxAWbCUME3spytdE",
+      "/dns/p2p-asia-gateway-quartz.unique.network/tcp/30333/ws/p2p/12D3KooWLfCkVJHnzKBprUXs3iKn1EnXRXGrPaCSUjGnUFbTh9im",
+      "/dns/p2p-ie-gateway-quartz.unique.network/tcp/30333/ws/p2p/12D3KooWFhZky1kUMhc2AYbxsxhQhQXf7Ezv5LKkA5Q2qGXFGrXz"
    ],
    "chainType": "Live",
    "telemetryEndpoints": null,
