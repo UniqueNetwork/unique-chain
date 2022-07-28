@@ -28,6 +28,7 @@ type Result<T> = core::result::Result<T, DispatchError>;
 
 sp_api::decl_runtime_apis! {
 	#[api_version(2)]
+	/// Trait for generate rpc.
 	pub trait UniqueApi<CrossAccountId, AccountId> where
 		AccountId: Decode,
 		CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
@@ -35,36 +36,57 @@ sp_api::decl_runtime_apis! {
 		#[changed_in(2)]
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;
 
+		/// Get number of tokens in collection owned by account.
 		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>>;
+
+		/// Number of existing tokens in collection.
 		fn collection_tokens(collection: CollectionId) -> Result<Vec<TokenId>>;
+
+		/// Check token exist.
 		fn token_exists(collection: CollectionId, token: TokenId) -> Result<bool>;
 
+		/// Get token owner.
 		fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
+
+		/// Get real owner of nested token.
 		fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>>;
+
+		/// Get nested tokens for the specified item.
 		fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>>;
 
+		/// Get collection properties.
 		fn collection_properties(collection: CollectionId, properties: Option<Vec<Vec<u8>>>) -> Result<Vec<Property>>;
 
+		/// Get token properties.
 		fn token_properties(
 			collection: CollectionId,
 			token_id: TokenId,
 			properties: Option<Vec<Vec<u8>>>
 		) -> Result<Vec<Property>>;
 
+		/// Get permissions for token properties.
 		fn property_permissions(
 			collection: CollectionId,
 			properties: Option<Vec<Vec<u8>>>
 		) -> Result<Vec<PropertyKeyPermission>>;
 
+		/// Get token data.
 		fn token_data(
 			collection: CollectionId,
 			token_id: TokenId,
 			keys: Option<Vec<Vec<u8>>>
 		) -> Result<TokenData<CrossAccountId>>;
 
+		/// Total number of tokens in collection.
 		fn total_supply(collection: CollectionId) -> Result<u32>;
+
+		/// Get account balance for collection (sum of tokens pieces).
 		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32>;
+		
+		/// Get account balance for specified token.
 		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128>;
+
+		/// Amount of token pieces allowed to spend from granded account.
 		fn allowance(
 			collection: CollectionId,
 			sender: CrossAccountId,
@@ -72,14 +94,31 @@ sp_api::decl_runtime_apis! {
 			token: TokenId,
 		) -> Result<u128>;
 
+		/// Get list of collection admins.
 		fn adminlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
+
+		/// Get list of users that allowet to mint tikens in collection.
 		fn allowlist(collection: CollectionId) -> Result<Vec<CrossAccountId>>;
+
+		/// Check that user is in allowed list (see [`allowlist`]).
 		fn allowed(collection: CollectionId, user: CrossAccountId) -> Result<bool>;
+
+		/// Last minted token id.
 		fn last_token_id(collection: CollectionId) -> Result<TokenId>;
+
+		/// Get collection by id.
 		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>>;
+
+		/// Get collection stats.
 		fn collection_stats() -> Result<CollectionStats>;
+
+		/// Get the number of blocks through which sponsorship will be available.
 		fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>>;
+
+		/// Get effective colletion limits.
 		fn effective_collection_limits(collection_id: CollectionId) -> Result<Option<CollectionLimits>>;
+
+		/// Get total pieces of token.
 		fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Result<Option<u128>>;
 		fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec<CrossAccountId>>;
 	}

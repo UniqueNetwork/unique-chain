@@ -1,3 +1,21 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+//! This module contins implementations for support bounded structures in [`serde`].
+
 use core::fmt;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 use sp_std::vec::Vec;
@@ -7,7 +25,7 @@ use frame_support::{
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
 };
 
-/// BoundedVec doesn't supports serde
+/// [`serde`] implementations for [`BoundedVec`].
 #[cfg(feature = "serde1")]
 pub mod vec_serde {
 	use core::convert::TryFrom;
@@ -39,6 +57,7 @@ pub mod vec_serde {
 	}
 }
 
+/// Format [`BoundedVec`] for debug output.
 pub fn vec_debug<V, S>(v: &BoundedVec<V, S>, f: &mut fmt::Formatter) -> Result<(), fmt::Error>
 where
 	V: fmt::Debug,
@@ -49,6 +68,7 @@ where
 
 #[cfg(feature = "serde1")]
 #[allow(dead_code)]
+/// [`serde`] implementations for [`BoundedBTreeMap`].
 pub mod map_serde {
 	use core::convert::TryFrom;
 	use sp_std::collections::btree_map::BTreeMap;
@@ -84,6 +104,7 @@ pub mod map_serde {
 	}
 }
 
+/// Format [`BoundedBTreeMap`] for debug output.
 pub fn map_debug<K, V, S>(
 	v: &BoundedBTreeMap<K, V, S>,
 	f: &mut fmt::Formatter,
@@ -98,6 +119,7 @@ where
 
 #[cfg(feature = "serde1")]
 #[allow(dead_code)]
+/// [`serde`] implementations for [`BoundedBTreeSet`].
 pub mod set_serde {
 	use core::convert::TryFrom;
 	use sp_std::collections::btree_set::BTreeSet;
@@ -129,6 +151,7 @@ pub mod set_serde {
 	}
 }
 
+/// Format [`BoundedBTreeSet`] for debug output.
 pub fn set_debug<K, S>(v: &BoundedBTreeSet<K, S>, f: &mut fmt::Formatter) -> Result<(), fmt::Error>
 where
 	K: fmt::Debug + Ord,
