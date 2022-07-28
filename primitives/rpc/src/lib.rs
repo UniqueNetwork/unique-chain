@@ -82,7 +82,7 @@ sp_api::decl_runtime_apis! {
 
 		/// Get account balance for collection (sum of tokens pieces).
 		fn account_balance(collection: CollectionId, account: CrossAccountId) -> Result<u32>;
-		
+
 		/// Get account balance for specified token.
 		fn balance(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<u128>;
 

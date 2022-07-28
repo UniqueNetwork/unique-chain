@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 //! # Primitives crate.
-//! 
+//!
 //! This crate contains amount of types, traits and constants.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -194,7 +194,7 @@ impl EncodeLike<TokenId> for u32 {}
 
 impl TokenId {
 	/// Try to get next token id.
-	/// 
+	///
 	/// If next id cause overflow, then [`ArithmeticError::Overflow`] returned.
 	pub fn try_next(self) -> Result<TokenId, ArithmeticError> {
 		self.0
@@ -244,7 +244,7 @@ impl From<OverflowError> for &'static str {
 pub type DecimalPoints = u8;
 
 /// Collection mode.
-/// 
+///
 /// Collection can represent various types of tokens.
 /// Each collection can contain only one type of tokens at a time.
 /// This type helps to understand which tokens the collection contains.
@@ -358,9 +358,9 @@ pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIP
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
 /// Base structure for represent collection.
-/// 
+///
 /// Used to provide basic functionality for all types of collections.
-/// 
+///
 /// #### Note
 /// Collection parameters, used in storage (see [`RpcCollection`] for the RPC version).
 #[struct_versioning::versioned(version = 2, upper)]
@@ -457,7 +457,7 @@ pub struct RpcCollection<AccountId> {
 }
 
 /// Data used for create collection.
-/// 
+///
 /// All fields are wrapped in [`Option`], where `None` means chain default.
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
 #[derivative(Debug, Default(bound = ""))]
@@ -505,7 +505,7 @@ pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_
 /// Limits and restrictions of a collection.
 ///
 /// All fields are wrapped in [`Option`], where `None` means chain default.
-/// 
+///
 /// Update with `pallet_common::Pallet::clamp_limits`.
 // IMPORTANT: When adding/removing fields from this struct - don't forget to also
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
@@ -526,9 +526,9 @@ pub struct CollectionLimits {
 
 	// FIXME should we delete this or repurpose it?
 	/// Times in how many blocks we sponsor data.
-	/// 
+	///
 	/// If is `Some(v)` then **setVariableMetadata** is sponsored if there is `v` block between transactions.
-	/// 
+	///
 	/// * Default - [`SponsoringDisabled`](SponsoringRateLimit::SponsoringDisabled).
 	/// * Limit - [`MAX_SPONSOR_TIMEOUT`].
 	///
@@ -537,38 +537,38 @@ pub struct CollectionLimits {
 	/// Maximum amount of tokens inside the collection. Chain default: [`COLLECTION_TOKEN_LIMIT`]
 
 	/// How many tokens can be mined into this collection.
-	/// 
+	///
 	/// * Default - [`COLLECTION_TOKEN_LIMIT`].
 	/// * Limit - [`COLLECTION_TOKEN_LIMIT`].
 	pub token_limit: Option<u32>,
 
 	/// Timeouts for transfer sponsoring.
-	/// 
+	///
 	/// * Default
 	///   - **Fungible** - [`FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT`]
 	///   - **NFT** - [`NFT_SPONSOR_TRANSFER_TIMEOUT`]
 	///   - **Refungible** - [`REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT`]
 	/// * Limit - [`MAX_SPONSOR_TIMEOUT`].
 	pub sponsor_transfer_timeout: Option<u32>,
-	
+
 	/// Timeout for sponsoring an approval in passed blocks.
-	/// 
+	///
 	/// * Default - [`SPONSOR_APPROVE_TIMEOUT`].
 	/// * Limit - [`MAX_SPONSOR_TIMEOUT`].
 	pub sponsor_approve_timeout: Option<u32>,
 
 	/// Whether the collection owner of the collection can send tokens (which belong to other users).
-	/// 
+	///
 	/// * Default - **false**.
 	pub owner_can_transfer: Option<bool>,
 
 	/// Can the collection owner burn other people's tokens.
-	/// 
+	///
 	/// * Default - **true**.
 	pub owner_can_destroy: Option<bool>,
-	
+
 	/// Is it possible to send tokens from this collection between users.
-	/// 
+	///
 	/// * Default - **true**.
 	pub transfers_enabled: Option<bool>,
 }
@@ -643,9 +643,9 @@ impl CollectionLimits {
 }
 
 /// Permissions on certain operations within a collection.
-/// 
+///
 /// Some fields are wrapped in [`Option`], where `None` means chain default.
-/// 
+///
 /// Update with `pallet_common::Pallet::clamp_permissions`.
 #[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
@@ -653,17 +653,17 @@ impl CollectionLimits {
 // TODO: move `pallet_common::Pallet::clamp_permissions` into `impl CollectionPermissions`.
 pub struct CollectionPermissions {
 	/// Access mode.
-	/// 
+	///
 	/// * Default - [`AccessMode::Normal`].
 	pub access: Option<AccessMode>,
 
 	/// Minting allowance.
-	/// 
+	///
 	/// * Default - **false**.
 	pub mint_mode: Option<bool>,
 
 	/// Permissions for nesting.
-	/// 
+	///
 	/// * Default
 	///   - `token_owner` - **false**
 	///   - `collection_admin` - **false**
@@ -744,7 +744,7 @@ pub struct NestingPermissions {
 }
 
 /// Enum denominating how often can sponsoring occur if it is enabled.
-/// 
+///
 /// Used for [`collection limits`](CollectionLimits).
 #[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
@@ -968,7 +968,7 @@ pub type PropertyValue = BoundedBytes<ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct PropertyPermission {
 	/// Permission to change the property and property permission.
-	/// 
+	///
 	/// If it **false** then you can not change corresponding property even if [`collection_admin`] and [`token_owner`] are **true**.
 	pub mutable: bool,
 
@@ -1031,13 +1031,13 @@ impl Into<(PropertyKey, PropertyPermission)> for PropertyKeyPermission {
 #[derive(Debug)]
 pub enum PropertiesError {
 	/// The space allocated for properties has run out.
-	/// 
+	///
 	/// * Limit for colection - [`MAX_COLLECTION_PROPERTIES_SIZE`].
 	/// * Limit for token - [`MAX_TOKEN_PROPERTIES_SIZE`].
 	NoSpaceForProperty,
 
 	/// The property limit has been reached.
-	/// 
+	///
 	/// * Limit - [`MAX_PROPERTIES_PER_ITEM`].
 	PropertyLimitReached,
 
@@ -1045,7 +1045,7 @@ pub enum PropertiesError {
 	InvalidCharacterInPropertyKey,
 
 	/// Property key length is too long.
-	/// 
+	///
 	/// * Limit - [`MAX_PROPERTY_KEY_LENGTH`].
 	PropertyKeyIsTooLong,
 
@@ -1054,7 +1054,7 @@ pub enum PropertiesError {
 }
 
 /// Marker for scope of property.
-/// 
+///
 /// Scoped property can't be changed by user. Used for external collections.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Clone, Copy)]
 pub enum PropertyScope {
@@ -1088,8 +1088,7 @@ pub trait TrySetProperty: Sized {
 		key: PropertyKey,
 		value: Self::Value,
 	) -> Result<(), PropertiesError>;
-	
-	
+
 	/// Try to set property with scope from iterator.
 	fn try_scoped_set_from_iter<I, KV>(
 		&mut self,
@@ -1112,7 +1111,7 @@ pub trait TrySetProperty: Sized {
 	fn try_set(&mut self, key: PropertyKey, value: Self::Value) -> Result<(), PropertiesError> {
 		self.try_scoped_set(PropertyScope::None, key, value)
 	}
-	
+
 	/// Try to set property from iterator.
 	fn try_set_from_iter<I, KV>(&mut self, iter: I) -> Result<(), PropertiesError>
 	where
@@ -1152,7 +1151,7 @@ impl<Value> PropertiesMap<Value> {
 	pub fn contains_key(&self, key: &PropertyKey) -> bool {
 		self.0.contains_key(key)
 	}
-	
+
 	/// Check if map contains key with key validation.
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
 		if key.is_empty() {
