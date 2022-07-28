@@ -66,8 +66,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Branch name
-        run: echo running on branch ${{ github.head_ref }}
+      - name: Echo variables
+        run: echo $ {{ github }}          
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
