@@ -9,7 +9,8 @@ on:
     branches:
       - develop
     types:
-      - closed
+      - opened
+      - edited
  # pull_request:
  #   branches: [ develop ]
   # Allows you to run this workflow manually from the Actions tab
