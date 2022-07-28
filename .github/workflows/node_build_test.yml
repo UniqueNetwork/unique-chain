@@ -72,10 +72,11 @@ jobs:
 #      - name: Build the stack
         #run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
       - name: Build the Docker image
-        run: docker build . --file .docker/Dockerfile --tag build-$BRANCH-$FEATURE-$(date +%s)
+        run: docker build . --file .docker/Dockerfile --tag build-${{ env.BRANCH }}-${{ env.FEATURE }}
+        ${{ env.actual_toolchain }}
 
-      - name: Run image: build-$BRANCH-$FEATURE-$(date +%s)
-        run: docker run build-$BRANCH-$FEATURE-$(date +%s)
+      - name: Run image: build-${{ env.BRANCH }}-${{ env.FEATURE }}
+        run: docker run build-${{ env.BRANCH }}-${{ env.FEATURE }}
 
   test:
     # The type of runner that the job will run on
