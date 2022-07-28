@@ -5,11 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-chain-dev
-#      args:
-#        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
-#        - BRANCH=${BRANCH:?err}
-#        - FEATURE=${FEATURE:?err}
-#        - REPO_URL=${REPO_URL:?err}
+      args:
+        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+        - BRANCH=${BRANCH:?err}
+        - FEATURE=${FEATURE:?err}
+        - REPO_URL=${REPO_URL:?err}
     image: node-o
     container_name: node-o
     command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
