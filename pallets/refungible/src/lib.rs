@@ -454,6 +454,14 @@ impl<T: Config> Pallet<T> {
 			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 			Self::burn_token_unchecked(collection, token)?;
+			<PalletEvm<T>>::deposit_log(
+				ERC721Events::Transfer {
+					from: *owner.as_eth(),
+					to: H160::default(),
+					token_id: token.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 				collection.id,
 				token,

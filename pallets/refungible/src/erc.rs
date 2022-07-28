@@ -34,8 +34,9 @@ use pallet_common::{
 		CommonEvmHandler, CollectionCall,
 		static_property::{key, value as property_value},
 	},
+	eth::collection_id_to_address,
 };
-use pallet_evm::{account::CrossAccountId, PrecompileHandle};
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::H160;
@@ -46,8 +47,8 @@ use up_data_structs::{
 };
 
 use crate::{
-	AccountBalance, Config, CreateItemData, Pallet, RefungibleHandle, SelfWeightOf,
-	TokenProperties, TokensMinted, weights::WeightInfo,
+	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, SelfWeightOf,
+	TokenProperties, TokensMinted, TotalSupply, weights::WeightInfo,
 };
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
@@ -331,16 +332,49 @@ impl<T: Config> RefungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
-	/// @dev Not implemented
+	/// @notice Transfer ownership of an RFT -- THE CALLER IS RESPONSIBLE
+	///  TO CONFIRM THAT `to` IS CAPABLE OF RECEIVING NFTS OR ELSE
+	///  THEY MAY BE PERMANENTLY LOST
+	/// @dev Throws unless `msg.sender` is the current owner or an authorized
+	///  operator for this RFT. Throws if `from` is not the current owner. Throws
+	///  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param from The current owner of the NFT
+	/// @param to The new owner
+	/// @param tokenId The NFT to transfer
+	/// @param _value Not used for an NFT
+	#[weight(<SelfWeightOf<T>>::transfer_from_creating_removing())]
 	fn transfer_from(
 		&mut self,
-		_caller: caller,
-		_from: address,
-		_to: address,
-		_token_id: uint256,
+		caller: caller,
+		from: address,
+		to: address,
+		token_id: uint256,
 		_value: value,
 	) -> Result<void> {
-		Err("not implemented".into())
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = T::CrossAccountId::from_eth(from);
+		let to = T::CrossAccountId::from_eth(to);
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(&self, token, &from)?;
+		ensure_single_owner(&self, token, balance)?;
+
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::Transfer {
+				from: *from.as_eth(),
+				to: *to.as_eth(),
+				token_id: token_id.into(),
+			}
+			.to_log(collection_id_to_address(self.id)),
+		);
+		Ok(())
 	}
 
 	/// @dev Not implemented
@@ -378,12 +412,48 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 }
 
+/// Returns amount of pieces of `token` that `owner` have
+fn balance<T: Config>(
+	collection: &RefungibleHandle<T>,
+	token: TokenId,
+	owner: &T::CrossAccountId,
+) -> Result<u128> {
+	collection.consume_store_reads(1)?;
+	let balance = <Balance<T>>::get((collection.id, token, &owner));
+	Ok(balance)
+}
+
+/// Throws if `owner_balance` is lower than total amount of `token` pieces
+fn ensure_single_owner<T: Config>(
+	collection: &RefungibleHandle<T>,
+	token: TokenId,
+	owner_balance: u128,
+) -> Result<()> {
+	collection.consume_store_reads(1)?;
+	let total_supply = <TotalSupply<T>>::get((collection.id, token));
+	if total_supply != owner_balance {
+		return Err("token has multiple owners".into());
+	}
+	Ok(())
+}
+
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
 #[solidity_interface(name = "ERC721Burnable")]
 impl<T: Config> RefungibleHandle<T> {
-	/// @dev Not implemented
-	fn burn(&mut self, _caller: caller, _token_id: uint256, _value: value) -> Result<void> {
-		Err("not implemented".into())
+	/// @notice Burns a specific ERC721 token.
+	/// @dev Throws unless `msg.sender` is the current RFT owner, or an authorized
+	///  operator of the current owner.
+	/// @param tokenId The RFT to approve
+	#[weight(<SelfWeightOf<T>>::burn_item_fully())]
+	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token = token_id.try_into()?;
+
+		let balance = balance(&self, token, &caller)?;
+		ensure_single_owner(&self, token, balance)?;
+
+		<Pallet<T>>::burn(self, &caller, token, balance).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 }
 
@@ -555,6 +625,75 @@ fn get_token_permission<T: Config>(
 /// @title Unique extensions for ERC721.
 #[solidity_interface(name = "ERC721UniqueExtensions")]
 impl<T: Config> RefungibleHandle<T> {
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	/// @param _value Not used for an RFT
+	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
+	fn transfer(
+		&mut self,
+		caller: caller,
+		to: address,
+		token_id: uint256,
+		_value: value,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(&self, token, &caller)?;
+		ensure_single_owner(&self, token, balance)?;
+
+		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::Transfer {
+				from: *caller.as_eth(),
+				to: *to.as_eth(),
+				token_id: token_id.into(),
+			}
+			.to_log(collection_id_to_address(self.id)),
+		);
+		Ok(())
+	}
+
+	/// @notice Burns a specific ERC721 token.
+	/// @dev Throws unless `msg.sender` is the current owner or an authorized
+	///  operator for this RFT. Throws if `from` is not the current owner. Throws
+	///  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param from The current owner of the RFT
+	/// @param tokenId The RFT to transfer
+	/// @param _value Not used for an RFT
+	#[weight(<SelfWeightOf<T>>::burn_from())]
+	fn burn_from(
+		&mut self,
+		caller: caller,
+		from: address,
+		token_id: uint256,
+		_value: value,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = T::CrossAccountId::from_eth(from);
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(&self, token, &caller)?;
+		ensure_single_owner(&self, token, balance)?;
+
+		<Pallet<T>>::burn_from(self, &caller, &from, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
 	/// @notice Returns next free RFT ID.
 	fn next_token_id(&self) -> Result<uint256> {
 		self.consume_store_reads(1)?;

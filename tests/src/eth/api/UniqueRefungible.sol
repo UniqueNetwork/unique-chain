@@ -42,26 +42,15 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
-// Selector: 0784ee64
-interface ERC721UniqueExtensions is Dummy, ERC165 {
-	// @notice Returns next free RFT ID.
-	//
-	// Selector: nextTokenId() 75794a3c
-	function nextTokenId() external view returns (uint256);
-
-	// Selector: mintBulk(address,uint256[]) 44a9945e
-	function mintBulk(address to, uint256[] memory tokenIds)
-		external
-		returns (bool);
-
-	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
-	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
-		external
-		returns (bool);
-}
-
 // Selector: 41369377
 interface TokenProperties is Dummy, ERC165 {
+	// @notice Set permissions for token property.
+	// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	// @param key Property key.
+	// @param is_mutable Permission to mutate property.
+	// @param collection_admin Permission to mutate property by collection admin if property is mutable.
+	// @param token_owner Permission to mutate property by token owner if property is mutable.
+	//
 	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
 	function setTokenPropertyPermission(
 		string memory key,
@@ -70,6 +59,12 @@ interface TokenProperties is Dummy, ERC165 {
 		bool tokenOwner
 	) external;
 
+	// @notice Set token property value.
+	// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// @param tokenId ID of the token.
+	// @param key Property key.
+	// @param value Property value.
+	//
 	// Selector: setProperty(uint256,string,bytes) 1752d67b
 	function setProperty(
 		uint256 tokenId,
@@ -77,10 +72,19 @@ interface TokenProperties is Dummy, ERC165 {
 		bytes memory value
 	) external;
 
+	// @notice Delete token property value.
+	// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// @param tokenId ID of the token.
+	// @param key Property key.
+	//
 	// Selector: deleteProperty(uint256,string) 066111d1
 	function deleteProperty(uint256 tokenId, string memory key) external;
 
-	// Throws error if key not found
+	// @notice Get token property value.
+	// @dev Throws error if key not found
+	// @param tokenId ID of the token.
+	// @param key Property key.
+	// @return Property value bytes
 	//
 	// Selector: property(uint256,string) 7228c327
 	function property(uint256 tokenId, string memory key)
@@ -91,7 +95,10 @@ interface TokenProperties is Dummy, ERC165 {
 
 // Selector: 42966c68
 interface ERC721Burnable is Dummy, ERC165 {
-	// @dev Not implemented
+	// @notice Burns a specific ERC721 token.
+	// @dev Throws unless `msg.sender` is the current RFT owner, or an authorized
+	//  operator of the current owner.
+	// @param tokenId The RFT to approve
 	//
 	// Selector: burn(uint256) 42966c68
 	function burn(uint256 tokenId) external;
@@ -99,6 +106,12 @@ interface ERC721Burnable is Dummy, ERC165 {
 
 // Selector: 58800161
 interface ERC721 is Dummy, ERC165, ERC721Events {
+	// @notice Count all RFTs assigned to an owner
+	// @dev RFTs assigned to the zero address are considered invalid, and this
+	//  function throws for queries about the zero address.
+	// @param owner An address for whom to query the balance
+	// @return The number of RFTs owned by `owner`, possibly zero
+	//
 	// Selector: balanceOf(address) 70a08231
 	function balanceOf(address owner) external view returns (uint256);
 
@@ -124,7 +137,17 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 		uint256 tokenId
 	) external;
 
-	// @dev Not implemented
+	// @notice Transfer ownership of an RFT -- THE CALLER IS RESPONSIBLE
+	//  TO CONFIRM THAT `to` IS CAPABLE OF RECEIVING NFTS OR ELSE
+	//  THEY MAY BE PERMANENTLY LOST
+	// @dev Throws unless `msg.sender` is the current owner or an authorized
+	//  operator for this RFT. Throws if `from` is not the current owner. Throws
+	//  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param from The current owner of the NFT
+	// @param to The new owner
+	// @param tokenId The NFT to transfer
+	// @param _value Not used for an NFT
 	//
 	// Selector: transferFrom(address,address,uint256) 23b872dd
 	function transferFrom(
@@ -159,13 +182,25 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 
 // Selector: 5b5e139f
 interface ERC721Metadata is Dummy, ERC165 {
+	// @notice A descriptive name for a collection of RFTs in this contract
+	//
 	// Selector: name() 06fdde03
 	function name() external view returns (string memory);
 
+	// @notice An abbreviated name for RFTs in this contract
+	//
 	// Selector: symbol() 95d89b41
 	function symbol() external view returns (string memory);
 
-	// Returns token's const_metadata
+	// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
+	//
+	// @dev If the token has a `url` property and it is not empty, it is returned.
+	//  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
+	//  If the collection property `baseURI` is empty or absent, return "" (empty string)
+	//  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	//  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
+	//
+	// @return token's const_metadata
 	//
 	// Selector: tokenURI(uint256) c87b56dd
 	function tokenURI(uint256 tokenId) external view returns (string memory);
@@ -176,14 +211,21 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	// Selector: mintingFinished() 05d2035b
 	function mintingFinished() external view returns (bool);
 
-	// `token_id` should be obtained with `next_token_id` method,
-	// unlike standard, you can't specify it manually
+	// @notice Function to mint token.
+	// @dev `tokenId` should be obtained with `nextTokenId` method,
+	//  unlike standard, you can't specify it manually
+	// @param to The new owner
+	// @param tokenId ID of the minted RFT
 	//
 	// Selector: mint(address,uint256) 40c10f19
 	function mint(address to, uint256 tokenId) external returns (bool);
 
-	// `token_id` should be obtained with `next_token_id` method,
-	// unlike standard, you can't specify it manually
+	// @notice Function to mint token with the given tokenUri.
+	// @dev `tokenId` should be obtained with `nextTokenId` method,
+	//  unlike standard, you can't specify it manually
+	// @param to The new owner
+	// @param tokenId ID of the minted RFT
+	// @param tokenUri Token URI that would be stored in the RFT properties
 	//
 	// Selector: mintWithTokenURI(address,uint256,string) 50bb4e7f
 	function mintWithTokenURI(
@@ -200,6 +242,11 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 
 // Selector: 780e9d63
 interface ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid RFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
 	// Selector: tokenByIndex(uint256) 4f6ccce7
 	function tokenByIndex(uint256 index) external view returns (uint256);
 
@@ -211,6 +258,10 @@ interface ERC721Enumerable is Dummy, ERC165 {
 		view
 		returns (uint256);
 
+	// @notice Count RFTs tracked by this contract
+	// @return A count of valid RFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
 	// Selector: totalSupply() 18160ddd
 	function totalSupply() external view returns (uint256);
 }
@@ -361,6 +412,59 @@ interface Collection is Dummy, ERC165 {
 	//
 	// Selector: setCollectionMintMode(bool) 00018e84
 	function setCollectionMintMode(bool mode) external;
+}
+
+// Selector: d74d154f
+interface ERC721UniqueExtensions is Dummy, ERC165 {
+	// @notice Transfer ownership of an RFT
+	// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	//  is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param to The new owner
+	// @param tokenId The RFT to transfer
+	// @param _value Not used for an RFT
+	//
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 tokenId) external;
+
+	// @notice Burns a specific ERC721 token.
+	// @dev Throws unless `msg.sender` is the current owner or an authorized
+	//  operator for this RFT. Throws if `from` is not the current owner. Throws
+	//  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param from The current owner of the RFT
+	// @param tokenId The RFT to transfer
+	// @param _value Not used for an RFT
+	//
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) external;
+
+	// @notice Returns next free RFT ID.
+	//
+	// Selector: nextTokenId() 75794a3c
+	function nextTokenId() external view returns (uint256);
+
+	// @notice Function to mint multiple tokens.
+	// @dev `tokenIds` should be an array of consecutive numbers and first number
+	//  should be obtained with `nextTokenId` method
+	// @param to The new owner
+	// @param tokenIds IDs of the minted RFTs
+	//
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		external
+		returns (bool);
+
+	// @notice Function to mint multiple tokens with the given tokenUris.
+	// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	//  numbers and first number should be obtained with `nextTokenId` method
+	// @param to The new owner
+	// @param tokens array of pairs of token ID and token URI for minted tokens
+	//
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		external
+		returns (bool);
 }
 
 interface UniqueRefungible is
