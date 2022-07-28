@@ -25,10 +25,9 @@ env:
   unique_chain_workdir: ./src_unique_chain
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
   actual_toolchain: nightly-2022-05-11
-  BRANCH: ${{ github.head_ref }}
   RUST_TOOLCHAIN: nightly-2022-05-11
-  REPO_URL: ${{ github.repositoryUrl }}
-  FEATURE: opal
+#  REPO_URL: ${{ github.repositoryUrl }}
+  features: opal
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -72,10 +71,10 @@ jobs:
 #      - name: Build the stack
         #run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
       - name: Build the Docker image
-        run: docker build . --file .docker/Dockerfile --tag build-${{ env.BRANCH }}-${{ env.FEATURE }}
-  
-      - name: Run image: build-${{ env.BRANCH }}-${{ env.FEATURE }}
-        run: docker run build-${{ env.BRANCH }}-${{ env.FEATURE }}
+        run: docker build . --file .docker/Dockerfile --tag build-${{ github.head_ref }}-${{ env.features }}
+
+      - name: Run image: build-${{ github.head_ref }}-${{ env.features }}
+        run: docker run build-${{ github.head_ref }}-${{ env.features }}
 
   test:
     # The type of runner that the job will run on
@@ -118,6 +117,6 @@ jobs:
           fail-on-error: 'false'
 
 
-      - name: Stop containers
-        if: always()
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" down
+#      - name: Stop containers
+#        if: always()
+#        run: docker-compose -f ".docker/docker-compose-dev.yaml" down
