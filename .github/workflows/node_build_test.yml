@@ -71,24 +71,16 @@ jobs:
 
       - name: Echo variables
         run: |
-          ls -la
-          cat .env
           echo "github.repositoryUrl: ${{ github.repositoryUrl }}"
           echo "env.features: ${{ env.features }}"
           echo "env.RUST_TOOLCHAIN: ${{ env.RUST_TOOLCHAIN }}"
           echo "env.REPO_URL: ${{ env.REPO_URL }}"
-          touch .env
-          echo "REPO_URL=${{ github.repositoryUrl }}" >> .env
-          echo "RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}" >> .env
-          echo "BRANCH=${{ github.head_ref }}" >> .env
-          echo "FEATURE=${{ env.features }}" >> .env
-          cat .env
 
 
       #- name: Build the stack
       #  run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
       - name: "Build the Docker image with Feature: ${{ env.features }}"
-        run: docker build -t build-${{ github.head_ref }}-${{ env.features }} --file .docker/Dockerfile-chain-dev --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE=${{ env.features }} --build-arg BRANCH=${{ github.head_ref }} --no-cache .
+        run: docker build -t build-${{ github.head_ref }}-${{ env.features }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.repositoryUrl }} --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE=${{ env.features }} --build-arg BRANCH=${{ github.head_ref }} --no-cache .
 
       #- name: Run image
       #  run: docker run build-${{ github.head_ref }}-${{ env.features }}
