@@ -28,7 +28,7 @@ env:
   actual_toolchain: nightly-2022-05-11
   RUST_TOOLCHAIN: nightly-2022-05-11
   REPO_URL: ${{ github.repositoryUrl }}
-  features: quartz-runtime
+  features: --features=quartz-runtime
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
