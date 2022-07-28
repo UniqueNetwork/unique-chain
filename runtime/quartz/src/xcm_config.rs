@@ -34,6 +34,7 @@ use xcm::{
 	v1::{BodyId, Junction::*, Junctions::*, MultiLocation, NetworkId},
 };
 use xcm_builder::{
+	AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, LocationInverter, ParentAsSuperuser,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
@@ -62,6 +63,7 @@ use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
 	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
 };
+use xcm::opaque::latest::prelude::{ DepositReserveAsset, DepositAsset, TransferAsset, TransferReserveAsset };
 
 // Signed version of balance
 pub type Amount = i128;
@@ -279,30 +281,100 @@ match_types! {
 	};
 }
 
-/// Execution barrier that just takes `max_weight` from `weight_credit`.
-///
-/// Useful to allow XCM execution by local chain users via extrinsics.
-/// E.g. `pallet_xcm::reserve_asset_transfer` to transfer a reserve asset
-/// out of the local chain to another one.
-pub struct AllowAllDebug;
-impl ShouldExecute for AllowAllDebug {
+pub fn get_allowed_locations() -> Vec<MultiLocation> {
+	vec![
+		// Self location
+		MultiLocation { parents: 0, interior: Here },
+		// Parent location
+		MultiLocation { parents: 1, interior: Here },
+		// Karura/Acala location
+		MultiLocation { parents: 1, interior: X1(Parachain(2000)) },
+		// Self parachain address
+		MultiLocation { parents: 1, interior: X1(Parachain(ParachainInfo::get().into())) },
+		]
+}
+
+/// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
+/// If it passes the Deny, and matches one of the Allow cases then it is let through.
+pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
+where
+	Deny: ShouldExecute,
+	Allow: ShouldExecute;
+
+impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
+where
+	Deny: ShouldExecute,
+	Allow: ShouldExecute,
+{
 	fn should_execute<Call>(
-		_origin: &MultiLocation,
-		_message: &mut Xcm<Call>,
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
 		max_weight: Weight,
 		weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-		Ok(())
+		Deny::should_execute(origin, message, max_weight, weight_credit)?;
+		Allow::should_execute(origin, message, max_weight, weight_credit)
 	}
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
-	// ^^^ Parent & its unit plurality gets free execution
-	AllowAllDebug,
-);
+// Allow xcm exchange only with locations in list
+pub struct DenyExchangeWithUnknownLocation;
+impl ShouldExecute for DenyExchangeWithUnknownLocation {
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+		_max_weight: Weight,
+		_weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+
+		// Check if deposit or transfer belongs to allowed parachains
+		let mut allowed = get_allowed_locations().contains(origin);
+
+		message.0.iter().for_each(|inst| {
+			match inst {
+				DepositReserveAsset { dest: dst, .. } => { allowed |= get_allowed_locations().contains(dst); }
+				TransferReserveAsset { dest: dst, .. } => { allowed |= get_allowed_locations().contains(dst); }
+				_ => {}
+			}
+		});
+
+		if allowed {
+			return Ok(());
+		}
+
+		log::warn!(
+			target: "xcm::barrier",
+			"Unexpected deposit or transfer location"
+		);			
+		// Deny
+		Err(())
+	}
+}
+
+match_types! {
+	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
+	};
+	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(_) }
+	};
+}
+
+pub type Barrier = DenyThenTry<
+	DenyExchangeWithUnknownLocation,
+	(
+		TakeWeightCredit,
+		AllowTopLevelPaidExecutionFrom<Everything>,
+		// Parent and its exec plurality get free execution
+		AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+		// Expected responses are OK.
+		AllowKnownQueryResponses<PolkadotXcm>,
+		// Subscriptions for version tracking are OK.
+		AllowSubscriptionsFrom<ParentOrSiblings>,
+	),
+>;
 
 pub struct AllAsset;
 impl FilterAssetLocation for AllAsset {
