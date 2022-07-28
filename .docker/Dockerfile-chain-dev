@@ -13,7 +13,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 ARG RUST_TOOLCHAIN=nightly-2022-04-07
 ARG BRANCH=develop
 ARG REPO_URL=https://github.com/UniqueNetwork/unique-chain.git
-ARG FEATURE=opal
+ARG FEATURE=opal-runtime
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
