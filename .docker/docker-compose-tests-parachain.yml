@@ -1,0 +1,30 @@
+version: "3.5"
+
+services:
+  blockchain_nodes:
+    build:
+      context: ./
+      dockerfile: Dockerfile-chain-dev
+      args:
+        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+        - RUST_C=${RUST_C:?err}
+        - POLKA_VERSION=${POLKA_VERSION:?err}
+        - UNIQUE_BRANCH=${UNIQUE_BRANCH:?err}
+    volumes:
+      - ./launch-config.json:/polkadot-launch/launch-config.json
+    ports:
+      - "127.0.0.1:9944:9944"
+    env_file:
+      - ./.env
+
+  #integration_tests:
+  #  build:
+  #    context: tests/
+  #    dockerfile: Dockerfile-tests
+  #  environment:
+  #    RPC_URL: http://blockchain_nodes:9933/
+  #  volumes:
+  #    - ./tests/src/config_docker.ts:/unique_parachain/src/config.ts
+  #    - /home/ubuntu/mochawesome-report:/unique_parachain/mochawesome-report
+  #  depends_on:
+  #    - blockchain_nodes
