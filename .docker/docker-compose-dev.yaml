@@ -19,11 +19,6 @@ services:
     ports:
       - 127.0.0.1:9944:9944
       - 127.0.0.1:9933:9933
-    environment:
-      - RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-      - BRANCH=${{ github.head_ref }}
-      - FEATURE=${{ env.features }}
-      - REPO_URL=${{ github.repositoryUrl }}
     logging:
       options:
         max-size: "1m"

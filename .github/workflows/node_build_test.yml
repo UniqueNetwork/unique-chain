@@ -75,6 +75,12 @@ jobs:
           echo "env.features: ${{ env.features }}"
           echo "env.RUST_TOOLCHAIN: ${{ env.RUST_TOOLCHAIN }}"
           echo "env.REPO_URL: ${{ env.REPO_URL }}"
+          touch .env
+          echo "- REPO_URL=${{ github.repositoryUrl }}" > .env
+          echo "- RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}" >> .env
+          echo "- BRANCH=${{ github.head_ref }}" >> .env
+          echo "- FEATURE=${{ env.features }}" >> .env
+
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
