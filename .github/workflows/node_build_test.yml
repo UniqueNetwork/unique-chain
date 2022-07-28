@@ -71,7 +71,7 @@ jobs:
 #      - name: Build the stack
         #run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
       - name: Build the Docker image
-        run: docker build . --file .docker/Dockerfile --tag build-${{ github.head_ref }}-${{ env.features }}
+        run: docker build . --file .docker/Dockerfile-chain-dev --tag build-${{ github.head_ref }}-${{ env.features }}
 
       - name: Run image
         run: docker run build-${{ github.head_ref }}-${{ env.features }}
