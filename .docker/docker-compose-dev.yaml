@@ -9,6 +9,7 @@ services:
         RUST_TOOLCHAIN: nightly-2022-05-11
         BRANCH:  ${{ github.head_ref }}
         FEATURE: opal
+        REPO_URL: ${{ github.repositoryUrl }}
     image: node-o
     container_name: node-o
     command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

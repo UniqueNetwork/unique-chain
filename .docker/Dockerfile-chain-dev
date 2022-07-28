@@ -11,7 +11,8 @@ ENV PATH="/cargo-home/bin:$PATH"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 ARG RUST_TOOLCHAIN=nightly-2022-04-07
-#ARG BRANCH=develop
+ARG BRANCH=develop
+ARG REPO_URL=https://github.com/UniqueNetwork/unique-chain.git
 ARG FEATURE=opal
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
@@ -19,11 +20,8 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup default $RUST_TOOLCHAIN && \
     rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN pwd && ls -la
-
-
-#RUN mkdir /dev_chain && git clone https://github.com/UniqueNetwork/unique-chain.git /dev_chain && cd /dev_chain && git checkout $BRANCH
-#WORKDIR /dev_chain
+RUN mkdir /dev_chain && git clone $REPO_URL /dev_chain && cd /dev_chain && git checkout $BRANCH
+WORKDIR /dev_chain
 
 RUN cargo build --release
 
