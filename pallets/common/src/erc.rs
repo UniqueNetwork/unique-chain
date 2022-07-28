@@ -430,10 +430,70 @@ fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	Ok(())
 }
 
-/// Get the "tokenURI" key as [PropertyKey](up_data_structs::PropertyKey).
-pub fn token_uri_key() -> up_data_structs::PropertyKey {
-	b"tokenURI"
-		.to_vec()
-		.try_into()
-		.expect("length < limit; qed")
+/// Contains static property keys and values.
+pub mod static_property {
+	use evm_coder::{
+		execution::{Result, Error},
+	};
+	use alloc::format;
+
+	const EXPECT_CONVERT_ERROR: &str = "length < limit";
+
+	/// Keys.
+	pub mod key {
+		use super::*;
+
+		/// Key "schemaName".
+		pub fn schema_name() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "baseURI".
+		pub fn base_uri() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "url".
+		pub fn url() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "suffix".
+		pub fn suffix() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
+		}
+	}
+
+	/// Values.
+	pub mod value {
+		use super::*;
+
+		/// Value "ERC721Metadata".
+		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
+
+		/// Value for [`ERC721_METADATA`].
+		pub fn erc721() -> up_data_structs::PropertyValue {
+			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
+		}
+	}
+
+	/// Convert `byte` to [`PropertyKey`].
+	pub fn property_key_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyKey> {
+		bytes.to_vec().try_into().map_err(|_| {
+			Error::Revert(format!(
+				"Property key is too long. Max length is {}.",
+				up_data_structs::PropertyKey::bound()
+			))
+		})
+	}
+
+	/// Convert `bytes` to [`PropertyValue`].
+	pub fn property_value_from_bytes(bytes: &[u8]) -> Result<up_data_structs::PropertyValue> {
+		bytes.to_vec().try_into().map_err(|_| {
+			Error::Revert(format!(
+				"Property key is too long. Max length is {}.",
+				up_data_structs::PropertyKey::bound()
+			))
+		})
+	}
 }

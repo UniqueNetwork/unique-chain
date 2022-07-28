@@ -8,6 +8,7 @@ use frame_support::{
 	weights::Pays,
 	traits::Get,
 };
+use sp_runtime::DispatchError;
 use up_data_structs::{CollectionId, CreateCollectionData};
 
 use crate::{pallet::Config, CommonCollectionOperations, CollectionHandle};
@@ -78,7 +79,7 @@ pub trait CollectionDispatch<T: Config> {
 	fn create(
 		sender: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
-	) -> DispatchResult;
+	) -> Result<CollectionId, DispatchError>;
 
 	/// Delete the collection.
 	///

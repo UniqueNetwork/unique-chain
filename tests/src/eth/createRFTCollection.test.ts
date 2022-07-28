@@ -27,54 +27,55 @@ import {
   getCollectionAddressFromResult,
 } from './util/helpers';
 
-describe('Create collection from EVM', () => {
-  // itWeb3('Create collection', async ({api, web3, privateKeyWrapper}) => {
-  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-  //   const collectionHelper = evmCollectionHelpers(web3, owner);
-  //   const collectionName = 'CollectionEVM';
-  //   const description = 'Some description';
-  //   const tokenPrefix = 'token prefix';
+describe('Create RFT collection from EVM', () => {
+  itWeb3('Create collection', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+    const collectionName = 'CollectionEVM';
+    const description = 'Some description';
+    const tokenPrefix = 'token prefix';
   
-  //   const collectionCountBefore = await getCreatedCollectionCount(api);
-  //   const result = await collectionHelper.methods
-  //     .createNonfungibleCollection(collectionName, description, tokenPrefix)
-  //     .send();
-  //   const collectionCountAfter = await getCreatedCollectionCount(api);
+    const collectionCountBefore = await getCreatedCollectionCount(api);
+    const result = await collectionHelper.methods
+      .createRefungibleCollection(collectionName, description, tokenPrefix)
+      .send();
+    const collectionCountAfter = await getCreatedCollectionCount(api);
   
-  //   const {collectionId, collection} = await getCollectionAddressFromResult(api, result);
-  //   expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-  //   expect(collectionId).to.be.eq(collectionCountAfter);
-  //   expect(collection.name.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(collectionName);
-  //   expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
-  //   expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
-  // });
+    const {collectionId, collection} = await getCollectionAddressFromResult(api, result);
+    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
+    expect(collectionId).to.be.eq(collectionCountAfter);
+    expect(collection.name.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(collectionName);
+    expect(collection.description.map(v => String.fromCharCode(v.toNumber())).join('')).to.be.eq(description);
+    expect(collection.tokenPrefix.toHuman()).to.be.eq(tokenPrefix);
+    expect(collection.mode.isReFungible).to.be.true;
+  });
 
-  // itWeb3('Check collection address exist', async ({api, web3, privateKeyWrapper}) => {
-  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-  //   const collectionHelpers = evmCollectionHelpers(web3, owner);
+  itWeb3('Check collection address exist', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
   
-  //   const expectedCollectionId = await getCreatedCollectionCount(api) + 1;
-  //   const expectedCollectionAddress = collectionIdToAddress(expectedCollectionId);
-  //   expect(await collectionHelpers.methods
-  //     .isCollectionExist(expectedCollectionAddress)
-  //     .call()).to.be.false;
+    const expectedCollectionId = await getCreatedCollectionCount(api) + 1;
+    const expectedCollectionAddress = collectionIdToAddress(expectedCollectionId);
+    expect(await collectionHelpers.methods
+      .isCollectionExist(expectedCollectionAddress)
+      .call()).to.be.false;
 
-  //   await collectionHelpers.methods
-  //     .createNonfungibleCollection('A', 'A', 'A')
-  //     .send();
+    await collectionHelpers.methods
+      .createRefungibleCollection('A', 'A', 'A')
+      .send();
     
-  //   expect(await collectionHelpers.methods
-  //     .isCollectionExist(expectedCollectionAddress)
-  //     .call()).to.be.true;
-  // });
+    expect(await collectionHelpers.methods
+      .isCollectionExist(expectedCollectionAddress)
+      .call()).to.be.true;
+  });
   
   itWeb3('Set sponsorship', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    let result = await collectionHelpers.methods.createRefungibleCollection('Sponsor collection', '1', '1').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
     result = await collectionEvm.methods.setCollectionSponsor(sponsor).send();
     let collectionSub = (await getDetailedCollectionInfo(api, collectionId))!;
     expect(collectionSub.sponsorship.isUnconfirmed).to.be.true;
@@ -91,7 +92,7 @@ describe('Create collection from EVM', () => {
   itWeb3('Set limits', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Const collection', '5', '5').send();
+    const result = await collectionHelpers.methods.createRefungibleCollection('Const collection', '5', '5').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const limits = {
       accountTokenOwnershipLimit: 1000,
@@ -105,7 +106,7 @@ describe('Create collection from EVM', () => {
       transfersEnabled: false,
     };
 
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
     await collectionEvm.methods['setCollectionLimit(string,uint32)']('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
     await collectionEvm.methods['setCollectionLimit(string,uint32)']('sponsoredDataSize', limits.sponsoredDataSize).send();
     await collectionEvm.methods['setCollectionLimit(string,uint32)']('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
@@ -136,7 +137,7 @@ describe('Create collection from EVM', () => {
       .isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Collection address exist', '7', '7').send();
+    const result = await collectionHelpers.methods.createRefungibleCollection('Collection address exist', '7', '7').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     expect(await collectionHelpers.methods
       .isCollectionExist(collectionIdAddress).call())
@@ -144,7 +145,7 @@ describe('Create collection from EVM', () => {
   });
 });
 
-describe('(!negative tests!) Create collection from EVM', () => {
+describe('(!negative tests!) Create RFT collection from EVM', () => {
   itWeb3('(!negative test!) Create collection (bad lengths)', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
@@ -155,7 +156,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const tokenPrefix = 'A';
     
       await expect(helper.methods
-        .createNonfungibleCollection(collectionName, description, tokenPrefix)
+        .createRefungibleCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGHT);
       
     }
@@ -165,7 +166,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGHT + 1);
       const tokenPrefix = 'A';
       await expect(helper.methods
-        .createNonfungibleCollection(collectionName, description, tokenPrefix)
+        .createRefungibleCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGHT);
     }
     {  
@@ -174,7 +175,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGHT + 1);
       await expect(helper.methods
-        .createNonfungibleCollection(collectionName, description, tokenPrefix)
+        .createRefungibleCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGHT);
     }
   });
@@ -187,7 +188,7 @@ describe('(!negative tests!) Create collection from EVM', () => {
     const tokenPrefix = 'A';
     
     await expect(helper.methods
-      .createNonfungibleCollection(collectionName, description, tokenPrefix)
+      .createRefungibleCollection(collectionName, description, tokenPrefix)
       .call()).to.be.rejectedWith('NotSufficientFounds');
   });
 
@@ -195,9 +196,9 @@ describe('(!negative tests!) Create collection from EVM', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const notOwner = await createEthAccount(web3);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('A', 'A', 'A').send();
+    const result = await collectionHelpers.methods.createRefungibleCollection('A', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contractEvmFromNotOwner = evmCollection(web3, notOwner, collectionIdAddress);
+    const contractEvmFromNotOwner = evmCollection(web3, notOwner, collectionIdAddress, {type: 'ReFungible'});
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -220,9 +221,9 @@ describe('(!negative tests!) Create collection from EVM', () => {
   itWeb3('(!negative test!) Set limits', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Schema collection', 'A', 'A').send();
+    const result = await collectionHelpers.methods.createRefungibleCollection('Schema collection', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
     await expect(collectionEvm.methods
       .setCollectionLimit('badLimit', 'true')
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');

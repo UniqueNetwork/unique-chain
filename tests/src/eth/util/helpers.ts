@@ -25,12 +25,13 @@ import * as solc from 'solc';
 import Web3 from 'web3';
 import config from '../../config';
 import getBalance from '../../substrate/get-balance';
-import privateKey from '../../substrate/privateKey';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
-import {CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
+import {CollectionMode, CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
 import collectionHelpersAbi from '../collectionHelpersAbi.json';
+import fungibleAbi from '../fungibleAbi.json';
 import nonFungibleAbi from '../nonFungibleAbi.json';
+import refungibleAbi from '../refungibleAbi.json';
 import contractHelpersAbi from './contractHelpersAbi.json';
 
 export const GAS_ARGS = {gas: 2500000};
@@ -307,8 +308,26 @@ export function evmCollectionHelpers(web3: Web3, caller: string) {
  * @param caller - eth address
  * @returns 
  */
-export function evmCollection(web3: Web3, caller: string, collection: string) {
-  return new web3.eth.Contract(nonFungibleAbi as any, collection, {from: caller, ...GAS_ARGS});
+export function evmCollection(web3: Web3, caller: string, collection: string, mode: CollectionMode = {type: 'NFT'}) {
+  let abi;
+  switch (mode.type) {
+    case 'Fungible':
+      abi = fungibleAbi;
+      break;
+    
+    case 'NFT':
+      abi = nonFungibleAbi;
+      break;
+    
+    case 'ReFungible':
+      abi = refungibleAbi;
+      break;
+
+    default:
+      throw 'Bad collection mode';
+  }
+  const contract = new web3.eth.Contract(abi as any, collection, {from: caller, ...GAS_ARGS});
+  return contract;
 }
 
 /**

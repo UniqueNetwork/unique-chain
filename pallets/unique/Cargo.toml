@@ -9,7 +9,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-unique'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.1.0'
+version = '0.1.1'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -103,3 +103,4 @@ pallet-common = { default-features = false, path = "../common" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
 pallet-nonfungible = { default-features = false, path = '../../pallets/nonfungible' }
+pallet-refungible = { default-features = false, path = '../../pallets/refungible' }
