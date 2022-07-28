@@ -1,7 +1,12 @@
 name: Tests code style
 
-on: [push]
-
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - edited
 jobs:
   build:
     runs-on: ubuntu-20.04
