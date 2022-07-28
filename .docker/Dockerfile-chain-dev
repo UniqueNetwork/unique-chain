@@ -13,7 +13,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 ARG RUST_TOOLCHAIN=nightly-2022-04-07
 ARG BRANCH=develop
 ARG REPO_URL=https://github.com/UniqueNetwork/unique-chain.git
-ARG FEATURE=opal-runtime
+ARG FEATURE=""
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -32,4 +32,4 @@ EXPOSE 9833
 EXPOSE 40333
 EXPOSE 30333
 
-CMD cargo run --release --features $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+CMD cargo run --release $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
