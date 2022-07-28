@@ -20,8 +20,6 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup default $RUST_TOOLCHAIN && \
     rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN echo "$REPO_URL"
-RUN echo "$BRANCH"
 RUN mkdir /dev_chain && git clone $REPO_URL /dev_chain && cd /dev_chain && git checkout $BRANCH
 WORKDIR /dev_chain
 

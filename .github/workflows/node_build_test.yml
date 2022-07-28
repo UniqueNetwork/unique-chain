@@ -27,7 +27,7 @@ env:
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
   actual_toolchain: nightly-2022-05-11
   RUST_TOOLCHAIN: nightly-2022-05-11
-#  REPO_URL: ${{ github.repositoryUrl }}
+  REPO_URL: ${{ github.repositoryUrl }}
   features: opal
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -69,13 +69,20 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-#      - name: Build the stack
-        #run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
-      - name: "Build the Docker image with Feature: ${{ env.features }}"
-        run: docker build -t build-${{ github.head_ref }}-${{ env.features }} --file .docker/Dockerfile-chain-dev --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg REPO_URL=${{ github.repositoryUrl }} --build-arg FEATURE=${{ env.features }} --build-arg BRANCH=${{ github.head_ref }} --no-cache . 
+      - name: Echo variables
+        run: |
+          echo "${{ github.repositoryUrl }}"
+          echo "${{ env.features }}"
+          echo "${{ env.RUST_TOOLCHAIN }}"
+          echo "${{ env.REPO_URL }}"
 
-      - name: Run image
-        run: docker run build-${{ github.head_ref }}-${{ env.features }}
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
+      #- name: "Build the Docker image with Feature: ${{ env.features }}"
+      #  run: docker build -t build-${{ github.head_ref }}-${{ env.features }} --file .docker/Dockerfile-chain-dev --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg REPO_URL=${{ github.repositoryUrl }} --build-arg FEATURE=${{ env.features }} --build-arg BRANCH=${{ github.head_ref }} --no-cache .
+
+      #- name: Run image
+      #  run: docker run build-${{ github.head_ref }}-${{ env.features }}
 
   test:
     # The type of runner that the job will run on
