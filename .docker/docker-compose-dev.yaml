@@ -5,11 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-chain-dev
-      args:
-        - "RUST_TOOLCHAIN=nightly-2022-05-11"
-        - "BRANCH=ci-build-workflow-v2"
-        - "FEATURE=$${{ env.features }}"
-        - "REPO_URL=$${{ github.repositoryUrl }}"
+#      args:
+#        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+#        - BRANCH=${BRANCH:?err}
+#        - FEATURE=${FEATURE:?err}
+#        - REPO_URL=${REPO_URL:?err}
     image: node-o
     container_name: node-o
     command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
@@ -19,6 +19,11 @@ services:
     ports:
       - 127.0.0.1:9944:9944
       - 127.0.0.1:9933:9933
+    environment:
+      - RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+      - BRANCH=${{ github.head_ref }}
+      - FEATURE=${{ env.features }}
+      - REPO_URL=${{ github.repositoryUrl }}
     logging:
       options:
         max-size: "1m"
