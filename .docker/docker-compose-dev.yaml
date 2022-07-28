@@ -6,10 +6,10 @@ services:
       context: .
       dockerfile: Dockerfile-chain-dev
       args:
-        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
-        - BRANCH=${BRANCH:?err}
-        - FEATURE=${FEATURE:?err}
-        - REPO_URL=${REPO_URL:?err}
+        - "RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}"
+        - "BRANCH=${BRANCH:?err}"
+        - "FEATURE=${FEATURE:?err}"
+        - "REPO_URL=${REPO_URL:?err}"
     image: node-o
     container_name: node-o
     command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
@@ -20,10 +20,10 @@ services:
       - 127.0.0.1:9944:9944
       - 127.0.0.1:9933:9933
     environment:
-      - RUST_TOOLCHAIN=${RUST_TOOLCHAIN}
-      - BRANCH=${BRANCH}
-      - FEATURE=${FEATURE}
-      - REPO_URL=${REPO_URL}
+      - "RUST_TOOLCHAIN=${RUST_TOOLCHAIN}"
+      - "BRANCH=${BRANCH}"
+      - "FEATURE=${FEATURE}"
+      - "REPO_URL=${REPO_URL}"
 
     logging:
       options:
