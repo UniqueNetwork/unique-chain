@@ -71,10 +71,10 @@ jobs:
 
       - name: Echo variables
         run: |
-          echo "${{ github.repositoryUrl }}"
-          echo "${{ env.features }}"
-          echo "${{ env.RUST_TOOLCHAIN }}"
-          echo "${{ env.REPO_URL }}"
+          echo "github.repositoryUrl: ${{ github.repositoryUrl }}"
+          echo "env.features: ${{ env.features }}"
+          echo "env.RUST_TOOLCHAIN: ${{ env.RUST_TOOLCHAIN }}"
+          echo "env.REPO_URL: ${{ env.REPO_URL }}"
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build

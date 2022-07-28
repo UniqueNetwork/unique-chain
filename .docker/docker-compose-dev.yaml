@@ -6,10 +6,10 @@ services:
       context: .
       dockerfile: Dockerfile-chain-dev
       args:
-        - RUST_TOOLCHAIN: nightly-2022-05-11
-        - BRANCH: ci-build-workflow-v2
-        - FEATURE: "${{ env.features }}"
-        - REPO_URL: "${{ github.repositoryUrl }}"
+        - RUST_TOOLCHAIN=nightly-2022-05-11
+        - BRANCH=ci-build-workflow-v2
+        - FEATURE=${ env.features }
+        - REPO_URL=${ github.repositoryUrl }
     image: node-o
     container_name: node-o
     command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
