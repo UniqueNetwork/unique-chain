@@ -78,10 +78,10 @@ jobs:
           echo "env.RUST_TOOLCHAIN: ${{ env.RUST_TOOLCHAIN }}"
           echo "env.REPO_URL: ${{ env.REPO_URL }}"
           touch .env
-          echo "- REPO_URL=${{ github.repositoryUrl }}" > .env
-          echo "- RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}" >> .env
-          echo "- BRANCH=${{ github.head_ref }}" >> .env
-          echo "- FEATURE=${{ env.features }}" >> .env
+          echo "REPO_URL=${{ github.repositoryUrl }}" >> .env
+          echo "RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}" >> .env
+          echo "BRANCH=${{ github.head_ref }}" >> .env
+          echo "FEATURE=${{ env.features }}" >> .env
           cat .env
 
 
