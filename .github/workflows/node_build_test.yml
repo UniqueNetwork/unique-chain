@@ -25,6 +25,7 @@ env:
   unique_chain_workdir: ./src_unique_chain
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
   actual_toolchain: nightly-2022-05-11
+  BRANCH: ${{ github.head_ref }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -64,6 +65,9 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+
+      - name: Branch name
+        run: echo running on branch ${{ github.head_ref }}
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
