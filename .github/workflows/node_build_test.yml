@@ -76,7 +76,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ci-01
 
-    if: ${{ always() }}
+    #if: ${{ always() }} - it requires if you need to run this job even previous failed.
     needs: [ build, pre-requisites ]
     name: Tests
 
