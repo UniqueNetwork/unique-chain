@@ -27,7 +27,6 @@ env:
   src_repo_url: https://github.com/lzadjsf/unique-chain.git
   RUST_TOOLCHAIN: nightly-2022-05-11
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-  features: --features=quartz-runtime
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -48,15 +47,6 @@ jobs:
           rustup target add wasm32-unknown-unknown --toolchain ${{ env.RUST_TOOLCHAIN }}
 
 
-      # Re-create release directory
-      - name: delete release dir
-        run: rm -rf ${{ env.chains_release_dir }}
-
-
-      - name: create release dir
-        run: mkdir -p ${{ env.chains_release_dir }}
-
-
   build:
     # The type of runner that the job will run on
     runs-on: ci-01
@@ -72,19 +62,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Echo variables
-        run: |
-          echo "env.features: ${{ env.features }}"
-          echo "env.RUST_TOOLCHAIN: ${{ env.RUST_TOOLCHAIN }}"
-
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp.j2
-          output_file: .docker/docker-compose.${{ env.features }}.yml
+          output_file: .docker/docker-compose.${{ matrix.features }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
-            RUST_TOOLCHAIN=${{ env.actual_toolchain }}
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
 
