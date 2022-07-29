@@ -1,0 +1,11 @@
+version: "3.5"
+
+services:
+  node-o:
+    build:
+     args:
+       - "RUST_TOOLCHAIN=nightly-2022-05-11"
+       - "BRANCH=ci-build-workflow-v2"
+       - "FEATURE=opal-runtime"
+       - "REPO_URL=https://github.com/lzadjsf/unique-chain.git"
+    command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

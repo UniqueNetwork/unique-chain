@@ -79,19 +79,35 @@ jobs:
           echo "github.repository: ${{ github.repository }}"
           echo "github.server_url: ${{ github.server_url }}"
 
-      #- name: Build the stack
-      #  run: docker-compose -f ".docker/docker-compose-dev.yaml" up -d --build
-      - name: "Build the Docker image with Feature: ${{ env.features }}"
-        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp.j2
+          output_file: .docker/docker-compose.${{ env.features }}.yml
+          variables: |
+            FEATURE=${{ env.features }}
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            ${{ env.RUST_TOOLCHAIN }}
+            RUST_TOOLCHAIN=${{ env.actual_toolchain }}
 
-      - name: Run image
-        run: docker run build-${{ github.head_ref }}
+
+
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ env.features }}.yml" up -d --build
+
+#      - name: "Build the Docker image with Feature: ${{ env.features }}"
+#        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
+
 
       - name: Wait
         run: sleep 600s
 
-      - name: Stop image
-        run: docker stop build-${{ github.head_ref }}
+      - name: Docker Compose
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ env.features }}.yml" down
+
+      #- name: Stop image
+      #  run: docker stop build-${{ github.head_ref }}
 
   test:
     # The type of runner that the job will run on
