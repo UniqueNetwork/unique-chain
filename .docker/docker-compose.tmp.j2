@@ -9,4 +9,5 @@ services:
         - "REPO_URL={{ REPO_URL }}"
         - "FEATURE={{ FEATURE }}"
 
-    command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+    command: cargo run --release $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+    

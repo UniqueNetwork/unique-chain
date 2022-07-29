@@ -52,9 +52,9 @@ jobs:
     runs-on: ci-01
 
     needs: pre-requisites
-    name: Build Container and Spin it Up
+    name: Build Container, Spin it Up an test
 
-    continue-on-error: true
+    continue-on-error: true         #Do not stop testing of matrix runs failed.
 
     strategy:
       matrix:
@@ -75,9 +75,6 @@ jobs:
             FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
 
-      - name: Listen directory
-        run: ls -la
-
       - name: Show temporary file
         run: cat .docker/docker-compose.${{ matrix.features }}.yml
 
@@ -88,7 +85,7 @@ jobs:
 #        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
 
       - name: Wait
-        run: sleep 300s
+        run: sleep 420s
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -121,5 +118,5 @@ jobs:
           fail-on-error: 'false'
 
       - name: Stop running containers
-        if: always()
+        if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.features }}.yml" down
