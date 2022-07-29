@@ -89,6 +89,8 @@ jobs:
             RUST_TOOLCHAIN=${{ env.actual_toolchain }}
             FEATURE="${{ env.features }}"
             BRANCH="${{ github.head_ref }}"
+
+      - name: Show temporasry file
         run: cat .docker/docker-compose.${{ env.features }}.yml
 
       - name: Build the stack
