@@ -58,7 +58,13 @@ jobs:
 
     strategy:
       matrix:
-        features: [--features=opal-runtime, --features=quartz-runtime, --features=unique-runtime]
+        include:
+          - network: "Opal"
+            features: " "
+          - network: "Ouartz"
+            features: "--features=quartz-runtime"
+          - network: "Unique"
+            features: "--features=unique-runtime"
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -68,7 +74,7 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp.j2
-          output_file: .docker/docker-compose.${{ matrix.features }}.yml
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
@@ -76,10 +82,10 @@ jobs:
             BRANCH=${{ github.head_ref }}
 
       - name: Show temporary file
-        run: cat .docker/docker-compose.${{ matrix.features }}.yml
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.features }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
 #      - name: "Build the Docker image with Feature: ${{ env.features }}"
 #        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
@@ -112,11 +118,11 @@ jobs:
         id: test-report               # Set ID reference for step
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: Tests ${{ matrix.features }}            # Name of the check run which will be created
+          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.features }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
