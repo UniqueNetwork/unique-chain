@@ -5,6 +5,8 @@ services:
     build:
       args:
         - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
-        - "BRANCH=ci-build-workflow-v2"
+        - "BRANCH={{ BRANCH }}"
         - "REPO_URL={{ REPO_URL }}"
+        - "FEATURE={{ FEATURE }}"
+
     command: cargo run --release -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

@@ -87,9 +87,8 @@ jobs:
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.actual_toolchain }}
-
-
-
+            FEATURE="${{ env.features }}"
+            BRANCH="${{ github.head_ref }}"
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ env.features }}.yml" up -d --build
@@ -100,12 +99,6 @@ jobs:
 
       - name: Wait
         run: sleep 600s
-
-      - name: Docker Compose
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ env.features }}.yml" down
-
-      #- name: Stop image
-      #  run: docker stop build-${{ github.head_ref }}
 
   test:
     # The type of runner that the job will run on
@@ -147,6 +140,9 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
+      - name: Stop running containers
+        if: always()
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ env.features }}.yml" down
 
 #      - name: Stop containers
 #        if: always()
