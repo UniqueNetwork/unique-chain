@@ -54,6 +54,8 @@ jobs:
     needs: pre-requisites
     name: Build Container and Spin it Up
 
+    continue-on-error: true
+
     strategy:
       matrix:
         features: [--features=opal-runtime, --features=quartz-runtime, --features=unique-runtime]
