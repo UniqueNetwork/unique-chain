@@ -87,8 +87,8 @@ jobs:
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.actual_toolchain }}
-            FEATURE="${{ env.features }}"
-            BRANCH="${{ github.head_ref }}"
+            FEATURE=${{ env.features }}
+            BRANCH=${{ github.head_ref }}
 
       - name: Show temporasry file
         run: cat .docker/docker-compose.${{ env.features }}.yml
