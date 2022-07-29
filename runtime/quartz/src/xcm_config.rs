@@ -289,6 +289,8 @@ pub fn get_allowed_locations() -> Vec<MultiLocation> {
 		MultiLocation { parents: 1, interior: Here },
 		// Karura/Acala location
 		MultiLocation { parents: 1, interior: X1(Parachain(2000)) },
+		// Moonriver location
+		MultiLocation { parents: 1, interior: X1(Parachain(2023)) },
 		// Self parachain address
 		MultiLocation { parents: 1, interior: X1(Parachain(ParachainInfo::get().into())) },
 		]
