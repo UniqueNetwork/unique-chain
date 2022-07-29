@@ -89,6 +89,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.actual_toolchain }}
             FEATURE="${{ env.features }}"
             BRANCH="${{ github.head_ref }}"
+        run: cat .docker/docker-compose.${{ env.features }}.yml
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ env.features }}.yml" up -d --build
