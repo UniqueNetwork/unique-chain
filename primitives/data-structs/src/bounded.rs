@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! This module contins implementations for support bounded structures in [`serde`].
+//! This module contins implementations for support bounded structures ([`BoundedVec`], [`BoundedBTreeMap`], [`BoundedBTreeSet`]) in [`serde`].
 
 use core::fmt;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};

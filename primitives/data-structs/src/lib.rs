@@ -16,7 +16,7 @@
 
 //! # Primitives crate.
 //!
-//! This crate contains amount of types, traits and constants.
+//! This crate contains types, traits and constants.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
