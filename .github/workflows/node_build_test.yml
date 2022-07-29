@@ -97,7 +97,6 @@ jobs:
 #      - name: "Build the Docker image with Feature: ${{ env.features }}"
 #        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
 
-
       - name: Wait
         run: sleep 300s
 
@@ -134,7 +133,3 @@ jobs:
       - name: Stop running containers
         if: always()
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.features }}.yml" down
-
-#      - name: Stop containers
-#        if: always()
-#        run: docker-compose -f ".docker/docker-compose-dev.yaml" down
