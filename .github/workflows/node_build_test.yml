@@ -85,9 +85,7 @@ jobs:
           template: .docker/docker-compose.tmp.j2
           output_file: .docker/docker-compose.${{ env.features }}.yml
           variables: |
-            FEATURE=${{ env.features }}
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
-            ${{ env.RUST_TOOLCHAIN }}
             RUST_TOOLCHAIN=${{ env.actual_toolchain }}
 
 
