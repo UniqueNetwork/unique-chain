@@ -108,7 +108,6 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          ./scripts/ci-check-docker-state.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
