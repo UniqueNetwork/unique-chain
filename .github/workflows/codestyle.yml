@@ -10,7 +10,7 @@ on:
 
 jobs:
   rustfmt:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v1
