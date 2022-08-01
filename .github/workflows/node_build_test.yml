@@ -32,7 +32,7 @@ env:
 jobs:
   pre-requisites:
     # The type of runner that the job will run on
-    runs-on: ci-01
+    runs-on: self-hosted
 
     steps:
       #runs ssh connection
@@ -49,7 +49,7 @@ jobs:
 
   build:
     # The type of runner that the job will run on
-    runs-on: ci-01
+    runs-on: self-hosted
 
     needs: pre-requisites
     name: Build Container, Spin it Up an test
