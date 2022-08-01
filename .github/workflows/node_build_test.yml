@@ -91,7 +91,7 @@ jobs:
 #        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
 
       - name: Wait
-        run: sleep 420s
+        run: sleep 500s
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -108,7 +108,6 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          ./scripts/ci-check-docker-state.sh
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
