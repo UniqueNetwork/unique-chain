@@ -28,13 +28,22 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
+
+#[cfg(feature = "scheduler")]
 use fp_self_contained::*;
+
+#[cfg(feature = "scheduler")]
+use sp_runtime::{
+	traits::Member,
+	generic::Era,
+	DispatchErrorWithPostInfo
+};
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, RuntimeAppPublic,
 };
@@ -69,7 +78,10 @@ pub use frame_support::{
 		WeightToFee,
 	},
 };
+
+#[cfg(feature = "scheduler")]
 use pallet_unique_scheduler::DispatchCall;
+
 use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
 	CollectionStats, RpcCollection,
@@ -93,12 +105,10 @@ use codec::{Encode, Decode};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{
-		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
+		BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
 		Saturating, CheckedConversion,
 	},
-	generic::Era,
-	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, SaturatedConversion,
+	transaction_validity::TransactionValidityError, SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -109,7 +119,7 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
@@ -949,8 +959,11 @@ parameter_types! {
 }
 
 type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
+
+#[cfg(feature = "scheduler")]
 use frame_support::traits::NamedReservableCurrency;
 
+#[cfg(feature = "scheduler")]
 fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
 	(
 		frame_system::CheckSpecVersion::<Runtime>::new(),
@@ -965,92 +978,95 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 	)
 }
 
-// pub struct SchedulerPaymentExecutor;
-// impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
-// 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
-// where
-// 	<T as frame_system::Config>::Call: Member
-// 		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
-// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
-// 		+ GetDispatchInfo
-// 		+ From<frame_system::Call<Runtime>>,
-// 	SelfContainedSignedInfo: Send + Sync + 'static,
-// 	Call: From<<T as frame_system::Config>::Call>
-// 		+ From<<T as pallet_unique_scheduler::Config>::Call>
-// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
-// 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
-// {
-// 	fn dispatch_call(
-// 		signer: <T as frame_system::Config>::AccountId,
-// 		call: <T as pallet_unique_scheduler::Config>::Call,
-// 	) -> Result<
-// 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
-// 		TransactionValidityError,
-// 	> {
-// 		let dispatch_info = call.get_dispatch_info();
-// 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
-// 			AccountId,
-// 			Call,
-// 			SignedExtraScheduler,
-// 			SelfContainedSignedInfo,
-// 		> {
-// 			signed:
-// 				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
-// 					signer.clone().into(),
-// 					get_signed_extras(signer.into()),
-// 				),
-// 			function: call.into(),
-// 		};
+#[cfg(feature = "scheduler")]
+pub struct SchedulerPaymentExecutor;
 
-// 		extrinsic.apply::<Runtime>(&dispatch_info, 0)
-// 	}
+#[cfg(feature = "scheduler")]
+impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
+	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
+where
+	<T as frame_system::Config>::Call: Member
+		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+		+ GetDispatchInfo
+		+ From<frame_system::Call<Runtime>>,
+	SelfContainedSignedInfo: Send + Sync + 'static,
+	Call: From<<T as frame_system::Config>::Call>
+		+ From<<T as pallet_unique_scheduler::Config>::Call>
+		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+{
+	fn dispatch_call(
+		signer: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unique_scheduler::Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
+		let dispatch_info = call.get_dispatch_info();
+		let extrinsic = fp_self_contained::CheckedExtrinsic::<
+			AccountId,
+			Call,
+			SignedExtraScheduler,
+			SelfContainedSignedInfo,
+		> {
+			signed:
+				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
+					signer.clone().into(),
+					get_signed_extras(signer.into()),
+				),
+			function: call.into(),
+		};
 
-// 	fn reserve_balance(
-// 		id: [u8; 16],
-// 		sponsor: <T as frame_system::Config>::AccountId,
-// 		call: <T as pallet_unique_scheduler::Config>::Call,
-// 		count: u32,
-// 	) -> Result<(), DispatchError> {
-// 		let dispatch_info = call.get_dispatch_info();
-// 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
-// 			.saturating_mul(count.into());
+		extrinsic.apply::<Runtime>(&dispatch_info, 0)
+	}
 
-// 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
-// 			&id,
-// 			&(sponsor.into()),
-// 			weight,
-// 		)
-// 	}
+	fn reserve_balance(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unique_scheduler::Config>::Call,
+		count: u32,
+	) -> Result<(), DispatchError> {
+		let dispatch_info = call.get_dispatch_info();
+		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
+			.saturating_mul(count.into());
 
-// 	fn pay_for_call(
-// 		id: [u8; 16],
-// 		sponsor: <T as frame_system::Config>::AccountId,
-// 		call: <T as pallet_unique_scheduler::Config>::Call,
-// 	) -> Result<u128, DispatchError> {
-// 		let dispatch_info = call.get_dispatch_info();
-// 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
-// 		Ok(
-// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-// 				&id,
-// 				&(sponsor.into()),
-// 				weight,
-// 			),
-// 		)
-// 	}
+		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
+			&id,
+			&(sponsor.into()),
+			weight,
+		)
+	}
 
-// 	fn cancel_reserve(
-// 		id: [u8; 16],
-// 		sponsor: <T as frame_system::Config>::AccountId,
-// 	) -> Result<u128, DispatchError> {
-// 		Ok(
-// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-// 				&id,
-// 				&(sponsor.into()),
-// 				u128::MAX,
-// 			),
-// 		)
-// 	}
-// }
+	fn pay_for_call(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+		call: <T as pallet_unique_scheduler::Config>::Call,
+	) -> Result<u128, DispatchError> {
+		let dispatch_info = call.get_dispatch_info();
+		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
+		Ok(
+			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+				&id,
+				&(sponsor.into()),
+				weight,
+			),
+		)
+	}
+
+	fn cancel_reserve(
+		id: [u8; 16],
+		sponsor: <T as frame_system::Config>::AccountId,
+	) -> Result<u128, DispatchError> {
+		Ok(
+			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+				&id,
+				&(sponsor.into()),
+				u128::MAX,
+			),
+		)
+	}
+}
 
 parameter_types! {
 	pub const NoPreimagePostponement: Option<u32> = Some(10);
@@ -1066,21 +1082,22 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 	}
 }
 
-// impl pallet_unique_scheduler::Config for Runtime {
-// 	type Event = Event;
-// 	type Origin = Origin;
-// 	type Currency = Balances;
-// 	type PalletsOrigin = OriginCaller;
-// 	type Call = Call;
-// 	type MaximumWeight = MaximumSchedulerWeight;
-// 	type ScheduleOrigin = EnsureSigned<AccountId>;
-// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-// 	type WeightInfo = ();
-// 	type CallExecutor = SchedulerPaymentExecutor;
-// 	type OriginPrivilegeCmp = OriginPrivilegeCmp;
-// 	type PreimageProvider = ();
-// 	type NoPreimagePostponement = NoPreimagePostponement;
-// }
+#[cfg(feature = "scheduler")]
+impl pallet_unique_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type Currency = Balances;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSigned<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = ();
+	type CallExecutor = SchedulerPaymentExecutor;
+	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+	type PreimageProvider = ();
+	type NoPreimagePostponement = NoPreimagePostponement;
+}
 
 type EvmSponsorshipHandler = (
 	UniqueEthSponsorshipHandler<Runtime>,
@@ -1166,7 +1183,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
+	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );

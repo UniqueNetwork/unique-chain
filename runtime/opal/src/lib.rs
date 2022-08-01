@@ -110,7 +110,7 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
@@ -966,6 +966,8 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 }
 
 pub struct SchedulerPaymentExecutor;
+
+#[cfg(feature = "scheduler")]
 impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
@@ -1066,6 +1068,7 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 	}
 }
 
+#[cfg(feature = "scheduler")]
 impl pallet_unique_scheduler::Config for Runtime {
 	type Event = Event;
 	type Origin = Origin;
