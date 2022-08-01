@@ -780,12 +780,7 @@ pub struct CreateFungibleData {
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
-	/// Immutable metadata of the token
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-
-	/// Pieces of created token.
+	/// Number of pieces the RFT is split into
 	pub pieces: u128,
 
 	/// Key-value pairs used to describe the token as metadata
@@ -832,11 +827,6 @@ pub struct CreateNftExData<CrossAccountId> {
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
 pub struct CreateRefungibleExData<CrossAccountId> {
-	/// Custom data stored in token.
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-
-	/// Users who will be assigned the specified number of token parts.
 	#[derivative(Debug(format_with = "bounded::map_debug"))]
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
@@ -874,10 +864,7 @@ pub enum CreateItemExData<CrossAccountId> {
 impl CreateItemData {
 	/// Get size of custom data.
 	pub fn data_size(&self) -> usize {
-		match self {
-			CreateItemData::ReFungible(data) => data.const_data.len(),
-			_ => 0,
-		}
+		0
 	}
 }
 

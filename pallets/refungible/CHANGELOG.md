@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.0] - 2022-08-01
+### Deprecated
+- `ItemData`
+- `TokenData`
+
 ## [v0.1.2] - 2022-07-14
 
 ### Other changes
