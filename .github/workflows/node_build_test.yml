@@ -32,7 +32,7 @@ env:
 jobs:
   pre-requisites:
     # The type of runner that the job will run on
-    runs-on: ci-01
+    runs-on: self-hosted
 
     steps:
       #runs ssh connection
