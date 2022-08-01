@@ -20,6 +20,8 @@ use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight, RefungibleExten
 
 use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
+
+#[cfg(feature = "refungible")]
 use pallet_refungible::{
 	Config as RefungibleConfig, weights::WeightInfo, common::CommonWeights as RefungibleWeights,
 };
