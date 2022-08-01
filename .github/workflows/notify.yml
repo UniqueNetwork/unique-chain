@@ -1,13 +1,17 @@
 name: telegram message
 on:
-  push:
-    branches: [ develop ]  
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - edited
 jobs:
-  build:    
-    runs-on: ubuntu-latest    
-    steps:        
+  build:
+    runs-on: self-hosted-ci
+    steps:
     - uses: avkviring/telegram-github-action@v0.0.13
       env:
-        telegram_to: ${{ secrets.TELEGRAM_TO }}  
+        telegram_to: ${{ secrets.TELEGRAM_TO }}
         telegram_token: ${{ secrets.TELEGRAM_TOKEN }}
         event: ${{ toJson(github.event) }}
