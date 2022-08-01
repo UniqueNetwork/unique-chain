@@ -9,7 +9,7 @@ on:
       - edited
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: self-hosted-ci
 
     steps:
     - uses: actions/checkout@v2
