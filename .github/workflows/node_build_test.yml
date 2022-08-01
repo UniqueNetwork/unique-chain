@@ -24,7 +24,6 @@ env:
   opal_chain_workdir: ./src_opal_chain
   quartz_chain_workdir: ./src_quartz_chain
   unique_chain_workdir: ./src_unique_chain
-  src_repo_url: https://github.com/lzadjsf/unique-chain.git
   RUST_TOOLCHAIN: nightly-2022-05-11
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
