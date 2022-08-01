@@ -23,3 +23,4 @@ pub mod runtime_apis;
 pub mod sponsoring;
 pub mod types;
 pub mod weights;
+pub mod construct_runtime;

@@ -54,7 +54,7 @@ pub use pallet_evm::{
 	OnMethodCall, Account as EVMAccount, FeeCalculator, GasWeightMapping,
 };
 pub use frame_support::{
-	construct_runtime, match_types,
+	match_types,
 	dispatch::DispatchResult,
 	PalletId, parameter_types, StorageValue, ConsensusEngineId,
 	traits::{
@@ -128,6 +128,7 @@ use xcm::latest::{
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 
 use unique_runtime_common::{
+	construct_runtime,
 	impl_common_runtime_apis,
 	types::*,
 	constants::*,
@@ -909,15 +910,17 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-// impl pallet_proxy_rmrk_core::Config for Runtime {
-// 	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
-// 	type Event = Event;
-// }
+#[cfg(feature = "rmrk")]
+impl pallet_proxy_rmrk_core::Config for Runtime {
+	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
+	type Event = Event;
+}
 
-// impl pallet_proxy_rmrk_equip::Config for Runtime {
-// 	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
-// 	type Event = Event;
-// }
+#[cfg(feature = "rmrk")]
+impl pallet_proxy_rmrk_equip::Config for Runtime {
+	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
+	type Event = Event;
+}
 
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
@@ -1118,60 +1121,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
 
-construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = opaque::Block,
-		UncheckedExtrinsic = UncheckedExtrinsic
-	{
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
-
-		Aura: pallet_aura::{Pallet, Config<T>} = 22,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 23,
-
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 32,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 33,
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 36,
-		Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
-		// Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
-		// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
-
-		// Unique Pallets
-		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		// Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
-		// free = 63
-		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
-		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
-		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
-		Fungible: pallet_fungible::{Pallet, Storage} = 67,
-		// Refungible: pallet_refungible::{Pallet, Storage} = 68,
-		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
-		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		// RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-		// RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
-
-		// Frontier
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin} = 101,
-
-		EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
-		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
-		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
-		EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
-	}
-);
+construct_runtime!();
 
 pub struct TransactionConverter;
 
@@ -1309,128 +1259,7 @@ macro_rules! dispatch_unique_runtime {
 	}};
 }
 
-impl_common_runtime_apis! {
-	#![custom_apis]
-
-	impl rmrk_rpc::RmrkApi<
-		Block,
-		AccountId,
-		RmrkCollectionInfo<AccountId>,
-		RmrkInstanceInfo<AccountId>,
-		RmrkResourceInfo,
-		RmrkPropertyInfo,
-		RmrkBaseInfo<AccountId>,
-		RmrkPartType,
-		RmrkTheme
-	> for Runtime {
-		
-		// fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::last_collection_idx::<Runtime>()
-		// }
-
-		// fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::collection_by_id::<Runtime>(collection_id)
-		// }
-
-		// fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::nft_by_id::<Runtime>(collection_id, nft_by_id)
-		// }
-
-		// fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::account_tokens::<Runtime>(account_id, collection_id)
-		// }
-
-		// fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::nft_children::<Runtime>(collection_id, nft_id)
-		// }
-
-		// fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::collection_properties::<Runtime>(collection_id, filter_keys)
-		// }
-
-		// fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::nft_properties::<Runtime>(collection_id, nft_id, filter_keys)
-		// }
-
-		// fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::nft_resources::<Runtime>(collection_id, nft_id)
-		// }
-
-		// fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
-		// 	pallet_proxy_rmrk_core::rpc::nft_resource_priority::<Runtime>(collection_id, nft_id, resource_id)
-		// }
-
-		// fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
-		// 	pallet_proxy_rmrk_equip::rpc::base::<Runtime>(base_id)
-		// }
-
-		// fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
-		// 	pallet_proxy_rmrk_equip::rpc::base_parts::<Runtime>(base_id)
-		// }
-
-		// fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
-		// 	pallet_proxy_rmrk_equip::rpc::theme_names::<Runtime>(base_id)
-		// }
-
-		// fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
-		// 	pallet_proxy_rmrk_equip::rpc::theme::<Runtime>(base_id, theme_name, filter_keys)
-		// }
-		
-		fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn collection_by_id(_collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn nft_by_id(_collection_id: RmrkCollectionId, _nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn account_tokens(_account_id: AccountId, _collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn nft_children(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn collection_properties(_collection_id: RmrkCollectionId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn nft_properties(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn nft_resources(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn nft_resource_priority(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn base(_base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn base_parts(_base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn theme_names(_base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
-			Ok(Default::default())
-		}
-
-		fn theme(_base_id: RmrkBaseId, _theme_name: RmrkThemeName, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
-			Ok(Default::default())
-		}
-		
-		
-	}
-}
+impl_common_runtime_apis!();
 
 struct CheckInherents;
 

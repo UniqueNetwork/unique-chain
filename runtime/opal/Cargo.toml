@@ -16,7 +16,7 @@ version = '0.9.24'
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
-default = ['std', 'new-functionality']
+default = ['std', 'opal-runtime']
 runtime-benchmarks = [
     'hex-literal',
     'frame-benchmarking',
@@ -119,9 +119,9 @@ std = [
     "orml-vesting/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-new-functionality = [
-    'unique-runtime-common/refungible',
-]
+opal-runtime = ['rmrk']
+
+rmrk = []
 
 ################################################################################
 # Substrate Dependencies
@@ -399,7 +399,7 @@ default-features = false
 
 [dependencies]
 log = { version = "0.4.16", default-features = false }
-unique-runtime-common = { path = "../common", default-features = false }
+unique-runtime-common = { path = "../common", default-features = false, features = ['refungible'] }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
