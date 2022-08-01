@@ -901,9 +901,11 @@ impl pallet_structure::Config for Runtime {
 impl pallet_fungible::Config for Runtime {
 	type WeightInfo = pallet_fungible::weights::SubstrateWeight<Self>;
 }
+
 impl pallet_refungible::Config for Runtime {
 	type WeightInfo = pallet_refungible::weights::SubstrateWeight<Self>;
 }
+
 impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
@@ -950,92 +952,92 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 	)
 }
 
-pub struct SchedulerPaymentExecutor;
-impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
-	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
-where
-	<T as frame_system::Config>::Call: Member
-		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
-		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
-		+ GetDispatchInfo
-		+ From<frame_system::Call<Runtime>>,
-	SelfContainedSignedInfo: Send + Sync + 'static,
-	Call: From<<T as frame_system::Config>::Call>
-		+ From<<T as pallet_unique_scheduler::Config>::Call>
-		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
-	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
-{
-	fn dispatch_call(
-		signer: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
-	) -> Result<
-		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
-		TransactionValidityError,
-	> {
-		let dispatch_info = call.get_dispatch_info();
-		let extrinsic = fp_self_contained::CheckedExtrinsic::<
-			AccountId,
-			Call,
-			SignedExtraScheduler,
-			SelfContainedSignedInfo,
-		> {
-			signed:
-				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
-					signer.clone().into(),
-					get_signed_extras(signer.into()),
-				),
-			function: call.into(),
-		};
+// pub struct SchedulerPaymentExecutor;
+// impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
+// 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
+// where
+// 	<T as frame_system::Config>::Call: Member
+// 		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+// 		+ GetDispatchInfo
+// 		+ From<frame_system::Call<Runtime>>,
+// 	SelfContainedSignedInfo: Send + Sync + 'static,
+// 	Call: From<<T as frame_system::Config>::Call>
+// 		+ From<<T as pallet_unique_scheduler::Config>::Call>
+// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+// 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+// {
+// 	fn dispatch_call(
+// 		signer: <T as frame_system::Config>::AccountId,
+// 		call: <T as pallet_unique_scheduler::Config>::Call,
+// 	) -> Result<
+// 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+// 		TransactionValidityError,
+// 	> {
+// 		let dispatch_info = call.get_dispatch_info();
+// 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
+// 			AccountId,
+// 			Call,
+// 			SignedExtraScheduler,
+// 			SelfContainedSignedInfo,
+// 		> {
+// 			signed:
+// 				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
+// 					signer.clone().into(),
+// 					get_signed_extras(signer.into()),
+// 				),
+// 			function: call.into(),
+// 		};
 
-		extrinsic.apply::<Runtime>(&dispatch_info, 0)
-	}
+// 		extrinsic.apply::<Runtime>(&dispatch_info, 0)
+// 	}
 
-	fn reserve_balance(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
-		count: u32,
-	) -> Result<(), DispatchError> {
-		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
-			.saturating_mul(count.into());
+// 	fn reserve_balance(
+// 		id: [u8; 16],
+// 		sponsor: <T as frame_system::Config>::AccountId,
+// 		call: <T as pallet_unique_scheduler::Config>::Call,
+// 		count: u32,
+// 	) -> Result<(), DispatchError> {
+// 		let dispatch_info = call.get_dispatch_info();
+// 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
+// 			.saturating_mul(count.into());
 
-		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
-			&id,
-			&(sponsor.into()),
-			weight,
-		)
-	}
+// 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
+// 			&id,
+// 			&(sponsor.into()),
+// 			weight,
+// 		)
+// 	}
 
-	fn pay_for_call(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
-	) -> Result<u128, DispatchError> {
-		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
-		Ok(
-			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-				&id,
-				&(sponsor.into()),
-				weight,
-			),
-		)
-	}
+// 	fn pay_for_call(
+// 		id: [u8; 16],
+// 		sponsor: <T as frame_system::Config>::AccountId,
+// 		call: <T as pallet_unique_scheduler::Config>::Call,
+// 	) -> Result<u128, DispatchError> {
+// 		let dispatch_info = call.get_dispatch_info();
+// 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
+// 		Ok(
+// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+// 				&id,
+// 				&(sponsor.into()),
+// 				weight,
+// 			),
+// 		)
+// 	}
 
-	fn cancel_reserve(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-	) -> Result<u128, DispatchError> {
-		Ok(
-			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-				&id,
-				&(sponsor.into()),
-				u128::MAX,
-			),
-		)
-	}
-}
+// 	fn cancel_reserve(
+// 		id: [u8; 16],
+// 		sponsor: <T as frame_system::Config>::AccountId,
+// 	) -> Result<u128, DispatchError> {
+// 		Ok(
+// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+// 				&id,
+// 				&(sponsor.into()),
+// 				u128::MAX,
+// 			),
+// 		)
+// 	}
+// }
 
 parameter_types! {
 	pub const NoPreimagePostponement: Option<u32> = Some(10);
@@ -1051,21 +1053,21 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 	}
 }
 
-impl pallet_unique_scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Currency = Balances;
-	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureSigned<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = ();
-	type CallExecutor = SchedulerPaymentExecutor;
-	type OriginPrivilegeCmp = OriginPrivilegeCmp;
-	type PreimageProvider = ();
-	type NoPreimagePostponement = NoPreimagePostponement;
-}
+// impl pallet_unique_scheduler::Config for Runtime {
+// 	type Event = Event;
+// 	type Origin = Origin;
+// 	type Currency = Balances;
+// 	type PalletsOrigin = OriginCaller;
+// 	type Call = Call;
+// 	type MaximumWeight = MaximumSchedulerWeight;
+// 	type ScheduleOrigin = EnsureSigned<AccountId>;
+// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+// 	type WeightInfo = ();
+// 	type CallExecutor = SchedulerPaymentExecutor;
+// 	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+// 	type PreimageProvider = ();
+// 	type NoPreimagePostponement = NoPreimagePostponement;
+// }
 
 type EvmSponsorshipHandler = (
 	UniqueEthSponsorshipHandler<Runtime>,
@@ -1139,13 +1141,13 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		// Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
-		Refungible: pallet_refungible::{Pallet, Storage} = 68,
+		// Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 

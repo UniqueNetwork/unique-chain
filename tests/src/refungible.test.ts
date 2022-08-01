@@ -36,6 +36,8 @@ import {
   CrossAccountId,
   getCreateItemsResult,
   getDestroyItemsResult,
+  getModuleNames,
+  Pallets,
 } from './util/helpers';
 
 import chai from 'chai';
@@ -46,14 +48,18 @@ const expect = chai.expect;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
-describe('integration test: Refungible functionality:', () => {
-  before(async () => {
+
+
+describe('integration test: Refungible functionality:', async () => {
+  before(async function() {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
+      if (!getModuleNames(api).includes(Pallets.ReFungible)) this.skip();
     });
+    
   });
-
+  
   it('Create refungible collection and token', async () => {
     await usingApi(async api => {
       const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
@@ -268,15 +274,6 @@ describe('integration test: Refungible functionality:', () => {
       ]);
     });
   });
-});
-
-describe('Test Refungible properties:', () => {
-  before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-    });
-  });
   
   it('Сreate new collection with properties', async () => {
     await usingApi(async api => {
@@ -292,3 +289,4 @@ describe('Test Refungible properties:', () => {
     });
   });
 });
+

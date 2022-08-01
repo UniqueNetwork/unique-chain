@@ -8,10 +8,16 @@ import {
 } from './util/tx';
 import {getChildren, NftIdTuple} from './util/fetch';
 import {isNftChildOfAnother, expectTxFailure} from './util/helpers';
+import { getModuleNames, Pallets } from '../util/helpers';
 
 describe('integration test: reject NFT', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  before(async function () {
+    api = await getApiConnection();
+    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+  });
+
+
 
   const alice = '//Alice';
   const bob = '//Bob';

@@ -1,6 +1,7 @@
 import {ApiPromise} from '@polkadot/api';
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
+import {getModuleNames, Pallets} from '../util/helpers';
 import {getNft, getParts, NftIdTuple} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {
@@ -122,8 +123,10 @@ async function checkEquipStatus(
 describe.skip('integration test: Equip NFT', () => {
 
   let api: any;
-  before(async () => {
+  
+  before(async function () {
     api = await getApiConnection();
+    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
   });
 
   it('equip nft', async () => {

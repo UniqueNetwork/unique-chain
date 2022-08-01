@@ -1,10 +1,14 @@
 import {getApiConnection} from '../substrate/substrate-api';
+import { getModuleNames, Pallets } from '../util/helpers';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, createBase, setEquippableList} from './util/tx';
 
 describe("integration test: set slot's Equippable List", () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  before(async function () {
+    api = await getApiConnection();
+    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+  });
 
   const alice = '//Alice';
   const bob = '//Bob';

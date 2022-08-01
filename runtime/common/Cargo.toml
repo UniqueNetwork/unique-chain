@@ -32,6 +32,8 @@ runtime-benchmarks = [
     'frame-support/runtime-benchmarks',
     'frame-system/runtime-benchmarks',
 ]
+unique-runtime = ['std']
+quartz-runtime = ['std']
 
 [dependencies.sp-core]
 default-features = false

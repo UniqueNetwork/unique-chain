@@ -64,7 +64,12 @@ where
 				);
 				<PalletFungible<T>>::init_collection(sender, data)?
 			}
+			#[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, data)?,
+
+			CollectionMode::ReFungible => {
+				return Err(DispatchError::Other("Refunginle pallet is not supported"))
+			}
 		};
 		Ok(id)
 	}

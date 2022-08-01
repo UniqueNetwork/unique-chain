@@ -909,15 +909,15 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 
-impl pallet_proxy_rmrk_core::Config for Runtime {
-	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
-	type Event = Event;
-}
+// impl pallet_proxy_rmrk_core::Config for Runtime {
+// 	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
+// 	type Event = Event;
+// }
 
-impl pallet_proxy_rmrk_equip::Config for Runtime {
-	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
-	type Event = Event;
-}
+// impl pallet_proxy_rmrk_equip::Config for Runtime {
+// 	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
+// 	type Event = Event;
+// }
 
 impl pallet_unique::Config for Runtime {
 	type Event = Event;
@@ -961,92 +961,92 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 	)
 }
 
-pub struct SchedulerPaymentExecutor;
-impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
-	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
-where
-	<T as frame_system::Config>::Call: Member
-		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
-		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
-		+ GetDispatchInfo
-		+ From<frame_system::Call<Runtime>>,
-	SelfContainedSignedInfo: Send + Sync + 'static,
-	Call: From<<T as frame_system::Config>::Call>
-		+ From<<T as pallet_unique_scheduler::Config>::Call>
-		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
-	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
-{
-	fn dispatch_call(
-		signer: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
-	) -> Result<
-		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
-		TransactionValidityError,
-	> {
-		let dispatch_info = call.get_dispatch_info();
-		let extrinsic = fp_self_contained::CheckedExtrinsic::<
-			AccountId,
-			Call,
-			SignedExtraScheduler,
-			SelfContainedSignedInfo,
-		> {
-			signed:
-				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
-					signer.clone().into(),
-					get_signed_extras(signer.into()),
-				),
-			function: call.into(),
-		};
+// pub struct SchedulerPaymentExecutor;
+// impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
+// 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
+// where
+// 	<T as frame_system::Config>::Call: Member
+// 		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
+// 		+ GetDispatchInfo
+// 		+ From<frame_system::Call<Runtime>>,
+// 	SelfContainedSignedInfo: Send + Sync + 'static,
+// 	Call: From<<T as frame_system::Config>::Call>
+// 		+ From<<T as pallet_unique_scheduler::Config>::Call>
+// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
+// 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
+// {
+// 	fn dispatch_call(
+// 		signer: <T as frame_system::Config>::AccountId,
+// 		call: <T as pallet_unique_scheduler::Config>::Call,
+// 	) -> Result<
+// 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+// 		TransactionValidityError,
+// 	> {
+// 		let dispatch_info = call.get_dispatch_info();
+// 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
+// 			AccountId,
+// 			Call,
+// 			SignedExtraScheduler,
+// 			SelfContainedSignedInfo,
+// 		> {
+// 			signed:
+// 				CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
+// 					signer.clone().into(),
+// 					get_signed_extras(signer.into()),
+// 				),
+// 			function: call.into(),
+// 		};
 
-		extrinsic.apply::<Runtime>(&dispatch_info, 0)
-	}
+// 		extrinsic.apply::<Runtime>(&dispatch_info, 0)
+// 	}
 
-	fn reserve_balance(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
-		count: u32,
-	) -> Result<(), DispatchError> {
-		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
-			.saturating_mul(count.into());
+// 	fn reserve_balance(
+// 		id: [u8; 16],
+// 		sponsor: <T as frame_system::Config>::AccountId,
+// 		call: <T as pallet_unique_scheduler::Config>::Call,
+// 		count: u32,
+// 	) -> Result<(), DispatchError> {
+// 		let dispatch_info = call.get_dispatch_info();
+// 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
+// 			.saturating_mul(count.into());
 
-		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
-			&id,
-			&(sponsor.into()),
-			weight.into(),
-		)
-	}
+// 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
+// 			&id,
+// 			&(sponsor.into()),
+// 			weight.into(),
+// 		)
+// 	}
 
-	fn pay_for_call(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
-	) -> Result<u128, DispatchError> {
-		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
-		Ok(
-			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-				&id,
-				&(sponsor.into()),
-				weight.into(),
-			),
-		)
-	}
+// 	fn pay_for_call(
+// 		id: [u8; 16],
+// 		sponsor: <T as frame_system::Config>::AccountId,
+// 		call: <T as pallet_unique_scheduler::Config>::Call,
+// 	) -> Result<u128, DispatchError> {
+// 		let dispatch_info = call.get_dispatch_info();
+// 		let weight: Balance = ChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
+// 		Ok(
+// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+// 				&id,
+// 				&(sponsor.into()),
+// 				weight.into(),
+// 			),
+// 		)
+// 	}
 
-	fn cancel_reserve(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-	) -> Result<u128, DispatchError> {
-		Ok(
-			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-				&id,
-				&(sponsor.into()),
-				u128::MAX,
-			),
-		)
-	}
-}
+// 	fn cancel_reserve(
+// 		id: [u8; 16],
+// 		sponsor: <T as frame_system::Config>::AccountId,
+// 	) -> Result<u128, DispatchError> {
+// 		Ok(
+// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
+// 				&id,
+// 				&(sponsor.into()),
+// 				u128::MAX,
+// 			),
+// 		)
+// 	}
+// }
 
 parameter_types! {
 	pub const NoPreimagePostponement: Option<u32> = Some(10);
@@ -1062,21 +1062,21 @@ impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
 	}
 }
 
-impl pallet_unique_scheduler::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Currency = Balances;
-	type PalletsOrigin = OriginCaller;
-	type Call = Call;
-	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureSigned<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = ();
-	type CallExecutor = SchedulerPaymentExecutor;
-	type OriginPrivilegeCmp = OriginPrivilegeCmp;
-	type PreimageProvider = ();
-	type NoPreimagePostponement = NoPreimagePostponement;
-}
+// impl pallet_unique_scheduler::Config for Runtime {
+// 	type Event = Event;
+// 	type Origin = Origin;
+// 	type Currency = Balances;
+// 	type PalletsOrigin = OriginCaller;
+// 	type Call = Call;
+// 	type MaximumWeight = MaximumSchedulerWeight;
+// 	type ScheduleOrigin = EnsureSigned<AccountId>;
+// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+// 	type WeightInfo = ();
+// 	type CallExecutor = SchedulerPaymentExecutor;
+// 	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+// 	type PreimageProvider = ();
+// 	type NoPreimagePostponement = NoPreimagePostponement;
+// }
 
 type EvmSponsorshipHandler = (
 	UniqueEthSponsorshipHandler<Runtime>,
@@ -1150,17 +1150,17 @@ construct_runtime!(
 		// Unique Pallets
 		Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
 		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
-		Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+		// Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 		// free = 63
 		Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
 		// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 		Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
 		Fungible: pallet_fungible::{Pallet, Storage} = 67,
-		Refungible: pallet_refungible::{Pallet, Storage} = 68,
+		// Refungible: pallet_refungible::{Pallet, Storage} = 68,
 		Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
 		Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
-		RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-		RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
+		// RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
+		// RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
 		// Frontier
 		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
@@ -1323,57 +1323,112 @@ impl_common_runtime_apis! {
 		RmrkPartType,
 		RmrkTheme
 	> for Runtime {
+		
+		// fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::last_collection_idx::<Runtime>()
+		// }
+
+		// fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::collection_by_id::<Runtime>(collection_id)
+		// }
+
+		// fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::nft_by_id::<Runtime>(collection_id, nft_by_id)
+		// }
+
+		// fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::account_tokens::<Runtime>(account_id, collection_id)
+		// }
+
+		// fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::nft_children::<Runtime>(collection_id, nft_id)
+		// }
+
+		// fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::collection_properties::<Runtime>(collection_id, filter_keys)
+		// }
+
+		// fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::nft_properties::<Runtime>(collection_id, nft_id, filter_keys)
+		// }
+
+		// fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::nft_resources::<Runtime>(collection_id, nft_id)
+		// }
+
+		// fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+		// 	pallet_proxy_rmrk_core::rpc::nft_resource_priority::<Runtime>(collection_id, nft_id, resource_id)
+		// }
+
+		// fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+		// 	pallet_proxy_rmrk_equip::rpc::base::<Runtime>(base_id)
+		// }
+
+		// fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+		// 	pallet_proxy_rmrk_equip::rpc::base_parts::<Runtime>(base_id)
+		// }
+
+		// fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+		// 	pallet_proxy_rmrk_equip::rpc::theme_names::<Runtime>(base_id)
+		// }
+
+		// fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+		// 	pallet_proxy_rmrk_equip::rpc::theme::<Runtime>(base_id, theme_name, filter_keys)
+		// }
+		
 		fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::last_collection_idx::<Runtime>()
+			Ok(Default::default())
 		}
 
-		fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::collection_by_id::<Runtime>(collection_id)
+		fn collection_by_id(_collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::nft_by_id::<Runtime>(collection_id, nft_by_id)
+		fn nft_by_id(_collection_id: RmrkCollectionId, _nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::account_tokens::<Runtime>(account_id, collection_id)
+		fn account_tokens(_account_id: AccountId, _collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::nft_children::<Runtime>(collection_id, nft_id)
+		fn nft_children(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn collection_properties(collection_id: RmrkCollectionId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::collection_properties::<Runtime>(collection_id, filter_keys)
+		fn collection_properties(_collection_id: RmrkCollectionId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn nft_properties(collection_id: RmrkCollectionId, nft_id: RmrkNftId, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::nft_properties::<Runtime>(collection_id, nft_id, filter_keys)
+		fn nft_properties(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::nft_resources::<Runtime>(collection_id, nft_id)
+		fn nft_resources(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
-			pallet_proxy_rmrk_core::rpc::nft_resource_priority::<Runtime>(collection_id, nft_id, resource_id)
+		fn nft_resource_priority(_collection_id: RmrkCollectionId, _nft_id: RmrkNftId, _resource_id: RmrkResourceId) -> Result<Option<u32>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
-			pallet_proxy_rmrk_equip::rpc::base::<Runtime>(base_id)
+		fn base(_base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
-			pallet_proxy_rmrk_equip::rpc::base_parts::<Runtime>(base_id)
+		fn base_parts(_base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
-			pallet_proxy_rmrk_equip::rpc::theme_names::<Runtime>(base_id)
+		fn theme_names(_base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
+			Ok(Default::default())
 		}
 
-		fn theme(base_id: RmrkBaseId, theme_name: RmrkThemeName, filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
-			pallet_proxy_rmrk_equip::rpc::theme::<Runtime>(base_id, theme_name, filter_keys)
+		fn theme(_base_id: RmrkBaseId, _theme_name: RmrkThemeName, _filter_keys: Option<Vec<RmrkPropertyKey>>) -> Result<Option<RmrkTheme>, DispatchError> {
+			Ok(Default::default())
 		}
+		
+		
 	}
 }
 

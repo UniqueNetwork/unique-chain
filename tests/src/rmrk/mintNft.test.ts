@@ -1,12 +1,18 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
+import { getModuleNames, Pallets } from '../util/helpers';
 import {getNft} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, mintNft} from './util/tx';
 
 describe('integration test: mint new NFT', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+ 
+  before(async function () {
+    api = await getApiConnection();
+    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+  });
+
 
   const alice = '//Alice';
   const bob = '//Bob';

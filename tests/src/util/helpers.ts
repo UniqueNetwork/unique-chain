@@ -38,6 +38,38 @@ export type CrossAccountId = {
   Ethereum: string,
 };
 
+
+export enum Pallets {
+  Inflation = 'inflation',
+  RmrkCore = 'rmrkcore',
+  ReFungible = 'refungible',
+  Fungible = 'fungible',
+  NFT = 'nonfungible',
+}
+
+export async function isUnique(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+
+    return chain.eq('UNIQUE');
+  });
+}
+
+export async function isQuartz(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+    
+    return chain.eq('QUARTZ');
+  });
+}
+
+let modulesNames: any;
+export function getModuleNames(api: ApiPromise): string[] {
+  if (typeof modulesNames === 'undefined') 
+    modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+  return modulesNames;
+}
+
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
     if (input.length >= 47) {

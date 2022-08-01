@@ -1,4 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
+import { getModuleNames, Pallets } from '../util/helpers';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, lockCollection, mintNft} from './util/tx';
 
@@ -8,8 +9,9 @@ describe('integration test: lock collection', () => {
   const Max = 5;
 
   let api: any;
-  before(async () => {
+  before(async function () {
     api = await getApiConnection();
+    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
   });
 
   it('lock collection', async () => {
