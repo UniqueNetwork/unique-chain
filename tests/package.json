@@ -76,6 +76,7 @@
     "testXcmTransferAcala": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferAcala.test.ts",
     "testXcmTransferKarura": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferKarura.test.ts",
     "testXcmTransferStatemine": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferStatemine.test.ts",
+    "testXcmTransferMoonriver": "mocha --timeout 9999999 -r ts-node/register ./**/xcmTransferMoonriver.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
