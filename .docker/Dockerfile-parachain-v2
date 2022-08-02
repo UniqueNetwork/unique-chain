@@ -34,10 +34,12 @@ FROM rust-builder as builder-unique
 RUN mkdir unique_parachain
 WORKDIR /unique_parachain
 
-ARG PROFILE='features=quartz-runtime --release'
+ARG PROFILE='features=quartz-runtime'
+
+ENV PROFILE $PROFILE
 
 COPY . .
-RUN cargo build --features=quartz-runtime --release
+RUN cargo build --$PROFILE
    # && \
    # cargo test
 
@@ -56,7 +58,6 @@ RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot
 
 FROM phusion/baseimage:focal-1.1.0
 
-#ARG PROFILE='--features=quartz-runtime --release'
 
 RUN apt-get -y update && \
       apt-get -y upgrade && \
