@@ -72,13 +72,22 @@ pub mod pallet {
 	pub(super) type SelfSponsoring<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
+	/// Store for sponsoring mode.
+	/// 
+	/// ### Usage
+	/// Prefer to delete collection from storage if mode chaged to [`Disabled`](SponsoringModeT::Disabled).
+	/// 
+	/// * **Key** - contract address.
+	/// * **Value** - [`sponsoring mode`](SponsoringModeT).
 	#[pallet::storage]
-	#[deprecated]
 	pub(super) type SponsoringMode<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = SponsoringModeT, QueryKind = OptionQuery>;
 
+	/// Storage for sponsoring rate limit in blocks.
+	/// 
+	/// * **Key** - contract address.
+	/// * **Value** - amount of sponsored blocks.
 	#[pallet::storage]
-	#[deprecated]
 	pub(super) type SponsoringRateLimit<T: Config> = StorageMap<
 		Hasher = Twox128,
 		Key = H160,
@@ -98,8 +107,14 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Storege for contracts with [`Allowlisted`](SponsoringModeT::Allowlisted) sponsoring mode.
+	/// 
+	/// ### Usage
+	/// Prefer to delete collection from storage if mode chaged to non `Allowlisted`, than set **Value** to **false**.
+	/// 
+	/// * **Key** - contract address.
+	/// * **Value** - is contract in [`Allowlisted`](SponsoringModeT::Allowlisted) mode.
 	#[pallet::storage]
-	#[deprecated]
 	pub(super) type AllowlistEnabled<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
