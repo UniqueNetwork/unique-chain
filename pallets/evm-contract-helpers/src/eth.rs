@@ -15,8 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use evm_coder::{
+	abi::AbiWriter,
+	execution::{Result, Error},
+	generate_stubgen, solidity_interface,
+	types::*,
+};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
@@ -43,7 +48,10 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 #[solidity_interface(name = "ContractHelpers")]
 impl<T: Config> ContractHelpers<T> {
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
-		Ok(<Owner<T>>::get(contract_address))
+		Ok(<Pallet<T>>::contract_owner(contract_address)
+			.map_err(dispatch_to_evm::<T>)?
+			.as_eth()
+			.clone())
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
@@ -97,7 +105,7 @@ impl<T: Config> ContractHelpers<T> {
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract_address, user))
+		Ok(<Pallet<T>>::allowed(contract_address, T::CrossAccountId::from_eth(user)))
 	}
 
 	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
@@ -141,7 +149,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		// TODO: Extract to another OnMethodCall handler
 		if <AllowlistEnabled<T>>::get(handle.code_address())
-			&& !<Pallet<T>>::allowed(handle.code_address(), handle.context().caller)
+			&& !<Pallet<T>>::allowed(handle.code_address(), T::CrossAccountId::from_eth(handle.context().caller))
 		{
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
@@ -170,7 +178,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 pub struct HelpersOnCreate<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 	fn on_create(owner: H160, contract: H160) {
-		<Owner<T>>::insert(contract, owner);
+		<Owner<T>>::insert(contract, T::CrossAccountId::from_eth(owner));
 	}
 }
 
@@ -184,7 +192,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			return None;
 		}
 
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who.as_eth()) {
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, who.clone()) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(is_some_with)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
@@ -25,9 +26,10 @@ pub mod eth;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use super::*;
-	use evm_coder::execution::Result;
 	use frame_support::pallet_prelude::*;
 	use sp_core::H160;
+	use pallet_evm::account::CrossAccountId;
+	use frame_system::pallet_prelude::BlockNumberFor;
 
 	#[pallet::config]
 	pub trait Config:
@@ -39,17 +41,31 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// This method is only executable by owner
+		/// This method is only executable by owner.
 		NoPermission,
+
+		/// Contract has no owner.
+		NoContractOwner,
 	}
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Store owner for contract.
+	///
+	/// * **Key** - contract address.
+	/// * **Value** - owner for contract.
 	#[pallet::storage]
-	pub(super) type Owner<T: Config> =
-		StorageMap<Hasher = Twox128, Key = H160, Value = H160, QueryKind = ValueQuery>;
+	pub(super) type Owner<T: Config> = StorageMap<
+		Hasher = Twox128,
+		Key = H160,
+		Value = T::CrossAccountId,
+		QueryKind = OptionQuery,
+	>;
 
 	#[pallet::storage]
 	#[deprecated]
@@ -57,10 +73,12 @@ pub mod pallet {
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
+	#[deprecated]
 	pub(super) type SponsoringMode<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = SponsoringModeT, QueryKind = OptionQuery>;
 
 	#[pallet::storage]
+	#[deprecated]
 	pub(super) type SponsoringRateLimit<T: Config> = StorageMap<
 		Hasher = Twox128,
 		Key = H160,
@@ -70,6 +88,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[deprecated]
 	pub(super) type SponsorBasket<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
 		Key1 = H160,
@@ -80,10 +99,12 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[deprecated]
 	pub(super) type AllowlistEnabled<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
+	#[deprecated]
 	pub(super) type Allowlist<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
 		Key1 = H160,
@@ -92,6 +113,18 @@ pub mod pallet {
 		Value = bool,
 		QueryKind = ValueQuery,
 	>;
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			let storage_version = StorageVersion::get::<Pallet<T>>();
+			if storage_version < StorageVersion::new(1) {
+				<Owner<T>>::translate_values::<H160, _>(|address| Some(T::CrossAccountId::from_eth(address)));
+			}
+
+			0
+		}
+	}
 
 	impl<T: Config> Pallet<T> {
 		pub fn sponsoring_mode(contract: H160) -> SponsoringModeT {
@@ -125,8 +158,9 @@ pub mod pallet {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
 		}
 
-		pub fn allowed(contract: H160, user: H160) -> bool {
-			<Allowlist<T>>::get(&contract, &user) || <Owner<T>>::get(&contract) == user
+		pub fn allowed(contract: H160, user: T::CrossAccountId) -> bool {
+			<Allowlist<T>>::get(&contract, user.as_eth())
+				|| Pallet::<T>::contract_owner(contract).is_ok_and(|owner| *owner == user)
 		}
 
 		pub fn toggle_allowlist(contract: H160, enabled: bool) {
@@ -137,9 +171,15 @@ pub mod pallet {
 			<Allowlist<T>>::insert(contract, user, allowed);
 		}
 
-		pub fn ensure_owner(contract: H160, user: H160) -> Result<()> {
-			ensure!(<Owner<T>>::get(&contract) == user, "no permission");
+		pub fn ensure_owner(contract: H160, user: H160) -> evm_coder::execution::Result<()> {
+			ensure!(Pallet::<T>::contract_owner(contract).is_ok_and(|owner| *owner.as_eth() == user), "no permission");
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn contract_owner(contract: H160) -> Result<T::CrossAccountId, DispatchError> {
+			Ok(<Owner<T>>::get(contract).ok_or::<Error<T>>(Error::NoContractOwner)?)
 		}
 	}
 }
