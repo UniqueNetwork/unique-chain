@@ -28,13 +28,21 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
+#[cfg(feature = "scheduler")]
 use fp_self_contained::*;
+
+#[cfg(feature = "scheduler")]
+use sp_runtime::{
+       traits::{Applyable, Member},
+       generic::Era,
+       DispatchErrorWithPostInfo
+};
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, RuntimeAppPublic,
 };
@@ -69,7 +77,10 @@ pub use frame_support::{
 		WeightToFee,
 	},
 };
+
+#[cfg(feature = "scheduler")]
 use pallet_unique_scheduler::DispatchCall;
+
 use up_data_structs::{
 	CollectionId, TokenId, TokenData, Property, PropertyKeyPermission, CollectionLimits,
 	CollectionStats, RpcCollection,
@@ -89,17 +100,14 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use smallvec::smallvec;
-// use scale_info::TypeInfo;
 use codec::{Encode, Decode};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{
-		Applyable, BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
+		BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
 		Saturating, CheckedConversion,
 	},
-	generic::Era,
-	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, SaturatedConversion,
+	transaction_validity::TransactionValidityError, SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -127,7 +135,6 @@ use xcm::latest::{
 	Error as XcmError,
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
-//use xcm_executor::traits::MatchesFungible;
 
 use unique_runtime_common::{
 	construct_runtime,
@@ -949,8 +956,11 @@ parameter_types! {
 }
 
 type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
+
+#[cfg(feature = "scheduler")]
 use frame_support::traits::NamedReservableCurrency;
 
+#[cfg(feature = "scheduler")]
 fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
 	(
 		frame_system::CheckSpecVersion::<Runtime>::new(),
@@ -965,6 +975,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 	)
 }
 
+#[cfg(feature = "scheduler")]
 pub struct SchedulerPaymentExecutor;
 
 #[cfg(feature = "scheduler")]
@@ -1089,7 +1100,6 @@ type EvmSponsorshipHandler = (
 	UniqueEthSponsorshipHandler<Runtime>,
 	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
 );
-
 type SponsorshipHandler = (
 	UniqueSponsorshipHandler<Runtime>,
 	//pallet_contract_helpers::ContractSponsorshipHandler<Runtime>,
