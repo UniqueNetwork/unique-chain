@@ -116,26 +116,42 @@ describe.skip('Admin adress', () => {
     // assert:  Alice calls appPromotion.setAdminAddress(Bob) throws /// Admin account can not set admin
   });
 
-  it('can be Substrate address only', async () => {
-    // assert:  Sudo calls appPromotion.setAdminAddress(0x0...) throws
+  it('can be any valid CrossAccountId', async () => {
+    /// We are not going to set an eth address as a sponsor,
+    /// but we do want to check, it doesn't break anything;
+
+    // arrange: Charlie creates Punks
+    // arrange: Sudo calls appPromotion.setAdminAddress(0x0...) success 
+    // arrange: Sudo calls appPromotion.setAdminAddress(Alice) success 
+    
+    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) success
   });
 
-  it('can be unset by sudo', async () => {
-    // TODO can he? What if admin address compromised?
+  it('can be reassigned', async () => {
+    // arrange: Charlie creates Punks
+    // arrange: Sudo calls appPromotion.setAdminAddress(Alice)
+    // act:     Sudo calls appPromotion.setAdminAddress(Bob)
+
+    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) throws /// Alice can not set collection sponsor
+    // assert:  Bob calls appPromotion.sponsorCollection(Punks.id) successful /// Bob can set collection sponsor
+
+    // act:     Sudo calls appPromotion.setAdminAddress(null) successful /// Sudo can set null as a sponsor
+    // assert:  Bob calls appPromotion.stopSponsoringCollection(Punks.id) throws /// Bob is no longer an admin  
   });
 });
 
+
 describe.skip('App-promotion collection sponsoring', () => {
   it('can not be set by non admin', async () => {
-    // arrange: Alice creates Punks
+    // arrange: Charlie creates Punks
     // arrange: Sudo calls appPromotion.setAdminAddress(Alice)
 
     // assert:  Random calls appPromotion.sponsorCollection(Punks.id) throws /// Random account can not set sponsoring
-    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) /// Admin account can set sponsoring
+    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) success /// Admin account can set sponsoring
   });
 
   it('will set pallet address as confirmed admin for collection without sponsor', async () => {
-    // arrange: Alice creates Punks
+    // arrange: Charlie creates Punks
 
     // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
 
@@ -143,8 +159,8 @@ describe.skip('App-promotion collection sponsoring', () => {
   });
 
   it('will set pallet address as confirmed admin for collection with unconfirmed sponsor', async () => {
-    // arrange: Alice creates Punks
-    // arrange: setCollectionSponsor(Punks.Id, Dave)
+    // arrange: Charlie creates Punks
+    // arrange: Charlie calls setCollectionSponsor(Punks.Id, Dave) /// Dave is unconfirmed sponsor
 
     // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
 
@@ -152,9 +168,9 @@ describe.skip('App-promotion collection sponsoring', () => {
   });
 
   it('will set pallet address as confirmed admin for collection with confirmed sponsor', async () => {
-    // arrange: Alice creates Punks
+    // arrange: Charlie creates Punks
     // arrange: setCollectionSponsor(Punks.Id, Dave)
-    // arrange: confirmSponsorship(Punks.Id, Dave)
+    // arrange: confirmSponsorship(Punks.Id, Dave) /// Dave is confirmed sponsor
 
     // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
 
@@ -162,16 +178,23 @@ describe.skip('App-promotion collection sponsoring', () => {
   });
 
   it('can be overwritten by collection owner', async () => {
-    // arrange: Alice creates Punks
-    // arrange: appPromotion.sponsorCollection(Punks.Id) 
+    // arrange: Charlie creates Punks
+    // arrange: appPromotion.sponsorCollection(Punks.Id)  /// Sponsor of Punks is pallete
 
-    // act:     Alice calls setCollectionSponsor(Alice)
+    // act:     Charlie calls unique.setCollectionLimits(limits) /// Charlie as owner can successfully change limits
+    // assert:  query collectionById(Punks.id) 1. sponsored by pallete, 2. limits has been changed
 
-    // assert:  query collectionById: Punks sponsoring is unconfirmed by Alice
+    // act:     Charlie calls setCollectionSponsor(Dave) /// Collection owner reasignes sponsoring
+    // assert:  query collectionById: Punks sponsoring is unconfirmed by Dave
   });
   
-  it('will actually sponsor collection transactions in accordance with limits set by collection owner', async () => {
-    // TODO im not sure we need this test
+  it('will keep collection limits set by the owner earlier', async () => {
+    // arrange: const limits = {...all possible collection limits}
+    // arrange: Charlie creates Punks
+    // arrange: Charlie calls unique.setCollectionLimits(limits) /// Owner sets all possible limits
+
+    // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
+    // assert:  query collectionById(Punks.id) returns limits 
   });
   
   it('will throw if collection doesn\'t exist', async () => {
@@ -179,8 +202,8 @@ describe.skip('App-promotion collection sponsoring', () => {
   });
 
   it('will throw if collection was burnt', async () => {
-    // arrange: Alice creates Punks
-    // arrange: Alice burns Punks
+    // arrange: Charlie creates Punks
+    // arrange: Charlie burns Punks
 
     // assert:  Admin calls appPromotion.sponsorCollection(Punks.id) throw 
   });
@@ -326,19 +349,19 @@ describe.skip('app-promotion rewards', () => {
 
   });
 
-  it('will charge 0.05% for staking period', async () => {
+  it('will credit 0.05% for staking period', async () => {
     // arrange: bob.stake(10000);
     // arrange: bob.stake(20000);
     // arrange: waitForRewards();
 
-    // assert:  bob.staked to equal [10005, 20010] //TODO 
+    // assert:  bob.staked to equal [10005, 20010]
   });
   
-  it('will be charged from treasury', async () => {
+  it('will be credited from treasury', async () => {
     // TODO
   });
   
-  it('will not be charged for unstaked (reserved) balance', async () => {
+  it('will not be credited for unstaked (reserved) balance', async () => {
     // arrange: bob.stake(10000);
     // arrange: bob.unstake(5000);
     // arrange: waitForRewards();
@@ -346,17 +369,16 @@ describe.skip('app-promotion rewards', () => {
     // assert:  bob.staked to equal [5002.5] 
   });
 
-  it('will not be charged for tokens reserved for non-staking reason', async() => {
+  it('will not be credited for tokens reserved for non-staking reason', async() => {
     // arrange: bob balance = 20000
-    // arrange: bob locks 10000 // TODO how?
+    // arrange: bob calls vesting.vestedTransfer(10000)
     // arrange: bob.stake(1000);
     // arrange: waitForRewards();
 
-    // assert:  bob.staked to equal [1000.5] 
+    // assert:  appPromotion.staked(bob) to equal [1000.5] 
   });
 
   it('will bring compound interest', async () => {
-    // TODO will it?
     // arrange: bob balance = 30000
     // arrange: bob.stake(10000);
     // arrange: bob.stake(10000);
