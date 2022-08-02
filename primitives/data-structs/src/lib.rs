@@ -861,13 +861,6 @@ pub enum CreateItemExData<CrossAccountId> {
 	RefungibleMultipleOwners(CreateRefungibleExData<CrossAccountId>),
 }
 
-impl CreateItemData {
-	/// Get size of custom data.
-	pub fn data_size(&self) -> usize {
-		0
-	}
-}
-
 impl From<CreateNftData> for CreateItemData {
 	fn from(item: CreateNftData) -> Self {
 		CreateItemData::NFT(item)
