@@ -124,3 +124,131 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+
+
+name: Build & test Master
+
+# Controls when the action will run.
+on:
+ # Triggers the workflow on push or pull request events but only for the master branch
+  #push:
+  #  branches: [ develop ]
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - edited
+      - reopened
+  # pull_request:
+ #   branches: [ develop ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+#Define Workflow variables
+env:
+  ubuntu_version: focal
+  chains_release_dir: /opt/runner/chains_release
+  opal_chain_workdir: ./src_opal_chain
+  quartz_chain_workdir: ./src_quartz_chain
+  unique_chain_workdir: ./src_unique_chain
+  RUST_TOOLCHAIN: nightly-2022-05-11
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  pre-requisites:
+    # The type of runner that the job will run on
+    runs-on: self-hosted-ci
+
+    steps:
+      #runs ssh connection
+      - name: Install dependencies
+        run: |
+          sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
+          sudo apt autoremove
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+          . $HOME/.cargo/env && cargo install --locked --git https://github.com/chevdor/subwasm
+          rustup toolchain install ${{ env.RUST_TOOLCHAIN }}
+          rustup default ${{ env.RUST_TOOLCHAIN }}
+          rustup target add wasm32-unknown-unknown --toolchain ${{ env.RUST_TOOLCHAIN }}
+
+
+  build:
+    # The type of runner that the job will run on
+    runs-on: self-hosted-ci
+
+    needs: pre-requisites
+    name: Build Container, Spin it Up an test
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.
+
+    strategy:
+      matrix:
+        include:
+          - network: "Opal"
+            features: " "
+          - network: "Quartz"
+            features: "--features=quartz-runtime"
+          - network: "Unique"
+            features: "--features=unique-runtime"
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            FEATURE=${{ matrix.features }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show temporary file
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+
+#      - name: "Build the Docker image with Feature: ${{ env.features }}"
+#        run: docker build -t build-${{ github.head_ref }} --file .docker/Dockerfile-chain-dev --build-arg REPO_URL=${{ github.server_url }}/${{ github.repository }}.git --build-arg RUST_TOOLCHAIN=${{ env.actual_toolchain }} --build-arg FEATURE="${{ env.features }}" --build-arg BRANCH=${{ github.head_ref }} --no-cache .
+
+      - name: Wait
+        run: sleep 420s
+
+      - name: Install node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+
+      - name: Install dependencies
+        run: |
+          cd tests
+          yarn install
+          yarn add mochawesome
+          yarn --pure-lockfile
+
+      - name: Run tests
+        run: |
+          cd tests
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      - name: Test Report
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report               # Set ID reference for step
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
