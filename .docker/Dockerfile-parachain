@@ -34,10 +34,10 @@ FROM rust-builder as builder-unique
 RUN mkdir unique_parachain
 WORKDIR /unique_parachain
 
-ARG FEATURE='--release'
+ARG FEATURE=' '
 
 COPY . .
-RUN cargo build $FEATURE
+RUN cargo build $FEATURE --release
    # && \
    # cargo test
 
