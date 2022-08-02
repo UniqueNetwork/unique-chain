@@ -11,7 +11,7 @@ services:
         - POLKA_VERSION=${POLKA_VERSION:?err}
         - FEATURE=${FEATURE:?err}
     volumes:
-      - ./launch-config.json:/polkadot-launch/launch-config.json
+      - ../launch-config.json:/polkadot-launch/launch-config.json
     env_file:
       - ./.env
 
