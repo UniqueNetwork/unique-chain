@@ -33,7 +33,7 @@ use fp_self_contained::*;
 
 #[cfg(feature = "scheduler")]
 use sp_runtime::{
-       traits::Member,
+       traits::{Applyable, Member},
        generic::Era,
        DispatchErrorWithPostInfo
 };
@@ -1137,7 +1137,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
 
-construct_runtime!();
+construct_runtime!(quartz);
 
 pub struct TransactionConverter;
 

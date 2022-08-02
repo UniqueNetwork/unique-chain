@@ -1126,7 +1126,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
 
-construct_runtime!();
+construct_runtime!(opal);
 
 pub struct TransactionConverter;
 

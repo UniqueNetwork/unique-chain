@@ -2,8 +2,10 @@ mod util;
 
 #[macro_export]
 macro_rules! construct_runtime {
-    () => {
+    ($select_runtime:ident) => {
         $crate::construct_runtime_impl! {
+            select_runtime($select_runtime);
+
             pub enum Runtime where
                 Block = Block,
                 NodeBlock = opaque::Block,
