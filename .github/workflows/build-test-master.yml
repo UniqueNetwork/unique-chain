@@ -1,4 +1,4 @@
-name: Build & test
+name: Build & Test Master
 
 # Controls when the action will run.
 on:
@@ -7,7 +7,7 @@ on:
   #  branches: [ develop ]
   pull_request:
     branches:
-      - develop
+      - master
     types:
       - opened
       - edited
