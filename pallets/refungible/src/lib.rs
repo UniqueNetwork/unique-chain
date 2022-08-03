@@ -163,7 +163,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -264,13 +264,10 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
 			let storage_version = StorageVersion::get::<Pallet<T>>();
-			if storage_version < StorageVersion::new(1) {
-				<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
-					Some(<ItemDataVersion2>::from(v))
-				})
-			} else if storage_version < StorageVersion::new(2) {
+			if storage_version < StorageVersion::new(2) {
 				<TokenData<T>>::remove_all(None);
 			}
+			StorageVersion::new(1).put::<Pallet<T>>();
 
 			0
 		}
