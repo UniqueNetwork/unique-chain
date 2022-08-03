@@ -29,8 +29,14 @@ contract CollectionHelpersEvents {
 	);
 }
 
-// Selector: c20653fc
+// Selector: 675f3074
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
+	// Create an NFT collection
+	// @param name Name of the collection
+	// @param description Informative description of the collection
+	// @param token_prefix Token prefix to represent the collection tokens in UI and user applications
+	// @return address Address of the newly created collection
+	//
 	// Selector: createNonfungibleCollection(string,string,string) e34a6844
 	function createNonfungibleCollection(
 		string memory name,
@@ -75,6 +81,26 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
+	// Selector: createERC721MetadataCompatibleRFTCollection(string,string,string,string) a5596388
+	function createERC721MetadataCompatibleRFTCollection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix,
+		string memory baseUri
+	) public returns (address) {
+		require(false, stub_error);
+		name;
+		description;
+		tokenPrefix;
+		baseUri;
+		dummy = 0;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Check if a collection exists
+	// @param collection_address Address of the collection in question
+	// @return bool Does the collection exist?
+	//
 	// Selector: isCollectionExist(address) c3de1494
 	function isCollectionExist(address collectionAddress)
 		public
