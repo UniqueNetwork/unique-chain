@@ -34,9 +34,8 @@ use pallet_common::{
 		CommonEvmHandler, CollectionCall,
 		static_property::{key, value as property_value},
 	},
-	eth::collection_id_to_address,
 };
-use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm, PrecompileHandle};
+use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::H160;
@@ -50,6 +49,8 @@ use crate::{
 	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, SelfWeightOf,
 	TokenProperties, TokensMinted, TotalSupply, weights::WeightInfo,
 };
+
+pub const ADDRESS_FOR_PARTIALLY_OWNED_TOKENS: H160 = H160::repeat_byte(0xff);
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
 #[solidity_interface(name = "TokenProperties")]
@@ -298,13 +299,20 @@ impl<T: Config> RefungibleHandle<T> {
 		Ok(balance.into())
 	}
 
+	/// @notice Find the owner of an RFT
+	/// @dev RFTs assigned to zero address are considered invalid, and queries
+	///  about them do throw.
+	///  Returns special 0xffffffffffffffffffffffffffffffffffffffff address for
+	///  the tokens that are partially owned.
+	/// @param tokenId The identifier for an RFT
+	/// @return The address of the owner of the RFT
 	fn owner_of(&self, token_id: uint256) -> Result<address> {
 		self.consume_store_reads(2)?;
 		let token = token_id.try_into()?;
 		let owner = <Pallet<T>>::token_owner(self.id, token);
 		Ok(owner
 			.map(|address| *address.as_eth())
-			.unwrap_or_else(|| H160::default()))
+			.unwrap_or_else(|| ADDRESS_FOR_PARTIALLY_OWNED_TOKENS))
 	}
 
 	/// @dev Not implemented
@@ -366,14 +374,6 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 
-		<PalletEvm<T>>::deposit_log(
-			ERC721Events::Transfer {
-				from: *from.as_eth(),
-				to: *to.as_eth(),
-				token_id: token_id.into(),
-			}
-			.to_log(collection_id_to_address(self.id)),
-		);
 		Ok(())
 	}
 
@@ -652,14 +652,6 @@ impl<T: Config> RefungibleHandle<T> {
 
 		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
-		<PalletEvm<T>>::deposit_log(
-			ERC721Events::Transfer {
-				from: *caller.as_eth(),
-				to: *to.as_eth(),
-				token_id: token_id.into(),
-			}
-			.to_log(collection_id_to_address(self.id)),
-		);
 		Ok(())
 	}
 

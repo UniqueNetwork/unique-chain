@@ -707,12 +707,13 @@ impl<T: Config> Pallet<T> {
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
-		let balance_from = <Balance<T>>::get((collection.id, token, from))
+		let initial_balance_from = <Balance<T>>::get((collection.id, token, from));
+		let updated_balance_from = initial_balance_from
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let mut create_target = false;
 		let from_to_differ = from != to;
-		let balance_to = if from != to {
+		let updated_balance_to = if from != to {
 			let old_balance = <Balance<T>>::get((collection.id, token, to));
 			if old_balance == 0 {
 				create_target = true;
@@ -726,7 +727,7 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		let account_balance_from = if balance_from == 0 {
+		let account_balance_from = if updated_balance_from == 0 {
 			Some(
 				<AccountBalance<T>>::get((collection.id, from))
 					.checked_sub(1)
@@ -762,15 +763,15 @@ impl<T: Config> Pallet<T> {
 			nesting_budget,
 		)?;
 
-		if let Some(balance_to) = balance_to {
+		if let Some(updated_balance_to) = updated_balance_to {
 			// from != to
-			if balance_from == 0 {
+			if updated_balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
 				<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
 			} else {
-				<Balance<T>>::insert((collection.id, token, from), balance_from);
+				<Balance<T>>::insert((collection.id, token, from), updated_balance_from);
 			}
-			<Balance<T>>::insert((collection.id, token, to), balance_to);
+			<Balance<T>>::insert((collection.id, token, to), updated_balance_to);
 			if let Some(account_balance_from) = account_balance_from {
 				<AccountBalance<T>>::insert((collection.id, from), account_balance_from);
 				<Owned<T>>::remove((collection.id, from, token));
@@ -800,6 +801,46 @@ impl<T: Config> Pallet<T> {
 			to.clone(),
 			amount,
 		));
+
+		let total_supply = <TotalSupply<T>>::get((collection.id, token));
+
+		if amount == total_supply {
+			// if token was fully owned by `from` and will be fully owned by `to` after transfer
+			<PalletEvm<T>>::deposit_log(
+				ERC721Events::Transfer {
+					from: *from.as_eth(),
+					to: *to.as_eth(),
+					token_id: token.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
+		} else if let Some(updated_balance_to) = updated_balance_to {
+			// if `from` not equals `to`. This condition is needed to avoid sending event
+			// when `from` fully owns token and sends part of token pieces to itself.
+			if initial_balance_from == total_supply {
+				// if token was fully owned by `from` and will be only partially owned by `to`
+				// and `from` after transfer
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: *from.as_eth(),
+						to: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			} else if updated_balance_to == total_supply {
+				// if token was partially owned by `from` and will be fully owned by `to` after transfer
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						to: *to.as_eth(),
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			}
+		}
+
 		Ok(())
 	}
 

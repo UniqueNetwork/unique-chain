@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, UNIQUE} from '../util/helpers';
+import {createCollectionExpectSuccess, transfer, UNIQUE} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, tokenIdToAddress} from './util/helpers';
 import reFungibleAbi from './reFungibleAbi.json';
 import reFungibleTokenAbi from './reFungibleTokenAbi.json';
@@ -95,6 +95,28 @@ describe('Refungible: Information getting', () => {
     const owner = await contract.methods.ownerOf(tokenId).call();
 
     expect(owner).to.equal(receiver);
+  });
+
+  itWeb3('ownerOf for partial ownership', async ({api, web3, privateKeyWrapper}) => {
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const receiver = createEthAccount(web3);
+    const helper = evmCollectionHelpers(web3, caller);
+    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+
+    const tokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(caller, tokenId).send();
+
+    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
+    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+
+    await tokenContract.methods.repartition(2).send();
+    await tokenContract.methods.transfer(receiver, 1).send();
+
+    const owner = await contract.methods.ownerOf(tokenId).call();
+
+    expect(owner).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
   });
 });
 
@@ -292,6 +314,74 @@ describe('Refungible: Plain calls', () => {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(1);
     }
+  });
+
+  itWeb3('transfer event on transfer from partial ownership to full ownership', async ({api, web3, privateKeyWrapper}) => {
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const receiver = createEthAccount(web3);
+    const helper = evmCollectionHelpers(web3, caller);
+    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+
+    const tokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(caller, tokenId).send();
+
+    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
+    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+
+    await tokenContract.methods.repartition(2).send();
+    await tokenContract.methods.transfer(receiver, 1).send();
+
+    let transfer;
+    contract.events.Transfer({}, function(_error: any, event: any){ transfer = event;});
+    await tokenContract.methods.transfer(receiver, 1).send();
+    const events = normalizeEvents([transfer]);
+    expect(events).to.deep.equal([
+      {
+        address: collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
+          to: receiver,
+          tokenId: tokenId.toString(),
+        },
+      },
+    ]);
+  });
+
+  itWeb3('transfer event on transfer from full ownership to partial ownership', async ({api, web3, privateKeyWrapper}) => {
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const receiver = createEthAccount(web3);
+    const helper = evmCollectionHelpers(web3, caller);
+    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+
+    const tokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(caller, tokenId).send();
+
+    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
+    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+
+    await tokenContract.methods.repartition(2).send();
+    
+    let transfer;
+    contract.events.Transfer({}, function(_error: any, event: any){ transfer = event;});
+    await tokenContract.methods.transfer(receiver, 1).send();
+
+    const events = normalizeEvents([transfer]);
+    expect(events).to.deep.equal([
+      {
+        address: collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: caller,
+          to: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
+          tokenId: tokenId.toString(),
+        },
+      },
+    ]);
   });
 });
 
