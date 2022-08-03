@@ -16,7 +16,9 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN apt-get update && \
     apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-    apt-get install -y cmake pkg-config libssl-dev git clang
+    apt-get install -y cmake pkg-config libssl-dev git clang && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -24,6 +26,18 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup target list --installed && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
+
+
+RUN cargo install cargo-chef
+
+RUN mkdir unique_parachain
+WORKDIR /unique_parachain
+
+# ===== Chef =====
+FROM rust-builder as chef
+
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
 ####works inside repo folder###
 
@@ -33,6 +47,10 @@ FROM rust-builder as builder-unique
 
 RUN mkdir unique_parachain
 WORKDIR /unique_parachain
+
+COPY --from=chef /unique_parachain/recipe.json recipe.json
+
+RUN cargo chef cook --release --recipe-path recipe.json
 
 ARG FEATURE=' '
 
