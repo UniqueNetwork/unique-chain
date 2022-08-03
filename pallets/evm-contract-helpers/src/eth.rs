@@ -51,6 +51,33 @@ impl<T: Config> ContractHelpers<T> {
 		Ok(<Owner<T>>::get(contract_address))
 	}
 
+	fn set_sponsor(
+		&mut self,
+		caller: caller,
+		contract_address: address,
+		sponsor: address,
+	) -> Result<void> {
+		Pallet::<T>::set_sponsor(
+			&T::CrossAccountId::from_eth(caller),
+			contract_address,
+			&T::CrossAccountId::from_eth(sponsor),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
+		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	fn get_sponsor(&self, contract_address: address) -> Result<address> {
+		let sponsor =
+			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
+		Ok(*sponsor.as_eth())
+	}
+
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
 		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
@@ -190,6 +217,11 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			return None;
 		}
 
+		let sponsor = match <Pallet<T>>::get_sponsor(*contract) {
+			Some(sponsor) => sponsor,
+			None => return None,
+		};
+
 		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(*contract, *who.as_eth()) {
 			return None;
 		}
@@ -206,7 +238,6 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 
 		<SponsorBasket<T>>::insert(contract, who.as_eth(), block_number);
 
-		let sponsor = T::CrossAccountId::from_eth(*contract);
 		Some(sponsor)
 	}
 }
