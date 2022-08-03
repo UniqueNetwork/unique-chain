@@ -18,7 +18,7 @@ services:
   integration_tests:
     build:
       context: ../tests/
-      dockerfile: .docker/Dockerfile-tests
+      dockerfile: Dockerfile-tests
     environment:
       RPC_URL: http://blockchain_nodes:9933/
     volumes:
