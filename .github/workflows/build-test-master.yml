@@ -121,6 +121,6 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-  #    - name: Stop running containers
-  #      if: always()                   # run this step always
-  #      run: docker-compose -f ".docker/docker-compose-tests-parachain.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-tests-parachain.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down

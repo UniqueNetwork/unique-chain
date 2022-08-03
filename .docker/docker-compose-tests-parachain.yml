@@ -14,15 +14,21 @@ services:
       - ../launch-config.json:/polkadot-launch/launch-config.json
     env_file:
       - ./.env
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
 
-  integration_tests:
-    build:
-      context: ../tests/
-      dockerfile: Dockerfile-tests
-    environment:
-      RPC_URL: http://blockchain_nodes:9933/
-    volumes:
-      - ./tests/src/config_docker.ts:/unique_parachain/src/config.ts
-      - /home/ubuntu/mochawesome-report:/unique_parachain/mochawesome-report
-    depends_on:
-      - blockchain_nodes
+#  integration_tests:
+#    build:
+#      context: ../tests/
+#      dockerfile: Dockerfile-tests
+#    environment:
+#      RPC_URL: http://blockchain_nodes:9933/
+#    volumes:
+#      - ./tests/src/config_docker.ts:/unique_parachain/src/config.ts
+#      - /home/ubuntu/mochawesome-report:/unique_parachain/mochawesome-report
+#    depends_on:
+#      - blockchain_nodes
