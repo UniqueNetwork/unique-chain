@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {createCollectionExpectSuccess, transfer, UNIQUE} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, tokenIdToAddress} from './util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, tokenIdToAddress} from './util/helpers';
 import reFungibleAbi from './reFungibleAbi.json';
 import reFungibleTokenAbi from './reFungibleTokenAbi.json';
 import {expect} from 'chai';
@@ -224,8 +224,7 @@ describe('Refungible: Plain calls', () => {
     {
       const result = await contract.methods.burn(tokenId).send();
       const events = normalizeEvents(result.events);
-
-      expect(events).to.be.deep.equal([
+      expect(events).to.include.deep.members([
         {
           address: collectionIdAddress,
           event: 'Transfer',
@@ -333,10 +332,8 @@ describe('Refungible: Plain calls', () => {
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
 
-    let transfer;
-    contract.events.Transfer({}, function(_error: any, event: any){ transfer = event;});
-    await tokenContract.methods.transfer(receiver, 1).send();
-    const events = normalizeEvents([transfer]);
+    const events =  await recordEvents(contract, async () => 
+      await tokenContract.methods.transfer(receiver, 1).send());
     expect(events).to.deep.equal([
       {
         address: collectionIdAddress,
@@ -366,11 +363,9 @@ describe('Refungible: Plain calls', () => {
 
     await tokenContract.methods.repartition(2).send();
     
-    let transfer;
-    contract.events.Transfer({}, function(_error: any, event: any){ transfer = event;});
-    await tokenContract.methods.transfer(receiver, 1).send();
-
-    const events = normalizeEvents([transfer]);
+    const events =  await recordEvents(contract, async () => 
+      await tokenContract.methods.transfer(receiver, 1).send());
+      
     expect(events).to.deep.equal([
       {
         address: collectionIdAddress,

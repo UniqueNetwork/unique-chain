@@ -277,7 +277,7 @@ describe('Refungible: Plain calls', () => {
     {
       const result = await contract.methods.transferFrom(owner, receiver, 49).send({from: spender});
       const events = normalizeEvents(result.events);
-      expect(events).to.be.deep.equal([
+      expect(events).to.include.deep.members([
         {
           address,
           event: 'Transfer',
@@ -329,7 +329,7 @@ describe('Refungible: Plain calls', () => {
     {
       const result = await contract.methods.transfer(receiver, 50).send({from: owner});
       const events = normalizeEvents(result.events);
-      expect(events).to.be.deep.equal([
+      expect(events).to.include.deep.members([
         {
           address,
           event: 'Transfer',
@@ -438,6 +438,38 @@ describe('Refungible: Plain calls', () => {
           from: owner,
           to: '0x0000000000000000000000000000000000000000',
           value: '50',
+        },
+      },
+    ]);
+  });
+
+  itWeb3('Receiving Transfer event on burning into full ownership', async ({web3, api, privateKeyWrapper}) => {
+    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const receiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const helper = evmCollectionHelpers(web3, caller);
+    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+
+    const tokenId = await contract.methods.nextTokenId().call();
+    await contract.methods.mint(caller, tokenId).send();
+
+    const address = tokenIdToAddress(collectionId, tokenId);
+
+    const tokenContract =  new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: caller, ...GAS_ARGS});
+    await tokenContract.methods.repartition(2).send();
+    await tokenContract.methods.transfer(receiver, 1).send();
+
+    const events =  await recordEvents(contract, async () => 
+      await tokenContract.methods.burnFrom(caller, 1).send());
+    expect(events).to.deep.equal([
+      {
+        address: collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
+          to: receiver,
+          tokenId,
         },
       },
     ]);

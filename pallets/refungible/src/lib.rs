@@ -399,6 +399,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn burn_token_unchecked(
 		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
 		token_id: TokenId,
 	) -> DispatchResult {
 		let burnt = <TokensBurnt<T>>::get(collection.id)
@@ -411,7 +412,15 @@ impl<T: Config> Pallet<T> {
 		<TotalSupply<T>>::remove((collection.id, token_id));
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
 		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
-		// TODO: ERC721 transfer event
+
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				token_id: token_id.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		Ok(())
 	}
 
@@ -453,12 +462,12 @@ impl<T: Config> Pallet<T> {
 			<Owned<T>>::remove((collection.id, owner, token));
 			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
-			Self::burn_token_unchecked(collection, token)?;
+			Self::burn_token_unchecked(collection, owner, token)?;
 			<PalletEvm<T>>::deposit_log(
-				ERC721Events::Transfer {
+				ERC20Events::Transfer {
 					from: *owner.as_eth(),
 					to: H160::default(),
-					token_id: token.into(),
+					value: amount.into(),
 				}
 				.to_log(collection_id_to_address(collection.id)),
 			);
@@ -490,6 +499,17 @@ impl<T: Config> Pallet<T> {
 			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<Balance<T>>::remove((collection.id, token, owner));
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
+
+			if let Some(user) = Self::token_owner(collection.id, token) {
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						to: *user.as_eth(),
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			}
 		} else {
 			<Balance<T>>::insert((collection.id, token, owner), balance);
 		}
@@ -981,11 +1001,35 @@ impl<T: Config> Pallet<T> {
 		for (i, token) in data.into_iter().enumerate() {
 			let token_id = first_token_id + i as u32 + 1;
 
-			for (user, amount) in token.users.into_iter() {
-				if amount == 0 {
-					continue;
-				}
+			let receivers = token
+				.users
+				.into_iter()
+				.filter(|(_, amount)| *amount > 0)
+				.collect::<Vec<_>>();
 
+			if let [(user, _)] = receivers.as_slice() {
+				// if there is exactly one receiver
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: H160::default(),
+						to: *user.as_eth(),
+						token_id: token_id.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			} else if let [_, ..] = receivers.as_slice() {
+				// if there is more than one receiver
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: H160::default(),
+						to: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						token_id: token_id.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			}
+
+			for (user, amount) in receivers.into_iter() {
 				<PalletEvm<T>>::deposit_log(
 					ERC20Events::Transfer {
 						from: H160::default(),
@@ -996,14 +1040,6 @@ impl<T: Config> Pallet<T> {
 						collection.id,
 						TokenId(token_id),
 					)),
-				);
-				<PalletEvm<T>>::deposit_log(
-					ERC721Events::Transfer {
-						from: H160::default(),
-						to: *user.as_eth(),
-						token_id: token_id.into(),
-					}
-					.to_log(collection_id_to_address(collection.id)),
 				);
 				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,
