@@ -267,7 +267,7 @@ pub mod pallet {
 			if storage_version < StorageVersion::new(2) {
 				<TokenData<T>>::remove_all(None);
 			}
-			StorageVersion::new(1).put::<Pallet<T>>();
+			StorageVersion::new(2).put::<Pallet<T>>();
 
 			0
 		}
