@@ -6,7 +6,7 @@ import {
   getCreateCollectionResult,
   getDetailedCollectionInfo,
   getGenericResult,
-  getModuleNames,
+  requirePallets,
   normalizeAccountId,
   Pallets,
 } from '../util/helpers';
@@ -64,7 +64,7 @@ describe('RMRK External Integration Test', async () => {
   before(async function() {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
-      if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+      requirePallets(this, api, [Pallets.RmrkCore]);
     });
   });
 

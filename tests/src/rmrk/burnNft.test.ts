@@ -5,7 +5,7 @@ import {burnNft, createCollection, sendNft, mintNft} from './util/tx';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { getModuleNames, Pallets } from '../util/helpers';
+import { requirePallets, Pallets } from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -17,7 +17,7 @@ describe('integration test: burn nft', () => {
   let api: any;
   before(async function() {
     api = await getApiConnection();
-    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+    requirePallets(this, api, [Pallets.RmrkCore]);
   });
 
 

@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
 import {executeTransaction, getApiConnection} from '../substrate/substrate-api';
-import { getModuleNames, Pallets } from '../util/helpers';
+import { requirePallets, Pallets } from '../util/helpers';
 import {getNft, NftIdTuple} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {
@@ -20,7 +20,7 @@ describe('Integration test: remove nft resource', () => {
   before(async function() {
     api = await getApiConnection();
     ss58Format = api.registry.getChainProperties()!.toJSON().ss58Format;
-    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+    requirePallets(this, api, [Pallets.RmrkCore]);
   });
 
   const Alice = '//Alice';

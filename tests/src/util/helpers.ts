@@ -28,6 +28,7 @@ import {default as usingApi, executeTransaction, submitTransactionAsync, submitT
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
 import {UpDataStructsTokenChild} from '../interfaces';
+import { Context } from 'mocha';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -42,6 +43,7 @@ export type CrossAccountId = {
 export enum Pallets {
   Inflation = 'inflation',
   RmrkCore = 'rmrkcore',
+  RmrkEquip = 'rmrkequip',
   ReFungible = 'refungible',
   Fungible = 'fungible',
   NFT = 'nonfungible',
@@ -68,6 +70,16 @@ export function getModuleNames(api: ApiPromise): string[] {
   if (typeof modulesNames === 'undefined') 
     modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
   return modulesNames;
+}
+
+export function requirePallets(mocha: Context, api: ApiPromise, requiredPallets: string[]) {
+  const pallets = getModuleNames(api);
+
+  const isAllPalletsPresent = requiredPallets.every(p => pallets.includes(p));
+
+  if (!isAllPalletsPresent) {
+    mocha.skip();
+  }
 }
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {

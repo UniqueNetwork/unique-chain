@@ -12,7 +12,7 @@ import {
   addNftComposableResource,
 } from './util/tx';
 import {RmrkTraitsResourceResourceInfo as ResourceInfo} from '@polkadot/types/lookup';
-import { getModuleNames, Pallets } from '../util/helpers';
+import { requirePallets, Pallets } from '../util/helpers';
 
 describe('integration test: add NFT resource', () => {
   const Alice = '//Alice';
@@ -27,7 +27,7 @@ describe('integration test: add NFT resource', () => {
   let api: any;
   before(async function() {
     api = await getApiConnection();
-    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+    requirePallets(this, api, [Pallets.RmrkCore]);
   });
 
   it('add resource', async () => {

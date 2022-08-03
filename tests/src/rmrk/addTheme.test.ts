@@ -3,13 +3,13 @@ import {getApiConnection} from '../substrate/substrate-api';
 import {createBase, addTheme} from './util/tx';
 import {expectTxFailure} from './util/helpers';
 import {getThemeNames} from './util/fetch';
-import { getModuleNames, Pallets } from '../util/helpers';
+import { requirePallets, Pallets } from '../util/helpers';
 
 describe('integration test: add Theme to Base', () => {
   let api: any;
   before(async function() {
     api = await getApiConnection();
-    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+    requirePallets(this, api, [Pallets.RmrkEquip]);
   });
 
   const alice = '//Alice';

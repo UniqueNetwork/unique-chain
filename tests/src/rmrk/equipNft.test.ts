@@ -1,7 +1,7 @@
 import {ApiPromise} from '@polkadot/api';
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
-import {getModuleNames, Pallets} from '../util/helpers';
+import {requirePallets, Pallets} from '../util/helpers';
 import {getNft, getParts, NftIdTuple} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {
@@ -126,7 +126,7 @@ describe.skip('integration test: Equip NFT', () => {
   
   before(async function () {
     api = await getApiConnection();
-    if (!getModuleNames(api).includes(Pallets.RmrkCore)) this.skip();
+    requirePallets(this, api, [Pallets.RmrkCore, Pallets.RmrkEquip]);
   });
 
   it('equip nft', async () => {
