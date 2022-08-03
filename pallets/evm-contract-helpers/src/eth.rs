@@ -48,10 +48,7 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 #[solidity_interface(name = "ContractHelpers")]
 impl<T: Config> ContractHelpers<T> {
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
-		Ok(<Pallet<T>>::contract_owner(contract_address)
-			.map_err(dispatch_to_evm::<T>)?
-			.as_eth()
-			.clone())
+		Ok(<Owner<T>>::get(contract_address))
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
@@ -65,7 +62,7 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
 		Ok(())
 	}
@@ -76,7 +73,7 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		mode: uint8,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
 		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
 		Ok(())
@@ -92,7 +89,7 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		rate_limit: uint32,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
 		Ok(())
 	}
@@ -105,7 +102,7 @@ impl<T: Config> ContractHelpers<T> {
 
 	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
 		self.0.consume_sload()?;
-		Ok(<Pallet<T>>::allowed(contract_address, T::CrossAccountId::from_eth(user)))
+		Ok(<Pallet<T>>::allowed(contract_address, user))
 	}
 
 	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
@@ -118,7 +115,7 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
 		Ok(())
 	}
@@ -130,7 +127,7 @@ impl<T: Config> ContractHelpers<T> {
 		user: address,
 		allowed: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 		Ok(())
 	}
@@ -149,7 +146,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		// TODO: Extract to another OnMethodCall handler
 		if <AllowlistEnabled<T>>::get(handle.code_address())
-			&& !<Pallet<T>>::allowed(handle.code_address(), T::CrossAccountId::from_eth(handle.context().caller))
+			&& !<Pallet<T>>::allowed(handle.code_address(), handle.context().caller)
 		{
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
@@ -178,7 +175,7 @@ impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
 pub struct HelpersOnCreate<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 	fn on_create(owner: H160, contract: H160) {
-		<Owner<T>>::insert(contract, T::CrossAccountId::from_eth(owner));
+		<Owner<T>>::insert(contract, owner);
 	}
 }
 
@@ -187,18 +184,19 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 	for HelpersContractSponsoring<T>
 {
 	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
-		let mode = <Pallet<T>>::sponsoring_mode(call.0);
+		let (contract, _) = call;
+		let mode = <Pallet<T>>::sponsoring_mode(*contract);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
 
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, who.clone()) {
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(*contract, *who.as_eth()) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who.as_eth()) {
-			let limit = <SponsoringRateLimit<T>>::get(&call.0);
+		if let Some(last_tx_block) = <SponsorBasket<T>>::get(contract, who.as_eth()) {
+			let limit = <SponsoringRateLimit<T>>::get(contract);
 
 			let timeout = last_tx_block + limit;
 			if block_number < timeout {
@@ -206,9 +204,9 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			}
 		}
 
-		<SponsorBasket<T>>::insert(&call.0, who.as_eth(), block_number);
+		<SponsorBasket<T>>::insert(contract, who.as_eth(), block_number);
 
-		let sponsor = T::CrossAccountId::from_eth(call.0);
+		let sponsor = T::CrossAccountId::from_eth(*contract);
 		Some(sponsor)
 	}
 }
