@@ -62,7 +62,6 @@ fn default_fungible_data() -> CreateFungibleData {
 
 fn default_re_fungible_data() -> CreateReFungibleData {
 	CreateReFungibleData {
-		const_data: vec![1, 2, 3].try_into().unwrap(),
 		pieces: 1023,
 		properties: vec![Property {
 			key: b"test-prop".to_vec().try_into().unwrap(),
@@ -298,7 +297,6 @@ fn create_refungible_item() {
 		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
 		let balance =
 			<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1)));
-		assert_eq!(item.const_data, data.const_data.into_inner());
 		assert_eq!(balance, 1023);
 	});
 }
@@ -333,7 +331,6 @@ fn create_multiple_refungible_items() {
 			));
 			let balance =
 				<pallet_refungible::Balance<Test>>::get((CollectionId(1), TokenId(1), account(1)));
-			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
 			assert_eq!(balance, 1023);
 		}
 	});
@@ -446,7 +443,6 @@ fn transfer_refungible_item() {
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
 		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
-		assert_eq!(item.const_data, data.const_data.into_inner());
 		assert_eq!(
 			<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))),
 			1

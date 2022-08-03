@@ -123,6 +123,7 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 /// for the convenience of database access. Notably contains the token metadata.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
+#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
 pub struct ItemData {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 
@@ -162,7 +163,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -180,7 +181,9 @@ pub mod pallet {
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
 	/// Token data, used to partially describe a token.
+	// TODO: remove
 	#[pallet::storage]
+	#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = ItemData,
@@ -260,7 +263,11 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
+			let storage_version = StorageVersion::get::<Pallet<T>>();
+			if storage_version < StorageVersion::new(2) {
+				<TokenData<T>>::remove_all(None);
+			}
+			StorageVersion::new(2).put::<Pallet<T>>();
 
 			0
 		}
@@ -373,7 +380,6 @@ impl<T: Config> Pallet<T> {
 
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
-		<TokenData<T>>::remove_prefix((id,), None);
 		<TotalSupply<T>>::remove_prefix((id,), None);
 		<Balance<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
@@ -383,7 +389,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
-		<TokenData<T>>::iter_prefix((collection_id,))
+		<TotalSupply<T>>::iter_prefix((collection_id,))
 			.next()
 			.is_some()
 	}
@@ -397,7 +403,6 @@ impl<T: Config> Pallet<T> {
 			.ok_or(ArithmeticError::Overflow)?;
 
 		<TokensBurnt<T>>::insert(collection.id, burnt);
-		<TokenData<T>>::remove((collection.id, token_id));
 		<TokenProperties<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
@@ -878,13 +883,6 @@ impl<T: Config> Pallet<T> {
 			for (i, data) in data.iter().enumerate() {
 				let token_id = first_token_id + i as u32 + 1;
 				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
-
-				<TokenData<T>>::insert(
-					(collection.id, token_id),
-					ItemData {
-						const_data: data.const_data.clone(),
-					},
-				);
 
 				for (user, amount) in data.users.iter() {
 					if *amount == 0 {
