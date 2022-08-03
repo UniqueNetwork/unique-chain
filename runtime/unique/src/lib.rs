@@ -36,7 +36,7 @@ use fp_self_contained::*;
 use sp_runtime::{
 	traits::{Applyable, Member},
 	generic::Era,
-	DispatchErrorWithPostInfo
+	DispatchErrorWithPostInfo,
 };
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
@@ -105,10 +105,11 @@ use codec::{Encode, Decode};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
 	traits::{
-		BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf,
-		Saturating, CheckedConversion,
+		BlockNumberProvider, Dispatchable, PostDispatchInfoOf, DispatchInfoOf, Saturating,
+		CheckedConversion,
 	},
-	transaction_validity::TransactionValidityError, SaturatedConversion,
+	transaction_validity::TransactionValidityError,
+	SaturatedConversion,
 };
 
 // pub use pallet_timestamp::Call as TimestampCall;
@@ -119,11 +120,10 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	ParentIsPreset,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
+	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::{cmp::Ordering, marker::PhantomData};
@@ -138,8 +138,7 @@ use xcm::latest::{
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 
 use unique_runtime_common::{
-	construct_runtime,
-	impl_common_runtime_apis,
+	construct_runtime, impl_common_runtime_apis,
 	types::*,
 	constants::*,
 	dispatch::{CollectionDispatchT, CollectionDispatch},

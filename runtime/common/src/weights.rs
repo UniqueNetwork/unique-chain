@@ -51,7 +51,6 @@ pub trait CommonWeightConfigs: FungibleConfig + NonfungibleConfig + RefungibleCo
 #[cfg(feature = "refungible")]
 impl<T: FungibleConfig + NonfungibleConfig + RefungibleConfig> CommonWeightConfigs for T {}
 
-
 pub struct CommonWeights<T>(PhantomData<T>);
 
 impl<T> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T>
