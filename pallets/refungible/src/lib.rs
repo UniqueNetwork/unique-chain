@@ -260,11 +260,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-				<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
-					Some(<ItemDataVersion2>::from(v))
-				})
-			}
+			StorageVersion::new(1).put::<Pallet<T>>();
 
 			0
 		}
