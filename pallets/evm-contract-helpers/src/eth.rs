@@ -15,12 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use evm_coder::{
-	abi::AbiWriter,
-	execution::{Result, Error},
-	generate_stubgen, solidity_interface,
-	types::*,
-};
+use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
@@ -46,7 +41,10 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 }
 
 #[solidity_interface(name = "ContractHelpers")]
-impl<T: Config> ContractHelpers<T> {
+impl<T: Config> ContractHelpers<T>
+where
+	T::AccountId: AsRef<[u8]>,
+{
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
 		Ok(<Owner<T>>::get(contract_address))
 	}
@@ -72,17 +70,19 @@ impl<T: Config> ContractHelpers<T> {
 		Ok(())
 	}
 
-	fn get_sponsor(&self, contract_address: address) -> Result<address> {
+	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
-		Ok(*sponsor.as_eth())
+		let sponsor_sub =
+			pallet_common::eth::convert_cross_account_to_eth_uint256::<T>(&sponsor);
+		Ok((*sponsor.as_eth(), sponsor_sub))
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
 		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
 
-	/// Deprecated
+	/// Deprecated 
 	fn toggle_sponsoring(
 		&mut self,
 		caller: caller,
@@ -161,7 +161,10 @@ impl<T: Config> ContractHelpers<T> {
 }
 
 pub struct HelpersOnMethodCall<T: Config>(PhantomData<*const T>);
-impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
+impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T>
+where
+	T::AccountId: AsRef<[u8]>,
+{
 	fn is_reserved(contract: &sp_core::H160) -> bool {
 		contract == &T::ContractAddress::get()
 	}

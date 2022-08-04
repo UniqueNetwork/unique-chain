@@ -425,7 +425,7 @@ impl AbiWrite for () {
 macro_rules! impl_tuples_abi_writer {
 	($($ident:ident)+) => {
 		#[allow(non_snake_case)]
-		impl<$($ident),+> AbiWrite for &($($ident,)+) 
+		impl<$($ident),+> AbiWrite for &($($ident,)+)
 		where
 			$($ident: AbiWrite,)+
 		{

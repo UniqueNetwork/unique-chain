@@ -52,6 +52,16 @@ pub fn is_collection(address: &H160) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
+/// Convert `CrossAccountId` to `uint256`.
+pub fn convert_cross_account_to_eth_uint256<T: Config>(from: &T::CrossAccountId) -> uint256
+where
+	T::AccountId: AsRef<[u8]>,
+{
+	use pallet_evm::account::CrossAccountId;
+	let slice = from.as_sub().as_ref();
+	uint256::from_big_endian(slice)
+}
+
 /// Converts Substrate address to CrossAccountId
 pub fn convert_substrate_address_to_cross_account_id<T: Config>(
 	address: uint256,
