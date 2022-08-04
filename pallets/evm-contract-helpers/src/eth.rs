@@ -357,7 +357,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 
 		<SponsorBasket<T>>::insert(contract_address, who.as_eth(), block_number);
 
-		Some(sponsor)
+		Some(sponsor) 
 	}
 }
 
