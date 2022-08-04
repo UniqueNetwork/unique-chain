@@ -84,13 +84,12 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 16
 
       - name: Run tests
         run: |
           cd tests
           yarn install
-          yarn add @polkadot/api mochawesome
           yarn --pure-lockfile
           echo "Ready to start tests"
           node scripts/readyness.js
