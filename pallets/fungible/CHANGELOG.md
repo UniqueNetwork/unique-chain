@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2022-08-04
+
+### Fixed
+
+ - Issue with ItemCreated event containing total supply of tokens instead minted amount
+
 ## [0.1.1] - 2022-07-14
 
 ### Added
