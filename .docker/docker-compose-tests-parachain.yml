@@ -1,0 +1,22 @@
+version: "3.5"
+
+services:
+  blockchain_nodes:
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile-parachain
+      args:
+        - RUST_TOOLCHAIN=${RUST_TOOLCHAIN:?err}
+        - RUST_C=${RUST_C:?err}
+        - POLKA_VERSION=${POLKA_VERSION:?err}
+        - FEATURE=${FEATURE:?err}
+    volumes:
+      - ../launch-config.json:/polkadot-launch/launch-config.json
+    env_file:
+      - ./.env
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933

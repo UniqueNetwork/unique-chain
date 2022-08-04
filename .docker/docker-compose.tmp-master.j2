@@ -1,0 +1,10 @@
+version: "3.5"
+
+services:
+  blockchain_nodes:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "BRANCH={{ BRANCH }}"
+        - "REPO_URL={{ REPO_URL }}"
+        - "FEATURE={{ FEATURE }}"
