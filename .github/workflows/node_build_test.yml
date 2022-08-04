@@ -82,8 +82,8 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
-      - name: Wait
-        run: sleep 420s
+#      - name: Wait
+#        run: sleep 420s
 
       - name: Install node
         uses: actions/setup-node@v1
@@ -100,7 +100,7 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          echi "Installing required packages"
+          echo "Installing required packages"
           yarn install
           yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome
           echo "Ready to start tests"
