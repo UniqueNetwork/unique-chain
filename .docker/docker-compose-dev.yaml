@@ -1,12 +1,12 @@
 version: "3.5"
 
 services:
-  node-o:
+  node-dev:
     build:
       context: .
       dockerfile: Dockerfile-chain-dev
-    image: node-o
-    container_name: node-o
+    image: node-dev
+    container_name: node-dev
     expose:
       - 9944
       - 9933

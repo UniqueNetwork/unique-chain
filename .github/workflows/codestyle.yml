@@ -6,7 +6,8 @@ on:
       - develop
     types:
       - opened
-      - edited
+      - reopened
+      - synchronize
 
 jobs:
   rustfmt:
@@ -29,7 +30,7 @@ jobs:
     runs-on: self-hosted-ci
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Install substrate dependencies
         run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
       - name: Install latest nightly
