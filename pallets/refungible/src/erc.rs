@@ -560,10 +560,7 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData::<T> {
-				users,
-				properties,
-			},
+			CreateItemData::<T> { users, properties },
 			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
