@@ -134,12 +134,11 @@ describe('Integration Test: createMultipleItemsEx', () => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
 
-      const users = new Map();
-      users.set(JSON.stringify({Substrate: alice.address}), 50);
-      users.set(JSON.stringify({Substrate: bob.address}), 100);
-
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
-        Fungible: users,
+        Fungible: new Map([
+          [JSON.stringify({Substrate: alice.address}), 50],
+          [JSON.stringify({Substrate: bob.address}), 100],
+        ]),
       }));
 
       expect(await getBalance(api, collection, alice.address, 0)).to.equal(50n);
@@ -153,16 +152,15 @@ describe('Integration Test: createMultipleItemsEx', () => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
 
-      const users = new Map();
-      users.set(JSON.stringify({Substrate: alice.address}), 1);
-      users.set(JSON.stringify({Substrate: bob.address}), 2);
-
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         RefungibleMultipleOwners: {
-          users: users,
+          users: new Map([
+            [JSON.stringify({Substrate: alice.address}), 1],
+            [JSON.stringify({Substrate: bob.address}), 2],
+          ]),
         },
       }));
-      
+
       const itemsListIndexAfter = await getLastTokenId(api, collection);
       expect(itemsListIndexAfter).to.be.equal(1);
 
@@ -176,19 +174,13 @@ describe('Integration Test: createMultipleItemsEx', () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
 
-      const item1User = new Map();
-      item1User.set(JSON.stringify({Substrate: alice.address}), 1);
-
-      const item2User = new Map();
-      item2User.set(JSON.stringify({Substrate: alice.address}), 3);
-
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         RefungibleMultipleItems: [
-          {users: item1User},
-          {users: item2User},
+          {user: {Substrate: alice.address}, pieces: 1},
+          {user: {Substrate: alice.address}, pieces: 3},
         ],
       }));
-      
+
       const itemsListIndexAfter = await getLastTokenId(api, collection);
       expect(itemsListIndexAfter).to.be.equal(2);
 
@@ -373,7 +365,7 @@ describe('Negative test: createMultipleItemsEx', () => {
 
   it('fails when trying to set multiple owners when creating multiple refungibles', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
