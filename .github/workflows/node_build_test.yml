@@ -90,17 +90,21 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Install dependencies
-        run: |
-          cd tests
-          yarn install
-          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome
-          yarn --pure-lockfile
+#      - name: Install dependencies
+#        run: |
+#          cd tests
+#          yarn install
+#          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome
+#          yarn --pure-lockfile
 
       - name: Run tests
         run: |
-          node .docker/readyness.js
           cd tests
+          echi "Installing required packages"
+          yarn install
+          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome
+          echo "Ready to start tests"
+          node .docker/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
