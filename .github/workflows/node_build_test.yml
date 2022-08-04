@@ -89,7 +89,7 @@ jobs:
       - name: Run tests
         run: |
           yarn install
-          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome
+          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome mocha@>=7
           yarn --pure-lockfile
           echo "Ready to start tests"
           node .docker/readyness.js
