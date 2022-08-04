@@ -101,9 +101,6 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-        #  echo "Installing required packages"
-        #  yarn install
-        #  yarn add polkadot/api polkadot/util mochawesome
           echo "Ready to start tests"
           node .docker/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
