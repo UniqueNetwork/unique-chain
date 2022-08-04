@@ -4,10 +4,10 @@ services:
   node-dev:
     build:
       args:
-        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN:?err }}"
-        - "BRANCH={{ BRANCH:?err }}"
-        - "REPO_URL={{ REPO_URL:?err }}"
-        - "FEATURE={{ FEATURE:?err }}"
-        - "POLKA_VERSION={{ POLKA_VERSION:?err }}"
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "BRANCH={{ BRANCH }}"
+        - "REPO_URL={{ REPO_URL }}"
+        - "FEATURE={{ FEATURE }}"
+        - "POLKA_VERSION={{ POLKA_VERSION }}"
 
     command: cargo run --release $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
