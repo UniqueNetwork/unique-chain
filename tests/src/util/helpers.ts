@@ -248,22 +248,23 @@ export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] 
 }
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
-  const genericResult = getGenericResult<[number, number, CrossAccountId?]>(events, 'common', 'ItemCreated', (data) => [
-    parseInt(data[0].toString(), 10),
-    parseInt(data[1].toString(), 10),
-    normalizeAccountId(data[2].toJSON() as any),
-  ]);
-
-  if (genericResult.data == null) genericResult.data = [0, 0];
-
-  const result: CreateItemResult = {
-    success: genericResult.success,
-    collectionId: genericResult.data[0],
-    itemId: genericResult.data[1],
-    recipient: genericResult.data![2],
-  };
+  const genericResult = getGenericResult(events, 'common', 'ItemCreated', (data) => data.map(function(value) { return value.toJSON(); }));
   
-  return result;
+  if (genericResult.data == null) 
+    return {
+      success: genericResult.success,
+      collectionId: 0,
+      itemId: 0,
+      amount: 0,
+    };
+  else 
+    return {
+      success: genericResult.success,
+      collectionId: genericResult.data[0] as number,
+      itemId: genericResult.data[1] as number,
+      recipient: normalizeAccountId(genericResult.data![2] as any),
+      amount: genericResult.data[3] as number,
+    };
 }
 
 export function getDestroyItemsResult(events: EventRecord[]): DestroyItemResult[] {
@@ -1698,4 +1699,15 @@ export async function repartitionRFT(
   const result = getGenericResult(events);
 
   return result.success;
+}
+
+export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean } = {}) {
+  let i: any = it;
+  if (opts.only) i = i.only;
+  else if (opts.skip) i = i.skip;
+  i(name, async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      await cb({api, privateKeyWrapper});
+    });
+  });
 }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi} from './substrate/substrate-api';
+import {default as usingApi, executeTransaction} from './substrate/substrate-api';
 import chai from 'chai';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
@@ -26,6 +26,9 @@ import {
   createItemWithPropsExpectFailure,
   createCollection,
   transferExpectSuccess,
+  itApi,
+  normalizeAccountId,
+  getCreateItemResult,
 } from './util/helpers';
 
 const expect = chai.expect;
@@ -49,6 +52,32 @@ describe('integration test: ext. ():', () => {
     const createMode = 'Fungible';
     const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
     await createItemExpectSuccess(alice, newCollectionID, createMode);
+  });
+  itApi('Check events on create new item in Fungible collection', async ({api}) => {
+    const createMode = 'Fungible';
+    
+    const newCollectionID = (await createCollection(api, alice, {mode: {type: createMode, decimalPoints: 0}})).collectionId;
+    
+    const to = normalizeAccountId(alice);
+    {
+      const createData = {fungible: {value: 100}};
+      const tx = api.tx.unique.createItem(newCollectionID, to, createData as any);
+      const events = await executeTransaction(api, alice, tx);
+      const result = getCreateItemResult(events);
+      expect(result.amount).to.be.equal(100);
+      expect(result.collectionId).to.be.equal(newCollectionID);
+      expect(result.recipient).to.be.deep.equal(to);
+    }
+    {
+      const createData = {fungible: {value: 50}};
+      const tx = api.tx.unique.createItem(newCollectionID, to, createData as any);
+      const events = await executeTransaction(api, alice, tx);
+      const result = getCreateItemResult(events);
+      expect(result.amount).to.be.equal(50);
+      expect(result.collectionId).to.be.equal(newCollectionID);
+      expect(result.recipient).to.be.deep.equal(to);
+    }
+
   });
   it('Create new item in ReFungible collection', async () => {
     const createMode = 'ReFungible';
