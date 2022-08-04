@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 
 const main = async () => {
