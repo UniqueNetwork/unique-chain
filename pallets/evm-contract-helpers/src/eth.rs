@@ -82,18 +82,6 @@ where
 		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
 
-	/// Deprecated 
-	fn toggle_sponsoring(
-		&mut self,
-		caller: caller,
-		contract_address: address,
-		enabled: bool,
-	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
-		Ok(())
-	}
-
 	fn set_sponsoring_mode(
 		&mut self,
 		caller: caller,

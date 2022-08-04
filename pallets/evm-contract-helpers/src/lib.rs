@@ -200,17 +200,6 @@ pub mod pallet {
 			<SelfSponsoring<T>>::remove(contract)
 		}
 
-		pub fn toggle_sponsoring(contract: H160, enabled: bool) {
-			Self::set_sponsoring_mode(
-				contract,
-				if enabled {
-					SponsoringModeT::Allowlisted
-				} else {
-					SponsoringModeT::Disabled
-				},
-			)
-		}
-
 		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
 		}
