@@ -2439,9 +2439,9 @@ export interface UpDataStructsCreateItemExData extends Enum {
   readonly isFungible: boolean;
   readonly asFungible: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr,u128>;
   readonly isRefungibleMultipleItems: boolean;
-  readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExData>;
+  readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExSingleOwner>;
   readonly isRefungibleMultipleOwners: boolean;
-  readonly asRefungibleMultipleOwners: UpDataStructsCreateRefungibleExData;
+  readonly asRefungibleMultipleOwners: UpDataStructsCreateRefungibleExMultipleOwners;
   readonly type: 'Nft' | 'Fungible' | 'RefungibleMultipleItems' | 'RefungibleMultipleOwners';
 }
 
@@ -2462,9 +2462,16 @@ export interface UpDataStructsCreateReFungibleData extends Struct {
   readonly properties: Vec<UpDataStructsProperty>;
 }
 
-/** @name UpDataStructsCreateRefungibleExData */
-export interface UpDataStructsCreateRefungibleExData extends Struct {
+/** @name UpDataStructsCreateRefungibleExMultipleOwners */
+export interface UpDataStructsCreateRefungibleExMultipleOwners extends Struct {
   readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
+  readonly properties: Vec<UpDataStructsProperty>;
+}
+
+/** @name UpDataStructsCreateRefungibleExSingleOwner */
+export interface UpDataStructsCreateRefungibleExSingleOwner extends Struct {
+  readonly user: PalletEvmAccountBasicCrossAccountIdRepr;
+  readonly pieces: u128;
   readonly properties: Vec<UpDataStructsProperty>;
 }
 
