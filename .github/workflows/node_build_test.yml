@@ -95,6 +95,7 @@ jobs:
           cd tests
           yarn install
           yarn add mochawesome
+          yarn add @polkadot/api
           yarn --pure-lockfile
 
       - name: Run tests
