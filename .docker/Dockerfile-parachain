@@ -22,7 +22,6 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN pwd && ls -la
 
 RUN mkdir unique_parachain
 WORKDIR /unique_parachain
@@ -31,13 +30,13 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique
 
 ARG PROFILE=release
+ARG FEATURE=
 
 RUN mkdir unique_parachain
 WORKDIR /unique_parachain
 
-RUN pwd && ls -la
-COPY . .
-RUN cargo build --$PROFILE
+RUN git clone $REPO_URL -b $BRANCH
+RUN cargo build $FEATURE --$PROFILE
    # && \
    # cargo test
 
