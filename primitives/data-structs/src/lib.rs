@@ -826,9 +826,19 @@ pub struct CreateNftExData<CrossAccountId> {
 /// Extended data for create ReFungible item.
 #[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug + Ord"))]
-pub struct CreateRefungibleExData<CrossAccountId> {
+pub struct CreateRefungibleExMultipleOwners<CrossAccountId> {
 	#[derivative(Debug(format_with = "bounded::map_debug"))]
 	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
+}
+
+/// Extended data for create ReFungible item.
+#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derivative(Debug(bound = "CrossAccountId: fmt::Debug"))]
+pub struct CreateRefungibleExSingleOwner<CrossAccountId> {
+	pub user: CrossAccountId,
+	pub pieces: u128,
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
 }
@@ -853,12 +863,12 @@ pub enum CreateItemExData<CrossAccountId> {
 	/// many tokens, each may have only one owner
 	RefungibleMultipleItems(
 		#[derivative(Debug(format_with = "bounded::vec_debug"))]
-		BoundedVec<CreateRefungibleExData<CrossAccountId>, ConstU32<MAX_ITEMS_PER_BATCH>>,
+		BoundedVec<CreateRefungibleExSingleOwner<CrossAccountId>, ConstU32<MAX_ITEMS_PER_BATCH>>,
 	),
 
 	/// Extended data for create ReFungible item in case of
 	/// single token, which may have many owners
-	RefungibleMultipleOwners(CreateRefungibleExData<CrossAccountId>),
+	RefungibleMultipleOwners(CreateRefungibleExMultipleOwners<CrossAccountId>),
 }
 
 impl From<CreateNftData> for CreateItemData {
