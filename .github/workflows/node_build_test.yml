@@ -88,12 +88,12 @@ jobs:
 
       - name: Run tests
         run: |
+          cd tests
           yarn install
-          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome mocha@>=7
+          yarn add @polkadot/api mochawesome
           yarn --pure-lockfile
           echo "Ready to start tests"
-          node .docker/readyness.js
-          cd tests
+          node scripts/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
