@@ -85,10 +85,11 @@ jobs:
 #      - name: Wait
 #        run: sleep 420s
 
-      - name: Install node
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 16
+          cache: 'yarn'
+          cache-dependency-path: tests/package.json
 
 #      - name: Install dependencies
 #        run: |
@@ -100,9 +101,9 @@ jobs:
       - name: Run tests
         run: |
           cd tests
-          echo "Installing required packages"
-          yarn install
-          yarn add @polkadot/api @polkadot/util@9.4.1 mochawesome
+        #  echo "Installing required packages"
+        #  yarn install
+        #  yarn add polkadot/api polkadot/util mochawesome
           echo "Ready to start tests"
           node .docker/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
