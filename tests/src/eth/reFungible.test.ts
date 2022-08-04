@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, transfer, UNIQUE} from '../util/helpers';
+import {createCollectionExpectSuccess, UNIQUE} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, tokenIdToAddress} from './util/helpers';
-import reFungibleAbi from './reFungibleAbi.json';
 import reFungibleTokenAbi from './reFungibleTokenAbi.json';
 import {expect} from 'chai';
 
@@ -242,24 +241,43 @@ describe('Refungible: Plain calls', () => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
     const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
     const receiver = createEthAccount(web3);
 
     const tokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(caller, tokenId).send();
+
+    const address = tokenIdToAddress(collectionId, tokenId);
+    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: caller, ...GAS_ARGS});
+    await tokenContract.methods.repartition(15).send();
+
     {
-      const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();
-      const events = normalizeEvents(result.events);
-      expect(events).to.include.deep.members([
+      const erc20Events = await recordEvents(tokenContract, async () => {
+        const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();
+        const events = normalizeEvents(result.events);
+        expect(events).to.include.deep.members([
+          {
+            address: collectionIdAddress,
+            event: 'Transfer',
+            args: {
+              from: caller,
+              to: receiver,
+              tokenId: tokenId.toString(),
+            },
+          },
+        ]);
+      });
+      
+      expect(erc20Events).to.include.deep.members([
         {
-          address: collectionIdAddress,
+          address,
           event: 'Transfer',
           args: {
             from: caller,
             to: receiver,
-            tokenId: tokenId.toString(),
+            value: '15',
           },
         },
       ]);
