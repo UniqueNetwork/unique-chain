@@ -2,8 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.1] - 2022-07-27
+
+### New features
+
+Implementation of ERC-721 EVM API ([#452](https://github.com/UniqueNetwork/unique-chain/pull/452))
+
 ## [v0.2.0] - 2022-08-01
+
 ### Deprecated
+
+`const_data` field is removed
+
 - `ItemData`
 - `TokenData`
 
@@ -15,11 +25,13 @@ feat(refungible-pallet): add ERC-20 EVM API for RFT token pieces ([#413](https:/
 test(refungible-pallet): add tests for ERC-20 EVM API for RFT token pieces ([#413](https://github.com/UniqueNetwork/unique-chain/pull/413))
 
 ## [v0.1.1] - 2022-07-14
-### Added
+
+### Added features
+
 - Support for properties for RFT collections and tokens.
 
 ### Other changes
 
 - feat: RPC method `token_owners` returning 10 owners in no particular order.
 
-This was an internal request to improve the web interface and support fractionalization event. 
+This was an internal request to improve the web interface and support fractionalization event.
