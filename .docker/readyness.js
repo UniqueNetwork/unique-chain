@@ -17,7 +17,7 @@ const sleep = time => {
     });
 }
 
-const main = async () {
+const main = async () => {
   while(true) {
     try {
       await connect();
