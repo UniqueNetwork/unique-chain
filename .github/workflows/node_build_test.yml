@@ -82,15 +82,13 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
-#      - name: Wait
-#        run: sleep 420s
-
       - uses: actions/setup-node@v3
         with:
           node-version: 16
 
       - name: Run tests
         run: |
+          yarn install
           yarn add @polkadot/api @polkadot/util mochawesome
           node -v
           echo "Ready to start tests"
