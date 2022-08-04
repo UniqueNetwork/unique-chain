@@ -24,7 +24,7 @@ const main = async () => {
       break;
     }
     catch(e) {
-      await sleep(1000);
+      await sleep(15000);
     }
   }
 }
