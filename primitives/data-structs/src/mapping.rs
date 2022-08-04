@@ -1,3 +1,21 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+//! This module contains mapping between different addresses.
+
 use core::marker::PhantomData;
 
 use sp_core::H160;
@@ -5,12 +23,19 @@ use sp_core::H160;
 use crate::{CollectionId, TokenId};
 use pallet_evm::account::CrossAccountId;
 
+/// Trait for mapping between token id and some `Address`.
 pub trait TokenAddressMapping<Address> {
+	/// Map token id to `Address`.
 	fn token_to_address(collection: CollectionId, token: TokenId) -> Address;
+
+	/// Map `Address` to token id.
 	fn address_to_token(address: &Address) -> Option<(CollectionId, TokenId)>;
+
+	/// Check is address for token.
 	fn is_token_address(address: &Address) -> bool;
 }
 
+/// Unit struct for mapping token id to/from *Evm address* represented by [`H160`].
 pub struct EvmTokenAddressMapping;
 
 /// 0xf8238ccfff8ed887463fd5e00000000100000002  - collection 1, token 2
@@ -46,6 +71,7 @@ impl TokenAddressMapping<H160> for EvmTokenAddressMapping {
 	}
 }
 
+/// Unit struct for mapping token id to/from [`CrossAccountId`].
 pub struct CrossTokenAddressMapping<A>(PhantomData<A>);
 
 impl<A, C: CrossAccountId<A>> TokenAddressMapping<C> for CrossTokenAddressMapping<A> {
