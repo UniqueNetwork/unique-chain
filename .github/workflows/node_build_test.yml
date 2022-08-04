@@ -88,7 +88,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache-dependency-path: tests/package.json
 
 #      - name: Install dependencies
 #        run: |
@@ -100,6 +99,7 @@ jobs:
       - name: Run tests
         run: |
           cd tests
+          yarn add polkadot/api polkadot/util mochawesome
           echo "Ready to start tests"
           node .docker/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
