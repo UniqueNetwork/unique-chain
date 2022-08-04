@@ -89,7 +89,8 @@ jobs:
       - name: Run tests
         run: |
           yarn install
-          yarn add @polkadot/api @polkadot/util mochawesome
+          yarn add @polkadot/api @polkadot/util mocha mochawesome
+
           node -v
           echo "Ready to start tests"
           node .docker/readyness.js
