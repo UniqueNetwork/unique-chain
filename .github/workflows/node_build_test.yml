@@ -90,6 +90,7 @@ jobs:
         run: |
           cd tests
           yarn install
+          yarn add mochawesome
           yarn --pure-lockfile
           echo "Ready to start tests"
           node scripts/readyness.js
