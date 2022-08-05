@@ -21,8 +21,16 @@ contract ERC165 is Dummy {
 	}
 }
 
+<<<<<<< HEAD
 /// @title Magic contract, which allows users to reconfigure other contracts
 /// @dev the ERC-165 identifier for this interface is 0xd77fab70
+=======
+<<<<<<< HEAD
+// Selector: 6073d917
+=======
+// Selector: 06fc42e9
+>>>>>>> path: add stubs
+>>>>>>> path: add stubs
 contract ContractHelpers is Dummy, ERC165 {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
@@ -44,11 +52,23 @@ contract ContractHelpers is Dummy, ERC165 {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
+<<<<<<< HEAD
 	/// Set sponsor.
 	/// @param contractAddress Contract for which a sponsor is being established.
 	/// @param sponsor User address who set as pending sponsor.
 	/// @dev EVM selector for this function is: 0xf01fba93,
 	///  or in textual repr: setSponsor(address,address)
+=======
+<<<<<<< HEAD
+	// Set sponsor.
+	//
+	// @param contract_address Contract for which a sponsor is being established.
+	// @param sponsor User address who set as pending sponsor.
+	//
+=======
+>>>>>>> path: add stubs
+	// Selector: setSponsor(address,address) f01fba93
+>>>>>>> path: add stubs
 	function setSponsor(address contractAddress, address sponsor) public {
 		require(false, stub_error);
 		contractAddress;
@@ -56,22 +76,44 @@ contract ContractHelpers is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+<<<<<<< HEAD
 	/// Set contract as self sponsored.
 	///
 	/// @param contractAddress Contract for which a self sponsoring is being enabled.
 	/// @dev EVM selector for this function is: 0x89f7d9ae,
 	///  or in textual repr: selfSponsoredEnable(address)
+=======
+<<<<<<< HEAD
+	// Set contract as self sponsored.
+	//
+	// @param contract_address Contract for which a self sponsoring is being enabled.
+	//
+	// Selector: selfSponsoredEnable(address) 89f7d9ae
+>>>>>>> path: add stubs
 	function selfSponsoredEnable(address contractAddress) public {
+=======
+	// Selector: confirmSponsorship(address) abc00001
+	function confirmSponsorship(address contractAddress) public {
+>>>>>>> path: add stubs
 		require(false, stub_error);
 		contractAddress;
 		dummy = 0;
 	}
 
+<<<<<<< HEAD
 	/// Remove sponsor.
 	///
 	/// @param contractAddress Contract for which a sponsorship is being removed.
 	/// @dev EVM selector for this function is: 0xef784250,
 	///  or in textual repr: removeSponsor(address)
+=======
+<<<<<<< HEAD
+	// Remove sponsor.
+	//
+	// @param contract_address Contract for which a sponsorship is being removed.
+	//
+	// Selector: removeSponsor(address) ef784250
+>>>>>>> path: add stubs
 	function removeSponsor(address contractAddress) public {
 		require(false, stub_error);
 		contractAddress;
@@ -98,6 +140,30 @@ contract ContractHelpers is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x743fc745,
 	///  or in textual repr: getSponsor(address)
 	function getSponsor(address contractAddress)
+=======
+	// Selector: getSponsor(address) 743fc745
+	function getSponsor(address contractAddress)
+		public
+		view
+		returns (Tuple0 memory)
+	{
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return Tuple0(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	// Selector: hasSponsor(address) 97418603
+	function hasSponsor(address contractAddress) public view returns (bool) {
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return false;
+	}
+
+	// Selector: hasPendingSponsor(address) 39b9b242
+	function hasPendingSponsor(address contractAddress)
+>>>>>>> path: add stubs
 		public
 		view
 		returns (Tuple0 memory)
@@ -121,13 +187,27 @@ contract ContractHelpers is Dummy, ERC165 {
 		return false;
 	}
 
+<<<<<<< HEAD
 	/// Check tat contract has pending sponsor.
 	///
 	/// @param contractAddress The contract for which the presence of a pending sponsor is checked.
 	/// @return **true** if contract has pending sponsor.
 	/// @dev EVM selector for this function is: 0x39b9b242,
 	///  or in textual repr: hasPendingSponsor(address)
+=======
+<<<<<<< HEAD
+	// Check tat contract has pending sponsor.
+	//
+	// @param contract_address The contract for which the presence of a pending sponsor is checked.
+	// @return **true** if contract has pending sponsor.
+	//
+	// Selector: hasPendingSponsor(address) 39b9b242
+>>>>>>> path: add stubs
 	function hasPendingSponsor(address contractAddress)
+=======
+	// Selector: sponsoringEnabled(address) 6027dc61
+	function sponsoringEnabled(address contractAddress)
+>>>>>>> path: add stubs
 		public
 		view
 		returns (bool)
@@ -136,6 +216,7 @@ contract ContractHelpers is Dummy, ERC165 {
 		contractAddress;
 		dummy;
 		return false;
+<<<<<<< HEAD
 	}
 
 	/// @dev EVM selector for this function is: 0x6027dc61,
@@ -149,6 +230,8 @@ contract ContractHelpers is Dummy, ERC165 {
 		contractAddress;
 		dummy;
 		return false;
+=======
+>>>>>>> path: add stubs
 	}
 
 	/// @dev EVM selector for this function is: 0xfde8a560,
