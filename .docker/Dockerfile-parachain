@@ -23,7 +23,7 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 
-RUN mkdir unique_parachain
+RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 # ===== BUILD ======
@@ -32,13 +32,11 @@ FROM rust-builder as builder-unique
 ARG PROFILE=release
 ARG FEATURE=
 
-RUN mkdir unique_parachain
+RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH
 RUN cargo build $FEATURE --$PROFILE
-   # && \
-   # cargo test
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
@@ -46,7 +44,7 @@ FROM rust-builder as builder-polkadot
 ARG POLKA_VERSION=release-v0.9.24
 ENV POLKA_VERSION $POLKA_VERSION
 
-RUN mkdir unique_parachain
+RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
@@ -77,7 +75,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 
-COPY ["./launch-config.json", "/polkadot-launch/launch-config.json"]
+COPY --from=builder-unique /unique_parachain/launch-config.json /polkadot-launch/launch-config.json
 
 
 CMD export NVM_DIR="$HOME/.nvm" && \
