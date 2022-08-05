@@ -22,8 +22,9 @@ use pallet_evm::{
 	account::CrossAccountId,
 };
 use sp_core::H160;
+use up_data_structs::SponsorshipState;
 use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
+	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT, Sponsoring,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -79,6 +80,13 @@ where
 
 	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
 		Ok(Pallet::<T>::get_sponsor(contract_address).is_some())
+	}
+
+	fn has_pending_sponsor(&self, contract_address: address) -> Result<bool> {
+		Ok(match Sponsoring::<T>::get(contract_address) {
+			SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => false,
+			SponsorshipState::Unconfirmed(_) => true,
+		})
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
