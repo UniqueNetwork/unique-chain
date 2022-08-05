@@ -46,10 +46,18 @@ impl<T: Config> ContractHelpers<T>
 where
 	T::AccountId: AsRef<[u8]>,
 {
+	/// Get contract ovner
+	/// 
+	/// @param Contract_address contract for which the owner is being determined.
+	/// @return Contract owner.
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
 		Ok(<Owner<T>>::get(contract_address))
 	}
 
+	/// Set sponsor.
+	/// 
+	/// @param contract_address Contract for which a sponsor is being established.
+	/// @param sponsor User address who set as pending sponsor.
 	fn set_sponsor(
 		&mut self,
 		caller: caller,
@@ -65,12 +73,21 @@ where
 		Ok(())
 	}
 
+	/// Confirm sponsorship.
+	/// 
+	/// @dev Caller must be same that set via [`set_sponsor`].
+	/// 
+	/// @param contract_address Сontract for which need to confirm sponsorship.
 	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
+	/// Get current sponsor.
+	/// 
+	/// @param contract_address The contract for which a sponsor is requested.
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
@@ -78,10 +95,18 @@ where
 		Ok((*sponsor.as_eth(), sponsor_sub))
 	}
 
+	/// Check tat contract has confirmed sponsor.
+	/// 
+	/// @param contract_address The contract for which the presence of a confirmed sponsor is checked.
+	/// @return **true** if contract has confirmed sponsor.
 	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
 		Ok(Pallet::<T>::get_sponsor(contract_address).is_some())
 	}
 
+	/// Check tat contract has pending sponsor.
+	/// 
+	/// @param contract_address The contract for which the presence of a pending sponsor is checked.
+	/// @return **true** if contract has pending sponsor.
 	fn has_pending_sponsor(&self, contract_address: address) -> Result<bool> {
 		Ok(match Sponsoring::<T>::get(contract_address) {
 			SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => false,

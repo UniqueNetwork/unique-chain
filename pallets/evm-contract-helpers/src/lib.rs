@@ -101,6 +101,11 @@ pub mod pallet {
 		OnEmpty = T::DefaultSponsoringRateLimit,
 	>;
 
+	/// Storage for last sponsored block.
+	/// 
+	/// * **Key1** - contract address.
+	/// * **Key2** - sponsored user address.
+	/// * **Value** - last sponsored block number.
 	#[pallet::storage]
 	pub(super) type SponsorBasket<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
@@ -151,6 +156,14 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Get contract owner.
+		pub fn contract_owner(contract: H160) -> H160 {
+			<Owner<T>>::get(contract)
+		}
+		
+		/// Set `sponsor` for `contract`. 
+		/// 
+		/// `sender` must be owner of contract.
 		pub fn set_sponsor(
 			sender: &T::CrossAccountId,
 			contract: H160,
@@ -164,6 +177,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Confirm sponsorship.
+		/// 
+		/// `sender` must be same that set via [`set_sponsor`].
 		pub fn confirm_sponsorship(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
 			match Sponsoring::<T>::get(contract) {
 				SponsorshipState::Unconfirmed(sponsor) => {
@@ -181,6 +197,7 @@ pub mod pallet {
 			}
 		}
 
+		/// Get sponsor.
 		pub fn get_sponsor(contract: H160) -> Option<T::CrossAccountId> {
 			match Sponsoring::<T>::get(contract) {
 				SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => None,
@@ -224,12 +241,6 @@ pub mod pallet {
 		pub fn ensure_owner(contract: H160, user: H160) -> DispatchResult {
 			ensure!(<Owner<T>>::get(&contract) == user, Error::<T>::NoPermission);
 			Ok(())
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		pub fn contract_owner(contract: H160) -> H160 {
-			<Owner<T>>::get(contract)
 		}
 	}
 }
