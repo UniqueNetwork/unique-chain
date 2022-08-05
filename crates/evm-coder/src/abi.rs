@@ -328,7 +328,7 @@ where
 	}
 }
 
-macro_rules! impl_tuples_abi_reader {
+macro_rules! impl_tuples {
 	($($ident:ident)+) => {
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
 		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
@@ -342,19 +342,29 @@ macro_rules! impl_tuples_abi_reader {
 				))
 			}
 		}
+		#[allow(non_snake_case)]
+		impl<$($ident),+> AbiWrite for &($($ident,)+)
+		where
+			$($ident: AbiWrite,)+
+		{
+			fn abi_write(&self, writer: &mut AbiWriter) {
+				let ($($ident,)+) = self;
+				$($ident.abi_write(writer);)+
+			}
+		}
 	};
 }
 
-impl_tuples_abi_reader! {A}
-impl_tuples_abi_reader! {A B}
-impl_tuples_abi_reader! {A B C}
-impl_tuples_abi_reader! {A B C D}
-impl_tuples_abi_reader! {A B C D E}
-impl_tuples_abi_reader! {A B C D E F}
-impl_tuples_abi_reader! {A B C D E F G}
-impl_tuples_abi_reader! {A B C D E F G H}
-impl_tuples_abi_reader! {A B C D E F G H I}
-impl_tuples_abi_reader! {A B C D E F G H I J}
+impl_tuples! {A}
+impl_tuples! {A B}
+impl_tuples! {A B C}
+impl_tuples! {A B C D}
+impl_tuples! {A B C D E}
+impl_tuples! {A B C D E F}
+impl_tuples! {A B C D E F G}
+impl_tuples! {A B C D E F G H}
+impl_tuples! {A B C D E F G H I}
+impl_tuples! {A B C D E F G H I J}
 
 pub trait AbiWrite {
 	fn abi_write(&self, writer: &mut AbiWriter);
@@ -421,32 +431,6 @@ impl AbiWrite for &Vec<u8> {
 impl AbiWrite for () {
 	fn abi_write(&self, _writer: &mut AbiWriter) {}
 }
-
-macro_rules! impl_tuples_abi_writer {
-	($($ident:ident)+) => {
-		#[allow(non_snake_case)]
-		impl<$($ident),+> AbiWrite for &($($ident,)+)
-		where
-			$($ident: AbiWrite,)+
-		{
-			fn abi_write(&self, writer: &mut AbiWriter) {
-				let ($($ident,)+) = self;
-				$($ident.abi_write(writer);)+
-			}
-		}
-	};
-}
-
-impl_tuples_abi_writer! {A}
-impl_tuples_abi_writer! {A B}
-impl_tuples_abi_writer! {A B C}
-impl_tuples_abi_writer! {A B C D}
-impl_tuples_abi_writer! {A B C D E}
-impl_tuples_abi_writer! {A B C D E F}
-impl_tuples_abi_writer! {A B C D E F G}
-impl_tuples_abi_writer! {A B C D E F G H}
-impl_tuples_abi_writer! {A B C D E F G H I}
-impl_tuples_abi_writer! {A B C D E F G H I J}
 
 #[macro_export]
 macro_rules! abi_decode {
