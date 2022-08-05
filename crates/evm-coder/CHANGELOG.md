@@ -1,4 +1,16 @@
-<!-- bureaucrate goes here -->
+# Change Log
+
+All notable changes to this project will be documented in this file.
+## [v0.1.2] 2022-08-19
+
+### Added
+
+ - Implementation `AbiWrite` for tuples.
+
+ ### Fixes
+
+ - Tuple generation for solidity.
+
 ## [v0.1.1] 2022-08-16
 
 ### Other changes
