@@ -194,11 +194,10 @@ pub mod pallet {
 			match Sponsoring::<T>::get(contract) {
 				SponsorshipState::Unconfirmed(sponsor) => {
 					ensure!(sponsor == *sender, Error::<T>::NoPermission);
-					Sponsoring::<T>::mutate_exists(contract, |state| {
-						*state = Some(SponsorshipState::<T::CrossAccountId>::Confirmed(
-							sponsor.clone(),
-						))
-					});
+					Sponsoring::<T>::insert(
+						contract,
+						SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor),
+					);
 					Ok(())
 				}
 				SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => {

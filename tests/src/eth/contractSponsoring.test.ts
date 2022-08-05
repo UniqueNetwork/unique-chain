@@ -110,6 +110,16 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
   });
 
+  itWeb3('Sponsorship can not be confirmed by the address that not set as sponsor', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const notSponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
+    await expect(helpers.methods.confirmSponsorship(flipper.options.address).call({from: notSponsor})).to.be.rejectedWith('NoPendingSponsor');
+    expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
+  });
+
   itWeb3('Get self sponsored sponsor', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
