@@ -156,17 +156,13 @@ pub fn withdraw_transfer<T: Config>(
 pub fn withdraw_create_item<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
-	_properties: &CreateItemData,
+	properties: &CreateItemData,
 ) -> Option<()> {
-	if _properties.data_size() as u32 > collection.limits.sponsored_data_size() {
-		return None;
-	}
-
 	// sponsor timeout
 	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 	let limit = collection
 		.limits
-		.sponsor_transfer_timeout(match _properties {
+		.sponsor_transfer_timeout(match properties {
 			CreateItemData::NFT(_) => NFT_SPONSOR_TRANSFER_TIMEOUT,
 			CreateItemData::Fungible(_) => FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 			CreateItemData::ReFungible(_) => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,

@@ -1314,7 +1314,6 @@ export interface PalletRmrkCoreCall extends Enum {
 /** @name PalletRmrkCoreError */
 export interface PalletRmrkCoreError extends Enum {
   readonly isCorruptedCollectionType: boolean;
-  readonly isNftTypeEncodeError: boolean;
   readonly isRmrkPropertyKeyIsTooLong: boolean;
   readonly isRmrkPropertyValueIsTooLong: boolean;
   readonly isRmrkPropertyIsNotFound: boolean;
@@ -1333,7 +1332,7 @@ export interface PalletRmrkCoreError extends Enum {
   readonly isCannotRejectNonPendingNft: boolean;
   readonly isResourceNotPending: boolean;
   readonly isNoAvailableResourceId: boolean;
-  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'RmrkPropertyIsNotFound' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'CannotRejectNonPendingNft' | 'ResourceNotPending' | 'NoAvailableResourceId';
+  readonly type: 'CorruptedCollectionType' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'RmrkPropertyIsNotFound' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'CannotRejectNonPendingNft' | 'ResourceNotPending' | 'NoAvailableResourceId';
 }
 
 /** @name PalletRmrkCoreEvent */
@@ -2459,14 +2458,12 @@ export interface UpDataStructsCreateNftExData extends Struct {
 
 /** @name UpDataStructsCreateReFungibleData */
 export interface UpDataStructsCreateReFungibleData extends Struct {
-  readonly constData: Bytes;
   readonly pieces: u128;
   readonly properties: Vec<UpDataStructsProperty>;
 }
 
 /** @name UpDataStructsCreateRefungibleExData */
 export interface UpDataStructsCreateRefungibleExData extends Struct {
-  readonly constData: Bytes;
   readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
   readonly properties: Vec<UpDataStructsProperty>;
 }

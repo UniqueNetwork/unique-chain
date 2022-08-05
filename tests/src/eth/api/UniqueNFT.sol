@@ -203,9 +203,13 @@ interface ERC721Metadata is Dummy, ERC165 {
 	function symbol() external view returns (string memory);
 
 	// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
-	// @dev Throws if `tokenId` is not a valid NFT. URIs are defined in RFC
-	//  3986. The URI may point to a JSON file that conforms to the "ERC721
-	//  Metadata JSON Schema".
+	//
+	// @dev If the token has a `url` property and it is not empty, it is returned.
+	//  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
+	//  If the collection property `baseURI` is empty or absent, return "" (empty string)
+	//  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	//  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
+	//
 	// @return token's const_metadata
 	//
 	// Selector: tokenURI(uint256) c87b56dd
