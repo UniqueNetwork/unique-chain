@@ -73,9 +73,12 @@ where
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
-		let sponsor_sub =
-			pallet_common::eth::convert_cross_account_to_eth_uint256::<T>(&sponsor);
+		let sponsor_sub = pallet_common::eth::convert_cross_account_to_eth_uint256::<T>(&sponsor);
 		Ok((*sponsor.as_eth(), sponsor_sub))
+	}
+
+	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
+		Ok(Pallet::<T>::get_sponsor(contract_address).is_some())
 	}
 
 	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
