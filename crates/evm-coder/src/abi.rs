@@ -184,6 +184,7 @@ impl<'i> AbiReader<'i> {
 pub struct AbiWriter {
 	static_part: Vec<u8>,
 	dynamic_part: Vec<(usize, AbiWriter)>,
+	had_call: bool,
 }
 impl AbiWriter {
 	pub fn new() -> Self {
@@ -192,6 +193,7 @@ impl AbiWriter {
 	pub fn new_call(method_id: u32) -> Self {
 		let mut val = Self::new();
 		val.static_part.extend(&method_id.to_be_bytes());
+		val.had_call = true;
 		val
 	}
 
@@ -264,7 +266,7 @@ impl AbiWriter {
 
 	pub fn finish(mut self) -> Vec<u8> {
 		for (static_offset, part) in self.dynamic_part {
-			let part_offset = self.static_part.len();
+			let part_offset = self.static_part.len() - self.had_call.then(|| 4).unwrap_or(0);
 
 			let encoded_dynamic_offset = usize::to_be_bytes(part_offset);
 			self.static_part[static_offset + ABI_ALIGNMENT - encoded_dynamic_offset.len()

@@ -31,7 +31,7 @@ import {CollectionMode, CrossAccountId, getDetailedCollectionInfo, getGenericRes
 import collectionHelpersAbi from '../collectionHelpersAbi.json';
 import fungibleAbi from '../fungibleAbi.json';
 import nonFungibleAbi from '../nonFungibleAbi.json';
-import refungibleAbi from '../refungibleAbi.json';
+import refungibleAbi from '../reFungibleAbi.json';
 import contractHelpersAbi from './contractHelpersAbi.json';
 
 export const GAS_ARGS = {gas: 2500000};

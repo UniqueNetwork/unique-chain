@@ -88,6 +88,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::erc_token::ERC20Events;
+use crate::erc::ERC721Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
@@ -96,7 +97,8 @@ use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transac
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CommonCollectionOperations, Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
+	CommonCollectionOperations, Error as CommonError, Event as CommonEvent,
+	eth::collection_id_to_address, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
 use scale_info::TypeInfo;
@@ -117,12 +119,16 @@ pub mod common;
 pub mod erc;
 pub mod erc_token;
 pub mod weights;
+
+pub type CreateItemData<T> =
+	CreateRefungibleExData<<T as pallet_evm::account::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
 /// for the convenience of database access. Notably contains the token metadata.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
+#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
 pub struct ItemData {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 
@@ -162,7 +168,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(2);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -180,7 +186,9 @@ pub mod pallet {
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
 
 	/// Token data, used to partially describe a token.
+	// TODO: remove
 	#[pallet::storage]
+	#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
 	pub type TokenData<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = ItemData,
@@ -260,11 +268,11 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-				<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
-					Some(<ItemDataVersion2>::from(v))
-				})
+			let storage_version = StorageVersion::get::<Pallet<T>>();
+			if storage_version < StorageVersion::new(2) {
+				<TokenData<T>>::remove_all(None);
 			}
+			StorageVersion::new(2).put::<Pallet<T>>();
 
 			0
 		}
@@ -377,7 +385,6 @@ impl<T: Config> Pallet<T> {
 
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
-		<TokenData<T>>::remove_prefix((id,), None);
 		<TotalSupply<T>>::remove_prefix((id,), None);
 		<Balance<T>>::remove_prefix((id,), None);
 		<Allowance<T>>::remove_prefix((id,), None);
@@ -387,13 +394,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
-		<TokenData<T>>::iter_prefix((collection_id,))
+		<TotalSupply<T>>::iter_prefix((collection_id,))
 			.next()
 			.is_some()
 	}
 
 	pub fn burn_token_unchecked(
 		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
 		token_id: TokenId,
 	) -> DispatchResult {
 		let burnt = <TokensBurnt<T>>::get(collection.id)
@@ -401,12 +409,19 @@ impl<T: Config> Pallet<T> {
 			.ok_or(ArithmeticError::Overflow)?;
 
 		<TokensBurnt<T>>::insert(collection.id, burnt);
-		<TokenData<T>>::remove((collection.id, token_id));
 		<TokenProperties<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
 		<Balance<T>>::remove_prefix((collection.id, token_id), None);
 		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
-		// TODO: ERC721 transfer event
+
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				token_id: token_id.into(),
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
 		Ok(())
 	}
 
@@ -448,7 +463,15 @@ impl<T: Config> Pallet<T> {
 			<Owned<T>>::remove((collection.id, owner, token));
 			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
-			Self::burn_token_unchecked(collection, token)?;
+			Self::burn_token_unchecked(collection, owner, token)?;
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: *owner.as_eth(),
+					to: H160::default(),
+					value: amount.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 				collection.id,
 				token,
@@ -477,6 +500,17 @@ impl<T: Config> Pallet<T> {
 			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, token);
 			<Balance<T>>::remove((collection.id, token, owner));
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
+
+			if let Some(user) = Self::token_owner(collection.id, token) {
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						to: *user.as_eth(),
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			}
 		} else {
 			<Balance<T>>::insert((collection.id, token, owner), balance);
 		}
@@ -694,12 +728,13 @@ impl<T: Config> Pallet<T> {
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
-		let balance_from = <Balance<T>>::get((collection.id, token, from))
+		let initial_balance_from = <Balance<T>>::get((collection.id, token, from));
+		let updated_balance_from = initial_balance_from
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let mut create_target = false;
 		let from_to_differ = from != to;
-		let balance_to = if from != to {
+		let updated_balance_to = if from != to {
 			let old_balance = <Balance<T>>::get((collection.id, token, to));
 			if old_balance == 0 {
 				create_target = true;
@@ -713,7 +748,7 @@ impl<T: Config> Pallet<T> {
 			None
 		};
 
-		let account_balance_from = if balance_from == 0 {
+		let account_balance_from = if updated_balance_from == 0 {
 			Some(
 				<AccountBalance<T>>::get((collection.id, from))
 					.checked_sub(1)
@@ -749,15 +784,15 @@ impl<T: Config> Pallet<T> {
 			nesting_budget,
 		)?;
 
-		if let Some(balance_to) = balance_to {
+		if let Some(updated_balance_to) = updated_balance_to {
 			// from != to
-			if balance_from == 0 {
+			if updated_balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
 				<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
 			} else {
-				<Balance<T>>::insert((collection.id, token, from), balance_from);
+				<Balance<T>>::insert((collection.id, token, from), updated_balance_from);
 			}
-			<Balance<T>>::insert((collection.id, token, to), balance_to);
+			<Balance<T>>::insert((collection.id, token, to), updated_balance_to);
 			if let Some(account_balance_from) = account_balance_from {
 				<AccountBalance<T>>::insert((collection.id, from), account_balance_from);
 				<Owned<T>>::remove((collection.id, from, token));
@@ -779,6 +814,7 @@ impl<T: Config> Pallet<T> {
 				token,
 			)),
 		);
+
 		<PalletCommon<T>>::deposit_event(CommonEvent::Transfer(
 			collection.id,
 			token,
@@ -786,6 +822,46 @@ impl<T: Config> Pallet<T> {
 			to.clone(),
 			amount,
 		));
+
+		let total_supply = <TotalSupply<T>>::get((collection.id, token));
+
+		if amount == total_supply {
+			// if token was fully owned by `from` and will be fully owned by `to` after transfer
+			<PalletEvm<T>>::deposit_log(
+				ERC721Events::Transfer {
+					from: *from.as_eth(),
+					to: *to.as_eth(),
+					token_id: token.into(),
+				}
+				.to_log(collection_id_to_address(collection.id)),
+			);
+		} else if let Some(updated_balance_to) = updated_balance_to {
+			// if `from` not equals `to`. This condition is needed to avoid sending event
+			// when `from` fully owns token and sends part of token pieces to itself.
+			if initial_balance_from == total_supply {
+				// if token was fully owned by `from` and will be only partially owned by `to`
+				// and `from` after transfer
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: *from.as_eth(),
+						to: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			} else if updated_balance_to == total_supply {
+				// if token was partially owned by `from` and will be fully owned by `to` after transfer
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						to: *to.as_eth(),
+						token_id: token.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			}
+		}
+
 		Ok(())
 	}
 
@@ -797,7 +873,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateRefungibleExData<T::CrossAccountId>>,
+		data: Vec<CreateItemData<T>>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
@@ -883,13 +959,6 @@ impl<T: Config> Pallet<T> {
 				let token_id = first_token_id + i as u32 + 1;
 				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
 
-				<TokenData<T>>::insert(
-					(collection.id, token_id),
-					ItemData {
-						const_data: data.const_data.clone(),
-					},
-				);
-
 				for (user, amount) in data.users.iter() {
 					if *amount == 0 {
 						continue;
@@ -926,11 +995,35 @@ impl<T: Config> Pallet<T> {
 		for (i, token) in data.into_iter().enumerate() {
 			let token_id = first_token_id + i as u32 + 1;
 
-			for (user, amount) in token.users.into_iter() {
-				if amount == 0 {
-					continue;
-				}
+			let receivers = token
+				.users
+				.into_iter()
+				.filter(|(_, amount)| *amount > 0)
+				.collect::<Vec<_>>();
 
+			if let [(user, _)] = receivers.as_slice() {
+				// if there is exactly one receiver
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: H160::default(),
+						to: *user.as_eth(),
+						token_id: token_id.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			} else if let [_, ..] = receivers.as_slice() {
+				// if there is more than one receiver
+				<PalletEvm<T>>::deposit_log(
+					ERC721Events::Transfer {
+						from: H160::default(),
+						to: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+						token_id: token_id.into(),
+					}
+					.to_log(collection_id_to_address(collection.id)),
+				);
+			}
+
+			for (user, amount) in receivers.into_iter() {
 				<PalletEvm<T>>::deposit_log(
 					ERC20Events::Transfer {
 						from: H160::default(),
@@ -1120,7 +1213,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateRefungibleExData<T::CrossAccountId>,
+		data: CreateItemData<T>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)

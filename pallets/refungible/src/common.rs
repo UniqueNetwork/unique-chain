@@ -32,7 +32,7 @@ use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
+	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted, TotalSupply,
 };
 
 macro_rules! max_weight_of {
@@ -155,7 +155,6 @@ fn map_create_data<T: Config>(
 ) -> Result<CreateRefungibleExData<T::CrossAccountId>, DispatchError> {
 	match data {
 		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateRefungibleExData {
-			const_data: data.const_data,
 			users: {
 				let mut out = BTreeMap::new();
 				out.insert(to.clone(), data.pieces);
@@ -421,7 +420,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	}
 
 	fn collection_tokens(&self) -> Vec<TokenId> {
-		<TokenData<T>>::iter_prefix((self.id,))
+		<TotalSupply<T>>::iter_prefix((self.id,))
 			.map(|(id, _)| id)
 			.collect()
 	}
