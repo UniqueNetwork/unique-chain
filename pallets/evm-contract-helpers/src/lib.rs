@@ -49,10 +49,7 @@ pub mod pallet {
 		NoPendingSponsor,
 	}
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
-
 	#[pallet::pallet]
-	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
@@ -102,7 +99,7 @@ pub mod pallet {
 	>;
 
 	/// Storage for last sponsored block.
-	/// 
+	///
 	/// * **Key1** - contract address.
 	/// * **Key2** - sponsored user address.
 	/// * **Value** - last sponsored block number.
@@ -145,24 +142,14 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			let storage_version = StorageVersion::get::<Pallet<T>>();
-			if storage_version < StorageVersion::new(1) {}
-
-			0
-		}
-	}
-
 	impl<T: Config> Pallet<T> {
 		/// Get contract owner.
 		pub fn contract_owner(contract: H160) -> H160 {
 			<Owner<T>>::get(contract)
 		}
-		
-		/// Set `sponsor` for `contract`. 
-		/// 
+
+		/// Set `sponsor` for `contract`.
+		///
 		/// `sender` must be owner of contract.
 		pub fn set_sponsor(
 			sender: &T::CrossAccountId,
@@ -177,8 +164,31 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Set `contract` as self sponsored.
+		///
+		/// `sender` must be owner of contract.
+		pub fn self_sponsored_enable(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
+			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
+			Sponsoring::<T>::insert(
+				contract,
+				SponsorshipState::<T::CrossAccountId>::Confirmed(T::CrossAccountId::from_eth(
+					contract,
+				)),
+			);
+			Ok(())
+		}
+
+		/// Remove sponsor for `contract`.
+		///
+		/// `sender` must be owner of contract.
+		pub fn remove_sponsor(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
+			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
+			Sponsoring::<T>::remove(contract);
+			Ok(())
+		}
+
 		/// Confirm sponsorship.
-		/// 
+		///
 		/// `sender` must be same that set via [`set_sponsor`].
 		pub fn confirm_sponsorship(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
 			match Sponsoring::<T>::get(contract) {

@@ -24,7 +24,8 @@ use pallet_evm::{
 use sp_core::H160;
 use up_data_structs::SponsorshipState;
 use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT, Sponsoring,
+	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
+	Sponsoring,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -47,7 +48,7 @@ where
 	T::AccountId: AsRef<[u8]>,
 {
 	/// Get contract ovner
-	/// 
+	///
 	/// @param Contract_address contract for which the owner is being determined.
 	/// @return Contract owner.
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
@@ -55,7 +56,7 @@ where
 	}
 
 	/// Set sponsor.
-	/// 
+	///
 	/// @param contract_address Contract for which a sponsor is being established.
 	/// @param sponsor User address who set as pending sponsor.
 	fn set_sponsor(
@@ -73,10 +74,28 @@ where
 		Ok(())
 	}
 
+	/// Set contract as self sponsored.
+	///
+	/// @param contract_address Contract for which a self sponsoring is being enabled.
+	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
+		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// Remove sponsor.
+	///
+	/// @param contract_address Contract for which a sponsorship is being removed.
+	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
+		Pallet::<T>::remove_sponsor(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
 	/// Confirm sponsorship.
-	/// 
+	///
 	/// @dev Caller must be same that set via [`set_sponsor`].
-	/// 
+	///
 	/// @param contract_address Сontract for which need to confirm sponsorship.
 	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
@@ -85,7 +104,7 @@ where
 	}
 
 	/// Get current sponsor.
-	/// 
+	///
 	/// @param contract_address The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
@@ -96,7 +115,7 @@ where
 	}
 
 	/// Check tat contract has confirmed sponsor.
-	/// 
+	///
 	/// @param contract_address The contract for which the presence of a confirmed sponsor is checked.
 	/// @return **true** if contract has confirmed sponsor.
 	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
@@ -104,7 +123,7 @@ where
 	}
 
 	/// Check tat contract has pending sponsor.
-	/// 
+	///
 	/// @param contract_address The contract for which the presence of a pending sponsor is checked.
 	/// @return **true** if contract has pending sponsor.
 	fn has_pending_sponsor(&self, contract_address: address) -> Result<bool> {
