@@ -16,7 +16,7 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
-use evm_coder::{types::*};
+use evm_coder::{types::uint256, execution::Result};
 pub use pallet_evm::account::CrossAccountId;
 use sp_core::H160;
 use up_data_structs::CollectionId;
@@ -53,24 +53,11 @@ pub fn is_collection(address: &H160) -> bool {
 }
 
 /// Convert `CrossAccountId` to `uint256`.
-pub fn convert_cross_account_to_eth_uint256<T: Config>(from: &T::CrossAccountId) -> uint256
+pub fn convert_cross_account_to_eth_uint256<T: Config>(from: &T::CrossAccountId) -> Result<uint256>
 where
 	T::AccountId: AsRef<[u8]>,
 {
 	use pallet_evm::account::CrossAccountId;
 	let slice = from.as_sub().as_ref();
 	uint256::from_big_endian(slice)
-}
-
-/// Converts Substrate address to CrossAccountId
-pub fn convert_substrate_address_to_cross_account_id<T: Config>(
-	address: uint256,
-) -> T::CrossAccountId
-where
-	T::AccountId: From<[u8; 32]>,
-{
-	let mut address_arr: [u8; 32] = Default::default();
-	address.to_big_endian(&mut address_arr);
-	let account_id = T::AccountId::from(address_arr);
-	T::CrossAccountId::from_sub(account_id)
 }
