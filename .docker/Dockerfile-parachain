@@ -1,35 +1,19 @@
 # ===== Rust builder =====
-FROM phusion/baseimage:focal-1.1.0 as rust-builder
+FROM ubuntu:20.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=nightly-2022-05-11
-#ARG RUST_C=1.62.0-nightly
-ARG POLKA_VERSION=release-v0.9.24
-ARG UNIQUE_BRANCH=develop
-
-#ARG USER=***
-#ARG PASS=***
-
 
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
-#ENV RUST_C $RUST_C
-ENV POLKA_VERSION $POLKA_VERSION
-ENV UNIQUE_BRANCH $UNIQUE_BRANCH
-
-
-#RUN echo $RUST_TOOLCHAIN
-#RUN echo $RUST_C
-#RUN echo $POLKA_VERSION
-#RUN echo $UNIQUE_BRANCH
-
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN apt-get update && \
-    apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-    apt-get install -y cmake pkg-config libssl-dev git clang
+    apt-get install -y cmake pkg-config libssl-dev git clang && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -38,48 +22,38 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN cargo install cargo-chef
 
-RUN mkdir unique_parachain
+RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
-
-# ===== Chef =====
-FROM rust-builder as chef
-
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
 
 # ===== BUILD ======
-FROM rust-builder as builder
+FROM rust-builder as builder-unique
 
-RUN mkdir unique_parachain
+ARG PROFILE=release
+ARG FEATURE=
+
+RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-COPY --from=chef /unique_parachain/recipe.json recipe.json
-ARG PROFILE=release
-RUN cargo chef cook "--$PROFILE" --recipe-path recipe.json
-
-COPY . .
-RUN cargo build "--$PROFILE"
-   # && \
-   # cargo test
+RUN git clone $REPO_URL -b $BRANCH
+RUN cargo build $FEATURE --$PROFILE
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
 
-RUN mkdir unique_parachain
+ARG POLKA_VERSION=release-v0.9.24
+ENV POLKA_VERSION $POLKA_VERSION
+
+RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
     cd polkadot && \
-    git tag -n && \
-	cargo build --release
+    cargo build --release
 
 # ===== RUN ======
 
-FROM phusion/baseimage:focal-1.1.0
-
-ARG PROFILE=release
+FROM ubuntu:20.04
 
 RUN apt-get -y update && \
       apt-get -y upgrade && \
@@ -87,19 +61,22 @@ RUN apt-get -y update && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-      nvm install v15.5.0 && \
-      nvm use v15.5.0
+      nvm install v16.16.0 && \
+      nvm use v16.16.0
 
-RUN git clone https://github.com/paritytech/polkadot-launch
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b feature/runtime-upgrade-testing
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
     npm install --global yarn && \
-    yarn
+    yarn install
 
-COPY --from=builder /unique_parachain/target/$PROFILE/unique-collator /unique-chain/target/$PROFILE/
-COPY --from=builder-polkadot /unique_parachain/polkadot/target/$PROFILE/polkadot /polkadot/target/$PROFILE/
+COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+
+COPY --from=builder-unique /unique_parachain/launch-config.json /polkadot-launch/launch-config.json
+
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
