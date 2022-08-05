@@ -74,7 +74,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKA_VERSION=${{ env.POLKA_VERSION }}
             FEATURE=${{ matrix.features }}
-            BRANCH=${{ github.base_ref }}
+            BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
