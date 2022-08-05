@@ -3,6 +3,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+// Anonymous struct
+struct Tuple0 {
+	address field_0;
+	uint256 field_1;
+}
+
 // Common stubs holder
 contract Dummy {
 	uint8 dummy;
@@ -21,7 +27,7 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 7b4866f9
+// Selector: 06fc42e9
 contract ContractHelpers is Dummy, ERC165 {
 	// Selector: contractOwner(address) 5152b14c
 	function contractOwner(address contractAddress)
@@ -35,8 +41,43 @@ contract ContractHelpers is Dummy, ERC165 {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	// Selector: sponsoringEnabled(address) 6027dc61
-	function sponsoringEnabled(address contractAddress)
+	// Selector: setSponsor(address,address) f01fba93
+	function setSponsor(address contractAddress, address sponsor) public {
+		require(false, stub_error);
+		contractAddress;
+		sponsor;
+		dummy = 0;
+	}
+
+	// Selector: confirmSponsorship(address) abc00001
+	function confirmSponsorship(address contractAddress) public {
+		require(false, stub_error);
+		contractAddress;
+		dummy = 0;
+	}
+
+	// Selector: getSponsor(address) 743fc745
+	function getSponsor(address contractAddress)
+		public
+		view
+		returns (Tuple0 memory)
+	{
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return Tuple0(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	// Selector: hasSponsor(address) 97418603
+	function hasSponsor(address contractAddress) public view returns (bool) {
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return false;
+	}
+
+	// Selector: hasPendingSponsor(address) 39b9b242
+	function hasPendingSponsor(address contractAddress)
 		public
 		view
 		returns (bool)
@@ -47,14 +88,16 @@ contract ContractHelpers is Dummy, ERC165 {
 		return false;
 	}
 
-	// Deprecated
-	//
-	// Selector: toggleSponsoring(address,bool) fcac6d86
-	function toggleSponsoring(address contractAddress, bool enabled) public {
+	// Selector: sponsoringEnabled(address) 6027dc61
+	function sponsoringEnabled(address contractAddress)
+		public
+		view
+		returns (bool)
+	{
 		require(false, stub_error);
 		contractAddress;
-		enabled;
-		dummy = 0;
+		dummy;
+		return false;
 	}
 
 	// Selector: setSponsoringMode(address,uint8) fde8a560
