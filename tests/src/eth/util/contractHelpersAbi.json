@@ -120,6 +120,32 @@
         "internalType": "address",
         "name": "contractAddress",
         "type": "address"
+      }
+    ],
+    "name": "removeSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "selfSponsoredEnable",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
       },
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
