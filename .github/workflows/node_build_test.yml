@@ -62,7 +62,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}  #Checking out head commit
+          ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
@@ -74,7 +74,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKA_VERSION=${{ env.POLKA_VERSION }}
             FEATURE=${{ matrix.features }}
-            BRANCH=${{ github.event.pull_request.head.sha }}
+            BRANCH=${{ github.base_ref }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
