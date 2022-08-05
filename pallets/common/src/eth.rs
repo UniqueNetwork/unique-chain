@@ -58,16 +58,3 @@ where
 	let slice = from.as_sub().as_ref();
 	uint256::from_big_endian(slice)
 }
-
-/// Converts Substrate address to CrossAccountId
-pub fn convert_substrate_address_to_cross_account_id<T: Config>(
-	address: uint256,
-) -> T::CrossAccountId
-where
-	T::AccountId: From<[u8; 32]>,
-{
-	let mut address_arr: [u8; 32] = Default::default();
-	address.to_big_endian(&mut address_arr);
-	let account_id = T::AccountId::from(address_arr);
-	T::CrossAccountId::from_sub(account_id)
-}
