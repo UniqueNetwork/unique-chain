@@ -1711,3 +1711,6 @@ export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateK
     });
   });
 }
+
+itApi.only = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {only: true});
+itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {skip: true});
