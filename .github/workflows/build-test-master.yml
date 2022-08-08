@@ -27,10 +27,10 @@ jobs:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
-    needs: pre-requisites
+
     name: Build Container, Spin it Up an test
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.
 
     strategy:
       matrix:
