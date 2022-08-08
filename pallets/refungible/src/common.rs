@@ -33,7 +33,7 @@ use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted, TotalSupply, CreateItemData,
+	SelfWeightOf, weights::WeightInfo, TokensMinted, TotalSupply, CreateItemData,
 };
 
 macro_rules! max_weight_of {
@@ -457,16 +457,31 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
-	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
-		None
+	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
+		<Pallet<T>>::token_properties((self.id, token_id))
+			.get(key)
+			.cloned()
 	}
 
-	fn token_properties(
-		&self,
-		_token_id: TokenId,
-		_keys: Option<Vec<PropertyKey>>,
-	) -> Vec<Property> {
-		Vec::new()
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
+		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+
+		keys.map(|keys| {
+			keys.into_iter()
+				.filter_map(|key| {
+					properties.get(&key).map(|value| Property {
+						key,
+						value: value.clone(),
+					})
+				})
+				.collect()
+		})
+		.unwrap_or_else(|| {
+			properties
+				.into_iter()
+				.map(|(key, value)| Property { key, value })
+				.collect()
+		})
 	}
 
 	fn total_supply(&self) -> u32 {

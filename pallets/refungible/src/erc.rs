@@ -27,7 +27,7 @@ use core::{
 	convert::TryInto,
 };
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
-use frame_support::{BoundedBTreeMap, BoundedVec};
+use frame_support::BoundedBTreeMap;
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,
 	erc::{
