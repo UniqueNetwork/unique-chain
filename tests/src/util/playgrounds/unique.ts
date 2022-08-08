@@ -580,7 +580,8 @@ class CollectionGroup extends HelperGroup {
  *
  * @param collectionId ID of collection
  * @param tokenId ID of token
- * @param addressObj 
+ * @param addressObj address for which the sponsorship is checked
+ * @example await getTokenNextSponsored(1, 2, {Substrate: '5DfhbVfww7ThF8q6f3...'});
  * @returns number of blocks or null if sponsorship hasn't been set
  */
   async getTokenNextSponsored(collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<number | null> {
@@ -588,7 +589,7 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * Get number of collection created on current chain.
+   * Get the number of created collections.
    * 
    * @returns number of created collections
    */
@@ -600,6 +601,7 @@ class CollectionGroup extends HelperGroup {
    * Get information about the collection with additional data, including the number of tokens it contains, its administrators, the normalized address of the collection's owner, and decoded name and description.
    * 
    * @param collectionId ID of collection
+   * @example await getData(2)
    * @returns collection information object
    */
   async getData(collectionId: number): Promise<{
@@ -634,6 +636,7 @@ class CollectionGroup extends HelperGroup {
    * Get the normalized addresses of the collection's administrators.
    * 
    * @param collectionId ID of collection
+   * @example await getAdmins(1)
    * @returns array of administrators
    */
   async getAdmins(collectionId: number): Promise<ICrossAccountId[]> {
@@ -649,6 +652,7 @@ class CollectionGroup extends HelperGroup {
    * Get the effective limits of the collection instead of null for default values
    * 
    * @param collectionId ID of collection
+   * @example await getEffectiveLimits(2)
    * @returns object of collection limits
    */
   async getEffectiveLimits(collectionId: number): Promise<ICollectionLimits> {
@@ -661,6 +665,7 @@ class CollectionGroup extends HelperGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param label extra label for log
+   * @example await helper.collection.burn(aliceKeyring, 3);
    * @returns bool true on success
    */
   async burn(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
@@ -681,6 +686,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param sponsorAddress Sponsor substrate address
    * @param label extra label for log
+   * @example setSponsor(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...")
    * @returns bool true on success
    */
   async setSponsor(signer: TSigner, collectionId: number, sponsorAddress: TSubstrateAccount, label?: string): Promise<boolean> {
@@ -700,6 +706,7 @@ class CollectionGroup extends HelperGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param label extra label for log
+   * @example confirmSponsorship(aliceKeyring, 10)
    * @returns bool true on success
    */
   async confirmSponsorship(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
@@ -720,6 +727,15 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param limits collection limits object
    * @param label extra label for log
+   * @example
+   * await setLimits(
+   *   aliceKeyring,
+   *   10,
+   *   {
+   *     sponsorTransferTimeout: 0,
+   *     ownerCanDestroy: false
+   *   }
+   * )
    * @returns bool true on success
    */
   async setLimits(signer: TSigner, collectionId: number, limits: ICollectionLimits, label?: string): Promise<boolean> {
@@ -740,6 +756,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param ownerAddress substrate address of new owner
    * @param label extra label for log
+   * @example changeOwner(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...")
    * @returns bool true on success
    */
   async changeOwner(signer: TSigner, collectionId: number, ownerAddress: TSubstrateAccount, label?: string): Promise<boolean> {
@@ -760,6 +777,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param adminAddressObj Administrator address (substrate or ethereum)
    * @param label extra label for log
+   * @example addAdmin(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns bool true on success
    */
   async addAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId, label?: string): Promise<boolean> {
@@ -780,6 +798,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param adminAddressObj Administrator address (substrate or ethereum)
    * @param label extra label for log
+   * @example removeAdmin(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns bool true on success
    */
   async removeAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId, label?: string): Promise<boolean> {
@@ -800,6 +819,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param permissions collection permissions object
    * @param label extra label for log
+   * @example setPermissions(aliceKeyring, 10, TODO);
    * @returns bool true on success
    */
   async setPermissions(signer: TSigner, collectionId: number, permissions: ICollectionPermissions, label?: string): Promise<boolean> {
@@ -820,6 +840,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param permissions nesting permissions object
    * @param label extra label for log
+   * @example enableNesting(aliceKeyring, 10, TODO);
    * @returns bool true on success
    */
   async enableNesting(signer: TSigner, collectionId: number, permissions: INestingPermissions, label?: string): Promise<boolean> {
@@ -832,6 +853,7 @@ class CollectionGroup extends HelperGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param label extra label for log
+   * @example disableNesting(aliceKeyring, 10);
    * @returns bool true on success
    */
   async disableNesting(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
@@ -845,6 +867,8 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param properties array of property objects
    * @param label extra label for log
+   * @example
+   * setProperties(aliceKeyring, 10, TODO)
    * @returns bool true on success
    */
   async setProperties(signer: TSigner, collectionId: number, properties: IProperty[], label?: string): Promise<boolean> {
@@ -864,7 +888,8 @@ class CollectionGroup extends HelperGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param propertyKeys array of property keys to delete
-   * @param label 
+   * @param label
+   * @example deleteProperties(aliceKeyring, 10, TODO)
    * @returns 
    */
   async deleteProperties(signer: TSigner, collectionId: number, propertyKeys: string[], label?: string): Promise<boolean> {
@@ -878,6 +903,17 @@ class CollectionGroup extends HelperGroup {
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertyDeleted', label);
   }
 
+  /**
+   * Changes the owner of the token.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param addressObj address of a new owner
+   * @param amount amount of tokens to be transfered. For NFT must be set to 1n
+   * @example transferToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
+   * @returns true if the token success, otherwise false
+   */
   async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId, amount=1n): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
@@ -888,6 +924,19 @@ class CollectionGroup extends HelperGroup {
     return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
   }
 
+  /**
+   * 
+   * Change ownership of a NFT on behalf of the owner. 
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param fromAddressObj address on behalf of which the token will be sent
+   * @param toAddressObj new token owner
+   * @param amount amount of tokens to be transfered. For NFT must be set to 1n
+   * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg"}, {Ethereum: "0x9F0583DbB85..."})
+   * @returns true if the token success, otherwise false
+   */
   async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
@@ -897,6 +946,18 @@ class CollectionGroup extends HelperGroup {
     return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
+  /**
+   * 
+   * Destroys a concrete instance of NFT.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param label 
+   * @param amount amount of tokens to be burned. For NFT must be set to 1n
+   * @example burnToken(aliceKeyring, 10, 5);
+   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
+   */
   async burnToken(signer: TSigner, collectionId: number, tokenId: number, label?: string, amount=1n): Promise<{
     success: boolean,
     token: number | null
@@ -912,6 +973,18 @@ class CollectionGroup extends HelperGroup {
     return {success: burnedTokens.success, token: burnedTokens.tokens.length > 0 ? burnedTokens.tokens[0] : null};
   }
 
+  /**
+   * Destroys a concrete instance of NFT on behalf of the owner
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param fromAddressObj address on behalf of which the token will be burnt
+   * @param tokenId ID of token
+   * @param label 
+   * @param amount amount of tokens to be burned. For NFT must be set to 1n
+   * @example burnTokenFrom(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."}, 5, {Ethereum: "0x9F0583DbB85..."})
+   * @returns ```true``` if extrinsic success. Otherwise ```false```
+   */
   async burnTokenFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, tokenId: number, label?: string, amount=1n): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const burnResult = await this.helper.executeExtrinsic(
@@ -923,6 +996,17 @@ class CollectionGroup extends HelperGroup {
     return burnedTokens.success && burnedTokens.tokens.length > 0;
   }
 
+  /**
+   * Set, change, or remove approved address to transfer the ownership of the NFT.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param toAddressObj 
+   * @param label 
+   * @param amount amount of token to be approved. For NFT must be set to 1n
+   * @returns ```true``` if extrinsic success. Otherwise ```false```
+   */
   async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string, amount=1n) {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const approveResult = await this.helper.executeExtrinsic(
@@ -934,24 +1018,63 @@ class CollectionGroup extends HelperGroup {
     return this.helper.util.findCollectionInEvents(approveResult.result.events, collectionId, 'common', 'Approved', label);
   }
 
+  /**
+   * TODO
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param toAccountObj 
+   * @param fromAccountObj
+   * @example getTokenApprovedPieces(10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Substrate: "5ERZNF88Mm7UGfPP3mdG..."})
+   * @returns number of approved to transfer pieces
+   */
   async getTokenApprovedPieces(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId, fromAccountObj: ICrossAccountId): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.unique.allowance', [collectionId, fromAccountObj, toAccountObj, tokenId])).toBigInt();
   }
 
+  /**
+   * Get the last created token id
+   * @param collectionId ID of collection
+   * @example getLastTokenId(10);
+   * @returns id of the last created token
+   */
   async getLastTokenId(collectionId: number): Promise<number> {
     return (await this.helper.callRpc('api.rpc.unique.lastTokenId', [collectionId])).toNumber();
   }
 
+  /**
+   * Check if token exists
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @example isTokenExists(10, 20);
+   * @returns true if the token exists, otherwise false
+   */
   async isTokenExists(collectionId: number, tokenId: number): Promise<boolean> {
     return (await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId])).toJSON();
   }
 }
 
 class NFTnRFT extends CollectionGroup {
+  /**
+   * Get tokens owned by account
+   * 
+   * @param collectionId ID of collection
+   * @param addressObj tokens owner
+   * @example getTokensByAddress(10, {Substrate: "5DyN4Y92vZCjv38fg..."})
+   * @returns array of token ids owned by account TODO for RFT?
+   */
   async getTokensByAddress(collectionId: number, addressObj: ICrossAccountId): Promise<number[]> {
     return (await this.helper.callRpc('api.rpc.unique.accountTokens', [collectionId, addressObj])).toJSON();
   }
 
+  /**
+   * Get token data
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param blockHashAt 
+   * @param propertyKeys TODO
+   * @example getToken(10, 5);
+   * @returns human readable token data 
+   */
   async getToken(collectionId: number, tokenId: number, blockHashAt?: string, propertyKeys?: string[]): Promise<{
     properties: IProperty[];
     owner: ICrossAccountId;
@@ -979,6 +1102,17 @@ class NFTnRFT extends CollectionGroup {
     return tokenData;
   }
 
+  /**
+   * Set permissions to change token properties
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param permissions permissions to change a property by the collection owner or admin
+   * @param label 
+   * @example setTokenPropertyPermissions(
+   *   aliceKeyring, 10, [{key: "gender", permission: {tokenOwner: true, mutable: true, collectionAdmin: true}}]
+   * )
+   * @returns true if extrinsic success otherwise false
+   */
   async setTokenPropertyPermissions(signer: TSigner, collectionId: number, permissions: ITokenPropertyPermission[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const result = await this.helper.executeExtrinsic(
@@ -990,6 +1124,16 @@ class NFTnRFT extends CollectionGroup {
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'PropertyPermissionSet', label);
   }
 
+  /**
+   * Set token properties
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param properties 
+   * @param label 
+   * @example setTokenProperties(aliceKeyring, 10, 5, [{key: "gender", value: "female"}, {key: "age", value: "23"}])
+   * @returns true if extrinsic success, otherwise false
+   */
   async setTokenProperties(signer: TSigner, collectionId: number, tokenId: number, properties: IProperty[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `token #${tokenId} from collection #${collectionId}`;
     const result = await this.helper.executeExtrinsic(
@@ -1001,6 +1145,16 @@ class NFTnRFT extends CollectionGroup {
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet', label);
   }
 
+  /**
+   * Delete the provided properties of a token
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param propertyKeys property keys to be deleted 
+   * @param label 
+   * @example deleteTokenProperties(aliceKeyring, 10, 5, ["gender", "age"])
+   * @returns true if extrinsic success, otherwise false
+   */
   async deleteTokenProperties(signer: TSigner, collectionId: number, tokenId: number, propertyKeys: string[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `token #${tokenId} from collection #${collectionId}`;
     const result = await this.helper.executeExtrinsic(
@@ -1012,6 +1166,15 @@ class NFTnRFT extends CollectionGroup {
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertyDeleted', label);
   }
 
+  /**
+   * Mint new collection
+   * @param signer keyring of signer
+   * @param collectionOptions TODO
+   * @param mode NFT or RFT type of a collection
+   * @param errorLabel 
+   * @example mintCollection(aliceKeyring, TODO, "NFT")
+   * @returns object of the created collection
+   */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT', errorLabel = 'Unable to mint collection'): Promise<UniqueCollectionBase> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
     collectionOptions.mode = (mode === 'NFT') ? {nft: null} : {refungible: null};
@@ -1037,14 +1200,35 @@ class NFTnRFT extends CollectionGroup {
 
 
 class NFTGroup extends NFTnRFT {
+  /**
+   * Get collection object
+   * @param collectionId ID of collection
+   * @example getCollectionObject(2);
+   * @returns instance of UniqueNFTCollection
+   */
   getCollectionObject(collectionId: number): UniqueNFTCollection {
     return new UniqueNFTCollection(collectionId, this.helper);
   }
 
+  /**
+   * Get token object
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @example getTokenObject(10, 5);
+   * @returns instance of UniqueNFTToken
+   */
   getTokenObject(collectionId: number, tokenId: number): UniqueNFTToken {
     return new UniqueNFTToken(tokenId, this.getCollectionObject(collectionId));
   }
 
+  /**
+   * Get token's owner
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param blockHashAt 
+   * @example getTokenOwner(10, 5);
+   * @returns Address in CrossAccountId format, e.g. {Substrate: "5DnSF6RRjwteE3BrCj..."}
+   */
   async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<ICrossAccountId> {
     let owner;
     if (typeof blockHashAt === 'undefined') {
@@ -1055,18 +1239,55 @@ class NFTGroup extends NFTnRFT {
     return crossAccountIdFromLower(owner.toJSON());
   }
 
+  /**
+   * Is token approved to transfer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param toAccountObj TODO
+   * @returns TODO 
+   */
   async isTokenApproved(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId): Promise<boolean> {
     return (await this.getTokenApprovedPieces(collectionId, tokenId, toAccountObj, await this.getTokenOwner(collectionId, tokenId))) === 1n;
   }
 
+  /**
+   * Changes the owner of the token.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param addressObj address of a new owner
+   * @example transferToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
+   * @returns true if extrinsic success, otherwise false
+   */
   async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<boolean> {
     return await super.transferToken(signer, collectionId, tokenId, addressObj, 1n);
   }
 
+  /**
+   * 
+   * Change ownership of a NFT on behalf of the owner. 
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param fromAddressObj address on behalf of which the token will be sent
+   * @param toAddressObj new token owner
+   * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Ethereum: "0x9F0583DbB85..."})
+   * @returns true if extrinsic success, otherwise false
+   */
   async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId): Promise<boolean> {
     return await super.transferTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, 1n);
   }
 
+  /**
+   * Recursively find the address that owns the token
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param blockHashAt 
+   * @example getTokenTopmostOwner(10, 5);
+   * @returns address in CrossAccountId format, e.g. {Substrate: "5DyN4Y92vZCjv38fg..."}
+   */
   async getTokenTopmostOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<ICrossAccountId | null> {
     let owner;
     if (typeof blockHashAt === 'undefined') {
@@ -1082,6 +1303,14 @@ class NFTGroup extends NFTnRFT {
     return owner.Substrate ? {Substrate: this.helper.address.normalizeSubstrate(owner.Substrate)} : owner;
   }
 
+  /**
+   * Get tokens nested in the provided token
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param blockHashAt 
+   * @example getTokenChildren(10, 5);
+   * @returns tokens whose depth of nesting is <= 5 
+   */
   async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<IToken[]> {
     let children;
     if(typeof blockHashAt === 'undefined') {
@@ -1095,6 +1324,15 @@ class NFTGroup extends NFTnRFT {
     });
   }
 
+  /**
+   * Nest one token into another
+   * @param signer keyring of signer
+   * @param tokenObj token to be nested
+   * @param rootTokenObj token to be parent
+   * @param label 
+   * @example nestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4});
+   * @returns true if extrinsic success, otherwise false
+   */
   async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, label='nest token'): Promise<boolean> {
     const rootTokenAddress = {Ethereum: this.helper.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
     const result = await this.transferToken(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress);
@@ -1104,6 +1342,16 @@ class NFTGroup extends NFTnRFT {
     return result;
   }
 
+  /**
+   * Remove token from nested state
+   * @param signer keyring of signer
+   * @param tokenObj token to unnest
+   * @param rootTokenObj parent of a token
+   * @param toAddressObj address of a new token owner 
+   * @param label 
+   * @example unnestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4}, {Substrate: "5DyN4Y92vZCjv38fg..."});
+   * @returns true if extrinsic success, otherwise false
+   */
   async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId, label='unnest token'): Promise<boolean> {
     const rootTokenAddress = {Ethereum: this.helper.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
     const result = await this.transferTokenFrom(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, toAddressObj);
@@ -1113,10 +1361,30 @@ class NFTGroup extends NFTnRFT {
     return result;
   }
 
+  /**
+   * Mint new collection
+   * @param signer keyring of signer
+   * @param collectionOptions Collection options
+   * @param label 
+   * @example 
+   * mintCollection(aliceKeyring, {
+   *   name: 'New',
+   *   description: 'New collection',
+   *   tokenPrefix: 'NEW',
+   * })
+   * @returns object of the created collection
+   */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, label = 'new collection'): Promise<UniqueNFTCollection> {
     return await super.mintCollection(signer, collectionOptions, 'NFT', `Unable to mint NFT collection for ${label}`) as UniqueNFTCollection;
   }
 
+  /**
+   * Mint new token
+   * @param signer keyring of signer
+   * @param data token data
+   * @param label 
+   * @returns created token object
+   */
   async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }, label?: string): Promise<UniqueNFTToken> {
     if(typeof label === 'undefined') label = `collection #${data.collectionId}`;
     const creationResult = await this.helper.executeExtrinsic(
@@ -1134,6 +1402,22 @@ class NFTGroup extends NFTnRFT {
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
   }
 
+  /**
+   * Mint multiple NFT tokens
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokens array of tokens with owner and properties
+   * @param label 
+   * @example 
+   * mintMultipleTokens(aliceKeyring, 10, [{
+   *     owner: {Substrate: "5DyN4Y92vZCjv38fg..."},
+   *     properties: [{key: "gender", value: "male"},{key: "age", value: "45"}],
+   *   },{
+   *     owner: {Ethereum: "0x9F0583DbB855d..."},
+   *     properties: [{key: "gender", value: "female"},{key: "age", value: "22"}],
+   * }]);
+   * @returns true if extrinsic success, otherwise false
+   */
   async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[], label?: string): Promise<UniqueNFTToken[]> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const creationResult = await this.helper.executeExtrinsic(
@@ -1145,6 +1429,25 @@ class NFTGroup extends NFTnRFT {
     return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
+  /**
+   * Mint multiple NFT tokens with one owner
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param owner tokens owner
+   * @param tokens array of tokens with owner and properties
+   * @param label 
+   * @example
+   * mintMultipleTokensWithOneOwner(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...", [{
+   *   properties: [{
+   *   key: "gender",
+   *   value: "female",
+   *  },{
+   *   key: "age",
+   *   value: "33",
+   *  }],
+   * }]);
+   * @returns array of newly created tokens
+   */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {properties?: IProperty[]}[], label?: string): Promise<UniqueNFTToken[]> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const rawTokens = [];
@@ -1161,10 +1464,30 @@ class NFTGroup extends NFTnRFT {
     return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
+  /**
+   * Destroys a concrete instance of NFT.
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param label 
+   * @example burnToken(aliceKeyring, 10, 5);
+   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
+   */
   async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, label?: string): Promise<{ success: boolean; token: number | null; }> {
     return await super.burnToken(signer, collectionId, tokenId, label, 1n);
   }
 
+  /**
+   * Set, change, or remove approved address to transfer the ownership of the NFT.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param toAddressObj address to approve
+   * @param label 
+   * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
+   * @returns ```true``` if extrinsic success. Otherwise ```false```
+   */
   async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, 1n);
   }
@@ -1172,34 +1495,104 @@ class NFTGroup extends NFTnRFT {
 
 
 class RFTGroup extends NFTnRFT {
+  /**
+   * Get collection object
+   * @param collectionId ID of collection
+   * @example getCollectionObject(2);
+   * @returns instance of UniqueNFTCollection
+   */
   getCollectionObject(collectionId: number): UniqueRFTCollection {
     return new UniqueRFTCollection(collectionId, this.helper);
   }
 
+  /**
+   * Get token object
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @example getTokenObject(10, 5);
+   * @returns instance of UniqueNFTToken
+   */
   getTokenObject(collectionId: number, tokenId: number): UniqueRFTToken {
     return new UniqueRFTToken(tokenId, this.getCollectionObject(collectionId));
   }
 
+  /**
+   * Get top 10 token owners with the largest number of pieces 
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @example getTokenTop10Owners(10, 5);
+   * @returns array of top 10 owners
+   */
   async getTokenTop10Owners(collectionId: number, tokenId: number): Promise<ICrossAccountId[]> {
     return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).toJSON().map(crossAccountIdFromLower);
   }
 
+  /**
+   * Get number of pieces owned by address
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param addressObj address token owner
+   * @example getTokenBalance(10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."});
+   * @returns number of pieces ownerd by address
+   */
   async getTokenBalance(collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, tokenId])).toBigInt();
   }
 
+  /**
+   * Transfer pieces of token to another address
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param addressObj address of a new owner
+   * @param amount number of pieces to be transfered
+   * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, 2000n)
+   * @returns true if extrinsic success, otherwise false
+   */
   async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId, amount=100n): Promise<boolean> {
     return await super.transferToken(signer, collectionId, tokenId, addressObj, amount);
   }
 
+  /**
+   * Change ownership of some pieces of RFT on behalf of the owner. 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param fromAddressObj address on behalf of which the token will be sent
+   * @param toAddressObj new token owner
+   * @param amount number of pieces to be transfered
+   * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Substrate: "5DfhbVfww7ThF8q6f3i..."}, 2000n)
+   * @returns true if extrinsic success, otherwise false
+   */
   async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=100n): Promise<boolean> {
     return await super.transferTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
+  /**
+   * Mint new collection
+   * @param signer keyring of signer
+   * @param collectionOptions Collection options
+   * @param label 
+   * @example
+   * mintCollection(aliceKeyring, {
+   *   name: 'New',
+   *   description: 'New collection',
+   *   tokenPrefix: 'NEW',
+   * })
+   * @returns object of the created collection
+   */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, label = 'new collection'): Promise<UniqueRFTCollection> {
     return await super.mintCollection(signer, collectionOptions, 'RFT', `Unable to mint RFT collection for ${label}`) as UniqueRFTCollection;
   }
 
+  /**
+   * Mint new token
+   * @param signer keyring of signer
+   * @param data token data
+   * @param label 
+   * @example mintToken(aliceKeyring, {collectionId: 10, owner: {Substrate: '5GHoZe9c73RYbVzq...'}, pieces: 10000n});
+   * @returns created token object
+   */
   async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }, label?: string): Promise<UniqueRFTToken> {
     if(typeof label === 'undefined') label = `collection #${data.collectionId}`;
     const creationResult = await this.helper.executeExtrinsic(
@@ -1230,6 +1623,16 @@ class RFTGroup extends NFTnRFT {
     return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
+  /**
+   * Mint multiple RFT tokens with one owner
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param owner tokens owner
+   * @param tokens array of tokens with properties and pieces
+   * @param label 
+   * @example mintMultipleTokensWithOneOwner(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, [{pieces: 100000n, properties: [{key: "gender", value: "male"}]}]);
+   * @returns array of newly created RFT tokens
+   */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {pieces: bigint, properties?: IProperty[]}[], label?: string): Promise<UniqueRFTToken[]> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const rawTokens = [];
@@ -1246,18 +1649,57 @@ class RFTGroup extends NFTnRFT {
     return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
+  /**
+   * Destroys a concrete instance of RFT.
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param label 
+   * @param amount number of pieces to be burnt
+   * @example burnToken(aliceKeyring, 10, 5);
+   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
+   */
   async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, label?: string, amount=100n): Promise<{ success: boolean; token: number | null; }> {
     return await super.burnToken(signer, collectionId, tokenId, label, amount);
   }
 
+  /**
+   * Set, change, or remove approved address to transfer the ownership of the RFT.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param toAddressObj address to approve
+   * @param label 
+   * @param amount number of pieces to be approved
+   * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5GHoZe9c73RYbVzq..."}, "", 10000n);
+   * @returns true if the token success, otherwise false
+   */
   async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string, amount=100n) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, amount);
   }
 
+  /**
+   * Get total number of pieces
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @example getTokenTotalPieces(10, 5);
+   * @returns number of pieces
+   */
   async getTokenTotalPieces(collectionId: number, tokenId: number): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, tokenId])).unwrap().toBigInt();
   }
 
+  /**
+   * Change number of token pieces. Signer must be the owner of all token pieces.
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param amount new number of pieces
+   * @param label 
+   * @example repartitionToken(aliceKeyring, 10, 5, 12345n);
+   * @returns true if the repartion was success, otherwise false
+   */
   async repartitionToken(signer: TSigner, collectionId: number, tokenId: number, amount: bigint, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const currentAmount = await this.getTokenTotalPieces(collectionId, tokenId);
@@ -1273,10 +1715,30 @@ class RFTGroup extends NFTnRFT {
 
 
 class FTGroup extends CollectionGroup {
+  /**
+   * Get collection object
+   * @param collectionId ID of collection
+   * @example getCollectionObject(2);
+   * @returns instance of UniqueNFTCollection
+   */
   getCollectionObject(collectionId: number): UniqueFTCollection {
     return new UniqueFTCollection(collectionId, this.helper);
   }
 
+  /**
+   * Mint new fungible collection
+   * @param signer keyring of signer
+   * @param collectionOptions Collection options
+   * @param decimalPoints number of token decimals 
+   * @param errorLabel 
+   * @example
+   * mintCollection(aliceKeyring, {
+   *   name: 'New',
+   *   description: 'New collection',
+   *   tokenPrefix: 'NEW',
+   * }, 18)
+   * @returns newly created fungible collection
+   */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, decimalPoints = 0, errorLabel = 'Unable to mint collection'): Promise<UniqueFTCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
     if(collectionOptions.tokenPropertyPermissions) throw Error('Fungible collections has no tokenPropertyPermissions');
@@ -1292,6 +1754,16 @@ class FTGroup extends CollectionGroup {
     return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult, errorLabel));
   }
 
+  /**
+   * Mint tokens
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param owner address owner of new tokens
+   * @param amount amount of tokens to be meanted
+   * @param label 
+   * @example mintTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq"}, 1000n);
+   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   */
   async mintTokens(signer: TSigner, collectionId: number, owner: ICrossAccountId | string, amount: bigint, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const creationResult = await this.helper.executeExtrinsic(
@@ -1306,6 +1778,26 @@ class FTGroup extends CollectionGroup {
     return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated', label);
   }
 
+  /**
+   * Mint multiple RFT tokens with one owner
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param owner tokens owner
+   * @param tokens array of tokens with properties and pieces
+   * @param label 
+   * @example mintMultipleTokensWithOneOwner(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, [{pieces: 100000n, properties: [{key: "gender", value: "male"}]}]);
+   * @returns array of newly created RFT tokens
+   */
+
+  /**
+   * Mint multiple Fungible tokens with one owner TODO For what??
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param owner tokens owner
+   * @param tokens array of tokens with properties and pieces
+   * @param label 
+   * @returns 
+   */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {value: bigint}[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const rawTokens = [];
@@ -1321,38 +1813,112 @@ class FTGroup extends CollectionGroup {
     return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated', label);
   }
 
+  /**
+   * Get top 10 token owners
+   * @param collectionId ID of collection
+   * @example getTop10Owners(10);
+   * @returns array of ```ICrossAccountId```
+   */
   async getTop10Owners(collectionId: number): Promise<ICrossAccountId[]> {
     return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).toJSON().map(crossAccountIdFromLower);
   }
 
+  /**
+   * Get account balance
+   * @param collectionId ID of collection
+   * @param addressObj address of owner
+   * @example getBalance(10, {Substrate: "5GHoZe9c73RYbVzq..."})
+   * @returns amount of fungible tokens owned by address
+   */
   async getBalance(collectionId: number, addressObj: ICrossAccountId): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, 0])).toBigInt();
   }
 
+  /**
+   * Transfer tokens to address
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param toAddressObj address recepient
+   * @param amount amount of tokens to be sent
+   * @example transfer(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
+   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   */
   async transfer(signer: TSigner, collectionId: number, toAddressObj: ICrossAccountId, amount: bigint) {
     return await super.transferToken(signer, collectionId, 0, toAddressObj, amount);
   }
 
+  /**
+   * Transfer some tokens on behalf of the owner.
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param fromAddressObj address on behalf of which tokens will be sent
+   * @param toAddressObj address where token to be sent
+   * @param amount number of tokens to be sent
+   * @example transferFrom(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, {Substrate: "5DfhbVfww7ThF8q6f3ij..."}, 10000n);
+   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   */
   async transferFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount: bigint) {
     return await super.transferTokenFrom(signer, collectionId, 0, fromAddressObj, toAddressObj, amount);
   }
 
+  /**
+   * Destroy some amount of tokens
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param amount amount of tokens to be destroyed
+   * @param label 
+   * @example burnTokens(aliceKeyring, 10, 1000n);
+   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   */
   async burnTokens(signer: IKeyringPair, collectionId: number, amount=100n, label?: string): Promise<boolean> {
     return (await super.burnToken(signer, collectionId, 0, label, amount)).success;
   }
 
+  /**
+   * Burn some tokens on behalf of the owner.
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param fromAddressObj address on behalf of which tokens will be burnt
+   * @param amount amount of tokens to be burnt
+   * @param label 
+   * @example burnTokensFrom(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
+   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   */
   async burnTokensFrom(signer: IKeyringPair, collectionId: number, fromAddressObj: ICrossAccountId, amount=100n, label?: string): Promise<boolean> {
     return await super.burnTokenFrom(signer, collectionId, fromAddressObj, 0, label, amount);
   }
 
+  /**
+   * TODO for what?
+   * @param collectionId 
+   * @returns 
+   */
   async getTotalPieces(collectionId: number): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, 0])).unwrap().toBigInt();
   }
 
+  /**
+   * Set, change, or remove approved address to transfer tokens.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param toAddressObj address to be approved
+   * @param amount amount of tokens to be approved
+   * @param label 
+   * @example approveTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n)
+   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   */
   async approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=100n, label?: string) {
     return super.approveToken(signer, collectionId, 0, toAddressObj, label, amount);
   }
 
+  /**
+   * TODO why pieces??
+   * @param collectionId 
+   * @param fromAddressObj 
+   * @param toAddressObj 
+   * @returns 
+   */
   async getApprovedTokens(collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
     return super.getTokenApprovedPieces(collectionId, 0, toAddressObj, fromAddressObj);
   }
@@ -1360,6 +1926,11 @@ class FTGroup extends CollectionGroup {
 
 
 class ChainGroup extends HelperGroup {
+  /**
+   * Get system properties of a chain
+   * @example getChainProperties();
+   * @returns ss58Format, token decimals, and token symbol
+   */
   getChainProperties(): IChainProperties {
     const properties = (this.helper.api as any).registry.getChainProperties().toJSON();
     return {
@@ -1369,16 +1940,33 @@ class ChainGroup extends HelperGroup {
     };
   }
 
+  /**
+   * Get chain header
+   * @example getLatestBlockNumber();
+   * @returns the number of the last block
+   */
   async getLatestBlockNumber(): Promise<number> {
     return (await this.helper.callRpc('api.rpc.chain.getHeader')).number.toNumber();
   }
 
+  /**
+   * Get block hash by block number
+   * @param blockNumber number of block
+   * @example getBlockHashByNumber(12345);
+   * @returns hash of a block
+   */
   async getBlockHashByNumber(blockNumber: number): Promise<string | null> {
     const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])).toJSON();
     if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
     return blockHash;
   }
 
+  /**
+   * Get account nonce
+   * @param address substrate address
+   * @example getNonce("5GrwvaEF5zXb26Fz...");
+   * @returns number, account's nonce
+   */
   async getNonce(address: TSubstrateAccount): Promise<number> {
     return (await (this.helper.api as any).query.system.account(address)).nonce.toNumber();
   }
@@ -1391,14 +1979,34 @@ class BalanceGroup extends HelperGroup {
     return 10n ** BigInt((chainProperties.tokenDecimals || [18])[0]);
   }
 
+  /**
+   * Get substrate address balance
+   * @param address substrate address
+   * @example getSubstrate("5GrwvaEF5zXb26Fz...")
+   * @returns amount of tokens on address
+   */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
     return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
   }
 
+  /**
+   * Get ethereum address balance
+   * @param address ethereum address
+   * @example getEthereum("0x9F0583DbB855d...")
+   * @returns amount of tokens on address
+   */
   async getEthereum(address: TEthereumAccount): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
   }
 
+  /**
+   * Transfer tokens to substrate address
+   * @param signer keyring of signer
+   * @param address substrate address of a recepient
+   * @param amount amount of tokens to be transfered
+   * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
+   * @returns true if extrinsic success, otherwise false
+   */
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`);
 
@@ -1425,17 +2033,36 @@ class AddressGroup extends HelperGroup {
     return this.helper.util.normalizeSubstrateAddress(address, ss58Format);
   }
 
+  /**
+   * Get address in the connected chain format
+   * @param address substrate address
+   * @example normalizeSubstrateToChainFormat("5GrwvaEF5zXb26Fz...") // returns unjKJQJrRd238pkUZZ... for Unique Network
+   * @returns address in chain format
+   */
   async normalizeSubstrateToChainFormat(address: TSubstrateAccount): Promise<TSubstrateAccount> {
     const info = this.helper.chain.getChainProperties();
     return encodeAddress(decodeAddress(address), info.ss58Format);
   }
 
+  /**
+   * Get substrate mirror of an ethereum address
+   * @param ethAddress ethereum address
+   * @param toChainFormat false for normalized account
+   * @example ethToSubstrate('0x9F0583DbB855d...')
+   * @returns substrate mirror of a provided ethereum address
+   */
   async ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat=false): Promise<TSubstrateAccount> {
     if(!toChainFormat) return evmToAddress(ethAddress);
     const info = this.helper.chain.getChainProperties();
     return evmToAddress(ethAddress, info.ss58Format);
   }
 
+  /**
+   * Get ethereum mirror of a substrate address
+   * @param subAddress substrate account
+   * @example substrateToEth("5DnSF6RRjwteE3BrC...")
+   * @returns ethereum mirror of a provided substrate address
+   */
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
     return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(subAddress), i => i.toString(16).padStart(2, '0')).join(''));
   }
