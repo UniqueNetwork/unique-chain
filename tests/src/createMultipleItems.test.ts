@@ -378,9 +378,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
         await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       {
         const argsReFungible = [
-          {ReFungible: ['1'.repeat(2049), 10, []]},
-          {ReFungible: ['2'.repeat(2049), 10, []]},
-          {ReFungible: ['3'.repeat(2049), 10, []]},
+          {ReFungible: [10, [['key', 'A'.repeat(32769)]]]},
+          {ReFungible: [10, [['key', 'B'.repeat(32769)]]]},
+          {ReFungible: [10, [['key', 'C'.repeat(32769)]]]},
         ];
         const createMultipleItemsTxFungible = api.tx.unique
           .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
