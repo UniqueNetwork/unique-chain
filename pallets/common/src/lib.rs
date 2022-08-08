@@ -569,6 +569,9 @@ pub mod pallet {
 
 		/// Tried to access an internal collection with an external API
 		CollectionIsInternal,
+
+		/// A method of an unsupported API was called
+		UnsupportedRuntimeApi,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.

@@ -189,7 +189,6 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
-            #[allow(unused_variables)]
             impl rmrk_rpc::RmrkApi<
                 Block,
                 AccountId,
@@ -206,41 +205,46 @@ macro_rules! impl_common_runtime_apis {
                     return pallet_proxy_rmrk_core::rpc::last_collection_idx::<Runtime>();
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default());
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_core::rpc::collection_by_id::<Runtime>(collection_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_core::rpc::nft_by_id::<Runtime>(collection_id, nft_by_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_core::rpc::account_tokens::<Runtime>(account_id, collection_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_core::rpc::nft_children::<Runtime>(collection_id, nft_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn collection_properties(
                     collection_id: RmrkCollectionId,
                     filter_keys: Option<Vec<RmrkPropertyKey>>
@@ -249,9 +253,10 @@ macro_rules! impl_common_runtime_apis {
                     return pallet_proxy_rmrk_core::rpc::collection_properties::<Runtime>(collection_id, filter_keys);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn nft_properties(
                     collection_id: RmrkCollectionId,
                     nft_id: RmrkNftId,
@@ -261,17 +266,19 @@ macro_rules! impl_common_runtime_apis {
                     return pallet_proxy_rmrk_core::rpc::nft_properties::<Runtime>(collection_id, nft_id, filter_keys);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn nft_resources(collection_id: RmrkCollectionId,nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_core::rpc::nft_resources::<Runtime>(collection_id, nft_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn nft_resource_priority(
                     collection_id: RmrkCollectionId,
                     nft_id: RmrkNftId,
@@ -281,33 +288,37 @@ macro_rules! impl_common_runtime_apis {
                     return pallet_proxy_rmrk_core::rpc::nft_resource_priority::<Runtime>(collection_id, nft_id, resource_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_equip::rpc::base::<Runtime>(base_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_equip::rpc::base_parts::<Runtime>(base_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
                     #[cfg(feature = "rmrk")]
                     return pallet_proxy_rmrk_equip::rpc::theme_names::<Runtime>(base_id);
 
                     #[cfg(not(feature = "rmrk"))]
-                    Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
 
+                #[allow(unused_variables)]
                 fn theme(
                     base_id: RmrkBaseId,
                     theme_name: RmrkThemeName,
@@ -317,7 +328,7 @@ macro_rules! impl_common_runtime_apis {
                     return pallet_proxy_rmrk_equip::rpc::theme::<Runtime>(base_id, theme_name, filter_keys);
 
                     #[cfg(not(feature = "rmrk"))]
-                    return Ok(Default::default())
+                    return Err(CommonError::UnsupportedRuntimeApi.into());
                 }
             }
 

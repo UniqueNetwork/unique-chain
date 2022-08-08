@@ -43,6 +43,8 @@ use crate::{
 };
 use common_types::{AccountId, BlockNumber};
 
+pub type CommonError = pallet_common::Error<Runtime>;
+
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
