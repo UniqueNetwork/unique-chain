@@ -44,6 +44,7 @@ FROM rust-builder as builder-unique-target
 
 ARG PROFILE=release
 ARG FEATURE=
+ARG MAINNET_BRANCH=
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
