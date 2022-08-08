@@ -1,18 +1,18 @@
-import { IKeyringPair } from '@polkadot/types/types';
-import { UniqueHelper } from './unique';
+import {IKeyringPair} from '@polkadot/types/types';
+import {UniqueHelper} from './unique';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
 import * as defs from '../../interfaces/definitions';
-import { ApiPromise, WsProvider } from '@polkadot/api';
+import {ApiPromise, WsProvider} from '@polkadot/api';
 
 
 class SilentLogger {
   log(msg: any, level: any): void {}
   level = {
-    ERROR: 'ERROR' as 'ERROR',
-    WARNING: 'WARNING' as 'WARNING',
-    INFO: 'INFO' as 'INFO'
-  }
+    ERROR: 'ERROR' as const,
+    WARNING: 'WARNING' as const,
+    INFO: 'INFO' as const,
+  };
 }
 
 
@@ -87,4 +87,4 @@ export const usingPlaygrounds = async (code: (helper: UniqueHelper, privateKey: 
     console.log = consoleLog;
     console.warn = consoleWarn;
   }
-}
+};
