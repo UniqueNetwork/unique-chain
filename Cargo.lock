@@ -1128,6 +1128,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "common-types"
+version = "0.9.24"
+dependencies = [
+ "fp-rpc",
+ "pallet-evm",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5282,6 +5294,7 @@ checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 name = "opal-runtime"
 version = "0.9.24"
 dependencies = [
+ "common-types",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -5291,6 +5304,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "evm-coder",
  "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
@@ -5352,9 +5366,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
+ "up-sponsorship",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -8596,6 +8610,7 @@ dependencies = [
 name = "quartz-runtime"
 version = "0.9.24"
 dependencies = [
+ "common-types",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -8605,6 +8620,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "evm-coder",
  "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
@@ -8666,9 +8682,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
+ "up-sponsorship",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -11881,6 +11897,8 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
+ "common-types",
+ "evm-coder",
  "fp-evm-mapping",
  "frame-support",
  "frame-system",
@@ -11902,8 +11920,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "unique-runtime-common",
  "up-data-structs",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -12387,7 +12405,6 @@ dependencies = [
  "sp-core",
  "sp-rpc",
  "sp-runtime",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12463,6 +12480,7 @@ name = "unique-node"
 version = "0.9.24"
 dependencies = [
  "clap",
+ "common-types",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
@@ -12541,7 +12559,6 @@ dependencies = [
  "try-runtime-cli",
  "unique-rpc",
  "unique-runtime",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12550,6 +12567,7 @@ dependencies = [
 name = "unique-rpc"
 version = "0.1.0"
 dependencies = [
+ "common-types",
  "fc-db",
  "fc-mapping-sync",
  "fc-rpc",
@@ -12590,7 +12608,6 @@ dependencies = [
  "substrate-frame-rpc-system",
  "tokio 0.2.25",
  "uc-rpc",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12599,6 +12616,7 @@ dependencies = [
 name = "unique-runtime"
 version = "0.9.24"
 dependencies = [
+ "common-types",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -12608,6 +12626,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "evm-coder",
  "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
@@ -12669,38 +12688,12 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
+ "up-sponsorship",
  "xcm",
  "xcm-builder",
  "xcm-executor",
-]
-
-[[package]]
-name = "unique-runtime-common"
-version = "0.9.24"
-dependencies = [
- "evm-coder",
- "fp-rpc",
- "frame-support",
- "frame-system",
- "pallet-common",
- "pallet-evm",
- "pallet-fungible",
- "pallet-nonfungible",
- "pallet-refungible",
- "pallet-unique",
- "pallet-unique-scheduler",
- "parity-scale-codec 3.1.5",
- "rmrk-rpc",
- "scale-info",
- "sp-consensus-aura",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "up-data-structs",
- "up-sponsorship",
 ]
 
 [[package]]
