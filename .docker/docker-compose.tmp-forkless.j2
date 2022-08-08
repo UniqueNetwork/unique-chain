@@ -1,0 +1,13 @@
+version: "3.5"
+
+services:
+  node-parachain:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "BRANCH={{ BRANCH }}"
+        - "REPO_URL={{ REPO_URL }}"
+        - "FEATURE={{ FEATURE }}"
+        - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
+        - "MAINNET_TAG={{ MAINNET_TAG }}"
+        - "MAINNET_BRANCH={{ MAINNET_BRANCH }}"

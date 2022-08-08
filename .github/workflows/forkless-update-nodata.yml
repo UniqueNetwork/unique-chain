@@ -1,0 +1,115 @@
+name: Develop - Build & test
+
+# Controls when the action will run.
+on:
+ # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - reopened
+      - synchronize   #commit(s) pushed to the pull request
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+#Define Workflow variables
+env:
+  RUST_TOOLCHAIN: nightly-2022-05-11
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+  POLKADOT_BUILD_BRANCH: release-v0.9.24
+  POLKADOT_MAINNET_BRANCH: release-v0.9.25  # for unique-runtime
+  UNIQUE_MAINNET_TAG: v924010
+  KUSAMA_MAINNET_BRANCH: release-v0.9.26    # for для quartz-runtime
+  QUARTZ_MAINNET_TAG: v924012
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: self-hosted-ci
+
+    name: Build Container, Spin it Up an test
+
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include:
+        #  - network: "Opal"
+        #    features: "--features=opal-runtime"
+        #    binary_version:
+          - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
+            features: "--features=quartz-runtime"
+            mainnet_branch: ${{ env.KUSAMA_MAINNET_BRANCH }}
+            mainnet_tag: ${{ env.QUARTZ_MAINNET_TAG }}
+          - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
+            features: "--features=unique-runtime"
+            mainnet_branch: ${{ env.POLKADOT_MAINNET_BRANCH }}
+            mainnet_tag: ${{ env.UNIQUE_MAINNET_TAG }}
+
+
+
+    steps:
+      - name: Skip if pull request is in Draft
+        # `if: github.event.pull_request.draft == true` should be kept here, at
+        # the step level, rather than at the job level. The latter is not
+        # recommended because when the PR is moved from "Draft" to "Ready to
+        # review" the workflow will immediately be passing (since it was skipped),
+        # even though it hasn't actually ran, since it takes a few seconds for
+        # the workflow to start. This is also disclosed in:
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/17
+        # That scenario would open an opportunity for the check to be bypassed:
+        # 1. Get your PR approved
+        # 2. Move it to Draft
+        # 3. Push whatever commits you want
+        # 4. Move it to "Ready for review"; now the workflow is passing (it was
+        #    skipped) and "Check reviews" is also passing (it won't be updated
+        #    until the workflow is finished)
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-forkless.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
+            MAINNET_TAG=${{ env.mainnet_tag }}
+            MAINNET_BRANCH=${{ env.mainnet_branch }}
+            FEATURE=${{ matrix.features }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+
+
+#      - name: Test Report
+#        uses: phoenix-actions/test-reporting@v8
+#        if: success() || failure()    # run this step even if previous step failed
+#        with:
+#          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
+#          path: tests/mochawesome-report/test-*.json    # Path to test results
+#          reporter: mochawesome-json
+#          fail-on-error: 'false'
+#
+#      - name: Read output variables
+#        run: |
+#          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
