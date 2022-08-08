@@ -40,9 +40,10 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
 use std::{collections::BTreeMap, sync::Arc};
 
-use unique_runtime_common::types::{
+use common_types::opaque::{
 	Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance,
 };
+
 // RMRK
 use up_data_structs::{
 	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,

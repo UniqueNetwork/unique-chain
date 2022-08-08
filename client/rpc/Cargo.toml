@@ -5,7 +5,6 @@ license = "GPLv3"
 edition = "2021"
 
 [dependencies]
-unique-runtime-common = { default-features = false, path = "../../runtime/common" }
 pallet-common = { default-features = false, path = '../../pallets/common' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 up-rpc = { path = "../../primitives/rpc" }

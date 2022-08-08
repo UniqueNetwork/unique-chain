@@ -15,6 +15,16 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #[macro_export]
+macro_rules! dispatch_unique_runtime {
+	($collection:ident.$method:ident($($name:ident),*)) => {{
+		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let dispatch = collection.as_dyn();
+
+		Ok::<_, DispatchError>(dispatch.$method($($name),*))
+	}};
+}
+
+#[macro_export]
 macro_rules! impl_common_runtime_apis {
     (
         $(
@@ -23,6 +33,26 @@ macro_rules! impl_common_runtime_apis {
             $($custom_apis:tt)+
         )?
     ) => {
+        use sp_std::prelude::*;
+        use sp_api::impl_runtime_apis;
+        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
+        use sp_runtime::{
+            Permill,
+            traits::Block as BlockT,
+            transaction_validity::{TransactionSource, TransactionValidity},
+            ApplyExtrinsicResult, DispatchError,
+        };
+        use fp_rpc::TransactionStatus;
+        use pallet_transaction_payment::{
+            FeeDetails, RuntimeDispatchInfo,
+        };
+        use pallet_evm::{
+            Runner, account::CrossAccountId as _,
+            Account as EVMAccount, FeeCalculator,
+        };
+        use up_data_structs::*;
+
+
         impl_runtime_apis! {
             $($($custom_apis)+)?
 
@@ -138,11 +168,11 @@ macro_rules! impl_common_runtime_apis {
                     Ok(<pallet_common::Pallet<Runtime>>::collection_stats())
                 }
                 fn next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Result<Option<u64>, DispatchError> {
-                    Ok(<$crate::sponsoring::UniqueSponsorshipPredict<Runtime> as
-                            $crate::sponsoring::SponsorshipPredict<Runtime>>::predict(
+                    Ok(<UniqueSponsorshipPredict<Runtime> as SponsorshipPredict<Runtime>>::predict(
                         collection,
                         account,
-                        token))
+                        token
+                    ))
                 }
 
                 fn effective_collection_limits(collection: CollectionId) -> Result<Option<CollectionLimits>, DispatchError> {
