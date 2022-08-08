@@ -21,13 +21,3 @@ pub mod pallets;
 pub mod parachain;
 pub mod xcm;
 pub mod orml;
-
-pub use {
-    substrate::*,
-    ethereum::*,
-    sponsoring::*,
-    pallets::*,
-    parachain::*,
-    self::xcm::*,
-    orml::*,
-};

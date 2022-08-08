@@ -14,26 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-mod constants;
-mod construct_runtime;
-mod dispatch;
-mod runtime_apis;
-mod sponsoring;
-mod weights;
-mod config;
-mod instance;
-mod ethereum;
-mod scheduler;
-
-pub use {
-    constants::*,
-    dispatch::*,
-    sponsoring::*,
-    weights::*,
-    config::*,
-    instance::*,
-    ethereum::*,
-};
+pub mod constants;
+pub mod construct_runtime;
+pub mod dispatch;
+pub mod runtime_apis;
+pub mod sponsoring;
+pub mod weights;
+pub mod config;
+pub mod instance;
+pub mod ethereum;
+pub mod scheduler;
 
 use sp_core::H160;
 use frame_support::traits::{Currency, OnUnbalanced, Imbalance};

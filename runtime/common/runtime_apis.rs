@@ -50,6 +50,11 @@ macro_rules! impl_common_runtime_apis {
             Runner, account::CrossAccountId as _,
             Account as EVMAccount, FeeCalculator,
         };
+        use runtime_common::{
+            sponsoring::{SponsorshipPredict, UniqueSponsorshipPredict},
+            dispatch::CollectionDispatch,
+            config::ethereum::CrossAccountId,
+        };
         use up_data_structs::*;
 
 

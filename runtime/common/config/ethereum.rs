@@ -9,7 +9,7 @@ use crate::{
     runtime_common::{
 		constants::*,
         dispatch::CollectionDispatchT,
-        ethereum::{EvmSponsorshipHandler},
+        ethereum::sponsoring::EvmSponsorshipHandler,
 		config::sponsoring::DefaultSponsoringRateLimit,
         DealWithFees,
     },

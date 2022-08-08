@@ -1,7 +1,7 @@
 use crate::{
     runtime_common::{
         config::ethereum::CrossAccountId,
-        ethereum::TransactionConverter
+        ethereum::transaction_converter::TransactionConverter
     },
     Runtime,
 };
