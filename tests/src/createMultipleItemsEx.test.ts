@@ -16,9 +16,9 @@
 
 import {expect} from 'chai';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties} from './util/helpers';
 
-describe('Integration Test: createMultipleItemsEx', () => {
+describe.only('Integration Test: createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
@@ -147,10 +147,15 @@ describe('Integration Test: createMultipleItemsEx', () => {
   });
 
   it('can initialize an RFT with multiple owners', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
+      const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      await executeTransaction(
+        api,
+        alice,
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'data', permission: {tokenOwner: true}}]),
+      );
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         RefungibleMultipleOwners: {
@@ -158,6 +163,9 @@ describe('Integration Test: createMultipleItemsEx', () => {
             [JSON.stringify({Substrate: alice.address}), 1],
             [JSON.stringify({Substrate: bob.address}), 2],
           ]),
+          properties: [
+            {key: 'data', value: 'testValue'},
+          ],
         },
       }));
 
@@ -166,18 +174,34 @@ describe('Integration Test: createMultipleItemsEx', () => {
 
       expect(await getBalance(api, collection, alice.address, 1)).to.be.equal(1n);
       expect(await getBalance(api, collection, bob.address, 1)).to.be.equal(2n);
+      expect((await getTokenProperties(api, collection, 1, ['data']))[0].value).to.be.equal('testValue');
     });
   });
 
   it('can initialize multiple RFTs with the same owner', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
+      const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      await executeTransaction(
+        api,
+        alice,
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'data', permission: {tokenOwner: true}}]),
+      );
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         RefungibleMultipleItems: [
-          {user: {Substrate: alice.address}, pieces: 1},
-          {user: {Substrate: alice.address}, pieces: 3},
+          {
+            user: {Substrate: alice.address}, pieces: 1,
+            properties: [
+              {key: 'data', value: 'testValue1'},
+            ],
+          },
+          {
+            user: {Substrate: alice.address}, pieces: 3,
+            properties: [
+              {key: 'data', value: 'testValue2'},
+            ],
+          },
         ],
       }));
 
@@ -186,6 +210,8 @@ describe('Integration Test: createMultipleItemsEx', () => {
 
       expect(await getBalance(api, collection, alice.address, 1)).to.be.equal(1n);
       expect(await getBalance(api, collection, alice.address, 2)).to.be.equal(3n);
+      expect((await getTokenProperties(api, collection, 1, ['data']))[0].value).to.be.equal('testValue1');
+      expect((await getTokenProperties(api, collection, 2, ['data']))[0].value).to.be.equal('testValue2');
     });
   });
 });
