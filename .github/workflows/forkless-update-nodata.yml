@@ -42,7 +42,7 @@ jobs:
         #    binary_version:
           - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
             features: "--features=quartz-runtime"
-            mainnet_branch: release-v0.9.26
+            mainnet_branch: quartz-v924012-2
             mainnet_tag: v924012
           - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
             features: "--features=unique-runtime"
