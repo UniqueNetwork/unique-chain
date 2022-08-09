@@ -666,7 +666,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param label extra label for log
    * @example await helper.collection.burn(aliceKeyring, 3);
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async burn(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -687,7 +687,7 @@ class CollectionGroup extends HelperGroup {
    * @param sponsorAddress Sponsor substrate address
    * @param label extra label for log
    * @example setSponsor(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...")
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async setSponsor(signer: TSigner, collectionId: number, sponsorAddress: TSubstrateAccount, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -707,7 +707,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param label extra label for log
    * @example confirmSponsorship(aliceKeyring, 10)
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async confirmSponsorship(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -736,7 +736,7 @@ class CollectionGroup extends HelperGroup {
    *     ownerCanDestroy: false
    *   }
    * )
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async setLimits(signer: TSigner, collectionId: number, limits: ICollectionLimits, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -757,7 +757,7 @@ class CollectionGroup extends HelperGroup {
    * @param ownerAddress substrate address of new owner
    * @param label extra label for log
    * @example changeOwner(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...")
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async changeOwner(signer: TSigner, collectionId: number, ownerAddress: TSubstrateAccount, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -778,7 +778,7 @@ class CollectionGroup extends HelperGroup {
    * @param adminAddressObj Administrator address (substrate or ethereum)
    * @param label extra label for log
    * @example addAdmin(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."})
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async addAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -799,7 +799,7 @@ class CollectionGroup extends HelperGroup {
    * @param adminAddressObj Administrator address (substrate or ethereum)
    * @param label extra label for log
    * @example removeAdmin(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."})
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async removeAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -819,8 +819,8 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param permissions collection permissions object
    * @param label extra label for log
-   * @example setPermissions(aliceKeyring, 10, TODO);
-   * @returns bool true on success
+   * @example setPermissions(aliceKeyring, 10, {access:'AllowList', mintMode: true, nesting: {collectionAdmin: true, tokenOwner: true}});
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async setPermissions(signer: TSigner, collectionId: number, permissions: ICollectionPermissions, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -840,8 +840,8 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param permissions nesting permissions object
    * @param label extra label for log
-   * @example enableNesting(aliceKeyring, 10, TODO);
-   * @returns bool true on success
+   * @example enableNesting(aliceKeyring, 10, {collectionAdmin: true, tokenOwner: true});
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async enableNesting(signer: TSigner, collectionId: number, permissions: INestingPermissions, label?: string): Promise<boolean> {
     return await this.setPermissions(signer, collectionId, {nesting: permissions}, label);
@@ -854,7 +854,7 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param label extra label for log
    * @example disableNesting(aliceKeyring, 10);
-   * @returns bool true on success
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async disableNesting(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
     return await this.setPermissions(signer, collectionId, {nesting: {tokenOwner: false, collectionAdmin: false}}, label);
@@ -867,9 +867,8 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param properties array of property objects
    * @param label extra label for log
-   * @example
-   * setProperties(aliceKeyring, 10, TODO)
-   * @returns bool true on success
+   * @example setProperties(aliceKeyring, 10, [{key: "gender", value: "male"}]);
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async setProperties(signer: TSigner, collectionId: number, properties: IProperty[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -889,8 +888,8 @@ class CollectionGroup extends HelperGroup {
    * @param collectionId ID of collection
    * @param propertyKeys array of property keys to delete
    * @param label
-   * @example deleteProperties(aliceKeyring, 10, TODO)
-   * @returns 
+   * @example deleteProperties(aliceKeyring, 10, ["gender", "age"]);
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async deleteProperties(signer: TSigner, collectionId: number, propertyKeys: string[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -983,7 +982,7 @@ class CollectionGroup extends HelperGroup {
    * @param label 
    * @param amount amount of tokens to be burned. For NFT must be set to 1n
    * @example burnTokenFrom(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."}, 5, {Ethereum: "0x9F0583DbB85..."})
-   * @returns ```true``` if extrinsic success. Otherwise ```false```
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async burnTokenFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, tokenId: number, label?: string, amount=1n): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -1005,7 +1004,7 @@ class CollectionGroup extends HelperGroup {
    * @param toAddressObj 
    * @param label 
    * @param amount amount of token to be approved. For NFT must be set to 1n
-   * @returns ```true``` if extrinsic success. Otherwise ```false```
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string, amount=1n) {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -1019,7 +1018,7 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * TODO
+   * Get amount of RFT pieces approved to transfer
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param toAccountObj 
@@ -1060,7 +1059,7 @@ class NFTnRFT extends CollectionGroup {
    * @param collectionId ID of collection
    * @param addressObj tokens owner
    * @example getTokensByAddress(10, {Substrate: "5DyN4Y92vZCjv38fg..."})
-   * @returns array of token ids owned by account TODO for RFT?
+   * @returns array of token ids owned by account
    */
   async getTokensByAddress(collectionId: number, addressObj: ICrossAccountId): Promise<number[]> {
     return (await this.helper.callRpc('api.rpc.unique.accountTokens', [collectionId, addressObj])).toJSON();
@@ -1071,7 +1070,7 @@ class NFTnRFT extends CollectionGroup {
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param blockHashAt 
-   * @param propertyKeys TODO
+   * @param propertyKeys
    * @example getToken(10, 5);
    * @returns human readable token data 
    */
@@ -1132,7 +1131,7 @@ class NFTnRFT extends CollectionGroup {
    * @param properties 
    * @param label 
    * @example setTokenProperties(aliceKeyring, 10, 5, [{key: "gender", value: "female"}, {key: "age", value: "23"}])
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async setTokenProperties(signer: TSigner, collectionId: number, tokenId: number, properties: IProperty[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `token #${tokenId} from collection #${collectionId}`;
@@ -1153,7 +1152,7 @@ class NFTnRFT extends CollectionGroup {
    * @param propertyKeys property keys to be deleted 
    * @param label 
    * @example deleteTokenProperties(aliceKeyring, 10, 5, ["gender", "age"])
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async deleteTokenProperties(signer: TSigner, collectionId: number, tokenId: number, propertyKeys: string[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `token #${tokenId} from collection #${collectionId}`;
@@ -1169,10 +1168,10 @@ class NFTnRFT extends CollectionGroup {
   /**
    * Mint new collection
    * @param signer keyring of signer
-   * @param collectionOptions TODO
+   * @param collectionOptions basic collection options and properties 
    * @param mode NFT or RFT type of a collection
    * @param errorLabel 
-   * @example mintCollection(aliceKeyring, TODO, "NFT")
+   * @example mintCollection(aliceKeyring, {name: 'New', description: "New collection", tokenPrefix: "NEW"}, "NFT")
    * @returns object of the created collection
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT', errorLabel = 'Unable to mint collection'): Promise<UniqueCollectionBase> {
@@ -1243,8 +1242,8 @@ class NFTGroup extends NFTnRFT {
    * Is token approved to transfer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param toAccountObj TODO
-   * @returns TODO 
+   * @param toAccountObj address to be approved
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async isTokenApproved(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId): Promise<boolean> {
     return (await this.getTokenApprovedPieces(collectionId, tokenId, toAccountObj, await this.getTokenOwner(collectionId, tokenId))) === 1n;
@@ -1258,7 +1257,7 @@ class NFTGroup extends NFTnRFT {
    * @param tokenId ID of token
    * @param addressObj address of a new owner
    * @example transferToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<boolean> {
     return await super.transferToken(signer, collectionId, tokenId, addressObj, 1n);
@@ -1274,7 +1273,7 @@ class NFTGroup extends NFTnRFT {
    * @param fromAddressObj address on behalf of which the token will be sent
    * @param toAddressObj new token owner
    * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Ethereum: "0x9F0583DbB85..."})
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId): Promise<boolean> {
     return await super.transferTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, 1n);
@@ -1331,7 +1330,7 @@ class NFTGroup extends NFTnRFT {
    * @param rootTokenObj token to be parent
    * @param label 
    * @example nestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4});
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, label='nest token'): Promise<boolean> {
     const rootTokenAddress = {Ethereum: this.helper.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
@@ -1350,7 +1349,7 @@ class NFTGroup extends NFTnRFT {
    * @param toAddressObj address of a new token owner 
    * @param label 
    * @example unnestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4}, {Substrate: "5DyN4Y92vZCjv38fg..."});
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId, label='unnest token'): Promise<boolean> {
     const rootTokenAddress = {Ethereum: this.helper.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
@@ -1416,7 +1415,7 @@ class NFTGroup extends NFTnRFT {
    *     owner: {Ethereum: "0x9F0583DbB855d..."},
    *     properties: [{key: "gender", value: "female"},{key: "age", value: "22"}],
    * }]);
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[], label?: string): Promise<UniqueNFTToken[]> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -1486,7 +1485,7 @@ class NFTGroup extends NFTnRFT {
    * @param toAddressObj address to approve
    * @param label 
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
-   * @returns ```true``` if extrinsic success. Otherwise ```false```
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, 1n);
@@ -1547,7 +1546,7 @@ class RFTGroup extends NFTnRFT {
    * @param addressObj address of a new owner
    * @param amount number of pieces to be transfered
    * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, 2000n)
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId, amount=100n): Promise<boolean> {
     return await super.transferToken(signer, collectionId, tokenId, addressObj, amount);
@@ -1562,7 +1561,7 @@ class RFTGroup extends NFTnRFT {
    * @param toAddressObj new token owner
    * @param amount number of pieces to be transfered
    * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Substrate: "5DfhbVfww7ThF8q6f3i..."}, 2000n)
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=100n): Promise<boolean> {
     return await super.transferTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
@@ -1762,7 +1761,7 @@ class FTGroup extends CollectionGroup {
    * @param amount amount of tokens to be meanted
    * @param label 
    * @example mintTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq"}, 1000n);
-   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async mintTokens(signer: TSigner, collectionId: number, owner: ICrossAccountId | string, amount: bigint, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -1790,13 +1789,13 @@ class FTGroup extends CollectionGroup {
    */
 
   /**
-   * Mint multiple Fungible tokens with one owner TODO For what??
+   * Mint multiple Fungible tokens with one owner
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param owner tokens owner
    * @param tokens array of tokens with properties and pieces
    * @param label 
-   * @returns 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {value: bigint}[], label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `collection #${collectionId}`;
@@ -1841,7 +1840,7 @@ class FTGroup extends CollectionGroup {
    * @param toAddressObj address recepient
    * @param amount amount of tokens to be sent
    * @example transfer(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
-   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async transfer(signer: TSigner, collectionId: number, toAddressObj: ICrossAccountId, amount: bigint) {
     return await super.transferToken(signer, collectionId, 0, toAddressObj, amount);
@@ -1855,7 +1854,7 @@ class FTGroup extends CollectionGroup {
    * @param toAddressObj address where token to be sent
    * @param amount number of tokens to be sent
    * @example transferFrom(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, {Substrate: "5DfhbVfww7ThF8q6f3ij..."}, 10000n);
-   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async transferFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount: bigint) {
     return await super.transferTokenFrom(signer, collectionId, 0, fromAddressObj, toAddressObj, amount);
@@ -1868,7 +1867,7 @@ class FTGroup extends CollectionGroup {
    * @param amount amount of tokens to be destroyed
    * @param label 
    * @example burnTokens(aliceKeyring, 10, 1000n);
-   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async burnTokens(signer: IKeyringPair, collectionId: number, amount=100n, label?: string): Promise<boolean> {
     return (await super.burnToken(signer, collectionId, 0, label, amount)).success;
@@ -1882,14 +1881,14 @@ class FTGroup extends CollectionGroup {
    * @param amount amount of tokens to be burnt
    * @param label 
    * @example burnTokensFrom(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
-   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async burnTokensFrom(signer: IKeyringPair, collectionId: number, fromAddressObj: ICrossAccountId, amount=100n, label?: string): Promise<boolean> {
     return await super.burnTokenFrom(signer, collectionId, fromAddressObj, 0, label, amount);
   }
 
   /**
-   * TODO for what?
+   * 
    * @param collectionId 
    * @returns 
    */
@@ -1906,18 +1905,18 @@ class FTGroup extends CollectionGroup {
    * @param amount amount of tokens to be approved
    * @param label 
    * @example approveTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n)
-   * @returns ```true``` if extrinsic success. Otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false``` 
    */
   async approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=100n, label?: string) {
     return super.approveToken(signer, collectionId, 0, toAddressObj, label, amount);
   }
 
   /**
-   * TODO why pieces??
-   * @param collectionId 
-   * @param fromAddressObj 
-   * @param toAddressObj 
-   * @returns 
+   * Get amount of fungible tokens approved to transfer
+   * @param collectionId ID of collection
+   * @param fromAddressObj owner of tokens
+   * @param toAddressObj the address approved for the transfer of tokens on behalf of the owner
+   * @returns number of tokens approved for the transfer
    */
   async getApprovedTokens(collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
     return super.getTokenApprovedPieces(collectionId, 0, toAddressObj, fromAddressObj);
@@ -2005,7 +2004,7 @@ class BalanceGroup extends HelperGroup {
    * @param address substrate address of a recepient
    * @param amount amount of tokens to be transfered
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
-   * @returns true if extrinsic success, otherwise false
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`);
