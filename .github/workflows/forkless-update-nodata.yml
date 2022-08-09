@@ -85,8 +85,8 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ env.mainnet_tag }}
-            MAINNET_BRANCH=${{ env.mainnet_branch }}
+            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
 
