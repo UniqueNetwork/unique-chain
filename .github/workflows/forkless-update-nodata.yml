@@ -1,4 +1,4 @@
-name: Forkless Parachain update with no data 
+name: Forkless Parachain update with no data
 
 # Controls when the action will run.
 on:
@@ -42,12 +42,12 @@ jobs:
         #    binary_version:
           - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
             features: "--features=quartz-runtime"
-            mainnet_branch: ${{ env.KUSAMA_MAINNET_BRANCH }}
-            mainnet_tag: ${{ env.QUARTZ_MAINNET_TAG }}
+            mainnet_branch: "${{ env.KUSAMA_MAINNET_BRANCH }}"
+            mainnet_tag: "${{ env.QUARTZ_MAINNET_TAG }}"
           - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
             features: "--features=unique-runtime"
-            mainnet_branch: ${{ env.POLKADOT_MAINNET_BRANCH }}
-            mainnet_tag: ${{ env.UNIQUE_MAINNET_TAG }}
+            mainnet_branch: "${{ env.POLKADOT_MAINNET_BRANCH }}"
+            mainnet_tag: "${{ env.UNIQUE_MAINNET_TAG }}"
 
 
 
