@@ -121,6 +121,7 @@ std = [
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 unique-runtime = []
 
+refungible = []
 scheduler = []
 rmrk = []
 
