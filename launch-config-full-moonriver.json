@@ -1,0 +1,138 @@
+{
+    "relaychain": {
+        "bin": "../polkadot/target/release/polkadot",
+        "chain": "rococo-local",
+        "nodes": [
+            {
+                "name": "alice",
+                "wsPort": 9844,
+                "rpcPort": 9843,
+                "port": 30444,
+                "flags": [
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
+                ]
+            },
+            {
+                "name": "bob",
+                "wsPort": 9855,
+                "rpcPort": 9854,
+                "port": 30555,
+                "flags": [
+                    "-lparachain::candidate_validation=debug",
+                    "-lxcm=trace"
+                ]
+            },
+            {
+                "name": "charlie",
+                "wsPort": 9866,
+                "rpcPort": 9865,
+                "port": 30666,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "dave",
+                "wsPort": 9877,
+                "rpcPort": 9876,
+                "port": 30777,
+                "flags": [
+                    "-lparachain::candidate_validation=debug"
+                ]
+            }
+        ],
+        "genesis": {
+            "runtime": {
+                "runtime_genesis_config": {
+                    "configuration": {
+                        "config": {
+                            "validation_upgrade_frequency": 1,
+                            "validation_upgrade_delay": 30,
+                            "validation_upgrade_cooldown": 30
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "parachains": [
+        {
+            "bin": "../unique-chain/target/release/unique-collator",
+            "id": "5000",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 31200,
+                    "wsPort": 9944,
+                    "rpcPort": 9933,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace",
+                        "-lfassets=trace"
+                    ]
+                },
+                {
+                    "port": 31201,
+                    "wsPort": 9945,
+                    "rpcPort": 9934,
+                    "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace",
+                        "-lfassets=trace"
+                    ]
+                }
+            ]
+        },
+        {
+            "bin": "../moonbeam/target/release/moonbeam",
+            "id": 1000,
+            "balance": "1000000000000000000000",
+            "chain": "moonriver-local",
+            "nodes": [
+                {
+                    "wsPort": 9946,
+					"port": 31202,
+                    "name": "alice",
+                    "flags": [
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "--rpc-methods=Unsafe",
+                        "--rpc-cors=all",
+                        "-lxcm=trace",
+                        "--",
+                        "--execution=wasm"
+                    ]
+                }
+            ]
+        }
+    ],
+    "simpleParachains": [],
+    "hrmpChannels": [
+        {
+            "sender": 1000,
+            "recipient": 5000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 5000,
+            "recipient": 1000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }
+    ],
+    "types": {
+        "Address": "MultiAddress",
+        "LookupSource": "MultiAddress",
+        "RoundIndex": "u32"
+    },
+    "finalization": true
+}
+
