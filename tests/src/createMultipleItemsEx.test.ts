@@ -16,7 +16,7 @@
 
 import {expect} from 'chai';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties, requirePallets, Pallets} from './util/helpers';
 
 describe.only('Integration Test: createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
@@ -146,7 +146,9 @@ describe.only('Integration Test: createMultipleItemsEx', () => {
     });
   });
 
-  it('can initialize an RFT with multiple owners', async () => {
+  it('can initialize an RFT with multiple owners', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
@@ -178,7 +180,9 @@ describe.only('Integration Test: createMultipleItemsEx', () => {
     });
   });
 
-  it('can initialize multiple RFTs with the same owner', async () => {
+  it('can initialize multiple RFTs with the same owner', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
@@ -389,7 +393,9 @@ describe('Negative test: createMultipleItemsEx', () => {
     });
   });
 
-  it('fails when trying to set multiple owners when creating multiple refungibles', async () => {
+  it('fails when trying to set multiple owners when creating multiple refungibles', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
 
     await usingApi(async (api, privateKeyWrapper) => {

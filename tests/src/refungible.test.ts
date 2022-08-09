@@ -38,6 +38,7 @@ import {
   getDestroyItemsResult,
   getModuleNames,
   Pallets,
+  requirePallets
 } from './util/helpers';
 
 import chai from 'chai';
@@ -52,6 +53,8 @@ let bob: IKeyringPair;
 
 describe('integration test: Refungible functionality:', async () => {
   before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');

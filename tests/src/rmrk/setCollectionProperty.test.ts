@@ -10,7 +10,7 @@ describe('integration test: set collection property', () => {
   let api: any;
   before(async function () {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkCore]);
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   it('set collection property', async () => {

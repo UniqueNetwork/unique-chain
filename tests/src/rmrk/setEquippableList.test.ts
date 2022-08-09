@@ -7,7 +7,7 @@ describe("integration test: set slot's Equippable List", () => {
   let api: any;
   before(async function () {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkCore]);
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   const alice = '//Alice';

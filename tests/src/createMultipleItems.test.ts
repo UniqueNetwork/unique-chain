@@ -33,6 +33,9 @@ import {
   createCollectionWithPropsExpectSuccess,
   createMultipleItemsWithPropsExpectSuccess,
   getTokenProperties,
+  requirePallets,
+  Pallets,
+  checkPalletsPresence
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -91,7 +94,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     });
   });
 
-  it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async () => {
+  it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
@@ -272,7 +277,9 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     });
   });
 
-  it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async () => {
+  it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
@@ -335,7 +342,9 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     });
   });
 
-  it('Regular user cannot create items in active ReFungible collection', async () => {
+  it('Regular user cannot create items in active ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const itemsListIndexBefore = await getLastTokenId(api, collectionId);
@@ -358,9 +367,8 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     });
   });
 
-  it('Create NFT and Re-fungible tokens that has reached the maximum data limit', async () => {
+  it('Create NFTs that has reached the maximum data limit', async function() {
     await usingApi(async (api, privateKeyWrapper) => {
-      // NFT
       const collectionId = await createCollectionWithPropsExpectSuccess({
         propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
       });
@@ -372,8 +380,13 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       ];
       const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
       await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
+    });
+  });
 
-      // ReFungible
+  it('Create Refungible tokens that has reached the maximum data limit', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    await usingApi(async api => {
       const collectionIdReFungible =
         await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       {
@@ -402,8 +415,15 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('Create tokens with different types', async () => {
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionExpectSuccess();
+
+      let types = ['NFT', 'Fungible'];
+
+      if (await checkPalletsPresence([Pallets.ReFungible])) {
+        types.push('ReFungible');
+      }
+
       const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'Fungible', 'ReFungible']);
+        .createMultipleItems(collectionId, normalizeAccountId(alice.address), types);
       await expect(executeTransaction(api, alice, createMultipleItemsTx)).to.be.rejectedWith(/nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/);
       // garbage collection :-D // lol
       await destroyCollectionExpectSuccess(collectionId);

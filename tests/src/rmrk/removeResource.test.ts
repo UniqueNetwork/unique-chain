@@ -20,7 +20,7 @@ describe('Integration test: remove nft resource', () => {
   before(async function() {
     api = await getApiConnection();
     ss58Format = api.registry.getChainProperties()!.toJSON().ss58Format;
-    requirePallets(this, api, [Pallets.RmrkCore]);
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   const Alice = '//Alice';

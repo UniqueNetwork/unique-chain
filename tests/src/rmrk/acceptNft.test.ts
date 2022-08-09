@@ -14,7 +14,7 @@ describe('integration test: accept NFT', () => {
   let api: any;
   before(async function() {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkCore]);
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
   
   

@@ -126,7 +126,7 @@ describe.skip('integration test: Equip NFT', () => {
   
   before(async function () {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkCore, Pallets.RmrkEquip]);
+    await requirePallets(this, [Pallets.RmrkCore, Pallets.RmrkEquip]);
   });
 
   it('equip nft', async () => {

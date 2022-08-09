@@ -64,7 +64,7 @@ describe('RMRK External Integration Test', async () => {
   before(async function() {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
-      requirePallets(this, api, [Pallets.RmrkCore]);
+      await requirePallets(this, [Pallets.RmrkCore]);
     });
   });
 

@@ -9,7 +9,7 @@ describe('integration test: add Theme to Base', () => {
   let api: any;
   before(async function() {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkEquip]);
+    await requirePallets(this, [Pallets.RmrkEquip]);
   });
 
   const alice = '//Alice';

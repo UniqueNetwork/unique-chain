@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {approve, createCollection, createRefungibleToken, transfer, transferFrom, UNIQUE} from '../util/helpers';
+import {approve, createCollection, createRefungibleToken, transfer, transferFrom, UNIQUE, requirePallets, Pallets} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth} from './util/helpers';
 import reFungibleTokenAbi from './reFungibleTokenAbi.json';
 
@@ -24,6 +24,10 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('Refungible token: Information getting', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
 
@@ -75,6 +79,10 @@ describe('Refungible token: Information getting', () => {
 
 // FIXME: Need erc721 for ReFubgible.
 describe('Check ERC721 token URI for ReFungible', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Empty tokenURI', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
@@ -216,6 +224,10 @@ describe('Check ERC721 token URI for ReFungible', () => {
 });
 
 describe('Refungible: Plain calls', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
 
@@ -477,6 +489,10 @@ describe('Refungible: Plain calls', () => {
 });
 
 describe('Refungible: Fees', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('approve() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
 
@@ -532,6 +548,10 @@ describe('Refungible: Fees', () => {
 });
 
 describe('Refungible: Substrate calls', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Events emitted for approve()', async ({web3, api, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
 

@@ -6,7 +6,7 @@ describe('integration test: create new Base', () => {
   let api: any;
   before(async function() {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkCore, Pallets.RmrkEquip]);
+    await requirePallets(this, [Pallets.RmrkCore, Pallets.RmrkEquip]);
   });
 
   const alice = '//Alice';

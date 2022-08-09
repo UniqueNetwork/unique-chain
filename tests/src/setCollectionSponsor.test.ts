@@ -23,6 +23,8 @@ import {createCollectionExpectSuccess,
   setCollectionSponsorExpectFailure,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
+  requirePallets,
+  Pallets
 } from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -50,7 +52,9 @@ describe('integration test: ext. setCollectionSponsor():', () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });
-  it('Set ReFungible collection sponsor', async () => {
+  it('Set ReFungible collection sponsor', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
   });

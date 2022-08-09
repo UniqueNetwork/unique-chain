@@ -7,7 +7,7 @@ describe('integration test: set NFT resource priorities', () => {
   let api: any;
   before(async function () {
     api = await getApiConnection();
-    requirePallets(this, api, [Pallets.RmrkCore]);
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   const alice = '//Alice';
