@@ -1,4 +1,4 @@
-name: Develop - Build & test
+name: Forkless Parachain update with no data 
 
 # Controls when the action will run.
 on:

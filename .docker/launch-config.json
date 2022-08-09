@@ -1,8 +1,6 @@
 {
     "relaychain": {
-        "bin": "../alts/polkadot/target/release/polkadot",
-        "upgradeBin": "../polkadot/target/release/polkadot",
-        "upgradeWasm": "../polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm",
+        "bin": "../polkadot/target/release/polkadot",
         "chain": "westend-local",
         "nodes": [
             {
