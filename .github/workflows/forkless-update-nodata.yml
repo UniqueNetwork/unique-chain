@@ -16,13 +16,7 @@ on:
 
 #Define Workflow variables
 env:
-  RUST_TOOLCHAIN: nightly-2022-05-11
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-  POLKADOT_BUILD_BRANCH: release-v0.9.24
-  POLKADOT_MAINNET_BRANCH: release-v0.9.25  # for unique-runtime
-  UNIQUE_MAINNET_TAG: v924010
-  KUSAMA_MAINNET_BRANCH: release-v0.9.26    # for для quartz-runtime
-  QUARTZ_MAINNET_TAG: v924012
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -41,11 +35,13 @@ jobs:
         #    features: "--features=opal-runtime"
         #    binary_version:
           - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
-            features: "--features=quartz-runtime"
+            features: "quartz-runtime"
+            runtime: "quartz"
             mainnet_branch: quartz-v924012-2
             mainnet_tag: v924012
           - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
-            features: "--features=unique-runtime"
+            features: "unique-runtime"
+            runtime: "unique"
             mainnet_branch: v924010
             mainnet_tag: v924010
 
@@ -70,10 +66,16 @@ jobs:
 #        if: github.event.pull_request.draft == true
 #        run: exit 1
 
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
@@ -93,8 +95,24 @@ jobs:
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
+      - name: Generate launch-config.json
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/launch-config.j2
+          output_file: .docker/launch-config-forkless.json
+          variables: |
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
+
+      - name: Show launch-config-forkless configuration
+        run: cat .docker/launch-config-forkless.json
+
+      - name: Show files in directory
+        run: ls -la
+
+
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate --remove-orphans
 
 
 #      - name: Test Report
@@ -110,6 +128,6 @@ jobs:
 #        run: |
 #          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
 
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+#      - name: Stop running containers
+#        if: always()                   # run this step always
+#        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down

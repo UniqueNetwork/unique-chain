@@ -1,0 +1,40 @@
+{
+      "parachains": [
+        {
+            "bin": "../unique-chain/current/release/unique-collator",
+            "upgradeBin": "../unique-chain/target/release/unique-collator",
+            "upgradeWasm": "../unique-chain/target/release/wbuild/{{ FEATURE }}/{{ RUNTIME }}_runtime.compact.compressed.wasm",
+            "id": "1000",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 31200,
+                    "wsPort": 9944,
+                    "rpcPort": 9933,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31201,
+                    "wsPort": 9945,
+                    "rpcPort": 9934,
+                    "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                }
+            ]
+        }
+    ],
+    "simpleParachains": [],
+    "hrmpChannels": [],
+    "finalization": false
+}

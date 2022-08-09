@@ -7,6 +7,8 @@ services:
       dockerfile: .docker/Dockerfile-parachain-upgrade
     image: node-parachain
     container_name: node-parachain
+    volumes:
+      - .docker/launch-config-forkless.json:/polkadot-launch/launch-config.json
     expose:
       - 9944
       - 9933

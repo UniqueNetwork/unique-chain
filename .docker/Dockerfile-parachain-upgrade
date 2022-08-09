@@ -11,7 +11,7 @@ ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && \
-    apt-get install -y cmake curl pkg-config libssl-dev git clang && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
 
@@ -40,9 +40,8 @@ ARG REPO_URL=
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-RUN echo "$MAINNET_BRANCH" && echo "$REPO_URL"
 RUN git clone $REPO_URL -b $MAINNET_BRANCH .
-RUN cargo build $FEATURE --$PROFILE
+RUN cargo build --features=$FEATURE --$PROFILE
 
 
 # ===== BUILD target version ======
@@ -57,9 +56,7 @@ RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH .
-RUN cargo build $FEATURE --$PROFILE
-
-COPY /unique_parachain/launch-config-forkless.json /polkadot-launch/launch-config.json
+RUN cargo build --features=$FEATURE --$PROFILE
 
 
 # ===== BUILD POLKADOT =====
@@ -99,10 +96,7 @@ COPY --from=builder-unique-current /unique_parachain/target/release/unique-colla
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 
-COPY --from=builder-unique-target /unique_parachain/launch-config-forkless.json /polkadot-launch/launch-config.json
-
-
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
-    yarn start launch-config.json --test-upgrade
+    yarn start launch-config.json
