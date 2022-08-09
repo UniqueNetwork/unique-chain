@@ -14,17 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-    weights::Weight,
-    parameter_types,
-};
-use crate::{
-    runtime_common::constants::*,
-    Runtime,
-    Event,
-    XcmpQueue,
-    DmpQueue,
-};
+use frame_support::{weights::Weight, parameter_types};
+use crate::{runtime_common::constants::*, Runtime, Event, XcmpQueue, DmpQueue};
 
 parameter_types! {
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;

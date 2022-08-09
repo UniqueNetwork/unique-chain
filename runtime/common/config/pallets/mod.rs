@@ -17,24 +17,18 @@
 use frame_support::parameter_types;
 use sp_runtime::traits::AccountIdConversion;
 use crate::{
-    runtime_common::{
-        constants::*,
-        dispatch::CollectionDispatchT,
-        config::{
-            substrate::TreasuryModuleId,
-            ethereum::EvmCollectionHelpersAddress,
-        },
-        weights::CommonWeights,
-        RelayChainBlockNumberProvider,
-    },
-    Runtime,
-    Event,
-    Call,
-    Balances,
+	runtime_common::{
+		constants::*,
+		dispatch::CollectionDispatchT,
+		config::{substrate::TreasuryModuleId, ethereum::EvmCollectionHelpersAddress},
+		weights::CommonWeights,
+		RelayChainBlockNumberProvider,
+	},
+	Runtime, Event, Call, Balances,
 };
 use common_types::{AccountId, Balance, BlockNumber};
 use up_data_structs::{
-    mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 };
 
 #[cfg(feature = "rmrk")]

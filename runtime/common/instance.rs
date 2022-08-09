@@ -1,9 +1,8 @@
 use crate::{
-    runtime_common::{
-        config::ethereum::CrossAccountId,
-        ethereum::transaction_converter::TransactionConverter
-    },
-    Runtime,
+	runtime_common::{
+		config::ethereum::CrossAccountId, ethereum::transaction_converter::TransactionConverter,
+	},
+	Runtime,
 };
 use common_types::opaque::RuntimeInstance;
 

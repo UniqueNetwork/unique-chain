@@ -15,19 +15,15 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-    traits::{
-        tokens::currency::Currency as CurrencyT,
-        OnUnbalanced as OnUnbalancedT,
-        Get, Everything
-    },
-    weights::{Weight, WeightToFeePolynomial, WeightToFee},
-    parameter_types, match_types,
+	traits::{
+		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get, Everything,
+	},
+	weights::{Weight, WeightToFeePolynomial, WeightToFee},
+	parameter_types, match_types,
 };
 use frame_system::EnsureRoot;
 use sp_runtime::{
-	traits::{
-		Saturating, CheckedConversion, Zero,
-	},
+	traits::{Saturating, CheckedConversion, Zero},
 	SaturatedConversion,
 };
 use pallet_xcm::XcmPassthrough;
@@ -36,8 +32,7 @@ use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm::latest::{
 	AssetId::{Concrete},
 	Fungibility::Fungible as XcmFungible,
-	MultiAsset,
-	Error as XcmError,
+	MultiAsset, Error as XcmError,
 };
 use xcm_executor::traits::{MatchesFungible, WeightTrader};
 use xcm_builder::{
@@ -49,19 +44,8 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::marker::PhantomData;
 use crate::{
-    runtime_common::{
-        constants::*,
-        config::substrate::LinearFee
-    },
-    Runtime,
-    Call,
-    Event,
-    Origin,
-    Balances,
-    ParachainInfo,
-    ParachainSystem,
-    PolkadotXcm,
-    XcmpQueue,
+	runtime_common::{constants::*, config::substrate::LinearFee},
+	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
 };
 use common_types::{AccountId, Balance};
 

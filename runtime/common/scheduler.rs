@@ -15,19 +15,16 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-    traits::NamedReservableCurrency,
-    weights::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
+	traits::NamedReservableCurrency,
+	weights::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
 };
 use sp_runtime::{
-    traits::{Dispatchable, Applyable, Member},
+	traits::{Dispatchable, Applyable, Member},
 	generic::Era,
-    transaction_validity::TransactionValidityError,
+	transaction_validity::TransactionValidityError,
 	DispatchErrorWithPostInfo, DispatchError,
 };
-use crate::{
-    Runtime, Call, Origin, Balances,
-    ChargeTransactionPayment,
-};
+use crate::{Runtime, Call, Origin, Balances, ChargeTransactionPayment};
 use common_types::{AccountId, Balance};
 use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler::DispatchCall;
@@ -85,11 +82,11 @@ where
 			SignedExtraScheduler,
 			SelfContainedSignedInfo,
 		> {
-			signed:
-                fp_self_contained::CheckedSignature::<AccountId, SignedExtraScheduler, SelfContainedSignedInfo>::Signed(
-					signer.clone().into(),
-					get_signed_extras(signer.into()),
-				),
+			signed: fp_self_contained::CheckedSignature::<
+				AccountId,
+				SignedExtraScheduler,
+				SelfContainedSignedInfo,
+			>::Signed(signer.clone().into(), get_signed_extras(signer.into())),
 			function: call.into(),
 		};
 

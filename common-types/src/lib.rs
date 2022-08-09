@@ -17,8 +17,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_runtime::{
-    generic,
-	traits::{Verify, IdentifyAccount}, MultiSignature,
+	generic,
+	traits::{Verify, IdentifyAccount},
+	MultiSignature,
 };
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -26,33 +27,29 @@ use sp_runtime::{
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-    pub use sp_runtime::{
-        generic,
-        traits::BlakeTwo256,
-        OpaqueExtrinsic as UncheckedExtrinsic
-    };
+	pub use sp_runtime::{generic, traits::BlakeTwo256, OpaqueExtrinsic as UncheckedExtrinsic};
 
 	pub use super::{BlockNumber, Signature, AccountId, Balance, Index, Hash, AuraId};
 
-    /// Opaque block header type.
-    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	/// Opaque block header type.
+	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
-    /// Opaque block type.
-    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
-    pub trait RuntimeInstance {
-        type CrossAccountId: pallet_evm::account::CrossAccountId<sp_runtime::AccountId32>
-            + Send
-            + Sync
-            + 'static;
+	pub trait RuntimeInstance {
+		type CrossAccountId: pallet_evm::account::CrossAccountId<sp_runtime::AccountId32>
+			+ Send
+			+ Sync
+			+ 'static;
 
-        type TransactionConverter: fp_rpc::ConvertTransaction<UncheckedExtrinsic>
-            + Send
-            + Sync
-            + 'static;
+		type TransactionConverter: fp_rpc::ConvertTransaction<UncheckedExtrinsic>
+			+ Send
+			+ Sync
+			+ 'static;
 
-        fn get_transaction_converter() -> Self::TransactionConverter;
-    }
+		fn get_transaction_converter() -> Self::TransactionConverter;
+	}
 }
 
 pub type SessionHandlers = ();

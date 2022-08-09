@@ -16,16 +16,13 @@
 
 use frame_support::parameter_types;
 use crate::{
-    runtime_common::{
-        constants::*,
-        sponsoring::UniqueSponsorshipHandler,
-    },
-    Runtime,
+	runtime_common::{constants::*, sponsoring::UniqueSponsorshipHandler},
+	Runtime,
 };
 use common_types::BlockNumber;
 
 parameter_types! {
-    pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
+	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
 }
 
 type SponsorshipHandler = (

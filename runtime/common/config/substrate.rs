@@ -18,11 +18,10 @@ use frame_support::{
 	traits::{Everything, ConstU32},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-		DispatchClass, WeightToFeePolynomial, WeightToFeeCoefficients,
-		ConstantMultiplier, WeightToFeeCoefficient,
+		DispatchClass, WeightToFeePolynomial, WeightToFeeCoefficients, ConstantMultiplier,
+		WeightToFeeCoefficient,
 	},
-	parameter_types,
-	PalletId,
+	parameter_types, PalletId,
 };
 use sp_runtime::{
 	generic,
@@ -36,20 +35,8 @@ use frame_system::{
 use sp_arithmetic::traits::{BaseArithmetic, Unsigned};
 use smallvec::smallvec;
 use crate::{
-    runtime_common::{
-        DealWithFees,
-        constants::*,
-    },
-	Runtime,
-	Event,
-	Call,
-	Origin,
-	PalletInfo,
-	System,
-	Balances,
-	Treasury,
-	SS58Prefix,
-	Version,
+	runtime_common::{DealWithFees, constants::*},
+	Runtime, Event, Call, Origin, PalletInfo, System, Balances, Treasury, SS58Prefix, Version,
 };
 use common_types::*;
 

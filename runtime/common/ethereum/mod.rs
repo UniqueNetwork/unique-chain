@@ -14,6 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+pub mod self_contained_call;
 pub mod sponsoring;
 pub mod transaction_converter;
-pub mod self_contained_call;

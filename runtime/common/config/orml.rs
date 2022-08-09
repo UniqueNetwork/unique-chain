@@ -16,10 +16,7 @@
 
 use frame_support::parameter_types;
 use frame_system::EnsureSigned;
-use crate::{
-    runtime_common::constants::*,
-    Runtime, Event, RelayChainBlockNumberProvider,
-};
+use crate::{runtime_common::constants::*, Runtime, Event, RelayChainBlockNumberProvider};
 use common_types::{AccountId, Balance};
 
 parameter_types! {

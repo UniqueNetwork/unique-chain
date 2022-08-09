@@ -15,11 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use codec::{Encode, Decode};
-use crate::{
-    opaque,
-    Runtime,
-    UncheckedExtrinsic,
-};
+use crate::{opaque, Runtime, UncheckedExtrinsic};
 
 pub struct TransactionConverter;
 

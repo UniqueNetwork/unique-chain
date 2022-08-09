@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-pub mod substrate;
 pub mod ethereum;
-pub mod sponsoring;
+pub mod orml;
 pub mod pallets;
 pub mod parachain;
+pub mod sponsoring;
+pub mod substrate;
 pub mod xcm;
-pub mod orml;

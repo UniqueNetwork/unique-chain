@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+pub mod config;
 pub mod constants;
 pub mod construct_runtime;
 pub mod dispatch;
+pub mod ethereum;
+pub mod instance;
 pub mod runtime_apis;
+pub mod scheduler;
 pub mod sponsoring;
 pub mod weights;
-pub mod config;
-pub mod instance;
-pub mod ethereum;
-pub mod scheduler;
 
 use sp_core::H160;
 use frame_support::traits::{Currency, OnUnbalanced, Imbalance};
 use sp_runtime::{
-    generic,
-    traits::{BlakeTwo256, BlockNumberProvider},
-    impl_opaque_keys,
+	generic,
+	traits::{BlakeTwo256, BlockNumberProvider},
+	impl_opaque_keys,
 };
 use sp_std::vec::Vec;
 
@@ -38,7 +38,7 @@ use sp_std::vec::Vec;
 use sp_version::NativeVersion;
 
 use crate::{
-    Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsReversedWithSystemFirst,
+	Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsReversedWithSystemFirst,
 	InherentDataExt,
 };
 use common_types::{AccountId, BlockNumber};

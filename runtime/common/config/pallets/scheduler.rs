@@ -14,20 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-    traits::PrivilegeCmp,
-    weights::Weight,
-    parameter_types
-};
+use frame_support::{traits::PrivilegeCmp, weights::Weight, parameter_types};
 use frame_system::EnsureSigned;
 use sp_runtime::Perbill;
 use sp_std::cmp::Ordering;
 use crate::{
-    runtime_common::{
-        scheduler::SchedulerPaymentExecutor,
-        config::substrate::RuntimeBlockWeights,
-    },
-    Runtime, Call, Event, Origin, OriginCaller, Balances
+	runtime_common::{scheduler::SchedulerPaymentExecutor, config::substrate::RuntimeBlockWeights},
+	Runtime, Call, Event, Origin, OriginCaller, Balances,
 };
 use common_types::AccountId;
 
@@ -36,7 +29,7 @@ parameter_types! {
 		RuntimeBlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
 
-    pub const NoPreimagePostponement: Option<u32> = Some(10);
+	pub const NoPreimagePostponement: Option<u32> = Some(10);
 	pub const Preimage: Option<u32> = Some(10);
 }
 
