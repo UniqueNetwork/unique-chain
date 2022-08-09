@@ -84,8 +84,8 @@
     },
     "parachains": [
         {
-            "bin": "../unique-chain/current/release/unique-collator",
-            "upgradeBin": "../unique-chain/target/release/unique-collator",
+            "bin": "../unique-chain/current/release/unique-collator",    #Mainnet TAG
+            "upgradeBin": "../unique-chain/target/release/unique-collator",   # version in PR develop to master
             "upgradeWasm": "../unique-chain/target/release/wbuild/opal-runtime/opal_runtime.compact.compressed.wasm",
             "id": "1000",
             "balance": "1000000000000000000000000",

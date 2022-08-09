@@ -28,23 +28,9 @@ RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 #RUN mkdir /unique_parachain
 #WORKDIR /unique_parachain
 
+
 # ===== BUILD current version ======
 FROM rust-builder as builder-unique-current
-
-ARG PROFILE=release
-ARG FEATURE=
-ARG BRANCH=
-ARG REPO_URL=
-
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
-
-RUN git clone $REPO_URL -b $BRANCH .
-RUN cargo build $FEATURE --$PROFILE
-
-
-# ===== BUILD target version ======
-FROM rust-builder as builder-unique-target
 
 ARG PROFILE=release
 ARG FEATURE=
@@ -56,6 +42,21 @@ WORKDIR /unique_parachain
 
 RUN echo "$MAINNET_BRANCH" && echo "$REPO_URL"
 RUN git clone $REPO_URL -b $MAINNET_BRANCH .
+RUN cargo build $FEATURE --$PROFILE
+
+
+# ===== BUILD target version ======
+FROM rust-builder as builder-unique-target
+
+ARG PROFILE=release
+ARG FEATURE=
+ARG BRANCH=
+ARG REPO_URL=
+
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
+
+RUN git clone $REPO_URL -b $BRANCH .
 RUN cargo build $FEATURE --$PROFILE
 
 
