@@ -47,6 +47,7 @@ export enum Pallets {
   ReFungible = 'refungible',
   Fungible = 'fungible',
   NFT = 'nonfungible',
+  Scheduler = 'scheduler',
 }
 
 export async function isUnique(): Promise<boolean> {
@@ -72,12 +73,28 @@ export function getModuleNames(api: ApiPromise): string[] {
   return modulesNames;
 }
 
-export function requirePallets(mocha: Context, api: ApiPromise, requiredPallets: string[]) {
-  const pallets = getModuleNames(api);
+export async function missingRequiredPallets(requiredPallets: string[]): Promise<string[]> {
+  return await usingApi(async api => {
+    const pallets = getModuleNames(api);
 
-  const isAllPalletsPresent = requiredPallets.every(p => pallets.includes(p));
+    return requiredPallets.filter(p => !pallets.includes(p));
+  });
+}
 
-  if (!isAllPalletsPresent) {
+export async function checkPalletsPresence(requiredPallets: string[]): Promise<boolean> {
+  return (await missingRequiredPallets(requiredPallets)).length == 0;
+}
+
+export async function requirePallets(mocha: Context, requiredPallets: string[]) {
+  const missingPallets = await missingRequiredPallets(requiredPallets);
+
+  if (missingPallets.length > 0) {
+    const skippingTestMsg = `\tSkipping test "${mocha.test?.title}".`;
+    const missingPalletsMsg = `\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
+    const skipMsg = `${skippingTestMsg}\n${missingPalletsMsg}`;
+
+    console.log('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+
     mocha.skip();
   }
 }
