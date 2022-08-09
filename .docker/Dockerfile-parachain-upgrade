@@ -10,12 +10,12 @@ ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
-
 RUN apt-get update && \
-    apt-get install -y cmake pkg-config libssl-dev git clang && \
+    apt-get install -y cmake curl pkg-config libssl-dev git clang && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -25,8 +25,8 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
+#RUN mkdir /unique_parachain
+#WORKDIR /unique_parachain
 
 # ===== BUILD current version ======
 FROM rust-builder as builder-unique-current
