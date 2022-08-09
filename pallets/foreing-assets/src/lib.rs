@@ -43,7 +43,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use up_data_structs::{CollectionMode};
-use pallet_common::{Pallet as PalletCommon};
+use pallet_fungible::{Pallet as PalletFungible};
 use scale_info::{TypeInfo};
 use sp_runtime::{
 	traits::{One, Zero},
@@ -308,9 +308,10 @@ pub mod module {
 				..Default::default()
 			};
 
-			// throw an error on bad result
-			let bounded_collection_id =
-				<PalletCommon<T>>::init_collection(CrossAccountId::from_sub(owner), data, true)?;
+			let bounded_collection_id = <PalletFungible<T>>::init_foreign_collection(
+				CrossAccountId::from_sub(owner),
+				data,
+			)?;
 			let foreign_asset_id =
 				Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
 
@@ -382,11 +383,6 @@ impl<T: Config> Pallet<T> {
 						AssetIds::ForeignAssetId(foreign_asset_id),
 						|maybe_asset_metadatas| -> DispatchResult {
 							ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
-
-							// insert bounded collection in metadata
-							//let mut md = metadata.clone();
-							//md.mapped_collection = bounded_collection_id;
-
 							*maybe_asset_metadatas = Some(metadata.clone());
 							Ok(())
 						},

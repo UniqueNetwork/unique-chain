@@ -434,7 +434,7 @@ where
 
 				let amount_data: pallet_fungible::CreateItemData<T> = (account.clone(), value);
 
-				pallet_fungible::Pallet::<T>::create_item(
+				pallet_fungible::Pallet::<T>::create_item_foreign(
 					&collection,
 					&account,
 					amount_data,
@@ -508,13 +508,10 @@ where
 				};
 				let collection =
 					FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
-				let account = T::CrossAccountId::from_sub(who.clone());
-				pallet_fungible::Pallet::<T>::burn_from(
+				pallet_fungible::Pallet::<T>::burn_foreign(
 					&collection,
-					&account.clone(),
-					&account,
+					&T::CrossAccountId::from_sub(who.clone()),
 					value,
-					&Unlimited,
 				)?;
 
 				Ok(amount)
