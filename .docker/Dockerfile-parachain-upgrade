@@ -44,7 +44,7 @@ RUN echo "$MAINNET_BRANCH" && echo "$REPO_URL"
 RUN git clone $REPO_URL -b $MAINNET_BRANCH .
 RUN cargo build $FEATURE --$PROFILE
 
-COPY /unique_parachain/.docker/launch-config.json /polkadot-launch/launch-config.json
+COPY /unique_parachain/launch-config-forkless.json /polkadot-launch/launch-config.json
 
 
 # ===== BUILD target version ======
