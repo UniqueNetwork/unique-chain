@@ -43,7 +43,12 @@ use crate::{
 };
 use common_types::{AccountId, BlockNumber};
 
-pub type CommonError = pallet_common::Error<Runtime>;
+#[macro_export]
+macro_rules! unsupported {
+	() => {
+		pallet_common::unsupported!($crate::Runtime)
+	}
+}
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;

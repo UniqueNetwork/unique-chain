@@ -34,6 +34,9 @@ use up_data_structs::{
 	CollectionId,
 };
 
+#[cfg(not(feature = "refungible"))]
+use pallet_common::unsupported;
+
 pub enum CollectionDispatchT<T>
 where
 	T: pallet_fungible::Config + pallet_nonfungible::Config + pallet_refungible::Config,
@@ -64,13 +67,12 @@ where
 				);
 				<PalletFungible<T>>::init_collection(sender, data)?
 			}
+
 			#[cfg(feature = "refungible")]
 			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, data)?,
 
 			#[cfg(not(feature = "refungible"))]
-			CollectionMode::ReFungible => {
-				return Err(DispatchError::Other("Refunginle pallet is not supported"))
-			}
+			CollectionMode::ReFungible => return unsupported!(T)
 		};
 		Ok(id)
 	}
