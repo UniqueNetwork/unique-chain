@@ -7,6 +7,8 @@ ARG RUST_TOOLCHAIN=
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
@@ -72,7 +74,6 @@ RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/
 FROM ubuntu:20.04
 
 RUN apt-get -y update && \
-      apt-get -y upgrade && \
       apt-get -y install curl git && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \
