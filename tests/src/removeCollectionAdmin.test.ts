@@ -16,7 +16,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

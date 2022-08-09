@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import { U128_MAX } from './util/helpers';
+import {U128_MAX} from './util/helpers';
 
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -37,16 +37,16 @@ describe('integration test: Fungible functionality:', () => {
 
   it('Create fungible collection and token', async () => {
     await usingPlaygrounds(async helper => {
-        const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'trest'});
-        const defaultTokenId = await collection.getLastTokenId();
-        expect(defaultTokenId).to.be.equal(0);
+      const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'trest'});
+      const defaultTokenId = await collection.getLastTokenId();
+      expect(defaultTokenId).to.be.equal(0);
 
-        await collection.mint(alice, {Substrate: alice.address}, U128_MAX);
-        const aliceBalance = await collection.getBalance({Substrate: alice.address});
-        const itemCountAfter = await collection.getLastTokenId();
+      await collection.mint(alice, {Substrate: alice.address}, U128_MAX);
+      const aliceBalance = await collection.getBalance({Substrate: alice.address});
+      const itemCountAfter = await collection.getLastTokenId();
 
-        expect(itemCountAfter).to.be.equal(defaultTokenId);
-        expect(aliceBalance).to.be.equal(U128_MAX);
+      expect(itemCountAfter).to.be.equal(defaultTokenId);
+      expect(aliceBalance).to.be.equal(U128_MAX);
     });
   });
   
@@ -103,7 +103,7 @@ describe('integration test: Fungible functionality:', () => {
       await collection.mintWithOneOwner(alice, {Substrate: alice.address}, [
         {value: 500n},
         {value: 400n},
-        {value: 300n}
+        {value: 300n},
       ]);
 
       expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(1200n);

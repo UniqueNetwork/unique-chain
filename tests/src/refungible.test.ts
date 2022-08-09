@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -105,7 +105,7 @@ describe('integration test: Refungible functionality:', () => {
       await helper.rft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, [
         {pieces: 1n}, 
         {pieces: 2n}, 
-        {pieces: 100n}
+        {pieces: 100n},
       ]);
       const lastTokenId = await collection.getLastTokenId();
       expect(lastTokenId).to.be.equal(3);
@@ -223,9 +223,9 @@ describe('integration test: Refungible functionality:', () => {
           collection.collectionId.toString(), 
           token.tokenId.toString(), 
           {Substrate: alice.address}, 
-          '100'
-        ]
-      }])
+          '100',
+        ],
+      }]);
     });
   });
 
@@ -243,9 +243,9 @@ describe('integration test: Refungible functionality:', () => {
           collection.collectionId.toString(), 
           token.tokenId.toString(), 
           {Substrate: alice.address}, 
-          '50'
-        ]
-      }])
+          '50',
+        ],
+      }]);
     });
   });
 });
