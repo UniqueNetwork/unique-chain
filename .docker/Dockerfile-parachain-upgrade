@@ -44,6 +44,8 @@ RUN echo "$MAINNET_BRANCH" && echo "$REPO_URL"
 RUN git clone $REPO_URL -b $MAINNET_BRANCH .
 RUN cargo build $FEATURE --$PROFILE
 
+COPY /unique_parachain/.docker/launch-config.json /polkadot-launch/launch-config.json
+
 
 # ===== BUILD target version ======
 FROM rust-builder as builder-unique-target
@@ -98,7 +100,7 @@ COPY --from=builder-unique-current /unique_parachain/target/release/unique-colla
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 
-COPY --from=builder-unique-current /unique_parachain/.docker/launch-config.json /polkadot-launch/launch-config.json
+COPY --from=builder-unique-current /unique_parachain/launch-config-forkless.json /polkadot-launch/launch-config.json
 
 
 CMD export NVM_DIR="$HOME/.nvm" && \
