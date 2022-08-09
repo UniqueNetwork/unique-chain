@@ -34,12 +34,12 @@ FROM rust-builder as builder-unique-current
 ARG PROFILE=release
 ARG FEATURE=
 ARG BRANCH=
+ARG REPO_URL=
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-RUN echo "$BRANCH" && echo "$REPO_URL"
-RUN git clone $REPO_URL -b $BRANCH
+RUN git clone $REPO_URL -b $BRANCH .
 RUN cargo build $FEATURE --$PROFILE
 
 
@@ -49,12 +49,13 @@ FROM rust-builder as builder-unique-target
 ARG PROFILE=release
 ARG FEATURE=
 ARG MAINNET_BRANCH=
+ARG REPO_URL=
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 RUN echo "$MAINNET_BRANCH" && echo "$REPO_URL"
-RUN git clone $REPO_URL -b $MAINNET_BRANCH
+RUN git clone $REPO_URL -b $MAINNET_BRANCH .
 RUN cargo build $FEATURE --$PROFILE
 
 
