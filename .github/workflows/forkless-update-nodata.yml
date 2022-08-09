@@ -46,7 +46,7 @@ jobs:
             mainnet_tag: v924012
           - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
             features: "--features=unique-runtime"
-            mainnet_branch: release-v0.9.25
+            mainnet_branch: v924010
             mainnet_tag: v924010
 
 
