@@ -92,7 +92,7 @@ COPY --from=builder-unique-current /unique_parachain/target/release/unique-colla
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 
-COPY --from=builder-unique /.docker/launch-config.json /polkadot-launch/launch-config.json
+COPY --from=builder-unique-current /.docker/launch-config.json /polkadot-launch/launch-config.json
 
 
 CMD export NVM_DIR="$HOME/.nvm" && \
