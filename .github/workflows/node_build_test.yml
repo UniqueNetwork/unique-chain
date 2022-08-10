@@ -16,7 +16,9 @@ on:
 
 #Define Workflow variables
 env:
+  RUST_TOOLCHAIN: nightly-2022-05-11
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+  POLKA_VERSION: release-v0.9.24
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -61,9 +63,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Read .env file from root of project
-        uses: xom9ikk/dotenv@v1.0.2
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0

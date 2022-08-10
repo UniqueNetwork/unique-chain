@@ -8,5 +8,6 @@ services:
         - "BRANCH={{ BRANCH }}"
         - "REPO_URL={{ REPO_URL }}"
         - "FEATURE={{ FEATURE }}"
+        - "POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}"
 
     command: cargo run --release {{ FEATURE }} -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

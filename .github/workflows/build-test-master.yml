@@ -64,7 +64,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Read .env file from root of project
+      - name: Simple Dotenv
         uses: xom9ikk/dotenv@v1.0.2
 
       - name: Generate ENV related extend file for docker-compose
