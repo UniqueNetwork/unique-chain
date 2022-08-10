@@ -5722,7 +5722,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-common"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5869,7 +5869,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-coder-substrate"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5887,7 +5887,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-contract-helpers"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "evm-coder",
  "fp-evm-mapping",
@@ -6189,7 +6189,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nonfungible"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -6311,8 +6311,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-refungible"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
+ "derivative",
  "ethereum",
  "evm-coder",
  "frame-benchmarking",
@@ -6333,7 +6334,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-rmrk-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "derivative",
  "frame-benchmarking",
@@ -6354,7 +6355,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-rmrk-equip"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6484,7 +6485,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-structure"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6629,7 +6630,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-unique"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -12732,7 +12733,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-data-structs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "derivative",
  "frame-support",
@@ -12750,7 +12751,7 @@ dependencies = [
 
 [[package]]
 name = "up-rpc"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "pallet-common",
  "pallet-evm",

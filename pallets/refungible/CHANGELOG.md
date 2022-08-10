@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- bureaucrate goes here -->
+## [v0.2.2] 2022-08-04
+
+### Product changes
+
+- Now RefungibleMultipleItems may only receive single user on type level.
+
+### Added features
+
+- Implement property RPC 7bf45b532e32daa91f03c157b58874d21b42ae1f
+
+### Other changes
+
+- refactor: Disallow invalid bulk mints 53fec71cf728dddd012257b407ea30441e699f88
+
+`create_multiple_items_ex` was allowing invalid (that will be always
+rejected at runtime level) refungible mint extrinsics, by passing
+multiple users into `RefungibleMultipleItems` call.
+
 ## [v0.2.1] - 2022-07-27
 
 ### New features

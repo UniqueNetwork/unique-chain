@@ -19,8 +19,9 @@ use core::marker::PhantomData;
 use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{
-	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
-	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData, CollectionPropertiesVec,
+	CollectionId, TokenId, CreateItemExData, budget::Budget, Property, PropertyKey, PropertyValue,
+	PropertyKeyPermission, CollectionPropertiesVec, CreateRefungibleExMultipleOwners,
+	CreateRefungibleExSingleOwner,
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
@@ -32,7 +33,7 @@ use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted, TotalSupply,
+	SelfWeightOf, weights::WeightInfo, TokensMinted, TotalSupply, CreateItemData,
 };
 
 macro_rules! max_weight_of {
@@ -58,11 +59,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::create_item()
 	}
 
-	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
+	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
 		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
 			data.iter()
 				.map(|data| match data {
-					CreateItemData::ReFungible(rft_data) => {
+					up_data_structs::CreateItemData::ReFungible(rft_data) => {
 						properties_weight::<T>(&rft_data.properties)
 					}
 					_ => 0,
@@ -152,9 +153,9 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 fn map_create_data<T: Config>(
 	data: up_data_structs::CreateItemData,
 	to: &T::CrossAccountId,
-) -> Result<CreateRefungibleExData<T::CrossAccountId>, DispatchError> {
+) -> Result<CreateItemData<T::CrossAccountId>, DispatchError> {
 	match data {
-		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateRefungibleExData {
+		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateItemData {
 			users: {
 				let mut out = BTreeMap::new();
 				out.insert(to.clone(), data.pieces);
@@ -214,12 +215,26 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
 		let data = match data {
-			CreateItemExData::RefungibleMultipleOwners(r) => vec![r],
-			CreateItemExData::RefungibleMultipleItems(r)
-				if r.iter().all(|i| i.users.len() == 1) =>
-			{
-				r.into_inner()
-			}
+			CreateItemExData::RefungibleMultipleOwners(CreateRefungibleExMultipleOwners {
+				users,
+				properties,
+			}) => vec![CreateItemData { users, properties }],
+			CreateItemExData::RefungibleMultipleItems(r) => r
+				.into_inner()
+				.into_iter()
+				.map(
+					|CreateRefungibleExSingleOwner {
+					     user,
+					     pieces,
+					     properties,
+					 }| CreateItemData {
+						users: BTreeMap::from([(user, pieces)])
+							.try_into()
+							.expect("limit >= 1"),
+						properties,
+					},
+				)
+				.collect(),
 			_ => fail!(<Error<T>>::NotRefungibleDataUsedToMintFungibleCollectionToken),
 		};
 
@@ -442,16 +457,31 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
-	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
-		None
+	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
+		<Pallet<T>>::token_properties((self.id, token_id))
+			.get(key)
+			.cloned()
 	}
 
-	fn token_properties(
-		&self,
-		_token_id: TokenId,
-		_keys: Option<Vec<PropertyKey>>,
-	) -> Vec<Property> {
-		Vec::new()
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
+		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+
+		keys.map(|keys| {
+			keys.into_iter()
+				.filter_map(|key| {
+					properties.get(&key).map(|value| Property {
+						key,
+						value: value.clone(),
+					})
+				})
+				.collect()
+		})
+		.unwrap_or_else(|| {
+			properties
+				.into_iter()
+				.map(|(key, value)| Property { key, value })
+				.collect()
+		})
 	}
 
 	fn total_supply(&self) -> u32 {

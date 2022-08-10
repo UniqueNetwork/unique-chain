@@ -93,7 +93,9 @@ use crate::erc::ERC721Events;
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
 use evm_coder::ToLog;
-use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transactional};
+use frame_support::{
+	BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32,
+};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
@@ -106,11 +108,13 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CreateCollectionData, CreateRefungibleExData,
-	CustomDataLimit, mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, TokenId, Property,
+	AccessMode, budget::Budget, CollectionId, CreateCollectionData, CustomDataLimit,
+	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, MAX_ITEMS_PER_BATCH, TokenId, Property,
 	PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
-	TrySetProperty,
+	TrySetProperty, CollectionPropertiesVec,
 };
+use frame_support::BoundedBTreeMap;
+use derivative::Derivative;
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
@@ -120,8 +124,13 @@ pub mod erc;
 pub mod erc_token;
 pub mod weights;
 
-pub type CreateItemData<T> =
-	CreateRefungibleExData<<T as pallet_evm::account::Config>::CrossAccountId>;
+#[derive(Derivative, Clone)]
+pub struct CreateItemData<CrossAccountId> {
+	#[derivative(Debug(format_with = "bounded::map_debug"))]
+	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
+	#[derivative(Debug(format_with = "bounded::vec_debug"))]
+	pub properties: CollectionPropertiesVec,
+}
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
@@ -873,7 +882,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T>>,
+		data: Vec<CreateItemData<T::CrossAccountId>>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
@@ -1213,7 +1222,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateItemData<T>,
+		data: CreateItemData<T::CrossAccountId>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
