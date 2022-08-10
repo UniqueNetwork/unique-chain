@@ -104,6 +104,7 @@ jobs:
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
+        id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests ${{ matrix.network }}            # Name of the check run which will be created
