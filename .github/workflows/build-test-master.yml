@@ -1,15 +1,15 @@
-name: Develop - Build & test
+name: MASTER - Build & Test
 
 # Controls when the action will run.
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
   pull_request:
     branches:
-      - develop
+      - master
     types:
       - opened
       - reopened
-      - synchronize   #commit(s) pushed to the pull request
+      - synchronize #commit(s) pushed to the pull request
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -20,13 +20,15 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+
   build:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
+
     name: Build Container, Spin it Up an test
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.
 
     strategy:
       matrix:
@@ -60,7 +62,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }}
 
       - name: Read .env file from root of project
         uses: xom9ikk/dotenv@v1.0.2
@@ -68,7 +70,7 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp.j2
+          template: .docker/docker-compose.tmp-master.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
@@ -81,7 +83,7 @@ jobs:
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
       - uses: actions/setup-node@v3
         with:
@@ -113,4 +115,4 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down

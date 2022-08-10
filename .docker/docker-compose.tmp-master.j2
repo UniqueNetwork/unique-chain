@@ -1,13 +1,11 @@
 version: "3.5"
 
 services:
-  node-dev:
+  blockchain_nodes:
     build:
       args:
         - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
         - "BRANCH={{ BRANCH }}"
         - "REPO_URL={{ REPO_URL }}"
         - "FEATURE={{ FEATURE }}"
-        - "POLKADOT_BUILD_BRANCH=${{ POLKADOT_BUILD_BRANCH }}"
-
-    command: cargo run --release {{ FEATURE }} -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+        - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"

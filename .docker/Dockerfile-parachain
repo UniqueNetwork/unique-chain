@@ -2,18 +2,18 @@
 FROM ubuntu:20.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
-ARG RUST_TOOLCHAIN=nightly-2022-05-11
+ARG RUST_TOOLCHAIN=
 
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
-
 RUN apt-get update && \
-    apt-get install -y cmake pkg-config libssl-dev git clang && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -31,6 +31,8 @@ FROM rust-builder as builder-unique
 
 ARG PROFILE=release
 ARG FEATURE=
+ARG REPO_URL=
+ARG BRANCH=
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -41,13 +43,13 @@ RUN cargo build $FEATURE --$PROFILE
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
 
-ARG POLKA_VERSION=release-v0.9.24
-ENV POLKA_VERSION $POLKA_VERSION
+ARG POLKADOT_BUILD_BRANCH=
+ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-RUN git clone -b $POLKA_VERSION --depth 1 https://github.com/paritytech/polkadot.git && \
+RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/polkadot.git && \
     cd polkadot && \
     cargo build --release
 
