@@ -33,7 +33,7 @@ jobs:
       matrix:
         include:
           - network: "Opal"
-            features: "--features=opal-runtime"
+            features: " "
           - network: "Quartz"
             features: "--features=quartz-runtime"
           - network: "Unique"
