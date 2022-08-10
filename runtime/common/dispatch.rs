@@ -72,7 +72,7 @@ where
 			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, data)?,
 
 			#[cfg(not(feature = "refungible"))]
-			CollectionMode::ReFungible => return unsupported!(T)
+			CollectionMode::ReFungible => return unsupported!(T),
 		};
 		Ok(id)
 	}

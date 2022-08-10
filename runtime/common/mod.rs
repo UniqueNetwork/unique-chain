@@ -47,7 +47,7 @@ use common_types::{AccountId, BlockNumber};
 macro_rules! unsupported {
 	() => {
 		pallet_common::unsupported!($crate::Runtime)
-	}
+	};
 }
 
 /// The address format for describing accounts.
