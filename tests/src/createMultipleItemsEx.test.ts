@@ -18,7 +18,7 @@ import {expect} from 'chai';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
 import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties, requirePallets, Pallets} from './util/helpers';
 
-describe.only('Integration Test: createMultipleItemsEx', () => {
+describe('Integration Test: createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
