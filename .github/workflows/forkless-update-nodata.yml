@@ -31,9 +31,9 @@ jobs:
     strategy:
       matrix:
         include:
-        #  - network: "Opal"
-        #    features: "--features=opal-runtime"
-        #    binary_version:
+#          - network: "Opal"
+#            features: " "
+#            binary_version:
           - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
             features: "quartz-runtime"
             runtime: "quartz"
@@ -108,12 +108,25 @@ jobs:
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless.json
 
-      - name: Show files in directory
-        run: ls -la
-
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+
+      - name: Collect docker logs on failure
+        if: success() || failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './fpu-logs'
+          images: 'node-parachain' 
+      - name: Tar logs
+        if: success() || failure()
+        run: tar cvzf ./fpu-logs.tgz ./fpu-logs
+      - name: Upload logs to GitHub
+        if: success() || failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: forkless-parachain-upgrade-logs.tgz
+          path: ./fpu-logs.tgz
 
 
 #      - name: Test Report
