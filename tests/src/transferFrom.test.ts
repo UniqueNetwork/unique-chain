@@ -32,7 +32,7 @@ import {
   setCollectionLimitsExpectSuccess,
   getCreatedCollectionCount,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);

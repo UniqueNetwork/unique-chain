@@ -28,7 +28,7 @@ import {
   getFreeBalance,
   waitNewBlocks, burnItemExpectSuccess,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 import {expect} from 'chai';
 

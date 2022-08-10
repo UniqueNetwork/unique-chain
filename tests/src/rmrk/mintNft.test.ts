@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
-import { requirePallets, Pallets } from '../util/helpers';
+import {requirePallets, Pallets} from '../util/helpers';
 import {getNft} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, mintNft} from './util/tx';

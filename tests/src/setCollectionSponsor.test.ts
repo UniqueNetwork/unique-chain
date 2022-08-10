@@ -24,7 +24,7 @@ import {createCollectionExpectSuccess,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 

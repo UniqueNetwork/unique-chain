@@ -26,7 +26,7 @@ import {createCollectionExpectSuccess,
   getCreatedCollectionCount,
   createItemExpectSuccess,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);

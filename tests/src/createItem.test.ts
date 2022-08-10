@@ -30,7 +30,7 @@ import {
   normalizeAccountId,
   getCreateItemResult,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 
 const expect = chai.expect;

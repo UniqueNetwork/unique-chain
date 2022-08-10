@@ -18,7 +18,7 @@ import {
   transferFromExpectSuccess,
   setCollectionLimitsExpectSuccess,
   requirePallets,
-  Pallets
+  Pallets,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 

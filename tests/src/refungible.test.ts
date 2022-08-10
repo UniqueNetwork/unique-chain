@@ -38,7 +38,7 @@ import {
   getDestroyItemsResult,
   getModuleNames,
   Pallets,
-  requirePallets
+  requirePallets,
 } from './util/helpers';
 
 import chai from 'chai';

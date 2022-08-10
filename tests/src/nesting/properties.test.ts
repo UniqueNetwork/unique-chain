@@ -9,7 +9,7 @@ import {
   getCreateCollectionResult,
   transferExpectSuccess,
   requirePallets,
-  Pallets
+  Pallets,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {tokenIdToAddress} from '../eth/util/helpers';

@@ -28,7 +28,7 @@ import {
   normalizeAccountId,
   getNextSponsored,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);

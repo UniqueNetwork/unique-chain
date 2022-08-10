@@ -1,5 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import { requirePallets, Pallets } from '../util/helpers';
+import {requirePallets, Pallets} from '../util/helpers';
 import {expectTxFailure} from './util/helpers';
 import {mintNft, createCollection, setResourcePriorities} from './util/tx';
 

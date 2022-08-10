@@ -42,7 +42,7 @@ import {
   subToEth,
   itWeb3, 
 } from './eth/util/helpers';
-import { request } from 'https';
+import {request} from 'https';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;

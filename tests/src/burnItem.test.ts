@@ -26,7 +26,7 @@ import {
   setCollectionLimitsExpectSuccess,
   isTokenExists,
   requirePallets,
-  Pallets
+  Pallets,
 } from './util/helpers';
 
 import chai from 'chai';

@@ -28,7 +28,7 @@ import {default as usingApi, executeTransaction, submitTransactionAsync, submitT
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
 import {UpDataStructsTokenChild} from '../interfaces';
-import { Context } from 'mocha';
+import {Context} from 'mocha';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

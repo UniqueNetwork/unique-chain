@@ -5,7 +5,7 @@ import {burnNft, createCollection, sendNft, mintNft} from './util/tx';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { requirePallets, Pallets } from '../util/helpers';
+import {requirePallets, Pallets} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

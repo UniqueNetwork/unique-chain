@@ -35,7 +35,7 @@ import {
   getTokenProperties,
   requirePallets,
   Pallets,
-  checkPalletsPresence
+  checkPalletsPresence,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -416,7 +416,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     await usingApi(async (api: ApiPromise) => {
       const collectionId = await createCollectionExpectSuccess();
 
-      let types = ['NFT', 'Fungible'];
+      const types = ['NFT', 'Fungible'];
 
       if (await checkPalletsPresence([Pallets.ReFungible])) {
         types.push('ReFungible');

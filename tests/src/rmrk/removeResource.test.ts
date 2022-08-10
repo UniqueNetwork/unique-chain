@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
 import {executeTransaction, getApiConnection} from '../substrate/substrate-api';
-import { requirePallets, Pallets } from '../util/helpers';
+import {requirePallets, Pallets} from '../util/helpers';
 import {getNft, NftIdTuple} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {
