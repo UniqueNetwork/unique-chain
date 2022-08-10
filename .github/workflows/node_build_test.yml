@@ -74,7 +74,7 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            FEATURE='${{ matrix.features }}'
+            FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
