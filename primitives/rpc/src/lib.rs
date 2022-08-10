@@ -20,16 +20,21 @@ use up_data_structs::{
 	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
 	PropertyKeyPermission, TokenData, TokenChild,
 };
+
 use sp_std::vec::Vec;
 use codec::Decode;
-use sp_runtime::DispatchError;
+use sp_runtime::{
+	DispatchError,
+	traits::{AtLeast32BitUnsigned, Member},
+};
 
 type Result<T> = core::result::Result<T, DispatchError>;
 
 sp_api::decl_runtime_apis! {
 	#[api_version(2)]
 	/// Trait for generate rpc.
-	pub trait UniqueApi<CrossAccountId, AccountId> where
+	pub trait UniqueApi<BlockNumber ,CrossAccountId, AccountId> where
+		BlockNumber: Decode + Member + AtLeast32BitUnsigned,
 		AccountId: Decode,
 		CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 	{
@@ -121,5 +126,8 @@ sp_api::decl_runtime_apis! {
 		/// Get total pieces of token.
 		fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Result<Option<u128>>;
 		fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec<CrossAccountId>>;
+		fn total_staked(staker: CrossAccountId) -> Result<u128>;
+		fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>>;
+		fn total_staking_locked(staker: CrossAccountId) -> Result<u128>;
 	}
 }

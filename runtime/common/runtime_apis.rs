@@ -61,7 +61,7 @@ macro_rules! impl_common_runtime_apis {
         impl_runtime_apis! {
             $($($custom_apis)+)?
 
-            impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId> for Runtime {
+            impl up_rpc::UniqueApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
                 fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
                     dispatch_unique_runtime!(collection.account_tokens(account))
                 }
@@ -186,6 +186,20 @@ macro_rules! impl_common_runtime_apis {
 
                 fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
+                }
+
+                fn total_staked(staker: CrossAccountId) -> Result<u128, DispatchError> {
+                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default())
+                    // Ok(0)
+                }
+
+                fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
+                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker))
+                }
+
+                fn total_staking_locked(staker: CrossAccountId) -> Result<u128, DispatchError> {
+                    // Ok(0)
+                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_locked_balance(staker))
                 }
             }
 
@@ -638,6 +652,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
+                    list_benchmark!(list, extra, pallet_app_promotion, Promotion);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 
@@ -693,6 +708,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
+                    add_benchmark!(params, batches, pallet_app_promotion, Promotion);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 

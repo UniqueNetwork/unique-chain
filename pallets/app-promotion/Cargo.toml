@@ -1,0 +1,110 @@
+################################################################################
+# Package
+
+[package]
+authors = ['Unique Network <support@uniquenetwork.io>']
+description = 'Unique App Promotion Pallet'
+edition = '2021'
+homepage = 'https://unique.network'
+license = 'GPLv3'
+name = 'pallet-app-promotion'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.1.0'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[features]
+default = ['std']
+runtime-benchmarks = [
+    'frame-benchmarking',
+    'frame-support/runtime-benchmarks',
+    'frame-system/runtime-benchmarks',
+]
+std = [
+    'codec/std',
+    'serde/std',
+    'frame-support/std',
+    'frame-system/std',
+    'pallet-balances/std',
+    'pallet-timestamp/std',
+    'pallet-randomness-collective-flip/std',
+    'sp-std/std',
+    'sp-runtime/std',
+    'frame-benchmarking/std',
+]
+
+################################################################################
+# Substrate Dependencies
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '3.1.2'
+
+[dependencies.frame-benchmarking]
+default-features = false
+optional = true
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.frame-support]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.frame-system]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.pallet-balances]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.pallet-timestamp]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.pallet-randomness-collective-flip]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.sp-std]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.serde]
+default-features = false
+features = ['derive']
+version = '1.0.130'
+
+[dependencies.sp-runtime]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.sp-core]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.sp-io]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.24"
+
+[dependencies.pallet-evm]
+default-features = false
+git = "https://github.com/uniquenetwork/frontier"
+branch = "unique-polkadot-v0.9.24"
+
+[dependencies]
+scale-info = { version = "2.0.1", default-features = false, features = [
+    "derive",
+] }
