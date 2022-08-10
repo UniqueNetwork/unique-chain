@@ -8,7 +8,10 @@ services:
     image: node-parachain
     container_name: node-parachain
     volumes:
-      - .docker/launch-config-forkless.json:/polkadot-launch/launch-config.json
+       - type: bind
+         source: ./launch-config-forkless.json
+         target: /polkadot-launch/launch-config.json
+         read_only: true
     expose:
       - 9944
       - 9933

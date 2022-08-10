@@ -112,7 +112,7 @@ jobs:
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate --remove-orphans
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
 
 #      - name: Test Report
