@@ -23,6 +23,7 @@ use jsonrpsee::{
 	proc_macros::rpc,
 };
 use anyhow::anyhow;
+use sp_runtime::traits::{AtLeast32BitUnsigned, Member};
 use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
 	PropertyKeyPermission, TokenData, TokenChild,
@@ -41,7 +42,7 @@ pub use rmrk_unique_rpc::RmrkApiServer;
 
 #[rpc(server)]
 #[async_trait]
-pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
+pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 	/// Get tokens owned by account.
 	#[method(name = "unique_accountTokens")]
 	fn account_tokens(
@@ -242,7 +243,23 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<Option<String>>;
+	) -> Result<Option<u128>>;
+
+	/// Returns the total amount of staked tokens.
+	#[method(name = "unique_totalStaked")]
+	fn total_staked(&self, staker: CrossAccountId, at: Option<BlockHash>) -> Result<u128>;
+
+	///Returns the total amount of staked tokens per block when staked.
+	#[method(name = "unique_totalStakedPerBlock")]
+	fn total_staked_per_block(
+		&self,
+		staker: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<(BlockNumber, u128)>>;
+
+	/// Return the total amount locked by staking tokens.
+	#[method(name = "unique_totalStakingLocked")]
+	fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>) -> Result<u128>;
 }
 
 mod rmrk_unique_rpc {
@@ -436,7 +453,7 @@ macro_rules! pass_method {
 
 macro_rules! unique_api {
 	() => {
-		dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>
+		dyn UniqueRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>
 	};
 }
 
@@ -447,13 +464,15 @@ macro_rules! rmrk_api {
 }
 
 #[allow(deprecated)]
-impl<C, Block, CrossAccountId, AccountId>
-	UniqueApiServer<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
+impl<C, Block, BlockNumber, CrossAccountId, AccountId>
+	UniqueApiServer<<Block as BlockT>::Hash, BlockNumber, CrossAccountId, AccountId>
+	for Unique<C, Block>
 where
 	Block: BlockT,
+	BlockNumber: Decode + Member + AtLeast32BitUnsigned,
 	AccountId: Decode,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
+	C::Api: UniqueRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>,
 	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 {
 	pass_method!(
@@ -520,6 +539,9 @@ where
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<String> => |o| o.map(|number| number.to_string()) , unique_api);
 	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
+	pass_method!(total_staked(staker: CrossAccountId) -> u128, unique_api);
+	pass_method!(total_staked_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, u128)>, unique_api);
+	pass_method!(total_staking_locked(staker: CrossAccountId) -> u128, unique_api);
 }
 
 #[allow(deprecated)]
