@@ -3,6 +3,11 @@ name = "tests"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ['refungible']
+
+refungible = []
+
 [dependencies]
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 
