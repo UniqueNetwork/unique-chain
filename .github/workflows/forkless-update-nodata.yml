@@ -112,9 +112,9 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
-      - name: Collect docker logs on failure
+      - name: Collect Docker Logs
         if: success() || failure()
-        uses: jwalton/gh-docker-logs@v1
+        uses: jwalton/gh-docker-logs@v2.2.0
         with:
           dest: './fpu-logs'
           images: 'node-parachain' 
