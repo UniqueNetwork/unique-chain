@@ -58,6 +58,8 @@ WORKDIR /unique_parachain
 RUN git clone $REPO_URL -b $BRANCH .
 RUN cargo build --features=$FEATURE --$PROFILE
 
+RUN ls -la /unique_parachain
+RUN ls -la /unique_parachain/target/release/wbuild
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
@@ -76,6 +78,9 @@ RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/
 
 FROM ubuntu:20.04
 
+ARG RUNTIME=
+ENV RUNTIME $RUNTIME
+
 RUN apt-get -y update && \
       apt-get -y install curl git && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
@@ -92,9 +97,15 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
+RUN echo "$RUNTIME"
+
 COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
+COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm
+
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
+				      
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \

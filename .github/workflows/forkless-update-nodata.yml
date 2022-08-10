@@ -90,6 +90,7 @@ jobs:
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
