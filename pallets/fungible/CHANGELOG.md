@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2022-08-11
+
+### Added
+
+ - Implementation of `mint` and `mint_bulk` methods for ERC20 API.
+
 ## [0.1.2] - 2022-08-04
 
 ### Fixed
