@@ -38,7 +38,7 @@ use frame_support::{
 	dispatch::DispatchResult,
 	ensure,
 	pallet_prelude::*,
-	traits::{fungible, fungibles, Currency, EnsureOrigin},
+	traits::{fungible, fungibles, Currency, EnsureOrigin, Contains},
 	transactional, RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
@@ -55,8 +55,8 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
 use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
-use xcm::{v1::MultiLocation, VersionedMultiLocation};
-use xcm_executor::{traits::WeightTrader, Assets};
+use xcm::{v1::MultiLocation, VersionedMultiLocation, latest::{Instruction, Xcm, Fungibility}};
+use xcm_executor::{traits::{ShouldExecute, WeightTrader}, Assets};
 
 
 use pallet_common::erc::CrossAccountId;
@@ -541,5 +541,46 @@ impl<
 {
 	fn drop(&mut self) {
 		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
+	}
+}
+
+/// Allows execution of AssetID transfers
+/// from any origin that is contained in `T` (i.e. `T::Contains(origin)`) without any payments.
+pub struct AllowUnpaidTokenTransfer<T, AssetID>(PhantomData<(T, AssetID)>);
+
+impl<
+	T: Contains<MultiLocation>,
+	AssetID: Get<MultiLocation>> ShouldExecute for AllowUnpaidTokenTransfer<T, AssetID>
+{
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+		_max_weight: Weight,
+		_weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		log::trace!(
+			target: "xcm::barriers",
+			"AllowUnpaidTokenTransfer origin: {:?}, message: {:?}, max_weight: {:?}, weight_credit: {:?}",
+			origin, message, _max_weight, _weight_credit,
+		);
+		ensure!(T::contains(origin), ());
+
+		let mut iter = message.0.iter();
+		let xcm_instruction = iter.next().ok_or(())?;
+		ensure!(iter.next().is_none(), ());  // XCM message should contain only 1 entry
+
+		if let Instruction::TransferAsset{assets, ..} = xcm_instruction {
+			let assets = assets.clone().drain();
+
+			let mut iter = assets.into_iter();
+			let asset_to_transfer = iter.next().ok_or(())?;
+			ensure!(iter.next().is_none(), ());  // Assets should contain only 1 entry
+
+			if let MultiAsset{fun: Fungibility::Fungible(..), id: asset_id_to_transfer, ..} = asset_to_transfer {
+				ensure!(asset_id_to_transfer == AssetID::get().into(), ());
+				return Ok(())
+			}
+		};
+		Err(())
 	}
 }

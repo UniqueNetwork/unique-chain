@@ -56,7 +56,7 @@ use crate::{
 
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
+	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId, AllowUnpaidTokenTransfer
 };
 
 // Signed version of balance
@@ -272,6 +272,10 @@ match_types! {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
 	};
+	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here } |
+		MultiLocation { parents: 1, interior: X1(_) }
+	};
 }
 
 /// Execution barrier that just takes `max_weight` from `weight_credit`.
@@ -295,6 +299,7 @@ pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
+	AllowUnpaidTokenTransfer<ParentOrSiblings, RelayLocation>,
 	// ^^^ Parent & its unit plurality gets free execution
 	AllowAllDebug,
 );

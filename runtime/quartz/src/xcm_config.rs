@@ -61,7 +61,7 @@ use crate::{
 
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
+	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId, AllowUnpaidTokenTransfer
 };
 use xcm::opaque::latest::prelude::{ DepositReserveAsset, DepositAsset, TransferAsset, TransferReserveAsset };
 
@@ -371,6 +371,8 @@ pub type Barrier = DenyThenTry<
 		AllowTopLevelPaidExecutionFrom<Everything>,
 		// Parent and its exec plurality get free execution
 		AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+		// Relay token transfer is free
+		AllowUnpaidTokenTransfer<ParentOrSiblings, RelayLocation>,
 		// Expected responses are OK.
 		AllowKnownQueryResponses<PolkadotXcm>,
 		// Subscriptions for version tracking are OK.
