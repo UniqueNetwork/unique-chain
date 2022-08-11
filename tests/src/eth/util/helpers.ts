@@ -32,6 +32,7 @@ import collectionHelpersAbi from '../collectionHelpersAbi.json';
 import fungibleAbi from '../fungibleAbi.json';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import refungibleAbi from '../reFungibleAbi.json';
+import refungibleTokenAbi from '../reFungibleTokenAbi.json';
 import contractHelpersAbi from './contractHelpersAbi.json';
 
 export const GAS_ARGS = {gas: 2500000};
@@ -101,6 +102,18 @@ export function tokenIdToAddress(collection: number, token: number): string {
   ]);
   return Web3.utils.toChecksumAddress('0x' + buf.toString('hex'));
 }
+
+export function tokenIdFromAddress(address: string) {
+  if (!address.startsWith('0x'))
+    throw 'address not starts with "0x"';
+  if (address.length > 42)
+    throw 'address length is more than 20 bytes';
+  return {
+    collectionId: Number('0x' + address.substring(address.length - 16, address.length - 8)),
+    tokenId: Number('0x' + address.substring(address.length - 8)),
+  };
+}
+
 export function tokenIdToCross(collection: number, token: number): CrossAccountId {
   return {
     Ethereum: tokenIdToAddress(collection, token),
@@ -126,6 +139,44 @@ export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair
   const events = await submitTransactionAsync(source, tx);
   const result = getGenericResult(events);
   expect(result.success).to.be.true;
+}
+
+export async function createRefungibleCollection(api: ApiPromise, web3: Web3, owner: string) {
+  const collectionHelper = evmCollectionHelpers(web3, owner);
+  const result = await collectionHelper.methods
+    .createRefungibleCollection('A', 'B', 'C')
+    .send();
+  return await getCollectionAddressFromResult(api, result);
+}
+
+
+export async function createNonfungibleCollection(api: ApiPromise, web3: Web3, owner: string) {
+  const collectionHelper = evmCollectionHelpers(web3, owner);
+  const result = await collectionHelper.methods
+    .createNonfungibleCollection('A', 'B', 'C')
+    .send();
+  return await getCollectionAddressFromResult(api, result);
+}
+
+export function uniqueNFT(web3: Web3, address: string, owner: string) {
+  return new web3.eth.Contract(nonFungibleAbi as any, address, {
+    from: owner,
+    ...GAS_ARGS,
+  });
+}
+
+export function uniqueRefungible(web3: Web3, collectionAddress: string, owner: string) {
+  return new web3.eth.Contract(refungibleAbi as any, collectionAddress, {
+    from: owner,
+    ...GAS_ARGS,
+  });
+}
+
+export function uniqueRefungibleToken(web3: Web3, tokenAddress: string, owner: string) {
+  return new web3.eth.Contract(refungibleTokenAbi as any, tokenAddress, {
+    from: owner,
+    ...GAS_ARGS,
+  });
 }
 
 export async function itWeb3(name: string, cb: (apis: { web3: Web3, api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean } = {}) {
