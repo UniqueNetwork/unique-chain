@@ -124,8 +124,10 @@ jobs:
             }
             function is_started {
                  if [[ ${DOCKER_LOGS} != *"RUNTIME UPGRADE TESTING"* ]];then
+                    echo "Function is_started: Return 0"
                     return 0
                  fi
+                    echo "Function is_started: Return 1"
                     return 1
             }
             while ! is_started; do
