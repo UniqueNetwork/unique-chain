@@ -20,7 +20,7 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  forkless-upgrade-nodata:
+  forkless-update-nodata:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
@@ -31,9 +31,11 @@ jobs:
     strategy:
       matrix:
         include:
-#          - network: "Opal"
-#            features: " "
-#            binary_version:
+          - network: "Opal"
+            features: "opal-runtime"
+            runtime: "opal"
+            mainnet_branch: v924010
+            mainnet_tag: v924010
           - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
             features: "quartz-runtime"
             runtime: "quartz"
@@ -112,49 +114,56 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
-#      - name: Wait for 5m before starting tests docker logs for " RUNTIME UPGRADE TESTING " criteria
-#        if: success()
-#        run: sleep 300s
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
+            counter=160
             function do_docker_logs {
-                 DOCKER_LOGS=$(docker logs --details node-parachain  2>&1)
+                docker logs --details node-parachain  2>&1
             }
             function is_started {
-                 if [[ ${DOCKER_LOGS} = *"RUNTIME UPGRADE TESTING"* ]];then
-                    echo "Function is_started: Return 0"
-                    return 0
-                 fi
-                    echo "Function is_started: Return 1"
-                    return 1
+                echo "Check Docker logs"
+                DOCKER_LOGS=$(do_docker_logs)
+                if [[ ${DOCKER_LOGS} = *"RUNTIME UPGRADE TESTING"* ]];then
+                     echo "Function is_started: Return 0"
+                     return 0
+                fi
+                     echo "Function is_started: Return 1"
+                     return 1
             }
             while ! is_started; do
-                 echo "Waiting for "RUNTIME UPGRADE TESTING" in container logs"
-                 sleep 15s
+                echo "Waiting for "RUNTIME UPGRADE TESTING" in container logs"
+                sleep 15s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                     continue
+                else
+                     break
+                fi
             done
             echo "Test completed."
-            exit 0          
+            exit 1
         shell: bash
 
       - name: Collect Docker Logs
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
+          dest: './forkless-parachain-update-nodata-logs.${{ matrix.features }}'
           images: 'node-parachain' 
 
       - name: Tar logs
         if: success() || failure()
-        run: tar cvzf ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}
+        run: tar cvzf ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz ./forkless-parachain-update-nodata-logs.${{ matrix.features }}
 
       - name: Upload logs to GitHub
         if: success() || failure()
         uses: actions/upload-artifact@master
         with:
-          name: forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz
-          path: ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz
+          name: forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
+          path: ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
 
       - name: Stop running containers
         if: always()                   # run this step always
