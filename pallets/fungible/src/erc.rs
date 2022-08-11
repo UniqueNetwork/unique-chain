@@ -131,6 +131,9 @@ impl<T: Config> FungibleHandle<T> {
 
 #[solidity_interface(name = "ERC20Mintable")]
 impl<T: Config> FungibleHandle<T> {
+	/// Mint tokens for `to` account.
+	/// @param to account that will receive minted tokens
+	/// @param amount amount of tokens to mint
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint(&mut self, caller: caller, to: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -147,6 +150,11 @@ impl<T: Config> FungibleHandle<T> {
 
 #[solidity_interface(name = "ERC20UniqueExtensions")]
 impl<T: Config> FungibleHandle<T> {
+	/// Burn tokens from account
+	/// @dev Function that burns an `amount` of the tokens of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -161,6 +169,8 @@ impl<T: Config> FungibleHandle<T> {
 		Ok(true)
 	}
 
+	/// Mint tokens for multiple accounts.
+	/// @param amounts array of pairs of account address and amount
 	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(address, uint256)>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
