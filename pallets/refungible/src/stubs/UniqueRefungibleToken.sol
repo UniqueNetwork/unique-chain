@@ -31,6 +31,38 @@ contract ERC20Events {
 	);
 }
 
+// Selector: 042f1106
+contract ERC1633UniqueExtensions is Dummy, ERC165 {
+	// Selector: setParentNFT(address,uint256) 042f1106
+	function setParentNFT(address collection, uint256 nftId)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		collection;
+		nftId;
+		dummy = 0;
+		return false;
+	}
+}
+
+// Selector: 5755c3f2
+contract ERC1633 is Dummy, ERC165 {
+	// Selector: parentToken() 80a54001
+	function parentToken() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// Selector: parentTokenId() d7f083f3
+	function parentTokenId() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+}
+
 // Selector: 942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
 	// @return the name of the token.
@@ -178,4 +210,11 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	}
 }
 
-contract UniqueRefungibleToken is Dummy, ERC165, ERC20, ERC20UniqueExtensions {}
+contract UniqueRefungibleToken is
+	Dummy,
+	ERC165,
+	ERC20,
+	ERC20UniqueExtensions,
+	ERC1633,
+	ERC1633UniqueExtensions
+{}

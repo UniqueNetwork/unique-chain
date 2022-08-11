@@ -116,6 +116,10 @@ where
 	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
 		max_weight_of!(burn_recursively_breadth_raw(amount))
 	}
+
+	fn token_owner() -> Weight {
+		max_weight_of!(token_owner())
+	}
 }
 
 #[cfg(feature = "refungible")]

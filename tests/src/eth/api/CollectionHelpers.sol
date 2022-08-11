@@ -48,7 +48,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external view returns (address);
+	) external returns (address);
 
 	// Selector: createERC721MetadataCompatibleRFTCollection(string,string,string,string) a5596388
 	function createERC721MetadataCompatibleRFTCollection(

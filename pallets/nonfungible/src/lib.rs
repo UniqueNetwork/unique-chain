@@ -784,6 +784,23 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
 
+	/// Set property permissions for the token with scope.
+	///
+	/// Sender should be the owner or admin of token's collection.
+	pub fn set_scoped_token_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		scope: PropertyScope,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_scoped_token_property_permissions(
+			collection,
+			sender,
+			scope,
+			property_permissions,
+		)
+	}
+
 	/// Set property permissions for the collection.
 	///
 	/// Sender should be the owner or admin of the collection.

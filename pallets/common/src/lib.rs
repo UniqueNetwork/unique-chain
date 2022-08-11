@@ -1113,6 +1113,26 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permission: PropertyKeyPermission,
 	) -> DispatchResult {
+		Self::set_scoped_property_permission(
+			collection,
+			sender,
+			PropertyScope::None,
+			property_permission,
+		)
+	}
+
+	/// Set collection property permission with scope.
+	///
+	/// * `collection` - Collection handler.
+	/// * `sender` - The owner or administrator of the collection.
+	/// * `scope` - Property scope.
+	/// * `property_permission` - Property permission.
+	pub fn set_scoped_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		scope: PropertyScope,
+		property_permission: PropertyKeyPermission,
+	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
 		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
@@ -1126,7 +1146,11 @@ impl<T: Config> Pallet<T> {
 
 		CollectionPropertyPermissions::<T>::try_mutate(collection.id, |permissions| {
 			let property_permission = property_permission.clone();
-			permissions.try_set(property_permission.key, property_permission.permission)
+			permissions.try_scoped_set(
+				scope,
+				property_permission.key,
+				property_permission.permission,
+			)
 		})
 		.map_err(<Error<T>>::from)?;
 
@@ -1149,8 +1173,29 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
+		Self::set_scoped_token_property_permissions(
+			collection,
+			sender,
+			PropertyScope::None,
+			property_permissions,
+		)
+	}
+
+	/// Set token property permission with scope.
+	///
+	/// * `collection` - Collection handler.
+	/// * `sender` - The owner or administrator of the collection.
+	/// * `scope` - Property scope.
+	/// * `property_permissions` - Property permissions.
+	#[transactional]
+	pub fn set_scoped_token_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		scope: PropertyScope,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
 		for prop_pemission in property_permissions {
-			Self::set_property_permission(collection, sender, prop_pemission)?;
+			Self::set_scoped_property_permission(collection, sender, scope, prop_pemission)?;
 		}
 
 		Ok(())
@@ -1430,6 +1475,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 			.saturating_mul(max_selfs.max(1) as u64)
 			.saturating_add(Self::burn_recursively_breadth_raw(max_breadth))
 	}
+
+	/// The price of retrieving token owner
+	fn token_owner() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -1568,7 +1616,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	///
 	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being set.
-	/// * `properties` - Properties to be set.
+	/// * `property_permissions` - Property permissions to be set.
 	/// * `budget` - Budget for setting properties.
 	fn set_token_property_permissions(
 		&self,

@@ -148,6 +148,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		// Refungible token can't have children
 		0
 	}
+
+	fn token_owner() -> Weight {
+		<SelfWeightOf<T>>::token_owner()
+	}
 }
 
 fn map_create_data<T: Config>(

@@ -61,7 +61,7 @@
     ],
     "name": "createRefungibleCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
