@@ -7,12 +7,13 @@ use frame_support::{
 use sp_runtime::{RuntimeAppPublic, Perbill};
 use crate::{
 	runtime_common::{
-		constants::*, dispatch::CollectionDispatchT, ethereum::sponsoring::EvmSponsorshipHandler,
+		dispatch::CollectionDispatchT, ethereum::sponsoring::EvmSponsorshipHandler,
 		config::sponsoring::DefaultSponsoringRateLimit, DealWithFees,
 	},
 	Runtime, Aura, Balances, Event, ChainId,
 };
 use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
+use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 

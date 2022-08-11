@@ -30,7 +30,7 @@ use frame_support::parameter_types;
 use sp_version::RuntimeVersion;
 use sp_runtime::create_runtime_str;
 
-use common_types::*;
+use up_common::types::*;
 
 #[path = "../../common/mod.rs"]
 mod runtime_common;

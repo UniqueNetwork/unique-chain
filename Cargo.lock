@@ -1128,18 +1128,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-types"
-version = "0.9.24"
-dependencies = [
- "fp-rpc",
- "pallet-evm",
- "sp-consensus-aura",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5294,7 +5282,6 @@ checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 name = "opal-runtime"
 version = "0.9.24"
 dependencies = [
- "common-types",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -5366,6 +5353,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "up-common",
  "up-data-structs",
  "up-rpc",
  "up-sponsorship",
@@ -8610,7 +8598,6 @@ dependencies = [
 name = "quartz-runtime"
 version = "0.9.24"
 dependencies = [
- "common-types",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -8682,6 +8669,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "up-common",
  "up-data-structs",
  "up-rpc",
  "up-sponsorship",
@@ -11897,7 +11885,6 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
- "common-types",
  "evm-coder",
  "fp-evm-mapping",
  "frame-support",
@@ -12480,7 +12467,6 @@ name = "unique-node"
 version = "0.9.24"
 dependencies = [
  "clap",
- "common-types",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
@@ -12559,6 +12545,7 @@ dependencies = [
  "try-runtime-cli",
  "unique-rpc",
  "unique-runtime",
+ "up-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12567,7 +12554,6 @@ dependencies = [
 name = "unique-rpc"
 version = "0.1.0"
 dependencies = [
- "common-types",
  "fc-db",
  "fc-mapping-sync",
  "fc-rpc",
@@ -12608,6 +12594,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "tokio 0.2.25",
  "uc-rpc",
+ "up-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12616,7 +12603,6 @@ dependencies = [
 name = "unique-runtime"
 version = "0.9.24"
 dependencies = [
- "common-types",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -12688,6 +12674,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "up-common",
  "up-data-structs",
  "up-rpc",
  "up-sponsorship",
@@ -12723,6 +12710,19 @@ name = "untrusted"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
+
+[[package]]
+name = "up-common"
+version = "0.9.24"
+dependencies = [
+ "fp-rpc",
+ "frame-support",
+ "pallet-evm",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "up-data-structs"

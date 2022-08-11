@@ -19,7 +19,7 @@ use frame_support::{
 	parameter_types,
 	weights::{Weight, constants::WEIGHT_PER_SECOND},
 };
-use common_types::{BlockNumber, Balance};
+use up_common::types::{BlockNumber, Balance};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 

@@ -41,7 +41,7 @@ use crate::{
 	Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsReversedWithSystemFirst,
 	InherentDataExt,
 };
-use common_types::{AccountId, BlockNumber};
+use up_common::types::{AccountId, BlockNumber};
 
 #[macro_export]
 macro_rules! unsupported {

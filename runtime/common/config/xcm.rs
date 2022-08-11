@@ -44,10 +44,13 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::marker::PhantomData;
 use crate::{
-	runtime_common::{constants::*, config::substrate::LinearFee},
-	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
+	runtime_common::config::substrate::LinearFee, Runtime, Call, Event, Origin, Balances,
+	ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
 };
-use common_types::{AccountId, Balance};
+use up_common::{
+	types::{AccountId, Balance},
+	constants::*,
+};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();

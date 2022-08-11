@@ -16,8 +16,11 @@
 
 use frame_support::parameter_types;
 use frame_system::EnsureSigned;
-use crate::{runtime_common::constants::*, Runtime, Event, RelayChainBlockNumberProvider};
-use common_types::{AccountId, Balance};
+use crate::{Runtime, Event, RelayChainBlockNumberProvider};
+use up_common::{
+	types::{AccountId, Balance},
+	constants::*,
+};
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 10 * UNIQUE;

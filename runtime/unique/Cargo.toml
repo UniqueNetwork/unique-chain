@@ -114,7 +114,7 @@ std = [
     'xcm/std',
     'xcm-builder/std',
     'xcm-executor/std',
-    'common-types/std',
+    'up-common/std',
 
     "orml-vesting/std",
 ]
@@ -401,7 +401,7 @@ default-features = false
 
 [dependencies]
 log = { version = "0.4.16", default-features = false }
-common-types = { path = "../../common-types", default-features = false }
+up-common = { path = "../../primitives/common", default-features = false }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }

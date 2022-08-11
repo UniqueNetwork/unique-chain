@@ -49,7 +49,7 @@ fc-db = { default-features = false, git = "https://github.com/uniquenetwork/fron
 fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 
 pallet-common = { default-features = false, path = "../../pallets/common" }
-common-types = { path = "../../common-types" }
+up-common = { path = "../../primitives/common" }
 pallet-unique = { path = "../../pallets/unique" }
 uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }

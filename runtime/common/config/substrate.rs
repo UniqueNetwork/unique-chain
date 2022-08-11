@@ -35,10 +35,10 @@ use frame_system::{
 use sp_arithmetic::traits::{BaseArithmetic, Unsigned};
 use smallvec::smallvec;
 use crate::{
-	runtime_common::{DealWithFees, constants::*},
-	Runtime, Event, Call, Origin, PalletInfo, System, Balances, Treasury, SS58Prefix, Version,
+	runtime_common::DealWithFees, Runtime, Event, Call, Origin, PalletInfo, System, Balances,
+	Treasury, SS58Prefix, Version,
 };
-use common_types::*;
+use up_common::{types::*, constants::*};
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;

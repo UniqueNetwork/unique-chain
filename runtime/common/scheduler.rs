@@ -25,7 +25,7 @@ use sp_runtime::{
 	DispatchErrorWithPostInfo, DispatchError,
 };
 use crate::{Runtime, Call, Origin, Balances, ChargeTransactionPayment};
-use common_types::{AccountId, Balance};
+use up_common::types::{AccountId, Balance};
 use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler::DispatchCall;
 

@@ -22,7 +22,7 @@ use crate::{
 	runtime_common::{scheduler::SchedulerPaymentExecutor, config::substrate::RuntimeBlockWeights},
 	Runtime, Call, Event, Origin, OriginCaller, Balances,
 };
-use common_types::AccountId;
+use up_common::types::AccountId;
 
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(50) *

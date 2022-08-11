@@ -253,8 +253,8 @@ branch = "release-v0.9.24"
 ################################################################################
 # Local dependencies
 
-[dependencies.common-types]
-path = "../../common-types"
+[dependencies.up-common]
+path = "../../primitives/common"
 
 [dependencies.unique-runtime]
 path = '../../runtime/unique'

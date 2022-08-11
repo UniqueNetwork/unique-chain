@@ -4,7 +4,7 @@ use crate::{
 	},
 	Runtime,
 };
-use common_types::opaque::RuntimeInstance;
+use up_common::types::opaque::RuntimeInstance;
 
 impl RuntimeInstance for Runtime {
 	type CrossAccountId = CrossAccountId;
