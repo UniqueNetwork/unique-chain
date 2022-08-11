@@ -110,7 +110,10 @@ jobs:
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate
+
+      - name: Wait for 15m
+        run: sleep 900s
 
       - name: Collect Docker Logs
         if: success() || failure()
@@ -141,6 +144,9 @@ jobs:
 #      - name: Read output variables
 #        run: |
 #          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+
+      - name: Wait for 15m
+        run: sleep 900s
 
       - name: Stop running containers
         if: always()                   # run this step always
