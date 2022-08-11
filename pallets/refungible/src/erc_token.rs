@@ -186,7 +186,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		<Pallet<T>>::transfer(self, &caller, &to, self.1, amount, &budget)
-			.map_err(|_| "transfer error")?;
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
