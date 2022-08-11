@@ -119,19 +119,19 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './fpu-logs.${{ matrix.feature }}'
+          dest: './fpu-logs.${{ matrix.features }}'
           images: 'node-parachain' 
 
       - name: Tar logs
         if: success() || failure()
-        run: tar cvzf ./fpu-logs.${{ matrix.feature }}.tgz ./fpu-logs.${{ matrix.feature }}
+        run: tar cvzf ./fpu-logs.${{ matrix.features }}.tgz ./fpu-logs.${{ matrix.features }}
 
       - name: Upload logs to GitHub
         if: success() || failure()
         uses: actions/upload-artifact@master
         with:
-          name: fpu-logs.${{ matrix.feature }}.tgz
-          path: ./fpu-logs.${{ matrix.feature }}.tgz
+          name: fpu-logs.${{ matrix.features }}.tgz
+          path: ./fpu-logs.${{ matrix.features }}.tgz
 
 
 #      - name: Test Report
