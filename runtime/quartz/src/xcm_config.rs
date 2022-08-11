@@ -18,9 +18,7 @@ use cumulus_pallet_xcm;
 use frame_support::{
 	{match_types, parameter_types, weights::Weight},
 	pallet_prelude::Get,
-	traits::{
-		Contains, Everything, fungibles,
-	},
+	traits::{Contains, Everything, fungibles},
 };
 use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
@@ -34,19 +32,16 @@ use xcm::{
 	v1::{BodyId, Junction::*, Junctions::*, MultiLocation, NetworkId},
 };
 use xcm_builder::{
-	AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, LocationInverter, ParentAsSuperuser,
-	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	AllowKnownQueryResponses, AllowSubscriptionsFrom, AccountId32Aliases,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
+	FixedWeightBounds, FungiblesAdapter, LocationInverter, ParentAsSuperuser, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 	ConvertedConcreteAssetId,
 };
 use xcm_executor::{
 	{Config, XcmExecutor},
-	traits::{
-		Convert as ConvertXcm, FilterAssetLocation, JustTry, MatchesFungible,
-		ShouldExecute,
-	},
+	traits::{Convert as ConvertXcm, FilterAssetLocation, JustTry, MatchesFungible, ShouldExecute},
 };
 
 use unique_runtime_common::{
@@ -56,14 +51,17 @@ use unique_runtime_common::{
 
 use crate::{
 	Balances, Call, DmpQueue, Event, ForeingAssets, LinearFee, Origin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, XcmpQueue, TreasuryModuleId, MaxLocks, TreasuryAccountId, MaxReserves,
+	ParachainSystem, PolkadotXcm, Runtime, XcmpQueue, TreasuryModuleId, MaxLocks,
+	TreasuryAccountId, MaxReserves,
 };
 
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId, AllowUnpaidTokenTransfer
+	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId, AllowUnpaidTokenTransfer,
 };
-use xcm::opaque::latest::prelude::{ DepositReserveAsset, DepositAsset, TransferAsset, TransferReserveAsset };
+use xcm::opaque::latest::prelude::{
+	DepositReserveAsset, DepositAsset, TransferAsset, TransferReserveAsset,
+};
 
 // Signed version of balance
 pub type Amount = i128;
@@ -196,25 +194,25 @@ where
 
 		let parent_id =
 			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent)).unwrap();
-		let here_id = ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here)).unwrap();
+		let here_id =
+			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here)).unwrap();
 
-		if asset_id.clone() == parent_id
-		{
+		if asset_id.clone() == parent_id {
 			return Ok(MultiLocation::parent());
 		}
 
-		if asset_id.clone() == here_id
-		{
-			return Ok(MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into()))));
+		if asset_id.clone() == here_id {
+			return Ok(MultiLocation::new(
+				1,
+				X1(Parachain(ParachainInfo::get().into())),
+			));
 		}
 
-		match <AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(
-			asset_id.clone()) 
-		{
-			Some(fid) => match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(fid){
+		match <AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(asset_id.clone()) {
+			Some(fid) => match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(fid) {
 				Some(location) => Ok(location),
-				None => Err(())
-			} ,
+				None => Err(()),
+			},
 			None => Err(()),
 		}
 	}
@@ -236,7 +234,6 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	// The account to use for tracking teleports.
 	CheckingAccount,
 >;
-
 
 /// Means for transacting assets on this chain.
 pub type AssetTransactors = FungiblesTransactor;
@@ -284,16 +281,31 @@ match_types! {
 pub fn get_allowed_locations() -> Vec<MultiLocation> {
 	vec![
 		// Self location
-		MultiLocation { parents: 0, interior: Here },
+		MultiLocation {
+			parents: 0,
+			interior: Here,
+		},
 		// Parent location
-		MultiLocation { parents: 1, interior: Here },
+		MultiLocation {
+			parents: 1,
+			interior: Here,
+		},
 		// Karura/Acala location
-		MultiLocation { parents: 1, interior: X1(Parachain(2000)) },
+		MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(2000)),
+		},
 		// Moonriver location
-		MultiLocation { parents: 1, interior: X1(Parachain(2023)) },
+		MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(2023)),
+		},
 		// Self parachain address
-		MultiLocation { parents: 1, interior: X1(Parachain(ParachainInfo::get().into())) },
-		]
+		MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(ParachainInfo::get().into())),
+		},
+	]
 }
 
 /// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
@@ -328,16 +340,17 @@ impl ShouldExecute for DenyExchangeWithUnknownLocation {
 		_max_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-
 		// Check if deposit or transfer belongs to allowed parachains
 		let mut allowed = get_allowed_locations().contains(origin);
 
-		message.0.iter().for_each(|inst| {
-			match inst {
-				DepositReserveAsset { dest: dst, .. } => { allowed |= get_allowed_locations().contains(dst); }
-				TransferReserveAsset { dest: dst, .. } => { allowed |= get_allowed_locations().contains(dst); }
-				_ => {}
+		message.0.iter().for_each(|inst| match inst {
+			DepositReserveAsset { dest: dst, .. } => {
+				allowed |= get_allowed_locations().contains(dst);
 			}
+			TransferReserveAsset { dest: dst, .. } => {
+				allowed |= get_allowed_locations().contains(dst);
+			}
+			_ => {}
 		});
 
 		if allowed {
@@ -347,7 +360,7 @@ impl ShouldExecute for DenyExchangeWithUnknownLocation {
 		log::warn!(
 			target: "xcm::barrier",
 			"Unexpected deposit or transfer location"
-		);			
+		);
 		// Deny
 		Err(())
 	}
@@ -399,8 +412,14 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader =
-		UsingAnyCurrencyComponents<LinearFee<Balance>, SelfLocation, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingAnyCurrencyComponents<
+		LinearFee<Balance>,
+		SelfLocation,
+		RelayLocation,
+		AccountId,
+		Balances,
+		(),
+	>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;

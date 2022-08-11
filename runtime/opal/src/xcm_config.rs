@@ -56,7 +56,7 @@ use crate::{
 
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId, AllowUnpaidTokenTransfer
+	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId, AllowUnpaidTokenTransfer,
 };
 
 // Signed version of balance
@@ -323,8 +323,14 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader =
-		UsingAnyCurrencyComponents<LinearFee<Balance>, SelfLocation, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingAnyCurrencyComponents<
+		LinearFee<Balance>,
+		SelfLocation,
+		RelayLocation,
+		AccountId,
+		Balances,
+		(),
+	>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;

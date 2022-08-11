@@ -55,9 +55,15 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
 use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
-use xcm::{v1::MultiLocation, VersionedMultiLocation, latest::{Instruction, Xcm, Fungibility}};
-use xcm_executor::{traits::{ShouldExecute, WeightTrader}, Assets};
-
+use xcm::{
+	v1::MultiLocation,
+	VersionedMultiLocation,
+	latest::{Instruction, Xcm, Fungibility},
+};
+use xcm_executor::{
+	traits::{ShouldExecute, WeightTrader},
+	Assets,
+};
 
 use pallet_common::erc::CrossAccountId;
 
@@ -469,7 +475,14 @@ pub struct UsingAnyCurrencyComponents<
 >(
 	Weight,
 	Currency::Balance,
-	PhantomData<(WeightToFee, SelfAssetId, RelayAssetId, AccountId, Currency, OnUnbalanced)>,
+	PhantomData<(
+		WeightToFee,
+		SelfAssetId,
+		RelayAssetId,
+		AccountId,
+		Currency,
+		OnUnbalanced,
+	)>,
 );
 
 impl<
@@ -480,7 +493,14 @@ impl<
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
 	> WeightTrader
-	for UsingAnyCurrencyComponents<WeightToFee, SelfAssetId, RelayAssetId, AccountId, Currency, OnUnbalanced>
+	for UsingAnyCurrencyComponents<
+		WeightToFee,
+		SelfAssetId,
+		RelayAssetId,
+		AccountId,
+		Currency,
+		OnUnbalanced,
+	>
 {
 	fn new() -> Self {
 		Self(0, Zero::zero(), PhantomData)
@@ -495,8 +515,12 @@ impl<
 		let self_asset_id = SelfAssetId::get().into();
 
 		// Only native token payment allowed
-		if !payment.fungible.keys().any(|asset_id| *asset_id != self_asset_id) {
-			return Err(XcmError::TooExpensive)
+		if !payment
+			.fungible
+			.keys()
+			.any(|asset_id| *asset_id != self_asset_id)
+		{
+			return Err(XcmError::TooExpensive);
 		}
 
 		let required = MultiAsset {
@@ -537,7 +561,15 @@ impl<
 		AccountId,
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop for UsingAnyCurrencyComponents<WeightToFee, SelfAssetId, RelayAssetId, AccountId, Currency, OnUnbalanced>
+	> Drop
+	for UsingAnyCurrencyComponents<
+		WeightToFee,
+		SelfAssetId,
+		RelayAssetId,
+		AccountId,
+		Currency,
+		OnUnbalanced,
+	>
 {
 	fn drop(&mut self) {
 		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
@@ -548,9 +580,8 @@ impl<
 /// from any origin that is contained in `T` (i.e. `T::Contains(origin)`) without any payments.
 pub struct AllowUnpaidTokenTransfer<T, AssetID>(PhantomData<(T, AssetID)>);
 
-impl<
-	T: Contains<MultiLocation>,
-	AssetID: Get<MultiLocation>> ShouldExecute for AllowUnpaidTokenTransfer<T, AssetID>
+impl<T: Contains<MultiLocation>, AssetID: Get<MultiLocation>> ShouldExecute
+	for AllowUnpaidTokenTransfer<T, AssetID>
 {
 	fn should_execute<Call>(
 		origin: &MultiLocation,
@@ -567,18 +598,23 @@ impl<
 
 		let mut iter = message.0.iter();
 		let xcm_instruction = iter.next().ok_or(())?;
-		ensure!(iter.next().is_none(), ());  // XCM message should contain only 1 entry
+		ensure!(iter.next().is_none(), ()); // XCM message should contain only 1 entry
 
-		if let Instruction::TransferAsset{assets, ..} = xcm_instruction {
+		if let Instruction::TransferAsset { assets, .. } = xcm_instruction {
 			let assets = assets.clone().drain();
 
 			let mut iter = assets.into_iter();
 			let asset_to_transfer = iter.next().ok_or(())?;
-			ensure!(iter.next().is_none(), ());  // Assets should contain only 1 entry
+			ensure!(iter.next().is_none(), ()); // Assets should contain only 1 entry
 
-			if let MultiAsset{fun: Fungibility::Fungible(..), id: asset_id_to_transfer, ..} = asset_to_transfer {
+			if let MultiAsset {
+				fun: Fungibility::Fungible(..),
+				id: asset_id_to_transfer,
+				..
+			} = asset_to_transfer
+			{
 				ensure!(asset_id_to_transfer == AssetID::get().into(), ());
-				return Ok(())
+				return Ok(());
 			}
 		};
 		Err(())
