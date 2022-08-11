@@ -42,7 +42,7 @@ contract Fractionalizer {
         
         require(
             keccak256(bytes(collectionType)) == refungibleCollectionType,
-            "Fractionalizer contract should be an admin of the collection"
+            "Wrong collection type. Collection is not refungible."
         );
         require(
             refungibleContract.verifyOwnerOrAdmin(),
