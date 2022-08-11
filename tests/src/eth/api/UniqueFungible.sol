@@ -219,6 +219,10 @@ interface Collection is Dummy, ERC165 {
 	// Selector: verifyOwnerOrAdmin() 04a46053
 	function verifyOwnerOrAdmin() external returns (bool);
 
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
 	// Selector: uniqueCollectionType() d34b55b8
 	function uniqueCollectionType() external returns (string memory);
 }

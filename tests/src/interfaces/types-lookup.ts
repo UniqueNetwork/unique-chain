@@ -3126,7 +3126,8 @@ declare module '@polkadot/types/lookup' {
   export interface UpDataStructsPropertyScope extends Enum {
     readonly isNone: boolean;
     readonly isRmrk: boolean;
-    readonly type: 'None' | 'Rmrk';
+    readonly isEth: boolean;
+    readonly type: 'None' | 'Rmrk' | 'Eth';
   }
 
   /** @name PalletNonfungibleError (399) */

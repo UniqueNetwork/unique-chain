@@ -57,7 +57,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory tokenPrefix,
 		string memory baseUri
 	) external returns (address);
-	
+
 	// Check if a collection exists
 	// @param collection_address Address of the collection in question
 	// @return bool Does the collection exist?

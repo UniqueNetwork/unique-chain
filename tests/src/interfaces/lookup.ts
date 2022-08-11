@@ -2978,7 +2978,7 @@ export default {
    * Lookup397: up_data_structs::PropertyScope
    **/
   UpDataStructsPropertyScope: {
-    _enum: ['None', 'Rmrk']
+    _enum: ['None', 'Rmrk', 'Eth']
   },
   /**
    * Lookup399: pallet_nonfungible::pallet::Error<T>

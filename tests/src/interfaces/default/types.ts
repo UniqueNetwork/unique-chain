@@ -2521,7 +2521,8 @@ export interface UpDataStructsPropertyPermission extends Struct {
 export interface UpDataStructsPropertyScope extends Enum {
   readonly isNone: boolean;
   readonly isRmrk: boolean;
-  readonly type: 'None' | 'Rmrk';
+  readonly isEth: boolean;
+  readonly type: 'None' | 'Rmrk' | 'Eth';
 }
 
 /** @name UpDataStructsRpcCollection */

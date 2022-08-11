@@ -96,7 +96,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
-	
+
 	// Check if a collection exists
 	// @param collection_address Address of the collection in question
 	// @return bool Does the collection exist?

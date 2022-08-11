@@ -652,6 +652,10 @@ contract Collection is Dummy, ERC165 {
 		return false;
 	}
 
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
 	// Selector: uniqueCollectionType() d34b55b8
 	function uniqueCollectionType() public returns (string memory) {
 		require(false, stub_error);
