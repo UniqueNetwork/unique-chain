@@ -9,7 +9,7 @@ on:
       - reopened
       - synchronize
 jobs:
-  build:
+  code_style:
     runs-on: self-hosted-ci
 
     steps:
