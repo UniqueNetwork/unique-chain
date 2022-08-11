@@ -3,6 +3,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+// Anonymous struct
+struct Tuple0 {
+	address field_0;
+	uint256 field_1;
+}
+
 // Common stubs holder
 interface Dummy {
 
@@ -20,6 +26,21 @@ interface ERC20Events {
 		address indexed spender,
 		uint256 value
 	);
+}
+
+// Selector: 40c10f19
+interface ERC20Mintable is Dummy, ERC165 {
+	// Selector: mint(address,uint256) 40c10f19
+	function mint(address to, uint256 amount) external returns (bool);
+}
+
+// Selector: 63034ac5
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
+
+	// Selector: mintBulk((address,uint256)[]) 1acf2d55
+	function mintBulk(Tuple0[] memory amounts) external returns (bool);
 }
 
 // Selector: 6cf113cd
@@ -185,12 +206,6 @@ interface Collection is Dummy, ERC165 {
 	function uniqueCollectionType() external returns (string memory);
 }
 
-// Selector: 79cc6790
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-}
-
 // Selector: 942e8b22
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
@@ -232,6 +247,7 @@ interface UniqueFungible is
 	Dummy,
 	ERC165,
 	ERC20,
+	ERC20Mintable,
 	ERC20UniqueExtensions,
 	Collection
 {}

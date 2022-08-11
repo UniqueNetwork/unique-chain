@@ -3,6 +3,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+// Anonymous struct
+struct Tuple0 {
+	address field_0;
+	uint256 field_1;
+}
+
 // Common stubs holder
 contract Dummy {
 	uint8 dummy;
@@ -29,6 +35,38 @@ contract ERC20Events {
 		address indexed spender,
 		uint256 value
 	);
+}
+
+// Selector: 40c10f19
+contract ERC20Mintable is Dummy, ERC165 {
+	// Selector: mint(address,uint256) 40c10f19
+	function mint(address to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+}
+
+// Selector: 63034ac5
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: mintBulk((address,uint256)[]) 1acf2d55
+	function mintBulk(Tuple0[] memory amounts) public returns (bool) {
+		require(false, stub_error);
+		amounts;
+		dummy = 0;
+		return false;
+	}
 }
 
 // Selector: 6cf113cd
@@ -282,18 +320,6 @@ contract Collection is Dummy, ERC165 {
 	}
 }
 
-// Selector: 79cc6790
-contract ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) public returns (bool) {
-		require(false, stub_error);
-		from;
-		amount;
-		dummy = 0;
-		return false;
-	}
-}
-
 // Selector: 942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
 	// Selector: name() 06fdde03
@@ -382,6 +408,7 @@ contract UniqueFungible is
 	Dummy,
 	ERC165,
 	ERC20,
+	ERC20Mintable,
 	ERC20UniqueExtensions,
 	Collection
 {}

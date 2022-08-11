@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
+import {approveExpectSuccess, createCollection, createCollectionExpectSuccess, createFungibleItemExpectSuccess, transferExpectSuccess, transferFromExpectSuccess, UNIQUE} from '../util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, GAS_ARGS, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, transferBalanceToEth} from './util/helpers';
 import fungibleAbi from './fungibleAbi.json';
 import {expect} from 'chai';
+import {submitTransactionAsync} from '../substrate/substrate-api';
 
 describe('Fungible: Information getting', () => {
   itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
@@ -58,6 +59,129 @@ describe('Fungible: Information getting', () => {
 });
 
 describe('Fungible: Plain calls', () => {
+  itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+    const collection = await createCollection(api, alice, {
+      name: 'token name',
+      mode: {type: 'Fungible', decimalPoints: 0},
+    });
+
+    const receiver = createEthAccount(web3);
+
+    const collectionIdAddress = collectionIdToAddress(collection.collectionId);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection.collectionId, {Ethereum: owner});
+    await submitTransactionAsync(alice, changeAdminTx);
+
+    const collectionContract = evmCollection(web3, owner, collectionIdAddress, {type: 'Fungible', decimalPoints: 0});
+    const result = await collectionContract.methods.mint(receiver, 100).send();
+    const events = normalizeEvents(result.events);
+    
+    expect(events).to.be.deep.equal([
+      {
+        address: collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          value: '100',
+        },
+      },
+    ]);
+  });
+
+  itWeb3('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+    const collection = await createCollection(api, alice, {
+      name: 'token name',
+      mode: {type: 'Fungible', decimalPoints: 0},
+    });
+
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const receiver1 = createEthAccount(web3);
+    const receiver2 = createEthAccount(web3);
+    const receiver3 = createEthAccount(web3);
+
+    const collectionIdAddress = collectionIdToAddress(collection.collectionId);
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection.collectionId, {Ethereum: owner});
+    await submitTransactionAsync(alice, changeAdminTx);
+
+    const collectionContract = evmCollection(web3, owner, collectionIdAddress, {type: 'Fungible', decimalPoints: 0});
+    const result = await collectionContract.methods.mintBulk([
+      [receiver1, 10],
+      [receiver2, 20],
+      [receiver3, 30],
+    ]).call();
+    console.log(result);
+    const events = normalizeEvents(result.events);
+
+    expect(events).to.be.deep.equal([
+      {
+        address:collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver1,
+          value: '10',
+        },
+      },
+      {
+        address:collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver2,
+          value: '20',
+        },
+      },
+      {
+        address:collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver3,
+          value: '30',
+        },
+      },
+    ]);
+  });
+
+  itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
+    const alice = privateKeyWrapper('//Alice');
+    const collection = await createCollection(api, alice, {
+      name: 'token name',
+      mode: {type: 'Fungible', decimalPoints: 0},
+    });
+
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection.collectionId, {Ethereum: owner});
+    await submitTransactionAsync(alice, changeAdminTx);
+    const receiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const collectionIdAddress = collectionIdToAddress(collection.collectionId);
+    const collectionContract = evmCollection(web3, owner, collectionIdAddress, {type: 'Fungible', decimalPoints: 0});
+    await collectionContract.methods.mint(receiver, 100).send();
+
+    const result = await collectionContract.methods.burnFrom(receiver, 49).send({from: receiver});
+    
+    const events = normalizeEvents(result.events);
+
+    expect(events).to.be.deep.equal([
+      {
+        address: collectionIdAddress,
+        event: 'Transfer',
+        args: {
+          from: receiver,
+          to: '0x0000000000000000000000000000000000000000',
+          value: '49',
+        },
+      },
+    ]);
+
+    const balance = await collectionContract.methods.balanceOf(receiver).call();
+    expect(balance).to.equal('51');
+  });
+
   itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',
