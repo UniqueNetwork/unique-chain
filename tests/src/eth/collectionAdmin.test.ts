@@ -59,6 +59,22 @@ describe('Add collection admins', () => {
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(newAdmin.address.toLocaleLowerCase());
   });
+  
+  itWeb3('Verify owner or admin', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+        
+    const result = await collectionHelper.methods
+      .createNonfungibleCollection('A', 'B', 'C')
+      .send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+
+    const newAdmin = createEthAccount(web3);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    expect(await collectionEvm.methods.verifyOwnerOrAdmin(newAdmin).call()).to.be.false;
+    await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
+    expect(await collectionEvm.methods.verifyOwnerOrAdmin(newAdmin).call()).to.be.true;
+  });
 
   itWeb3('(!negative tests!) Add admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);

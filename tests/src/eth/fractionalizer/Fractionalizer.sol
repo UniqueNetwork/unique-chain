@@ -64,7 +64,7 @@ contract Fractionalizer {
             "Wrong collection type. Collection is not refungible."
         );
         require(
-            refungibleContract.verifyOwnerOrAdmin(),
+            refungibleContract.verifyOwnerOrAdmin(address(this)),
             "Fractionalizer contract should be an admin of the collection"
         );
         rftCollection = _collection;

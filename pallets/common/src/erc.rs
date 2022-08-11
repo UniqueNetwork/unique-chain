@@ -412,9 +412,10 @@ where
 
 	/// Check that account is the owner or admin of the collection
 	///
+	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	fn verify_owner_or_admin(&mut self, caller: caller) -> Result<bool> {
-		Ok(check_is_owner_or_admin(caller, self)
+	fn verify_owner_or_admin(&self, user: address) -> Result<bool> {
+		Ok(check_is_owner_or_admin(user, self)
 			.map(|_| true)
 			.unwrap_or(false))
 	}

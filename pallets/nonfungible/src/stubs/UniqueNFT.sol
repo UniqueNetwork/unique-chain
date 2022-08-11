@@ -373,49 +373,7 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 }
 
-// Selector: 780e9d63
-contract ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid NFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
-	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) public view returns (uint256) {
-		require(false, stub_error);
-		index;
-		dummy;
-		return 0;
-	}
-
-	// @dev Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
-		require(false, stub_error);
-		owner;
-		index;
-		dummy;
-		return 0;
-	}
-
-	// @notice Count NFTs tracked by this contract
-	// @return A count of valid NFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-}
-
-// Selector: aa7d570d
+// Selector: 6cf113cd
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -643,12 +601,14 @@ contract Collection is Dummy, ERC165 {
 
 	// Check that account is the owner or admin of the collection
 	//
+	// @param user account to verify
 	// @return "true" if account is the owner or admin
 	//
-	// Selector: verifyOwnerOrAdmin() 04a46053
-	function verifyOwnerOrAdmin() public returns (bool) {
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) public view returns (bool) {
 		require(false, stub_error);
-		dummy = 0;
+		user;
+		dummy;
 		return false;
 	}
 
@@ -661,6 +621,48 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy = 0;
 		return "";
+	}
+}
+
+// Selector: 780e9d63
+contract ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid NFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		index;
+		dummy;
+		return 0;
+	}
+
+	// @notice Count NFTs tracked by this contract
+	// @return A count of valid NFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
 	}
 }
 
