@@ -110,5 +110,4 @@ COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/wbuild/we
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
-    yarn start launch-config.json --test-upgrade-parachain
-
+    yarn start launch-config.json --test-upgrade-parachains
