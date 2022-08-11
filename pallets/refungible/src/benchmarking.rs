@@ -36,9 +36,7 @@ const SEED: u32 = 1;
 fn create_max_item_data<CrossAccountId: Ord>(
 	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
 ) -> CreateRefungibleExData<CrossAccountId> {
-	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
 	CreateRefungibleExData {
-		const_data,
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()

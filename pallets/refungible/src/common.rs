@@ -150,7 +150,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn token_owner() -> Weight {
-		0 //<SelfWeightOf<T>>::token_owner()
+		<SelfWeightOf<T>>::token_owner()
 	}
 }
 
