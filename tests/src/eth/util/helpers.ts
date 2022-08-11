@@ -172,7 +172,7 @@ export function uniqueRefungible(web3: Web3, collectionAddress: string, owner: s
   });
 }
 
-export function uniqueRefungibleToken(web3: Web3, tokenAddress: string, owner: string) {
+export function uniqueRefungibleToken(web3: Web3, tokenAddress: string, owner: string | undefined = undefined) {
   return new web3.eth.Contract(refungibleTokenAbi as any, tokenAddress, {
     from: owner,
     ...GAS_ARGS,

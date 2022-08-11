@@ -15,8 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {createCollectionExpectSuccess, UNIQUE} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, tokenIdToAddress} from './util/helpers';
-import reFungibleTokenAbi from './reFungibleTokenAbi.json';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, tokenIdToAddress, uniqueRefungibleToken} from './util/helpers';
 import {expect} from 'chai';
 
 describe('Refungible: Information getting', () => {
@@ -84,7 +83,7 @@ describe('Refungible: Information getting', () => {
     await contract.methods.mint(caller, tokenId).send();
 
     const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
@@ -108,7 +107,7 @@ describe('Refungible: Information getting', () => {
     await contract.methods.mint(caller, tokenId).send();
 
     const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
@@ -250,7 +249,7 @@ describe('Refungible: Plain calls', () => {
     await contract.methods.mint(caller, tokenId).send();
 
     const address = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, address, {from: caller, ...GAS_ARGS});
+    const tokenContract = uniqueRefungibleToken(web3, address, caller);
     await tokenContract.methods.repartition(15).send();
 
     {
@@ -345,7 +344,7 @@ describe('Refungible: Plain calls', () => {
     await contract.methods.mint(caller, tokenId).send();
 
     const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
@@ -377,7 +376,7 @@ describe('Refungible: Plain calls', () => {
     await contract.methods.mint(caller, tokenId).send();
 
     const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = new web3.eth.Contract(reFungibleTokenAbi as any, tokenAddress, {from: caller, ...GAS_ARGS});
+    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
 
     await tokenContract.methods.repartition(2).send();
     
