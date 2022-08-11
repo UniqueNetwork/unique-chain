@@ -30,7 +30,7 @@ contract Fractionalizer {
     event RFTCollectionSet(address _collection);
     event AllowListSet(address _collection, bool _status);
     event Fractionalized(address _collection, uint256 _tokenId, address _rftToken, uint128 _amount);
-    event DeFractionalized(address _rftToken, address _nftCollection, uint256 _nftTokenId);
+    event Defractionalized(address _rftToken, address _nftCollection, uint256 _nftTokenId);
 
     function setRFTCollection(address _collection) public onlyOwner {
         require(
@@ -52,7 +52,7 @@ contract Fractionalizer {
         emit RFTCollectionSet(rftCollection);
     }
 
-    function mintRFTCollection(string calldata _name, string calldata _description, string calldata _tokenPrefix) public onlyOwner {
+    function createAndSetRFTCollection(string calldata _name, string calldata _description, string calldata _tokenPrefix) public onlyOwner {
         require(
             rftCollection == address(0),
             "RFT collection is already set"
@@ -62,7 +62,7 @@ contract Fractionalizer {
         emit RFTCollectionSet(rftCollection);
     }
 
-    function setAllowlist(address collection, bool status) public onlyOwner {
+    function setNftCollectionIsAllowed(address collection, bool status) public onlyOwner {
         nftCollectionAllowList[collection] = status;
         emit AllowListSet(collection, status);
     }
@@ -139,6 +139,6 @@ contract Fractionalizer {
             msg.sender,
             nftToken._tokenId
         );
-        emit DeFractionalized(rftTokenAddress, nftToken._collection, nftToken._tokenId);
+        emit Defractionalized(rftTokenAddress, nftToken._collection, nftToken._tokenId);
     }
 }

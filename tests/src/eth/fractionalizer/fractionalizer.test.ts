@@ -46,7 +46,7 @@ async function initFractionalizer(api: ApiPromise, web3: Web3, privateKeyWrapper
   const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
   const alice = privateKeyWrapper('//Alice');
   await submitTransactionAsync(alice, tx);
-  const result = await fractionalizer.methods.mintRFTCollection('A', 'B', 'C').send();
+  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send();
   const rftCollectionAddress = result.events.RFTCollectionSet.returnValues._collection;
   return {fractionalizer, rftCollectionAddress};
 }
@@ -57,7 +57,7 @@ async function createRFTToken(api: ApiPromise, web3: Web3, owner: string, fracti
   const nftTokenId = await nftContract.methods.nextTokenId().call();
   await nftContract.methods.mint(owner, nftTokenId).send();
 
-  await fractionalizer.methods.setAllowlist(nftCollectionAddress, true).send();
+  await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
   await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
   const result = await fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, amount).send();
   const {_collection, _tokenId, _rftToken} = result.events.Fractionalized.returnValues;
@@ -92,7 +92,7 @@ describe('Fractionalizer contract usage', () => {
     const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
     await submitTransactionAsync(alice, tx);
 
-    const result = await fractionalizer.methods.mintRFTCollection('A', 'B', 'C').send({from: owner});
+    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner});
     expect(result.events).to.be.like({
       RFTCollectionSet: {},
     });
@@ -104,7 +104,7 @@ describe('Fractionalizer contract usage', () => {
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);    
 
     const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const result1 = await fractionalizer.methods.setAllowlist(nftCollectionAddress, true).send({from: owner});
+    const result1 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send({from: owner});
     expect(result1.events).to.be.like({
       AllowListSet: {
         returnValues: {
@@ -113,7 +113,7 @@ describe('Fractionalizer contract usage', () => {
         },
       },
     });
-    const result2 = await fractionalizer.methods.setAllowlist(nftCollectionAddress, false).send({from: owner});
+    const result2 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, false).send({from: owner});
     expect(result2.events).to.be.like({
       AllowListSet: {
         returnValues: {
@@ -134,7 +134,7 @@ describe('Fractionalizer contract usage', () => {
 
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
 
-    await fractionalizer.methods.setAllowlist(nftCollectionAddress, true).send();
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
     await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
     const result = await fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).send();
     expect(result.events).to.be.like({
@@ -164,7 +164,7 @@ describe('Fractionalizer contract usage', () => {
     await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send();
     const result = await fractionalizer.methods.rft2nft(refungibleAddress, tokenId).send();
     expect(result.events).to.be.like({
-      DeFractionalized: {
+      Defractionalized: {
         returnValues: {
           _rftToken: rftTokenAddress,
           _nftCollection: nftCollectionAddress,
@@ -212,14 +212,14 @@ describe('Negative Integration Tests for fractionalizer', () => {
       .to.eventually.be.rejectedWith(/Fractionalizer contract should be an admin of the collection$/g);
   });
 
-  itWeb3('call setRFTCollection after mintRFTCollection', async ({api, web3, privateKeyWrapper}) => {
+  itWeb3('call setRFTCollection after createAndSetRFTCollection', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const fractionalizer = await deployFractionalizer(api, web3, owner);
     const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
     await submitTransactionAsync(alice, tx);
 
-    const result = await fractionalizer.methods.mintRFTCollection('A', 'B', 'C').send({from: owner});
+    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner});
     const collectionIdAddress = result.events.RFTCollectionSet.returnValues._collection;
 
     await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
@@ -282,7 +282,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
 
-    await fractionalizer.methods.setAllowlist(nftCollectionAddress, true).send();
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
     await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
       .to.eventually.be.rejectedWith(/ApprovedValueTooLow$/g);
   });

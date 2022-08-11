@@ -14,5 +14,8 @@ cp $dir/tests/src/eth/api/UniqueRefungibleToken.sol api/UniqueRefungibleToken.so
 cp $dir/tests/src/eth/api/UniqueRefungible.sol api/UniqueRefungible.sol
 cp $dir/tests/src/eth/api/UniqueNFT.sol api/UniqueNFT.sol
 solcjs --optimize --bin refungible/input.sol -o $PWD
+solcjs --abi -p refungible/input.sol
 
 mv refungible_input_sol_Fractionalizer.bin $dir/tests/src/eth/fractionalizer/Fractionalizer.bin
+mv refungible_input_sol_Fractionalizer.abi refungible_input_sol_Fractionalizer.json
+prettier refungible_input_sol_Fractionalizer.json > $dir/tests/src/eth/fractionalizer/FractionalizerAbi.json
