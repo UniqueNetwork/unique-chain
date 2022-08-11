@@ -78,10 +78,7 @@ CollectionHelpers: CollectionHelpers.sol
 	INPUT=$(COLLECTION_HELPER_STUBS)/$< OUTPUT=$(COLLECTION_HELPER_STUBS)/CollectionHelpers.raw ./.maintain/scripts/compile_stub.sh
 	INPUT=$(COLLECTION_HELPER_STUBS)/$< OUTPUT=$(COLLECTION_HELPER_ABI) ./.maintain/scripts/generate_abi.sh
 
-Fractionalizer:
-	./.maintain/scripts/compile_fractionalizer.sh
-
-evm_stubs: UniqueFungible UniqueNFT UniqueRefungible UniqueRefungibleToken ContractHelpers CollectionHelpers Fractionalizer
+evm_stubs: UniqueFungible UniqueNFT UniqueRefungible UniqueRefungibleToken ContractHelpers CollectionHelpers
 
 .PHONY: _bench
 _bench:

@@ -250,7 +250,12 @@ export function subToEth(eth: string): string {
   return Web3.utils.toChecksumAddress(subToEthLowercase(eth));
 }
 
-export function compileContract(name: string, src: string) {
+export interface CompiledContract {
+  abi: any,
+  object: string,
+}
+
+export function compileContract(name: string, src: string) : CompiledContract {
   const out = JSON.parse(solc.compile(JSON.stringify({
     language: 'Solidity',
     sources: {
