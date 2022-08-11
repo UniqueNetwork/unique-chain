@@ -118,16 +118,24 @@ jobs:
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
-        shell: bash
         run: |
-          function do_docker_logs { DOCKER_LOGS=$(docker logs container node-parachain --details  2>&1)}
-          function is_started { if [[ ${DOCKER_LOGS} != *"RUNTIME UPGRADE TESTING"* ]];then return 0 fi return 1}
-          while ! is_started; do
-               echo "Waiting for "RUNTIME UPGRADE TESTING" in container logs"
-               sleep 15s
-          done
-          echo "Test completed."
-          exit 0
+            function do_docker_logs {
+                 DOCKER_LOGS=$(docker logs --details node-parachain  2>&1)
+            }
+            function is_started {
+                 if [[ ${DOCKER_LOGS} != *"PARACHAINS' RUNTIME UPGRADE TESTING"* ]];then
+                    return 0
+                 fi
+                    return 1
+            }
+            while ! is_started; do
+                 echo "Waiting for "PARACHAINS' RUNTIME UPGRADE TESTING" in container logs"
+                 sleep 15s
+            done
+            echo "Test completed."
+            exit 0          
+        shell: bash
+
 
       - name: Collect Docker Logs
         if: success() || failure()
