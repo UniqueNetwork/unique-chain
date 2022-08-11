@@ -134,7 +134,7 @@ jobs:
             }
             while ! is_started; do
                 echo "Waiting for "RUNTIME UPGRADE TESTING" in container logs"
-                sleep 15s
+                sleep 30s
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
                 if [ "$counter" -gt "0" ]; then
