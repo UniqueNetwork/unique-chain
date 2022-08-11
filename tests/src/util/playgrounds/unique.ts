@@ -925,7 +925,7 @@ class CollectionGroup extends HelperGroup {
 
   /**
    * 
-   * Change ownership of a NFT on behalf of the owner. 
+   * Change ownership of a token(s) on behalf of the owner. 
    * 
    * @param signer keyring of signer
    * @param collectionId ID of collection
@@ -947,7 +947,7 @@ class CollectionGroup extends HelperGroup {
 
   /**
    * 
-   * Destroys a concrete instance of NFT.
+   * Destroys a concrete instance of NFT/RFT or burns a specified amount of fungible tokens.
    * 
    * @param signer keyring of signer
    * @param collectionId ID of collection
@@ -1018,7 +1018,7 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * Get amount of RFT pieces approved to transfer
+   * Get the amount of token pieces approved to transfer
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param toAccountObj 
@@ -1498,7 +1498,7 @@ class RFTGroup extends NFTnRFT {
    * Get collection object
    * @param collectionId ID of collection
    * @example getCollectionObject(2);
-   * @returns instance of UniqueNFTCollection
+   * @returns instance of UniqueRFTCollection
    */
   getCollectionObject(collectionId: number): UniqueRFTCollection {
     return new UniqueRFTCollection(collectionId, this.helper);
@@ -1718,7 +1718,7 @@ class FTGroup extends CollectionGroup {
    * Get collection object
    * @param collectionId ID of collection
    * @example getCollectionObject(2);
-   * @returns instance of UniqueNFTCollection
+   * @returns instance of UniqueFTCollection
    */
   getCollectionObject(collectionId: number): UniqueFTCollection {
     return new UniqueFTCollection(collectionId, this.helper);
@@ -1778,17 +1778,6 @@ class FTGroup extends CollectionGroup {
   }
 
   /**
-   * Mint multiple RFT tokens with one owner
-   * @param signer keyring of signer
-   * @param collectionId ID of collection
-   * @param owner tokens owner
-   * @param tokens array of tokens with properties and pieces
-   * @param label 
-   * @example mintMultipleTokensWithOneOwner(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, [{pieces: 100000n, properties: [{key: "gender", value: "male"}]}]);
-   * @returns array of newly created RFT tokens
-   */
-
-  /**
    * Mint multiple Fungible tokens with one owner
    * @param signer keyring of signer
    * @param collectionId ID of collection
@@ -1813,7 +1802,7 @@ class FTGroup extends CollectionGroup {
   }
 
   /**
-   * Get top 10 token owners
+   * Get the top 10 owners with the largest balance for the Fungible collection 
    * @param collectionId ID of collection
    * @example getTop10Owners(10);
    * @returns array of ```ICrossAccountId```
@@ -1888,7 +1877,7 @@ class FTGroup extends CollectionGroup {
   }
 
   /**
-   * 
+   * Get total collection supply
    * @param collectionId 
    * @returns 
    */
@@ -1973,6 +1962,11 @@ class ChainGroup extends HelperGroup {
 
 
 class BalanceGroup extends HelperGroup {
+  /**
+   * Representation of the native token in the smallest unit
+   * @example getOneTokenNominal()
+   * @returns ```BigInt``` representation of the native token in the smallest unit, e.g. ```1_000_000_000_000_000_000n``` for QTZ.
+   */
   getOneTokenNominal(): bigint {
     const chainProperties = this.helper.chain.getChainProperties();
     return 10n ** BigInt((chainProperties.tokenDecimals || [18])[0]);
@@ -2028,6 +2022,13 @@ class BalanceGroup extends HelperGroup {
 
 
 class AddressGroup extends HelperGroup {
+  /**
+   * Normalizes the address to the specified ss58 format, by default ```42```.
+   * @param address substrate address
+   * @param ss58Format format for address conversion, by default ```42```
+   * @example normalizeSubstrate("unjKJQJrRd238pkUZZvzDQrfKuM39zBSnQ5zjAGAGcdRhaJTx") // returns 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+   * @returns substrate address converted to normalized (i.e., starting with 5) or specified explicitly representation
+   */
   normalizeSubstrate(address: TSubstrateAccount, ss58Format = 42): TSubstrateAccount {
     return this.helper.util.normalizeSubstrateAddress(address, ss58Format);
   }
