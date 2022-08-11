@@ -15,15 +15,16 @@ contract Fractionalizer {
     mapping(address => bool) nftCollectionAllowList;
     mapping(address => mapping(uint256 => uint256)) nft2rftMapping;
     mapping(address => Token) rft2nftMapping;
-    address owner;
     bytes32 refungibleCollectionType = keccak256(bytes("ReFungible"));
 
     constructor() {
-        owner = msg.sender;
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can");
+        address contracthelpersAddress = 0x842899ECF380553E8a4de75bF534cdf6fBF64049;
+        ContractHelpers contractHelpers = ContractHelpers(contracthelpersAddress);
+        address contractOwner = contractHelpers.contractOwner(address(this));
+        require(msg.sender == contractOwner, "Only owner can");
         _;
     }
 
