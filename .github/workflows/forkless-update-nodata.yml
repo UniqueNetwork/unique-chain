@@ -110,7 +110,7 @@ jobs:
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300 --exit-code-from node-parachain
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Wait for 5m before starting tests docker logs for " RUNTIME UPGRADE TESTING " criteria
         if: success()
