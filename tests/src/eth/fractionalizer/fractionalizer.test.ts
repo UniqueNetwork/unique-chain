@@ -180,21 +180,27 @@ describe('Fractionalizer contract usage', () => {
 describe('Negative Integration Tests for fractionalizer', () => {
   itWeb3('call setRFTCollection twice', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const fractionalizer = await deployFractionalizer(api, web3, owner);
     const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
     const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
+
+    const fractionalizer = await deployFractionalizer(api, web3, owner);
     await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
     await fractionalizer.methods.setRFTCollection(collectionIdAddress).send();
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+      .to.eventually.be.rejectedWith(/RFT collection is already set$/g);
   });
 
   itWeb3('call setRFTCollection with NFT collection', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const fractionalizer = await deployFractionalizer(api, web3, owner);
     const {collectionIdAddress} = await createNonfungibleCollection(api, web3, owner);
+    const nftContract = uniqueNFT(web3, collectionIdAddress, owner);
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).send()).to.be.eventually.rejected;
+    const fractionalizer = await deployFractionalizer(api, web3, owner);
+    await nftContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
+
+    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+      .to.eventually.be.rejectedWith(/Wrong collection type. Collection is not refungible.$/g);
   });
 
   itWeb3('call setRFTCollection while not collection admin', async ({api, web3, privateKeyWrapper}) => {
@@ -202,7 +208,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const fractionalizer = await deployFractionalizer(api, web3, owner);
     const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+      .to.eventually.be.rejectedWith(/Fractionalizer contract should be an admin of the collection$/g);
   });
 
   itWeb3('call setRFTCollection after mintRFTCollection', async ({api, web3, privateKeyWrapper}) => {
@@ -215,7 +222,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const result = await fractionalizer.methods.mintRFTCollection('A', 'B', 'C').send({from: owner});
     const collectionIdAddress = result.events.RFTCollectionSet.returnValues._collection;
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+      .to.eventually.be.rejectedWith(/RFT collection is already set$/g);
   });
 
   itWeb3('call nft2rft without setting RFT collection for contract', async ({api, web3, privateKeyWrapper}) => {
@@ -228,7 +236,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const fractionalizer = await deployFractionalizer(api, web3, owner);
 
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+      .to.eventually.be.rejectedWith(/RFT collection is not set$/g);
   });
 
   itWeb3('call nft2rft while not owner of NFT token', async ({api, web3, privateKeyWrapper}) => {
@@ -244,7 +253,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
 
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+      .to.eventually.be.rejectedWith(/Only token owner could fractionalize it$/g);
   });
 
   itWeb3('call nft2rft while not in list of allowed accounts', async ({api, web3, privateKeyWrapper}) => {
@@ -258,7 +268,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
 
     await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+      .to.eventually.be.rejectedWith(/Fractionalization of this collection is not allowed by admin$/g);
   });
 
   itWeb3('call nft2rft while fractionalizer doesnt have approval for nft token', async ({api, web3, privateKeyWrapper}) => {
@@ -272,7 +283,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
 
     await fractionalizer.methods.setAllowlist(nftCollectionAddress, true).send();
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+      .to.eventually.be.rejectedWith(/ApprovedValueTooLow$/g);
   });
 
   itWeb3('call rft2nft without setting RFT collection for contract', async ({api, web3, privateKeyWrapper}) => {
@@ -284,7 +296,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
     await refungibleContract.methods.mint(owner, rftTokenId).send();
     
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).call())
+      .to.eventually.be.rejectedWith(/RFT collection is not set$/g);
   });
 
   itWeb3('call rft2nft for RFT token that is not from configured RFT collection', async ({api, web3, privateKeyWrapper}) => {
@@ -296,7 +309,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
     await refungibleContract.methods.mint(owner, rftTokenId).send();
     
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).call())
+      .to.eventually.be.rejectedWith(/Wrong RFT collection$/g);
   });
 
   itWeb3('call rft2nft for RFT token that was not minted by fractionalizer contract', async ({api, web3, privateKeyWrapper}) => {
@@ -312,7 +326,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
     await refungibleContract.methods.mint(owner, rftTokenId).send();
     
-    await expect(await fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).call())
+      .to.eventually.be.rejectedWith(/No corresponding NFT token found$/g);
   });
 
   itWeb3('call rft2nft without owning all RFT pieces', async ({api, web3, privateKeyWrapper}) => {
@@ -326,6 +341,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
     await refungibleTokenContract.methods.transfer(receiver, 50).send();
     await refungibleTokenContract.methods.approve(fractionalizer.options.address, 50).send();
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, tokenId).send()).to.be.eventually.rejected;
+    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, tokenId).call())
+      .to.eventually.be.rejectedWith(/Not all pieces are owned by the caller$/g);
   });
 });
