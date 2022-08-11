@@ -655,5 +655,22 @@ describe('ERC 1633 implementation', () => {
     expect(tokenAddress).to.be.equal(nftTokenAddress);
     expect(tokenId).to.be.equal(nftTokenId);
   });
+
+  itWeb3('Default parent token address and id', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const {collectionIdAddress, collectionId} = await createRefungibleCollection(api, web3, owner);
+    const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
+    const refungibleTokenId = await refungibleContract.methods.nextTokenId().call();
+    await refungibleContract.methods.mint(owner, refungibleTokenId).send();
+
+    const rftTokenAddress = tokenIdToAddress(collectionId, refungibleTokenId);
+    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
+
+    const tokenAddress = await refungibleTokenContract.methods.parentToken().call();
+    const tokenId = await refungibleTokenContract.methods.parentTokenId().call();
+    expect(tokenAddress).to.be.equal(rftTokenAddress);
+    expect(tokenId).to.be.equal(refungibleTokenId);
+  });
 });
 

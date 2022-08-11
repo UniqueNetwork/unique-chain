@@ -59,8 +59,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let key_scoped = PropertyScope::Eth
 			.apply(key)
 			.expect("property key shouldn't exceed length limit");
-		let value = props.get(&key_scoped).ok_or("key not found")?;
-		Ok(H160::from_slice(value.as_slice()))
+		if let Some(value) = props.get(&key_scoped) {
+			Ok(H160::from_slice(value.as_slice()))
+		} else {
+			Ok(*T::CrossTokenAddressMapping::token_to_address(self.id, self.1).as_eth())
+		}
 	}
 
 	fn parent_token_id(&self) -> Result<uint256> {
@@ -71,13 +74,16 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let key_scoped = PropertyScope::Eth
 			.apply(key)
 			.expect("property key shouldn't exceed length limit");
-		let value = props.get(&key_scoped).ok_or("key not found")?;
-		let nft_token_address = H160::from_slice(value.as_slice());
-		let nft_token_account = T::CrossAccountId::from_eth(nft_token_address);
-		let (_, token_id) = T::CrossTokenAddressMapping::address_to_token(&nft_token_account)
-			.ok_or("parent NFT should contain NFT token address")?;
+		if let Some(value) = props.get(&key_scoped) {
+			let nft_token_address = H160::from_slice(value.as_slice());
+			let nft_token_account = T::CrossAccountId::from_eth(nft_token_address);
+			let (_, token_id) = T::CrossTokenAddressMapping::address_to_token(&nft_token_account)
+				.ok_or("parent NFT should contain NFT token address")?;
 
-		Ok(token_id.into())
+			Ok(token_id.into())
+		} else {
+			Ok(self.1.into())
+		}
 	}
 }
 
