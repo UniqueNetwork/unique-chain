@@ -413,7 +413,100 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	}
 }
 
-// Selector: 7d9262e6
+// Selector: 7c3bef89
+contract ERC721UniqueExtensions is Dummy, ERC165 {
+	// @notice Transfer ownership of an RFT
+	// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	//  is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param to The new owner
+	// @param tokenId The RFT to transfer
+	// @param _value Not used for an RFT
+	//
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 tokenId) public {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @notice Burns a specific ERC721 token.
+	// @dev Throws unless `msg.sender` is the current owner or an authorized
+	//  operator for this RFT. Throws if `from` is not the current owner. Throws
+	//  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param from The current owner of the RFT
+	// @param tokenId The RFT to transfer
+	// @param _value Not used for an RFT
+	//
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) public {
+		require(false, stub_error);
+		from;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @notice Returns next free RFT ID.
+	//
+	// Selector: nextTokenId() 75794a3c
+	function nextTokenId() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	// @notice Function to mint multiple tokens.
+	// @dev `tokenIds` should be an array of consecutive numbers and first number
+	//  should be obtained with `nextTokenId` method
+	// @param to The new owner
+	// @param tokenIds IDs of the minted RFTs
+	//
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokenIds;
+		dummy = 0;
+		return false;
+	}
+
+	// @notice Function to mint multiple tokens with the given tokenUris.
+	// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	//  numbers and first number should be obtained with `nextTokenId` method
+	// @param to The new owner
+	// @param tokens array of pairs of token ID and token URI for minted tokens
+	//
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokens;
+		dummy = 0;
+		return false;
+	}
+
+	// Returns EVM address for refungible token
+	//
+	// @param token ID of the token
+	//
+	// Selector: tokenContractAddress(uint256) ab76fac6
+	function tokenContractAddress(uint256 token) public view returns (address) {
+		require(false, stub_error);
+		token;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+}
+
+// Selector: aa7d570d
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -638,86 +731,27 @@ contract Collection is Dummy, ERC165 {
 		mode;
 		dummy = 0;
 	}
-}
 
-// Selector: d74d154f
-contract ERC721UniqueExtensions is Dummy, ERC165 {
-	// @notice Transfer ownership of an RFT
-	// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
-	//  is the zero address. Throws if `tokenId` is not a valid RFT.
-	//  Throws if RFT pieces have multiple owners.
-	// @param to The new owner
-	// @param tokenId The RFT to transfer
-	// @param _value Not used for an RFT
+	// Check that account is the owner or admin of the collection
 	//
-	// Selector: transfer(address,uint256) a9059cbb
-	function transfer(address to, uint256 tokenId) public {
-		require(false, stub_error);
-		to;
-		tokenId;
-		dummy = 0;
-	}
-
-	// @notice Burns a specific ERC721 token.
-	// @dev Throws unless `msg.sender` is the current owner or an authorized
-	//  operator for this RFT. Throws if `from` is not the current owner. Throws
-	//  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
-	//  Throws if RFT pieces have multiple owners.
-	// @param from The current owner of the RFT
-	// @param tokenId The RFT to transfer
-	// @param _value Not used for an RFT
+	// @return "true" if account is the owner or admin
 	//
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 tokenId) public {
+	// Selector: verifyOwnerOrAdmin() 04a46053
+	function verifyOwnerOrAdmin() public returns (bool) {
 		require(false, stub_error);
-		from;
-		tokenId;
-		dummy = 0;
-	}
-
-	// @notice Returns next free RFT ID.
-	//
-	// Selector: nextTokenId() 75794a3c
-	function nextTokenId() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-
-	// @notice Function to mint multiple tokens.
-	// @dev `tokenIds` should be an array of consecutive numbers and first number
-	//  should be obtained with `nextTokenId` method
-	// @param to The new owner
-	// @param tokenIds IDs of the minted RFTs
-	//
-	// Selector: mintBulk(address,uint256[]) 44a9945e
-	function mintBulk(address to, uint256[] memory tokenIds)
-		public
-		returns (bool)
-	{
-		require(false, stub_error);
-		to;
-		tokenIds;
 		dummy = 0;
 		return false;
 	}
 
-	// @notice Function to mint multiple tokens with the given tokenUris.
-	// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
-	//  numbers and first number should be obtained with `nextTokenId` method
-	// @param to The new owner
-	// @param tokens array of pairs of token ID and token URI for minted tokens
+	// Returns collection type
 	//
-	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
-	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
-		public
-		returns (bool)
-	{
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() public returns (string memory) {
 		require(false, stub_error);
-		to;
-		tokens;
 		dummy = 0;
-		return false;
+		return "";
 	}
 }
 

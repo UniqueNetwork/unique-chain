@@ -41,8 +41,8 @@ use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _
 use sp_core::H160;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
 use up_data_structs::{
-	CollectionId, CollectionPropertiesVec, Property, PropertyKey, PropertyKeyPermission,
-	PropertyPermission, TokenId,
+	CollectionId, CollectionPropertiesVec, mapping::TokenAddressMapping, Property, PropertyKey,
+	PropertyKeyPermission, PropertyPermission, TokenId,
 };
 
 use crate::{
@@ -413,7 +413,7 @@ impl<T: Config> RefungibleHandle<T> {
 }
 
 /// Returns amount of pieces of `token` that `owner` have
-fn balance<T: Config>(
+pub fn balance<T: Config>(
 	collection: &RefungibleHandle<T>,
 	token: TokenId,
 	owner: &T::CrossAccountId,
@@ -424,7 +424,7 @@ fn balance<T: Config>(
 }
 
 /// Throws if `owner_balance` is lower than total amount of `token` pieces
-fn ensure_single_owner<T: Config>(
+pub fn ensure_single_owner<T: Config>(
 	collection: &RefungibleHandle<T>,
 	token: TokenId,
 	owner_balance: u128,
@@ -787,6 +787,16 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
+	}
+
+	/// Returns EVM address for refungible token
+	///
+	/// @param token ID of the token
+	fn token_contract_address(&self, token: uint256) -> Result<address> {
+		Ok(T::EvmTokenAddressMapping::token_to_address(
+			self.id,
+			token.try_into().map_err(|_| "token id overflow")?,
+		))
 	}
 }
 

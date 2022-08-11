@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {approve, createCollection, createRefungibleToken, transfer, transferFrom, UNIQUE} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth} from './util/helpers';
+import {collectionIdFromAddress, collectionIdToAddress, createEthAccount, createEthAccountWithBalance, createNonfungibleCollection, createRefungibleCollection, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth, uniqueNFT, uniqueRefungible, uniqueRefungibleToken} from './util/helpers';
 import reFungibleTokenAbi from './reFungibleTokenAbi.json';
 
 import chai from 'chai';
@@ -630,3 +630,31 @@ describe('Refungible: Substrate calls', () => {
     ]);
   });
 });
+
+describe('ERC 1633 implementation', () => {
+  itWeb3('Parent NFT token address and id', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const {collectionIdAddress:  nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
+    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    const nftTokenId = await nftContract.methods.nextTokenId().call();
+    await nftContract.methods.mint(owner, nftTokenId).send();
+    const nftCollectionId = collectionIdFromAddress(nftCollectionAddress);
+
+    const {collectionIdAddress, collectionId} = await createRefungibleCollection(api, web3, owner);
+    const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
+    const refungibleTokenId = await refungibleContract.methods.nextTokenId().call();
+    await refungibleContract.methods.mint(owner, refungibleTokenId).send();
+
+    const rftTokenAddress = tokenIdToAddress(collectionId, refungibleTokenId);
+    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
+    await refungibleTokenContract.methods.setParentNFT(nftCollectionAddress, nftTokenId).send();
+
+    const tokenAddress = await refungibleTokenContract.methods.parentToken().call();
+    const tokenId = await refungibleTokenContract.methods.parentTokenId().call();
+    const nftTokenAddress = tokenIdToAddress(nftCollectionId, nftTokenId);
+    expect(tokenAddress).to.be.equal(nftTokenAddress);
+    expect(tokenId).to.be.equal(nftTokenId);
+  });
+});
+

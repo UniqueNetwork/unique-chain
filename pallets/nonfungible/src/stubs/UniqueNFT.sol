@@ -415,7 +415,7 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	}
 }
 
-// Selector: 7d9262e6
+// Selector: aa7d570d
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -639,6 +639,24 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		mode;
 		dummy = 0;
+	}
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin() 04a46053
+	function verifyOwnerOrAdmin() public returns (bool) {
+		require(false, stub_error);
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() public returns (string memory) {
+		require(false, stub_error);
+		dummy = 0;
+		return "";
 	}
 }
 

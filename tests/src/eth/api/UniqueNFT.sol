@@ -276,7 +276,7 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function totalSupply() external view returns (uint256);
 }
 
-// Selector: 7d9262e6
+// Selector: aa7d570d
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -422,6 +422,16 @@ interface Collection is Dummy, ERC165 {
 	//
 	// Selector: setCollectionMintMode(bool) 00018e84
 	function setCollectionMintMode(bool mode) external;
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin() 04a46053
+	function verifyOwnerOrAdmin() external returns (bool);
+
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() external returns (string memory);
 }
 
 // Selector: d74d154f

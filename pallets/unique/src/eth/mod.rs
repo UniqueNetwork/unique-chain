@@ -17,26 +17,29 @@
 //! Implementation of CollectionHelpers contract.
 
 use core::marker::PhantomData;
-use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
 use ethereum as _;
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_evm::{OnMethodCall, PrecompileResult, account::CrossAccountId, PrecompileHandle};
-use up_data_structs::{
-	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue,
-};
+use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
 use frame_support::traits::Get;
 use pallet_common::{
-	CollectionById,
-	erc::{
-		static_property::{key, value as property_value},
-		CollectionHelpersEvents,
-	},
+	CollectionById, CollectionHandle,
 	dispatch::CollectionDispatch,
+	erc::{
+		CollectionHelpersEvents,
+		static_property::{key, value as property_value},
+	},
+	Pallet as PalletCommon,
 };
-use crate::{SelfWeightOf, Config, weights::WeightInfo};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
+use pallet_evm_coder_substrate::dispatch_to_evm;
+use up_data_structs::{
+	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
+	CollectionMode, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+};
 
-use sp_std::vec::Vec;
+use crate::{Config, SelfWeightOf, weights::WeightInfo};
+
+use sp_std::{vec, vec::Vec};
 use alloc::format;
 
 /// See [`CollectionHelpersCall`]
@@ -151,6 +154,54 @@ fn make_data<T: Config>(
 	Ok(data)
 }
 
+fn parent_nft_property_permissions() -> PropertyKeyPermission {
+	PropertyKeyPermission {
+		key: key::parent_nft(),
+		permission: PropertyPermission {
+			mutable: false,
+			collection_admin: false,
+			token_owner: true,
+		},
+	}
+}
+
+fn create_refungible_collection_internal<
+	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
+>(
+	caller: caller,
+	name: string,
+	description: string,
+	token_prefix: string,
+	base_uri: string,
+	add_properties: bool,
+) -> Result<address> {
+	let (caller, name, description, token_prefix, base_uri_value) =
+		convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
+	let data = make_data::<T>(
+		name,
+		CollectionMode::ReFungible,
+		description,
+		token_prefix,
+		base_uri_value,
+		add_properties,
+	)?;
+
+	let collection_id = T::CollectionDispatch::create(caller.clone(), data)
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+
+	let handle = <CollectionHandle<T>>::try_get(collection_id).map_err(dispatch_to_evm::<T>)?;
+	<PalletCommon<T>>::set_scoped_token_property_permissions(
+		&handle,
+		&caller,
+		PropertyScope::Eth,
+		vec![parent_nft_property_permissions()],
+	)
+	.map_err(dispatch_to_evm::<T>)?;
+
+	let address = pallet_common::eth::collection_id_to_address(collection_id);
+	Ok(address)
+}
+
 /// @title Contract, which allows users to operate with collections
 #[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
 impl<T> EvmCollectionHelpers<T>
@@ -216,27 +267,20 @@ where
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_refungible_collection(
-		&self,
+		&mut self,
 		caller: caller,
 		name: string,
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix, _base_uri) =
-			convert_data::<T>(caller, name, description, token_prefix, "".into())?;
-		let data = make_data::<T>(
+		create_refungible_collection_internal::<T>(
+			caller,
 			name,
-			CollectionMode::ReFungible,
 			description,
 			token_prefix,
 			Default::default(),
 			false,
-		)?;
-		let collection_id = T::CollectionDispatch::create(caller, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
+		)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -249,21 +293,14 @@ where
 		token_prefix: string,
 		base_uri: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix, base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-		let data = make_data::<T>(
+		create_refungible_collection_internal::<T>(
+			caller,
 			name,
-			CollectionMode::NFT,
 			description,
 			token_prefix,
-			base_uri_value,
+			base_uri,
 			true,
-		)?;
-		let collection_id = T::CollectionDispatch::create(caller, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
+		)
 	}
 
 	/// Check if a collection exists

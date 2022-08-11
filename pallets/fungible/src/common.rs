@@ -103,6 +103,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		// Fungible tokens can't have children
 		0
 	}
+
+	fn token_owner() -> Weight {
+		0
+	}
 }
 
 /// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallete

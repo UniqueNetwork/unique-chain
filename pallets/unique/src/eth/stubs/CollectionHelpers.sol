@@ -72,12 +72,12 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) public view returns (address) {
+	) public returns (address) {
 		require(false, stub_error);
 		name;
 		description;
 		tokenPrefix;
-		dummy;
+		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
 
@@ -96,7 +96,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
+	
 	// Check if a collection exists
 	// @param collection_address Address of the collection in question
 	// @return bool Does the collection exist?

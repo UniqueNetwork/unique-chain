@@ -25,7 +25,8 @@ pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, accou
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
-	Property, SponsoringRateLimit, OwnerRestrictedSet, AccessMode, CollectionPermissions,
+	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
+	SponsoringRateLimit,
 };
 use alloc::format;
 
@@ -408,6 +409,27 @@ where
 
 		save(self)
 	}
+
+	/// Check that account is the owner or admin of the collection
+	///
+	/// @return "true" if account is the owner or admin
+	fn verify_owner_or_admin(&mut self, caller: caller) -> Result<bool> {
+		Ok(check_is_owner_or_admin(caller, self)
+			.map(|_| true)
+			.unwrap_or(false))
+	}
+
+	/// Returns collection type
+	///
+	/// @return `Fungible` or `NFT` or `ReFungible`
+	fn unique_collection_type(&mut self) -> Result<string> {
+		let mode = match self.collection.mode {
+			CollectionMode::Fungible(_) => "Fungible",
+			CollectionMode::NFT => "NFT",
+			CollectionMode::ReFungible => "ReFungible",
+		};
+		Ok(mode.into())
+	}
 }
 
 fn check_is_owner_or_admin<T: Config>(
@@ -461,6 +483,11 @@ pub mod static_property {
 		/// Key "suffix".
 		pub fn suffix() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Key "parentNft".
+		pub fn parent_nft() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"parentNft").expect(EXPECT_CONVERT_ERROR)
 		}
 	}
 

@@ -48,7 +48,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external view returns (address);
+	) external returns (address);
 
 	// Selector: createERC721MetadataCompatibleRFTCollection(string,string,string,string) a5596388
 	function createERC721MetadataCompatibleRFTCollection(
@@ -57,7 +57,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory tokenPrefix,
 		string memory baseUri
 	) external returns (address);
-
+	
 	// Check if a collection exists
 	// @param collection_address Address of the collection in question
 	// @return bool Does the collection exist?

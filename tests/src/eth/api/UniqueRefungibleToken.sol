@@ -22,6 +22,23 @@ interface ERC20Events {
 	);
 }
 
+// Selector: 042f1106
+interface ERC1633UniqueExtensions is Dummy, ERC165 {
+	// Selector: setParentNFT(address,uint256) 042f1106
+	function setParentNFT(address collection, uint256 nftId)
+		external
+		returns (bool);
+}
+
+// Selector: 5755c3f2
+interface ERC1633 is Dummy, ERC165 {
+	// Selector: parentToken() 80a54001
+	function parentToken() external view returns (address);
+
+	// Selector: parentTokenId() d7f083f3
+	function parentTokenId() external view returns (uint256);
+}
+
 // Selector: 942e8b22
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	// @return the name of the token.
@@ -115,5 +132,7 @@ interface UniqueRefungibleToken is
 	Dummy,
 	ERC165,
 	ERC20,
-	ERC20UniqueExtensions
+	ERC20UniqueExtensions,
+	ERC1633,
+	ERC1633UniqueExtensions
 {}
