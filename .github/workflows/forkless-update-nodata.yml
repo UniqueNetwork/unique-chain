@@ -123,7 +123,7 @@ jobs:
                  DOCKER_LOGS=$(docker logs --details node-parachain  2>&1)
             }
             function is_started {
-                 if [[ ${DOCKER_LOGS} != *"RUNTIME UPGRADE TESTING"* ]];then
+                 if [[ ${DOCKER_LOGS} = *"RUNTIME UPGRADE TESTING"* ]];then
                     echo "Function is_started: Return 0"
                     return 0
                  fi
@@ -138,40 +138,24 @@ jobs:
             exit 0          
         shell: bash
 
+      - name: Collect Docker Logs
+        if: success() || failure()
+        uses: jwalton/gh-docker-logs@v2.2.0
+        with:
+          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
+          images: 'node-parachain' 
 
-#      - name: Collect Docker Logs
-#        if: success() || failure()
-#        uses: jwalton/gh-docker-logs@v2.2.0
-#        with:
-#          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
-#          images: 'node-parachain' 
-#
-#      - name: Tar logs
-#        if: success() || failure()
-#        run: tar cvzf ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}
-#
-#      - name: Upload logs to GitHub
-#        if: success() || failure()
-#        uses: actions/upload-artifact@master
-#        with:
-#          name: forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz
-#          path: ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz
+      - name: Tar logs
+        if: success() || failure()
+        run: tar cvzf ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}
 
+      - name: Upload logs to GitHub
+        if: success() || failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz
+          path: ./forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.tgz
 
-#      - name: Test Report
-#        uses: phoenix-actions/test-reporting@v8
-#        if: success() || failure()    # run this step even if previous step failed
-#        with:
-#          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
-#          path: tests/mochawesome-report/test-*.json    # Path to test results
-#          reporter: mochawesome-json
-#          fail-on-error: 'false'
-#
-#      - name: Read output variables
-#        run: |
-#          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
-
-
-#      - name: Stop running containers
-#        if: always()                   # run this step always
-#        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
