@@ -396,7 +396,7 @@ impl Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader =
-		UsingAnyCurrencyComponents<LinearFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+		UsingAnyCurrencyComponents<LinearFee<Balance>, SelfLocation, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;

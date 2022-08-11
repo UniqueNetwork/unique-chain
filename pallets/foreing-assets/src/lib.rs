@@ -58,6 +58,7 @@ use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
 
+
 use pallet_common::erc::CrossAccountId;
 
 #[cfg(feature = "std")]
@@ -204,9 +205,9 @@ pub mod module {
 		BadLocation,
 		/// MultiLocation existed
 		MultiLocationExisted,
-		/// AssetId not exists
+		/// RelayAssetId not exists
 		AssetIdNotExists,
-		/// AssetId exists
+		/// RelayAssetId exists
 		AssetIdExisted,
 	}
 
@@ -237,7 +238,7 @@ pub mod module {
 		},
 	}
 
-	/// Next available Foreign AssetId ID.
+	/// Next available Foreign RelayAssetId ID.
 	///
 	/// NextForeignAssetId: ForeignAssetId
 	#[pallet::storage]
@@ -460,24 +461,26 @@ use xcm::latest::{Fungibility::Fungible as XcmFungible};
 
 pub struct UsingAnyCurrencyComponents<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
+	SelfAssetId: Get<MultiLocation>,
+	RelayAssetId: Get<MultiLocation>,
 	AccountId,
 	Currency: CurrencyT<AccountId>,
 	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
 >(
 	Weight,
 	Currency::Balance,
-	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
+	PhantomData<(WeightToFee, SelfAssetId, RelayAssetId, AccountId, Currency, OnUnbalanced)>,
 );
 
 impl<
 		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
+		SelfAssetId: Get<MultiLocation>,
+		RelayAssetId: Get<MultiLocation>,
 		AccountId,
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
 	> WeightTrader
-	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+	for UsingAnyCurrencyComponents<WeightToFee, SelfAssetId, RelayAssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn new() -> Self {
 		Self(0, Zero::zero(), PhantomData)
@@ -489,15 +492,15 @@ impl<
 		let amount = WeightToFee::weight_to_fee(&weight);
 		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
 
-		let asset_id = payment
-			.fungible
-			.iter()
-			.next()
-			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
+		let self_asset_id = SelfAssetId::get().into();
 
-		// First fungible pays fee
+		// Only native token payment allowed
+		if !payment.fungible.keys().any(|asset_id| *asset_id != self_asset_id) {
+			return Err(XcmError::TooExpensive)
+		}
+
 		let required = MultiAsset {
-			id: asset_id.clone(),
+			id: self_asset_id,
 			fun: XcmFungible(u128_amount),
 		};
 
@@ -521,7 +524,7 @@ impl<
 		self.1 = self.1.saturating_sub(amount);
 		let amount: u128 = amount.saturated_into();
 		if amount > 0 {
-			Some((AssetId::get(), amount).into())
+			Some((RelayAssetId::get(), amount).into())
 		} else {
 			None
 		}
@@ -529,11 +532,12 @@ impl<
 }
 impl<
 		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
+		SelfAssetId: Get<MultiLocation>,
+		RelayAssetId: Get<MultiLocation>,
 		AccountId,
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+	> Drop for UsingAnyCurrencyComponents<WeightToFee, SelfAssetId, RelayAssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn drop(&mut self) {
 		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
