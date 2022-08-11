@@ -20,7 +20,6 @@ contract Fractionalizer {
     mapping(address => Token) rft2nftMapping;
     bytes32 refungibleCollectionType = keccak256(bytes("ReFungible"));
 
-    //TODO: add nonPayable  modifier after Solidity updates to 0.9.
     receive() external payable onlyOwner {}
 
     /// @dev Method modifier to only allow contract owner to call it.
