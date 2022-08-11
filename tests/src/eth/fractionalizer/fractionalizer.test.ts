@@ -252,6 +252,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
 
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
 
     await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
       .to.eventually.be.rejectedWith(/Only token owner could fractionalize it$/g);

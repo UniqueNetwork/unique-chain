@@ -74,10 +74,6 @@ contract Fractionalizer {
         );
         UniqueRefungible rftCollectionContract = UniqueRefungible(rftCollection);
         require(
-            UniqueNFT(_collection).ownerOf(_token) == msg.sender,
-            "Only token owner could fractionalize it"
-        );
-        require(
             nftCollectionAllowList[_collection] == true,
             "Fractionalization of this collection is not allowed by admin"
         );
