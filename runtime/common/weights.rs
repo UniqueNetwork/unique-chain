@@ -20,25 +20,42 @@ use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight, RefungibleExten
 
 use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
+
+#[cfg(feature = "refungible")]
 use pallet_refungible::{
 	Config as RefungibleConfig, weights::WeightInfo, common::CommonWeights as RefungibleWeights,
 };
 use up_data_structs::{CreateItemExData, CreateItemData};
 
 macro_rules! max_weight_of {
-	($method:ident ( $($args:tt)* )) => {
-		<FungibleWeights<T>>::$method($($args)*)
-		.max(<NonfungibleWeights<T>>::$method($($args)*))
-		.max(<RefungibleWeights<T>>::$method($($args)*))
-	};
+	($method:ident ( $($args:tt)* )) => {{
+		let max_weight = <FungibleWeights<T>>::$method($($args)*)
+			.max(<NonfungibleWeights<T>>::$method($($args)*));
+
+		#[cfg(feature = "refungible")]
+		let max_weight = max_weight.max(<RefungibleWeights<T>>::$method($($args)*));
+
+		max_weight
+	}};
 }
 
-pub struct CommonWeights<T>(PhantomData<T>)
-where
-	T: FungibleConfig + NonfungibleConfig + RefungibleConfig;
+#[cfg(not(feature = "refungible"))]
+pub trait CommonWeightConfigs: FungibleConfig + NonfungibleConfig {}
+
+#[cfg(not(feature = "refungible"))]
+impl<T: FungibleConfig + NonfungibleConfig> CommonWeightConfigs for T {}
+
+#[cfg(feature = "refungible")]
+pub trait CommonWeightConfigs: FungibleConfig + NonfungibleConfig + RefungibleConfig {}
+
+#[cfg(feature = "refungible")]
+impl<T: FungibleConfig + NonfungibleConfig + RefungibleConfig> CommonWeightConfigs for T {}
+
+pub struct CommonWeights<T>(PhantomData<T>);
+
 impl<T> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T>
 where
-	T: FungibleConfig + NonfungibleConfig + RefungibleConfig,
+	T: CommonWeightConfigs,
 {
 	fn create_item() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(create_item())
@@ -101,11 +118,22 @@ where
 	}
 }
 
+#[cfg(feature = "refungible")]
 impl<T> RefungibleExtensionsWeightInfo for CommonWeights<T>
 where
 	T: FungibleConfig + NonfungibleConfig + RefungibleConfig,
 {
 	fn repartition() -> Weight {
 		dispatch_weight::<T>() + <<T as RefungibleConfig>::WeightInfo>::repartition_item()
+	}
+}
+
+#[cfg(not(feature = "refungible"))]
+impl<T> RefungibleExtensionsWeightInfo for CommonWeights<T>
+where
+	T: FungibleConfig + NonfungibleConfig,
+{
+	fn repartition() -> Weight {
+		dispatch_weight::<T>()
 	}
 }

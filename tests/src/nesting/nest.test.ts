@@ -17,6 +17,8 @@ import {
   transferExpectSuccess,
   transferFromExpectSuccess,
   setCollectionLimitsExpectSuccess,
+  requirePallets,
+  Pallets,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -311,7 +313,9 @@ describe('Integration Test: Various token type nesting', async () => {
 
   // ---------- Re-Fungible ----------
 
-  it('ReFungible: allows an Owner to nest/unnest their token', async () => {
+  it('ReFungible: allows an Owner to nest/unnest their token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true}});
@@ -333,7 +337,9 @@ describe('Integration Test: Various token type nesting', async () => {
     });
   });
 
-  it('ReFungible: allows an Owner to nest/unnest their token (Restricted nesting)', async () => {
+  it('ReFungible: allows an Owner to nest/unnest their token (Restricted nesting)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       const targetToken = await createItemExpectSuccess(alice, collectionNFT, 'NFT', {Substrate: alice.address});
@@ -715,7 +721,9 @@ describe('Negative Test: Nesting', async() => {
 
   // ---------- Re-Fungible ----------
 
-  it('ReFungible: disallows to nest token if nesting is disabled', async () => {
+  it('ReFungible: disallows to nest token if nesting is disabled', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {}});
@@ -745,7 +753,9 @@ describe('Negative Test: Nesting', async() => {
     });
   });
 
-  it('ReFungible: disallows a non-Owner to nest someone else\'s token', async () => {
+  it('ReFungible: disallows a non-Owner to nest someone else\'s token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true}});
@@ -773,7 +783,9 @@ describe('Negative Test: Nesting', async() => {
     });
   });
 
-  it('ReFungible: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async () => {
+  it('ReFungible: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await addToAllowListExpectSuccess(alice, collectionNFT, bob.address);
@@ -800,7 +812,9 @@ describe('Negative Test: Nesting', async() => {
     });
   });
 
-  it('ReFungible: disallows to nest token to an unlisted collection', async () => {
+  it('ReFungible: disallows to nest token to an unlisted collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collectionNFT = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionPermissionsExpectSuccess(alice, collectionNFT, {nesting: {tokenOwner: true, restricted:[]}});

@@ -1,4 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
+import {requirePallets, Pallets} from '../util/helpers';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, setPropertyCollection} from './util/tx';
 
@@ -7,8 +8,9 @@ describe('integration test: set collection property', () => {
   const Bob = '//Bob';
 
   let api: any;
-  before(async () => {
+  before(async function () {
     api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   it('set collection property', async () => {

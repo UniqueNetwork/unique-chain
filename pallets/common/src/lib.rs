@@ -535,7 +535,8 @@ pub mod pallet {
 
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
-		/// Target collection doesn't support this operation
+
+		/// The oprtation is not supported
 		UnsupportedOperation,
 
 		/// Insufficient funds to perform an action
@@ -1353,8 +1354,8 @@ impl<T: Config> Pallet<T> {
 /// Indicates unsupported methods by returning [Error::UnsupportedOperation].
 #[macro_export]
 macro_rules! unsupported {
-	() => {
-		Err(<Error<T>>::UnsupportedOperation.into())
+	($runtime:path) => {
+		Err($crate::Error::<$runtime>::UnsupportedOperation.into())
 	};
 }
 

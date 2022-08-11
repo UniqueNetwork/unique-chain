@@ -1,4 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
+import {requirePallets, Pallets} from '../util/helpers';
 import {expectTxFailure} from './util/helpers';
 import {
   changeIssuer,
@@ -10,9 +11,12 @@ describe('integration test: collection issuer', () => {
   const Bob = '//Bob';
 
   let api: any;
-  before(async () => {
+  before(async function() {
     api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
+
+
 
   it('change collection issuer', async () => {
     await createCollection(

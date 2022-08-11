@@ -49,8 +49,6 @@ const requiredPallets = [
   'inflation',
   'unique',
   'nonfungible',
-  'refungible',
-  'scheduler',
   'charging',
 ];
 
@@ -66,8 +64,16 @@ describe('Pallet presence', () => {
     await usingApi(async api => {
       const chain = await api.rpc.system.chain();
 
-      if (!chain.eq('UNIQUE')) {
-        requiredPallets.push(...['rmrkcore', 'rmrkequip']);
+      const refungible = 'refungible';
+      const scheduler = 'scheduler';
+      const rmrkPallets = ['rmrkcore', 'rmrkequip'];
+
+      if (chain.eq('OPAL by UNIQUE')) {
+        requiredPallets.push(refungible, scheduler, ...rmrkPallets);
+      } else if (chain.eq('QUARTZ by UNIQUE')) {
+        // Insert Quartz additional pallets here
+      } else if (chain.eq('UNIQUE')) {
+        // Insert Unique additional pallets here
       }
     });
   });

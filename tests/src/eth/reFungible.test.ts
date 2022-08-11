@@ -14,12 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, UNIQUE} from '../util/helpers';
+import {createCollectionExpectSuccess, UNIQUE, requirePallets, Pallets} from '../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, tokenIdToAddress} from './util/helpers';
 import reFungibleTokenAbi from './reFungibleTokenAbi.json';
 import {expect} from 'chai';
 
 describe('Refungible: Information getting', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
@@ -120,6 +124,10 @@ describe('Refungible: Information getting', () => {
 });
 
 describe('Refungible: Plain calls', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
@@ -399,6 +407,10 @@ describe('Refungible: Plain calls', () => {
 });
 
 describe('RFT: Fees', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
@@ -435,6 +447,10 @@ describe('RFT: Fees', () => {
 });
 
 describe('Common metadata', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Returns collection name', async ({api, web3, privateKeyWrapper}) => {
     const collection = await createCollectionExpectSuccess({
       name: 'token name',

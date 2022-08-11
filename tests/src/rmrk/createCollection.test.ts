@@ -1,9 +1,15 @@
 import {getApiConnection} from '../substrate/substrate-api';
+import {requirePallets, Pallets} from '../util/helpers';
 import {createCollection} from './util/tx';
 
 describe('Integration test: create new collection', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  before(async function () {
+    api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
+  });
+
+
 
   const alice = '//Alice';
 

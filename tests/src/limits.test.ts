@@ -27,6 +27,8 @@ import {
   transferExpectSuccess,
   getFreeBalance,
   waitNewBlocks, burnItemExpectSuccess,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 import {expect} from 'chai';
 
@@ -67,7 +69,9 @@ describe('Number of tokens per address (NFT)', () => {
 describe('Number of tokens per address (ReFungible)', () => {
   let alice: IKeyringPair;
 
-  before(async () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
     });
@@ -367,7 +371,9 @@ describe('Collection zero limits (ReFungible)', () => {
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
-  before(async () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');

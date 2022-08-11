@@ -27,6 +27,8 @@ import {
   transferExpectSuccess,
   normalizeAccountId,
   getNextSponsored,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -89,7 +91,9 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
     });
   });
 
-  it('ReFungible', async () => {
+  it('ReFungible', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api: ApiPromise) => {
 
       const createMode = 'ReFungible';

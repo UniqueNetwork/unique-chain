@@ -1,11 +1,17 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
+import {requirePallets, Pallets} from '../util/helpers';
 import {getOwnedNfts} from './util/fetch';
 import {mintNft, createCollection} from './util/tx';
 
 describe('integration test: get owned NFTs', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  
+  before(async function () {
+    api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
+  });
+
 
   const alice = '//Alice';
 

@@ -27,7 +27,7 @@ use pallet_evm::account::CrossAccountId;
 use up_data_structs::{TokenId, CreateItemData, CreateNftData, CollectionMode};
 use pallet_unique::Config as UniqueConfig;
 
-use crate::sponsoring::*;
+use crate::{Runtime, runtime_common::sponsoring::*};
 
 use pallet_nonfungible::erc::{
 	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call, TokenPropertiesCall,
@@ -36,6 +36,11 @@ use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
 use pallet_fungible::Config as FungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;
 use pallet_refungible::Config as RefungibleConfig;
+
+pub type EvmSponsorshipHandler = (
+	UniqueEthSponsorshipHandler<Runtime>,
+	pallet_evm_contract_helpers::HelpersContractSponsoring<Runtime>,
+);
 
 pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
 impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
