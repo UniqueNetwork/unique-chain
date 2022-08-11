@@ -93,7 +93,7 @@ export async function requirePallets(mocha: Context, requiredPallets: string[]) 
     const missingPalletsMsg = `\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
     const skipMsg = `${skippingTestMsg}\n${missingPalletsMsg}`;
 
-    console.log('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+    console.error('\x1b[38:5:208m%s\x1b[0m', skipMsg);
 
     mocha.skip();
   }
