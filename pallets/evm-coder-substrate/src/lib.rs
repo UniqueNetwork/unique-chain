@@ -261,7 +261,8 @@ fn call_internal<
 	let (selector, mut reader) = AbiReader::new_call(input)?;
 	let call = C::parse(selector, &mut reader)?;
 	if call.is_none() {
-		return Err("Function not found".into());
+		let selector = u32::from_be_bytes(selector);
+		return Err(format!("unrecognized selector: 0x{selector:0<8x}").into());
 	}
 	let call = call.unwrap();
 

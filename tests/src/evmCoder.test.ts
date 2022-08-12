@@ -31,30 +31,33 @@ async function compileTestContract(collectionAddress: string, contractAddress: s
         // SPDX-License-Identifier: MIT
         pragma solidity ^0.8.0;
         interface ITest {
-            function ztestzzzzzzz() external returns (uint256 n);
+          function ztestzzzzzzz() external returns (uint256 n);
         }
         contract Test {
-            event Result(bool, uint256);
-            function test1() public {
-                try
-                    ITest(${collectionAddress}).ztestzzzzzzz()
-                returns (uint256 n) {
-                    // enters
-                    emit Result(true, n); // => [true, BigNumber { value: "43648854190028290368124427828690944273759144372138548774646036134290060795932" }]
-                } catch {
-                    emit Result(false, 0);
-                }
-            }
-            function test2() public {
-                try
-                    ITest(${contractAddress}).ztestzzzzzzz()
-                returns (uint256 n) {
-                    emit Result(true, n);
-                } catch {
-                    // enters
-                    emit Result(false, 0); // => [ false, BigNumber { value: "0" } ]
-                }
-            }
+          event Result(bool, uint256);
+          function test1() public {
+              try
+                  ITest(${collectionAddress}).ztestzzzzzzz()
+              returns (uint256 n) {
+                  // enters
+                  emit Result(true, n); // => [true, BigNumber { value: "43648854190028290368124427828690944273759144372138548774646036134290060795932" }]
+              } catch {
+                  emit Result(false, 0);
+              }
+          }
+          function test2() public {
+              try
+                  ITest(${contractAddress}).ztestzzzzzzz()
+              returns (uint256 n) {
+                  emit Result(true, n);
+              } catch {
+                  // enters
+                  emit Result(false, 0); // => [ false, BigNumber { value: "0" } ]
+              }
+          }
+          function test3() public {
+            ITest(${collectionAddress}).ztestzzzzzzz();
+          }
         }
         `,
       },
@@ -105,6 +108,10 @@ describe('Evm Coder tests', () => {
         '0': false,
         '1': '0',
       });
+    }
+    {
+      await expect(testContract.methods.test3().call())
+        .to.be.rejectedWith(/unrecognized selector: 0xd9f02b36$/g);
     }
   });
 });
