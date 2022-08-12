@@ -501,10 +501,10 @@ decl_module! {
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminAdded(
 				collection_id,
-				new_admin.clone()
+				new_admin_id.clone()
 			));
 
-			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin, true)
+			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
 		}
 
 		/// Remove admin of a collection.
