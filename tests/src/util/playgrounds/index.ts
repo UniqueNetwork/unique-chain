@@ -1,3 +1,6 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 import {IKeyringPair} from '@polkadot/types/types';
 import {UniqueHelper} from './unique';
 import config from '../../config';

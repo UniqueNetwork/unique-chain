@@ -1,3 +1,6 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable function-call-argument-newline */
 /* eslint-disable no-prototype-builtins */
