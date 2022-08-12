@@ -58,7 +58,7 @@ use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
 use xcm::{
 	v1::MultiLocation,
 	VersionedMultiLocation,
-	latest::{Instruction, Xcm, Fungibility},
+	latest::{Instruction, Xcm},
 };
 use xcm_executor::{
 	traits::{ShouldExecute, WeightTrader},
@@ -512,19 +512,8 @@ impl<
 		let amount = WeightToFee::weight_to_fee(&weight);
 		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
 
-		let self_asset_id = SelfAssetId::get().into();
-
-		// Only native token payment allowed
-		if !payment
-			.fungible
-			.keys()
-			.any(|asset_id| *asset_id != self_asset_id)
-		{
-			return Err(XcmError::TooExpensive);
-		}
-
 		let required = MultiAsset {
-			id: self_asset_id,
+			id: SelfAssetId::get().into(),
 			fun: XcmFungible(u128_amount),
 		};
 
@@ -608,7 +597,7 @@ impl<T: Contains<MultiLocation>, AssetID: Get<MultiLocation>> ShouldExecute
 			ensure!(iter.next().is_none(), ()); // Assets should contain only 1 entry
 
 			if let MultiAsset {
-				fun: Fungibility::Fungible(..),
+				fun: XcmFungible(..),
 				id: asset_id_to_transfer,
 				..
 			} = asset_to_transfer
