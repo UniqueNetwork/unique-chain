@@ -211,9 +211,9 @@ pub mod module {
 		BadLocation,
 		/// MultiLocation existed
 		MultiLocationExisted,
-		/// RelayAssetId not exists
+		/// AssetId not exists
 		AssetIdNotExists,
-		/// RelayAssetId exists
+		/// AssetId exists
 		AssetIdExisted,
 	}
 
@@ -244,7 +244,7 @@ pub mod module {
 		},
 	}
 
-	/// Next available Foreign RelayAssetId ID.
+	/// Next available Foreign AssetId ID.
 	///
 	/// NextForeignAssetId: ForeignAssetId
 	#[pallet::storage]
