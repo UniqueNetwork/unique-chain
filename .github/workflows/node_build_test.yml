@@ -1,44 +1,121 @@
-name: Build & test
+name: Develop - Build & test
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
-    branches: [ develop ]
- # pull_request:
- #   branches: [ develop ]
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - reopened
+      - synchronize   #commit(s) pushed to the pull request
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+
+#Define Workflow variables
+env:
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted-ci
 
-  #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    name: Build Container, Spin it Up an test
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include:
+          - network: "Opal"
+            features: " "
+          - network: "Quartz"
+            features: "--features=quartz-runtime"
+          - network: "Unique"
+            features: "--features=unique-runtime"
+
     steps:
+      - name: Skip if pull request is in Draft
+        # `if: github.event.pull_request.draft == true` should be kept here, at
+        # the step level, rather than at the job level. The latter is not
+        # recommended because when the PR is moved from "Draft" to "Ready to
+        # review" the workflow will immediately be passing (since it was skipped),
+        # even though it hasn't actually ran, since it takes a few seconds for
+        # the workflow to start. This is also disclosed in:
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/17
+        # That scenario would open an opportunity for the check to be bypassed:
+        # 1. Get your PR approved
+        # 2. Move it to Draft
+        # 3. Push whatever commits you want
+        # 4. Move it to "Ready for review"; now the workflow is passing (it was
+        #    skipped) and "Check reviews" is also passing (it won't be updated
+        #    until the workflow is finished)
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-          
-     #runs ssh connection
-      - name: Go to server
-        uses: appleboy/ssh-action@master
+      - uses: actions/checkout@v3
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          command_timeout: 300m
-          script: |
-            eval $(ssh-agent -s)
-            ssh-add /home/devops/.ssh/git_hub
-            git clone git@github.com:UniqueNetwork/unique-chain.git
-            cd unique-chain
-            git checkout develop
-            # git pull --all
-            chmod +x ci_node.sh
-            ./ci_node.sh
-            rm -rf /home/polkadot/unique-chain
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            FEATURE=${{ matrix.features }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Run tests
+        run: |
+          cd tests
+          yarn install
+          yarn add mochawesome
+          echo "Ready to start tests"
+          node scripts/readyness.js
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      - name: Test Report
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
+      - name: Read output variables
+        run: |
+          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down

@@ -32,6 +32,8 @@ import {
   getCreatedCollectionCount,
   transferFromExpectSuccess,
   transferFromExpectFail,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -49,34 +51,44 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
     });
   });
 
-  it('Execute the extrinsic and check approvedList', async () => {
+  it('[nft] Execute the extrinsic and check approvedList', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
-    // nft
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
     await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address);
-    // fungible
+  });
+
+  it('[fungible] Execute the extrinsic and check approvedList', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
     await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address);
-    // reFungible
+  });
+
+  it('[refungible] Execute the extrinsic and check approvedList', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
     await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address);
   });
 
-  it('Remove approval by using 0 amount', async () => {
+  it('[nft] Remove approval by using 0 amount', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
-    // nft
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
     await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address, 1);
     await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address, 0);
-    // fungible
+  });
+
+  it('[fungible] Remove approval by using 0 amount', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
     await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 1);
     await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 0);
-    // reFungible
+  });
+
+  it('[refungible] Remove approval by using 0 amount', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
@@ -117,7 +129,9 @@ describe('Normal user can approve other users to transfer:', () => {
     await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
   });
 
-  it('ReFungible up to an approved amount', async () => {
+  it('ReFungible up to an approved amount', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
     await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
@@ -151,7 +165,9 @@ describe('Approved users can transferFrom up to approved amount:', () => {
     await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'Fungible');
   });
 
-  it('ReFungible up to an approved amount', async () => {
+  it('ReFungible up to an approved amount', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
     await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
@@ -188,7 +204,9 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
     await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
   });
 
-  it('ReFungible up to an approved amount', async () => {
+  it('ReFungible up to an approved amount', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
     await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
@@ -250,7 +268,9 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
     await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, bob, bob, charlie, 1);
   });
 
-  it('ReFungible', async () => {
+  it('ReFungible', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
@@ -285,7 +305,9 @@ describe('User cannot approve for the amount greater than they own:', () => {
     await approveExpectFail(fungibleCollectionId, newFungibleTokenId, bob, charlie, 11);
   });
 
-  it('ReFungible', async () => {
+  it('ReFungible', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
     await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, charlie, 101);
@@ -325,7 +347,9 @@ describe('Administrator and collection owner do not need approval in order to ex
     await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'Fungible');
   });
 
-  it('ReFungible up to an approved amount', async () => {
+  it('ReFungible up to an approved amount', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
     const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', charlie.address);
@@ -422,63 +446,87 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     });
   });
 
-  it('Approve for a collection that does not exist', async () => {
+  it('[nft] Approve for a collection that does not exist', async () => {
     await usingApi(async (api: ApiPromise) => {
-      // nft
       const nftCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(nftCollectionCount + 1, 1, alice, bob);
-      // fungible
+    });
+  });
+
+  it('[fungible] Approve for a collection that does not exist', async () => {
+    await usingApi(async (api: ApiPromise) => {
       const fungibleCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(fungibleCollectionCount + 1, 0, alice, bob);
-      // reFungible
+    });
+  });
+
+  it('[refungible] Approve for a collection that does not exist', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    await usingApi(async (api: ApiPromise) => {
       const reFungibleCollectionCount = await getCreatedCollectionCount(api);
       await approveExpectFail(reFungibleCollectionCount + 1, 1, alice, bob);
     });
   });
 
-  it('Approve for a collection that was destroyed', async () => {
-    // nft
+  it('[nft] Approve for a collection that was destroyed', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     await destroyCollectionExpectSuccess(nftCollectionId);
     await approveExpectFail(nftCollectionId, 1, alice, bob);
-    // fungible
+  });
+
+  it('Approve for a collection that was destroyed', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await destroyCollectionExpectSuccess(fungibleCollectionId);
     await approveExpectFail(fungibleCollectionId, 0, alice, bob);
-    // reFungible
+  });
+
+  it('[refungible] Approve for a collection that was destroyed', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await destroyCollectionExpectSuccess(reFungibleCollectionId);
     await approveExpectFail(reFungibleCollectionId, 1, alice, bob);
   });
 
-  it('Approve transfer of a token that does not exist', async () => {
-    // nft
+  it('[nft] Approve transfer of a token that does not exist', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     await approveExpectFail(nftCollectionId, 2, alice, bob);
-    // reFungible
+  });
+
+  it('[refungible] Approve transfer of a token that does not exist', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await approveExpectFail(reFungibleCollectionId, 2, alice, bob);
   });
 
-  it('Approve using the address that does not own the approved token', async () => {
+  it('[nft] Approve using the address that does not own the approved token', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
-    // nft
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
     await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice);
-    // fungible
+  });
+
+  it('[fungible] Approve using the address that does not own the approved token', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
     await approveExpectFail(fungibleCollectionId, newFungibleTokenId, bob, alice);
-    // reFungible
+  });
+
+  it('[refungible] Approve using the address that does not own the approved token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId =
       await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
     await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, alice);
   });
 
-  it('should fail if approved more ReFungibles than owned', async () => {
+  it('should fail if approved more ReFungibles than owned', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const nftCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'ReFungible');
     await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 100, 'ReFungible');

@@ -23,7 +23,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
-use unique_runtime_common::types::*;
+use up_common::types::opaque::*;
 
 #[cfg(feature = "unique-runtime")]
 pub use unique_runtime as default_runtime;

@@ -9,7 +9,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-unique'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.1.1'
+version = "0.1.2"
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']

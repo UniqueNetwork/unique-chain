@@ -1314,7 +1314,6 @@ export interface PalletRmrkCoreCall extends Enum {
 /** @name PalletRmrkCoreError */
 export interface PalletRmrkCoreError extends Enum {
   readonly isCorruptedCollectionType: boolean;
-  readonly isNftTypeEncodeError: boolean;
   readonly isRmrkPropertyKeyIsTooLong: boolean;
   readonly isRmrkPropertyValueIsTooLong: boolean;
   readonly isRmrkPropertyIsNotFound: boolean;
@@ -1333,7 +1332,7 @@ export interface PalletRmrkCoreError extends Enum {
   readonly isCannotRejectNonPendingNft: boolean;
   readonly isResourceNotPending: boolean;
   readonly isNoAvailableResourceId: boolean;
-  readonly type: 'CorruptedCollectionType' | 'NftTypeEncodeError' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'RmrkPropertyIsNotFound' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'CannotRejectNonPendingNft' | 'ResourceNotPending' | 'NoAvailableResourceId';
+  readonly type: 'CorruptedCollectionType' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'RmrkPropertyIsNotFound' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'CannotRejectNonPendingNft' | 'ResourceNotPending' | 'NoAvailableResourceId';
 }
 
 /** @name PalletRmrkCoreEvent */
@@ -2440,9 +2439,9 @@ export interface UpDataStructsCreateItemExData extends Enum {
   readonly isFungible: boolean;
   readonly asFungible: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr,u128>;
   readonly isRefungibleMultipleItems: boolean;
-  readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExData>;
+  readonly asRefungibleMultipleItems: Vec<UpDataStructsCreateRefungibleExSingleOwner>;
   readonly isRefungibleMultipleOwners: boolean;
-  readonly asRefungibleMultipleOwners: UpDataStructsCreateRefungibleExData;
+  readonly asRefungibleMultipleOwners: UpDataStructsCreateRefungibleExMultipleOwners;
   readonly type: 'Nft' | 'Fungible' | 'RefungibleMultipleItems' | 'RefungibleMultipleOwners';
 }
 
@@ -2459,15 +2458,20 @@ export interface UpDataStructsCreateNftExData extends Struct {
 
 /** @name UpDataStructsCreateReFungibleData */
 export interface UpDataStructsCreateReFungibleData extends Struct {
-  readonly constData: Bytes;
   readonly pieces: u128;
   readonly properties: Vec<UpDataStructsProperty>;
 }
 
-/** @name UpDataStructsCreateRefungibleExData */
-export interface UpDataStructsCreateRefungibleExData extends Struct {
-  readonly constData: Bytes;
+/** @name UpDataStructsCreateRefungibleExMultipleOwners */
+export interface UpDataStructsCreateRefungibleExMultipleOwners extends Struct {
   readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
+  readonly properties: Vec<UpDataStructsProperty>;
+}
+
+/** @name UpDataStructsCreateRefungibleExSingleOwner */
+export interface UpDataStructsCreateRefungibleExSingleOwner extends Struct {
+  readonly user: PalletEvmAccountBasicCrossAccountIdRepr;
+  readonly pieces: u128;
   readonly properties: Vec<UpDataStructsProperty>;
 }
 
@@ -2517,7 +2521,8 @@ export interface UpDataStructsPropertyPermission extends Struct {
 export interface UpDataStructsPropertyScope extends Enum {
   readonly isNone: boolean;
   readonly isRmrk: boolean;
-  readonly type: 'None' | 'Rmrk';
+  readonly isEth: boolean;
+  readonly type: 'None' | 'Rmrk' | 'Eth';
 }
 
 /** @name UpDataStructsRpcCollection */

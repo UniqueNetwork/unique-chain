@@ -17,25 +17,26 @@
 use super::*;
 use crate::{Pallet, Config, RefungibleHandle};
 
-use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, property_key, property_value, create_data};
+use core::convert::TryInto;
+use core::iter::IntoIterator;
 use frame_benchmarking::{benchmarks, account};
+use pallet_common::{
+	bench_init,
+	benchmarking::{create_collection_raw, property_key, property_value, create_data},
+};
+use sp_core::H160;
+use sp_std::prelude::*;
 use up_data_structs::{
 	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, CUSTOM_DATA_LIMIT,
 	budget::Unlimited,
 };
-use pallet_common::bench_init;
-use core::convert::TryInto;
-use core::iter::IntoIterator;
 
 const SEED: u32 = 1;
 
 fn create_max_item_data<CrossAccountId: Ord>(
 	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
 ) -> CreateRefungibleExData<CrossAccountId> {
-	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
 	CreateRefungibleExData {
-		const_data,
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
@@ -44,6 +45,7 @@ fn create_max_item_data<CrossAccountId: Ord>(
 		properties: Default::default(),
 	}
 }
+
 fn create_max_item<T: Config>(
 	collection: &RefungibleHandle<T>,
 	sender: &T::CrossAccountId,
@@ -59,11 +61,12 @@ fn create_collection<T: Config>(
 ) -> Result<RefungibleHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
-		CollectionMode::NFT,
+		CollectionMode::ReFungible,
 		<Pallet<T>>::init_collection,
 		RefungibleHandle::cast,
 	)
 }
+
 benchmarks! {
 	create_item {
 		bench_init!{
@@ -277,4 +280,21 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
 	}: {<Pallet<T>>::repartition(&collection, &owner, item, 200)?}
+
+	set_parent_nft_unchecked {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); owner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
+
+	}: {<Pallet<T>>::set_parent_nft_unchecked(&collection, item, owner,  T::CrossAccountId::from_eth(H160::default()))?}
+
+	token_owner {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); owner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
+	}: {<Pallet<T>>::token_owner(collection.id, item)}
 }

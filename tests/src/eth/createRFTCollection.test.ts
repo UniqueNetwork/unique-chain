@@ -16,7 +16,7 @@
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import {expect} from 'chai';
-import {getCreatedCollectionCount, getDetailedCollectionInfo} from '../util/helpers';
+import {getCreatedCollectionCount, getDetailedCollectionInfo, requirePallets, Pallets} from '../util/helpers';
 import {
   evmCollectionHelpers,
   collectionIdToAddress,
@@ -28,6 +28,10 @@ import {
 } from './util/helpers';
 
 describe('Create RFT collection from EVM', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Create collection', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
@@ -146,6 +150,10 @@ describe('Create RFT collection from EVM', () => {
 });
 
 describe('(!negative tests!) Create RFT collection from EVM', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('(!negative test!) Create collection (bad lengths)', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);

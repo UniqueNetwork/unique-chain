@@ -3,6 +3,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+// Anonymous struct
+struct Tuple0 {
+	uint256 field_0;
+	string field_1;
+}
+
 // Common stubs holder
 contract Dummy {
 	uint8 dummy;
@@ -21,7 +27,351 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Selector: 7d9262e6
+// Inline
+contract ERC721Events {
+	event Transfer(
+		address indexed from,
+		address indexed to,
+		uint256 indexed tokenId
+	);
+	event Approval(
+		address indexed owner,
+		address indexed approved,
+		uint256 indexed tokenId
+	);
+	event ApprovalForAll(
+		address indexed owner,
+		address indexed operator,
+		bool approved
+	);
+}
+
+// Inline
+contract ERC721MintableEvents {
+	event MintingFinished();
+}
+
+// Selector: 41369377
+contract TokenProperties is Dummy, ERC165 {
+	// @notice Set permissions for token property.
+	// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	// @param key Property key.
+	// @param is_mutable Permission to mutate property.
+	// @param collection_admin Permission to mutate property by collection admin if property is mutable.
+	// @param token_owner Permission to mutate property by token owner if property is mutable.
+	//
+	// Selector: setTokenPropertyPermission(string,bool,bool,bool) 222d97fa
+	function setTokenPropertyPermission(
+		string memory key,
+		bool isMutable,
+		bool collectionAdmin,
+		bool tokenOwner
+	) public {
+		require(false, stub_error);
+		key;
+		isMutable;
+		collectionAdmin;
+		tokenOwner;
+		dummy = 0;
+	}
+
+	// @notice Set token property value.
+	// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// @param tokenId ID of the token.
+	// @param key Property key.
+	// @param value Property value.
+	//
+	// Selector: setProperty(uint256,string,bytes) 1752d67b
+	function setProperty(
+		uint256 tokenId,
+		string memory key,
+		bytes memory value
+	) public {
+		require(false, stub_error);
+		tokenId;
+		key;
+		value;
+		dummy = 0;
+	}
+
+	// @notice Delete token property value.
+	// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// @param tokenId ID of the token.
+	// @param key Property key.
+	//
+	// Selector: deleteProperty(uint256,string) 066111d1
+	function deleteProperty(uint256 tokenId, string memory key) public {
+		require(false, stub_error);
+		tokenId;
+		key;
+		dummy = 0;
+	}
+
+	// @notice Get token property value.
+	// @dev Throws error if key not found
+	// @param tokenId ID of the token.
+	// @param key Property key.
+	// @return Property value bytes
+	//
+	// Selector: property(uint256,string) 7228c327
+	function property(uint256 tokenId, string memory key)
+		public
+		view
+		returns (bytes memory)
+	{
+		require(false, stub_error);
+		tokenId;
+		key;
+		dummy;
+		return hex"";
+	}
+}
+
+// Selector: 42966c68
+contract ERC721Burnable is Dummy, ERC165 {
+	// @notice Burns a specific ERC721 token.
+	// @dev Throws unless `msg.sender` is the current RFT owner, or an authorized
+	//  operator of the current owner.
+	// @param tokenId The RFT to approve
+	//
+	// Selector: burn(uint256) 42966c68
+	function burn(uint256 tokenId) public {
+		require(false, stub_error);
+		tokenId;
+		dummy = 0;
+	}
+}
+
+// Selector: 58800161
+contract ERC721 is Dummy, ERC165, ERC721Events {
+	// @notice Count all RFTs assigned to an owner
+	// @dev RFTs assigned to the zero address are considered invalid, and this
+	//  function throws for queries about the zero address.
+	// @param owner An address for whom to query the balance
+	// @return The number of RFTs owned by `owner`, possibly zero
+	//
+	// Selector: balanceOf(address) 70a08231
+	function balanceOf(address owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
+	}
+
+	// @notice Find the owner of an RFT
+	// @dev RFTs assigned to zero address are considered invalid, and queries
+	//  about them do throw.
+	//  Returns special 0xffffffffffffffffffffffffffffffffffffffff address for
+	//  the tokens that are partially owned.
+	// @param tokenId The identifier for an RFT
+	// @return The address of the owner of the RFT
+	//
+	// Selector: ownerOf(uint256) 6352211e
+	function ownerOf(uint256 tokenId) public view returns (address) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: safeTransferFromWithData(address,address,uint256,bytes) 60a11672
+	function safeTransferFromWithData(
+		address from,
+		address to,
+		uint256 tokenId,
+		bytes memory data
+	) public {
+		require(false, stub_error);
+		from;
+		to;
+		tokenId;
+		data;
+		dummy = 0;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: safeTransferFrom(address,address,uint256) 42842e0e
+	function safeTransferFrom(
+		address from,
+		address to,
+		uint256 tokenId
+	) public {
+		require(false, stub_error);
+		from;
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @notice Transfer ownership of an RFT -- THE CALLER IS RESPONSIBLE
+	//  TO CONFIRM THAT `to` IS CAPABLE OF RECEIVING NFTS OR ELSE
+	//  THEY MAY BE PERMANENTLY LOST
+	// @dev Throws unless `msg.sender` is the current owner or an authorized
+	//  operator for this RFT. Throws if `from` is not the current owner. Throws
+	//  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param from The current owner of the NFT
+	// @param to The new owner
+	// @param tokenId The NFT to transfer
+	// @param _value Not used for an NFT
+	//
+	// Selector: transferFrom(address,address,uint256) 23b872dd
+	function transferFrom(
+		address from,
+		address to,
+		uint256 tokenId
+	) public {
+		require(false, stub_error);
+		from;
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: approve(address,uint256) 095ea7b3
+	function approve(address approved, uint256 tokenId) public {
+		require(false, stub_error);
+		approved;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: setApprovalForAll(address,bool) a22cb465
+	function setApprovalForAll(address operator, bool approved) public {
+		require(false, stub_error);
+		operator;
+		approved;
+		dummy = 0;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: getApproved(uint256) 081812fc
+	function getApproved(uint256 tokenId) public view returns (address) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: isApprovedForAll(address,address) e985e9c5
+	function isApprovedForAll(address owner, address operator)
+		public
+		view
+		returns (address)
+	{
+		require(false, stub_error);
+		owner;
+		operator;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+}
+
+// Selector: 5b5e139f
+contract ERC721Metadata is Dummy, ERC165 {
+	// @notice A descriptive name for a collection of RFTs in this contract
+	//
+	// Selector: name() 06fdde03
+	function name() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	// @notice An abbreviated name for RFTs in this contract
+	//
+	// Selector: symbol() 95d89b41
+	function symbol() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
+	//
+	// @dev If the token has a `url` property and it is not empty, it is returned.
+	//  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
+	//  If the collection property `baseURI` is empty or absent, return "" (empty string)
+	//  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	//  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
+	//
+	// @return token's const_metadata
+	//
+	// Selector: tokenURI(uint256) c87b56dd
+	function tokenURI(uint256 tokenId) public view returns (string memory) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return "";
+	}
+}
+
+// Selector: 68ccfe89
+contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
+	// Selector: mintingFinished() 05d2035b
+	function mintingFinished() public view returns (bool) {
+		require(false, stub_error);
+		dummy;
+		return false;
+	}
+
+	// @notice Function to mint token.
+	// @dev `tokenId` should be obtained with `nextTokenId` method,
+	//  unlike standard, you can't specify it manually
+	// @param to The new owner
+	// @param tokenId ID of the minted RFT
+	//
+	// Selector: mint(address,uint256) 40c10f19
+	function mint(address to, uint256 tokenId) public returns (bool) {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+		return false;
+	}
+
+	// @notice Function to mint token with the given tokenUri.
+	// @dev `tokenId` should be obtained with `nextTokenId` method,
+	//  unlike standard, you can't specify it manually
+	// @param to The new owner
+	// @param tokenId ID of the minted RFT
+	// @param tokenUri Token URI that would be stored in the RFT properties
+	//
+	// Selector: mintWithTokenURI(address,uint256,string) 50bb4e7f
+	function mintWithTokenURI(
+		address to,
+		uint256 tokenId,
+		string memory tokenUri
+	) public returns (bool) {
+		require(false, stub_error);
+		to;
+		tokenId;
+		tokenUri;
+		dummy = 0;
+		return false;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: finishMinting() 7d64bcb4
+	function finishMinting() public returns (bool) {
+		require(false, stub_error);
+		dummy = 0;
+		return false;
+	}
+}
+
+// Selector: 6cf113cd
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -246,6 +596,176 @@ contract Collection is Dummy, ERC165 {
 		mode;
 		dummy = 0;
 	}
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) public view returns (bool) {
+		require(false, stub_error);
+		user;
+		dummy;
+		return false;
+	}
+
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() public returns (string memory) {
+		require(false, stub_error);
+		dummy = 0;
+		return "";
+	}
 }
 
-contract UniqueRefungible is Dummy, ERC165, Collection {}
+// Selector: 780e9d63
+contract ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid RFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+
+	// Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		index;
+		dummy;
+		return 0;
+	}
+
+	// @notice Count RFTs tracked by this contract
+	// @return A count of valid RFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+}
+
+// Selector: 7c3bef89
+contract ERC721UniqueExtensions is Dummy, ERC165 {
+	// @notice Transfer ownership of an RFT
+	// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	//  is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param to The new owner
+	// @param tokenId The RFT to transfer
+	// @param _value Not used for an RFT
+	//
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 tokenId) public {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @notice Burns a specific ERC721 token.
+	// @dev Throws unless `msg.sender` is the current owner or an authorized
+	//  operator for this RFT. Throws if `from` is not the current owner. Throws
+	//  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	//  Throws if RFT pieces have multiple owners.
+	// @param from The current owner of the RFT
+	// @param tokenId The RFT to transfer
+	// @param _value Not used for an RFT
+	//
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 tokenId) public {
+		require(false, stub_error);
+		from;
+		tokenId;
+		dummy = 0;
+	}
+
+	// @notice Returns next free RFT ID.
+	//
+	// Selector: nextTokenId() 75794a3c
+	function nextTokenId() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	// @notice Function to mint multiple tokens.
+	// @dev `tokenIds` should be an array of consecutive numbers and first number
+	//  should be obtained with `nextTokenId` method
+	// @param to The new owner
+	// @param tokenIds IDs of the minted RFTs
+	//
+	// Selector: mintBulk(address,uint256[]) 44a9945e
+	function mintBulk(address to, uint256[] memory tokenIds)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokenIds;
+		dummy = 0;
+		return false;
+	}
+
+	// @notice Function to mint multiple tokens with the given tokenUris.
+	// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	//  numbers and first number should be obtained with `nextTokenId` method
+	// @param to The new owner
+	// @param tokens array of pairs of token ID and token URI for minted tokens
+	//
+	// Selector: mintBulkWithTokenURI(address,(uint256,string)[]) 36543006
+	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+		public
+		returns (bool)
+	{
+		require(false, stub_error);
+		to;
+		tokens;
+		dummy = 0;
+		return false;
+	}
+
+	// Returns EVM address for refungible token
+	//
+	// @param token ID of the token
+	//
+	// Selector: tokenContractAddress(uint256) ab76fac6
+	function tokenContractAddress(uint256 token) public view returns (address) {
+		require(false, stub_error);
+		token;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+}
+
+contract UniqueRefungible is
+	Dummy,
+	ERC165,
+	ERC721,
+	ERC721Metadata,
+	ERC721Enumerable,
+	ERC721UniqueExtensions,
+	ERC721Mintable,
+	ERC721Burnable,
+	Collection,
+	TokenProperties
+{}

@@ -28,6 +28,7 @@ import {default as usingApi, executeTransaction, submitTransactionAsync, submitT
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
 import {UpDataStructsTokenChild} from '../interfaces';
+import {Context} from 'mocha';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -37,6 +38,66 @@ export type CrossAccountId = {
 } | {
   Ethereum: string,
 };
+
+
+export enum Pallets {
+  Inflation = 'inflation',
+  RmrkCore = 'rmrkcore',
+  RmrkEquip = 'rmrkequip',
+  ReFungible = 'refungible',
+  Fungible = 'fungible',
+  NFT = 'nonfungible',
+  Scheduler = 'scheduler',
+}
+
+export async function isUnique(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+
+    return chain.eq('UNIQUE');
+  });
+}
+
+export async function isQuartz(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+    
+    return chain.eq('QUARTZ');
+  });
+}
+
+let modulesNames: any;
+export function getModuleNames(api: ApiPromise): string[] {
+  if (typeof modulesNames === 'undefined') 
+    modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+  return modulesNames;
+}
+
+export async function missingRequiredPallets(requiredPallets: string[]): Promise<string[]> {
+  return await usingApi(async api => {
+    const pallets = getModuleNames(api);
+
+    return requiredPallets.filter(p => !pallets.includes(p));
+  });
+}
+
+export async function checkPalletsPresence(requiredPallets: string[]): Promise<boolean> {
+  return (await missingRequiredPallets(requiredPallets)).length == 0;
+}
+
+export async function requirePallets(mocha: Context, requiredPallets: string[]) {
+  const missingPallets = await missingRequiredPallets(requiredPallets);
+
+  if (missingPallets.length > 0) {
+    const skippingTestMsg = `\tSkipping test "${mocha.test?.title}".`;
+    const missingPalletsMsg = `\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
+    const skipMsg = `${skippingTestMsg}\n${missingPalletsMsg}`;
+
+    console.error('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+
+    mocha.skip();
+  }
+}
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
@@ -248,22 +309,23 @@ export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] 
 }
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
-  const genericResult = getGenericResult<[number, number, CrossAccountId?]>(events, 'common', 'ItemCreated', (data) => [
-    parseInt(data[0].toString(), 10),
-    parseInt(data[1].toString(), 10),
-    normalizeAccountId(data[2].toJSON() as any),
-  ]);
-
-  if (genericResult.data == null) genericResult.data = [0, 0];
-
-  const result: CreateItemResult = {
-    success: genericResult.success,
-    collectionId: genericResult.data[0],
-    itemId: genericResult.data[1],
-    recipient: genericResult.data![2],
-  };
+  const genericResult = getGenericResult(events, 'common', 'ItemCreated', (data) => data.map(function(value) { return value.toJSON(); }));
   
-  return result;
+  if (genericResult.data == null) 
+    return {
+      success: genericResult.success,
+      collectionId: 0,
+      itemId: 0,
+      amount: 0,
+    };
+  else 
+    return {
+      success: genericResult.success,
+      collectionId: genericResult.data[0] as number,
+      itemId: genericResult.data[1] as number,
+      recipient: normalizeAccountId(genericResult.data![2] as any),
+      amount: genericResult.data[3] as number,
+    };
 }
 
 export function getDestroyItemsResult(events: EventRecord[]): DestroyItemResult[] {
@@ -1699,3 +1761,17 @@ export async function repartitionRFT(
 
   return result.success;
 }
+
+export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean } = {}) {
+  let i: any = it;
+  if (opts.only) i = i.only;
+  else if (opts.skip) i = i.skip;
+  i(name, async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      await cb({api, privateKeyWrapper});
+    });
+  });
+}
+
+itApi.only = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {only: true});
+itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {skip: true});

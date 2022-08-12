@@ -23,8 +23,8 @@ The Unique Chain also provides:
 
 Wider Unique Ecosystem (most of it was developed during Hackusama):
 
--   [SubstraPunks Game hosted on IPFS](https://github.com/usetech-llc/substrapunks)
--   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
+-   [SubstraPunks Game hosted on IPFS](https://github.com/UniqueNetwork/substrapunks)
+-   [Unique Wallet and UI](https://wallet.unique.network)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
 Please see our [walk-through instructions](doc/hackusama_walk_through.md) to try everything out!
@@ -48,7 +48,7 @@ curl https://sh.rustup.rs -sSf | sh
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install install nightly 2021-11-11 and make it default:
+3. Install toolchain nightly-2022-05-11 and make it default:
 
 ```bash
 rustup toolchain install nightly-2022-05-11

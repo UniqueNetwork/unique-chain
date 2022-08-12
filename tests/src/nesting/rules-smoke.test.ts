@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {tokenIdToAddress} from '../eth/util/helpers';
 import usingApi, {executeTransaction} from '../substrate/substrate-api';
-import {createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, CrossAccountId, getCreateCollectionResult} from '../util/helpers';
+import {createCollectionExpectSuccess, createFungibleItemExpectSuccess, createItemExpectSuccess, CrossAccountId, getCreateCollectionResult, requirePallets, Pallets} from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
 describe('nesting check', () => {
@@ -47,7 +47,9 @@ describe('nesting check', () => {
     });
   });
 
-  it('called for refungible', async () => {
+  it('called for refungible', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       await expect(executeTransaction(api, alice, api.tx.unique.createItem(collection, nestTarget, {ReFungible: {}})))

@@ -393,14 +393,7 @@ impl<T: Config> Pallet<T> {
 			})
 			.ok_or(ArithmeticError::Overflow)?;
 
-		let mut balances = data;
-		for (k, v) in balances.iter_mut() {
-			*v = <Balance<T>>::get((collection.id, &k))
-				.checked_add(*v)
-				.ok_or(ArithmeticError::Overflow)?;
-		}
-
-		for (to, _) in balances.iter() {
+		for (to, _) in data.iter() {
 			<PalletStructure<T>>::check_nesting(
 				sender.clone(),
 				to,
@@ -410,11 +403,21 @@ impl<T: Config> Pallet<T> {
 			)?;
 		}
 
+		let updated_balances = data
+			.into_iter()
+			.map(|(user, amount)| {
+				let updated_balance = <Balance<T>>::get((collection.id, &user))
+					.checked_add(amount)
+					.ok_or(ArithmeticError::Overflow)?;
+				Ok((user, amount, updated_balance))
+			})
+			.collect::<Result<Vec<_>, DispatchError>>()?;
+
 		// =========
 
 		<TotalSupply<T>>::insert(collection.id, total_supply);
-		for (user, amount) in balances {
-			<Balance<T>>::insert((collection.id, &user), amount);
+		for (user, amount, updated_balance) in updated_balances {
+			<Balance<T>>::insert((collection.id, &user), updated_balance);
 			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
 				&user,
 				collection.id,

@@ -535,7 +535,8 @@ pub mod pallet {
 
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
-		/// Target collection doesn't support this operation
+
+		/// The oprtation is not supported
 		UnsupportedOperation,
 
 		/// Insufficient funds to perform an action
@@ -669,65 +670,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-				use up_data_structs::{CollectionVersion1, CollectionVersion2};
-				<CollectionById<T>>::translate::<CollectionVersion1<T::AccountId>, _>(|id, v| {
-					let mut props = Vec::new();
-					if !v.offchain_schema.is_empty() {
-						props.push(Property {
-							key: b"_old_offchainSchema".to_vec().try_into().unwrap(),
-							value: v
-								.offchain_schema
-								.clone()
-								.into_inner()
-								.try_into()
-								.expect("offchain schema too big"),
-						});
-					}
-					if !v.variable_on_chain_schema.is_empty() {
-						props.push(Property {
-							key: b"_old_variableOnChainSchema".to_vec().try_into().unwrap(),
-							value: v
-								.variable_on_chain_schema
-								.clone()
-								.into_inner()
-								.try_into()
-								.expect("offchain schema too big"),
-						});
-					}
-					if !v.const_on_chain_schema.is_empty() {
-						props.push(Property {
-							key: b"_old_constOnChainSchema".to_vec().try_into().unwrap(),
-							value: v
-								.const_on_chain_schema
-								.clone()
-								.into_inner()
-								.try_into()
-								.expect("offchain schema too big"),
-						});
-					}
-					props.push(Property {
-						key: b"_old_schemaVersion".to_vec().try_into().unwrap(),
-						value: match v.schema_version {
-							SchemaVersion::ImageURL => b"ImageUrl".as_slice(),
-							SchemaVersion::Unique => b"Unique".as_slice(),
-						}
-						.to_vec()
-						.try_into()
-						.unwrap(),
-					});
-					Self::set_scoped_collection_properties(
-						id,
-						PropertyScope::None,
-						props.into_iter(),
-					)
-					.expect("existing data larger than properties");
-					let mut new = CollectionVersion2::from(v.clone());
-					new.permissions.access = Some(v.access);
-					new.permissions.mint_mode = Some(v.mint_mode);
-					Some(new)
-				});
-			}
+			StorageVersion::new(1).put::<Pallet<T>>();
 
 			0
 		}
@@ -1170,6 +1113,26 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permission: PropertyKeyPermission,
 	) -> DispatchResult {
+		Self::set_scoped_property_permission(
+			collection,
+			sender,
+			PropertyScope::None,
+			property_permission,
+		)
+	}
+
+	/// Set collection property permission with scope.
+	///
+	/// * `collection` - Collection handler.
+	/// * `sender` - The owner or administrator of the collection.
+	/// * `scope` - Property scope.
+	/// * `property_permission` - Property permission.
+	pub fn set_scoped_property_permission(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		scope: PropertyScope,
+		property_permission: PropertyKeyPermission,
+	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
 		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
@@ -1183,7 +1146,11 @@ impl<T: Config> Pallet<T> {
 
 		CollectionPropertyPermissions::<T>::try_mutate(collection.id, |permissions| {
 			let property_permission = property_permission.clone();
-			permissions.try_set(property_permission.key, property_permission.permission)
+			permissions.try_scoped_set(
+				scope,
+				property_permission.key,
+				property_permission.permission,
+			)
 		})
 		.map_err(<Error<T>>::from)?;
 
@@ -1206,8 +1173,29 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
+		Self::set_scoped_token_property_permissions(
+			collection,
+			sender,
+			PropertyScope::None,
+			property_permissions,
+		)
+	}
+
+	/// Set token property permission with scope.
+	///
+	/// * `collection` - Collection handler.
+	/// * `sender` - The owner or administrator of the collection.
+	/// * `scope` - Property scope.
+	/// * `property_permissions` - Property permissions.
+	#[transactional]
+	pub fn set_scoped_token_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		scope: PropertyScope,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
 		for prop_pemission in property_permissions {
-			Self::set_property_permission(collection, sender, prop_pemission)?;
+			Self::set_scoped_property_permission(collection, sender, scope, prop_pemission)?;
 		}
 
 		Ok(())
@@ -1411,8 +1399,8 @@ impl<T: Config> Pallet<T> {
 /// Indicates unsupported methods by returning [Error::UnsupportedOperation].
 #[macro_export]
 macro_rules! unsupported {
-	() => {
-		Err(<Error<T>>::UnsupportedOperation.into())
+	($runtime:path) => {
+		Err($crate::Error::<$runtime>::UnsupportedOperation.into())
 	};
 }
 
@@ -1487,6 +1475,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 			.saturating_mul(max_selfs.max(1) as u64)
 			.saturating_add(Self::burn_recursively_breadth_raw(max_breadth))
 	}
+
+	/// The price of retrieving token owner
+	fn token_owner() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -1625,7 +1616,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	///
 	/// * `sender` - Must be either the owner of the token or its admin.
 	/// * `token_id` - The token for which the properties are being set.
-	/// * `properties` - Properties to be set.
+	/// * `property_permissions` - Property permissions to be set.
 	/// * `budget` - Budget for setting properties.
 	fn set_token_property_permissions(
 		&self,

@@ -16,7 +16,7 @@
 
 import {expect} from 'chai';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties, requirePallets, Pallets} from './util/helpers';
 
 describe('Integration Test: createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
@@ -134,12 +134,11 @@ describe('Integration Test: createMultipleItemsEx', () => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
 
-      const users = new Map();
-      users.set(JSON.stringify({Substrate: alice.address}), 50);
-      users.set(JSON.stringify({Substrate: bob.address}), 100);
-
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
-        Fungible: users,
+        Fungible: new Map([
+          [JSON.stringify({Substrate: alice.address}), 50],
+          [JSON.stringify({Substrate: bob.address}), 100],
+        ]),
       }));
 
       expect(await getBalance(api, collection, alice.address, 0)).to.equal(50n);
@@ -147,53 +146,76 @@ describe('Integration Test: createMultipleItemsEx', () => {
     });
   });
 
-  it('can initialize an RFT with multiple owners', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+  it('can initialize an RFT with multiple owners', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
-
-      const users = new Map();
-      users.set(JSON.stringify({Substrate: alice.address}), 1);
-      users.set(JSON.stringify({Substrate: bob.address}), 2);
+      const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      await executeTransaction(
+        api,
+        alice,
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'data', permission: {tokenOwner: true}}]),
+      );
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         RefungibleMultipleOwners: {
-          users: users,
+          users: new Map([
+            [JSON.stringify({Substrate: alice.address}), 1],
+            [JSON.stringify({Substrate: bob.address}), 2],
+          ]),
+          properties: [
+            {key: 'data', value: 'testValue'},
+          ],
         },
       }));
-      
+
       const itemsListIndexAfter = await getLastTokenId(api, collection);
       expect(itemsListIndexAfter).to.be.equal(1);
 
       expect(await getBalance(api, collection, alice.address, 1)).to.be.equal(1n);
       expect(await getBalance(api, collection, bob.address, 1)).to.be.equal(2n);
+      expect((await getTokenProperties(api, collection, 1, ['data']))[0].value).to.be.equal('testValue');
     });
   });
 
-  it('can initialize multiple RFTs with the same owner', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+  it('can initialize multiple RFTs with the same owner', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
-
-      const item1User = new Map();
-      item1User.set(JSON.stringify({Substrate: alice.address}), 1);
-
-      const item2User = new Map();
-      item2User.set(JSON.stringify({Substrate: alice.address}), 3);
+      const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+      await executeTransaction(
+        api,
+        alice,
+        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'data', permission: {tokenOwner: true}}]),
+      );
 
       await executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
         RefungibleMultipleItems: [
-          {users: item1User},
-          {users: item2User},
+          {
+            user: {Substrate: alice.address}, pieces: 1,
+            properties: [
+              {key: 'data', value: 'testValue1'},
+            ],
+          },
+          {
+            user: {Substrate: alice.address}, pieces: 3,
+            properties: [
+              {key: 'data', value: 'testValue2'},
+            ],
+          },
         ],
       }));
-      
+
       const itemsListIndexAfter = await getLastTokenId(api, collection);
       expect(itemsListIndexAfter).to.be.equal(2);
 
       expect(await getBalance(api, collection, alice.address, 1)).to.be.equal(1n);
       expect(await getBalance(api, collection, alice.address, 2)).to.be.equal(3n);
+      expect((await getTokenProperties(api, collection, 1, ['data']))[0].value).to.be.equal('testValue1');
+      expect((await getTokenProperties(api, collection, 2, ['data']))[0].value).to.be.equal('testValue2');
     });
   });
 });
@@ -368,27 +390,6 @@ describe('Negative test: createMultipleItemsEx', () => {
       const tokens = await api.query.nonfungible.tokenData.entries(collection);
       const json = tokens.map(([, token]) => token.toJSON());
       expect(json).to.be.deep.equal(data);
-    });
-  });
-
-  it('fails when trying to set multiple owners when creating multiple refungibles', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      // Polkadot requires map, and yet requires keys to be JSON encoded
-      const users = new Map();
-      users.set(JSON.stringify({substrate: alice.address}), 1);
-      users.set(JSON.stringify({substrate: bob.address}), 1);
-
-      // TODO: better error message?
-      await expect(executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
-        RefungibleMultipleItems: [
-          {users},
-          {users},
-        ],
-      }))).to.be.rejectedWith(/^refungible\.NotRefungibleDataUsedToMintFungibleCollectionToken$/);
     });
   });
 });

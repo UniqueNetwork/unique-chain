@@ -8,6 +8,8 @@ import {
   createItemExpectSuccess,
   getCreateCollectionResult,
   transferExpectSuccess,
+  requirePallets,
+  Pallets,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {tokenIdToAddress} from '../eth/util/helpers';
@@ -64,7 +66,9 @@ describe('Composite Properties Test', () => {
     await testMakeSureSuppliesRequired({type: 'NFT'});
   });
 
-  it('Makes sure collectionById supplies required fields for ReFungible', async () => {
+  it('Makes sure collectionById supplies required fields for ReFungible', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testMakeSureSuppliesRequired({type: 'ReFungible'});
   });
 });
@@ -120,7 +124,9 @@ describe('Integration Test: Collection Properties', () => {
   it('Sets properties for a NFT collection', async () => {
     await testSetsPropertiesForCollection('NFT');
   });
-  it('Sets properties for a ReFungible collection', async () => {
+  it('Sets properties for a ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testSetsPropertiesForCollection('ReFungible');
   });
 
@@ -178,7 +184,9 @@ describe('Integration Test: Collection Properties', () => {
   it('Check valid names for NFT collection properties keys', async () => {
     await testCheckValidNames('NFT');
   });
-  it('Check valid names for ReFungible collection properties keys', async () => {
+  it('Check valid names for ReFungible collection properties keys', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testCheckValidNames('ReFungible');
   });
 
@@ -209,7 +217,9 @@ describe('Integration Test: Collection Properties', () => {
   it('Changes properties of a NFT collection', async () => {
     await testChangesProperties({type: 'NFT'});
   });
-  it('Changes properties of a ReFungible collection', async () => {
+  it('Changes properties of a ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testChangesProperties({type: 'ReFungible'});
   });
 
@@ -238,7 +248,9 @@ describe('Integration Test: Collection Properties', () => {
   it('Deletes properties of a NFT collection', async () => {
     await testDeleteProperties({type: 'NFT'});
   });
-  it('Deletes properties of a ReFungible collection', async () => {
+  it('Deletes properties of a ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testDeleteProperties({type: 'ReFungible'});
   });
 });
@@ -269,7 +281,9 @@ describe('Negative Integration Test: Collection Properties', () => {
   it('Fails to set properties in a NFT collection if not its onwer/administrator', async () => {
     await testFailsSetPropertiesIfNotOwnerOrAdmin({type: 'NFT'});
   });
-  it('Fails to set properties in a ReFungible collection if not its onwer/administrator', async () => {
+  it('Fails to set properties in a ReFungible collection if not its onwer/administrator', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testFailsSetPropertiesIfNotOwnerOrAdmin({type: 'ReFungible'});
   });
   
@@ -307,7 +321,9 @@ describe('Negative Integration Test: Collection Properties', () => {
   it('Fails to set properties that exceed the limits (NFT)', async () => {
     await testFailsSetPropertiesThatExeedLimits({type: 'NFT'});
   });
-  it('Fails to set properties that exceed the limits (ReFungible)', async () => {
+  it('Fails to set properties that exceed the limits (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testFailsSetPropertiesThatExeedLimits({type: 'ReFungible'});
   });
   
@@ -337,7 +353,9 @@ describe('Negative Integration Test: Collection Properties', () => {
   it('Fails to set more properties than it is allowed (NFT)', async () => {
     await testFailsSetMorePropertiesThanAllowed({type: 'NFT'});
   });
-  it('Fails to set more properties than it is allowed (ReFungible)', async () => {
+  it('Fails to set more properties than it is allowed (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testFailsSetMorePropertiesThanAllowed({type: 'ReFungible'});
   });
   
@@ -392,7 +410,9 @@ describe('Negative Integration Test: Collection Properties', () => {
   it('Fails to set properties with invalid names (NFT)', async () => {
     await testFailsSetPropertiesWithInvalidNames({type: 'NFT'});
   });
-  it('Fails to set properties with invalid names (ReFungible)', async () => {
+  it('Fails to set properties with invalid names (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testFailsSetPropertiesWithInvalidNames({type: 'ReFungible'});
   });
 });
@@ -443,7 +463,9 @@ describe('Integration Test: Access Rights to Token Properties', () => {
   it('Sets access rights to properties of a collection (NFT)', async () => {
     await testSetsAccessRightsToProperties({type: 'NFT'});
   });
-  it('Sets access rights to properties of a collection (ReFungible)', async () => {
+  it('Sets access rights to properties of a collection (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testSetsAccessRightsToProperties({type: 'ReFungible'});
   });
   
@@ -472,7 +494,9 @@ describe('Integration Test: Access Rights to Token Properties', () => {
   it('Changes access rights to properties of a NFT collection', async () => {
     await testChangesAccessRightsToProperty({type: 'NFT'});
   });
-  it('Changes access rights to properties of a ReFungible collection', async () => {
+  it('Changes access rights to properties of a ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testChangesAccessRightsToProperty({type: 'ReFungible'});
   });
 });
@@ -502,7 +526,9 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
   it('Prevents from setting access rights to properties of a NFT collection if not an onwer/admin', async () => {
     await testPreventsFromSettingAccessRightsNotAdminOrOwner({type: 'NFT'});
   });
-  it('Prevents from setting access rights to properties of a ReFungible collection if not an onwer/admin', async () => {
+  it('Prevents from setting access rights to properties of a ReFungible collection if not an onwer/admin', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testPreventsFromSettingAccessRightsNotAdminOrOwner({type: 'ReFungible'});
   });
 
@@ -531,7 +557,9 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
   it('Prevents from adding too many possible properties (NFT)', async () => {
     await testPreventFromAddingTooManyPossibleProperties({type: 'NFT'});
   });
-  it('Prevents from adding too many possible properties (ReFungible)', async () => {
+  it('Prevents from adding too many possible properties (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testPreventFromAddingTooManyPossibleProperties({type: 'ReFungible'});
   });
 
@@ -560,7 +588,9 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
   it('Prevents access rights to be modified if constant (NFT)', async () => {
     await testPreventAccessRightsModifiedIfConstant({type: 'NFT'});
   });
-  it('Prevents access rights to be modified if constant (ReFungible)', async () => {
+  it('Prevents access rights to be modified if constant (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testPreventAccessRightsModifiedIfConstant({type: 'ReFungible'});
   });
 
@@ -608,7 +638,9 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
   it('Prevents adding properties with invalid names (NFT)', async () => {
     await testPreventsAddingPropertiesWithInvalidNames({type: 'NFT'});
   });
-  it('Prevents adding properties with invalid names (ReFungible)', async () => {
+  it('Prevents adding properties with invalid names (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testPreventsAddingPropertiesWithInvalidNames({type: 'ReFungible'});
   });
 });
@@ -651,7 +683,9 @@ describe('Integration Test: Token Properties', () => {
   it('Reads yet empty properties of a token (NFT)', async () => {
     await testReadsYetEmptyProperties({type: 'NFT'});
   });
-  it('Reads yet empty properties of a token (ReFungible)', async () => {
+  it('Reads yet empty properties of a token (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testReadsYetEmptyProperties({type: 'ReFungible'});
   });
 
@@ -696,7 +730,9 @@ describe('Integration Test: Token Properties', () => {
   it('Assigns properties to a token according to permissions (NFT)', async () => {
     await testAssignPropertiesAccordingToPermissions({type: 'NFT'}, 1);
   });
-  it('Assigns properties to a token according to permissions (ReFungible)', async () => {
+  it('Assigns properties to a token according to permissions (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testAssignPropertiesAccordingToPermissions({type: 'ReFungible'}, 100);
   });
 
@@ -749,7 +785,9 @@ describe('Integration Test: Token Properties', () => {
   it('Changes properties of a token according to permissions (NFT)', async () => {
     await testChangesPropertiesAccordingPermission({type: 'NFT'}, 1);
   });
-  it('Changes properties of a token according to permissions (ReFungible)', async () => {
+  it('Changes properties of a token according to permissions (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testChangesPropertiesAccordingPermission({type: 'ReFungible'}, 100);
   });
 
@@ -802,7 +840,9 @@ describe('Integration Test: Token Properties', () => {
   it('Deletes properties of a token according to permissions (NFT)', async () => {
     await testDeletePropertiesAccordingPermission({type: 'NFT'}, 1);
   });
-  it('Deletes properties of a token according to permissions (ReFungible)', async () => {
+  it('Deletes properties of a token according to permissions (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testDeletePropertiesAccordingPermission({type: 'ReFungible'}, 100);
   });
 
@@ -1029,7 +1069,9 @@ describe('Negative Integration Test: Token Properties', () => {
   it('Forbids changing/deleting properties of a token if the user is outside of permissions (NFT)', async () => {
     await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions({type: 'NFT'}, 1);
   });
-  it('Forbids changing/deleting properties of a token if the user is outside of permissions (ReFungible)', async () => {
+  it('Forbids changing/deleting properties of a token if the user is outside of permissions (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions({type: 'ReFungible'}, 100);
   });
 
@@ -1062,7 +1104,9 @@ describe('Negative Integration Test: Token Properties', () => {
   it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async () => {
     await testForbidsChangingDeletingPropertiesIfPropertyImmutable({type: 'NFT'}, 1);
   });
-  it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', async () => {
+  it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testForbidsChangingDeletingPropertiesIfPropertyImmutable({type: 'ReFungible'}, 100);
   });
 
@@ -1096,7 +1140,9 @@ describe('Negative Integration Test: Token Properties', () => {
   it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async () => {
     await testForbidsAddingPropertiesIfPropertyNotDeclared({type: 'NFT'}, 1);
   });
-  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', async () => {
+  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testForbidsAddingPropertiesIfPropertyNotDeclared({type: 'ReFungible'}, 100);
   });
 
@@ -1140,7 +1186,9 @@ describe('Negative Integration Test: Token Properties', () => {
   it('Forbids adding too many properties to a token (NFT)', async () => {
     await testForbidsAddingTooManyProperties({type: 'NFT'}, 1);
   });
-  it('Forbids adding too many properties to a token (ReFungible)', async () => {
+  it('Forbids adding too many properties to a token (ReFungible)', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await testForbidsAddingTooManyProperties({type: 'ReFungible'}, 100);
   });
 });
@@ -1149,7 +1197,9 @@ describe('ReFungible token properties permissions tests', () => {
   let collection: number;
   let token: number;
 
-  before(async () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');

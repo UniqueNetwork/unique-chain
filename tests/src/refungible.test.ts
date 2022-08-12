@@ -16,7 +16,12 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {usingPlaygrounds} from './util/playgrounds';
+import { usingPlaygrounds } from './util/playgrounds';
+import {
+  getModuleNames,
+  Pallets,
+  requirePallets,
+} from './util/helpers';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -26,14 +31,17 @@ const expect = chai.expect;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
-describe('integration test: Refungible functionality:', () => {
-  before(async () => {
+describe('integration test: Refungible functionality:', async () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
+      if (!getModuleNames(helper.api!).includes(Pallets.ReFungible)) this.skip();
     });
   });
-
+  
   it('Create refungible collection and token', async () => {
     await usingPlaygrounds(async helper => {
       const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
@@ -248,17 +256,8 @@ describe('integration test: Refungible functionality:', () => {
       }]);
     });
   });
-});
-
-describe('Test Refungible properties:', () => {
-  before(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-    });
-  });
   
-  it('Сreate new collection with properties', async () => {
+  it('Create new collection with properties', async () => {
     await usingPlaygrounds(async helper => {
       const properties = [{key: 'key1', value: 'val1'}];
       const tokenPropertyPermissions = [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}];
@@ -269,3 +268,4 @@ describe('Test Refungible properties:', () => {
     });
   });
 });
+

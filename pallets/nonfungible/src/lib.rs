@@ -276,61 +276,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-				let mut had_consts = BTreeSet::new();
-				<TokenData<T>>::translate::<ItemDataVersion1<T::CrossAccountId>, _>(
-					|(collection, token), v| {
-						let mut props = vec![];
-						if !v.const_data.is_empty() {
-							props.push(Property {
-								key: b"_old_constData".to_vec().try_into().unwrap(),
-								value: v
-									.const_data
-									.clone()
-									.into_inner()
-									.try_into()
-									.expect("const too long"),
-							});
-							had_consts.insert(collection);
-						}
-						if !v.variable_data.is_empty() {
-							props.push(Property {
-								key: b"_old_variableData".to_vec().try_into().unwrap(),
-								value: v
-									.variable_data
-									.clone()
-									.into_inner()
-									.try_into()
-									.expect("variable too long"),
-							})
-						}
-						if !props.is_empty() {
-							Self::set_scoped_token_properties(
-								collection,
-								token,
-								PropertyScope::None,
-								props.into_iter(),
-							)
-							.expect("existing token data exceeds property storage");
-						}
-						Some(<ItemDataVersion2<T::CrossAccountId>>::from(v))
-					},
-				);
-				for collection in had_consts {
-					<PalletCommon<T>>::set_property_permission_unchecked(
-						collection,
-						PropertyKeyPermission {
-							key: b"_old_constData".to_vec().try_into().unwrap(),
-							permission: PropertyPermission {
-								mutable: false,
-								collection_admin: true,
-								token_owner: false,
-							},
-						},
-					)
-					.expect("failed to configure permission");
-				}
-			}
+			StorageVersion::new(1).put::<Pallet<T>>();
 
 			0
 		}
@@ -836,6 +782,23 @@ impl<T: Config> Pallet<T> {
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
+	}
+
+	/// Set property permissions for the token with scope.
+	///
+	/// Sender should be the owner or admin of token's collection.
+	pub fn set_scoped_token_property_permissions(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		scope: PropertyScope,
+		property_permissions: Vec<PropertyKeyPermission>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_scoped_token_property_permissions(
+			collection,
+			sender,
+			scope,
+			property_permissions,
+		)
 	}
 
 	/// Set property permissions for the collection.

@@ -35,8 +35,17 @@ use fp_evm_mapping::EvmBackwardsAddressMapping;
 use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
-use unique_runtime_common::{dispatch::CollectionDispatchT, weights::CommonWeights};
 use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
+
+#[path = "../../common/dispatch.rs"]
+mod dispatch;
+
+use dispatch::CollectionDispatchT;
+
+#[path = "../../common/weights.rs"]
+mod weights;
+
+use weights::CommonWeights;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

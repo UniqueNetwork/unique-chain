@@ -118,6 +118,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_recursively_breadth_plus_self_plus_self_per_each_raw(amount)
 			.saturating_sub(Self::burn_recursively_self_raw().saturating_mul(amount as u64 + 1))
 	}
+
+	fn token_owner() -> Weight {
+		<SelfWeightOf<T>>::token_owner()
+	}
 }
 
 fn map_create_data<T: Config>(

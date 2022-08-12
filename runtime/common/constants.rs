@@ -19,7 +19,7 @@ use frame_support::{
 	parameter_types,
 	weights::{Weight, constants::WEIGHT_PER_SECOND},
 };
-use crate::types::{BlockNumber, Balance};
+use up_common::types::{BlockNumber, Balance};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
@@ -51,7 +51,5 @@ pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 parameter_types! {
-	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
-
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE;
 }
