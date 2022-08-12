@@ -114,6 +114,12 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
+      - name: Collect Docker Logs
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2.2.0
+        with:
+          dest: './forkless-parachain-update-nodata-logs.${{ matrix.features }}'
+
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -144,7 +150,7 @@ jobs:
                 fi
             done
             echo "Test completed."
-            exit 1
+            exit 0
         shell: bash
 
       - name: Collect Docker Logs
