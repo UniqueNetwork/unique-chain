@@ -5871,7 +5871,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-coder-substrate"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "ethereum",
  "evm-coder",
