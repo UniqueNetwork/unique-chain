@@ -54,7 +54,7 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
+use xcm::opaque::latest::{prelude::XcmError, MultiAsset, MultiAssetFilter};
 use xcm::{
 	v1::MultiLocation,
 	VersionedMultiLocation,
@@ -589,23 +589,35 @@ impl<T: Contains<MultiLocation>, AssetID: Get<MultiLocation>> ShouldExecute
 		let xcm_instruction = iter.next().ok_or(())?;
 		ensure!(iter.next().is_none(), ()); // XCM message should contain only 1 entry
 
-		if let Instruction::TransferAsset { assets, .. } = xcm_instruction {
-			let assets = assets.clone().drain();
-
-			let mut iter = assets.into_iter();
-			let asset_to_transfer = iter.next().ok_or(())?;
-			ensure!(iter.next().is_none(), ()); // Assets should contain only 1 entry
-
-			if let MultiAsset {
-				fun: XcmFungible(..),
-				id: asset_id_to_transfer,
+		let assets = match xcm_instruction {
+			Instruction::TransferAsset { assets, .. } => assets,
+			Instruction::TransferReserveAsset { assets, .. } => assets,
+			Instruction::DepositAsset {
+				assets: MultiAssetFilter::Definite(assets),
 				..
-			} = asset_to_transfer
-			{
-				ensure!(asset_id_to_transfer == AssetID::get().into(), ());
-				return Ok(());
-			}
+			} => assets,
+			Instruction::DepositReserveAsset {
+				assets: MultiAssetFilter::Definite(assets),
+				..
+			} => assets,
+			_ => return Err(()),
 		};
-		Err(())
+		let assets = assets.clone().drain();
+
+		let mut iter = assets.into_iter();
+		let asset_to_transfer = iter.next().ok_or(())?;
+		ensure!(iter.next().is_none(), ()); // Assets should contain only 1 entry
+
+		if let MultiAsset {
+			fun: XcmFungible(..),
+			id: asset_id_to_transfer,
+			..
+		} = asset_to_transfer
+		{
+			ensure!(asset_id_to_transfer == AssetID::get().into(), ());
+			Ok(())
+		} else {
+			Err(())
+		}
 	}
 }
