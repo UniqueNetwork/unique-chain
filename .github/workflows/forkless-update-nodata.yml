@@ -44,7 +44,6 @@ jobs:
       - name: Create Execution matrix
         uses: fabiocaccamo/create-matrix-action@v2
         id: create_matrix
-        uses: ./
         with:
           matrix: |
             network {Opal}, runtime {opal}, feature {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
