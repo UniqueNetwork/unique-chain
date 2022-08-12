@@ -247,7 +247,8 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 
 	/// Returns the total amount of staked tokens.
 	#[method(name = "unique_totalStaked")]
-	fn total_staked(&self, staker: CrossAccountId, at: Option<BlockHash>) -> Result<u128>;
+	fn total_staked(&self, staker: Option<CrossAccountId>, at: Option<BlockHash>)
+		-> Result<String>;
 
 	///Returns the total amount of staked tokens per block when staked.
 	#[method(name = "unique_totalStakedPerBlock")]
@@ -255,11 +256,12 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 		&self,
 		staker: CrossAccountId,
 		at: Option<BlockHash>,
-	) -> Result<Vec<(BlockNumber, u128)>>;
+	) -> Result<Vec<(BlockNumber, String)>>;
 
 	/// Return the total amount locked by staking tokens.
 	#[method(name = "unique_totalStakingLocked")]
-	fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>) -> Result<u128>;
+	fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>)
+		-> Result<String>;
 }
 
 mod rmrk_unique_rpc {
@@ -539,9 +541,13 @@ where
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<String> => |o| o.map(|number| number.to_string()) , unique_api);
 	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
-	pass_method!(total_staked(staker: CrossAccountId) -> u128, unique_api);
-	pass_method!(total_staked_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, u128)>, unique_api);
-	pass_method!(total_staking_locked(staker: CrossAccountId) -> u128, unique_api);
+	pass_method!(total_staked(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), unique_api);
+	pass_method!(total_staked_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, String)> =>
+		|v| v
+		.into_iter()
+		.map(|(b, a)| (b, a.to_string()))
+		.collect::<Vec<_>>(), unique_api);
+	pass_method!(total_staking_locked(staker: CrossAccountId) -> String => |v| v.to_string(), unique_api);
 }
 
 #[allow(deprecated)]

@@ -806,6 +806,27 @@ export interface OrmlVestingVestingSchedule extends Struct {
   readonly perPeriod: Compact<u128>;
 }
 
+/** @name PalletAppPromotionCall */
+export interface PalletAppPromotionCall extends Enum {
+  readonly isSetAdminAddress: boolean;
+  readonly asSetAdminAddress: {
+    readonly admin: AccountId32;
+  } & Struct;
+  readonly isStartAppPromotion: boolean;
+  readonly asStartAppPromotion: {
+    readonly promotionStartRelayBlock: u32;
+  } & Struct;
+  readonly isStake: boolean;
+  readonly asStake: {
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnstake: boolean;
+  readonly asUnstake: {
+    readonly amount: u128;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'Stake' | 'Unstake';
+}
+
 /** @name PalletBalancesAccountData */
 export interface PalletBalancesAccountData extends Struct {
   readonly free: u128;
