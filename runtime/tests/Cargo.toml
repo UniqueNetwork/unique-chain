@@ -3,8 +3,12 @@ name = "tests"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ['refungible']
+
+refungible = []
+
 [dependencies]
-unique-runtime-common = { path = '../common' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 
 sp-core = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.24' }
@@ -37,3 +41,6 @@ parity-scale-codec = { version = "3.1.2", default-features = false, features = [
 	"derive",
 ] }
 scale-info = "*"
+
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.24' }

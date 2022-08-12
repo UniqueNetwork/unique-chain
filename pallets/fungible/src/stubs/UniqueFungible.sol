@@ -31,19 +31,7 @@ contract ERC20Events {
 	);
 }
 
-// Selector: 79cc6790
-contract ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) public returns (bool) {
-		require(false, stub_error);
-		from;
-		amount;
-		dummy = 0;
-		return false;
-	}
-}
-
-// Selector: 7d9262e6
+// Selector: 6cf113cd
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -267,6 +255,42 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		mode;
 		dummy = 0;
+	}
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) public view returns (bool) {
+		require(false, stub_error);
+		user;
+		dummy;
+		return false;
+	}
+
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() public returns (string memory) {
+		require(false, stub_error);
+		dummy = 0;
+		return "";
+	}
+}
+
+// Selector: 79cc6790
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
 	}
 }
 

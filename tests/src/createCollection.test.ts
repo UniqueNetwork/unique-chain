@@ -16,7 +16,7 @@
 
 import {expect} from 'chai';
 import usingApi, {executeTransaction, submitTransactionAsync} from './substrate/substrate-api';
-import {createCollectionWithPropsExpectFailure, createCollectionExpectFailure, createCollectionExpectSuccess, getCreateCollectionResult, getDetailedCollectionInfo, createCollectionWithPropsExpectSuccess} from './util/helpers';
+import {createCollectionWithPropsExpectFailure, createCollectionExpectFailure, createCollectionExpectSuccess, getCreateCollectionResult, getDetailedCollectionInfo, createCollectionWithPropsExpectSuccess, requirePallets, Pallets} from './util/helpers';
 
 describe('integration test: ext. createCollection():', () => {
   it('Create new NFT collection', async () => {
@@ -34,7 +34,9 @@ describe('integration test: ext. createCollection():', () => {
   it('Create new Fungible collection', async () => {
     await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
   });
-  it('Create new ReFungible collection', async () => {
+  it('Create new ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
   });
 

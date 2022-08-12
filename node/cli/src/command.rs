@@ -64,7 +64,7 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{io::Write, net::SocketAddr, time::Duration};
 
-use unique_runtime_common::types::Block;
+use up_common::types::opaque::Block;
 
 macro_rules! no_runtime_err {
 	($chain_name:expr) => {

@@ -5291,6 +5291,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "evm-coder",
  "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
@@ -5352,9 +5353,10 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "unique-runtime-common",
+ "up-common",
  "up-data-structs",
  "up-rpc",
+ "up-sponsorship",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -8605,6 +8607,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "evm-coder",
  "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
@@ -8666,9 +8669,10 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "unique-runtime-common",
+ "up-common",
  "up-data-structs",
  "up-rpc",
+ "up-sponsorship",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -11881,6 +11885,7 @@ dependencies = [
 name = "tests"
 version = "0.1.0"
 dependencies = [
+ "evm-coder",
  "fp-evm-mapping",
  "frame-support",
  "frame-system",
@@ -11902,8 +11907,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "unique-runtime-common",
  "up-data-structs",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -12387,7 +12392,6 @@ dependencies = [
  "sp-core",
  "sp-rpc",
  "sp-runtime",
- "unique-runtime-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12541,7 +12545,7 @@ dependencies = [
  "try-runtime-cli",
  "unique-rpc",
  "unique-runtime",
- "unique-runtime-common",
+ "up-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12590,7 +12594,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "tokio 0.2.25",
  "uc-rpc",
- "unique-runtime-common",
+ "up-common",
  "up-data-structs",
  "up-rpc",
 ]
@@ -12608,6 +12612,7 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "derivative",
+ "evm-coder",
  "fp-evm-mapping",
  "fp-rpc",
  "fp-self-contained",
@@ -12669,38 +12674,13 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "unique-runtime-common",
+ "up-common",
  "up-data-structs",
  "up-rpc",
+ "up-sponsorship",
  "xcm",
  "xcm-builder",
  "xcm-executor",
-]
-
-[[package]]
-name = "unique-runtime-common"
-version = "0.9.24"
-dependencies = [
- "evm-coder",
- "fp-rpc",
- "frame-support",
- "frame-system",
- "pallet-common",
- "pallet-evm",
- "pallet-fungible",
- "pallet-nonfungible",
- "pallet-refungible",
- "pallet-unique",
- "pallet-unique-scheduler",
- "parity-scale-codec 3.1.5",
- "rmrk-rpc",
- "scale-info",
- "sp-consensus-aura",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "up-data-structs",
- "up-sponsorship",
 ]
 
 [[package]]
@@ -12730,6 +12710,19 @@ name = "untrusted"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
+
+[[package]]
+name = "up-common"
+version = "0.9.24"
+dependencies = [
+ "fp-rpc",
+ "frame-support",
+ "pallet-evm",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
 
 [[package]]
 name = "up-data-structs"

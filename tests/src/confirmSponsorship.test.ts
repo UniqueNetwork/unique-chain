@@ -33,6 +33,8 @@ import {
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
   UNIQUE,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -124,7 +126,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
     });
   });
 
-  it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async () => {
+  it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
@@ -252,7 +256,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
     });
   });
 
-  it('ReFungible: Sponsoring is rate limited', async () => {
+  it('ReFungible: Sponsoring is rate limited', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');

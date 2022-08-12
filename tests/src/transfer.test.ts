@@ -35,11 +35,14 @@ import {
   getBalance as getTokenBalance,
   transferFromExpectSuccess,
   transferFromExpectFail,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 import {
   subToEth,
   itWeb3, 
 } from './eth/util/helpers';
+import {request} from 'https';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -89,56 +92,61 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
     });
   });
 
-  it('User can transfer owned token', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
-      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
-      await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 1, 'NFT');
-      // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
-      await transferExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob, 1, 'Fungible');
-      // reFungible
-      const reFungibleCollectionId = await
-      createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
-      await transferExpectSuccess(
-        reFungibleCollectionId,
-        newReFungibleTokenId,
-        alice,
-        bob,
-        100,
-        'ReFungible',
-      );
-    });
+  it('[nft] User can transfer owned token', async () => {
+    const nftCollectionId = await createCollectionExpectSuccess();
+    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+    await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 1, 'NFT');
   });
 
-  it('Collection admin can transfer owned token', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
-      await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
-      const newNftTokenId = await createItemExpectSuccess(bob, nftCollectionId, 'NFT', bob.address);
-      await transferExpectSuccess(nftCollectionId, newNftTokenId, bob, alice, 1, 'NFT');
-      // fungible
-      const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      await addCollectionAdminExpectSuccess(alice, fungibleCollectionId, bob.address);
-      const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible', bob.address);
-      await transferExpectSuccess(fungibleCollectionId, newFungibleTokenId, bob, alice, 1, 'Fungible');
-      // reFungible
-      const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      await addCollectionAdminExpectSuccess(alice, reFungibleCollectionId, bob.address);
-      const newReFungibleTokenId = await createItemExpectSuccess(bob, reFungibleCollectionId, 'ReFungible', bob.address);
-      await transferExpectSuccess(
-        reFungibleCollectionId,
-        newReFungibleTokenId,
-        bob,
-        alice,
-        100,
-        'ReFungible',
-      );
-    });
+  it('[fungible] User can transfer owned token', async () => {
+    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
+    await transferExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob, 1, 'Fungible');
+  });
+
+  it('[refungible] User can transfer owned token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
+    await transferExpectSuccess(
+      reFungibleCollectionId,
+      newReFungibleTokenId,
+      alice,
+      bob,
+      100,
+      'ReFungible',
+    );
+  });
+
+  it('[nft] Collection admin can transfer owned token', async () => {
+    const nftCollectionId = await createCollectionExpectSuccess();
+    await addCollectionAdminExpectSuccess(alice, nftCollectionId, bob.address);
+    const newNftTokenId = await createItemExpectSuccess(bob, nftCollectionId, 'NFT', bob.address);
+    await transferExpectSuccess(nftCollectionId, newNftTokenId, bob, alice, 1, 'NFT');
+  });
+
+  it('[fungible] Collection admin can transfer owned token', async () => {
+    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
+    await addCollectionAdminExpectSuccess(alice, fungibleCollectionId, bob.address);
+    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible', bob.address);
+    await transferExpectSuccess(fungibleCollectionId, newFungibleTokenId, bob, alice, 1, 'Fungible');
+  });
+
+  it('[refungible] Collection admin can transfer owned token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+    await addCollectionAdminExpectSuccess(alice, reFungibleCollectionId, bob.address);
+    const newReFungibleTokenId = await createItemExpectSuccess(bob, reFungibleCollectionId, 'ReFungible', bob.address);
+    await transferExpectSuccess(
+      reFungibleCollectionId,
+      newReFungibleTokenId,
+      bob,
+      alice,
+      100,
+      'ReFungible',
+    );
   });
 });
 
@@ -150,33 +158,49 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       charlie = privateKeyWrapper('//Charlie');
     });
   });
-  it('Transfer with not existed collection_id', async () => {
+
+  it('[nft] Transfer with not existed collection_id', async () => {
     await usingApi(async (api) => {
-      // nft
       const nftCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(nftCollectionCount + 1, 1, alice, bob, 1);
-      // fungible
+    });
+  });
+
+  it('[fungible] Transfer with not existed collection_id', async () => {
+    await usingApi(async (api) => {
       const fungibleCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(fungibleCollectionCount + 1, 0, alice, bob, 1);
-      // reFungible
+    });
+  });
+
+  it('[refungible] Transfer with not existed collection_id', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    await usingApi(async (api) => {
       const reFungibleCollectionCount = await getCreatedCollectionCount(api);
       await transferExpectFailure(reFungibleCollectionCount + 1, 1, alice, bob, 1);
     });
   });
-  it('Transfer with deleted collection_id', async () => {
-    // nft
+
+  it('[nft] Transfer with deleted collection_id', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
     await burnItemExpectSuccess(alice, nftCollectionId, newNftTokenId);
     await destroyCollectionExpectSuccess(nftCollectionId);
     await transferExpectFailure(nftCollectionId, newNftTokenId, alice, bob, 1);
-    // fungible
+  });
+
+  it('[fungible] Transfer with deleted collection_id', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
     await burnItemExpectSuccess(alice, fungibleCollectionId, newFungibleTokenId, 10);
     await destroyCollectionExpectSuccess(fungibleCollectionId);
     await transferExpectFailure(fungibleCollectionId, newFungibleTokenId, alice, bob, 1);
-    // reFungible
+  });
+
+  it('[refungible] Transfer with deleted collection_id', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId = await
     createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
@@ -190,16 +214,21 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       1,
     );
   });
-  it('Transfer with not existed item_id', async () => {
-    // nft
+
+  it('[nft] Transfer with not existed item_id', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     await transferExpectFailure(nftCollectionId, 2, alice, bob, 1);
-    // fungible
+  });
+
+  it('[fungible] Transfer with not existed item_id', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await transferExpectFailure(fungibleCollectionId, 2, alice, bob, 1);
-    // reFungible
-    const reFungibleCollectionId = await
-    createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+  });
+
+  it('[refungible] Transfer with not existed item_id', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await transferExpectFailure(
       reFungibleCollectionId,
       2,
@@ -208,18 +237,24 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       1,
     );
   });
-  it('Transfer with deleted item_id', async () => {
-    // nft
+
+  it('[nft] Transfer with deleted item_id', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
     await burnItemExpectSuccess(alice, nftCollectionId, newNftTokenId, 1);
     await transferExpectFailure(nftCollectionId, newNftTokenId, alice, bob, 1);
-    // fungible
+  });
+
+  it('[fungible] Transfer with deleted item_id', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
     await burnItemExpectSuccess(alice, fungibleCollectionId, newFungibleTokenId, 10);
     await transferExpectFailure(fungibleCollectionId, newFungibleTokenId, alice, bob, 1);
-    // reFungible
+  });
+
+  it('[refungible] Transfer with deleted item_id', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const reFungibleCollectionId = await
     createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
@@ -232,18 +267,23 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
       1,
     );
   });
-  it('Transfer with recipient that is not owner', async () => {
-    // nft
+
+  it('[nft] Transfer with recipient that is not owner', async () => {
     const nftCollectionId = await createCollectionExpectSuccess();
     const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
     await transferExpectFailure(nftCollectionId, newNftTokenId, charlie, bob, 1);
-    // fungible
+  });
+
+  it('[fungible] Transfer with recipient that is not owner', async () => {
     const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
     await transferExpectFailure(fungibleCollectionId, newFungibleTokenId, charlie, bob, 1);
-    // reFungible
-    const reFungibleCollectionId = await
-    createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
+  });
+
+  it('[refungible] Transfer with recipient that is not owner', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
+    const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
     await transferExpectFailure(
       reFungibleCollectionId,
@@ -276,7 +316,9 @@ describe('Zero value transfer(From)', () => {
     });
   });
 
-  it('RFT', async () => {
+  it('RFT', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api: ApiPromise) => {
       const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
       const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');

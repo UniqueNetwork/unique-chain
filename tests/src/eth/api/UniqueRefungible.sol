@@ -248,33 +248,7 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	function finishMinting() external returns (bool);
 }
 
-// Selector: 780e9d63
-interface ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid RFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
-	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) external view returns (uint256);
-
-	// Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		external
-		view
-		returns (uint256);
-
-	// @notice Count RFTs tracked by this contract
-	// @return A count of valid RFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
-}
-
-// Selector: 7d9262e6
+// Selector: 6cf113cd
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -420,9 +394,50 @@ interface Collection is Dummy, ERC165 {
 	//
 	// Selector: setCollectionMintMode(bool) 00018e84
 	function setCollectionMintMode(bool mode) external;
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) external view returns (bool);
+
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() external returns (string memory);
 }
 
-// Selector: d74d154f
+// Selector: 780e9d63
+interface ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid RFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) external view returns (uint256);
+
+	// Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		external
+		view
+		returns (uint256);
+
+	// @notice Count RFTs tracked by this contract
+	// @return A count of valid RFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() external view returns (uint256);
+}
+
+// Selector: 7c3bef89
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// @notice Transfer ownership of an RFT
 	// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -473,6 +488,16 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
 		external
 		returns (bool);
+
+	// Returns EVM address for refungible token
+	//
+	// @param token ID of the token
+	//
+	// Selector: tokenContractAddress(uint256) ab76fac6
+	function tokenContractAddress(uint256 token)
+		external
+		view
+		returns (address);
 }
 
 interface UniqueRefungible is

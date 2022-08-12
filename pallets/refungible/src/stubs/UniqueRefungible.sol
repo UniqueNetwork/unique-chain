@@ -371,49 +371,7 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 }
 
-// Selector: 780e9d63
-contract ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid RFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
-	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) public view returns (uint256) {
-		require(false, stub_error);
-		index;
-		dummy;
-		return 0;
-	}
-
-	// Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
-		require(false, stub_error);
-		owner;
-		index;
-		dummy;
-		return 0;
-	}
-
-	// @notice Count RFTs tracked by this contract
-	// @return A count of valid RFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-}
-
-// Selector: 7d9262e6
+// Selector: 6cf113cd
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -638,9 +596,75 @@ contract Collection is Dummy, ERC165 {
 		mode;
 		dummy = 0;
 	}
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) public view returns (bool) {
+		require(false, stub_error);
+		user;
+		dummy;
+		return false;
+	}
+
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() public returns (string memory) {
+		require(false, stub_error);
+		dummy = 0;
+		return "";
+	}
 }
 
-// Selector: d74d154f
+// Selector: 780e9d63
+contract ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid RFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+
+	// Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		index;
+		dummy;
+		return 0;
+	}
+
+	// @notice Count RFTs tracked by this contract
+	// @return A count of valid RFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+}
+
+// Selector: 7c3bef89
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// @notice Transfer ownership of an RFT
 	// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -718,6 +742,18 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		tokens;
 		dummy = 0;
 		return false;
+	}
+
+	// Returns EVM address for refungible token
+	//
+	// @param token ID of the token
+	//
+	// Selector: tokenContractAddress(uint256) ab76fac6
+	function tokenContractAddress(uint256 token) public view returns (address) {
+		require(false, stub_error);
+		token;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
 	}
 }
 

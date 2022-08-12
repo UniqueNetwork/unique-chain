@@ -25,6 +25,8 @@ import {
   getBalance,
   setCollectionLimitsExpectSuccess,
   isTokenExists,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 
 import chai from 'chai';
@@ -80,7 +82,9 @@ describe('integration test: ext. burnItem():', () => {
     });
   });
 
-  it('Burn item in ReFungible collection', async () => {
+  it('Burn item in ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
@@ -99,7 +103,9 @@ describe('integration test: ext. burnItem():', () => {
     });
   });
 
-  it('Burn owned portion of item in ReFungible collection', async () => {
+  it('Burn owned portion of item in ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
     const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
@@ -189,7 +195,9 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
   });
 
   // TODO: burnFrom
-  it('Burn item in ReFungible collection', async () => {
+  it('Burn item in ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const createMode = 'ReFungible';
     const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});

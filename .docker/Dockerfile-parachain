@@ -9,7 +9,6 @@ ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
 
-
 RUN apt-get update && \
     apt-get install -y curl cmake pkg-config libssl-dev git clang && \
     apt-get clean && \
@@ -24,9 +23,9 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
+
 
 # ===== BUILD ======
 FROM rust-builder as builder-unique
@@ -41,6 +40,7 @@ WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH && \
     cargo build --features=$FEATURE --$PROFILE
+
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
@@ -60,7 +60,6 @@ RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/
 FROM ubuntu:20.04
 
 RUN apt-get -y update && \
-      apt-get -y upgrade && \
       apt-get -y install curl git && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \

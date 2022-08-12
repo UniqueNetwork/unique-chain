@@ -29,6 +29,8 @@ import {
   itApi,
   normalizeAccountId,
   getCreateItemResult,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 
 const expect = chai.expect;
@@ -79,7 +81,9 @@ describe('integration test: ext. ():', () => {
     }
 
   });
-  it('Create new item in ReFungible collection', async () => {
+  it('Create new item in ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const createMode = 'ReFungible';
     const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
     await createItemExpectSuccess(alice, newCollectionID, createMode);
@@ -96,7 +100,9 @@ describe('integration test: ext. ():', () => {
     await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
     await createItemExpectSuccess(bob, newCollectionID, createMode);
   });
-  it('Create new item in ReFungible collection with collection admin permissions', async () => {
+  it('Create new item in ReFungible collection with collection admin permissions', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const createMode = 'ReFungible';
     const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
     await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
@@ -175,7 +181,9 @@ describe('integration test: ext. ():', () => {
     });
   });
 
-  it('Check total pieces of ReFungible token', async () => {
+  it('Check total pieces of ReFungible token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const createMode = 'ReFungible';
       const createCollectionResult = await createCollection(api, alice, {mode: {type: createMode}});
@@ -219,7 +227,9 @@ describe('Negative integration test: ext. createItem():', () => {
     const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
     await expect(createItemExpectSuccess(bob, newCollectionID, createMode)).to.be.rejected;
   });
-  it('Regular user cannot create new item in ReFungible collection', async () => {
+  it('Regular user cannot create new item in ReFungible collection', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const createMode = 'ReFungible';
     const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
     await expect(createItemExpectSuccess(bob, newCollectionID, createMode)).to.be.rejected;
@@ -296,7 +306,9 @@ describe('Negative integration test: ext. createItem():', () => {
     });
   });
 
-  it('Check total pieces for invalid Refungible token', async () => {
+  it('Check total pieces for invalid Refungible token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
       const collectionId  = createCollectionResult.collectionId;

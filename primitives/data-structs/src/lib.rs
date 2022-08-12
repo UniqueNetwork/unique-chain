@@ -1050,6 +1050,7 @@ pub enum PropertiesError {
 pub enum PropertyScope {
 	None,
 	Rmrk,
+	Eth,
 }
 
 impl PropertyScope {
@@ -1058,6 +1059,7 @@ impl PropertyScope {
 		let scope_str: &[u8] = match self {
 			Self::None => return Ok(key),
 			Self::Rmrk => b"rmrk",
+			Self::Eth => b"eth",
 		};
 
 		[scope_str, b":", key.as_slice()]

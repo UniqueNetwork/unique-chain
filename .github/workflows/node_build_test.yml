@@ -32,7 +32,7 @@ jobs:
       matrix:
         include:
           - network: "Opal"
-            features: "--features=opal-runtime"
+            features: " "
           - network: "Quartz"
             features: "--features=quartz-runtime"
           - network: "Unique"
@@ -57,6 +57,9 @@ jobs:
         if: github.event.pull_request.draft == true
         run: exit 1
 
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
@@ -74,7 +77,7 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            FEATURE='${{ matrix.features }}'
+            FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
@@ -100,6 +103,7 @@ jobs:
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v8
+        id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests ${{ matrix.network }}            # Name of the check run which will be created

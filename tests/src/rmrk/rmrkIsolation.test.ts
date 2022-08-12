@@ -6,7 +6,9 @@ import {
   getCreateCollectionResult,
   getDetailedCollectionInfo,
   getGenericResult,
+  requirePallets,
   normalizeAccountId,
+  Pallets,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
@@ -59,11 +61,10 @@ async function isUnique(): Promise<boolean> {
 describe('RMRK External Integration Test', async () => {
   const it_rmrk = (await isUnique() ? it : it.skip);
 
-  before(async () => {
+  before(async function() {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
-
-      
+      await requirePallets(this, [Pallets.RmrkCore]);
     });
   });
 
