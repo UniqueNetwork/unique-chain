@@ -83,6 +83,7 @@ declare module '@polkadot/types/types/registry' {
     OrmlVestingModuleError: OrmlVestingModuleError;
     OrmlVestingModuleEvent: OrmlVestingModuleEvent;
     OrmlVestingVestingSchedule: OrmlVestingVestingSchedule;
+    PalletAppPromotionCall: PalletAppPromotionCall;
     PalletBalancesAccountData: PalletBalancesAccountData;
     PalletBalancesBalanceLock: PalletBalancesBalanceLock;
     PalletBalancesCall: PalletBalancesCall;

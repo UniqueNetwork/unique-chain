@@ -188,7 +188,7 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
 
-                fn total_staked(staker: CrossAccountId) -> Result<u128, DispatchError> {
+                fn total_staked(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default())
                     // Ok(0)
                 }

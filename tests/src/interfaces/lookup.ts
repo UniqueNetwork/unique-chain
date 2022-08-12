@@ -1979,9 +1979,25 @@ export default {
         collectionId: 'u32',
         data: 'UpDataStructsCreateItemExData',
       },
+<<<<<<< HEAD
       set_transfers_enabled_flag: {
         collectionId: 'u32',
         value: 'bool',
+=======
+      finish: {
+        address: 'H160',
+        code: 'Bytes'
+      }
+    }
+  },
+  /**
+   * Lookup259: pallet_sudo::pallet::Event<T>
+   **/
+  PalletSudoEvent: {
+    _enum: {
+      Sudid: {
+        sudoResult: 'Result<Null, SpRuntimeDispatchError>',
+>>>>>>> b43f8da0... added totalstaked & fix bug with number in RPC Client
       },
       burn_item: {
         collectionId: 'u32',

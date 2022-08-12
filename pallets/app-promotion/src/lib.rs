@@ -448,8 +448,11 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	pub fn cross_id_total_staked(staker: T::CrossAccountId) -> Option<BalanceOf<T>> {
-		Self::total_staked_by_id(staker.as_sub())
+	pub fn cross_id_total_staked(staker: Option<T::CrossAccountId>) -> Option<BalanceOf<T>> {
+		staker.map_or(Some(<TotalStaked<T>>::get()), |s| {
+			Self::total_staked_by_id(s.as_sub())
+		})
+		// Self::total_staked_by_id(staker.as_sub())
 	}
 
 	pub fn cross_id_locked_balance(staker: T::CrossAccountId) -> BalanceOf<T> {
