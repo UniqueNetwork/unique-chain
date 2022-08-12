@@ -43,4 +43,4 @@ parity-scale-codec = { version = "3.1.2", default-features = false, features = [
 scale-info = "*"
 
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.24' }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.26' }
