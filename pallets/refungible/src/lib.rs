@@ -424,10 +424,8 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenProperties<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
-<<<<<<< HEAD
-		<Balance<T>>::remove_prefix((collection.id, token_id), None);
-		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
-
+		let _ = <Balance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
+		let _ = <Allowance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
 		<PalletEvm<T>>::deposit_log(
 			ERC721Events::Transfer {
 				from: *owner.as_eth(),
@@ -436,11 +434,6 @@ impl<T: Config> Pallet<T> {
 			}
 			.to_log(collection_id_to_address(collection.id)),
 		);
-=======
-		let _ = <Balance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
-		let _ = <Allowance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
-		// TODO: ERC721 transfer event
->>>>>>> 5d9665e0... refactor: switch to new prefix removal methods
 		Ok(())
 	}
 
