@@ -270,7 +270,7 @@ parameter_types! {
 }
 
 impl pallet_unique::Config for Test {
-	type Event = ();
+	type Event = Event;
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
