@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 import {
   getModuleNames,
   Pallets,
@@ -30,6 +30,7 @@ const expect = chai.expect;
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
+const MAX_REFUNGIBLE_PIECES = 1_000_000_000_000_000_000_000n;
 
 describe('integration test: Refungible functionality:', async () => {
   before(async function() {
@@ -55,6 +56,22 @@ describe('integration test: Refungible functionality:', async () => {
       expect(token?.tokenId).to.be.gte(itemCountBefore);
       expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
       expect(itemCountAfter.toString()).to.be.equal(token?.tokenId.toString());
+    });
+  });
+  
+  it('Checking RPC methods when interacting with maximum allowed values (MAX_REFUNGIBLE_PIECES)', async () => {
+    await usingPlaygrounds(async helper => {
+      const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+      
+      const token = await collection.mintToken(alice, {Substrate: alice.address}, MAX_REFUNGIBLE_PIECES);
+      
+      expect(await collection.getTokenBalance(token.tokenId, {Substrate: alice.address})).to.be.equal(MAX_REFUNGIBLE_PIECES);
+      
+      await collection.transferToken(alice, token.tokenId, {Substrate: bob.address}, MAX_REFUNGIBLE_PIECES);
+      expect(await collection.getTokenBalance(token.tokenId, {Substrate: bob.address})).to.be.equal(MAX_REFUNGIBLE_PIECES);
+      expect(await token.getTotalPieces()).to.be.equal(MAX_REFUNGIBLE_PIECES);
+      
+      await expect(collection.mintToken(alice, {Substrate: alice.address}, MAX_REFUNGIBLE_PIECES + 1n)).to.eventually.be.rejected;
     });
   });
   
