@@ -40,8 +40,8 @@ ARG REPO_URL=
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-RUN git clone $REPO_URL -b $MAINNET_BRANCH .
-RUN cargo build --features=$FEATURE --$PROFILE
+RUN git clone $REPO_URL -b $MAINNET_BRANCH . && \
+    cargo build --features=$FEATURE --$PROFILE
 
 
 # ===== BUILD target version ======
@@ -55,11 +55,8 @@ ARG REPO_URL=
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-RUN git clone $REPO_URL -b $BRANCH .
-RUN cargo build --features=$FEATURE --$PROFILE
-
-RUN ls -la /unique_parachain
-RUN ls -la /unique_parachain/target/release/wbuild
+RUN git clone $REPO_URL -b $BRANCH . && \
+    cargo build --features=$FEATURE --$PROFILE
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot

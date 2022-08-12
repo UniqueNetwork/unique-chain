@@ -16,13 +16,11 @@ on:
 
 #Define Workflow variables
 env:
-  RUST_TOOLCHAIN: nightly-2022-05-11
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-  POLKA_VERSION: release-v0.9.24
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  dev_build_test:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
@@ -64,6 +62,9 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
@@ -72,7 +73,7 @@ jobs:
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKA_VERSION=${{ env.POLKA_VERSION }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             FEATURE='${{ matrix.features }}'
             BRANCH=${{ github.head_ref }}
 
