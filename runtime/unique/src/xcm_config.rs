@@ -278,8 +278,8 @@ match_types! {
 	};
 }
 
-pub fn get_allowed_locations() -> Vec<MultiLocation> {
-	vec![
+pub fn get_allowed_locations() -> impl AsRef<[MultiLocation]> {
+	[
 		// Self location
 		MultiLocation {
 			parents: 0,
@@ -335,15 +335,17 @@ impl ShouldExecute for DenyExchangeWithUnknownLocation {
 		_max_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-		// Check if deposit or transfer belongs to allowed parachains
-		let mut allowed = get_allowed_locations().contains(origin);
+		// Check if deposit or transfer belongs to allowed 
+		let allowed_locations = get_allowed_locations();
+		let allowed_locations = allowed_locations.as_ref();
+		let mut allowed = allowed_locations.contains(origin);
 
 		message.0.iter().for_each(|inst| match inst {
 			DepositReserveAsset { dest: dst, .. } => {
-				allowed |= get_allowed_locations().contains(dst);
+				allowed |= allowed_locations.contains(dst);
 			}
 			TransferReserveAsset { dest: dst, .. } => {
-				allowed |= get_allowed_locations().contains(dst);
+				allowed |= allowed_locations.contains(dst);
 			}
 			_ => {}
 		});
