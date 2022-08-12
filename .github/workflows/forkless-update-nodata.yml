@@ -114,13 +114,6 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
-      - name: Collect Docker Logs
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2.2.0
-        with:
-          dest: './forkless-parachain-update-nodata-logs.${{ matrix.features }}'
-
-
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
@@ -131,7 +124,7 @@ jobs:
             function is_started {
                 echo "Check Docker logs"
                 DOCKER_LOGS=$(do_docker_logs)
-                if [[ ${DOCKER_LOGS} = *"RUNTIME UPGRADE TESTING"* ]];then
+                if [[ ${DOCKER_LOGS} = *"RUNTIME UPGRADE TESTING COMPLETE"* ]];then
                      echo "Function is_started: Return 0"
                      return 0
                 fi
@@ -150,7 +143,7 @@ jobs:
                 fi
             done
             echo "Test completed."
-            exit 0
+            exit 1
         shell: bash
 
       - name: Collect Docker Logs
