@@ -134,7 +134,7 @@ jobs:
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
-            counter=180
+            counter=160
             function check_container_status {
                 docker inspect -f {{.State.Running}} node-parachain
             }
@@ -143,31 +143,34 @@ jobs:
             }
             function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                     echo "Container: node-parachain RUNNING";
-                     echo "Check Docker logs"
-                     DOCKER_LOGS=$(do_docker_logs)
-                     if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
-                          echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
-                          exit 0
-                     fi
+                    echo "Container: node-parachain RUNNING";
+                    echo "Check Docker logs"
+                    DOCKER_LOGS=$(do_docker_logs)
+                    if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
+                        echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
+                        return 0
+                        exit 1
+                    fi
                 else
-                     echo "Container node-parachain not RUNNING";
-                     exit 1
+                    echo "Container node-parachain not RUNNING"
+                    echo "Halting all future checks"
+                    exit 1
                 fi
+                exit 0
             }
-
             while ! is_started; do
-                echo "Waiting for special message in log files "
+        	echo "Waiting for special message in log files "
                 sleep 30s
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
                 if [ "$counter" -gt "0" ]; then
-                     continue
+                    continue
                 else
-                     break
+                    break
                 fi
-            done
-            exit 1
+                done
+           echo "Halting script"
+           exit 1
         shell: bash
 
       - name: Collect Docker Logs
@@ -188,6 +191,6 @@ jobs:
           name: forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
           path: ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
 
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+#      - name: Stop running containers
+#        if: always()                   # run this step always
+#        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
