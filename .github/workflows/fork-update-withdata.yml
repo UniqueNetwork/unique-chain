@@ -1,0 +1,203 @@
+name: Forkless Parachain update with no data
+
+# Controls when the action will run.
+on:
+ # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - reopened
+      - synchronize   #commit(s) pushed to the pull request
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+#Define Workflow variables
+env:
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  prepare-execution-marix-fork:
+    
+    name: Prepare execution matrix for fork
+    
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+    steps:
+      
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: fabiocaccamo/create-matrix-action@v2
+        id: create_matrix
+        with:
+          matrix: |
+            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
+            network {Quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {Unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+
+
+
+  fork-update-withdata:
+    needs: prepare-execution-marix-fork
+    # The type of runner that the job will run on
+    runs-on: ci-tests
+
+    name: Build Container, Spin it Up an test
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix-fork.outputs.matrix)}}
+#        include:
+#          - network: "Opal"
+#            features: "opal-runtime"
+#            runtime: "opal"
+#            mainnet_branch: v924010
+#            mainnet_tag: v924010
+#          - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
+#            features: "quartz-runtime"
+#            runtime: "quartz"
+#            mainnet_branch: quartz-v924012-2
+#            mainnet_tag: v924012
+#          - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
+#            features: "unique-runtime"
+#            runtime: "unique"
+#            mainnet_branch: v924010
+#            mainnet_tag: v924010
+
+
+
+    steps:
+#      - name: Skip if pull request is in Draft
+        # `if: github.event.pull_request.draft == true` should be kept here, at
+        # the step level, rather than at the job level. The latter is not
+        # recommended because when the PR is moved from "Draft" to "Ready to
+        # review" the workflow will immediately be passing (since it was skipped),
+        # even though it hasn't actually ran, since it takes a few seconds for
+        # the workflow to start. This is also disclosed in:
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/17
+        # That scenario would open an opportunity for the check to be bypassed:
+        # 1. Get your PR approved
+        # 2. Move it to Draft
+        # 3. Push whatever commits you want
+        # 4. Move it to "Ready for review"; now the workflow is passing (it was
+        #    skipped) and "Check reviews" is also passing (it won't be updated
+        #    until the workflow is finished)
+#        if: github.event.pull_request.draft == true
+#        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/forking/docker-compose.tmp-fork.j2
+          output_file: .docker/forking/docker-compose.${{ matrix.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
+            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/forking/docker-compose.${{ matrix.network }}.yml
+
+      - name: Generate launch-config-fork.json
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/forking/launch-config-fork.j2
+          output_file: .docker/forking/launch-config-fork.json
+          variables: |
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
+
+      - name: Show launch-config-fork configuration
+        run: cat .docker/forking/launch-config-fork.json
+
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/forking/docker-compose-fork.yaml" -f ".docker/forking/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+
+      - name: Check if docker logs consist logs related to Runtime Upgrade testing.
+        if: success()
+        run: |
+            counter=160
+            function do_docker_logs {
+                docker logs --details parachain-fork  2>&1
+            }
+            function is_started {
+                echo "Check Docker logs"
+                DOCKER_LOGS=$(do_docker_logs)
+                if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
+                     echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
+                     return 0
+                     exit 0
+                fi
+                     echo "Function is_started: Return 1"
+                     return 1
+            }
+            while ! is_started; do
+                echo "Waiting for special message in log files "
+                sleep 30s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                     continue
+                else
+                     break
+                fi
+            done
+            exit 1
+        shell: bash
+
+      - name: Collect Docker Logs
+        if: success() || failure()
+        uses: jwalton/gh-docker-logs@v2.2.0
+        with:
+          dest: './fork-parachain-update-withdata-logs.${{ matrix.features }}'
+          images: 'parachain-fork' 
+
+      - name: Tar logs
+        if: success() || failure()
+        run: tar cvzf ./fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz ./fork-parachain-update-withdata-logs.${{ matrix.features }}
+
+      - name: Upload logs to GitHub
+        if: success() || failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz
+          path: ./fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz
+
+#      - name: Stop running containers
+#        if: always()                   # run this step always
+#        run: docker-compose -f ".docker/forking/docker-compose-fork.yaml" -f ".docker/forking/docker-compose.${{ matrix.network }}.yml" down
