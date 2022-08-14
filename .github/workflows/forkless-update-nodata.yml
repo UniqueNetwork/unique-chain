@@ -158,15 +158,16 @@ jobs:
             function is_started {
                 echo "Check Docker logs"
                 DOCKER_LOGS=$(do_docker_logs)
-                if [[ ${DOCKER_LOGS} = *"RUNTIME UPGRADE TESTING COMPLETE"* ]];then
-                     echo "Function is_started: Return 0"
+                if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
+                     echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
                      return 0
+                     exit 0
                 fi
                      echo "Function is_started: Return 1"
                      return 1
             }
             while ! is_started; do
-                echo "Waiting for "RUNTIME UPGRADE TESTING" in container logs"
+                echo "Waiting for message "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸" in container logs"
                 sleep 30s
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
@@ -176,7 +177,6 @@ jobs:
                      break
                 fi
             done
-            echo "Test completed."
             exit 1
         shell: bash
 
@@ -198,6 +198,6 @@ jobs:
           name: forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
           path: ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
 
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+#      - name: Stop running containers
+#        if: always()                   # run this step always
+#        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
