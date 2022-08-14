@@ -64,23 +64,6 @@ jobs:
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-#        include:
-#          - network: "Opal"
-#            features: "opal-runtime"
-#            runtime: "opal"
-#            mainnet_branch: v924010
-#            mainnet_tag: v924010
-#          - network: "Quartz"   # KUSAMA_MAINNET_BRANCH для quartz-runtime
-#            features: "quartz-runtime"
-#            runtime: "quartz"
-#            mainnet_branch: quartz-v924012-2
-#            mainnet_tag: v924012
-#          - network: "Unique"   # POLKADOT_MAINNET_BRANCH для unique-runtime
-#            features: "unique-runtime"
-#            runtime: "unique"
-#            mainnet_branch: v924010
-#            mainnet_tag: v924010
-
 
 
     steps:
@@ -151,21 +134,28 @@ jobs:
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
-            counter=160
+            counter=180
+            function check_container_status {
+                docker inspect -f {{.State.Running}} node-parachain
+            }
             function do_docker_logs {
                 docker logs --details node-parachain  2>&1
             }
             function is_started {
-                echo "Check Docker logs"
-                DOCKER_LOGS=$(do_docker_logs)
-                if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
-                     echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
-                     return 0
-                     exit 0
+                if [ "$(check_container_status)" == "true" ]; then
+                     echo "Container: node-parachain RUNNING";
+                     echo "Check Docker logs"
+                     DOCKER_LOGS=$(do_docker_logs)
+                     if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
+                          echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
+                          exit 0
+                     fi
+                else
+                     echo "Container node-parachain not RUNNING";
+                     exit 1
                 fi
-                     echo "Function is_started: Return 1"
-                     return 1
             }
+
             while ! is_started; do
                 echo "Waiting for special message in log files "
                 sleep 30s
@@ -198,6 +188,6 @@ jobs:
           name: forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
           path: ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
 
-#      - name: Stop running containers
-#        if: always()                   # run this step always
-#        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
