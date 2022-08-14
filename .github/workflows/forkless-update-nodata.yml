@@ -150,6 +150,10 @@ jobs:
                         echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
                         return 0
                         exit 1
+                    else 
+                        echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸 - Not found in logs output."
+                        return 1
+                        exit 1
                     fi
                 else
                     echo "Container node-parachain not RUNNING"
