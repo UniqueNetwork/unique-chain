@@ -167,7 +167,7 @@ jobs:
                      return 1
             }
             while ! is_started; do
-                echo "Waiting for message "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸" in container logs"
+                echo "Waiting for special message in log files "
                 sleep 30s
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
