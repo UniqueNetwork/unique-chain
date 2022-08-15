@@ -50,6 +50,7 @@ const requiredPallets = [
   'unique',
   'nonfungible',
   'charging',
+  'configuration',
 ];
 
 // Pallets that depend on consensus and governance configuration
