@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 pub mod config;
-pub mod constants;
 pub mod construct_runtime;
 pub mod dispatch;
 pub mod ethereum;
