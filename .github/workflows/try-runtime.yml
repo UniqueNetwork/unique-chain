@@ -21,16 +21,29 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-  prepare-execution-marix-try-runtime:
-    
-    name: Prepare execution matrix for fork
-    
+  fork-update-withdata:
+    # The type of runner that the job will run on
     runs-on: self-hosted-ci
-    outputs:
-      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    name: Build Container, Spin it Up an test
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include:
+          - network: Opal
+            features: try-runtime,opal-runtime
+            fork_from_address: wss://eu-ws-opal.unique.network:443
+          - network: Quartz
+            features: try-runtime,quartz-runtime
+            fork_from_address: wss://eu-ws-quartz.unique.network:443
+          - network: Unique
+            features: try-runtime,unique-runtime
+            fork_from_address: wss://eu-ws.unique.network:443
+
     steps:
-      - name: Skip if pull request is in Draft
+#      - name: Skip if pull request is in Draft
         # `if: github.event.pull_request.draft == true` should be kept here, at
         # the step level, rather than at the job level. The latter is not
         # recommended because when the PR is moved from "Draft" to "Ready to
@@ -45,45 +58,9 @@ jobs:
         # 4. Move it to "Ready for review"; now the workflow is passing (it was
         #    skipped) and "Check reviews" is also passing (it won't be updated
         #    until the workflow is finished)
-        if: github.event.pull_request.draft == true
-        run: exit 1
+#        if: github.event.pull_request.draft == true
+#        run: exit 1
 
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v1.0.2
-
-      - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
-        id: create_matrix
-        with:
-          matrix: |
-            network {Opal}, features {opal-runtime}, fork_from_address {'wss://eu-ws-opal.unique.network:443'}
-            network {Quartz}, features {quartz-runtime}, fork_from_address {'wss://eu-ws-quartz.unique.network:443'}
-            network {Unique}, features {unique-runtime}, fork_from_address {'wss://eu-ws.unique.network:443'}
-
-
-
-  fork-update-withdata:
-    needs: prepare-execution-marix-try-runtime
-    # The type of runner that the job will run on
-    runs-on: self-hosted-ci
-
-    name: Build Container, Spin it Up an test
-
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
-    strategy:
-      matrix:
-        include: ${{fromJson(needs.prepare-execution-marix-try-runtime.outputs.matrix)}}
-
-    steps:
 
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
