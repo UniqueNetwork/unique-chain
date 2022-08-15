@@ -639,14 +639,18 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
-                    list_benchmark!(list, extra, pallet_refungible, Refungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
+
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    list_benchmark!(list, extra, pallet_refungible, Refungible);
+
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
 
-                    #[cfg(not(feature = "unique-runtime"))]
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
 
-                    #[cfg(not(feature = "unique-runtime"))]
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
 
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
@@ -690,14 +694,18 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
-                    add_benchmark!(params, batches, pallet_refungible, Refungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
+
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    add_benchmark!(params, batches, pallet_refungible, Refungible);
+
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
 
-                    #[cfg(not(feature = "unique-runtime"))]
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
 
-                    #[cfg(not(feature = "unique-runtime"))]
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);

@@ -18,8 +18,7 @@ use frame_support::{
 	traits::{Everything, ConstU32},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-		DispatchClass, WeightToFeePolynomial, WeightToFeeCoefficients, ConstantMultiplier,
-		WeightToFeeCoefficient,
+		DispatchClass, ConstantMultiplier,
 	},
 	parameter_types, PalletId,
 };
@@ -32,8 +31,6 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use sp_arithmetic::traits::{BaseArithmetic, Unsigned};
-use smallvec::smallvec;
 use crate::{
 	runtime_common::DealWithFees, Runtime, Event, Call, Origin, PalletInfo, System, Balances,
 	Treasury, SS58Prefix, Version,
@@ -156,30 +153,11 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-/// Linear implementor of `WeightToFeePolynomial`
-pub struct LinearFee<T>(sp_std::marker::PhantomData<T>);
-
-impl<T> WeightToFeePolynomial for LinearFee<T>
-where
-	T: BaseArithmetic + From<u32> + Copy + Unsigned,
-{
-	type Balance = T;
-
-	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		smallvec!(WeightToFeeCoefficient {
-			coeff_integer: WEIGHT_TO_FEE_COEFF.into(),
-			coeff_frac: Perbill::zero(),
-			negative: false,
-			degree: 1,
-		})
-	}
-}
-
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type WeightToFee = LinearFee<Balance>;
+	type WeightToFee = pallet_configuration::WeightToFee<Self, Balance>;
 	type FeeMultiplierUpdate = ();
 }
 

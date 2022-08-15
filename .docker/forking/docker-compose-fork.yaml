@@ -3,8 +3,8 @@ version: "3.5"
 services:
   parachain-fork:
     build:
-      context: ../
-      dockerfile: .docker/forking/Dockerfile-parachain-live-fork
+      context: ./
+      dockerfile: ./Dockerfile-parachain-live-fork
     image: parachain-fork
     container_name: parachain-fork
     volumes:

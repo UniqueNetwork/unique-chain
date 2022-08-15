@@ -22,7 +22,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  build:
+  master-build-and-test:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
@@ -35,11 +35,11 @@ jobs:
       matrix:
         include:
           - network: "Opal"
-            features: " "
+            features: "opal-runtime"
           - network: "Quartz"
-            features: "--features=quartz-runtime"
+            features: "quartz-runtime"
           - network: "Unique"
-            features: "--features=unique-runtime"
+            features: "unique-runtime"
 
     steps:
       - name: Skip if pull request is in Draft

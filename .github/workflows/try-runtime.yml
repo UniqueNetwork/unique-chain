@@ -91,7 +91,7 @@ jobs:
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-try-runtime.yaml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
 
       - name: Collect Docker Logs
@@ -114,4 +114,4 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/forking/docker-compose-try-runtime.yaml" -f ".docker/forking/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down

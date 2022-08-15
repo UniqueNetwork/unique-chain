@@ -41,7 +41,6 @@ WORKDIR /unique_parachain
 RUN git clone $REPO_URL -b $BRANCH && \
     cargo build --features=$FEATURE --$PROFILE
 
-
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
 

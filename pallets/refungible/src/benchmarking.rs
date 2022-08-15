@@ -35,8 +35,8 @@ const SEED: u32 = 1;
 
 fn create_max_item_data<CrossAccountId: Ord>(
 	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
-) -> CreateRefungibleExData<CrossAccountId> {
-	CreateRefungibleExData {
+) -> CreateItemData<CrossAccountId> {
+	CreateItemData {
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
@@ -51,7 +51,7 @@ fn create_max_item<T: Config>(
 	sender: &T::CrossAccountId,
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
-	let data: CreateRefungibleExData<T::CrossAccountId> = create_max_item_data(users);
+	let data: CreateItemData<T::CrossAccountId> = create_max_item_data(users);
 	<Pallet<T>>::create_item(&collection, sender, data, &Unlimited)?;
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }

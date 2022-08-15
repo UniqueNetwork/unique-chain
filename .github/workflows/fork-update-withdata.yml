@@ -22,39 +22,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  prepare-execution-marix-fork:
-    
-    name: Prepare execution matrix for fork
-    
-    runs-on: self-hosted-ci
-    outputs:
-      matrix: ${{ steps.create_matrix.outputs.matrix }}
-    steps:
-      
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v1.0.2
-
-      - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
-        id: create_matrix
-        with:
-          matrix: |
-            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}, fork_from_address {'wss://eu-ws-opal.unique.network:443'}
-            network {Quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {'wss://eu-ws-quartz.unique.network:443'}
-            network {Unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, fork_from_address {'wss://eu-ws.unique.network:443'}
-
-
-
   fork-update-withdata:
-    needs: prepare-execution-marix-fork
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
@@ -64,7 +32,19 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix-fork.outputs.matrix)}}
+        include:
+          - network: Opal
+            features: opal-runtime
+            runtime: opal
+            fork_from_address: wss://eu-ws-opal.unique.network:443
+          - network: Quartz
+            features: quartz-runtime
+            runtime: quartz
+            fork_from_address: wss://eu-ws-quartz.unique.network:443
+          - network: Unique
+            features: unique-runtime
+            runtime: unique
+            fork_from_address: wss://eu-ws.unique.network:443
 
     steps:
       - name: Skip if pull request is in Draft
@@ -106,8 +86,6 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ matrix.mainnet_tag }}
-            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}

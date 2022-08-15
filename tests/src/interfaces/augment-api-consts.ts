@@ -42,6 +42,14 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    configuration: {
+      defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
+      defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     inflation: {
       /**
        * Number of blocks that pass between treasury balance updates due to inflation
