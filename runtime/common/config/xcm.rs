@@ -44,8 +44,7 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor, Assets};
 use sp_std::marker::PhantomData;
 use crate::{
-	runtime_common::config::substrate::LinearFee, Runtime, Call, Event, Origin, Balances,
-	ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
+	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
 };
 use up_common::{
 	types::{AccountId, Balance},
@@ -234,8 +233,11 @@ impl<
 	}
 }
 
-pub struct XcmConfig;
-impl Config for XcmConfig {
+pub struct XcmConfig<T>(PhantomData<T>);
+impl<T> Config for XcmConfig<T>
+where
+	T: pallet_configuration::Config,
+{
 	type Call = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
@@ -246,8 +248,13 @@ impl Config for XcmConfig {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader =
-		UsingOnlySelfCurrencyComponents<LinearFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+	type Trader = UsingOnlySelfCurrencyComponents<
+		pallet_configuration::WeightToFee<T, Balance>,
+		RelayLocation,
+		AccountId,
+		Balances,
+		(),
+	>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
@@ -261,7 +268,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Everything;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
@@ -274,13 +281,13 @@ impl pallet_xcm::Config for Runtime {
 
 impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type WeightInfo = ();
 	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
@@ -290,6 +297,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
-	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
