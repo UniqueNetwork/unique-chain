@@ -536,7 +536,7 @@ pub mod pallet {
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
 
-		/// The oprtation is not supported
+		/// The operation is not supported
 		UnsupportedOperation,
 
 		/// Insufficient funds to perform an action
