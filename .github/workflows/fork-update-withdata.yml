@@ -55,7 +55,7 @@ jobs:
   fork-update-withdata:
     needs: prepare-execution-marix-fork
     # The type of runner that the job will run on
-    runs-on: ci-tests
+    runs-on: self-hosted-ci
 
     name: Build Container, Spin it Up an test
 
@@ -181,6 +181,6 @@ jobs:
           name: fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz
           path: ./fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz
 
-#      - name: Stop running containers
-#        if: always()                   # run this step always
-#        run: docker-compose -f ".docker/forking/docker-compose-fork.yaml" -f ".docker/forking/docker-compose.${{ matrix.network }}.yml" down
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/forking/docker-compose-fork.yaml" -f ".docker/forking/docker-compose.${{ matrix.network }}.yml" down
