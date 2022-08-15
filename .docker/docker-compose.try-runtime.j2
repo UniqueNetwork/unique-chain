@@ -1,0 +1,15 @@
+version: "3.5"
+
+services:
+  try-runtime:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "BRANCH={{ BRANCH }}"
+        - "REPO_URL={{ REPO_URL }}"
+        - "FEATURE={{ FEATURE }}"
+        - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
+        - "FORK_FROM={{ FORK_FROM }}"
+
+    command: cargo run --features=$FEATURE --release -- try-runtime on-runtime-upgrade live --uri $FORK_FROM
+
