@@ -64,9 +64,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {Opal}, features {opal-runtime}, fork_from_address {wss://eu-ws-opal.unique.network:443}
-            network {Quartz}, features {quartz-runtime}, fork_from_address {wss://eu-ws-quartz.unique.network:443}
-            network {Unique}, features {unique-runtime}, fork_from_address {wss://eu-ws.unique.network:443}
+            network {Opal}, features {opal-runtime}, fork_from_address {'wss://eu-ws-opal.unique.network:443'}
+            network {Quartz}, features {quartz-runtime}, fork_from_address {'wss://eu-ws-quartz.unique.network:443'}
+            network {Unique}, features {unique-runtime}, fork_from_address {'wss://eu-ws.unique.network:443'}
 
 
 
