@@ -1,0 +1,24 @@
+version: "3.5"
+
+services:
+  node-parachain:
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile-parachain-upgrade
+    image: node-parachain
+    container_name: node-parachain
+    volumes:
+       - type: bind
+         source: ./launch-config-forkless.json
+         target: /polkadot-launch/launch-config.json
+         read_only: true
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"

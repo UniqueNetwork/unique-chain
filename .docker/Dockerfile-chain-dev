@@ -11,6 +11,7 @@ ENV PATH="/cargo-home/bin:$PATH"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 ARG RUST_TOOLCHAIN=
+ARG POLKADOT_BUILD_BRANCH=
 ARG BRANCH=
 ARG REPO_URL=
 ARG FEATURE=
@@ -25,4 +26,4 @@ WORKDIR /dev_chain
 
 RUN cargo build --release
 
-CMD cargo run --release $FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+CMD cargo run --release --features=$FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
