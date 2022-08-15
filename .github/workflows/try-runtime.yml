@@ -76,8 +76,8 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/forking/docker-compose.try-runtime.j2
-          output_file: .docker/forking/docker-compose.${{ matrix.network }}.yml
+          template: .docker/docker-compose.try-runtime.j2
+          output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
