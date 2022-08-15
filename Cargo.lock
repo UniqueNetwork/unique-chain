@@ -5309,6 +5309,7 @@ dependencies = [
  "pallet-balances",
  "pallet-base-fee",
  "pallet-common",
+ "pallet-configuration",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
@@ -5338,9 +5339,7 @@ dependencies = [
  "rmrk-rpc",
  "scale-info",
  "serde",
- "smallvec",
  "sp-api",
- "sp-arithmetic",
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
@@ -5741,6 +5740,22 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
+]
+
+[[package]]
+name = "pallet-configuration"
+version = "0.1.0"
+dependencies = [
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "smallvec",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

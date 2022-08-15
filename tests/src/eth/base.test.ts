@@ -15,14 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {
-  collectionIdToAddress, 
-  createEthAccount, 
-  createEthAccountWithBalance, 
-  deployFlipper, 
-  ethBalanceViaSub, 
-  GAS_ARGS, 
-  itWeb3, 
-  recordEthFee, 
+  collectionIdToAddress,
+  createEthAccount,
+  createEthAccountWithBalance,
+  deployFlipper,
+  ethBalanceViaSub,
+  GAS_ARGS,
+  itWeb3,
+  recordEthFee,
   usingWeb3,
 } from './util/helpers';
 import {expect} from 'chai';
@@ -66,7 +66,7 @@ describe('Contract calls', () => {
 
     const fee = Number(cost) / Number(UNIQUE);
     const expectedFee = 0.15;
-    const tolerance = 0.00002;
+    const tolerance = 0.001;
 
     expect(Math.abs(fee - expectedFee)).to.be.lessThan(tolerance);
   });
