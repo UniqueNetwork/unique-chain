@@ -92,7 +92,7 @@ git checkout feature/runtime-upgrade-testing
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.26
+git checkout release-v0.9.27
 cargo build --release
 ```
 

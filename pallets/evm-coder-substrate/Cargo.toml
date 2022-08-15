@@ -8,15 +8,15 @@ edition = "2021"
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 ethereum = { version = "0.12.0", default-features = false }
 evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.26" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.26" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
 
 [dependencies.codec]
