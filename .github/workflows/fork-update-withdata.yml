@@ -1,4 +1,4 @@
-name: Forkless Parachain update with no data
+name: Fork Parachain update with data
 
 # Controls when the action will run.
 on:
@@ -46,9 +46,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}, fork_from_address {wss://eu-ws-quartz.unique.network:443}
+            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}, fork_from_address {}
             network {Quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {wss://eu-ws-quartz.unique.network:443}
-            network {Unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, fork_from_address {wss://eu-ws-quartz.unique.network:443}
+            network {Unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, fork_from_address {wss://eu-ws.unique.network:443}
 
 
 
