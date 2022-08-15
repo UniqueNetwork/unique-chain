@@ -4,10 +4,7 @@ LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=
 
-ARG UNIQUE_BRANCH=develop
-
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
-ENV UNIQUE_BRANCH $UNIQUE_BRANCH
 
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
@@ -27,21 +24,6 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup target list --installed && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
-
-# ===== BUILD current version ======
-FROM rust-builder as builder-unique-current
-
-ARG PROFILE=release
-ARG FEATURE=
-ARG MAINNET_BRANCH=
-ARG REPO_URL=
-
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
-
-RUN git clone $REPO_URL -b $MAINNET_BRANCH . && \
-    cargo build --features=$FEATURE --$PROFILE
-
 
 # ===== BUILD target version ======
 FROM rust-builder as builder-unique-target
@@ -100,27 +82,21 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
     npm install --global yarn && \
-    yarn
+    yarn install
 
 RUN echo "$RUNTIME"
 
-COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm
 
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
-COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
 
 COPY --from=builder-chainql /chainql/target/release/chainql /chainql/target/release/
 
-ARG FORK_FROM=wss://eu-ws-quartz.unique.network:443
+ARG FORK_FROM=
 ENV FORK_FROM=$FORK_FROM
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" FORK_FROM && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
-    yarn start launch-config.json --test-upgrade-parachains
-
-
-
+    yarn start launch-config.json
 
 
