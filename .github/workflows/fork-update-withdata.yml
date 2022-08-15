@@ -46,7 +46,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}, fork_from_address {}
+            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}, fork_from_address {wss://eu-ws-opal.unique.network:443}
             network {Quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {wss://eu-ws-quartz.unique.network:443}
             network {Unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, fork_from_address {wss://eu-ws.unique.network:443}
 
