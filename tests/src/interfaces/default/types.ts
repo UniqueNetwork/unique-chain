@@ -994,6 +994,19 @@ export interface PalletCommonEvent extends Enum {
   readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
 }
 
+/** @name PalletConfigurationCall */
+export interface PalletConfigurationCall extends Enum {
+  readonly isSetWeightToFeeCoefficientOverride: boolean;
+  readonly asSetWeightToFeeCoefficientOverride: {
+    readonly coeff: Option<u32>;
+  } & Struct;
+  readonly isSetMinGasPriceOverride: boolean;
+  readonly asSetMinGasPriceOverride: {
+    readonly coeff: Option<u64>;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride';
+}
+
 /** @name PalletEthereumCall */
 export interface PalletEthereumCall extends Enum {
   readonly isTransact: boolean;

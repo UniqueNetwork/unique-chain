@@ -173,7 +173,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TransferNotAllowed: AugmentedError<ApiType>;
       /**
-       * Target collection doesn't support this operation
+       * The operation is not supported
        **/
       UnsupportedOperation: AugmentedError<ApiType>;
       /**

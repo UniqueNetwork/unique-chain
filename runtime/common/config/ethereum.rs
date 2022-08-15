@@ -50,13 +50,6 @@ impl pallet_evm::GasWeightMapping for FixedGasWeightMapping {
 	}
 }
 
-pub struct FixedFee;
-impl pallet_evm::FeeCalculator for FixedFee {
-	fn min_gas_price() -> (U256, u64) {
-		(MIN_GAS_PRICE.into(), 0)
-	}
-}
-
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 	fn find_author<'a, I>(digests: I) -> Option<H160>
@@ -73,7 +66,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 
 impl pallet_evm::Config for Runtime {
 	type BlockGasLimit = BlockGasLimit;
-	type FeeCalculator = FixedFee;
+	type FeeCalculator = pallet_configuration::FeeCalculator<Self>;
 	type GasWeightMapping = FixedGasWeightMapping;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self>;
