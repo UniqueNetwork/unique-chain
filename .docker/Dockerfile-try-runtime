@@ -37,9 +37,6 @@ ARG FEATURE=
 ARG REPO_URL=
 ARG BRANCH=
 
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
-
 RUN git clone $REPO_URL -b $BRANCH && \
     cargo build --features=$FEATURE --$PROFILE
 
