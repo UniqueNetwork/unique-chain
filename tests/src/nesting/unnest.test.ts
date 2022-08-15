@@ -10,6 +10,8 @@ import {
   setCollectionPermissionsExpectSuccess,
   transferExpectSuccess,
   transferFromExpectSuccess,
+  requirePallets,
+  Pallets,
 } from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -80,7 +82,9 @@ describe('Integration Test: Unnesting', () => {
     });
   });
 
-  it('ReFungible: allows the owner to successfully unnest a token', async () => {
+  it('ReFungible: allows the owner to successfully unnest a token', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
       await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});

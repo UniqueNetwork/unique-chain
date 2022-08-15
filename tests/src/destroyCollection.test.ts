@@ -25,6 +25,8 @@ import {createCollectionExpectSuccess,
   addCollectionAdminExpectSuccess,
   getCreatedCollectionCount,
   createItemExpectSuccess,
+  requirePallets,
+  Pallets,
 } from './util/helpers';
 
 chai.use(chaiAsPromised);
@@ -38,7 +40,9 @@ describe('integration test: ext. destroyCollection():', () => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await destroyCollectionExpectSuccess(collectionId);
   });
-  it('ReFungible collection can be destroyed', async () => {
+  it('ReFungible collection can be destroyed', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await destroyCollectionExpectSuccess(collectionId);
   });

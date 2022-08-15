@@ -23,8 +23,8 @@ The Unique Chain also provides:
 
 Wider Unique Ecosystem (most of it was developed during Hackusama):
 
--   [SubstraPunks Game hosted on IPFS](https://github.com/usetech-llc/substrapunks)
--   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
+-   [SubstraPunks Game hosted on IPFS](https://github.com/UniqueNetwork/substrapunks)
+-   [Unique Wallet and UI](https://wallet.unique.network)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
 Please see our [walk-through instructions](doc/hackusama_walk_through.md) to try everything out!

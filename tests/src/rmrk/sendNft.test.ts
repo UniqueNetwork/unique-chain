@@ -3,10 +3,14 @@ import {getApiConnection} from '../substrate/substrate-api';
 import {createCollection, mintNft, sendNft} from './util/tx';
 import {NftIdTuple} from './util/fetch';
 import {isNftChildOfAnother, expectTxFailure} from './util/helpers';
+import {requirePallets, Pallets} from '../util/helpers';
 
 describe('integration test: send NFT', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  before(async function () {
+    api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
+  });
 
   const maxNftId = 0xFFFFFFFF;
 

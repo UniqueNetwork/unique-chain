@@ -16,9 +16,13 @@
 
 import {expect} from 'chai';
 import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
-import {scheduleExpectSuccess, waitNewBlocks} from '../util/helpers';
+import {scheduleExpectSuccess, waitNewBlocks, requirePallets, Pallets} from '../util/helpers';
 
 describe('Scheduing EVM smart contracts', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.Scheduler]);
+  });
+
   itWeb3('Successfully schedules and periodically executes an EVM contract', async ({api, web3, privateKeyWrapper}) => {
     const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, deployer);

@@ -28,6 +28,7 @@ import {default as usingApi, executeTransaction, submitTransactionAsync, submitT
 import {hexToStr, strToUTF16, utf16ToStr} from './util';
 import {UpDataStructsRpcCollection, UpDataStructsCreateItemData, UpDataStructsProperty} from '@polkadot/types/lookup';
 import {UpDataStructsTokenChild} from '../interfaces';
+import {Context} from 'mocha';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -37,6 +38,66 @@ export type CrossAccountId = {
 } | {
   Ethereum: string,
 };
+
+
+export enum Pallets {
+  Inflation = 'inflation',
+  RmrkCore = 'rmrkcore',
+  RmrkEquip = 'rmrkequip',
+  ReFungible = 'refungible',
+  Fungible = 'fungible',
+  NFT = 'nonfungible',
+  Scheduler = 'scheduler',
+}
+
+export async function isUnique(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+
+    return chain.eq('UNIQUE');
+  });
+}
+
+export async function isQuartz(): Promise<boolean> {
+  return usingApi(async api => {
+    const chain = await api.rpc.system.chain();
+    
+    return chain.eq('QUARTZ');
+  });
+}
+
+let modulesNames: any;
+export function getModuleNames(api: ApiPromise): string[] {
+  if (typeof modulesNames === 'undefined') 
+    modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+  return modulesNames;
+}
+
+export async function missingRequiredPallets(requiredPallets: string[]): Promise<string[]> {
+  return await usingApi(async api => {
+    const pallets = getModuleNames(api);
+
+    return requiredPallets.filter(p => !pallets.includes(p));
+  });
+}
+
+export async function checkPalletsPresence(requiredPallets: string[]): Promise<boolean> {
+  return (await missingRequiredPallets(requiredPallets)).length == 0;
+}
+
+export async function requirePallets(mocha: Context, requiredPallets: string[]) {
+  const missingPallets = await missingRequiredPallets(requiredPallets);
+
+  if (missingPallets.length > 0) {
+    const skippingTestMsg = `\tSkipping test "${mocha.test?.title}".`;
+    const missingPalletsMsg = `\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
+    const skipMsg = `${skippingTestMsg}\n${missingPalletsMsg}`;
+
+    console.error('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+
+    mocha.skip();
+  }
+}
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {

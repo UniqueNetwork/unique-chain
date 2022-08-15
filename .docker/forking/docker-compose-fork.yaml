@@ -1,0 +1,28 @@
+version: "3.5"
+
+services:
+  parachain-fork:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile-parachain-live-fork
+    image: parachain-fork
+    container_name: parachain-fork
+    volumes:
+       - type: bind
+         source: ./launch-config-fork.json
+         target: /polkadot-launch/launch-config.json
+         read_only: true
+       - type: bind
+         source: ./fork.jsonnet
+         target: /polkadot-launch/fork.jsonnet
+         read_only: true          
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"

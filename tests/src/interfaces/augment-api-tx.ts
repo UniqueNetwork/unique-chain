@@ -104,6 +104,14 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    configuration: {
+      setMinGasPriceOverride: AugmentedSubmittable<(coeff: Option<u64> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<u64>]>;
+      setWeightToFeeCoefficientOverride: AugmentedSubmittable<(coeff: Option<u32> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<u32>]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     cumulusXcm: {
       /**
        * Generic tx

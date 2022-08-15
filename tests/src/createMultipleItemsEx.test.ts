@@ -16,9 +16,9 @@
 
 import {expect} from 'chai';
 import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties} from './util/helpers';
+import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createCollectionWithPropsExpectSuccess, getBalance, getLastTokenId, getTokenProperties, requirePallets, Pallets} from './util/helpers';
 
-describe.only('Integration Test: createMultipleItemsEx', () => {
+describe('Integration Test: createMultipleItemsEx', () => {
   it('can initialize multiple NFT with different owners', async () => {
     const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await usingApi(async (api, privateKeyWrapper) => {
@@ -146,7 +146,9 @@ describe.only('Integration Test: createMultipleItemsEx', () => {
     });
   });
 
-  it('can initialize an RFT with multiple owners', async () => {
+  it('can initialize an RFT with multiple owners', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const bob = privateKeyWrapper('//Bob');
@@ -178,7 +180,9 @@ describe.only('Integration Test: createMultipleItemsEx', () => {
     });
   });
 
-  it('can initialize multiple RFTs with the same owner', async () => {
+  it('can initialize multiple RFTs with the same owner', async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+
     await usingApi(async (api, privateKeyWrapper) => {
       const alice = privateKeyWrapper('//Alice');
       const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
@@ -386,27 +390,6 @@ describe('Negative test: createMultipleItemsEx', () => {
       const tokens = await api.query.nonfungible.tokenData.entries(collection);
       const json = tokens.map(([, token]) => token.toJSON());
       expect(json).to.be.deep.equal(data);
-    });
-  });
-
-  it('fails when trying to set multiple owners when creating multiple refungibles', async () => {
-    const collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      // Polkadot requires map, and yet requires keys to be JSON encoded
-      const users = new Map();
-      users.set(JSON.stringify({substrate: alice.address}), 1);
-      users.set(JSON.stringify({substrate: bob.address}), 1);
-
-      // TODO: better error message?
-      await expect(executeTransaction(api, alice, api.tx.unique.createMultipleItemsEx(collection, {
-        RefungibleMultipleItems: [
-          {users},
-          {users},
-        ],
-      }))).to.be.rejectedWith(/^refungible\.NotRefungibleDataUsedToMintFungibleCollectionToken$/);
     });
   });
 });

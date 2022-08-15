@@ -22,13 +22,7 @@ interface ERC20Events {
 	);
 }
 
-// Selector: 79cc6790
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-}
-
-// Selector: 7d9262e6
+// Selector: 6cf113cd
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -174,6 +168,27 @@ interface Collection is Dummy, ERC165 {
 	//
 	// Selector: setCollectionMintMode(bool) 00018e84
 	function setCollectionMintMode(bool mode) external;
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) external view returns (bool);
+
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() external returns (string memory);
+}
+
+// Selector: 79cc6790
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
 }
 
 // Selector: 942e8b22

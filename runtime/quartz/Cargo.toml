@@ -16,7 +16,7 @@ version = '0.9.24'
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
-default = ['std']
+default = ['std', 'quartz-runtime']
 runtime-benchmarks = [
     'hex-literal',
     'frame-benchmarking',
@@ -87,6 +87,7 @@ std = [
     'parachain-info/std',
     'serde',
     'pallet-inflation/std',
+    'pallet-configuration/std',
     'pallet-common/std',
     'pallet-structure/std',
     'pallet-fungible/std',
@@ -113,11 +114,16 @@ std = [
     'xcm/std',
     'xcm-builder/std',
     'xcm-executor/std',
-    'unique-runtime-common/std',
+    'up-common/std',
 
     "orml-vesting/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
+quartz-runtime = []
+
+refungible = []
+scheduler = []
+rmrk = []
 
 ################################################################################
 # Substrate Dependencies
@@ -403,7 +409,7 @@ path = "../../primitives/rmrk-rpc"
 
 [dependencies]
 log = { version = "0.4.16", default-features = false }
-unique-runtime-common = { path = "../common", default-features = false }
+up-common = { path = "../../primitives/common", default-features = false }
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
@@ -413,6 +419,7 @@ up-rpc = { path = "../../primitives/rpc", default-features = false }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
+pallet-configuration = { default-features = false, path = "../../pallets/configuration" }
 pallet-common = { default-features = false, path = "../../pallets/common" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }
 pallet-fungible = { default-features = false, path = "../../pallets/fungible" }
@@ -432,6 +439,8 @@ pallet-ethereum = { default-features = false, git = "https://github.com/uniquene
 pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.24' }
 
 ################################################################################
 # Build Dependencies
