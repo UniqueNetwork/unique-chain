@@ -21,11 +21,11 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  fork-update-withdata:
+  try-runtime:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
-    name: Build Container, Spin it Up an test
+    name: ${{ matrix.network }} - Try-runtime
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -43,7 +43,7 @@ jobs:
             fork_from_address: wss://eu-ws.unique.network:443
 
     steps:
-#      - name: Skip if pull request is in Draft
+      - name: Skip if pull request is in Draft
         # `if: github.event.pull_request.draft == true` should be kept here, at
         # the step level, rather than at the job level. The latter is not
         # recommended because when the PR is moved from "Draft" to "Ready to
@@ -58,8 +58,8 @@ jobs:
         # 4. Move it to "Ready for review"; now the workflow is passing (it was
         #    skipped) and "Check reviews" is also passing (it won't be updated
         #    until the workflow is finished)
-#        if: github.event.pull_request.draft == true
-#        run: exit 1
+        if: github.event.pull_request.draft == true
+        run: exit 1
 
 
       - name: Clean Workspace
@@ -81,7 +81,6 @@ jobs:
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
             FORK_FROM=${{ matrix.fork_from_address }}
