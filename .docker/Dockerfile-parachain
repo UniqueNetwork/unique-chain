@@ -36,7 +36,7 @@ ARG FEATURE=
 ARG REPO_URL=
 ARG BRANCH=
 
-RUN mkdir /unique_parachain
+
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH && \
@@ -48,7 +48,7 @@ FROM rust-builder as builder-polkadot
 ARG POLKADOT_BUILD_BRANCH=
 ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
 
-RUN mkdir /unique_parachain
+
 WORKDIR /unique_parachain
 
 RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/polkadot.git && \
