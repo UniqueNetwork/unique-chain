@@ -7,7 +7,8 @@ ARG RUST_TOOLCHAIN=
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
-
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && \
     apt-get install -y curl cmake pkg-config libssl-dev git clang && \
