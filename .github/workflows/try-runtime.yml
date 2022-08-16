@@ -1,4 +1,4 @@
-name: MASTER - Build & Test
+name: Try Runtime
 
 # Controls when the action will run.
 on:
@@ -9,7 +9,7 @@ on:
     types:
       - opened
       - reopened
-      - synchronize #commit(s) pushed to the pull request
+      - synchronize   #commit(s) pushed to the pull request
       - ready_for_review
 
   # Allows you to run this workflow manually from the Actions tab
@@ -21,28 +21,29 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-  master-build-and-test:
+  fork-update-withdata:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
 
+    name: Build Container, Spin it Up an test
 
-    name: ${{ matrix.network }} - Build and Test
-
-    continue-on-error: true         #Do not stop testing of matrix runs failed.
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
         include:
-          - network: "Opal"
-            features: "opal-runtime"
-          - network: "Quartz"
-            features: "quartz-runtime"
-          - network: "Unique"
-            features: "unique-runtime"
+          - network: Opal
+            features: try-runtime,opal-runtime
+            fork_from_address: wss://eu-ws-opal.unique.network:443
+          - network: Quartz
+            features: try-runtime,quartz-runtime
+            fork_from_address: wss://eu-ws-quartz.unique.network:443
+          - network: Unique
+            features: try-runtime,unique-runtime
+            fork_from_address: wss://eu-ws.unique.network:443
 
     steps:
-      - name: Skip if pull request is in Draft
+#      - name: Skip if pull request is in Draft
         # `if: github.event.pull_request.draft == true` should be kept here, at
         # the step level, rather than at the job level. The latter is not
         # recommended because when the PR is moved from "Draft" to "Ready to
@@ -57,8 +58,9 @@ jobs:
         # 4. Move it to "Ready for review"; now the workflow is passing (it was
         #    skipped) and "Check reviews" is also passing (it won't be updated
         #    until the workflow is finished)
-        if: github.event.pull_request.draft == true
-        run: exit 1
+#        if: github.event.pull_request.draft == true
+#        run: exit 1
+
 
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -66,7 +68,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -74,50 +76,42 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-master.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          template: .docker/docker-compose.try-runtime.j2
+          output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
+            FORK_FROM=${{ matrix.fork_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
+
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
-      - uses: actions/setup-node@v3
+
+      - name: Collect Docker Logs
+        if: success() || failure()
+        uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          node-version: 16
+          dest: './try-runtime-logs.${{ matrix.features }}'
+          images: 'try-runtime' 
 
-      - name: Run tests
-        run: |
-          cd tests
-          yarn install
-          yarn add mochawesome
-          echo "Ready to start tests"
-          node scripts/readyness.js
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
+      - name: Tar logs
+        if: success() || failure()
+        run: tar cvzf ./try-runtime-logs.${{ matrix.features }}.tgz ./try-runtime-logs.${{ matrix.features }}
 
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v8
-        id: test-report
-        if: success() || failure()    # run this step even if previous step failed
+      - name: Upload logs to GitHub
+        if: success() || failure()
+        uses: actions/upload-artifact@master
         with:
-          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-
-      - name: Read output variables
-        run: |
-          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+          name: try-runtime-logs.${{ matrix.features }}.tgz
+          path: ./try-runtime-logs.${{ matrix.features }}.tgz
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
