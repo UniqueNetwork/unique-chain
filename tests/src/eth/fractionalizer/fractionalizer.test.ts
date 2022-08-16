@@ -20,7 +20,7 @@ import {ApiPromise} from '@polkadot/api';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {readFile} from 'fs/promises';
 import {executeTransaction, submitTransactionAsync} from '../../substrate/substrate-api';
-import {getCreateCollectionResult, getCreateItemResult, UNIQUE} from '../../util/helpers';
+import {getCreateCollectionResult, getCreateItemResult, UNIQUE, requirePallets, Pallets} from '../../util/helpers';
 import {collectionIdToAddress, CompiledContract, createEthAccountWithBalance, createNonfungibleCollection, createRefungibleCollection, GAS_ARGS, itWeb3, tokenIdFromAddress, uniqueNFT, uniqueRefungible, uniqueRefungibleToken} from '../util/helpers';
 import {Contract} from 'web3-eth-contract';
 import * as solc from 'solc';
@@ -116,6 +116,10 @@ async function createRFTToken(api: ApiPromise, web3: Web3, owner: string, fracti
 }
 
 describe('Fractionalizer contract usage', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Set RFT collection', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const fractionalizer = await deployFractionalizer(web3, owner);
@@ -224,6 +228,10 @@ describe('Fractionalizer contract usage', () => {
 
 
 describe('Negative Integration Tests for fractionalizer', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('call setRFTCollection twice', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
