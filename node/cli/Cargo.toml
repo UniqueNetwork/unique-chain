@@ -290,7 +290,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'unique-node'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = "0.9.24"
+version = "0.9.27"
 
 [[bin]]
 name = 'unique-collator'

@@ -1,5 +1,5 @@
 <!-- bureaucrate goes here -->
-## [v0.9.25] 2022-08-16
+## [v0.9.27] 2022-08-16
 
 ### Bugfixes
 
