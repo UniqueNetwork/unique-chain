@@ -14,42 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! struct-versioning
-//! The crate contains procedural macros for versioning data structures.
-//! Macros `versioned` generate versioned variants of a struct.
-//!
-//! Example:
-//! #[struct_versioning::versioned(version = 2, upper)]
-//! ...
-//! pub struct ItemData {
-//! 	pub const_data: BoundedVec<u8, CustomDataLimit>,
-//!
-//! 	#[version(..2)]
-//! 	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-//! }
-//! ...
-//! `#[version(..2)]` that means that any version before 2 will be upgraded to 2 via the `upper` function.
-//! When version become 3 `#[struct_versioning::versioned(version = 3, upper)]` this field will be removed.
-//! *upper* - generate From impls, which converts old version of structs to new
-//! In this case, the upgrade is described in `on_runtime_upgrade` using the `translate_values` substrate feature
-//!
-//! #[pallet::hooks]
-//! impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-//! 	fn on_runtime_upgrade() -> Weight {
-//! 		if StorageVersion::get::<Pallet<T>>() < StorageVersion::new(1) {
-//! 			<TokenData<T>>::translate_values::<ItemDataVersion1, _>(|v| {
-//! 				Some(<ItemDataVersion2>::from(v))
-//! 			})
-//! 		}
-//! 		0
-//! 	}
-//! }
-//!
-//! Another functionality
-///
-/// `#[versioned(version = 1[, first_version = 1][, upper][, versions])]`
-/// - *first_version* - allows to skip generation of structs, which predates first supported version
-/// - *versions* - generate enum, which contains all possible versions of struct
+#![doc = include_str!("../README.md")]
+
 use proc_macro::TokenStream;
 use quote::format_ident;
 use syn::{
