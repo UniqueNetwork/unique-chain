@@ -32,11 +32,11 @@ jobs:
       matrix:
         include:
           - network: "Opal"
-            features: " "
+            features: "opal-runtime"
           - network: "Quartz"
-            features: "--features=quartz-runtime"
+            features: "quartz-runtime"
           - network: "Unique"
-            features: "--features=unique-runtime"
+            features: "unique-runtime"
 
     steps:
       - name: Skip if pull request is in Draft
