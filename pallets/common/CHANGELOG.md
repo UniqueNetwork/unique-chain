@@ -1,3 +1,7 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+
 <!-- bureaucrate goes here -->
 ## [v0.1.5] 2022-08-16
 
@@ -17,10 +21,6 @@ straightforward
 Upstream-Change: https://github.com/paritytech/substrate/pull/11490
 
 - build: Upgrade polkadot to v0.9.25 cdfb9bdc7b205ff1b5134f034ef9973d769e5e6b
-
-# Change Log
-
-All notable changes to this project will be documented in this file.
 
 ## [0.1.3] - 2022-07-25
 ### Add
