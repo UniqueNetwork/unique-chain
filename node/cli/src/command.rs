@@ -407,7 +407,9 @@ pub fn run() -> Result<()> {
 				BenchmarkCmd::Machine(cmd) => {
 					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
 				}
-				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
+				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Extrinsic(_) => {
+					Err("Unsupported benchmarking command".into())
+				}
 			}
 		}
 		Some(Subcommand::TryRuntime(cmd)) => {
