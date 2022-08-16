@@ -651,6 +651,10 @@ describe('Refungible: Substrate calls', () => {
 });
 
 describe('ERC 1633 implementation', () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.ReFungible]);
+  });
+
   itWeb3('Parent NFT token address and id', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
