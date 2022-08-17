@@ -179,7 +179,12 @@ impl<T: Config> FungibleHandle<T> {
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 		let amounts = amounts
 			.into_iter()
-			.map(|(to, amount)| Ok((T::CrossAccountId::from_eth(to), amount.try_into().map_err(|_| "amount overflow")?)))
+			.map(|(to, amount)| {
+				Ok((
+					T::CrossAccountId::from_eth(to),
+					amount.try_into().map_err(|_| "amount overflow")?,
+				))
+			})
 			.collect::<Result<_>>()?;
 
 		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)

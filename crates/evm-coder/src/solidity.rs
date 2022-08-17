@@ -192,7 +192,10 @@ macro_rules! impl_tuples {
 				write!(writer, "{}", tc.collect_tuple::<Self>())
 			}
 			fn is_simple() -> bool {
-				false
+				true
+				$(
+					&& <$ident>::is_simple()
+				)*
 			}
 			#[allow(unused_assignments)]
 			fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {

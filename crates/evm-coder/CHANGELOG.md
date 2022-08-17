@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2022-08-29
+
+### Fixed
+
+ - Parsing simple values.
+
 <!-- bureaucrate goes here -->
 ## [v0.1.2] 2022-08-19
 
