@@ -111,39 +111,38 @@ describe('Fungible: Plain calls', () => {
       [receiver1, 10],
       [receiver2, 20],
       [receiver3, 30],
-    ]).call();
-    console.log(result);
+    ]).send();
     const events = normalizeEvents(result.events);
 
-    expect(events).to.be.deep.equal([
-      {
-        address:collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver1,
-          value: '10',
-        },
+    expect(events).to.be.deep.contain({
+      address:collectionIdAddress,
+      event: 'Transfer',
+      args: {
+        from: '0x0000000000000000000000000000000000000000',
+        to: receiver1,
+        value: '10',
       },
-      {
-        address:collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver2,
-          value: '20',
-        },
+    });
+    
+    expect(events).to.be.deep.contain({
+      address:collectionIdAddress,
+      event: 'Transfer',
+      args: {
+        from: '0x0000000000000000000000000000000000000000',
+        to: receiver2,
+        value: '20',
       },
-      {
-        address:collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver3,
-          value: '30',
-        },
+    });
+    
+    expect(events).to.be.deep.contain({
+      address:collectionIdAddress,
+      event: 'Transfer',
+      args: {
+        from: '0x0000000000000000000000000000000000000000',
+        to: receiver3,
+        value: '30',
       },
-    ]);
+    });
   });
 
   itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
