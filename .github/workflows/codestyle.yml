@@ -13,6 +13,10 @@ on:
 jobs:
   rustfmt:
     runs-on: self-hosted-ci
+    
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: Skip if pull request is in Draft
@@ -47,6 +51,10 @@ jobs:
   clippy:
     if: ${{ false }}
     runs-on: self-hosted-ci
+  
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: Skip if pull request is in Draft

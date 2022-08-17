@@ -27,6 +27,10 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
     name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.

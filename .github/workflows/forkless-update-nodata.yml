@@ -29,6 +29,11 @@ jobs:
     runs-on: self-hosted-ci
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
       
       - name: Clean Workspace
@@ -57,6 +62,11 @@ jobs:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,medium]
+    
+    concurrency: 
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
