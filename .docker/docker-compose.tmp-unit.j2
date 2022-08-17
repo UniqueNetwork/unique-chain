@@ -4,6 +4,6 @@ services:
   node-dev:
     build:
       args:
-        - "RUST_TOOLCHAIN=${{ RUST_TOOLCHAIN }}"
-        - "COMMAND=${{ COMMAND }}"
-    command: ${{ COMMAND }}
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "COMMAND={{ COMMAND }}"
+    command: {{ COMMAND }}
