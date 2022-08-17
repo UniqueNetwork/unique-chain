@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {default as usingApi, submitTransactionAsync} from './substrate/substrate-api';
-import {IKeyringPair} from '@polkadot/types/types';
+import {IKeyringPair, ITuple} from '@polkadot/types/types';
 import {
   
   createMultipleItemsExpectSuccess,
@@ -33,26 +33,38 @@ import {
   U128_MAX,
   burnFromExpectSuccess,
   UNIQUE,
+  getModuleNames,
+  Pallets,
+  getBlockNumber,
 } from './util/helpers';
 
-import chai from 'chai';
+import chai, {use} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import getBalance from './substrate/get-balance';
-import { unique } from './interfaces/definitions';
+import getBalance, {getBalanceSingle} from './substrate/get-balance';
+import {unique} from './interfaces/definitions';
+import {usingPlaygrounds} from './util/playgrounds';
+import {default as waitNewBlocks} from './substrate/wait-new-blocks';
+
+import BN from 'bn.js';
+import {mnemonicGenerate} from '@polkadot/util-crypto';
+import {UniqueHelper} from './util/playgrounds/unique';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 let palletAdmin: IKeyringPair;
+let nominal: bigint; 
 
 describe('integration test: AppPromotion', () => {
-  before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
       palletAdmin = privateKeyWrapper('//palletAdmin');
-      const tx = api.tx.sudo.sudo(api.tx.promotion.setAdminAddress(palletAdmin.addressRaw));
+      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(palletAdmin.addressRaw));
+      nominal = helper.balance.getOneTokenNominal();
       await submitTransactionAsync(alice, tx);
     });
   });
@@ -69,22 +81,110 @@ describe('integration test: AppPromotion', () => {
     // assert:  query appPromotion.staked(Alice) equal [100, 200]
     // assert:  query appPromotion.totalStaked() increased by 200
     
-    await usingApi(async (api, privateKeyWrapper) => {
-      await submitTransactionAsync(alice, api.tx.balances.transfer(bob.addressRaw, 10n * UNIQUE));
-      const [alicesBalanceBefore, bobsBalanceBefore] = await getBalance(api, [alice.address, bob.address]);
+    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
+      const staker = await createUser();
+   
+      const firstStakedBlock = await helper.chain.getLatestBlockNumber();
       
-      console.log(`alice: ${alicesBalanceBefore} \n bob: ${bobsBalanceBefore}`);
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
+      expect((await helper.api!.rpc.unique.totalStakingLocked(normalizeAccountId(staker))).toBigInt()).to.be.equal(nominal);
+      expect(9n * nominal - await helper.balance.getSubstrate(staker.address) <= nominal / 2n).to.be.true;
+      expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(staker))).toBigInt()).to.be.equal(nominal);
+      expect((await helper.api!.rpc.unique.totalStaked()).toBigInt()).to.be.equal(totalStakedBefore + nominal);
       
-      await submitTransactionAsync(alice, api.tx.promotion.stake(1n * UNIQUE));
-      await submitTransactionAsync(bob, api.tx.promotion.stake(1n * UNIQUE));
-      const alice_total_staked = (await (api.rpc.unique.totalStaked(normalizeAccountId(alice)))).toBigInt();
-      const bob_total_staked = (await api.rpc.unique.totalStaked(normalizeAccountId(bob))).toBigInt();
-       
-      console.log(`alice staked: ${alice_total_staked} \n bob staked: ${bob_total_staked}, total staked: ${(await api.rpc.unique.totalStaked()).toBigInt()}`);
+      await waitNewBlocks(helper.api!, 1);
+      const secondStakedBlock = await helper.chain.getLatestBlockNumber();
       
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
+      expect((await helper.api!.rpc.unique.totalStakingLocked(normalizeAccountId(staker))).toBigInt()).to.be.equal(3n * nominal);
       
+      const stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([block, amount]) => [block.toBigInt(), amount.toBigInt()]);
+      expect(stakedPerBlock.map((x) => x[1])).to.be.deep.equal([nominal, 2n * nominal]);
+    });
+  });
+  
+  it('will throws if stake amount is more than total free balance', async () => {
+    // arrange: Alice balance = 1000
+    // assert:  Alice calls appPromotion.stake(1000) throws /// because Alice needs some fee
+
+    // act:     Alice calls appPromotion.stake(700)
+    // assert:  Alice calls appPromotion.stake(400) throws /// because Alice has ~300 free QTZ and 700 locked
+
+    await usingPlaygrounds(async helper => { 
       
+      const staker = await createUser();
+      
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.rejected;
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(7n * nominal))).to.be.eventually.fulfilled;
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(4n * nominal))).to.be.eventually.rejected;
+      
+    });
+  });
+  
+  it.skip('for different accounts in one block is possible', async () => {
+    // arrange: Alice, Bob, Charlie, Dave balance = 1000
+    // arrange: Alice, Bob, Charlie, Dave calls appPromotion.stake(100) in the same time
+
+    // assert:  query appPromotion.staked(Alice/Bob/Charlie/Dave) equal [100]
+    await usingPlaygrounds(async helper => {
+      const crowd = await creteAccounts([10n, 10n, 10n, 10n], alice, helper);
+      // const promises = crowd.map(async user => submitTransactionAsync(user, helper.api!.tx.promotion.stake(nominal)));
+      // await expect(Promise.all(promises)).to.be.eventually.fulfilled;
     });
   });
 
 });
+
+describe.skip('unstake balance extrinsic', () => {
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
+      alice = privateKeyWrapper('//Alice');
+      bob = privateKeyWrapper('//Bob');
+      palletAdmin = privateKeyWrapper('//palletAdmin');
+      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(palletAdmin.addressRaw));
+      nominal = helper.balance.getOneTokenNominal();
+      await submitTransactionAsync(alice, tx);
+    });
+  });
+  it('will change balance state to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
+    // arrange: Alice balance = 1000
+    // arrange: Alice calls appPromotion.stake(Alice, 500)
+
+    // act:     Alice calls appPromotion.unstake(300)
+    // assert:  Alice reserved balance to equal 300
+    // assert:  query appPromotion.staked(Alice) equal [200] /// 500 - 300
+    // assert:  query appPromotion.pendingUnstake(Alice) to equal [300]
+    // assert:  query appPromotion.totalStaked() decreased by 300
+  });
+});
+
+
+
+async function createUser(amount?: bigint) {
+  return await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+    const user: IKeyringPair = privateKeyWrapper(`//Alice+${(new Date()).getTime()}`);
+    await helper.balance.transferToSubstrate(alice, user.address, amount ? amount : 10n * helper.balance.getOneTokenNominal());
+    return user;
+  });
+}
+
+const creteAccounts = async (balances: bigint[], donor: IKeyringPair, helper: UniqueHelper) => {
+  let nonce = await helper.chain.getNonce(donor.address);
+  const tokenNominal = helper.balance.getOneTokenNominal();
+  const transactions = [];
+  const accounts = [];
+  for (const balance of balances) {
+    const recepient = helper.util.fromSeed(mnemonicGenerate());
+    accounts.push(recepient);
+    if (balance !== 0n){
+      const tx = helper.constructApiCall('api.tx.balances.transfer', [{Id: recepient.address}, balance * tokenNominal]);
+      transactions.push(helper.signTransaction(donor, tx, 'account generation', {nonce}));
+      nonce++;
+    }
+  }
+
+  await Promise.all(transactions);
+  return accounts;
+};

@@ -703,6 +703,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
       /**
+       * Returns the total amount of unstaked tokens
+       **/
+      pendingUnstake: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
        * Get property permissions, optionally limited to the provided keys
        **/
       propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;

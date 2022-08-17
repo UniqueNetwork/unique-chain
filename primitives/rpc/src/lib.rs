@@ -129,5 +129,6 @@ sp_api::decl_runtime_apis! {
 		fn total_staked(staker: Option<CrossAccountId>) -> Result<u128>;
 		fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>>;
 		fn total_staking_locked(staker: CrossAccountId) -> Result<u128>;
+		fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128>;
 	}
 }

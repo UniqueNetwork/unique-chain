@@ -4,7 +4,10 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
-import {DevUniqueHelper} from './unique.dev';
+import * as defs from '../../interfaces/definitions';
+import {ApiPromise, WsProvider} from '@polkadot/api';
+import { UniqueHelper } from './unique';
+
 
 class SilentLogger {
   log(msg: any, level: any): void { }
@@ -15,13 +18,53 @@ class SilentLogger {
   };
 }
 
-export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+
+class DevUniqueHelper extends UniqueHelper {
+  async connect(wsEndpoint: string, listeners?: any): Promise<void> {
+    const wsProvider = new WsProvider(wsEndpoint);
+    this.api = new ApiPromise({
+      provider: wsProvider, 
+      signedExtensions: {
+        ContractHelpers: {
+          extrinsic: {},
+          payload: {},
+        },
+        FakeTransactionFinalizer: {
+          extrinsic: {},
+          payload: {},
+        },
+      },
+      rpc: {
+        unique: defs.unique.rpc,
+        rmrk: defs.rmrk.rpc,
+        eth: {
+          feeHistory: {
+            description: 'Dummy',
+            params: [],
+            type: 'u8',
+          },
+          maxPriorityFeePerGas: {
+            description: 'Dummy',
+            params: [],
+            type: 'u8',
+          },
+        },
+      },
+    });
+    await this.api.isReadyOrError;
+    this.network = await UniqueHelper.detectNetwork(this.api);
+  }
+}
+
+
+export const usingPlaygrounds = async <T = void> (code: (helper: UniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<T>) => {
   // TODO: Remove, this is temporary: Filter unneeded API output
   // (Jaco promised it will be removed in the next version)
   const consoleErr = console.error;
   const consoleLog = console.log;
   const consoleWarn = console.warn;
-
+  let result: T = null as unknown as T;
+  
   const outFn = (printer: any) => (...args: any[]) => {
     for (const arg of args) {
       if (typeof arg !== 'string')
@@ -41,7 +84,7 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
     await helper.connect(config.substrateUrl);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const privateKey = (seed: string) => helper.util.fromSeed(seed, ss58Format);
-    await code(helper, privateKey);
+    result = await code(helper, privateKey);
   }
   finally {
     await helper.disconnect();
@@ -49,4 +92,5 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
     console.log = consoleLog;
     console.warn = consoleWarn;
   }
+  return result as T;
 };

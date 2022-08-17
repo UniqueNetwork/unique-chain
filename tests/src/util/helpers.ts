@@ -48,6 +48,7 @@ export enum Pallets {
   Fungible = 'fungible',
   NFT = 'nonfungible',
   Scheduler = 'scheduler',
+  AppPromotion = 'promotion',
 }
 
 export async function isUnique(): Promise<boolean> {
