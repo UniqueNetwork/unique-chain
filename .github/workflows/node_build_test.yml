@@ -78,19 +78,16 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          output_file: .docker/docker-compose.int.${{ matrix.network }}.yml
           variables: |
-            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            FEATURE=${{ matrix.features }}
-            BRANCH=${{ github.head_ref }}
+            COMMAND='cargo run --release --features=${{ matrix.features }} -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external'
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.int.${{ matrix.network }}.yml" up -d --build
 
       - uses: actions/setup-node@v3
         with:
@@ -123,4 +120,61 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.int.${{ matrix.network }}.yml" down
+
+  dev_unit_test:
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci,medium]
+    timeout-minutes: 1380
+
+    name: Unit Test All Nets
+
+    steps:
+      - name: Skip if pull request is in Draft
+        # `if: github.event.pull_request.draft == true` should be kept here, at
+        # the step level, rather than at the job level. The latter is not
+        # recommended because when the PR is moved from "Draft" to "Ready to
+        # review" the workflow will immediately be passing (since it was skipped),
+        # even though it hasn't actually ran, since it takes a few seconds for
+        # the workflow to start. This is also disclosed in:
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/17
+        # That scenario would open an opportunity for the check to be bypassed:
+        # 1. Get your PR approved
+        # 2. Move it to Draft
+        # 3. Push whatever commits you want
+        # 4. Move it to "Ready for review"; now the workflow is passing (it was
+        #    skipped) and "Check reviews" is also passing (it won't be updated
+        #    until the workflow is finished)
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-unit.j2
+          output_file: .docker/docker-compose.unit.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            COMMAND='cargo test --features=limit-testing'
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.${{ matrix.network }}.yml" up -d --build
+
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.${{ matrix.network }}.yml" down
