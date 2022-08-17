@@ -273,7 +273,7 @@ describe('Negative Test: Scheduling', () => {
 
       await waitNewBlocks(waitForBlocks);
 
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
+      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
     });
   });
 });
