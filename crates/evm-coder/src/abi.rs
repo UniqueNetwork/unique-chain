@@ -29,6 +29,7 @@ use crate::{
 	types::{string, self},
 };
 use crate::execution::Result;
+use crate::solidity::SolidityTypeName;
 
 const ABI_ALIGNMENT: usize = 32;
 
@@ -75,8 +76,8 @@ impl<'i> AbiReader<'i> {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
-		// Verify padding is empty
-		if !buf[pad_start..pad_size].iter().all(|&v| v == 0) {
+		let is_pad_zeroed = !buf[pad_start..pad_size].iter().all(|&v| v == 0);
+		if is_pad_zeroed {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
 		block.copy_from_slice(&buf[block_start..block_size]);
@@ -127,7 +128,7 @@ impl<'i> AbiReader<'i> {
 	}
 
 	pub fn bytes(&mut self) -> Result<Vec<u8>> {
-		let mut subresult = self.subresult()?;
+		let mut subresult = self.subresult(None)?;
 		let length = subresult.read_usize()?;
 		if subresult.buf.len() < subresult.offset + length {
 			return Err(Error::Error(ExitError::OutOfOffset));
@@ -163,15 +164,26 @@ impl<'i> AbiReader<'i> {
 		Ok(usize::from_be_bytes(self.read_padleft()?))
 	}
 
-	fn subresult(&mut self) -> Result<AbiReader<'i>> {
-		let offset = self.read_usize()?;
+	/// If `size` is [`None`] then [`Self::offset`] and [`Self::subresult_offset`] evals from [`Self::buf`].
+	fn subresult(&mut self, size: Option<usize>) -> Result<AbiReader<'i>> {
+		let subresult_offset = self.subresult_offset;
+		let offset = if let Some(size) = size {
+			self.offset += size;
+			self.subresult_offset += size;
+			0
+		} else {
+			self.read_usize()?
+		};
+
 		if offset + self.subresult_offset > self.buf.len() {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
+
+		let new_offset = offset + subresult_offset;
 		Ok(AbiReader {
 			buf: self.buf,
-			subresult_offset: offset + self.subresult_offset,
-			offset: offset + self.subresult_offset,
+			subresult_offset: new_offset,
+			offset: new_offset,
 		})
 	}
 
@@ -317,7 +329,7 @@ where
 	Self: AbiRead<R>,
 {
 	fn abi_read(&mut self) -> Result<Vec<R>> {
-		let mut sub = self.subresult()?;
+		let mut sub = self.subresult(None)?;
 		let size = sub.read_usize()?;
 		sub.subresult_offset = sub.offset;
 		let mut out = Vec::with_capacity(size);
@@ -328,15 +340,33 @@ where
 	}
 }
 
+fn aligned_size(size: usize) -> usize {
+	let need_align = (size % ABI_ALIGNMENT) != 0;
+	let aligned_parts = size / ABI_ALIGNMENT;
+	(aligned_parts * ABI_ALIGNMENT) + if need_align { ABI_ALIGNMENT } else { 0 }
+}
+
+#[test]
+fn test_aligned_size() {
+	assert_eq!(aligned_size(20), ABI_ALIGNMENT);
+	assert_eq!(aligned_size(32), ABI_ALIGNMENT);
+	assert_eq!(aligned_size(52), 2 * ABI_ALIGNMENT);
+	assert_eq!(aligned_size(64), 2 * ABI_ALIGNMENT);
+}
+
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
 		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
 		where
-			$(Self: AbiRead<$ident>),+
+			$(
+				Self: AbiRead<$ident>,
+			)+
+			($($ident,)+): SolidityTypeName,
 		{
 			fn abi_read(&mut self) -> Result<($($ident,)+)> {
-				let mut subresult = self.subresult()?;
+				let size = if <($($ident,)+)>::is_simple() { Some(0 $(+aligned_size(sp_std::mem::size_of::<$ident>()))+) } else { None };
+				let mut subresult = self.subresult(size)?;
 				Ok((
 					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+
 				))
@@ -479,7 +509,7 @@ pub mod test {
 		assert_eq!(encoded, alternative_encoded);
 
 		let mut decoder = AbiReader::new(&encoded);
-		assert_eq!(decoder.bool().unwrap(), true);
+		assert!(decoder.bool().unwrap());
 		assert_eq!(decoder.string().unwrap(), "test");
 	}
 

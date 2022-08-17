@@ -2339,7 +2339,7 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ethereum",
  "evm-coder-macros",
@@ -2348,6 +2348,7 @@ dependencies = [
  "hex-literal",
  "impl-trait-for-tuples",
  "primitive-types",
+ "sp-std",
 ]
 
 [[package]]
