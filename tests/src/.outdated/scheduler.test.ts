@@ -264,12 +264,12 @@ describe('Negative Test: Scheduling', () => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
       const scheduledId = makeScheduledId();
-      const waitForBlocks = 3;
+      const waitForBlocks = 8;
 
       const amount = 1;
 
       await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
-      await expect(cancelScheduled(api, bob, scheduledId)).to.be.rejected;
+      await expect(cancelScheduled(api, bob, scheduledId)).to.be.rejectedWith(/BadOrigin/);
 
       await waitNewBlocks(waitForBlocks);
 
