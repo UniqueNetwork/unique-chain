@@ -102,16 +102,26 @@ describe('Scheduling token and balance transfers', () => {
       const period = 2;
       const repetitions = 2;
 
-      await scheduleTransferFundsExpectSuccess(api, 1n * UNIQUE, alice, bob, waitForBlocks, makeScheduledId(), period, repetitions);
+      const amount = 1n * UNIQUE;
+
+      await scheduleTransferFundsExpectSuccess(api, amount, alice, bob, waitForBlocks, makeScheduledId(), period, repetitions);
       const bobsBalanceBefore = await getFreeBalance(bob);
 
       await waitNewBlocks(waitForBlocks + 1);
       const bobsBalanceAfterFirst = await getFreeBalance(bob);
-      expect(bobsBalanceAfterFirst > bobsBalanceBefore, '#1 Balance of the recipient did not increase').to.be.true;
+      expect(bobsBalanceAfterFirst)
+        .to.be.equal(
+          bobsBalanceBefore + 1n * amount,
+          '#1 Balance of the recipient should be increased by 1 * amount',
+        );
 
       await waitNewBlocks(period);
       const bobsBalanceAfterSecond = await getFreeBalance(bob);
-      expect(bobsBalanceAfterSecond > bobsBalanceAfterFirst, '#2 Balance of the recipient did not increase').to.be.true;
+      expect(bobsBalanceAfterSecond)
+        .to.be.equal(
+          bobsBalanceBefore + 2n * amount,
+          '#2 Balance of the recipient should be increased by 2 * amount',
+        );
     });
   });
 
@@ -122,7 +132,9 @@ describe('Scheduling token and balance transfers', () => {
       const scheduledId = makeScheduledId();
       const waitForBlocks = 4;
 
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 1, waitForBlocks, scheduledId);
+      const amount = 1;
+
+      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
       await expect(cancelScheduled(api, alice, scheduledId)).to.not.be.rejected;
 
       await waitNewBlocks(waitForBlocks);
@@ -138,23 +150,33 @@ describe('Scheduling token and balance transfers', () => {
       const repetitions = 2;
 
       const scheduledId = makeScheduledId();
+      const amount = 1n * UNIQUE;
 
       const bobsBalanceBefore = await getFreeBalance(bob);
-      await scheduleTransferFundsExpectSuccess(api, 1n * UNIQUE, alice, bob, waitForBlocks, scheduledId, period, repetitions);
+      await scheduleTransferFundsExpectSuccess(api, amount, alice, bob, waitForBlocks, scheduledId, period, repetitions);
 
       await waitNewBlocks(waitForBlocks + 1);
       const bobsBalanceAfterFirst = await getFreeBalance(bob);
-      expect(bobsBalanceAfterFirst > bobsBalanceBefore, '#1 Balance of the recipient did not increase').to.be.true;
+      expect(bobsBalanceAfterFirst)
+        .to.be.equal(
+          bobsBalanceBefore + 1n * amount,
+          '#1 Balance of the recipient should be increased by 1 * amount',
+        );
 
       await expect(cancelScheduled(api, alice, scheduledId)).to.not.be.rejected;
 
       await waitNewBlocks(period);
       const bobsBalanceAfterSecond = await getFreeBalance(bob);
-      expect(bobsBalanceAfterSecond == bobsBalanceAfterFirst, '#2 Balance of the recipient changed').to.be.true;
+      expect(bobsBalanceAfterSecond)
+        .to.be.equal(
+          bobsBalanceAfterFirst,
+          '#2 Balance of the recipient should not be changed',
+        );
     });
   });
 
-  it('Can schedule a scheduled operation of canceling the scheduled operation', async () => {
+  // FIXME What purpose of this test?
+  it.skip('Can schedule a scheduled operation of canceling the scheduled operation', async () => {
     await usingApi(async api => {
       const scheduledId = makeScheduledId();
 
@@ -172,11 +194,10 @@ describe('Scheduling token and balance transfers', () => {
         repetitions,
       )).to.not.be.rejected;
 
-
       await waitNewBlocks(waitForBlocks);
 
       // todo:scheduler debug line; doesn't work (and doesn't appear in events) when executed in the same block as the scheduled transaction
-      //await expect(executeTransaction(api, alice, api.tx.scheduler.cancelNamed(scheduledId))).to.not.be.rejected;
+      await expect(submitTransactionAsync(alice, api.tx.scheduler.cancelNamed(scheduledId))).to.not.be.rejected;
 
       let schedulerEvents = 0;
       for (let i = 0; i < period * repetitions; i++) {
@@ -205,44 +226,49 @@ describe('Negative Test: Scheduling', () => {
     });
   });
 
-  it('Can\'t overwrite a scheduled ID', async () => {
+  it("Can't overwrite a scheduled ID", async () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
       const scheduledId = makeScheduledId();
+      const waitForBlocks = 4;
+      const amount = 1;
 
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 1, 4, scheduledId);
+      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
       await expect(scheduleAfter(
         api, 
         api.tx.balances.transfer(alice.address, 1n * UNIQUE), 
         bob, 
-        2, 
+        /* period = */ 2, 
         scheduledId,
       )).to.be.rejectedWith(/scheduler\.FailedToSchedule/);
-      const bobsBalance = await getFreeBalance(bob);
 
-      await waitNewBlocks(3);
+      const bobsBalanceBefore = await getFreeBalance(bob);
+
+      await waitNewBlocks(waitForBlocks);
 
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
-      expect(bobsBalance).to.be.equal(await getFreeBalance(bob));
+      expect(bobsBalanceBefore).to.be.equal(await getFreeBalance(bob));
     });
   });
 
-  it('Can\'t cancel an operation which is not scheduled', async () => {
+  it("Can't cancel an operation which is not scheduled", async () => {
     await usingApi(async api => {
       const scheduledId = makeScheduledId();
       await expect(cancelScheduled(api, alice, scheduledId)).to.be.rejectedWith(/scheduler\.NotFound/);
     });
   });
 
-  it('Can\'t cancel a non-owned scheduled operation', async () => {
+  it("Can't cancel a non-owned scheduled operation", async () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
       const scheduledId = makeScheduledId();
       const waitForBlocks = 3;
 
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 1, waitForBlocks, scheduledId);
+      const amount = 1;
+
+      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
       await expect(cancelScheduled(api, bob, scheduledId)).to.be.rejected;
 
       await waitNewBlocks(waitForBlocks);
