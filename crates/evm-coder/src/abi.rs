@@ -76,8 +76,8 @@ impl<'i> AbiReader<'i> {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
-		let is_pad_zeroed = !buf[pad_start..pad_size].iter().all(|&v| v == 0);
-		if is_pad_zeroed {
+		let is_pad_zeroed = buf[pad_start..pad_size].iter().all(|&v| v == 0);
+		if !is_pad_zeroed {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
 		block.copy_from_slice(&buf[block_start..block_size]);
@@ -575,6 +575,42 @@ pub mod test {
 				(1.into(), "Test URI 0".to_string()),
 				(11.into(), "Test URI 1".to_string()),
 				(12.into(), "Test URI 2".to_string())
+			]
+		);
+	}
+
+	#[test]
+	fn parse_vec_with_simple_type() {
+		use crate::types::address;
+		use primitive_types::{H160, U256};
+
+		let (call, mut decoder) = AbiReader::new_call(&hex!(
+			"
+				1ACF2D55
+				0000000000000000000000000000000000000000000000000000000000000020 // offset of (address, uint256)[]
+				0000000000000000000000000000000000000000000000000000000000000003 // length of (address, uint256)[]
+
+				0000000000000000000000002D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC // address
+				000000000000000000000000000000000000000000000000000000000000000A // uint256
+
+				000000000000000000000000AB8E3D9134955566483B11E6825C9223B6737B10 // address
+				0000000000000000000000000000000000000000000000000000000000000014 // uint256
+
+				0000000000000000000000008C582BDF2953046705FC56F189385255EFC1BE18 // address
+				000000000000000000000000000000000000000000000000000000000000001E // uint256
+			"
+		))
+		.unwrap();
+		assert_eq!(call, u32::to_be_bytes(0x1ACF2D55));
+		let data =
+			<AbiReader<'_> as AbiRead<Vec<(address, uint256)>>>::abi_read(&mut decoder).unwrap();
+		assert_eq!(data.len(), 3);
+		assert_eq!(
+			data,
+			vec![
+				(H160(hex!("2D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC")), U256([10, 0, 0, 0])),
+				(H160(hex!("AB8E3D9134955566483B11E6825C9223B6737B10")), U256([20, 0, 0, 0])),
+				(H160(hex!("8C582BDF2953046705FC56F189385255EFC1BE18")), U256([30, 0, 0, 0])),
 			]
 		);
 	}
