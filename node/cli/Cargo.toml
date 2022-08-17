@@ -266,6 +266,7 @@ optional = true
 
 [dependencies.opal-runtime]
 path = '../../runtime/opal'
+optional = true
 
 [dependencies.up-data-structs]
 path = "../../primitives/data-structs"
@@ -320,7 +321,7 @@ unique-rpc = { default-features = false, path = "../rpc" }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 
 [features]
-default = []
+default = ["opal-runtime"]
 runtime-benchmarks = [
     'unique-runtime?/runtime-benchmarks',
     'quartz-runtime?/runtime-benchmarks',
