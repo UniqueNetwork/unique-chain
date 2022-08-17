@@ -8,13 +8,15 @@ on:
       - opened
       - reopened
       - synchronize
+      - ready_for_review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code_style:
     runs-on: self-hosted-ci
-
-    concurrency: 
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
 
     steps:
       - name: Skip if pull request is in Draft

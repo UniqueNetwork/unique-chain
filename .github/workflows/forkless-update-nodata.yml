@@ -18,6 +18,10 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
@@ -28,10 +32,6 @@ jobs:
     runs-on: self-hosted-ci
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
-
-    concurrency: 
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
 
     steps:
       
@@ -62,9 +62,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,medium]
     
-    concurrency: 
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+    
 
     timeout-minutes: 1380
 
