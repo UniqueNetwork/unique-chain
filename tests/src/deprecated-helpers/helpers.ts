@@ -1235,12 +1235,12 @@ scheduleTransferAndWaitExpectSuccess(
     scheduleMethod,
   );
 
-  const recipientBalanceBefore = (await api.query.system.account(recipient.address)).data.free.toBigInt();
+  const recipientBalanceBefore = await getFreeBalance(recipient);
 
   // sleep for n + 1 blocks
   await waitNewBlocks(blocksBeforeExecution + 1);
 
-  const recipientBalanceAfter = (await api.query.system.account(recipient.address)).data.free.toBigInt();
+  const recipientBalanceAfter = await getFreeBalance(recipient);
 
   expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(recipient.address));
   expect(recipientBalanceAfter).to.be.equal(recipientBalanceBefore);
