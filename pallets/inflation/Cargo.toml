@@ -9,7 +9,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-inflation'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = "0.1.0"
+version = "0.1.1"
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -43,37 +43,37 @@ version = '3.1.2'
 default-features = false
 optional = true
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.pallet-balances]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.serde]
 default-features = false
@@ -83,17 +83,17 @@ version = '1.0.130'
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies.sp-io]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.24"
+branch = "polkadot-v0.9.27"
 
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [

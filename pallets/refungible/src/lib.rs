@@ -398,11 +398,11 @@ impl<T: Config> Pallet<T> {
 
 		<TokensMinted<T>>::remove(id);
 		<TokensBurnt<T>>::remove(id);
-		<TotalSupply<T>>::remove_prefix((id,), None);
-		<Balance<T>>::remove_prefix((id,), None);
-		<Allowance<T>>::remove_prefix((id,), None);
-		<Owned<T>>::remove_prefix((id,), None);
-		<AccountBalance<T>>::remove_prefix((id,), None);
+		let _ = <TotalSupply<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Balance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <Owned<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <AccountBalance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
@@ -424,9 +424,8 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::insert(collection.id, burnt);
 		<TokenProperties<T>>::remove((collection.id, token_id));
 		<TotalSupply<T>>::remove((collection.id, token_id));
-		<Balance<T>>::remove_prefix((collection.id, token_id), None);
-		<Allowance<T>>::remove_prefix((collection.id, token_id), None);
-
+		let _ = <Balance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
+		let _ = <Allowance<T>>::clear_prefix((collection.id, token_id), u32::MAX, None);
 		<PalletEvm<T>>::deposit_log(
 			ERC721Events::Transfer {
 				from: *owner.as_eth(),

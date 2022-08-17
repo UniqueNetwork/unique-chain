@@ -10,6 +10,7 @@ on:
       - opened
       - reopened
       - synchronize #commit(s) pushed to the pull request
+      - ready_for_review
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

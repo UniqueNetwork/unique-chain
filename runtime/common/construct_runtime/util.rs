@@ -24,7 +24,7 @@ macro_rules! construct_runtime_impl {
         {
             $(
                 $(#[runtimes($($pallet_runtimes:ident),+ $(,)?)])?
-                $pallet_name:ident: $pallet_mod:ident::{$($pallet_parts:ty),*} = $index:literal
+                $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal
             ),*
             $(,)?
         }
@@ -37,7 +37,7 @@ macro_rules! construct_runtime_impl {
             pallets(
                 $(
                     $(#[runtimes($($pallet_runtimes),+)])?
-                    $pallet_name: $pallet_mod::{$($pallet_parts),*} = $index
+                    $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index
                 ),*,
             )
         }
@@ -53,7 +53,7 @@ macro_rules! construct_runtime_helper {
         where_clause($($where_clause:tt)*),
         pallets(
             #[runtimes($($pallet_runtimes:ident),+)]
-            $pallet_name:ident: $pallet_mod:ident::{$($pallet_parts:ty),*} = $index:literal,
+            $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal,
 
             $($pallets_tl:tt)*
         )
@@ -65,7 +65,7 @@ macro_rules! construct_runtime_helper {
 
             where_clause($($where_clause)*),
             pallets(
-                $pallet_name: $pallet_mod::{$($pallet_parts),*} = $index,
+                $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
                 $($pallets_tl)*
             )
         }
@@ -77,7 +77,7 @@ macro_rules! construct_runtime_helper {
 
         where_clause($($where_clause:tt)*),
         pallets(
-            $pallet_name:ident: $pallet_mod:ident::{$($pallet_parts:ty),*} = $index:literal,
+            $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal,
 
             $($pallets_tl:tt)*
         )
@@ -86,7 +86,7 @@ macro_rules! construct_runtime_helper {
             select_runtime($select_runtime),
             selected_pallets(
                 $($selected_pallets)*
-                $pallet_name: $pallet_mod::{$($pallet_parts),*} = $index,
+                $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
 
             where_clause($($where_clause)*),
@@ -120,7 +120,7 @@ macro_rules! add_runtime_specific_pallets {
 
         where_clause($($where_clause:tt)*),
         pallets(
-            $pallet_name:ident: $pallet_mod:ident::{$($pallet_parts:ty),*} = $index:literal,
+            $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal,
             $($pallets_tl:tt)*
         )
     ) => {
@@ -128,7 +128,7 @@ macro_rules! add_runtime_specific_pallets {
             select_runtime(opal),
             selected_pallets(
                 $($selected_pallets)*
-                $pallet_name: $pallet_mod::{$($pallet_parts),*} = $index,
+                $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
 
             where_clause($($where_clause)*),
@@ -143,7 +143,7 @@ macro_rules! add_runtime_specific_pallets {
 
         where_clause($($where_clause:tt)*),
         pallets(
-            $pallet_name:ident: $pallet_mod:ident::{$($pallet_parts:ty),*} = $index:literal,
+            $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal,
             $($pallets_tl:tt)*
         )
     ) => {
@@ -151,7 +151,7 @@ macro_rules! add_runtime_specific_pallets {
             select_runtime(quartz),
             selected_pallets(
                 $($selected_pallets)*
-                $pallet_name: $pallet_mod::{$($pallet_parts),*} = $index,
+                $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
 
             where_clause($($where_clause)*),
@@ -166,7 +166,7 @@ macro_rules! add_runtime_specific_pallets {
 
         where_clause($($where_clause:tt)*),
         pallets(
-            $pallet_name:ident: $pallet_mod:ident::{$($pallet_parts:ty),*} = $index:literal,
+            $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal,
             $($pallets_tl:tt)*
         )
     ) => {
@@ -174,7 +174,7 @@ macro_rules! add_runtime_specific_pallets {
             select_runtime(unique),
             selected_pallets(
                 $($selected_pallets)*
-                $pallet_name: $pallet_mod::{$($pallet_parts),*} = $index,
+                $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
 
             where_clause($($where_clause)*),
@@ -207,7 +207,7 @@ macro_rules! add_runtime_specific_pallets {
 
         where_clause($($where_clause:tt)*),
         pallets(
-            $_pallet_name:ident: $_pallet_mod:ident::{$($_pallet_parts:ty),*} = $_index:literal,
+            $_pallet_name:ident: $_pallet_mod:ident$(::{$($_pallet_parts:ty),*})? = $_index:literal,
             $($pallets_tl:tt)*
         )
     ) => {
