@@ -81,7 +81,7 @@ jobs:
           output_file: .docker/docker-compose.int.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            COMMAND='cargo run --release --features=${{ matrix.features }} -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external'
+            COMMAND=cargo run --release --features=${{ matrix.features }} -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
 
       - name: Show build configuration
         run: cat .docker/docker-compose.int.${{ matrix.network }}.yml
@@ -166,7 +166,7 @@ jobs:
           output_file: .docker/docker-compose.unit.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            COMMAND='cargo test --features=limit-testing'
+            COMMAND=cargo test --features=limit-testing
 
       - name: Show build configuration
         run: cat .docker/docker-compose.unit.yml
