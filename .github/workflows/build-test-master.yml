@@ -1,4 +1,4 @@
-name: yarn test para
+name: Yarn test para
 
 # Controls when the action will run.
 on:
