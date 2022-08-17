@@ -117,6 +117,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Amount of tokens pending unstake per user per block.
 	#[pallet::storage]
 	pub type PendingUnstake<T: Config> = StorageNMap<
 		Key = (
@@ -142,8 +143,13 @@ pub mod pallet {
 		fn on_initialize(current_block: T::BlockNumber) -> Weight
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
-			// <<T as pallet::Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
 		{
+			let mut consumed_weight = 0;
+			let mut add_weight = |reads, writes, weight| {
+				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+				consumed_weight += weight;
+			};
+
 			PendingUnstake::<T>::iter()
 				.filter_map(|((staker, block), amount)| {
 					if block <= current_block {
@@ -161,19 +167,22 @@ pub mod pallet {
 
 			if next_interest_block != 0.into() && current_block >= next_interest_block {
 				let mut acc = <BalanceOf<T>>::default();
-				let mut weight: Weight = 0;
+
 				NextInterestBlock::<T>::set(current_block + DAY.into());
+				add_weight(0, 1, 0);
+
 				Staked::<T>::iter()
 					.filter(|((_, block), _)| *block + DAY.into() <= current_block)
 					.for_each(|((staker, block), amount)| {
 						Self::recalculate_stake(&staker, block, amount, &mut acc);
-						// weight += recalculate_stake();
+						add_weight(0, 0, T::WeightInfo::recalculate_stake());
 					});
 				<TotalStaked<T>>::get()
 					.checked_add(&acc)
 					.map(|res| <TotalStaked<T>>::set(res));
+				add_weight(0, 1, 0);
 			};
-			0
+			consumed_weight
 		}
 	}
 
@@ -518,5 +527,15 @@ where
 		staker.map_or(PendingUnstake::<T>::iter_values().sum(), |s| {
 			PendingUnstake::<T>::iter_prefix_values((s.as_sub(),)).sum()
 		})
+	}
+
+	pub fn cross_id_pending_unstake_per_block(
+		staker: T::CrossAccountId,
+	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
+		let mut unsorted_res = PendingUnstake::<T>::iter_prefix((staker.as_sub(),))
+			.into_iter()
+			.collect::<Vec<_>>();
+		unsorted_res.sort_by_key(|(block, _)| *block);
+		unsorted_res
 	}
 }

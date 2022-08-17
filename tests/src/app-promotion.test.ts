@@ -122,22 +122,35 @@ describe('integration test: AppPromotion', () => {
     });
   });
   
-  it.skip('for different accounts in one block is possible', async () => {
+  it('for different accounts in one block is possible', async () => {
     // arrange: Alice, Bob, Charlie, Dave balance = 1000
     // arrange: Alice, Bob, Charlie, Dave calls appPromotion.stake(100) in the same time
 
     // assert:  query appPromotion.staked(Alice/Bob/Charlie/Dave) equal [100]
     await usingPlaygrounds(async helper => {
-      const crowd = await creteAccounts([10n, 10n, 10n, 10n], alice, helper);
-      // const promises = crowd.map(async user => submitTransactionAsync(user, helper.api!.tx.promotion.stake(nominal)));
-      // await expect(Promise.all(promises)).to.be.eventually.fulfilled;
+      // const userOne = await createUser();
+      // const userTwo = await createUser();
+      // const userThree = await createUser();
+      // const userFour = await createUser();
+      const crowd = [];
+      for(let i = 4; i--;) crowd.push(await createUser());
+      // const crowd = await creteAccounts([10n, 10n, 10n, 10n], alice, helper);
+      // const crowd = [userOne, userTwo, userThree, userFour];
+      
+      
+      const promises = crowd.map(async user => submitTransactionAsync(user, helper.api!.tx.promotion.stake(nominal)));
+      await expect(Promise.all(promises)).to.be.eventually.fulfilled;
+    
+      for (let i = 0; i < crowd.length; i++){
+        expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(crowd[i]))).toBigInt()).to.be.equal(nominal);  
+      }
     });
   });
 
 });
 
-describe.skip('unstake balance extrinsic', () => {
-  before(async function() {
+describe('unstake balance extrinsic', () => {
+  before(async function () {
     await usingPlaygrounds(async (helper, privateKeyWrapper) => {
       if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
       alice = privateKeyWrapper('//Alice');
@@ -148,6 +161,7 @@ describe.skip('unstake balance extrinsic', () => {
       await submitTransactionAsync(alice, tx);
     });
   });
+  
   it('will change balance state to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
     // arrange: Alice balance = 1000
     // arrange: Alice calls appPromotion.stake(Alice, 500)
@@ -157,9 +171,65 @@ describe.skip('unstake balance extrinsic', () => {
     // assert:  query appPromotion.staked(Alice) equal [200] /// 500 - 300
     // assert:  query appPromotion.pendingUnstake(Alice) to equal [300]
     // assert:  query appPromotion.totalStaked() decreased by 300
+    await usingPlaygrounds(async helper => {
+      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
+      const staker = await createUser();
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(5n * nominal))).to.be.eventually.fulfilled;
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.unstake(3n * nominal))).to.be.eventually.fulfilled;
+      expect((await helper.api!.rpc.unique.pendingUnstake(normalizeAccountId(staker.address))).toBigInt()).to.be.equal(3n * nominal);
+      expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(staker))).toBigInt()).to.be.equal(2n * nominal);
+      expect((await helper.api!.rpc.unique.totalStaked()).toBigInt()).to.be.equal(totalStakedBefore + 2n * nominal);
+    });
+  });
+  it('will remove from the "staked" map starting from the oldest entry', async () => {
+    // arrange: Alice balance = 1000
+    // arrange: Alice stakes 100
+    // arrange: Alice stakes 200
+    // arrange: Alice stakes 300
+
+    // assert Alice stake is [100, 200, 300]
+
+
+    // act:     Alice calls appPromotion.unstake(30)
+    // assert:  query appPromotion.staked(Alice) to equal [70, 200, 300] /// Can unstake part of stake
+    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30]
+
+    // act:     Alice calls appPromotion.unstake(170)
+    // assert:  query appPromotion.staked(Alice) to equal [100, 300] /// Can unstake one stake totally and one more partialy
+    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30, 170]
+
+    // act:     Alice calls appPromotion.unstake(400)
+    // assert:  query appPromotion.staked(Alice) to equal [100, 300] /// Can totally unstake 2 stakes in one tx
+    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30, 170, 400]
+    await usingPlaygrounds(async helper => {
+      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
+      const staker = await createUser();
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.stake(3n * nominal))).to.be.eventually.fulfilled;
+      let stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
+      expect(stakedPerBlock).to.be.deep.equal([nominal, 2n * nominal, 3n * nominal]);
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.unstake(3n * nominal / 10n))).to.be.eventually.fulfilled;
+      expect((await helper.api!.rpc.unique.pendingUnstake(normalizeAccountId(staker.address))).toBigInt()).to.be.equal(3n * nominal / 10n);
+      stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
+      
+      expect(stakedPerBlock).to.be.deep.equal([7n * nominal / 10n, 2n * nominal, 3n * nominal]);
+      
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.unstake(17n * nominal / 10n))).to.be.eventually.fulfilled;
+      stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
+      expect(stakedPerBlock).to.be.deep.equal([nominal, 3n * nominal]);
+      const unstakedPerBlock = (await helper.api!.rpc.unique.pendingUnstakePerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
+      
+      expect(unstakedPerBlock).to.be.deep.equal([3n * nominal / 10n, 17n * nominal / 10n]);
+      
+      await waitNewBlocks(helper.api!, 1);
+      await expect(submitTransactionAsync(staker, helper.api!.tx.promotion.unstake(4n * nominal))).to.be.eventually.fulfilled;
+      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt())).to.be.deep.equal([]);
+      expect((await helper.api!.rpc.unique.pendingUnstakePerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt())).to.be.deep.equal([3n * nominal / 10n, 17n * nominal / 10n, 4n * nominal]);
+    });
+    
   });
 });
-
 
 
 async function createUser(amount?: bigint) {

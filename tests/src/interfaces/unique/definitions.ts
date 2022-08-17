@@ -195,5 +195,10 @@ export default {
       [{name: 'staker', type: CROSS_ACCOUNT_ID_TYPE, isOptional: true}],
       'u128',
     ),
+    pendingUnstakePerBlock: fun(
+      'Returns the total amount of unstaked tokens per block',
+      [crossAccountParam('staker')],
+      'Vec<(u32, u128)>',
+    ),
   },
 };

@@ -462,6 +462,9 @@ declare module '@polkadot/api-base/types/storage' {
        * Next target block when interest is recalculated
        **/
       nextInterestBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Amount of tokens pending unstake per user per block.
+       **/
       pendingUnstake: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<u128>, [AccountId32, u32]> & QueryableStorageEntry<ApiType, [AccountId32, u32]>;
       /**
        * Amount of tokens staked by account in the blocknumber.
