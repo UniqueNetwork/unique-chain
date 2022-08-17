@@ -11,6 +11,7 @@ ENV PATH="/cargo-home/bin:$PATH"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 ARG RUST_TOOLCHAIN=
+ARG COMMAND=
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -20,3 +21,5 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
 RUN mkdir /dev_chain
 COPY . /dev_chain
 WORKDIR /dev_chain
+
+CMD $COMMAND
