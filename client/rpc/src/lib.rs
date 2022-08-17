@@ -262,6 +262,14 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 	#[method(name = "unique_totalStakingLocked")]
 	fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>)
 		-> Result<String>;
+
+	/// Return the total amount locked by staking tokens.
+	#[method(name = "unique_pendingUnstake")]
+	fn pending_unstake(
+		&self,
+		staker: Option<CrossAccountId>,
+		at: Option<BlockHash>,
+	) -> Result<String>;
 }
 
 mod rmrk_unique_rpc {
@@ -548,6 +556,7 @@ where
 		.map(|(b, a)| (b, a.to_string()))
 		.collect::<Vec<_>>(), unique_api);
 	pass_method!(total_staking_locked(staker: CrossAccountId) -> String => |v| v.to_string(), unique_api);
+	pass_method!(pending_unstake(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), unique_api);
 }
 
 #[allow(deprecated)]

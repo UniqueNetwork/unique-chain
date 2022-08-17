@@ -31,12 +31,12 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-pub mod types;
-
 #[cfg(test)]
 mod tests;
+pub mod types;
+pub mod weights;
 
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, iter::Sum};
 use codec::EncodeLike;
 use pallet_balances::BalanceLock;
 pub use types::ExtendedLockableCurrency;
@@ -48,6 +48,9 @@ use frame_support::{
 	},
 	ensure,
 };
+
+use weights::WeightInfo;
+
 pub use pallet::*;
 use pallet_evm::account::CrossAccountId;
 use sp_runtime::{
@@ -78,6 +81,9 @@ pub mod pallet {
 		type Currency: ExtendedLockableCurrency<Self::AccountId>;
 
 		type TreasuryAccountId: Get<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		// The block number provider
 		type BlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
@@ -136,6 +142,7 @@ pub mod pallet {
 		fn on_initialize(current_block: T::BlockNumber) -> Weight
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
+			// <<T as pallet::Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
 		{
 			PendingUnstake::<T>::iter()
 				.filter_map(|((staker, block), amount)| {
@@ -172,7 +179,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
 			ensure_root(origin)?;
 			<Admin<T>>::set(Some(admin));
@@ -180,7 +187,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::start_app_promotion())]
 		pub fn start_app_promotion(
 			origin: OriginFor<T>,
 			promotion_start_relay_block: T::BlockNumber,
@@ -201,7 +208,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
 
@@ -210,10 +217,16 @@ pub mod pallet {
 
 			ensure!(balance >= amount, ArithmeticError::Underflow);
 
-			Self::set_lock_unchecked(&staker_id, amount);
+			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
+				&staker_id,
+				amount,
+				WithdrawReasons::all(),
+				balance - amount,
+			)?;
 
-			let block_number =
-				<T::BlockNumberProvider as BlockNumberProvider>::current_block_number();
+			Self::add_lock_balance(&staker_id, amount)?;
+
+			let block_number = frame_system::Pallet::<T>::block_number();
 
 			<Staked<T>>::insert(
 				(&staker_id, block_number),
@@ -231,7 +244,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::unstake())]
 		pub fn unstake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
 
@@ -249,7 +262,7 @@ pub mod pallet {
 					.ok_or(ArithmeticError::Underflow)?,
 			);
 
-			let block = <T::BlockNumberProvider>::current_block_number() + WEEK.into();
+			let block = frame_system::Pallet::<T>::block_number() + WEEK.into();
 			<PendingUnstake<T>>::insert(
 				(&staker_id, block),
 				<PendingUnstake<T>>::get((&staker_id, block))
@@ -400,8 +413,8 @@ impl<T: Config> Pallet<T> {
 
 	fn add_lock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
 		Self::get_locked_balance(staker)
-			.map(|l| l.amount)
-			.and_then(|b| b.checked_add(&amount))
+			.map_or(<BalanceOf<T>>::default(), |l| l.amount)
+			.checked_add(&amount)
 			.map(|new_lock| Self::set_lock_unchecked(staker, new_lock))
 			.ok_or(ArithmeticError::Overflow.into())
 	}
@@ -437,10 +450,11 @@ impl<T: Config> Pallet<T> {
 	pub fn total_staked_by_id_per_block(
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<Vec<(T::BlockNumber, BalanceOf<T>)>> {
-		let staked = Staked::<T>::iter_prefix((staker,))
+		let mut staked = Staked::<T>::iter_prefix((staker,))
 			.into_iter()
 			.map(|(block, amount)| (block, amount))
 			.collect::<Vec<_>>();
+		staked.sort_by_key(|(block, _)| *block);
 		if !staked.is_empty() {
 			Some(staked)
 		} else {
@@ -493,5 +507,16 @@ impl<T: Config> Pallet<T> {
 	{
 		let day_rate = Perbill::from_rational(5u32, 1_0000);
 		day_rate * base
+	}
+}
+
+impl<T: Config> Pallet<T>
+where
+	<<T as pallet::Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
+{
+	pub fn cross_id_pending_unstake(staker: Option<T::CrossAccountId>) -> BalanceOf<T> {
+		staker.map_or(PendingUnstake::<T>::iter_values().sum(), |s| {
+			PendingUnstake::<T>::iter_prefix_values((s.as_sub(),)).sum()
+		})
 	}
 }

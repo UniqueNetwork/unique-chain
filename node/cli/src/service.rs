@@ -63,7 +63,7 @@ use polkadot_service::CollatorPair;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-use unique_runtime_common::types::{
+use up_common::types::opaque::{
 	AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block, BlockNumber,
 };
 

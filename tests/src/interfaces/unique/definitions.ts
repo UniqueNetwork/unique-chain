@@ -190,5 +190,10 @@ export default {
       [crossAccountParam('staker')],
       'u128',
     ),
+    pendingUnstake: fun(
+      'Returns the total amount of unstaked tokens',
+      [{name: 'staker', type: CROSS_ACCOUNT_ID_TYPE, isOptional: true}],
+      'u128',
+    ),
   },
 };
