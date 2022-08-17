@@ -97,8 +97,6 @@ use frame_support::{
 
 pub use weights::WeightInfo;
 
-/// Just a simple index for naming period tasks.
-pub type PeriodicIndex = u32;
 /// The location of a scheduled task that can be used to remove it.
 pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
