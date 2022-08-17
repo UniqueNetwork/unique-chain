@@ -1,4 +1,4 @@
-name: yarn test dev
+name: Yarn test dev
 
 # Controls when the action will run.
 on:
