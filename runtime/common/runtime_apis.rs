@@ -203,6 +203,10 @@ macro_rules! impl_common_runtime_apis {
                 fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker))
                 }
+
+                fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
+                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
+                }
             }
 
             impl rmrk_rpc::RmrkApi<

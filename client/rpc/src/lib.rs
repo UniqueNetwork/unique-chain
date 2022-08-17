@@ -243,7 +243,7 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 		at: Option<BlockHash>,
-	) -> Result<Option<u128>>;
+	) -> Result<Option<String>>;
 
 	/// Returns the total amount of staked tokens.
 	#[method(name = "unique_totalStaked")]
@@ -258,18 +258,25 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 		at: Option<BlockHash>,
 	) -> Result<Vec<(BlockNumber, String)>>;
 
-	/// Return the total amount locked by staking tokens.
+	/// Returns the total amount locked by staking tokens.
 	#[method(name = "unique_totalStakingLocked")]
 	fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>)
 		-> Result<String>;
 
-	/// Return the total amount locked by staking tokens.
+	/// Returns the total amount of tokens pending withdrawal from staking.
 	#[method(name = "unique_pendingUnstake")]
 	fn pending_unstake(
 		&self,
 		staker: Option<CrossAccountId>,
 		at: Option<BlockHash>,
 	) -> Result<String>;
+	/// Returns the total amount of tokens pending withdrawal from staking per block.
+	#[method(name = "unique_pendingUnstakePerBlock")]
+	fn pending_unstake_per_block(
+		&self,
+		staker: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<Vec<(BlockNumber, String)>>;
 }
 
 mod rmrk_unique_rpc {
@@ -557,6 +564,11 @@ where
 		.collect::<Vec<_>>(), unique_api);
 	pass_method!(total_staking_locked(staker: CrossAccountId) -> String => |v| v.to_string(), unique_api);
 	pass_method!(pending_unstake(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), unique_api);
+	pass_method!(pending_unstake_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, String)> =>
+		|v| v
+		.into_iter()
+		.map(|(b, a)| (b, a.to_string()))
+		.collect::<Vec<_>>(), unique_api);
 }
 
 #[allow(deprecated)]
