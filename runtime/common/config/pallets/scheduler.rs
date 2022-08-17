@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{traits::PrivilegeCmp, weights::Weight, parameter_types};
+use frame_support::{traits::EqualPrivilegeOnly, weights::Weight, parameter_types};
 use frame_system::EnsureSigned;
 use sp_runtime::Perbill;
-use sp_std::cmp::Ordering;
 use crate::{
 	runtime_common::{scheduler::SchedulerPaymentExecutor, config::substrate::RuntimeBlockWeights},
 	Runtime, Call, Event, Origin, OriginCaller, Balances,
@@ -33,15 +32,6 @@ parameter_types! {
 	pub const Preimage: Option<u32> = Some(10);
 }
 
-/// Used the compare the privilege of an origin inside the scheduler.
-pub struct OriginPrivilegeCmp;
-
-impl PrivilegeCmp<OriginCaller> for OriginPrivilegeCmp {
-	fn cmp_privilege(_left: &OriginCaller, _right: &OriginCaller) -> Option<Ordering> {
-		Some(Ordering::Equal)
-	}
-}
-
 impl pallet_unique_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
@@ -53,7 +43,7 @@ impl pallet_unique_scheduler::Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
 	type CallExecutor = SchedulerPaymentExecutor;
-	type OriginPrivilegeCmp = OriginPrivilegeCmp;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PreimageProvider = ();
 	type NoPreimagePostponement = NoPreimagePostponement;
 }
