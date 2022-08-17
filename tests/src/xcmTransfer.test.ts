@@ -33,9 +33,9 @@ const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
-describe('Integration test: Exchanging QTZ with Karura', () => {
+describe.skip('Integration test: Exchanging QTZ with Karura', () => {
   let alice: IKeyringPair;
-  
+
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
@@ -75,7 +75,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
 
   it('Should connect and send QTZ to Karura', async () => {
     let balanceOnKaruraBefore: bigint;
-    
+
     await usingApi(async (api) => {
       const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
       balanceOnKaruraBefore = free;
@@ -142,7 +142,7 @@ describe('Integration test: Exchanging QTZ with Karura', () => {
 
   it('Should connect to Karura and send QTZ back', async () => {
     let balanceBefore: bigint;
-    
+
     await usingApi(async (api) => {
       [balanceBefore] = await getBalance(api, [alice.address]);
     });

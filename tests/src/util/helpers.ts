@@ -439,7 +439,7 @@ createCollection(
     tokenPrefix: strToUTF16(tokenPrefix),
     mode: modeprm as any,
   });
-  const events = await submitTransactionAsync(sender, tx);
+  const events = await executeTransaction(api, sender, tx);
   return getCreateCollectionResult(events);
 }
 

@@ -54,7 +54,7 @@ describe.skip('Contracts', () => {
       const initialGetResponse = await getFlipValue(contract, deployer);
 
       const bob = privateKeyWrapper('//Bob');
-      const flip = contract.tx.flip(value, gasLimit);
+      const flip = contract.tx.flip({value, gasLimit});
       await submitTransactionAsync(bob, flip);
 
       const afterFlipGetResponse = await getFlipValue(contract, deployer);
@@ -89,7 +89,7 @@ describe.skip('Chain extensions', () => {
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
 
       // Transfer
-      const transferTx = contract.tx.transfer(value, gasLimit, bob.address, collectionId, tokenId, 1);
+      const transferTx = contract.tx.transfer({value, gasLimit}, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -110,7 +110,7 @@ describe.skip('Chain extensions', () => {
       await addToAllowListExpectSuccess(alice, collectionId, contract.address);
       await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
-      const transferTx = contract.tx.createItem(value, gasLimit, bob.address, collectionId, {Nft: {const_data: '0x010203'}});
+      const transferTx = contract.tx.createItem({value, gasLimit}, bob.address, collectionId, {Nft: {const_data: '0x010203'}});
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -137,7 +137,7 @@ describe.skip('Chain extensions', () => {
       await addToAllowListExpectSuccess(alice, collectionId, contract.address);
       await addToAllowListExpectSuccess(alice, collectionId, bob.address);
 
-      const transferTx = contract.tx.createMultipleItems(value, gasLimit, bob.address, collectionId, [
+      const transferTx = contract.tx.createMultipleItems({value, gasLimit}, bob.address, collectionId, [
         {NFT: {/*const_data: '0x010203'*/}},
         {NFT: {/*const_data: '0x010204'*/}},
         {NFT: {/*const_data: '0x010205'*/}},
@@ -176,7 +176,7 @@ describe.skip('Chain extensions', () => {
       const [contract] = await deployTransferContract(api, privateKeyWrapper);
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', contract.address.toString());
 
-      const transferTx = contract.tx.approve(value, gasLimit, bob.address, collectionId, tokenId, 1);
+      const transferTx = contract.tx.approve({value, gasLimit}, bob.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -196,7 +196,7 @@ describe.skip('Chain extensions', () => {
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
       await approveExpectSuccess(collectionId, tokenId, bob, contract.address.toString(), 1);
 
-      const transferTx = contract.tx.transferFrom(value, gasLimit, bob.address, charlie.address, collectionId, tokenId, 1);
+      const transferTx = contract.tx.transferFrom({value, gasLimit}, bob.address, charlie.address, collectionId, tokenId, 1);
       const events = await submitTransactionAsync(alice, transferTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -219,7 +219,7 @@ describe.skip('Chain extensions', () => {
       expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
 
       {
-        const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, true);
+        const transferTx = contract.tx.toggleAllowList({value, gasLimit}, collectionId, bob.address, true);
         const events = await submitTransactionAsync(alice, transferTx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
@@ -227,7 +227,7 @@ describe.skip('Chain extensions', () => {
         expect(await isAllowlisted(api, collectionId, bob.address)).to.be.true;
       }
       {
-        const transferTx = contract.tx.toggleAllowList(value, gasLimit, collectionId, bob.address, false);
+        const transferTx = contract.tx.toggleAllowList({value, gasLimit}, collectionId, bob.address, false);
         const events = await submitTransactionAsync(alice, transferTx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;

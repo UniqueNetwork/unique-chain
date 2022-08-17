@@ -55,14 +55,14 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       const [contract, deployer] = await deployFlipper(api, privateKeyWrapper);
 
       let flipValueBefore = await getFlipValue(contract, deployer);
-      const flip = contract.tx.flip(value, gasLimit);
+      const flip = contract.tx.flip({value, gasLimit});
       await submitTransactionAsync(bob, flip);
       const flipValueAfter = await getFlipValue(contract,deployer);
       expect(flipValueAfter).to.be.eq(!flipValueBefore, 'Anyone can call new contract.');
 
       const deployerCanFlip = async () => {
         const flipValueBefore = await getFlipValue(contract, deployer);
-        const deployerFlip = contract.tx.flip(value, gasLimit);
+        const deployerFlip = contract.tx.flip({value, gasLimit});
         await submitTransactionAsync(deployer, deployerFlip);
         const aliceFlip1Response = await getFlipValue(contract, deployer);
         expect(aliceFlip1Response).to.be.eq(!flipValueBefore, 'Deployer always can flip.');
@@ -72,7 +72,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       flipValueBefore = await getFlipValue(contract, deployer);
       const enableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, true);
       await submitTransactionAsync(deployer, enableAllowListTx);
-      const flipWithEnabledAllowList = contract.tx.flip(value, gasLimit);
+      const flipWithEnabledAllowList = contract.tx.flip({value, gasLimit});
       await expect(submitTransactionExpectFailAsync(bob, flipWithEnabledAllowList)).to.be.rejected;
       const flipValueAfterEnableAllowList = await getFlipValue(contract, deployer);
       expect(flipValueAfterEnableAllowList).to.be.eq(flipValueBefore, 'Enabling allowlist doesn\'t make it possible to call contract for everyone.');
@@ -82,7 +82,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       flipValueBefore = await getFlipValue(contract, deployer);
       const addBobToAllowListTx = api.tx.unique.addToContractAllowList(contract.address, bob.address);
       await submitTransactionAsync(deployer, addBobToAllowListTx);
-      const flipWithAllowlistedBob = contract.tx.flip(value, gasLimit);
+      const flipWithAllowlistedBob = contract.tx.flip({value, gasLimit});
       await submitTransactionAsync(bob, flipWithAllowlistedBob);
       const flipAfterAllowListed = await getFlipValue(contract,deployer);
       expect(flipAfterAllowListed).to.be.eq(!flipValueBefore, 'Bob was allowlisted, now he can flip.');
@@ -92,7 +92,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       flipValueBefore = await getFlipValue(contract, deployer);
       const removeBobFromAllowListTx = api.tx.unique.removeFromContractAllowList(contract.address, bob.address);
       await submitTransactionAsync(deployer, removeBobFromAllowListTx);
-      const bobRemoved = contract.tx.flip(value, gasLimit);
+      const bobRemoved = contract.tx.flip({value, gasLimit});
       await expect(submitTransactionExpectFailAsync(bob, bobRemoved)).to.be.rejected;
       const afterBobRemoved = await getFlipValue(contract, deployer);
       expect(afterBobRemoved).to.be.eq(flipValueBefore, 'Bob can\'t call contract, now when he is removeed from allow list.');
@@ -102,7 +102,7 @@ describe.skip('Integration Test toggleContractAllowList', () => {
       flipValueBefore = await getFlipValue(contract, deployer);
       const disableAllowListTx = api.tx.unique.toggleContractAllowList(contract.address, false);
       await submitTransactionAsync(deployer, disableAllowListTx);
-      const allowListDisabledFlip = contract.tx.flip(value, gasLimit);
+      const allowListDisabledFlip = contract.tx.flip({value, gasLimit});
       await submitTransactionAsync(bob, allowListDisabledFlip);
       const afterAllowListDisabled = await getFlipValue(contract,deployer);
       expect(afterAllowListDisabled).to.be.eq(!flipValueBefore, 'Anyone can call contract with disabled allowlist.');

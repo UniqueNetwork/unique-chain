@@ -40,10 +40,11 @@ ARG FORK_FROM=
 
 WORKDIR /unique_parachain
 
+
 RUN echo "Requested features: $FEATURE\n" && \
     echo "Fork from: $FORK_FROM\n" && \
     echo "Repositry URL: $REPO_URL\n" && \
     echo "Branch: $BRANCH\n" && \
     git clone $REPO_URL -b $BRANCH . && \
     cargo run --features=$FEATURE --release -- try-runtime on-runtime-upgrade live --uri $FORK_FROM
-
+ 
