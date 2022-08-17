@@ -163,17 +163,17 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp-unit.j2
-          output_file: .docker/docker-compose.unit.${{ matrix.network }}.yml
+          output_file: .docker/docker-compose.unit.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             COMMAND='cargo test --features=limit-testing'
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.unit.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.unit.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.yml" up -d --build
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.yml" down
