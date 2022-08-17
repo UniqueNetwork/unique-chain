@@ -87,7 +87,7 @@ jobs:
         run: cat .docker/docker-compose.int.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.int.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.int.${{ matrix.network }}.yml" up -d --build --force-recreate
 
       - uses: actions/setup-node@v3
         with:
@@ -172,7 +172,7 @@ jobs:
         run: cat .docker/docker-compose.unit.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.yml" up -d --build --force-recreate
 
       - name: Stop running containers
         if: always()                   # run this step always
