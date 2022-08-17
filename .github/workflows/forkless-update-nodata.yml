@@ -1,4 +1,4 @@
-name: Forkless Parachain update with no data
+name: Upgrade nodata
 
 # Controls when the action will run.
 on:
@@ -56,9 +56,10 @@ jobs:
   forkless-update-nodata:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: self-hosted-ci
+    runs-on: [self-hosted-ci,medium]
+    timeout-minutes: 1380
 
-    name: ${{ matrix.network }} - Forkless Parachain Upgrade NO data
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
