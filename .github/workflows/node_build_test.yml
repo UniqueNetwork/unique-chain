@@ -84,7 +84,7 @@ jobs:
             COMMAND='cargo run --release --features=${{ matrix.features }} -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external'
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.int.${{ matrix.network }}.yml
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.int.${{ matrix.network }}.yml" up -d --build
@@ -169,11 +169,10 @@ jobs:
             COMMAND='cargo test --features=limit-testing'
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.unit.${{ matrix.network }}.yml
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yml" -f ".docker/docker-compose.unit.${{ matrix.network }}.yml" up -d --build
-
 
       - name: Stop running containers
         if: always()                   # run this step always
