@@ -1,4 +1,4 @@
-name: Code style
+name: cargo fmt
 
 on:
   pull_request:

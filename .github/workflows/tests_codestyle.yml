@@ -1,4 +1,4 @@
-name: Tests code style
+name: yarn eslint
 
 on:
   pull_request:
