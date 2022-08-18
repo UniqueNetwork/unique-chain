@@ -23,6 +23,4 @@ COPY . /dev_chain
 
 WORKDIR /dev_chain
 
-RUN cargo build --release
-
-CMD cargo run --release --features=$FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+RUN cargo test --features=limit-testing

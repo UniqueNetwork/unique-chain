@@ -1,0 +1,16 @@
+version: "3.5"
+
+services:
+  node-dev:
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile-chain-dev-unit
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "FEATURE={{ FEATURE }}"
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"
+
+    
