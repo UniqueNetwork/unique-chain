@@ -10,6 +10,10 @@ on:
       - synchronize
       - ready_for_review
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rustfmt:
     runs-on: self-hosted-ci
@@ -47,7 +51,7 @@ jobs:
   clippy:
     if: ${{ false }}
     runs-on: self-hosted-ci
-
+      
     steps:
       - name: Skip if pull request is in Draft
         # `if: github.event.pull_request.draft == true` should be kept here, at

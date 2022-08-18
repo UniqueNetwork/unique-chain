@@ -1,4 +1,4 @@
-name: Develop - Build & test
+name: Yarn test dev
 
 # Controls when the action will run.
 on:
@@ -19,13 +19,18 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   dev_build_test:
     # The type of runner that the job will run on
-    runs-on: self-hosted-ci
+    runs-on: [self-hosted-ci,medium]
+    timeout-minutes: 1380
 
-    name: Build Container, Spin it Up an test
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 

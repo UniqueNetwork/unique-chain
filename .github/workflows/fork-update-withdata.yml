@@ -1,4 +1,4 @@
-name: Fork Parachain update with data
+name: Upgrade replica
 
 # Controls when the action will run.
 on:
@@ -19,14 +19,19 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
   fork-update-withdata:
     # The type of runner that the job will run on
-    runs-on: self-hosted-ci
+    runs-on: [self-hosted-ci,large]
+    timeout-minutes: 1380
 
-    name: ${{ matrix.network }} Fork Parachain with data
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 

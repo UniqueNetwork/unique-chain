@@ -1,4 +1,4 @@
-name: MASTER - Build & Test
+name: Yarn test para
 
 # Controls when the action will run.
 on:
@@ -19,15 +19,19 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
   master-build-and-test:
     # The type of runner that the job will run on
-    runs-on: self-hosted-ci
+    runs-on: [self-hosted-ci,large]
+    timeout-minutes: 1380
 
-
-    name: ${{ matrix.network }} - Build and Test
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.
 

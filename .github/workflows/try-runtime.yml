@@ -1,4 +1,4 @@
-name: Try Runtime
+name: try-runtime
 
 # Controls when the action will run.
 on:
@@ -19,26 +19,30 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   try-runtime:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
-
-    name: ${{ matrix.network }} - Try-runtime
+    
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
         include:
-          - network: Opal
+          - network: opal
             features: try-runtime,opal-runtime
             fork_from_address: wss://eu-ws-opal.unique.network:443
-          - network: Quartz
+          - network: quartz
             features: try-runtime,quartz-runtime
             fork_from_address: wss://eu-ws-quartz.unique.network:443
-          - network: Unique
+          - network: unique
             features: try-runtime,unique-runtime
             fork_from_address: wss://eu-ws.unique.network:443
 
@@ -79,37 +83,15 @@ jobs:
           template: .docker/docker-compose.try-runtime.j2
           output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
-            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             FEATURE=${{ matrix.features }}
-            BRANCH=${{ github.head_ref }}
             FORK_FROM=${{ matrix.fork_from_address }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
 
-
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
-
-
-      - name: Collect Docker Logs
-        if: success() || failure()
-        uses: jwalton/gh-docker-logs@v2.2.0
-        with:
-          dest: './try-runtime-logs.${{ matrix.features }}'
-          images: 'try-runtime' 
-
-      - name: Tar logs
-        if: success() || failure()
-        run: tar cvzf ./try-runtime-logs.${{ matrix.features }}.tgz ./try-runtime-logs.${{ matrix.features }}
-
-      - name: Upload logs to GitHub
-        if: success() || failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: try-runtime-logs.${{ matrix.features }}.tgz
-          path: ./try-runtime-logs.${{ matrix.features }}.tgz
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300 --remove-orphans
 
       - name: Stop running containers
         if: always()                   # run this step always
