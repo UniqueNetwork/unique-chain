@@ -25,8 +25,8 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 
-#RUN mkdir /unique_parachain
-#WORKDIR /unique_parachain
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
 
 
 # ===== BUILD current version ======
@@ -37,7 +37,6 @@ ARG FEATURE=
 ARG MAINNET_BRANCH=
 ARG REPO_URL=
 
-RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $MAINNET_BRANCH . && \
@@ -52,11 +51,10 @@ ARG FEATURE=
 ARG BRANCH=
 ARG REPO_URL=
 
-RUN mkdir /unique_parachain
+COPY . /unique_parachain
 WORKDIR /unique_parachain
 
-RUN git clone $REPO_URL -b $BRANCH . && \
-    cargo build --features=$FEATURE --$PROFILE
+RUN cargo build --features=$FEATURE --$PROFILE
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
@@ -64,7 +62,7 @@ FROM rust-builder as builder-polkadot
 ARG POLKADOT_BUILD_BRANCH=
 ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
 
-RUN mkdir /unique_parachain
+
 WORKDIR /unique_parachain
 
 RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/polkadot.git && \
