@@ -19,7 +19,7 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -27,15 +27,15 @@ concurrency:
 jobs:
 
   prepare-execution-marix:
-    
+
     name: Prepare execution matrix
-    
+
     runs-on: self-hosted-ci
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
-      
+
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -62,8 +62,8 @@ jobs:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
-    
-    
+
+
 
     timeout-minutes: 1380
 
@@ -193,9 +193,10 @@ jobs:
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
           dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
-          images: 'node-parachain' 
+          images: 'node-parachain'
 
       - name: Show docker logs
+        if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
 
       - name: Stop running containers

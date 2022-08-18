@@ -196,6 +196,7 @@ jobs:
           images: 'node-parachain'
 
       - name: Show Docker logs
+        if: success() || failure()
         run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/node-parachain.log'
 
       - name: Stop running containers
