@@ -1,4 +1,4 @@
-cp launch-config-full-moonriver.json ../polkadot-launch/launch-config-full.json
+cp launch-config-full-moonbeam.json ../polkadot-launch/launch-config-full.json
 
 cd ../polkadot-launch
 yarn install

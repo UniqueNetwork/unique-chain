@@ -40,24 +40,16 @@
                 "flags": [
                     "-lparachain::candidate_validation=debug"
                 ]
-            },
-            {
-                "name": "eve",
-                "wsPort": 9888,
-                "rpcPort": 9887,
-                "port": 30888,
-                "flags": [
-                    "-lparachain::candidate_validation=debug"
-                ]
             }
         ],
         "genesis": {
             "runtime": {
                 "runtime_genesis_config": {
-                    "parachainsConfiguration": {
+                    "configuration": {
                         "config": {
                             "validation_upgrade_frequency": 1,
-                            "validation_upgrade_delay": 1
+                            "validation_upgrade_delay": 30,
+                            "validation_upgrade_cooldown": 30
                         }
                     }
                 }
@@ -66,44 +58,12 @@
     },
     "parachains": [
         {
-            "bin": "../Acala/target/release/acala",
-            "id": "2000",
-            "chain":  "local",
-			"balance": "1000000000000000000000",
-			"nodes": [
-				{
-					"wsPort": 9946,
-					"port": 11202,
-                    "rpcPort": 29932,
-					"name": "alice",
-                    "flags": [
-                        "--rpc-cors=all",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external",
-                        "-lxcm=trace"
-                    ]
-				},
-                {
-					"wsPort": 9947,
-					"port": 11203,
-                    "rpcPort": 29933,
-					"name": "bob",
-                    "flags": [
-                        "--rpc-cors=all",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external",
-                        "-lxcm=trace"
-                    ]
-				}
-			]
-		},
-        {
             "bin": "../unique-chain/target/release/unique-collator",
             "id": "5000",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
-                    "port": 41200,
+                    "port": 31200,
                     "wsPort": 9944,
                     "rpcPort": 9933,
                     "name": "alice",
@@ -116,7 +76,7 @@
                     ]
                 },
                 {
-                    "port": 41201,
+                    "port": 31201,
                     "wsPort": 9945,
                     "rpcPort": 9934,
                     "name": "bob",
@@ -129,22 +89,50 @@
                     ]
                 }
             ]
+        },
+        {
+            "bin": "../moonbeam/target/release/moonbeam",
+            "id": 1000,
+            "balance": "1000000000000000000000",
+            "chain": "moonbeam-local",
+            "nodes": [
+                {
+                    "wsPort": 9946,
+					"port": 31202,
+                    "name": "alice",
+                    "flags": [
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "--rpc-methods=Unsafe",
+                        "--rpc-cors=all",
+                        "-lxcm=trace",
+                        "--",
+                        "--execution=wasm"
+                    ]
+                }
+            ]
         }
     ],
     "simpleParachains": [],
     "hrmpChannels": [
         {
-            "sender": 2000,
+            "sender": 1000,
             "recipient": 5000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
             "sender": 5000,
-            "recipient": 2000,
+            "recipient": 1000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         }
     ],
-    "finalization": false
+    "types": {
+        "Address": "MultiAddress",
+        "LookupSource": "MultiAddress",
+        "RoundIndex": "u32"
+    },
+    "finalization": true
 }
+

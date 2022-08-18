@@ -66,9 +66,9 @@
     },
     "parachains": [
         {
-            "bin": "../Acala/target/production/acala",
+            "bin": "../Acala/target/release/acala",
             "id": "2000",
-            "chain":  "karura-dev",
+            "chain":  "local",
 			"balance": "1000000000000000000000",
 			"nodes": [
 				{

@@ -30,32 +30,32 @@ import waitNewBlocks from './substrate/wait-new-blocks';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const QUARTZ_CHAIN = 5000;
-const MOONRIVER_CHAIN = 1000;
-const QUARTZ_PORT = '9944';
-const MOONRIVER_PORT = '9946';
+const UNIQUE_CHAIN = 5000;
+const MOONBEAM_CHAIN = 1000;
+const UNIQUE_PORT = '9944';
+const MOONBEAM_PORT = '9946';
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
-describe('Integration test: Exchanging QTZ with Moonriver', () => {
+describe('Integration test: Exchanging UNQ with Moonbeam', () => {
 
   // Unique constants
-  let quartzAlice: IKeyringPair;
-  let quartzAssetLocation;
+  let uniqueAlice: IKeyringPair;
+  let uniqueAssetLocation;
 
-  let randomAccountQuartz: IKeyringPair;
-  let randomAccountMoonriver: IKeyringPair;
+  let randomAccountUnique: IKeyringPair;
+  let randomAccountMoonbeam: IKeyringPair;
 
-  // Moonriver constants
+  // Moonbeam constants
   let assetId: Uint8Array;
 
-  const moonriverKeyring = new Keyring({type: 'ethereum'});
+  const moonbeamKeyring = new Keyring({type: 'ethereum'});
   const alithPrivateKey = '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
   const baltatharPrivateKey = '0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b';
   const dorothyPrivateKey = '0x39539ab1876910bbf3a223d84a29e28f1cb4e2e456503e7e91ed39b2e7223d68';
 
-  const alithAccount = moonriverKeyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
-  const baltatharAccount = moonriverKeyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
-  const dorothyAccount = moonriverKeyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
+  const alithAccount = moonbeamKeyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
+  const baltatharAccount = moonbeamKeyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
+  const dorothyAccount = moonbeamKeyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
 
   const councilVotingThreshold = 2;
   const technicalCommitteeThreshold = 2;
@@ -63,8 +63,8 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
   const delayPeriod = 0;
 
   const uniqueAssetMetadata = {
-    name: 'xcQuartz',
-    symbol: 'xcQTZ',
+    name: 'xcUnique',
+    symbol: 'xcUNQ',
     decimals: 18,
     isFrozen: false,
     minimalBalance: 1,
@@ -73,23 +73,23 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
   let actuallySent1: bigint;
   let actuallySent2: bigint;
 
-  let balanceQuartz1: bigint;
-  let balanceQuartz2: bigint;
-  let balanceQuartz3: bigint;
+  let balanceUnique1: bigint;
+  let balanceUnique2: bigint;
+  let balanceUnique3: bigint;
   
-  let balanceMoonriverMovr1: bigint;
-  let balanceMoonriverMovr2: bigint;
-  let balanceMoonriverMovr3: bigint;
+  let balanceMoonbeamGlmr1: bigint;
+  let balanceMoonbeamGlmr2: bigint;
+  let balanceMoonbeamGlmr3: bigint;
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      quartzAlice = privateKeyWrapper('//Alice');
-      randomAccountQuartz = generateKeyringPair();
-      randomAccountMoonriver = generateKeyringPair('ethereum');
+      uniqueAlice = privateKeyWrapper('//Alice');
+      randomAccountUnique = generateKeyringPair();
+      randomAccountMoonbeam = generateKeyringPair('ethereum');
     });
 
-    const moonriverApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + MOONRIVER_PORT),
+    const moonbeamApiOptions: ApiOptions = {
+      provider: new WsProvider('ws://127.0.0.1:' + MOONBEAM_PORT),
     };
 
     await usingApi(
@@ -106,20 +106,20 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
           'MultiLocation',
           {
             parents: 1,
-            interior: {X1: {Parachain: QUARTZ_CHAIN}},
+            interior: {X1: {Parachain: UNIQUE_CHAIN}},
           },
         );
 
         assetId = api.registry.hash(sourceLocation.toU8a()).slice(0, 16).reverse();
         console.log('Internal asset ID is %s', assetId);
-        quartzAssetLocation = {XCM: sourceLocation};
+        uniqueAssetLocation = {XCM: sourceLocation};
         const existentialDeposit = 1;
         const isSufficient = true;
         const unitsPerSecond = '1';
         const numAssetsWeightHint = 0;
 
         const registerTx = api.tx.assetManager.registerForeignAsset(
-          quartzAssetLocation,
+          uniqueAssetLocation,
           uniqueAssetMetadata,
           existentialDeposit,
           isSufficient,
@@ -127,7 +127,7 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
         console.log('Encoded proposal for registerAsset is %s', registerTx.method.toHex() || '');
 
         const setUnitsTx = api.tx.assetManager.setAssetUnitsPerSecond(
-          quartzAssetLocation,
+          uniqueAssetLocation,
           unitsPerSecond,
           numAssetsWeightHint,
         );
@@ -228,28 +228,28 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
         // <<< Referendum voting <<<
 
         // >>> Sponsoring random Account >>>
-        const tx9 = api.tx.balances.transfer(randomAccountMoonriver.address, 11_000_000_000_000_000_000n);
+        const tx9 = api.tx.balances.transfer(randomAccountMoonbeam.address, 11_000_000_000_000_000_000n);
         const events9 = await submitTransactionAsync(baltatharAccount, tx9);
         const result9 = getGenericResult(events9);
         expect(result9.success).to.be.true;
         // <<< Sponsoring random Account <<<
 
-        [balanceMoonriverMovr1] = await getBalance(api, [randomAccountMoonriver.address]);
+        [balanceMoonbeamGlmr1] = await getBalance(api, [randomAccountMoonbeam.address]);
       },
-      moonriverApiOptions,
+      moonbeamApiOptions,
     );
 
     await usingApi(async (api) => {
-      const tx0 = api.tx.balances.transfer(randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
-      const events0 = await submitTransactionAsync(quartzAlice, tx0);
+      const tx0 = api.tx.balances.transfer(randomAccountUnique.address, 10n * TRANSFER_AMOUNT);
+      const events0 = await submitTransactionAsync(uniqueAlice, tx0);
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
 
-      [balanceQuartz1] = await getBalance(api, [randomAccountQuartz.address]);
+      [balanceUnique1] = await getBalance(api, [randomAccountUnique.address]);
     });
   });
 
-  it('Should connect and send QTZ to Moonriver', async () => {
+  it('Should connect and send UNQ to Moonbeam', async () => {
     await usingApi(async (api) => {
       const currencyId = {
         NativeAssetId: 'Here',
@@ -259,8 +259,8 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
           parents: 1,
           interior: {
             X2: [
-              {Parachain: MOONRIVER_CHAIN},
-              {AccountKey20: {network: 'Any', key: randomAccountMoonriver.address}},
+              {Parachain: MOONBEAM_CHAIN},
+              {AccountKey20: {network: 'Any', key: randomAccountMoonbeam.address}},
             ],
           },
         },
@@ -269,16 +269,16 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
       const destWeight = 50000000;
 
       const tx = api.tx.xTokens.transfer(currencyId, amount, dest, destWeight);
-      const events = await submitTransactionAsync(quartzAlice, tx);
+      const events = await submitTransactionAsync(uniqueAlice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      [balanceQuartz2] = await getBalance(api, [randomAccountQuartz.address]);
-      expect(balanceQuartz2 < balanceQuartz1).to.be.true;
+      [balanceUnique2] = await getBalance(api, [randomAccountUnique.address]);
+      expect(balanceUnique2 < balanceUnique1).to.be.true;
 
-      const transactionFees = balanceQuartz1 - balanceQuartz2 - TRANSFER_AMOUNT;
+      const transactionFees = balanceUnique1 - balanceUnique2 - TRANSFER_AMOUNT;
       actuallySent1 = TRANSFER_AMOUNT;  // Why not TRANSFER_AMOUNT - transactionFees ???
-      console.log('Quartz to Moonriver transaction fees on Quartz: %s QTZ', transactionFees);
+      console.log('Unique to Moonbeam transaction fees on Unique: %s UNQ', transactionFees);
       expect(transactionFees > 0).to.be.true;
     });
 
@@ -287,17 +287,17 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
         // todo do something about instant sealing, where there might not be any new blocks
         await waitNewBlocks(api, 3);
 
-        [balanceMoonriverMovr2] = await getBalance(api, [randomAccountMoonriver.address]);
+        [balanceMoonbeamGlmr2] = await getBalance(api, [randomAccountMoonbeam.address]);
 
-        const movrFees = balanceMoonriverMovr1 - balanceMoonriverMovr2;
-        console.log('Quartz to Moonriver transaction fees on Moonriver: %s MOVR', movrFees);
-        expect(movrFees == 0n).to.be.true;
+        const glmrFees = balanceMoonbeamGlmr1 - balanceMoonbeamGlmr2;
+        console.log('Unique to Moonbeam transaction fees on Moonbeam: %s GLMR', glmrFees);
+        expect(glmrFees == 0n).to.be.true;
       },
-      {provider: new WsProvider('ws://127.0.0.1:' + MOONRIVER_PORT)},
+      {provider: new WsProvider('ws://127.0.0.1:' + MOONBEAM_PORT)},
     );
   });
 
-  it('Should connect to Moonriver and send QTZ back', async () => {
+  it('Should connect to Moonbeam and send UNQ back', async () => {
     await usingApi(
       async (api) => {
         const amount = TRANSFER_AMOUNT / 2n;
@@ -307,7 +307,7 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
               Concrete: {
                 parents: 1,
                 interior: {
-                  X1: {Parachain: QUARTZ_CHAIN},
+                  X1: {Parachain: UNIQUE_CHAIN},
                 },
               },
             },
@@ -321,8 +321,8 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
             parents: 1,
             interior: {
               X2: [
-                {Parachain: QUARTZ_CHAIN},
-                {AccountId32: {network: 'Any', id: randomAccountQuartz.addressRaw}},
+                {Parachain: UNIQUE_CHAIN},
+                {AccountId32: {network: 'Any', id: randomAccountUnique.addressRaw}},
               ],
             },
           },
@@ -330,31 +330,31 @@ describe('Integration test: Exchanging QTZ with Moonriver', () => {
         const destWeight = 50000000;
 
         const tx = api.tx.xTokens.transferMultiasset(asset, destination, destWeight);
-        const events = await submitTransactionAsync(randomAccountMoonriver, tx);
+        const events = await submitTransactionAsync(randomAccountMoonbeam, tx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        [balanceMoonriverMovr3] = await getBalance(api, [randomAccountMoonriver.address]);
+        [balanceMoonbeamGlmr3] = await getBalance(api, [randomAccountMoonbeam.address]);
 
-        const movrFees = balanceMoonriverMovr2 - balanceMoonriverMovr3;
+        const glmrFees = balanceMoonbeamGlmr2 - balanceMoonbeamGlmr3;
         actuallySent2 = amount;
-        console.log('Moonriver to Quartz transaction fees on Moonriver: %s MOVR', movrFees);
-        expect(movrFees > 0).to.be.true;
+        console.log('Moonbeam to Unique transaction fees on Moonbeam: %s GLMR', glmrFees);
+        expect(glmrFees > 0).to.be.true;
       },
-      {provider: new WsProvider('ws://127.0.0.1:' + MOONRIVER_PORT)},
+      {provider: new WsProvider('ws://127.0.0.1:' + MOONBEAM_PORT)},
     );
 
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
 
-      [balanceQuartz3] = await getBalance(api, [randomAccountQuartz.address]);
-      const actuallyDelivered = balanceQuartz3 - balanceQuartz2;
+      [balanceUnique3] = await getBalance(api, [randomAccountUnique.address]);
+      const actuallyDelivered = balanceUnique3 - balanceUnique2;
       expect(actuallyDelivered > 0).to.be.true;
 
-      const qtzFees = actuallySent2 - actuallyDelivered;
-      console.log('Moonriver to Quartz transaction fees on Quartz: %s QTZ', qtzFees);
-      expect(qtzFees > 0).to.be.true;
+      const unqFees = actuallySent2 - actuallyDelivered;
+      console.log('Moonbeam to Unique transaction fees on Unique: %s UNQ', unqFees);
+      expect(unqFees > 0).to.be.true;
     });
   });
 });

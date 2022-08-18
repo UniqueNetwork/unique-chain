@@ -16,7 +16,7 @@
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
-import {ApiPromise} from '@polkadot/api';
+import {Keyring, ApiPromise} from '@polkadot/api';
 import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
 import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
@@ -1698,4 +1698,20 @@ export async function repartitionRFT(
   const result = getGenericResult(events);
 
   return result.success;
+}
+
+let accountSeed = 10000;
+
+const keyringEth = new Keyring({type: 'ethereum'});
+const keyringEd25519 = new Keyring({type: 'ed25519'});
+const keyringSr25519 = new Keyring({type: 'sr25519'});
+
+export function generateKeyringPair(type: 'ethereum' | 'sr25519' | 'ed25519' = 'sr25519') {
+  const privateKey = `0xDEADBEEF${(accountSeed++).toString(16).padStart(56, '0')}`;
+  if (type == 'sr25519') {
+    return keyringSr25519.addFromUri(privateKey);
+  } else if (type == 'ed25519') {
+    return keyringEd25519.addFromUri(privateKey);
+  }
+  return keyringEth.addFromUri(privateKey);
 }
