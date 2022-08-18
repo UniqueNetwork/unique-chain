@@ -1,4 +1,4 @@
-name: Upgrade replica
+name: upgrade replica
 
 # Controls when the action will run.
 on:
@@ -38,15 +38,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - network: Opal
+          - network: opal
             features: opal-runtime
             runtime: opal
             fork_from_address: wss://eu-ws-opal.unique.network:443
-          - network: Quartz
+          - network: quartz
             features: quartz-runtime
             runtime: quartz
             fork_from_address: wss://eu-ws-quartz.unique.network:443
-          - network: Unique
+          - network: unique
             features: unique-runtime
             runtime: unique
             fork_from_address: wss://eu-ws.unique.network:443
