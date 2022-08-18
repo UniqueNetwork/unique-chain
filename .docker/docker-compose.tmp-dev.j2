@@ -5,9 +5,18 @@ services:
     build:
       args:
         - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
-        - "BRANCH={{ BRANCH }}"
-        - "REPO_URL={{ REPO_URL }}"
         - "FEATURE={{ FEATURE }}"
-        - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
-
+      context: ../
+      dockerfile: .docker/Dockerfile-chain-dev
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"
     command: cargo run --release --features=$FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+    
