@@ -6,7 +6,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'up-common'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = "0.9.25"
+version = "0.9.27"
 
 [features]
 default = ['std']

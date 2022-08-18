@@ -24,5 +24,3 @@ COPY . /dev_chain
 WORKDIR /dev_chain
 
 RUN cargo test --features=limit-testing
-
-CMD cargo test --features=limit-testing

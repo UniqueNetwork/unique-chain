@@ -26,7 +26,7 @@ concurrency:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  fork-update-withdata:
+  forkless-update-data:
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
@@ -84,8 +84,8 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/forking/docker-compose.tmp-fork.j2
-          output_file: .docker/forking/docker-compose.${{ matrix.network }}.yml
+          template: .docker/docker-compose.tmp-forkless-data.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
@@ -97,23 +97,23 @@ jobs:
             FORK_FROM=${{ matrix.fork_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/forking/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
-      - name: Generate launch-config-fork.json
+      - name: Generate launch-config-forkless-data.json
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/forking/launch-config-fork.j2
-          output_file: .docker/forking/launch-config-fork.json
+          template: .docker/forkless-config/launch-config-forkless-data.j2
+          output_file: .docker/launch-config-forkless-data.json
           variables: |
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
 
-      - name: Show launch-config-fork configuration
-        run: cat .docker/forking/launch-config-fork.json
+      - name: Show launch-config-forkless configuration
+        run: cat .docker/launch-config-forkless-data.json
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/forking/docker-compose-fork.yaml" -f ".docker/forking/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -151,20 +151,12 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './fork-parachain-update-withdata-logs.${{ matrix.features }}'
-          images: 'parachain-fork' 
+          dest: './forkless-parachain-upgrade-data-logs.${{ matrix.features }}'
+          images: 'node-parachain' 
 
-      - name: Tar logs
-        if: success() || failure()
-        run: tar cvzf ./fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz ./fork-parachain-update-withdata-logs.${{ matrix.features }}
-
-      - name: Upload logs to GitHub
-        if: success() || failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz
-          path: ./fork-parachain-update-withdata-logs.${{ matrix.features }}.tgz
+      - name: Show Docker logs
+        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/node-parachain.log' 
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/forking/docker-compose-fork.yaml" -f ".docker/forking/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
