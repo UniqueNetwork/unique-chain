@@ -192,11 +192,11 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.log'
+          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
           images: 'node-parachain' 
 
       - name: Show docker logs
-        run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}.log'
+        run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
