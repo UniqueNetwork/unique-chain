@@ -11,8 +11,8 @@ services:
         - "RUNTIME={{ RUNTIME }}"
         - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
         - "FORK_FROM={{ FORK_FROM }}"
-      context: ./
-      dockerfile: ./Dockerfile-parachain-upgrade-data
+      context: ../
+      dockerfile: .docker/Dockerfile-parachain-upgrade-data
     image: node-parachain
     container_name: node-parachain
     volumes:
@@ -21,7 +21,7 @@ services:
          target: /polkadot-launch/launch-config.json
          read_only: true
        - type: bind
-         source: ./fork.jsonnet
+         source: ./forkless-config/fork.jsonnet
          target: /polkadot-launch/fork.jsonnet
          read_only: true          
     expose:
