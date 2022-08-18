@@ -97,7 +97,7 @@ jobs:
             FORK_FROM=${{ matrix.fork_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/forking/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Generate launch-config-forkless-data.json
         uses: cuchi/jinja2-action@v1.2.0
@@ -113,7 +113,7 @@ jobs:
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/forking/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
