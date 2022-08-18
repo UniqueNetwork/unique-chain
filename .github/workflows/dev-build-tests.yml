@@ -38,11 +38,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - network: "Opal"
+          - network: "opal"
             features: "opal-runtime"
-          - network: "Quartz"
+          - network: "quartz"
             features: "quartz-runtime"
-          - network: "Unique"
+          - network: "unique"
             features: "unique-runtime"
 
     steps:
