@@ -35,6 +35,8 @@ FROM rust-builder as builder-unique
 ARG PROFILE=release
 ARG FEATURE=
 ARG FORK_FROM=
+ENV FEATURE $FEATURE
+ENV FORK_FROM $FORK_FROM
 
 COPY . /unique_parachain
 WORKDIR /unique_parachain
@@ -42,4 +44,7 @@ WORKDIR /unique_parachain
 
 RUN echo "Requested features: $FEATURE\n" && \
     echo "Fork from: $FORK_FROM\n" && \
-    cargo run --features=$FEATURE --release -- try-runtime on-runtime-upgrade live --uri $FORK_FROM
+    cargo build --features=$FEATURE --release
+    
+
+CMD cargo run --features=$FEATURE --release -- try-runtime on-runtime-upgrade live --uri $FORK_FROM

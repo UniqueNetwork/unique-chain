@@ -93,6 +93,16 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300 --remove-orphans
 
+      - name: Collect Docker Logs
+        if: success() || failure()
+        uses: jwalton/gh-docker-logs@v2.2.0
+        with:
+          dest: './try-runtime-logs.${{ matrix.features }}'
+          images: 'try-runtime' 
+
+      - name: Show docker logs
+        run: cat './try-runtime-logs.${{ matrix.features }}/try-runtime.log'
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
