@@ -216,6 +216,56 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
+  it('Scheduled tasks should take some fees', async function() {
+    await requirePallets(this, [Pallets.TestUtils]);
+
+    await usingApi(async api => {
+      const scheduledId = makeScheduledId();
+      const waitForBlocks = 10;
+      const period = 2;
+      const repetitions = 1;
+
+      const dummyTxFeeAmount = 100_000_000;
+
+      const dummyTx = api.tx.testUtils.justTakeFee();
+
+      await expect(scheduleAfter(
+        api,
+        dummyTx,
+        alice,
+        waitForBlocks,
+        scheduledId,
+        period,
+        repetitions,
+      )).to.not.be.rejected;
+
+      const aliceInitBalance = await getFreeBalance(alice);
+      let diff;
+
+      await waitNewBlocks(waitForBlocks + 1);
+
+      const aliceBalanceAfterFirst = await getFreeBalance(alice);
+      expect(
+        aliceBalanceAfterFirst < aliceInitBalance,
+        '[after execution #1] Scheduled task should take a fee',
+      ).to.be.true;
+
+      diff = aliceInitBalance - aliceBalanceAfterFirst;
+      expect(diff).to.be.equal(dummyTxFeeAmount, 'Scheduled task should take the right amount of fees');
+
+      await waitNewBlocks(period);
+
+      const aliceBalanceAfterSecond = await getFreeBalance(alice);
+      expect(
+        aliceBalanceAfterSecond < aliceBalanceAfterFirst,
+        '[after execution #2] Scheduled task should take a fee',
+      ).to.be.true;
+
+      diff = aliceBalanceAfterFirst - aliceBalanceAfterSecond;
+      expect(diff).to.be.equal(dummyTxFeeAmount, 'Scheduled task should take the right amount of fees');
+    });
+  });
+
   // FIXME What purpose of this test?
   it.skip('Can schedule a scheduled operation of canceling the scheduled operation', async () => {
     await usingApi(async api => {

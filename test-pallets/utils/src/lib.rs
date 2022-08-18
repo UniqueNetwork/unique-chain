@@ -69,5 +69,10 @@ pub mod pallet {
 
 			Err(<Error<T>>::TriggerRollback.into())
 		}
+
+		#[pallet::weight(100_000_000)]
+		pub fn just_take_fee(_origin: OriginFor<T>) -> DispatchResult {
+			Ok(())
+		}
 	}
 }
