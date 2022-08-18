@@ -111,7 +111,7 @@ jobs:
         id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: int test results: ${{ matrix.network }}            # Name of the check run which will be created
+          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
