@@ -49,6 +49,10 @@ const requiredPallets = [
   'xtokens',
 ];
 
+const testPallets = [
+  'testutils',
+];
+
 // Pallets that depend on consensus and governance configuration
 const consensusPallets = [
   'sudo',
@@ -85,6 +89,10 @@ describe('Pallet presence', () => {
 
   itSub('Required pallets are present', async ({helper}) => {
     expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets]);
+  });
+
+  itSub('Test pallets are present', async ({helper}) => {
+    expect(helper.fetchAllPalletNames()).to.contain.members([...testPallets]);
   });
 
   itSub('Governance and consensus pallets are present', async ({helper}) => {

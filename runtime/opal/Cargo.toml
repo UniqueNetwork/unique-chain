@@ -167,7 +167,10 @@ std = [
     "orml-xtokens/std",
     "orml-traits/std",
     "pallet-foreign-assets/std",
+
+    'pallet-test-utils?/std',
 ]
+test-pallets = ['pallet-test-utils']
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 opal-runtime = ['refungible', 'rmrk', 'app-promotion', 'foreign-assets']
 
@@ -493,6 +496,11 @@ impl-trait-for-tuples = "0.2.2"
 
 [dev-dependencies.logtest]
 version = "2.0.0"
+
+################################################################################
+# Test dependencies
+pallet-test-utils = { optional = true, default-features = false, path = "../../test-pallets/utils" }
+
 
 ################################################################################
 # Build Dependencies

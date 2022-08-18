@@ -93,6 +93,11 @@ macro_rules! construct_runtime {
                 EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
                 EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
+
+                #[test_pallets]
+                {
+                    TestUtils: pallet_test_utils,
+                }
             }
         }
     }

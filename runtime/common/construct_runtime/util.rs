@@ -27,11 +27,24 @@ macro_rules! construct_runtime_impl {
                 $pallet_name:ident: $pallet_mod:ident$(::{$($pallet_parts:ty),*})? = $index:literal
             ),*
             $(,)?
+
+            #[test_pallets]
+            {
+                $(
+                    $test_pallet_name:ident: $test_pallet_mod:ident
+                ),*
+                $(,)?
+            }
         }
     ) => {
         $crate::construct_runtime_helper! {
             select_runtime($select_runtime),
             selected_pallets(),
+            test_pallets(
+                $(
+                    $test_pallet_name: $test_pallet_mod
+                ),*
+            ),
 
             where_clause($($where_ident = $where_ty),*),
             pallets(
@@ -49,6 +62,7 @@ macro_rules! construct_runtime_helper {
     (
         select_runtime($select_runtime:ident),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets(
@@ -62,6 +76,7 @@ macro_rules! construct_runtime_helper {
             select_runtime($select_runtime),
             runtimes($($pallet_runtimes),+,),
             selected_pallets($($selected_pallets)*),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets(
@@ -74,6 +89,7 @@ macro_rules! construct_runtime_helper {
     (
         select_runtime($select_runtime:ident),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets(
@@ -88,6 +104,7 @@ macro_rules! construct_runtime_helper {
                 $($selected_pallets)*
                 $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets($($pallets_tl)*)
@@ -97,15 +114,27 @@ macro_rules! construct_runtime_helper {
     (
         select_runtime($select_runtime:ident),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets()
     ) => {
+        #[cfg(not(feature = "test-pallets"))]
         frame_support::construct_runtime! {
             pub enum Runtime where
                 $($where_clause)*
             {
                 $($selected_pallets)*
+            }
+        }
+
+        #[cfg(feature = "test-pallets")]
+        frame_support::construct_runtime! {
+            pub enum Runtime where
+                $($where_clause)*
+            {
+                $($selected_pallets)*
+                $($test_pallets)*
             }
         }
     };
@@ -117,6 +146,7 @@ macro_rules! add_runtime_specific_pallets {
         select_runtime(opal),
         runtimes(opal, $($_runtime_tl:tt)*),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets(
@@ -130,6 +160,7 @@ macro_rules! add_runtime_specific_pallets {
                 $($selected_pallets)*
                 $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets($($pallets_tl)*)
@@ -140,6 +171,7 @@ macro_rules! add_runtime_specific_pallets {
         select_runtime(quartz),
         runtimes(quartz, $($_runtime_tl:tt)*),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets(
@@ -153,6 +185,7 @@ macro_rules! add_runtime_specific_pallets {
                 $($selected_pallets)*
                 $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets($($pallets_tl)*)
@@ -163,6 +196,7 @@ macro_rules! add_runtime_specific_pallets {
         select_runtime(unique),
         runtimes(unique, $($_runtime_tl:tt)*),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets(
@@ -176,6 +210,7 @@ macro_rules! add_runtime_specific_pallets {
                 $($selected_pallets)*
                 $pallet_name: $pallet_mod$(::{$($pallet_parts),*})? = $index,
             ),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets($($pallets_tl)*)
@@ -186,6 +221,7 @@ macro_rules! add_runtime_specific_pallets {
         select_runtime($select_runtime:ident),
         runtimes($_current_runtime:ident, $($runtime_tl:tt)*),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets($($pallets:tt)*)
@@ -194,6 +230,7 @@ macro_rules! add_runtime_specific_pallets {
             select_runtime($select_runtime),
             runtimes($($runtime_tl)*),
             selected_pallets($($selected_pallets)*),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets($($pallets)*)
@@ -204,6 +241,7 @@ macro_rules! add_runtime_specific_pallets {
         select_runtime($select_runtime:ident),
         runtimes(),
         selected_pallets($($selected_pallets:tt)*),
+        test_pallets($($test_pallets:tt)*),
 
         where_clause($($where_clause:tt)*),
         pallets(
@@ -214,6 +252,7 @@ macro_rules! add_runtime_specific_pallets {
         $crate::construct_runtime_helper! {
             select_runtime($select_runtime),
             selected_pallets($($selected_pallets)*),
+            test_pallets($($test_pallets)*),
 
             where_clause($($where_clause)*),
             pallets($($pallets_tl)*)
