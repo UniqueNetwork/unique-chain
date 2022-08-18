@@ -129,7 +129,23 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = ERC20UniqueExtensions)]
+#[solidity_interface(name = "ERC20Mintable")]
+impl<T: Config> FungibleHandle<T> {
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint(&mut self, caller: caller, to: address, amount: uint256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+}
+
+#[solidity_interface(name = "ERC20UniqueExtensions")]
 impl<T: Config> FungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
@@ -144,12 +160,29 @@ impl<T: Config> FungibleHandle<T> {
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
+	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(address, uint256)>) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let amounts = amounts
+			.into_iter()
+			.map(|(to, amount)| Ok((T::CrossAccountId::from_eth(to), amount.try_into().map_err(|_| "amount overflow")?)))
+			.collect::<Result<_>>()?;
+
+		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
 }
 
 #[solidity_interface(
 	name = UniqueFungible,
 	is(
 		ERC20,
+		ERC20Mintable,
 		ERC20UniqueExtensions,
 		Collection(common_mut, CollectionHandle<T>),
 	)

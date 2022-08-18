@@ -3,7 +3,13 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-/// @dev common stubs holder
+// Anonymous struct
+struct Tuple0 {
+	address field_0;
+	uint256 field_1;
+}
+
+// Common stubs holder
 interface Dummy {
 
 }
@@ -12,8 +18,32 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-/// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xe54be640
+// Inline
+interface ERC20Events {
+	event Transfer(address indexed from, address indexed to, uint256 value);
+	event Approval(
+		address indexed owner,
+		address indexed spender,
+		uint256 value
+	);
+}
+
+// Selector: 40c10f19
+interface ERC20Mintable is Dummy, ERC165 {
+	// Selector: mint(address,uint256) 40c10f19
+	function mint(address to, uint256 amount) external returns (bool);
+}
+
+// Selector: 63034ac5
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
+
+	// Selector: mintBulk((address,uint256)[]) 1acf2d55
+	function mintBulk(Tuple0[] memory amounts) external returns (bool);
+}
+
+// Selector: 6cf113cd
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -207,28 +237,6 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
 	function uniqueCollectionType() external returns (string memory);
-
-	/// Changes collection owner to another account
-	///
-	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner account
-	/// @dev EVM selector for this function is: 0x13af4035,
-	///  or in textual repr: setOwner(address)
-	function setOwner(address newOwner) external;
-
-	/// Changes collection owner to another substrate account
-	///
-	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner substrate account
-	/// @dev EVM selector for this function is: 0xb212138f,
-	///  or in textual repr: setOwnerSubstrate(uint256)
-	function setOwnerSubstrate(uint256 newOwner) external;
-}
-
-/// @dev anonymous struct
-struct Tuple6 {
-	address field_0;
-	uint256 field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x79cc6790
@@ -298,6 +306,7 @@ interface UniqueFungible is
 	Dummy,
 	ERC165,
 	ERC20,
+	ERC20Mintable,
 	ERC20UniqueExtensions,
 	Collection
 {}
