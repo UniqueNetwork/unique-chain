@@ -45,7 +45,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		TriggerRollback
+		TriggerRollback,
 	}
 
 	#[pallet::call]
@@ -63,7 +63,7 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		pub fn set_test_value_and_rollback(origin: OriginFor<T>, value: u32) -> DispatchResult {
-            Self::set_test_value(origin, value)?;
+			Self::set_test_value(origin, value)?;
 
 			Self::deposit_event(Event::ShouldRollback);
 

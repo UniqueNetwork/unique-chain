@@ -17,5 +17,5 @@
 use crate::{Runtime, Event};
 
 impl pallet_test_utils::Config for Runtime {
-    type Event = Event;
+	type Event = Event;
 }
