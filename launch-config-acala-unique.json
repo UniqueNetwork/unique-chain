@@ -66,9 +66,9 @@
     },
     "parachains": [
         {
-            "bin": "../Acala/target/release/acala",
+            "bin": "../Acala/target/production/acala",
             "id": "2000",
-            "chain":  "local",
+            "chain":  "acala-dev",
 			"balance": "1000000000000000000000",
 			"nodes": [
 				{
