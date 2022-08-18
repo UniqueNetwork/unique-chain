@@ -8,6 +8,8 @@ local raw = local sourceRaw = sourceChain._raw._preloadKeys; {
   if sourceRaw[key] != null
 };
 
+local typeNames = (import './typeNames.jsonnet')(sourceChain);
+
 local
 auraKeys = [
 	// AuraExt.Authorities, we don't have aura pallet enabled for some reason, to refer using cql api
@@ -45,6 +47,7 @@ cleanupRaw(raw) = {
 	if std.all(std.map(function(prefix) !std.startsWith(key, prefix), unwantedPrefixes))
 };
 
+
 local originalRaw = rawSpec.genesis.raw.top;
 local outSpec = rawSpec {
 	genesis+: {
@@ -52,8 +55,42 @@ local outSpec = rawSpec {
 			top: cleanupRaw(raw) {
 				[key]: originalRaw[key]
 				for key in wantedKeys
+				if std.objectHas(originalRaw, key)
 			},
 		},
 	},
 };
-outSpec
+
+local
+	aliceAccount = sourceChain.System._encodeKey.Account(['0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d']),
+	totalIssuance = sourceChain.Balances._encodeKey.TotalIssuance([]),
+ 	unique = cql.calc(["10", "18", "**"]),
+ 	Munique = cql.calc([unique, "10", "6", "**", "*"]),
+;
+
+outSpec {
+	genesis+: {
+		raw+: {
+			top+: {
+				[totalIssuance]: cql.calc([
+					Munique,
+					if std.objectHas(super, totalIssuance) then sourceChain._decode(typeNames.u128, super[totalIssuance]) else '0',
+					if std.objectHas(super, aliceAccount) then sourceChain._decode(typeNames.AccountInfo, super[aliceAccount]).data.free else '0',
+					'-', '+',
+				]),
+				[aliceAccount]: sourceChain._encode(typeNames.AccountInfo, {
+					nonce: 0,
+					consumers: 3,
+					providers: 1,
+					sufficients: 0,
+					data: {
+						free: Munique,
+						reserved: "0",
+						misc_frozen: "0",
+						fee_frozen: "0",
+					},
+				},)
+			},
+		},
+	},
+}
