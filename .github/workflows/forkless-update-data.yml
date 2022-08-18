@@ -19,17 +19,52 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  prepare-execution-marix:
+
+    name: Prepare execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v3
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {${{ env.OPAL_FORK_FROM }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {${{ env.QUARTZ_FORK_FROM }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, fork_from_address {${{ env.UNIQUE_FORK_FROM }}}
+
+
+
   forkless-update-data:
+    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
+
+
 
     name: ${{ matrix.network }}
 
@@ -37,19 +72,8 @@ jobs:
 
     strategy:
       matrix:
-        include:
-          - network: opal
-            features: opal-runtime
-            runtime: opal
-            fork_from_address: wss://eu-ws-opal.unique.network:443
-          - network: quartz
-            features: quartz-runtime
-            runtime: quartz
-            fork_from_address: wss://eu-ws-quartz.unique.network:443
-          - network: unique
-            features: unique-runtime
-            runtime: unique
-            fork_from_address: wss://eu-ws.unique.network:443
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
 
     steps:
       - name: Skip if pull request is in Draft
@@ -91,6 +115,8 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
+            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
@@ -118,33 +144,48 @@ jobs:
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
-            counter=160
-            function do_docker_logs {
-                docker logs --details parachain-fork  2>&1
-            }
-            function is_started {
-                echo "Check Docker logs"
-                DOCKER_LOGS=$(do_docker_logs)
-                if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
-                     echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
-                     return 0
-                     exit 0
+          counter=160
+          function check_container_status {
+                docker inspect -f {{.State.Running}} node-parachain
+          }
+          function do_docker_logs {
+                docker logs --details node-parachain  2>&1
+          }
+          function is_started {
+                if [ "$(check_container_status)" == "true" ]; then
+                        echo "Container: node-parachain RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
+                                echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
+                                return 0
+                        elif [[ ${DOCKER_LOGS} = *"🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧"* ]];then
+                                echo "🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧"
+                                return 1
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
+                else
+                        echo "Container node-parachain not RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
                 fi
-                     echo "Function is_started: Return 1"
-                     return 1
-            }
-            while ! is_started; do
+          exit 0
+          }
+          while ! is_started; do
                 echo "Waiting for special message in log files "
                 sleep 30s
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
                 if [ "$counter" -gt "0" ]; then
-                     continue
+                         continue
                 else
-                     break
+                         break
                 fi
-            done
-            exit 1
+          done
+          echo "Halting script"
+          exit 0
         shell: bash
 
       - name: Collect Docker Logs
@@ -152,10 +193,10 @@ jobs:
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
           dest: './forkless-parachain-upgrade-data-logs.${{ matrix.features }}'
-          images: 'node-parachain' 
+          images: 'node-parachain'
 
       - name: Show Docker logs
-        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/node-parachain.log' 
+        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/node-parachain.log'
 
       - name: Stop running containers
         if: always()                   # run this step always

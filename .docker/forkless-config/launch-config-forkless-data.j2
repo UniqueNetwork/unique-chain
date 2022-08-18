@@ -1,6 +1,8 @@
 {
       "relaychain": {
         "bin": "/polkadot/target/release/polkadot",
+        "upgradeBin": "/polkadot/target/release/polkadot",
+        "upgradeWasm": "/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm",
         "chain": "westend-local",
         "nodes": [
             {
@@ -85,6 +87,8 @@
       "parachains": [
         {
             "bin": "/unique-chain/target/release/unique-collator",
+            "upgradeBin": "/unique-chain/target/release/unique-collator",
+            "upgradeWasm": "/unique-chain/target/release/wbuild/{{ FEATURE }}/{{ RUNTIME }}_runtime.compact.compressed.wasm",
             "id": "1000",
             "balance": "1000000000000000000000000",
             "chainRawInitializer": [

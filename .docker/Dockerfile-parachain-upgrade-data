@@ -5,7 +5,6 @@ LABEL maintainer="Unique.Network"
 ARG RUST_TOOLCHAIN=
 
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
-
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
@@ -27,6 +26,19 @@ RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
+
+# ===== BUILD current version ======
+FROM rust-builder as builder-unique-current
+
+ARG PROFILE=release
+ARG FEATURE=
+ARG MAINNET_BRANCH=
+ARG REPO_URL=
+
+WORKDIR /unique_parachain
+
+RUN git clone $REPO_URL -b $MAINNET_BRANCH . && \
+    cargo build --features=$FEATURE --$PROFILE
 
 # ===== BUILD target version ======
 FROM rust-builder as builder-unique-target
@@ -59,7 +71,7 @@ FROM rust-builder as builder-chainql
 RUN mkdir chainql
 WORKDIR /chainql
 
-RUN git clone --depth 1 https://github.com/CertainLach/chainql.git . && \
+RUN git clone -b v0.1.0 --depth 1 https://github.com/CertainLach/chainql.git . && \
     cargo build --release
 
 # ===== RUN ======
@@ -70,14 +82,14 @@ ARG RUNTIME=
 ENV RUNTIME $RUNTIME
 
 RUN apt-get -y update && \
-      apt-get -y install curl git && \
-      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
-      export NVM_DIR="$HOME/.nvm" && \
-      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-      nvm install v16.16.0 && \
-      nvm use v16.16.0
+    apt-get -y install curl git && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+    export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    nvm install v16.16.0 && \
+    nvm use v16.16.0
 
-RUN git clone https://github.com/uniquenetwork/polkadot-launch -b feature/parachain-forking
+RUN git clone https://github.com/uniquenetwork/polkadot-launch.git -b feature/parachain-forking
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -87,17 +99,18 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 
 RUN echo "$RUNTIME"
 
+COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-
-COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm
 
 COPY --from=builder-chainql /chainql/target/release/chainql /chainql/target/release/
+
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
 
 ARG FORK_FROM=
 ENV FORK_FROM=$FORK_FROM
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" FORK_FROM && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
-    yarn start launch-config.json
-
-
+    yarn start launch-config.json --test-upgrade-parachains

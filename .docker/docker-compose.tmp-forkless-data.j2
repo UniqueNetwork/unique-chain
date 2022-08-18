@@ -10,6 +10,8 @@ services:
         - "FEATURE={{ FEATURE }}"
         - "RUNTIME={{ RUNTIME }}"
         - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
+        - "MAINNET_TAG={{ MAINNET_TAG }}"
+        - "MAINNET_BRANCH={{ MAINNET_BRANCH }}"
         - "FORK_FROM={{ FORK_FROM }}"
       context: ../
       dockerfile: .docker/Dockerfile-parachain-upgrade-data
@@ -23,7 +25,11 @@ services:
        - type: bind
          source: ./forkless-config/fork.jsonnet
          target: /polkadot-launch/fork.jsonnet
-         read_only: true          
+         read_only: true
+       - type: bind
+         source: ./forkless-config/typeNames.jsonnet
+         target: /polkadot-launch/typeNames.jsonnet
+         read_only: true
     expose:
       - 9944
       - 9933
