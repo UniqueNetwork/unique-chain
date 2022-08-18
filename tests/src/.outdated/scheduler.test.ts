@@ -19,6 +19,7 @@ import chaiAsPromised from 'chai-as-promised';
 import {
   default as usingApi,
   submitTransactionAsync,
+  submitTransactionExpectFailAsync,
 } from '../substrate/substrate-api';
 import {
   createItemExpectSuccess,
@@ -41,6 +42,8 @@ import {
   scheduleExpectFailure,
   scheduleAfter,
   cancelScheduled,
+  requirePallets,
+  Pallets,
 } from '../deprecated-helpers/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
@@ -79,7 +82,9 @@ describe('Scheduling token and balance transfers', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  before(async() => {
+  before(async function() {
+    await requirePallets(this, [Pallets.Scheduler]);
+
     await usingApi(async (_, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
@@ -175,6 +180,42 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
+  it('Scheduled tasks are transactional', async function() {
+    await requirePallets(this, [Pallets.TestUtils]);
+
+    await usingApi(async api => {
+      const scheduledId = makeScheduledId();
+      const waitForBlocks = 4;
+      const period = null;
+      const priority = 0;
+
+      const initTestVal = 42;
+      const changedTestVal = 111;
+
+      const initTx = api.tx.testUtils.setTestValue(initTestVal);
+      await submitTransactionAsync(alice, initTx);
+
+      const changeErrTx = api.tx.testUtils.setTestValueAndRollback(changedTestVal);
+
+      const scheduleTx = api.tx.scheduler.scheduleNamedAfter(
+        scheduledId,
+        waitForBlocks, 
+        period,
+        priority, 
+        {Value: changeErrTx as any},
+      );
+
+      await submitTransactionAsync(alice, scheduleTx);
+
+      await waitNewBlocks(waitForBlocks);
+
+      const testVal = (await api.query.testUtils.testValue()).toNumber();
+      expect(testVal, 'The test value should NOT be commited')
+        .not.to.be.equal(changedTestVal)
+        .and.to.be.equal(initTx);
+    });
+  });
+
   // FIXME What purpose of this test?
   it.skip('Can schedule a scheduled operation of canceling the scheduled operation', async () => {
     await usingApi(async api => {
@@ -219,7 +260,9 @@ describe('Negative Test: Scheduling', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  before(async() => {
+  before(async function() {
+    await requirePallets(this, [Pallets.Scheduler]);
+
     await usingApi(async (_, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
