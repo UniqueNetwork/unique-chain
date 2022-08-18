@@ -89,7 +89,7 @@ jobs:
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
       - uses: actions/setup-node@v3
         with:
@@ -111,7 +111,7 @@ jobs:
         id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
+          name: int test results: ${{ matrix.network }}            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
@@ -180,7 +180,7 @@ jobs:
         run: cat .docker/docker-compose.unit.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.unit.yml" up -d --build
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.unit.yml" up -d --build --remove-orphans
 
 
       - name: Stop running containers
