@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   rustfmt:
     runs-on: self-hosted-ci
@@ -37,16 +40,17 @@ jobs:
         if: github.event.pull_request.draft == true
         run: exit 1
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
             toolchain: nightly
             default: true
             target: wasm32-unknown-unknown
-            components: rustfmt, clippy
+            components: rustfmt, clippy 
       - name: Run cargo fmt
-        run: cargo fmt -- --check
+        run: cargo fmt --all -- --check
+
 
   clippy:
     if: ${{ false }}
