@@ -120,13 +120,18 @@ std = [
     'up-sponsorship/std',
 
     "orml-vesting/std",
+    "orml-tokens/std",
+    "orml-xtokens/std",
+    "orml-traits/std",
+    "pallet-foreing-assets/std"
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'scheduler', 'rmrk']
+opal-runtime = ['refungible', 'scheduler', 'rmrk', 'foreign-asset']
 
 refungible = []
 scheduler = []
 rmrk = []
+foreign-asset = []
 
 ################################################################################
 # Substrate Dependencies
@@ -399,6 +404,24 @@ branch = "polkadot-v0.9.27"
 version = "0.4.1-dev"
 default-features = false
 
+[dependencies.orml-xtokens]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+branch = "polkadot-v0.9.27"
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-tokens]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+branch = "polkadot-v0.9.27"
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-traits]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+branch = "polkadot-v0.9.27"
+version = "0.4.1-dev"
+default-features = false
+
 ################################################################################
 # local dependencies
 
@@ -437,6 +460,7 @@ fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/fro
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.27' }
+pallet-foreing-assets = { default-features = false, path = "../../pallets/foreing-assets" }
 
 ################################################################################
 # Build Dependencies

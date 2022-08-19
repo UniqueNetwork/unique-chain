@@ -167,7 +167,13 @@ pub mod pallet {
 		Value = u128,
 		QueryKind = ValueQuery,
 	>;
+
+	/// Foreign collection flag
+	#[pallet::storage]
+	pub type ForeignCollection<T: Config> =
+	StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = bool, QueryKind = ValueQuery>;
 }
+
 
 /// Wrapper around untyped collection handle, asserting inner collection is of fungible type.
 /// Required for interaction with Fungible collections, type safety and implementation [`solidity_interface`][`evm_coder::solidity_interface`].
@@ -215,6 +221,16 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::init_collection(owner, data, false)
 	}
 
+	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
+	pub fn init_foreign_collection(
+		owner: T::CrossAccountId,
+		data: CreateCollectionData<T::AccountId>,
+	) -> Result<CollectionId, DispatchError> {
+		let id = <PalletCommon<T>>::init_collection(owner, data, false)?;
+		<ForeignCollection<T>>::insert(id, true);
+		Ok(id)
+	}
+
 	/// Destroys a collection.
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,
@@ -230,6 +246,7 @@ impl<T: Config> Pallet<T> {
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
 
+		<ForeignCollection<T>>::remove(id);
 		<TotalSupply<T>>::remove(id);
 		let _ = <Balance<T>>::clear_prefix((id,), u32::MAX, None);
 		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
@@ -257,6 +274,12 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
+		// Foreign collection check
+		ensure!(
+			!<ForeignCollection<T>>::get(collection.id),
+			<CommonError<T>>::NoPermission
+		);
+
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 		}
@@ -278,6 +301,46 @@ impl<T: Config> Pallet<T> {
 				value: amount.into(),
 			}
 			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
+			collection.id,
+			TokenId::default(),
+			owner.clone(),
+			amount,
+		));
+		Ok(())
+	}
+
+	/// Burns the specified amount of the token.
+	pub fn burn_foreign(
+		collection: &FungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		amount: u128,
+	) -> DispatchResult {
+		let total_supply = <TotalSupply<T>>::get(collection.id)
+			.checked_sub(amount)
+			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
+
+		let balance = <Balance<T>>::get((collection.id, owner))
+			.checked_sub(amount)
+			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
+		// =========
+
+		if balance == 0 {
+			<Balance<T>>::remove((collection.id, owner));
+			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, TokenId::default());
+		} else {
+			<Balance<T>>::insert((collection.id, owner), balance);
+		}
+		<TotalSupply<T>>::insert(collection.id, total_supply);
+
+		<PalletEvm<T>>::deposit_log(
+			ERC20Events::Transfer {
+				from: *owner.as_eth(),
+				to: H160::default(),
+				value: amount.into(),
+			}
+				.to_log(collection_id_to_address(collection.id)),
 		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
@@ -373,6 +436,12 @@ impl<T: Config> Pallet<T> {
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
+		// Foreign collection check
+		ensure!(
+			!<ForeignCollection<T>>::get(collection.id),
+			<CommonError<T>>::NoPermission
+		);
+
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
 				collection.permissions.mint_mode(),
@@ -430,6 +499,68 @@ impl<T: Config> Pallet<T> {
 					value: amount.into(),
 				}
 				.to_log(collection_id_to_address(collection.id)),
+			);
+			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
+				collection.id,
+				TokenId::default(),
+				user.clone(),
+				amount,
+			));
+		}
+
+		Ok(())
+	}
+
+	/// Minting tokens for multiple IDs.
+	/// See [`create_item_foreign`][`Pallet::create_item_foreign`] for more details.
+	pub fn create_multiple_items_foreign(
+		collection: &FungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		data: BTreeMap<T::CrossAccountId, u128>,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		let total_supply = data
+			.iter()
+			.map(|(_, v)| *v)
+			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
+				acc.checked_add(v)
+			})
+			.ok_or(ArithmeticError::Overflow)?;
+
+		let mut balances = data;
+		for (k, v) in balances.iter_mut() {
+			*v = <Balance<T>>::get((collection.id, &k))
+				.checked_add(*v)
+				.ok_or(ArithmeticError::Overflow)?;
+		}
+
+		for (to, _) in balances.iter() {
+			<PalletStructure<T>>::check_nesting(
+				sender.clone(),
+				to,
+				collection.id,
+				TokenId::default(),
+				nesting_budget,
+			)?;
+		}
+
+		// =========
+
+		<TotalSupply<T>>::insert(collection.id, total_supply);
+		for (user, amount) in balances {
+			<Balance<T>>::insert((collection.id, &user), amount);
+			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
+				&user,
+				collection.id,
+				TokenId::default(),
+			);
+			<PalletEvm<T>>::deposit_log(
+				ERC20Events::Transfer {
+					from: H160::default(),
+					to: *user.as_eth(),
+					value: amount.into(),
+				}
+					.to_log(collection_id_to_address(collection.id)),
 			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 				collection.id,
@@ -608,6 +739,24 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(
+			collection,
+			sender,
+			[(data.0, data.1)].into_iter().collect(),
+			nesting_budget,
+		)
+	}
+
+	///	Creates fungible token.
+	///
+	/// - `data`: Contains user who will become the owners of the tokens and amount
+	///   of tokens he will receive.
+	pub fn create_item_foreign(
+		collection: &FungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		data: CreateItemData<T>,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		Self::create_multiple_items_foreign(
 			collection,
 			sender,
 			[(data.0, data.1)].into_iter().collect(),

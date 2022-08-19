@@ -5190,7 +5190,10 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
+ "orml-tokens",
+ "orml-traits",
  "orml-vesting",
+ "orml-xtokens",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -5202,6 +5205,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
+ "pallet-foreing-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -5307,6 +5311,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-utilities"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "orml-vesting"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
@@ -5319,6 +5370,41 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "orml-traits",
+ "parity-scale-codec 3.1.5",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "orml-xtokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "orml-xcm-support",
+ "pallet-xcm",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -5786,6 +5872,33 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-sponsorship",
+]
+
+[[package]]
+name = "pallet-foreing-assets"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "orml-tokens",
+ "pallet-balances",
+ "pallet-common",
+ "pallet-fungible",
+ "pallet-timestamp",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-data-structs",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -12130,7 +12243,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
@@ -12473,7 +12586,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-common"
-version = "0.9.25"
+version = "0.9.27"
 dependencies = [
  "fp-rpc",
  "frame-support",
