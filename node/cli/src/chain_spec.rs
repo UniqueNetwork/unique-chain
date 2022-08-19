@@ -235,7 +235,7 @@ pub fn development_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000
+				2037
 			)
 		},
 		// Bootnodes
@@ -250,7 +250,7 @@ pub fn development_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-dev".into(),
-			para_id: 1000,
+			para_id: 2037,
 		},
 	)
 }
@@ -303,7 +303,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000
+				2037
 			)
 		},
 		// Bootnodes
@@ -318,7 +318,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "westend-local".into(),
-			para_id: 1000,
+			para_id: 2037,
 		},
 	)
 }
