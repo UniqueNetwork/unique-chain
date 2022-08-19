@@ -35,7 +35,6 @@ use xcm::latest::{
 	Fungibility::Fungible as XcmFungible,
 	MultiAsset, Error as XcmError,
 };
-use xcm_executor::traits::{Convert as ConvertXcm, MatchesFungible, WeightTrader};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
 	FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser, RelayChainAsNative,
@@ -43,6 +42,7 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
+use xcm_executor::traits::{Convert as ConvertXcm, MatchesFungible, WeightTrader, FilterAssetLocation};
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
 	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
@@ -356,6 +356,34 @@ pub type AssetTransactors = FungiblesTransactor;
 #[cfg(not(feature = "foreign-assets"))]
 pub type AssetTransactors = LocalAssetTransactor;
 
+#[cfg(feature = "foreign-assets")]
+pub struct AllAsset;
+#[cfg(feature = "foreign-assets")]
+impl FilterAssetLocation for AllAsset {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		true
+	}
+}
+
+#[cfg(feature = "foreign-assets")]
+pub type IsReserve = AllAsset;
+#[cfg(not(feature = "foreign-assets"))]
+pub type IsReserve = NativeAsset;
+
+#[cfg(feature = "foreign-assets")]
+type Trader<T> =
+	UsingAnyCurrencyComponents<
+		pallet_configuration::WeightToFee<T, Balance>,
+		RelayLocation, AccountId, Balances, ()>;
+#[cfg(not(feature = "foreign-assets"))]
+type Trader<T> = UsingOnlySelfCurrencyComponents<
+	pallet_configuration::WeightToFee<T, Balance>,
+	RelayLocation,
+	AccountId,
+	Balances,
+	(),
+>;
+
 pub struct XcmConfig<T>(PhantomData<T>);
 impl<T> Config for XcmConfig<T>
 where
@@ -366,18 +394,12 @@ where
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
+	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingOnlySelfCurrencyComponents<
-		pallet_configuration::WeightToFee<T, Balance>,
-		RelayLocation,
-		AccountId,
-		Balances,
-		(),
-	>;
+	type Trader = Trader<T>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
