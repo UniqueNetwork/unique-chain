@@ -167,6 +167,7 @@ macro_rules! testnet_genesis {
 					.collect(),
 			},
 			treasury: Default::default(),
+			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},
