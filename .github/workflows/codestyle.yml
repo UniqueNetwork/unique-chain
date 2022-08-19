@@ -49,7 +49,7 @@ jobs:
             target: wasm32-unknown-unknown
             components: rustfmt, clippy 
       - name: Run cargo fmt
-        run: cargo fmt --all -- --check
+        run: cargo fmt --verbose -- --check
 
 
   clippy:
