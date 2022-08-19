@@ -78,7 +78,7 @@ impl PostDispatchInfo {
 		info.weight - self.calc_actual_weight(info)
 	}
 
-	/// Calculate actual cansumed weight, saturating to weight reported
+	/// Calculate actual consumed weight, saturating to weight reported
 	/// pre-dispatch
 	pub fn calc_actual_weight(&self, info: &DispatchInfo) -> Weight {
 		if let Some(actual_weight) = self.actual_weight {

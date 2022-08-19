@@ -16,6 +16,10 @@
 
 #![allow(dead_code)]
 
+// NOTE: In order to understand this Rust macro better, first read this chapter
+// about Procedural Macros in Rust book:
+// https://doc.rust-lang.org/reference/procedural-macros.html
+
 use quote::{quote, ToTokens};
 use inflector::cases;
 use std::fmt::Write;
@@ -485,6 +489,8 @@ enum Mutability {
 	Pure,
 }
 
+/// Group all keywords for this macro. Usage example:
+/// #[solidity_interface(name = "B", inline_is(A))]
 mod kw {
 	syn::custom_keyword!(weight);
 
@@ -498,6 +504,7 @@ mod kw {
 	syn::custom_keyword!(rename_selector);
 }
 
+/// Rust methods are parsed into this structure when Solidity code is generated
 struct Method {
 	name: Ident,
 	camel_name: String,

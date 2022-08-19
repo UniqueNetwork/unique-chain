@@ -34,17 +34,18 @@ pub mod execution;
 ///
 /// `#[solidity_interface(name, is, inline_is, events)]`
 /// - *name* - used in generated code, and for Call enum name
-/// - *is* - used to provide call inheritance, not found methods will be delegated to all contracts
-/// specified in is/inline_is
-/// - *inline_is* - same as is, but selectors for passed contracts will be used by derived ERC165
-/// implementation
+/// - *is* - used to provide inheritance in Solidity
+/// - *inline_is* - same as `is`, but ERC165::SupportsInterface will work differently: For `is` SupportsInterface(A) will return true
+///   if A is one of the interfaces the contract is inherited from (e.g. B is created as `is(A)`). If B is created as `inline_is(A)`
+///   SupportsInterface(A) will internally create a new interface that combines all methods of A and B, so SupportsInterface(A) will return
+///   false.
 ///
 /// `#[weight(value)]`
 /// Can be added to every method of impl block, used for deriving [`crate::Weighted`], which
 /// is used by substrate bridge.
 /// - *value*: expression, which evaluates to weight required to call this method.
 /// This expression can use call arguments to calculate non-constant execution time.
-/// This expression should evaluate faster than actual execution does, and may provide worser case
+/// This expression should evaluate faster than actual execution does, and may provide worse case
 /// than one is called.
 ///
 /// `#[solidity_interface(rename_selector)]`
