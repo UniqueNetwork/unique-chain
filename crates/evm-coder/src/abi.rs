@@ -330,6 +330,7 @@ impl AbiWriter {
 pub trait AbiRead<T> {
 	/// Read item from current position, advanding decoder
 	fn abi_read(&mut self) -> Result<T>;
+	fn size() -> usize;
 }
 
 macro_rules! impl_abi_readable {
@@ -337,6 +338,10 @@ macro_rules! impl_abi_readable {
 		impl AbiRead<$ty> for AbiReader<'_> {
 			fn abi_read(&mut self) -> Result<$ty> {
 				self.$method()
+			}
+
+			fn size() -> usize {
+				ABI_ALIGNMENT
 			}
 		}
 	};
@@ -376,20 +381,10 @@ where
 		}
 		Ok(out)
 	}
-}
 
-fn aligned_size(size: usize) -> usize {
-	let need_align = (size % ABI_ALIGNMENT) != 0;
-	let aligned_parts = size / ABI_ALIGNMENT;
-	(aligned_parts * ABI_ALIGNMENT) + if need_align { ABI_ALIGNMENT } else { 0 }
-}
-
-#[test]
-fn test_aligned_size() {
-	assert_eq!(aligned_size(20), ABI_ALIGNMENT);
-	assert_eq!(aligned_size(32), ABI_ALIGNMENT);
-	assert_eq!(aligned_size(52), 2 * ABI_ALIGNMENT);
-	assert_eq!(aligned_size(64), 2 * ABI_ALIGNMENT);
+	fn size() -> usize {
+		ABI_ALIGNMENT
+	}
 }
 
 macro_rules! impl_tuples {
@@ -403,11 +398,15 @@ macro_rules! impl_tuples {
 			($($ident,)+): SolidityTypeName,
 		{
 			fn abi_read(&mut self) -> Result<($($ident,)+)> {
-				let size = if <($($ident,)+)>::is_simple() { Some(0 $(+aligned_size(sp_std::mem::size_of::<$ident>()))+) } else { None };
+				let size = if <($($ident,)+)>::is_simple() { Some(<Self as AbiRead<($($ident,)+)>>::size()) } else { None };
 				let mut subresult = self.subresult(size)?;
 				Ok((
 					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+
 				))
+			}
+
+			fn size() -> usize {
+				0 $(+ {let _ : $ident; ABI_ALIGNMENT})+
 			}
 		}
 		#[allow(non_snake_case)]
