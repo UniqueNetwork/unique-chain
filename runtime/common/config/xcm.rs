@@ -49,7 +49,8 @@ use pallet_foreing_assets::{
 };
 use sp_std::{borrow::Borrow, marker::PhantomData, vec, vec::Vec};
 use crate::{
-	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue
+	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
+	xcm_config::Barrier
 };
 #[cfg(feature = "foreign-assets")]
 use crate::ForeingAssets;
@@ -153,11 +154,13 @@ match_types! {
 	};
 }
 
+/*
 pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	// ^^^ Parent & its unit plurality gets free execution
 );
+ */
 
 pub struct UsingOnlySelfCurrencyComponents<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
