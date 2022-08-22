@@ -65,7 +65,6 @@ jobs:
       - name: Show files in current directory
         run: |
           pwd
-          whois
           ls -la ./
 
       - name: Checkout SDK repo
@@ -77,6 +76,5 @@ jobs:
       - name: Show files in qa-tests directory
         run: |
           pwd
-          whois
           ls -la ./qa-tests
 
