@@ -62,12 +62,14 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
+      - name: Show files incurrent directory
+        run: ls -la ./
+
       - name: Checkout SDK repo
         uses: actions/checkout@v3
         with:
-          repository: UniqueNetwork/unique-sdk@master
-          path: qa-tests
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: 'UniqueNetwork/unique-sdk'
+          path: 'qa-tests'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
