@@ -14,8 +14,8 @@ contract Fractionalizer {
         address _collection;
         uint256 _tokenId;
     }
-    address rftCollection;
-    mapping(address => bool) nftCollectionAllowList;
+    address public rftCollection;
+    mapping(address => bool) public nftCollectionAllowList;
     mapping(address => mapping(uint256 => uint256)) nft2rftMapping;
     mapping(address => Token) rft2nftMapping;
     bytes32 refungibleCollectionType = keccak256(bytes("ReFungible"));
