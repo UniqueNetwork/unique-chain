@@ -62,10 +62,10 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
-      - name: Checkout QA repo
+      - name: Checkout SDK repo
         uses: actions/checkout@v3
         with:
-          repository: UniqueNetwork/market-e2e-tests@master
+          repository: UniqueNetwork/unique-sdk@master
           path: qa-tests
           token: ${{ secrets.GITHUB_TOKEN }}
 
