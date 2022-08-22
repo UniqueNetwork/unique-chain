@@ -58,7 +58,7 @@ jobs:
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout master repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@master
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -67,6 +67,7 @@ jobs:
         with:
           repository: UniqueNetwork/market-e2e-tests@master
           path: qa-tests
+          token: ${{ secrets.GITHUB_MACHINE_TOKEN }}
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
