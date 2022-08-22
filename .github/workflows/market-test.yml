@@ -67,7 +67,7 @@ jobs:
         with:
           repository: UniqueNetwork/market-e2e-tests@master
           path: qa-tests
-          token: ${{ secrets.GITHUB_MACHINE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
