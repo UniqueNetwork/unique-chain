@@ -10,7 +10,7 @@ on:
       - synchronize
       - ready_for_review
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -46,12 +46,16 @@ jobs:
             target: wasm32-unknown-unknown
             components: rustfmt, clippy
       - name: Run cargo fmt
-        run: cargo fmt -- --check
+        run: cargo fmt -- --check   # In that mode it returns only exit code.
+      - name: Cargo fmt state
+        if: success()
+        run: echo "Nothing to do. Cargo fmt returned exit code 0."
+
 
   clippy:
     if: ${{ false }}
     runs-on: self-hosted-ci
-      
+
     steps:
       - name: Skip if pull request is in Draft
         # `if: github.event.pull_request.draft == true` should be kept here, at
@@ -70,7 +74,7 @@ jobs:
         #    until the workflow is finished)
         if: github.event.pull_request.draft == true
         run: exit 1
-        
+
       - uses: actions/checkout@v3
       - name: Install substrate dependencies
         run: sudo apt-get install libssl-dev pkg-config libclang-dev clang
