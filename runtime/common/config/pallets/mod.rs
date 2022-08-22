@@ -40,7 +40,7 @@ pub mod rmrk;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 
-#[cfg(feature = "foreign-asset")]
+#[cfg(feature = "foreign-assets")]
 pub mod foreign_asset;
 
 parameter_types! {

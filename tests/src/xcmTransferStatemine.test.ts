@@ -30,7 +30,7 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 const RELAY_PORT = '9844';
-const UNIQUE_CHAIN = 5000;
+const UNIQUE_CHAIN = 2037;
 const UNIQUE_PORT = '9944';
 const STATEMINE_CHAIN = 1000;
 const STATEMINE_PORT = '9946';
@@ -87,8 +87,9 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
       const result3 = getGenericResult(events3);
       expect(result3.success).to.be.true;
 
-      // funding parachain sovereing account (Parachain: 5000)
-      const parachainSovereingAccount = '0x7369626c88130000000000000000000000000000000000000000000000000000';
+      // funding parachain sovereing account (Parachain: 2037)
+      //const parachainSovereingAccount = '0x70617261f5070000000000000000000000000000000000000000000000000000';
+      const parachainSovereingAccount = '0x7369626cf5070000000000000000000000000000000000000000000000000000';
       const tx4 = api.tx.balances.transfer(parachainSovereingAccount, fundingAmount);
       const events4 = await submitTransactionAsync(bob, tx4);
       const result4 = getGenericResult(events4);
@@ -265,7 +266,7 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
     }, uniqueApiOptions);
   });
 
-  it('Should connect and send USDT from Unique to Statemine back', async () => {
+  it.skip('Should connect and send USDT from Unique to Statemine back', async () => {
     let balanceBefore: bigint;
     const uniqueApiOptions: ApiOptions = {
       provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),

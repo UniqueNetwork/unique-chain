@@ -40,9 +40,10 @@ use xcm_builder::{
 	FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser, RelayChainAsNative,
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, ParentIsPreset,
+	ConvertedConcreteAssetId
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
-use xcm_executor::traits::{Convert as ConvertXcm, MatchesFungible, WeightTrader, FilterAssetLocation};
+use xcm_executor::traits::{Convert as ConvertXcm, JustTry, MatchesFungible, WeightTrader, FilterAssetLocation};
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
 	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
@@ -356,8 +357,9 @@ pub type FungiblesTransactor = FungiblesAdapter<
 /// Means for transacting assets on this chain.
 #[cfg(feature = "foreign-assets")]
 pub type AssetTransactors = FungiblesTransactor;
-#[cfg(not(feature = "foreign-assets"))]
-pub type AssetTransactors = LocalAssetTransactor;
+
+//#[cfg(not(feature = "foreign-assets"))]
+//pub type AssetTransactors = LocalAssetTransactor;
 
 #[cfg(feature = "foreign-assets")]
 pub struct AllAsset;
@@ -370,14 +372,15 @@ impl FilterAssetLocation for AllAsset {
 
 #[cfg(feature = "foreign-assets")]
 pub type IsReserve = AllAsset;
-#[cfg(not(feature = "foreign-assets"))]
-pub type IsReserve = NativeAsset;
+//#[cfg(not(feature = "foreign-assets"))]
+//pub type IsReserve = NativeAsset;
 
 #[cfg(feature = "foreign-assets")]
 type Trader<T> =
 	UsingAnyCurrencyComponents<
 		pallet_configuration::WeightToFee<T, Balance>,
 		RelayLocation, AccountId, Balances, ()>;
+/*
 #[cfg(not(feature = "foreign-assets"))]
 type Trader<T> = UsingOnlySelfCurrencyComponents<
 	pallet_configuration::WeightToFee<T, Balance>,
@@ -386,6 +389,7 @@ type Trader<T> = UsingOnlySelfCurrencyComponents<
 	Balances,
 	(),
 >;
+*/
 
 pub struct XcmConfig<T>(PhantomData<T>);
 impl<T> Config for XcmConfig<T>
