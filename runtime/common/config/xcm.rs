@@ -358,8 +358,8 @@ pub type FungiblesTransactor = FungiblesAdapter<
 #[cfg(feature = "foreign-assets")]
 pub type AssetTransactors = FungiblesTransactor;
 
-//#[cfg(not(feature = "foreign-assets"))]
-//pub type AssetTransactors = LocalAssetTransactor;
+#[cfg(not(feature = "foreign-assets"))]
+pub type AssetTransactors = LocalAssetTransactor;
 
 #[cfg(feature = "foreign-assets")]
 pub struct AllAsset;
@@ -372,15 +372,14 @@ impl FilterAssetLocation for AllAsset {
 
 #[cfg(feature = "foreign-assets")]
 pub type IsReserve = AllAsset;
-//#[cfg(not(feature = "foreign-assets"))]
-//pub type IsReserve = NativeAsset;
+#[cfg(not(feature = "foreign-assets"))]
+pub type IsReserve = NativeAsset;
 
 #[cfg(feature = "foreign-assets")]
 type Trader<T> =
 	UsingAnyCurrencyComponents<
 		pallet_configuration::WeightToFee<T, Balance>,
 		RelayLocation, AccountId, Balances, ()>;
-/*
 #[cfg(not(feature = "foreign-assets"))]
 type Trader<T> = UsingOnlySelfCurrencyComponents<
 	pallet_configuration::WeightToFee<T, Balance>,
@@ -389,7 +388,6 @@ type Trader<T> = UsingOnlySelfCurrencyComponents<
 	Balances,
 	(),
 >;
-*/
 
 pub struct XcmConfig<T>(PhantomData<T>);
 impl<T> Config for XcmConfig<T>
