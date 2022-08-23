@@ -1096,6 +1096,16 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   return balance;
 }
 
+export async function paraSiblingSovereignAccount(paraid: number): Promise<string> {
+  return usingApi(async api => {
+    const siblingPrefix = '0x7369626c';
+    const encodedParaId = api.createType('u32', paraid).toHex(true).substring(2);
+    const suffix = '000000000000000000000000000000000000000000000000';
+
+    return siblingPrefix + encodedParaId + suffix;
+  });
+}
+
 export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
   const tx = api.tx.balances.transfer(target, amount);
   const events = await submitTransactionAsync(source, tx);
