@@ -42,6 +42,7 @@ macro_rules! construct_runtime {
                 Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
                 Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
                 Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
+                #[runtimes(opal)]
                 XTokens: orml_xtokens = 38,
                 Tokens: orml_tokens = 39,
                 // Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
