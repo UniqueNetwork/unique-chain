@@ -1,4 +1,4 @@
-name: 
+name: nodes-only update
 
 # Controls when the action will run.
 on:
@@ -194,7 +194,7 @@ jobs:
                         echo "Container: node-parachain RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"🌗 All parachain collators restarted with the new binaries."* ]];then
+                        if [[ ${DOCKER_LOGS} = *"All parachain collators restarted with the new binaries."* ]];then
                                 echo "🌗 All parachain collators restarted with the new binaries."
                                 return 0
                         else
