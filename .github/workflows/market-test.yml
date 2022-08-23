@@ -108,7 +108,7 @@ jobs:
           cd qa-tests
           cp ./.env.example ./.env
           npm install
-          npm run all
+          npm run all:docker
 
 #      - name: Test Report
 #        uses: phoenix-actions/test-reporting@v8
