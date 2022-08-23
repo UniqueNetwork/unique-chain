@@ -146,7 +146,7 @@ jobs:
 
 
       - name: Temp Wait. Will be remove after send SIGUSER to polkadot-launch
-        run: sleep 600s
+        run: sleep 30s
 
 #      - name: Run tests before Node Parachain upgrade
 #        run: |
@@ -173,9 +173,10 @@ jobs:
         if: success()
         run: |
           #Get PID of polkadot-launch
-          PID=$(docker exec -it node-parachain pidof 'polkadot-launch')
+          PID=$(docker exec node-parachain pidof 'polkadot-launch')
+          echo $PID
           #Send SIGUSR1 signal to $PID
-          docker exec -it node-parachain kill -SIGUSR1 $(PID)
+          docker exec node-parachain kill -SIGUSR1 $PID
 
       #  🌗 All parachain collators restarted with the new binaries.
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
