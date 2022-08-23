@@ -37,7 +37,7 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
       const collection = await helper.collection.getData(collectionId);
-      expect(collection?.normalizedOwner!).to.be.equal(alice.address);
+      expect(collection!.normalizedOwner!).to.be.equal(alice.address);
 
       await helper.nft.addAdmin(alice, collectionId, {Substrate: bob.address});
 

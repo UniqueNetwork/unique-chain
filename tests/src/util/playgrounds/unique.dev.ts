@@ -12,11 +12,11 @@ export class DevUniqueHelper extends UniqueHelper {
   /**
    * Arrange methods for tests
    */
-  arrange: UniqueArrange;
+  arrange: ArrangeGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
     super(logger);
-    this.arrange = new UniqueArrange(this);
+    this.arrange = new ArrangeGroup(this);
   }
 
   async connect(wsEndpoint: string, listeners?: any): Promise<void> {
@@ -55,7 +55,7 @@ export class DevUniqueHelper extends UniqueHelper {
   }
 }
 
-class UniqueArrange {
+class ArrangeGroup {
   helper: UniqueHelper;
 
   constructor(helper: UniqueHelper) {
