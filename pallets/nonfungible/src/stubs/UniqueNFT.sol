@@ -373,7 +373,49 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 }
 
-// Selector: 6cf113cd
+// Selector: 780e9d63
+contract ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid NFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) public view returns (uint256) {
+		require(false, stub_error);
+		index;
+		dummy;
+		return 0;
+	}
+
+	// @dev Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		index;
+		dummy;
+		return 0;
+	}
+
+	// @notice Count NFTs tracked by this contract
+	// @return A count of valid NFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+}
+
+// Selector: ca08c92c
 contract Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -622,47 +664,17 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 		return "";
 	}
-}
 
-// Selector: 780e9d63
-contract ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid NFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
+	// Changes collection owner
 	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) public view returns (uint256) {
-		require(false, stub_error);
-		index;
-		dummy;
-		return 0;
-	}
-
-	// @dev Not implemented
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner
 	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
+	// Selector: changeOwner(address) a6f9dae1
+	function changeOwner(address newOwner) public {
 		require(false, stub_error);
-		owner;
-		index;
-		dummy;
-		return 0;
-	}
-
-	// @notice Count NFTs tracked by this contract
-	// @return A count of valid NFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
+		newOwner;
+		dummy = 0;
 	}
 }
 

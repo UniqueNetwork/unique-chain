@@ -15,6 +15,7 @@
 
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
+import { UNIQUE } from '../util/helpers';
 import {
   createEthAccount,
   createEthAccountWithBalance, 
@@ -22,6 +23,7 @@ import {
   evmCollectionHelpers, 
   getCollectionAddressFromResult, 
   itWeb3,
+  recordEthFee,
 } from './util/helpers';
 
 describe('Add collection admins', () => {
@@ -308,5 +310,52 @@ describe('Remove collection admins', () => {
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(adminSub.address.toLocaleLowerCase());
+  });
+});
+
+describe('Change owner tests', () => {
+  itWeb3('Change owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const newOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelper.methods
+      .createNonfungibleCollection('A', 'B', 'C')
+      .send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  
+    await collectionEvm.methods.changeOwner(newOwner).send();
+  
+    expect(await collectionEvm.methods.verifyOwnerOrAdmin(owner).call()).to.be.false;
+    expect(await collectionEvm.methods.verifyOwnerOrAdmin(newOwner).call()).to.be.true;
+  });
+
+  itWeb3('change owner call fee', async ({web3, api, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const newOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelper.methods
+      .createNonfungibleCollection('A', 'B', 'C')
+      .send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+
+    const cost = await recordEthFee(api, owner, () => collectionEvm.methods.changeOwner(newOwner).send());
+    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    expect(cost > 0);
+  });
+
+  itWeb3('(!negative tests!) call changeOwner by not owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const newOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const collectionHelper = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelper.methods
+      .createNonfungibleCollection('A', 'B', 'C')
+      .send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  
+    await expect(collectionEvm.methods.changeOwner(newOwner).send({from: newOwner})).to.be.rejected;
+    expect(await collectionEvm.methods.verifyOwnerOrAdmin(newOwner).call()).to.be.false;
   });
 });

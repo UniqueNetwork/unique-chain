@@ -431,6 +431,27 @@ where
 		};
 		Ok(mode.into())
 	}
+
+	/// Changes collection owner
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner
+	fn change_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = T::CrossAccountId::from_eth(new_owner);
+		self.change_owner_internal(caller, new_owner)
+	}
+
+impl<T: Config> CollectionHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
+
+	fn change_owner_internal(&mut self, caller: T::CrossAccountId, new_owner: T::CrossAccountId) -> Result<void> {
+		self.check_is_owner(&caller).map_err(dispatch_to_evm::<T>)?;
+		self.collection.owner = new_owner.as_sub().clone();
+		save(self)
+	}
 }
 
 fn check_is_owner_or_admin<T: Config>(
@@ -440,12 +461,13 @@ fn check_is_owner_or_admin<T: Config>(
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner_or_admin(&caller)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		.map_err(dispatch_to_evm::<T>)?;
 	Ok(caller)
 }
 
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	// TODO possibly delete for the lack of transaction
+	collection.consume_store_writes(1)?;
 	collection
 		.check_is_internal()
 		.map_err(dispatch_to_evm::<T>)?;

@@ -250,7 +250,33 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	function finishMinting() external returns (bool);
 }
 
-// Selector: 6cf113cd
+// Selector: 780e9d63
+interface ERC721Enumerable is Dummy, ERC165 {
+	// @notice Enumerate valid NFTs
+	// @param index A counter less than `totalSupply()`
+	// @return The token identifier for the `index`th NFT,
+	//  (sort order not specified)
+	//
+	// Selector: tokenByIndex(uint256) 4f6ccce7
+	function tokenByIndex(uint256 index) external view returns (uint256);
+
+	// @dev Not implemented
+	//
+	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
+	function tokenOfOwnerByIndex(address owner, uint256 index)
+		external
+		view
+		returns (uint256);
+
+	// @notice Count NFTs tracked by this contract
+	// @return A count of valid NFTs tracked by this contract, where each one of
+	//  them has an assigned and queryable owner not equal to the zero address
+	//
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() external view returns (uint256);
+}
+
+// Selector: ca08c92c
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -411,32 +437,14 @@ interface Collection is Dummy, ERC165 {
 	//
 	// Selector: uniqueCollectionType() d34b55b8
 	function uniqueCollectionType() external returns (string memory);
-}
 
-// Selector: 780e9d63
-interface ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid NFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
+	// Changes collection owner
 	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) external view returns (uint256);
-
-	// @dev Not implemented
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner
 	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		external
-		view
-		returns (uint256);
-
-	// @notice Count NFTs tracked by this contract
-	// @return A count of valid NFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
+	// Selector: changeOwner(address) a6f9dae1
+	function changeOwner(address newOwner) external;
 }
 
 // Selector: d74d154f

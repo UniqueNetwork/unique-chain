@@ -116,6 +116,15 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "address", "name": "newOwner", "type": "address" }
+    ],
+    "name": "changeOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
     "name": "collectionProperty",
     "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
