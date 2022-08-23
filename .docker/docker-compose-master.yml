@@ -7,6 +7,8 @@ services:
       dockerfile: .docker/Dockerfile-parachain
     image: blockchain_nodes
     container_name: blockchain_nodes
+    network:
+      - blockchain
     expose:
       - 9944
       - 9933
@@ -17,3 +19,7 @@ services:
       options:
         max-size: "1m"
         max-file: "3"
+
+networks:
+  blockchain:
+    driver: bridge
