@@ -27,7 +27,16 @@ jobs:
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
-
+    
+    strategy:
+      matrix:
+        include:
+          - network: "opal"
+            features: "opal-runtime"
+          - network: "quartz"
+            features: "quartz-runtime"
+          - network: "unique"
+            features: "unique-runtime"
 
     name: draft job
 
@@ -62,11 +71,6 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
-      - name: Show files in current directory
-        run: |
-          pwd
-          ls -la ./
-
       - name: Checkout SDK repo
         uses: actions/checkout@v3
         with:
@@ -74,10 +78,50 @@ jobs:
           ssh-key: '${{ secrets.GH_PAT }}'
           path: 'qa-tests'
 
-      - name: Show files in qa-tests directory
-        run: |
-          pwd
-          ls -la ../
-          ls -la ./
-          ls -la ./qa-tests
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
 
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-master.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            FEATURE=${{ matrix.features }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Run tests
+        run: |
+          cd qa-tests
+          npm run all
+
+#      - name: Test Report
+#        uses: phoenix-actions/test-reporting@v8
+#        id: test-report
+#        if: success() || failure()    # run this step even if previous step failed
+#        with:
+#          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
+#          path: tests/mochawesome-report/test-*.json    # Path to test results
+#          reporter: mochawesome-json
+#          fail-on-error: 'false'
+
+#      - name: Read output variables
+#        run: |
+#          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
