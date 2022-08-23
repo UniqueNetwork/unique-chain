@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.1.6] - 2022-08-16
 
 ### Added
--   New Ethereum API methods: changeOwner, changeOwnerSubstrate and verifyOwnerOrAdminSubstrate.
+-   New Ethereum API methods: changeOwner, changeOwner(Substrate) and verifyOwnerOrAdmin(Substrate).
 
 <!-- bureaucrate goes here -->
 ## [v0.1.5] 2022-08-16

@@ -147,7 +147,7 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "newOwner", "type": "address" }
+      { "internalType": "uint256", "name": "newOwner", "type": "uint256" }
     ],
     "name": "changeOwner",
     "outputs": [],
@@ -156,9 +156,9 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "newOwner", "type": "uint256" }
+      { "internalType": "address", "name": "newOwner", "type": "address" }
     ],
-    "name": "changeOwnerSubstrate",
+    "name": "changeOwner",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -563,7 +563,7 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
+      { "internalType": "uint256", "name": "user", "type": "uint256" }
     ],
     "name": "verifyOwnerOrAdmin",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
@@ -572,9 +572,9 @@
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "user", "type": "uint256" }
+      { "internalType": "address", "name": "user", "type": "address" }
     ],
-    "name": "verifyOwnerOrAdminSubstrate",
+    "name": "verifyOwnerOrAdmin",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
     "type": "function"

@@ -204,7 +204,7 @@ impl<T: Config> CollectionHandle<T> {
 
 	/// Save collection to storage.
 	pub fn save(&self) -> DispatchResult {
-		<CollectionById<T>>::insert(self.id, self.collection.clone());
+		<CollectionById<T>>::insert(self.id, &self.collection);
 		Ok(())
 	}
 

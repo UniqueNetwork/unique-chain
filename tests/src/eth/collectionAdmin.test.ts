@@ -373,11 +373,11 @@ describe('Change substrate owner tests', () => {
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
   
     expect(await collectionEvm.methods.verifyOwnerOrAdmin(owner).call()).to.be.true;
-    expect(await collectionEvm.methods.verifyOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
-    await collectionEvm.methods.changeOwnerSubstrate(newOwner.addressRaw).send();
+    expect(await collectionEvm.methods['verifyOwnerOrAdmin(uint256)'](newOwner.addressRaw).call()).to.be.false;
+    await collectionEvm.methods['changeOwner(uint256)'](newOwner.addressRaw).send();
   
     expect(await collectionEvm.methods.verifyOwnerOrAdmin(owner).call()).to.be.false;
-    expect(await collectionEvm.methods.verifyOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.true;
+    expect(await collectionEvm.methods['verifyOwnerOrAdmin(uint256)'](newOwner.addressRaw).call()).to.be.true;
   });
 
   itWeb3('change owner call fee', async ({web3, api, privateKeyWrapper}) => {
@@ -390,7 +390,7 @@ describe('Change substrate owner tests', () => {
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
 
-    const cost = await recordEthFee(api, owner, () => collectionEvm.methods.changeOwnerSubstrate(newOwner.addressRaw).send());
+    const cost = await recordEthFee(api, owner, () => collectionEvm.methods['changeOwner(uint256)'](newOwner.addressRaw).send());
     expect(cost < BigInt(0.2 * Number(UNIQUE)));
     expect(cost > 0);
   });
@@ -406,7 +406,7 @@ describe('Change substrate owner tests', () => {
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
   
-    await expect(collectionEvm.methods.changeOwnerSubstrate(newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;
-    expect(await collectionEvm.methods.verifyOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
+    await expect(collectionEvm.methods['changeOwner(uint256)'](newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;
+    expect(await collectionEvm.methods['verifyOwnerOrAdmin(uint256)'](newOwner.addressRaw).call()).to.be.false;
   });
 });
