@@ -106,6 +106,8 @@ jobs:
       - name: Run tests
         run: |
           cd qa-tests
+          cp ./.env.example ./.env
+          npm install
           npm run all
 
 #      - name: Test Report
