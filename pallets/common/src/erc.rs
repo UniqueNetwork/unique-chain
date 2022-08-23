@@ -421,7 +421,6 @@ where
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	#[solidity(rename_selector = "isOwnerOrAdmin")]
 	fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
 		let user = convert_substrate_address_to_cross_account_id::<T>(user);
 		Ok(self.is_owner_or_admin(&user))
@@ -454,7 +453,6 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner substrate account
-	#[solidity(rename_selector = "setOwner")]
 	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = convert_substrate_address_to_cross_account_id::<T>(new_owner);
