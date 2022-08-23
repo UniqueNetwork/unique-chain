@@ -13,8 +13,7 @@ services:
         - "MAINNET_TAG={{ MAINNET_TAG }}"
         - "MAINNET_BRANCH={{ MAINNET_BRANCH }}"
       context: ../
-      dockerfile: .docker/Dockerfile-parachain-upgrade
-    command: export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && cd /polkadot-launch && yarn start launch-config.json --test-upgrade-parachains -w -n
+      dockerfile: .docker/Dockerfile-parachain-node-only
     image: node-parachain
     container_name: node-parachain
     volumes:
