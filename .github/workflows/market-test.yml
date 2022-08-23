@@ -104,19 +104,24 @@ jobs:
         with:
           node-version: 16
 
+      - name: Copy qa-tests/.env.example to qa-tests/.env
+        run: cp qa-tests/.env.example qa-tests/.env
+
+      - name; Show content of qa-test .env
+        run: cat qa-tests/.env
+
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
         with:
-          path: qa-test/.env
+          path: qa-tests/
           mode: example
 
       - name: Run tests
         run: |
-          cd qa-tests
-          cp ./.env.example ./.env
           npm install
+          echo "Node modules installed"
           npm run all:docker
-          npm run test:api
+          #npm run test:api
 
 #      - name: Test Report
 #        uses: phoenix-actions/test-reporting@v8
