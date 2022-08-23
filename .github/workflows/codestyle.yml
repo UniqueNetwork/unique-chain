@@ -49,7 +49,7 @@ jobs:
         run: cargo fmt -- --check   # In that mode it returns only exit code.
       - name: Cargo fmt state
         if: success()
-        run: echo "Nothing to do. Cargo fmt returned exit code 0."
+        run: echo "Nothing to do. Command 'cargo fmt -- --check' returned exit code 0."
 
 
   clippy:
