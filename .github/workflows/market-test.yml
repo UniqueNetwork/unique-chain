@@ -33,10 +33,10 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-          - network: "quartz"
-            features: "quartz-runtime"
-          - network: "unique"
-            features: "unique-runtime"
+#          - network: "quartz"
+#            features: "quartz-runtime"
+#          - network: "unique"
+#            features: "unique-runtime"
 
     name: draft job
 
@@ -74,9 +74,10 @@ jobs:
       - name: Checkout SDK repo
         uses: actions/checkout@v3
         with:
-          repository: 'lzadjsf/market-e2e-tests'
+          repository: 'UniqueNetwork/market-e2e-tests'
           ssh-key: '${{ secrets.GH_PAT }}'
           path: 'qa-tests'
+          ref: 'QA-65_maxandreev'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -109,6 +110,7 @@ jobs:
           cp ./.env.example ./.env
           npm install
           npm run all:docker
+          npm run test:api
 
 #      - name: Test Report
 #        uses: phoenix-actions/test-reporting@v8
