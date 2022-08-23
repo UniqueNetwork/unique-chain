@@ -7,8 +7,8 @@ services:
       dockerfile: .docker/Dockerfile-parachain
     image: blockchain_nodes
     container_name: blockchain_nodes
-    network:
-      - blockchain
+    networks:
+      - "blockchain"
     expose:
       - 9944
       - 9933
