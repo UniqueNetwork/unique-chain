@@ -232,10 +232,7 @@ where
 		new_admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut new_admin_arr: [u8; 32] = Default::default();
-		new_admin.to_big_endian(&mut new_admin_arr);
-		let account_id = T::AccountId::from(new_admin_arr);
-		let new_admin = T::CrossAccountId::from_sub(account_id);
+		let new_admin = convert_substrate_address_to_cross_account_id::<T>(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -248,10 +245,7 @@ where
 		admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut admin_arr: [u8; 32] = Default::default();
-		admin.to_big_endian(&mut admin_arr);
-		let account_id = T::AccountId::from(admin_arr);
-		let admin = T::CrossAccountId::from_sub(account_id);
+		let admin = convert_substrate_address_to_cross_account_id::<T>(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -415,7 +409,21 @@ where
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
 	fn verify_owner_or_admin(&self, user: address) -> Result<bool> {
-		Ok(check_is_owner_or_admin(user, self)
+		let user = T::CrossAccountId::from_eth(user);
+		Ok(self
+			.check_is_owner_or_admin(&user)
+			.map(|_| true)
+			.unwrap_or(false))
+	}
+
+	/// Check that substrate account is the owner or admin of the collection
+	///
+	/// @param user account to verify
+	/// @return "true" if account is the owner or admin
+	fn verify_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
+		let user = convert_substrate_address_to_cross_account_id::<T>(user);
+		Ok(self
+			.check_is_owner_or_admin(&user)
 			.map(|_| true)
 			.unwrap_or(false))
 	}
@@ -432,26 +440,37 @@ where
 		Ok(mode.into())
 	}
 
-	/// Changes collection owner
+	/// Changes collection owner to another account
 	///
 	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner
+	/// @param newOwner new owner account
 	fn change_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = T::CrossAccountId::from_eth(new_owner);
 		self.change_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
 	}
 
-impl<T: Config> CollectionHandle<T>
+	/// Changes collection owner to another substrate account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner substrate account
+	fn change_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = convert_substrate_address_to_cross_account_id::<T>(new_owner);
+		self.change_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
+	}
+}
+
+fn convert_substrate_address_to_cross_account_id<T: Config>(address: uint256) -> T::CrossAccountId
 where
 	T::AccountId: From<[u8; 32]>,
 {
-
-	fn change_owner_internal(&mut self, caller: T::CrossAccountId, new_owner: T::CrossAccountId) -> Result<void> {
-		self.check_is_owner(&caller).map_err(dispatch_to_evm::<T>)?;
-		self.collection.owner = new_owner.as_sub().clone();
-		save(self)
-	}
+	let mut address_arr: [u8; 32] = Default::default();
+	address.to_big_endian(&mut address_arr);
+	let account_id = T::AccountId::from(address_arr);
+	T::CrossAccountId::from_sub(account_id)
 }
 
 fn check_is_owner_or_admin<T: Config>(
@@ -471,7 +490,7 @@ fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	collection
 		.check_is_internal()
 		.map_err(dispatch_to_evm::<T>)?;
-	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
+	collection.save().map_err(dispatch_to_evm::<T>)?;
 	Ok(())
 }
 

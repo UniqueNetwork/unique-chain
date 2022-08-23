@@ -22,50 +22,7 @@ interface ERC20Events {
 	);
 }
 
-// Selector: 79cc6790
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-}
-
-// Selector: 942e8b22
-interface ERC20 is Dummy, ERC165, ERC20Events {
-	// Selector: name() 06fdde03
-	function name() external view returns (string memory);
-
-	// Selector: symbol() 95d89b41
-	function symbol() external view returns (string memory);
-
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
-
-	// Selector: decimals() 313ce567
-	function decimals() external view returns (uint8);
-
-	// Selector: balanceOf(address) 70a08231
-	function balanceOf(address owner) external view returns (uint256);
-
-	// Selector: transfer(address,uint256) a9059cbb
-	function transfer(address to, uint256 amount) external returns (bool);
-
-	// Selector: transferFrom(address,address,uint256) 23b872dd
-	function transferFrom(
-		address from,
-		address to,
-		uint256 amount
-	) external returns (bool);
-
-	// Selector: approve(address,uint256) 095ea7b3
-	function approve(address spender, uint256 amount) external returns (bool);
-
-	// Selector: allowance(address,address) dd62ed3e
-	function allowance(address owner, address spender)
-		external
-		view
-		returns (uint256);
-}
-
-// Selector: ca08c92c
+// Selector: 07f76b0c
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -220,6 +177,17 @@ interface Collection is Dummy, ERC165 {
 	// Selector: verifyOwnerOrAdmin(address) c2282493
 	function verifyOwnerOrAdmin(address user) external view returns (bool);
 
+	// Check that substrate account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdminSubstrate(uint256) fe818e40
+	function verifyOwnerOrAdminSubstrate(uint256 user)
+		external
+		view
+		returns (bool);
+
 	// Returns collection type
 	//
 	// @return `Fungible` or `NFT` or `ReFungible`
@@ -227,13 +195,64 @@ interface Collection is Dummy, ERC165 {
 	// Selector: uniqueCollectionType() d34b55b8
 	function uniqueCollectionType() external returns (string memory);
 
-	// Changes collection owner
+	// Changes collection owner to another account
 	//
 	// @dev Owner can be changed only by current owner
-	// @param newOwner new owner
+	// @param newOwner new owner account
 	//
 	// Selector: changeOwner(address) a6f9dae1
 	function changeOwner(address newOwner) external;
+
+	// Changes collection owner to another substrate account
+	//
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner substrate account
+	//
+	// Selector: changeOwnerSubstrate(uint256) 337e2c60
+	function changeOwnerSubstrate(uint256 newOwner) external;
+}
+
+// Selector: 79cc6790
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
+}
+
+// Selector: 942e8b22
+interface ERC20 is Dummy, ERC165, ERC20Events {
+	// Selector: name() 06fdde03
+	function name() external view returns (string memory);
+
+	// Selector: symbol() 95d89b41
+	function symbol() external view returns (string memory);
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() external view returns (uint256);
+
+	// Selector: decimals() 313ce567
+	function decimals() external view returns (uint8);
+
+	// Selector: balanceOf(address) 70a08231
+	function balanceOf(address owner) external view returns (uint256);
+
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 amount) external returns (bool);
+
+	// Selector: transferFrom(address,address,uint256) 23b872dd
+	function transferFrom(
+		address from,
+		address to,
+		uint256 amount
+	) external returns (bool);
+
+	// Selector: approve(address,uint256) 095ea7b3
+	function approve(address spender, uint256 amount) external returns (bool);
+
+	// Selector: allowance(address,address) dd62ed3e
+	function allowance(address owner, address spender)
+		external
+		view
+		returns (uint256);
 }
 
 interface UniqueFungible is

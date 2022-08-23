@@ -42,6 +42,196 @@ interface ERC721MintableEvents {
 	event MintingFinished();
 }
 
+// Selector: 07f76b0c
+interface Collection is Dummy, ERC165 {
+	// Set collection property.
+	//
+	// @param key Property key.
+	// @param value Propery value.
+	//
+	// Selector: setCollectionProperty(string,bytes) 2f073f66
+	function setCollectionProperty(string memory key, bytes memory value)
+		external;
+
+	// Delete collection property.
+	//
+	// @param key Property key.
+	//
+	// Selector: deleteCollectionProperty(string) 7b7debce
+	function deleteCollectionProperty(string memory key) external;
+
+	// Get collection property.
+	//
+	// @dev Throws error if key not found.
+	//
+	// @param key Property key.
+	// @return bytes The property corresponding to the key.
+	//
+	// Selector: collectionProperty(string) cf24fd6d
+	function collectionProperty(string memory key)
+		external
+		view
+		returns (bytes memory);
+
+	// Set the sponsor of the collection.
+	//
+	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	//
+	// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
+	//
+	// Selector: setCollectionSponsor(address) 7623402e
+	function setCollectionSponsor(address sponsor) external;
+
+	// Collection sponsorship confirmation.
+	//
+	// @dev After setting the sponsor for the collection, it must be confirmed with this function.
+	//
+	// Selector: confirmCollectionSponsorship() 3c50e97a
+	function confirmCollectionSponsorship() external;
+
+	// Set limits for the collection.
+	// @dev Throws error if limit not found.
+	// @param limit Name of the limit. Valid names:
+	// 	"accountTokenOwnershipLimit",
+	// 	"sponsoredDataSize",
+	// 	"sponsoredDataRateLimit",
+	// 	"tokenLimit",
+	// 	"sponsorTransferTimeout",
+	// 	"sponsorApproveTimeout"
+	// @param value Value of the limit.
+	//
+	// Selector: setCollectionLimit(string,uint32) 6a3841db
+	function setCollectionLimit(string memory limit, uint32 value) external;
+
+	// Set limits for the collection.
+	// @dev Throws error if limit not found.
+	// @param limit Name of the limit. Valid names:
+	// 	"ownerCanTransfer",
+	// 	"ownerCanDestroy",
+	// 	"transfersEnabled"
+	// @param value Value of the limit.
+	//
+	// Selector: setCollectionLimit(string,bool) 993b7fba
+	function setCollectionLimit(string memory limit, bool value) external;
+
+	// Get contract address.
+	//
+	// Selector: contractAddress() f6b4dfb4
+	function contractAddress() external view returns (address);
+
+	// Add collection admin by substrate address.
+	// @param new_admin Substrate administrator address.
+	//
+	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
+	function addCollectionAdminSubstrate(uint256 newAdmin) external;
+
+	// Remove collection admin by substrate address.
+	// @param admin Substrate administrator address.
+	//
+	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
+	function removeCollectionAdminSubstrate(uint256 admin) external;
+
+	// Add collection admin.
+	// @param new_admin Address of the added administrator.
+	//
+	// Selector: addCollectionAdmin(address) 92e462c7
+	function addCollectionAdmin(address newAdmin) external;
+
+	// Remove collection admin.
+	//
+	// @param new_admin Address of the removed administrator.
+	//
+	// Selector: removeCollectionAdmin(address) fafd7b42
+	function removeCollectionAdmin(address admin) external;
+
+	// Toggle accessibility of collection nesting.
+	//
+	// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
+	//
+	// Selector: setCollectionNesting(bool) 112d4586
+	function setCollectionNesting(bool enable) external;
+
+	// Toggle accessibility of collection nesting.
+	//
+	// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
+	// @param collections Addresses of collections that will be available for nesting.
+	//
+	// Selector: setCollectionNesting(bool,address[]) 64872396
+	function setCollectionNesting(bool enable, address[] memory collections)
+		external;
+
+	// Set the collection access method.
+	// @param mode Access mode
+	// 	0 for Normal
+	// 	1 for AllowList
+	//
+	// Selector: setCollectionAccess(uint8) 41835d4c
+	function setCollectionAccess(uint8 mode) external;
+
+	// Add the user to the allowed list.
+	//
+	// @param user Address of a trusted user.
+	//
+	// Selector: addToCollectionAllowList(address) 67844fe6
+	function addToCollectionAllowList(address user) external;
+
+	// Remove the user from the allowed list.
+	//
+	// @param user Address of a removed user.
+	//
+	// Selector: removeFromCollectionAllowList(address) 85c51acb
+	function removeFromCollectionAllowList(address user) external;
+
+	// Switch permission for minting.
+	//
+	// @param mode Enable if "true".
+	//
+	// Selector: setCollectionMintMode(bool) 00018e84
+	function setCollectionMintMode(bool mode) external;
+
+	// Check that account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdmin(address) c2282493
+	function verifyOwnerOrAdmin(address user) external view returns (bool);
+
+	// Check that substrate account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: verifyOwnerOrAdminSubstrate(uint256) fe818e40
+	function verifyOwnerOrAdminSubstrate(uint256 user)
+		external
+		view
+		returns (bool);
+
+	// Returns collection type
+	//
+	// @return `Fungible` or `NFT` or `ReFungible`
+	//
+	// Selector: uniqueCollectionType() d34b55b8
+	function uniqueCollectionType() external returns (string memory);
+
+	// Changes collection owner to another account
+	//
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner account
+	//
+	// Selector: changeOwner(address) a6f9dae1
+	function changeOwner(address newOwner) external;
+
+	// Changes collection owner to another substrate account
+	//
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner substrate account
+	//
+	// Selector: changeOwnerSubstrate(uint256) 337e2c60
+	function changeOwnerSubstrate(uint256 newOwner) external;
+}
+
 // Selector: 41369377
 interface TokenProperties is Dummy, ERC165 {
 	// @notice Set permissions for token property.
@@ -335,177 +525,6 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 		external
 		view
 		returns (address);
-}
-
-// Selector: ca08c92c
-interface Collection is Dummy, ERC165 {
-	// Set collection property.
-	//
-	// @param key Property key.
-	// @param value Propery value.
-	//
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
-
-	// Delete collection property.
-	//
-	// @param key Property key.
-	//
-	// Selector: deleteCollectionProperty(string) 7b7debce
-	function deleteCollectionProperty(string memory key) external;
-
-	// Get collection property.
-	//
-	// @dev Throws error if key not found.
-	//
-	// @param key Property key.
-	// @return bytes The property corresponding to the key.
-	//
-	// Selector: collectionProperty(string) cf24fd6d
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
-
-	// Set the sponsor of the collection.
-	//
-	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	//
-	// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
-	//
-	// Selector: setCollectionSponsor(address) 7623402e
-	function setCollectionSponsor(address sponsor) external;
-
-	// Collection sponsorship confirmation.
-	//
-	// @dev After setting the sponsor for the collection, it must be confirmed with this function.
-	//
-	// Selector: confirmCollectionSponsorship() 3c50e97a
-	function confirmCollectionSponsorship() external;
-
-	// Set limits for the collection.
-	// @dev Throws error if limit not found.
-	// @param limit Name of the limit. Valid names:
-	// 	"accountTokenOwnershipLimit",
-	// 	"sponsoredDataSize",
-	// 	"sponsoredDataRateLimit",
-	// 	"tokenLimit",
-	// 	"sponsorTransferTimeout",
-	// 	"sponsorApproveTimeout"
-	// @param value Value of the limit.
-	//
-	// Selector: setCollectionLimit(string,uint32) 6a3841db
-	function setCollectionLimit(string memory limit, uint32 value) external;
-
-	// Set limits for the collection.
-	// @dev Throws error if limit not found.
-	// @param limit Name of the limit. Valid names:
-	// 	"ownerCanTransfer",
-	// 	"ownerCanDestroy",
-	// 	"transfersEnabled"
-	// @param value Value of the limit.
-	//
-	// Selector: setCollectionLimit(string,bool) 993b7fba
-	function setCollectionLimit(string memory limit, bool value) external;
-
-	// Get contract address.
-	//
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() external view returns (address);
-
-	// Add collection admin by substrate address.
-	// @param new_admin Substrate administrator address.
-	//
-	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
-	function addCollectionAdminSubstrate(uint256 newAdmin) external;
-
-	// Remove collection admin by substrate address.
-	// @param admin Substrate administrator address.
-	//
-	// Selector: removeCollectionAdminSubstrate(uint256) 4048fcf9
-	function removeCollectionAdminSubstrate(uint256 admin) external;
-
-	// Add collection admin.
-	// @param new_admin Address of the added administrator.
-	//
-	// Selector: addCollectionAdmin(address) 92e462c7
-	function addCollectionAdmin(address newAdmin) external;
-
-	// Remove collection admin.
-	//
-	// @param new_admin Address of the removed administrator.
-	//
-	// Selector: removeCollectionAdmin(address) fafd7b42
-	function removeCollectionAdmin(address admin) external;
-
-	// Toggle accessibility of collection nesting.
-	//
-	// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
-	//
-	// Selector: setCollectionNesting(bool) 112d4586
-	function setCollectionNesting(bool enable) external;
-
-	// Toggle accessibility of collection nesting.
-	//
-	// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
-	// @param collections Addresses of collections that will be available for nesting.
-	//
-	// Selector: setCollectionNesting(bool,address[]) 64872396
-	function setCollectionNesting(bool enable, address[] memory collections)
-		external;
-
-	// Set the collection access method.
-	// @param mode Access mode
-	// 	0 for Normal
-	// 	1 for AllowList
-	//
-	// Selector: setCollectionAccess(uint8) 41835d4c
-	function setCollectionAccess(uint8 mode) external;
-
-	// Add the user to the allowed list.
-	//
-	// @param user Address of a trusted user.
-	//
-	// Selector: addToCollectionAllowList(address) 67844fe6
-	function addToCollectionAllowList(address user) external;
-
-	// Remove the user from the allowed list.
-	//
-	// @param user Address of a removed user.
-	//
-	// Selector: removeFromCollectionAllowList(address) 85c51acb
-	function removeFromCollectionAllowList(address user) external;
-
-	// Switch permission for minting.
-	//
-	// @param mode Enable if "true".
-	//
-	// Selector: setCollectionMintMode(bool) 00018e84
-	function setCollectionMintMode(bool mode) external;
-
-	// Check that account is the owner or admin of the collection
-	//
-	// @param user account to verify
-	// @return "true" if account is the owner or admin
-	//
-	// Selector: verifyOwnerOrAdmin(address) c2282493
-	function verifyOwnerOrAdmin(address user) external view returns (bool);
-
-	// Returns collection type
-	//
-	// @return `Fungible` or `NFT` or `ReFungible`
-	//
-	// Selector: uniqueCollectionType() d34b55b8
-	function uniqueCollectionType() external returns (string memory);
-
-	// Changes collection owner
-	//
-	// @dev Owner can be changed only by current owner
-	// @param newOwner new owner
-	//
-	// Selector: changeOwner(address) a6f9dae1
-	function changeOwner(address newOwner) external;
 }
 
 interface UniqueRefungible is
