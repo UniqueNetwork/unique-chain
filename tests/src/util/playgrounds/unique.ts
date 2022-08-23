@@ -439,7 +439,7 @@ class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender: TSigner, transaction: any, label = 'transaction', options = null) {
+  signTransaction(sender: TSigner, transaction: any, label = 'transaction', options: any = null) {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
