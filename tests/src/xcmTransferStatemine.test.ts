@@ -266,7 +266,7 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
     }, uniqueApiOptions);
   });
 
-  it.skip('Should connect and send USDT from Unique to Statemine back', async () => {
+  it('Should connect and send USDT from Unique to Statemine back', async () => {
     let balanceBefore: bigint;
     const uniqueApiOptions: ApiOptions = {
       provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
