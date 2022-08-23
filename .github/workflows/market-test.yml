@@ -104,6 +104,12 @@ jobs:
         with:
           node-version: 16
 
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-test/.env
+          mode: example
+
       - name: Run tests
         run: |
           cd qa-tests
