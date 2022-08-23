@@ -118,6 +118,7 @@ jobs:
 
       - name: Run tests
         run: |
+          cd qa-tests
           npm install
           echo "Node modules installed"
           npm run all:docker
