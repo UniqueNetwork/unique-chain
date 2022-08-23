@@ -304,7 +304,7 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Changes collection owner to another account
-	fn change_owner_internal(
+	fn set_owner_internal(
 		&mut self,
 		caller: T::CrossAccountId,
 		new_owner: T::CrossAccountId,

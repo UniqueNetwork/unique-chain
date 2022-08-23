@@ -30,7 +30,10 @@ use up_data_structs::{
 };
 use alloc::format;
 
-use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
+use crate::{
+	Pallet, CollectionHandle, Config, CollectionProperties,
+	eth::convert_substrate_address_to_cross_account_id,
+};
 
 /// Events for ethereum collection helper.
 #[derive(ToLog)]
@@ -408,25 +411,20 @@ where
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	fn verify_owner_or_admin(&self, user: address) -> Result<bool> {
+	#[solidity(rename_selector = "isOwnerOrAdmin")]
+	fn is_owner_or_admin_eth(&self, user: address) -> Result<bool> {
 		let user = T::CrossAccountId::from_eth(user);
-		Ok(self
-			.check_is_owner_or_admin(&user)
-			.map(|_| true)
-			.unwrap_or(false))
+		Ok(self.is_owner_or_admin(&user))
 	}
 
 	/// Check that substrate account is the owner or admin of the collection
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	#[solidity(rename_selector = "verifyOwnerOrAdmin")]
-	fn verify_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
+	#[solidity(rename_selector = "isOwnerOrAdmin")]
+	fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
 		let user = convert_substrate_address_to_cross_account_id::<T>(user);
-		Ok(self
-			.check_is_owner_or_admin(&user)
-			.map(|_| true)
-			.unwrap_or(false))
+		Ok(self.is_owner_or_admin(&user))
 	}
 
 	/// Returns collection type
@@ -445,10 +443,10 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
-	fn change_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
+	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = T::CrossAccountId::from_eth(new_owner);
-		self.change_owner_internal(caller, new_owner)
+		self.set_owner_internal(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -456,23 +454,13 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner substrate account
-	#[solidity(rename_selector = "changeOwner")]
-	fn change_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
+	#[solidity(rename_selector = "setOwner")]
+	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = convert_substrate_address_to_cross_account_id::<T>(new_owner);
-		self.change_owner_internal(caller, new_owner)
+		self.set_owner_internal(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
-}
-
-fn convert_substrate_address_to_cross_account_id<T: Config>(address: uint256) -> T::CrossAccountId
-where
-	T::AccountId: From<[u8; 32]>,
-{
-	let mut address_arr: [u8; 32] = Default::default();
-	address.to_big_endian(&mut address_arr);
-	let account_id = T::AccountId::from(address_arr);
-	T::CrossAccountId::from_sub(account_id)
 }
 
 fn check_is_owner_or_admin<T: Config>(
