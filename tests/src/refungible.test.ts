@@ -239,7 +239,14 @@ describe('integration test: Refungible functionality:', async () => {
       const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
       const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
       await token.repartition(alice, 200n);
-      const chainEvents = helper.chainLog.slice(-1)[0].events.map((x: any) => x.event);
+      const chainEvents = helper.chainLog.slice(-1)[0].events.map((x: any) => {
+        const e = x.event;
+        if (e.method == 'ItemCreated' && e.section == 'common') {
+          e.data[0] = e.data[0].replace(',',''); 
+          e.data[1] = e.data[1].replace(',',''); 
+        }
+        return e;
+      });
       expect(chainEvents).to.include.deep.members([{
         method: 'ItemCreated',
         section: 'common',
@@ -259,7 +266,14 @@ describe('integration test: Refungible functionality:', async () => {
       const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
       const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
       await token.repartition(alice, 50n);
-      const chainEvents = helper.chainLog.slice(-1)[0].events.map((x: any) => x.event);
+      const chainEvents = helper.chainLog.slice(-1)[0].events.map((x: any) => {
+        const e = x.event;
+        if (e.method == 'ItemDestroyed' && e.section == 'common') {
+          e.data[0] = e.data[0].replace(',',''); 
+          e.data[1] = e.data[1].replace(',',''); 
+        }
+        return e;
+      });
       expect(chainEvents).to.include.deep.members([{
         method: 'ItemDestroyed',
         section: 'common',
