@@ -14,6 +14,6 @@ services:
         - "CUMULUS_BUILD_BRANCH=release-v0.9.230"
     volumes:
        - type: bind
-         source: ./launch-config-xcm-quartz.json
+         source: ./xcm-config/launch-config-xcm-quartz.json
          target: /polkadot-launch/launch-config.json
          read_only: true          
