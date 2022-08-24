@@ -74,7 +74,7 @@ where
 
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
-		
+
 		Ok(())
 	}
 
@@ -84,7 +84,7 @@ where
 	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
 			.map_err(dispatch_to_evm::<T>)?;
-		
+
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -100,7 +100,7 @@ where
 
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
-		
+
 		Ok(())
 	}
 
@@ -130,7 +130,7 @@ where
 			let sponsor = pallet_common::eth::convert_cross_account_to_uint256::<T>(&sponsor);
 			(Default::default(), sponsor)
 		} else {
-			let sponsor =  *sponsor.as_eth();
+			let sponsor = *sponsor.as_eth();
 			(sponsor, Default::default())
 		};
 		Ok(result)
@@ -236,7 +236,7 @@ where
 
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
-		
+
 		Ok(())
 	}
 }
