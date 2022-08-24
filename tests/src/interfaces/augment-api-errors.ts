@@ -1,10 +1,16 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/errors';
+
+import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
+
+export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
 
 declare module '@polkadot/api-base/types/errors' {
-  export interface AugmentedErrors<ApiType extends ApiTypes> {
+  interface AugmentedErrors<ApiType extends ApiTypes> {
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -652,6 +658,11 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     treasury: {
+      /**
+       * The spend origin is valid but the amount it is allowed to spend is lower than the
+       * amount to be spent.
+       **/
+      InsufficientPermission: AugmentedError<ApiType>;
       /**
        * Proposer's balance is too low.
        **/

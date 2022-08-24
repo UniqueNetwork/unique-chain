@@ -1,14 +1,22 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/submittable';
+
+import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction } from '@polkadot/api-base/types';
 import type { Bytes, Compact, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, FrameSupportScheduleMaybeHashed, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, RmrkTraitsPartEquippableList, RmrkTraitsPartPartType, RmrkTraitsResourceBasicResource, RmrkTraitsResourceComposableResource, RmrkTraitsResourceResourceTypes, RmrkTraitsResourceSlotResource, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
+export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
+export type __SubmittableExtrinsic<ApiType extends ApiTypes> = SubmittableExtrinsic<ApiType>;
+export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> = SubmittableExtrinsicFunction<ApiType>;
+
 declare module '@polkadot/api-base/types/submittable' {
-  export interface AugmentedSubmittables<ApiType extends ApiTypes> {
+  interface AugmentedSubmittables<ApiType extends ApiTypes> {
     balances: {
       /**
        * Exactly as `transfer`, except the origin must be root and the source account may be
@@ -105,8 +113,8 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     configuration: {
-      setMinGasPriceOverride: AugmentedSubmittable<(coeff: Option<u64> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<u64>]>;
-      setWeightToFeeCoefficientOverride: AugmentedSubmittable<(coeff: Option<u32> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<u32>]>;
+      setMinGasPriceOverride: AugmentedSubmittable<(coeff: Option<u64> | null | Uint8Array | u64 | AnyNumber) => SubmittableExtrinsic<ApiType>, [Option<u64>]>;
+      setWeightToFeeCoefficientOverride: AugmentedSubmittable<(coeff: Option<u32> | null | Uint8Array | u32 | AnyNumber) => SubmittableExtrinsic<ApiType>, [Option<u32>]>;
       /**
        * Generic tx
        **/
@@ -153,16 +161,16 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
        **/
-      call: AugmentedSubmittable<(source: H160 | string | Uint8Array, target: H160 | string | Uint8Array, input: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | object | string | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, H160, Bytes, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
+      call: AugmentedSubmittable<(source: H160 | string | Uint8Array, target: H160 | string | Uint8Array, input: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber, nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, H160, Bytes, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
       /**
        * Issue an EVM create operation. This is similar to a contract creation transaction in
        * Ethereum.
        **/
-      create: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | object | string | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, Bytes, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
+      create: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber, nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, Bytes, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
       /**
        * Issue an EVM create2 operation.
        **/
-      create2: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, salt: H256 | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | object | string | Uint8Array, nonce: Option<U256> | null | object | string | Uint8Array, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, Bytes, H256, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
+      create2: AugmentedSubmittable<(source: H160 | string | Uint8Array, init: Bytes | string | Uint8Array, salt: H256 | string | Uint8Array, value: U256 | AnyNumber | Uint8Array, gasLimit: u64 | AnyNumber | Uint8Array, maxFeePerGas: U256 | AnyNumber | Uint8Array, maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber, nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber, accessList: Vec<ITuple<[H160, Vec<H256>]>> | ([H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]])[]) => SubmittableExtrinsic<ApiType>, [H160, Bytes, H256, U256, u64, U256, Option<U256>, Option<U256>, Vec<ITuple<[H160, Vec<H256>]>>]>;
       /**
        * Withdraw balance from EVM into currency/balances pallet.
        **/
@@ -244,7 +252,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `origin`: Must be Root.
        * - `maybe_xcm_version`: The default XCM encoding version, or `None` to disable.
        **/
-      forceDefaultXcmVersion: AugmentedSubmittable<(maybeXcmVersion: Option<u32> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<u32>]>;
+      forceDefaultXcmVersion: AugmentedSubmittable<(maybeXcmVersion: Option<u32> | null | Uint8Array | u32 | AnyNumber) => SubmittableExtrinsic<ApiType>, [Option<u32>]>;
       /**
        * Ask a location to notify us regarding their XCM version and any changes to it.
        * 
@@ -364,6 +372,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token-owner-to-be
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT to be accepted.
        * - `rmrk_nft_id`: ID of the NFT to be accepted.
        * - `new_owner`: Either the sender's account ID or a sender-owned NFT,
@@ -381,9 +390,11 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token owner
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT.
        * - `rmrk_nft_id`: ID of the NFT with a pending resource to be accepted.
        * - `resource_id`: ID of the newly created pending resource.
+       * accept the addition of a new resource to an existing NFT
        **/
       acceptResource: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, resourceId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, u32]>;
       /**
@@ -396,6 +407,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token owner
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT.
        * - `rmrk_nft_id`: ID of the NFT with a resource to be removed.
        * - `resource_id`: ID of the removal-pending resource.
@@ -412,6 +424,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * the owner's [acceptance](Pallet::accept_resource).
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT.
        * - `nft_id`: ID of the NFT to assign a resource to.
        * - `resource`: Data of the resource to be created.
@@ -428,6 +441,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * the owner's [acceptance](Pallet::accept_resource).
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT.
        * - `nft_id`: ID of the NFT to assign a resource to.
        * - `resource`: Data of the resource to be created.
@@ -444,6 +458,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * the owner's [acceptance](Pallet::accept_resource).
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT.
        * - `nft_id`: ID of the NFT to assign a resource to.
        * - `resource`: Data of the resource to be created.
@@ -461,6 +476,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * Token owner
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `collection_id`: RMRK ID of the collection in which the NFT to burn belongs to.
        * - `nft_id`: ID of the NFT to be destroyed.
        * - `max_burns`: Maximum number of tokens to burn, assuming nesting. The transaction
@@ -475,6 +491,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * Collection issuer
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `collection_id`: RMRK collection ID to change the issuer of.
        * - `new_issuer`: Collection's new issuer.
        **/
@@ -486,12 +503,13 @@ declare module '@polkadot/api-base/types/submittable' {
        * * Anyone - will be assigned as the issuer of the collection.
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `metadata`: Metadata describing the collection, e.g. IPFS hash. Cannot be changed.
        * - `max`: Optional maximum number of tokens.
        * - `symbol`: UTF-8 string with token prefix, by which to represent the token in wallets and UIs.
        * Analogous to Unique's [`token_prefix`](up_data_structs::Collection). Cannot be changed.
        **/
-      createCollection: AugmentedSubmittable<(metadata: Bytes | string | Uint8Array, max: Option<u32> | null | object | string | Uint8Array, symbol: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, Option<u32>, Bytes]>;
+      createCollection: AugmentedSubmittable<(metadata: Bytes | string | Uint8Array, max: Option<u32> | null | Uint8Array | u32 | AnyNumber, symbol: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes, Option<u32>, Bytes]>;
       /**
        * Destroy a collection.
        * 
@@ -501,6 +519,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * Collection issuer
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `collection_id`: RMRK ID of the collection to destroy.
        **/
       destroyCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
@@ -511,6 +530,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * Collection issuer
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `collection_id`: RMRK ID of the collection to lock.
        **/
       lockCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
@@ -521,6 +541,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * Collection issuer
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `owner`: Owner account of the NFT. If set to None, defaults to the sender (collection issuer).
        * - `collection_id`: RMRK collection ID for the NFT to be minted within. Cannot be changed.
        * - `recipient`: Receiver account of the royalty. Has no effect if the `royalty_amount` is not set. Cannot be changed.
@@ -529,7 +550,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `transferable`: Can this NFT be transferred? Cannot be changed.
        * - `resources`: Resource data to be added to the NFT immediately after minting.
        **/
-      mintNft: AugmentedSubmittable<(owner: Option<AccountId32> | null | object | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, recipient: Option<AccountId32> | null | object | string | Uint8Array, royaltyAmount: Option<Permill> | null | object | string | Uint8Array, metadata: Bytes | string | Uint8Array, transferable: bool | boolean | Uint8Array, resources: Option<Vec<RmrkTraitsResourceResourceTypes>> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, u32, Option<AccountId32>, Option<Permill>, Bytes, bool, Option<Vec<RmrkTraitsResourceResourceTypes>>]>;
+      mintNft: AugmentedSubmittable<(owner: Option<AccountId32> | null | Uint8Array | AccountId32 | string, collectionId: u32 | AnyNumber | Uint8Array, recipient: Option<AccountId32> | null | Uint8Array | AccountId32 | string, royaltyAmount: Option<Permill> | null | Uint8Array | Permill | AnyNumber, metadata: Bytes | string | Uint8Array, transferable: bool | boolean | Uint8Array, resources: Option<Vec<RmrkTraitsResourceResourceTypes>> | null | Uint8Array | Vec<RmrkTraitsResourceResourceTypes> | (RmrkTraitsResourceResourceTypes | { Basic: any } | { Composable: any } | { Slot: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, u32, Option<AccountId32>, Option<Permill>, Bytes, bool, Option<Vec<RmrkTraitsResourceResourceTypes>>]>;
       /**
        * Reject an NFT sent from another account to self or owned NFT.
        * The NFT in question will not be sent back and burnt instead.
@@ -540,6 +561,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token-owner-to-be-not
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK ID of the NFT to be rejected.
        * - `rmrk_nft_id`: ID of the NFT to be rejected.
        **/
@@ -554,7 +576,8 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Collection issuer
        * 
        * # Arguments
-       * - `collection_id`: RMRK ID of a collection to which the NFT making use of the resource belongs to.
+       * - `origin`: sender of the transaction
+       * - `rmrk_collection_id`: RMRK ID of a collection to which the NFT making use of the resource belongs to.
        * - `nft_id`: ID of the NFT with a resource to be removed.
        * - `resource_id`: ID of the resource to be removed.
        **/
@@ -570,8 +593,9 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token owner
        * 
        * # Arguments:
-       * - `collection_id`: RMRK ID of the collection of the NFT to be transferred.
-       * - `nft_id`: ID of the NFT to be transferred.
+       * - `origin`: sender of the transaction
+       * - `rmrk_collection_id`: RMRK ID of the collection of the NFT to be transferred.
+       * - `rmrk_nft_id`: ID of the NFT to be transferred.
        * - `new_owner`: New owner of the nft which can be either an account or a NFT.
        **/
       send: AugmentedSubmittable<(rmrkCollectionId: u32 | AnyNumber | Uint8Array, rmrkNftId: u32 | AnyNumber | Uint8Array, newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple | { AccountId: any } | { CollectionAndNftTuple: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsNftAccountIdOrCollectionNftTuple]>;
@@ -587,6 +611,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token owner
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID of the NFT.
        * - `rmrk_nft_id`: ID of the NFT to rearrange resource priorities for.
        * - `priorities`: Ordered vector of resource IDs.
@@ -605,12 +630,13 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Token owner - in case of NFT property
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `rmrk_collection_id`: RMRK collection ID.
        * - `maybe_nft_id`: Optional ID of the NFT. If left empty, then the property is set for the collection.
        * - `key`: Key of the custom property to be referenced by.
        * - `value`: Value of the custom property to be stored.
        **/
-      setProperty: AugmentedSubmittable<(rmrkCollectionId: Compact<u32> | AnyNumber | Uint8Array, maybeNftId: Option<u32> | null | object | string | Uint8Array, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, Option<u32>, Bytes, Bytes]>;
+      setProperty: AugmentedSubmittable<(rmrkCollectionId: Compact<u32> | AnyNumber | Uint8Array, maybeNftId: Option<u32> | null | Uint8Array | u32 | AnyNumber, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>, Option<u32>, Bytes, Bytes]>;
       /**
        * Generic tx
        **/
@@ -626,6 +652,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Anyone - will be assigned as the issuer of the Base.
        * 
        * # Arguments:
+       * - `origin`: Caller, will be assigned as the issuer of the Base
        * - `base_type`: Arbitrary media type, e.g. "svg".
        * - `symbol`: Arbitrary client-chosen symbol.
        * - `parts`: Array of Fixed and Slot Parts composing the Base,
@@ -641,8 +668,9 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Base issuer
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `base_id`: Base containing the Slot Part to be updated.
-       * - `part_id`: Slot Part whose Equippable List is being updated.
+       * - `slot_id`: Slot Part whose Equippable List is being updated .
        * - `equippables`: List of equippables that will override the current Equippables list.
        **/
       equippable: AugmentedSubmittable<(baseId: u32 | AnyNumber | Uint8Array, slotId: u32 | AnyNumber | Uint8Array, equippables: RmrkTraitsPartEquippableList | { All: any } | { Empty: any } | { Custom: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32, RmrkTraitsPartEquippableList]>;
@@ -656,6 +684,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Base issuer
        * 
        * # Arguments:
+       * - `origin`: sender of the transaction
        * - `base_id`: Base ID containing the Theme to be updated.
        * - `theme`: Theme to add to the Base.  A Theme has a name and properties, which are an
        * array of [key, value, inherit].
@@ -677,7 +706,7 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * Schedule a named task.
        **/
-      scheduleNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, when: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | object | string | Uint8Array, priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
+      scheduleNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, when: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | Uint8Array | ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array], priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
       /**
        * Schedule a named task after a delay.
        * 
@@ -685,7 +714,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Same as [`schedule_named`](Self::schedule_named).
        * # </weight>
        **/
-      scheduleNamedAfter: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, after: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | object | string | Uint8Array, priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
+      scheduleNamedAfter: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, after: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | Uint8Array | ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array], priority: u8 | AnyNumber | Uint8Array, call: FrameSupportScheduleMaybeHashed | { Value: any } | { Hash: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, FrameSupportScheduleMaybeHashed]>;
       /**
        * Generic tx
        **/
@@ -906,6 +935,17 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       removeApproval: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u32>]>;
       /**
+       * Propose and approve a spend of treasury funds.
+       * 
+       * - `origin`: Must be `SpendOrigin` with the `Success` value being at least `amount`.
+       * - `amount`: The amount to be transferred from the treasury to the `beneficiary`.
+       * - `beneficiary`: The destination account for the transfer.
+       * 
+       * NOTE: For record-keeping purposes, the proposer is deemed to be equivalent to the
+       * beneficiary.
+       **/
+      spend: AugmentedSubmittable<(amount: Compact<u128> | AnyNumber | Uint8Array, beneficiary: MultiAddress | { Id: any } | { Index: any } | { Raw: any } | { Address32: any } | { Address20: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Compact<u128>, MultiAddress]>;
+      /**
        * Generic tx
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
@@ -929,7 +969,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * * `collection_id`: ID of the Collection to add an admin for.
        * * `new_admin`: Address of new admin to add.
        **/
-      addCollectionAdmin: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newAdmin: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      addCollectionAdmin: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, newAdminId: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Add an address to allow list.
        * 

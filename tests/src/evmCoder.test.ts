@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import Web3 from 'web3';
-import {createEthAccountWithBalance, createRefungibleCollection, GAS_ARGS, itWeb3} from './eth/util/helpers';
+import {createEthAccountWithBalance, createNonfungibleCollection, GAS_ARGS, itWeb3} from './eth/util/helpers';
 import * as solc from 'solc';
 
 import chai from 'chai';
@@ -92,7 +92,7 @@ async function deployTestContract(web3: Web3, owner: string, collectionAddress: 
 describe('Evm Coder tests', () => {
   itWeb3('Call non-existing function', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress} = await createNonfungibleCollection(api, web3, owner);
     const contract = await deployTestContract(web3, owner, collectionIdAddress, '0x1bfed5D614b886b9Ab2eA4CBAc22A96B7EC29c9c');
     const testContract = await deployTestContract(web3, owner, collectionIdAddress, contract.options.address);
     {

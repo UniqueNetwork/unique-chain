@@ -1,15 +1,16 @@
-name: Develop - Build & test
+name: try-runtime
 
 # Controls when the action will run.
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
   pull_request:
     branches:
-      - develop
+      - master
     types:
       - opened
       - reopened
       - synchronize   #commit(s) pushed to the pull request
+      - ready_for_review
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,25 +19,32 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  dev_build_test:
+  try-runtime:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
-
-    name: Build Container, Spin it Up an test
+    
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
         include:
-          - network: "Opal"
-            features: "opal-runtime"
-          - network: "Quartz"
-            features: "quartz-runtime"
-          - network: "Unique"
-            features: "unique-runtime"
+          - network: opal
+            features: try-runtime,opal-runtime
+            replica_from_address: wss://eu-ws-opal.unique.network:443
+          - network: quartz
+            features: try-runtime,quartz-runtime
+            replica_from_address: wss://eu-ws-quartz.unique.network:443
+          - network: unique
+            features: try-runtime,unique-runtime
+            replica_from_address: wss://eu-ws.unique.network:443
 
     steps:
       - name: Skip if pull request is in Draft
@@ -57,6 +65,7 @@ jobs:
         if: github.event.pull_request.draft == true
         run: exit 1
 
+
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -71,50 +80,29 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          template: .docker/docker-compose.try-runtime.j2
+          output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
-            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             FEATURE=${{ matrix.features }}
-            BRANCH=${{ github.head_ref }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
-
-      - uses: actions/setup-node@v3
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from try-runtime
+ 
+      - name: Collect Docker Logs
+        if: success() || failure()
+        uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          node-version: 16
+          dest: './try-runtime-logs.${{ matrix.network }}'
+          images: 'try-runtime' 
 
-      - name: Run tests
-        run: |
-          cd tests
-          yarn install
-          yarn add mochawesome
-          echo "Ready to start tests"
-          node scripts/readyness.js
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
-
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v8
-        id: test-report
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-
-      - name: Read output variables
-        run: |
-          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+      - name: Show docker logs
+        run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down

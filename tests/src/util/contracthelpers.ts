@@ -77,7 +77,7 @@ export async function deployFlipper(api: ApiPromise, privateKeyWrapper: (account
 }
 
 export async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
-  const result = await contract.query.get(deployer.address, value, gasLimit);
+  const result = await contract.query.get(deployer.address, {value, gasLimit});
 
   if(!result.result.isOk) {
     throw 'Failed to get flipper value';
@@ -86,7 +86,7 @@ export async function getFlipValue(contract: Contract, deployer: IKeyringPair) {
 }
 
 export async function toggleFlipValueExpectSuccess(sender: IKeyringPair, contract: Contract) {
-  const tx = contract.tx.flip(value, gasLimit);
+  const tx = contract.tx.flip({value, gasLimit});
   const events = await submitTransactionAsync(sender, tx);
   const result = getGenericResult(events);
 
@@ -94,7 +94,7 @@ export async function toggleFlipValueExpectSuccess(sender: IKeyringPair, contrac
 }
 
 export async function toggleFlipValueExpectFailure(sender: IKeyringPair, contract: Contract) {
-  const tx = contract.tx.flip(value, gasLimit);
+  const tx = contract.tx.flip({value, gasLimit});
   await expect(submitTransactionExpectFailAsync(sender, tx)).to.be.rejected;
 }
 

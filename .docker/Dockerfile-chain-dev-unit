@@ -1,0 +1,26 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+ARG RUST_TOOLCHAIN=
+ARG FEATURE=
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install $RUST_TOOLCHAIN && \
+    rustup default $RUST_TOOLCHAIN && \
+    rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
+
+RUN mkdir /dev_chain 
+COPY . /dev_chain
+
+WORKDIR /dev_chain
+
+CMD cargo test --features=limit-testing

@@ -133,7 +133,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{pallet_prelude::*, transactional, BoundedVec, dispatch::DispatchResult};
+use frame_support::{pallet_prelude::*, BoundedVec, dispatch::DispatchResult};
 use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::DispatchError;
 use up_data_structs::*;
@@ -226,11 +226,11 @@ pub mod pallet {
 		/// - Anyone - will be assigned as the issuer of the Base.
 		///
 		/// # Arguments:
+		/// - `origin`: Caller, will be assigned as the issuer of the Base
 		/// - `base_type`: Arbitrary media type, e.g. "svg".
 		/// - `symbol`: Arbitrary client-chosen symbol.
 		/// - `parts`: Array of Fixed and Slot Parts composing the Base,
 		/// confined in length by [`RmrkPartsLimit`](up_data_structs::RmrkPartsLimit).
-		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
 		pub fn create_base(
 			origin: OriginFor<T>,
@@ -295,13 +295,13 @@ pub mod pallet {
 		/// - Base issuer
 		///
 		/// # Arguments:
+		/// - `origin`: sender of the transaction
 		/// - `base_id`: Base ID containing the Theme to be updated.
 		/// - `theme`: Theme to add to the Base.  A Theme has a name and properties, which are an
 		///   array of [key, value, inherit].
 		///   - `key`: Arbitrary BoundedString, defined by client.
 		///   - `value`: Arbitrary BoundedString, defined by client.
 		///   - `inherit`: Optional bool.
-		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::theme_add(theme.properties.len() as u32))]
 		pub fn theme_add(
 			origin: OriginFor<T>,
@@ -359,10 +359,10 @@ pub mod pallet {
 		/// - Base issuer
 		///
 		/// # Arguments:
+		/// - `origin`: sender of the transaction
 		/// - `base_id`: Base containing the Slot Part to be updated.
-		/// - `part_id`: Slot Part whose Equippable List is being updated.
+		/// - `slot_id`: Slot Part whose Equippable List is being updated .
 		/// - `equippables`: List of equippables that will override the current Equippables list.
-		#[transactional]
 		#[pallet::weight(<SelfWeightOf<T>>::equippable())]
 		pub fn equippable(
 			origin: OriginFor<T>,

@@ -1,4 +1,4 @@
-name: Tests code style
+name: yarn eslint
 
 on:
   pull_request:
@@ -8,6 +8,12 @@ on:
       - opened
       - reopened
       - synchronize
+      - ready_for_review
+
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code_style:
     runs-on: self-hosted-ci

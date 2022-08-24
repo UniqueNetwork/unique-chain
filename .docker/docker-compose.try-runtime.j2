@@ -1,0 +1,10 @@
+version: "3.5"
+
+services:
+  try-runtime:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "FEATURE={{ FEATURE }}"
+        - "REPLICA_FROM={{ REPLICA_FROM }}"
+

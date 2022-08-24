@@ -11,9 +11,6 @@ ENV PATH="/cargo-home/bin:$PATH"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 ARG RUST_TOOLCHAIN=
-ARG POLKADOT_BUILD_BRANCH=
-ARG BRANCH=
-ARG REPO_URL=
 ARG FEATURE=
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
@@ -21,7 +18,9 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup default $RUST_TOOLCHAIN && \
     rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN mkdir /dev_chain && git clone $REPO_URL -b $BRANCH /dev_chain
+RUN mkdir /dev_chain 
+COPY . /dev_chain
+
 WORKDIR /dev_chain
 
 RUN cargo build --release

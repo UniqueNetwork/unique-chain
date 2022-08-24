@@ -1,4 +1,4 @@
-name: Forkless Parachain update with no data
+name: upgrade nodata
 
 # Controls when the action will run.
 on:
@@ -10,6 +10,7 @@ on:
       - opened
       - reopened
       - synchronize   #commit(s) pushed to the pull request
+      - ready_for_review
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,18 +19,23 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
   prepare-execution-marix:
-    
+
     name: Prepare execution matrix
-    
+
     runs-on: self-hosted-ci
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
+
     steps:
-      
+
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -46,18 +52,22 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {Opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {Quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {Unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
 
 
 
   forkless-update-nodata:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: self-hosted-ci
+    runs-on: [self-hosted-ci,large]
 
-    name: ${{ matrix.network }} - Forkless Parachain Upgrade NO data
+
+
+    timeout-minutes: 1380
+
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -99,7 +109,7 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-forkless.j2
+          template: .docker/docker-compose.tmp-forkless-nodata.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
@@ -115,21 +125,21 @@ jobs:
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
-      - name: Generate launch-config.json
+      - name: Generate launch-config-forkless-nodata.json
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/launch-config.j2
-          output_file: .docker/launch-config-forkless.json
+          template: .docker/forkless-config/launch-config-forkless-nodata.j2
+          output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
 
       - name: Show launch-config-forkless configuration
-        run: cat .docker/launch-config-forkless.json
+        run: cat .docker/launch-config-forkless-nodata.json
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -143,24 +153,25 @@ jobs:
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                    echo "Container: node-parachain RUNNING";
-                    echo "Check Docker logs"
-                    DOCKER_LOGS=$(do_docker_logs)
-                    if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
-                        echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
-                        return 0
-                        exit 1
-                    else 
-                        echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸 - Not found in logs output."
-                        return 1
-                        exit 1
-                    fi
+                        echo "Container: node-parachain RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
+                                echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
+                                return 0
+                        elif [[ ${DOCKER_LOGS} = *"🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧"* ]];then
+                                echo "🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧"
+                                return 1
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
                 else
-                    echo "Container node-parachain not RUNNING"
-                    echo "Halting all future checks"
-                    exit 1
+                        echo "Container node-parachain not RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
                 fi
-                exit 0
+          exit 0
           }
           while ! is_started; do
                 echo "Waiting for special message in log files "
@@ -168,33 +179,26 @@ jobs:
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
                 if [ "$counter" -gt "0" ]; then
-                    continue
+                         continue
                 else
-                    break
+                         break
                 fi
-                done
-           echo "Halting script"
-           exit 0
+          done
+          echo "Halting script"
+          exit 0
         shell: bash
 
       - name: Collect Docker Logs
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './forkless-parachain-update-nodata-logs.${{ matrix.features }}'
-          images: 'node-parachain' 
+          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
+          images: 'node-parachain'
 
-      - name: Tar logs
+      - name: Show docker logs
         if: success() || failure()
-        run: tar cvzf ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz ./forkless-parachain-update-nodata-logs.${{ matrix.features }}
-
-      - name: Upload logs to GitHub
-        if: success() || failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
-          path: ./forkless-parachain-update-nodata-logs.${{ matrix.features }}.tgz
+        run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
