@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
  - Set arbitrary evm address as contract sponsor.
  - Ability to remove current sponsor.
 
+### Removed
+ - Remove methods
+   + sponsoring_enabled
+   + toggle_sponsoring
+
  ### Changed
 
  - Change `toggle_sponsoring` to `self_sponsored_enable`.

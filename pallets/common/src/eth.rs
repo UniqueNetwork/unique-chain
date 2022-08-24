@@ -53,9 +53,9 @@ pub fn is_collection(address: &H160) -> bool {
 }
 
 /// Convert `CrossAccountId` to `uint256`.
-pub fn convert_cross_account_to_eth_uint256<T: Config>(from: &T::CrossAccountId) -> Result<uint256>
+pub fn convert_cross_account_to_uint256<T: Config>(from: &T::CrossAccountId) -> uint256
 where
-	T::AccountId: AsRef<[u8]>,
+	T::AccountId: AsRef<[u8; 32]>,
 {
 	use pallet_evm::account::CrossAccountId;
 	let slice = from.as_sub().as_ref();

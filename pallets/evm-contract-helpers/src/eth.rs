@@ -45,7 +45,7 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 #[solidity_interface(name = "ContractHelpers")]
 impl<T: Config> ContractHelpers<T>
 where
-	T::AccountId: AsRef<[u8]>,
+	T::AccountId: AsRef<[u8; 32]>,
 {
 	/// Get contract ovner
 	///
@@ -110,7 +110,7 @@ where
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
-		let sponsor_sub = pallet_common::eth::convert_cross_account_to_eth_uint256::<T>(&sponsor)?;
+		let sponsor_sub = pallet_common::eth::convert_cross_account_to_uint256::<T>(&sponsor);
 		Ok((*sponsor.as_eth(), sponsor_sub))
 	}
 
@@ -206,7 +206,7 @@ where
 pub struct HelpersOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T>
 where
-	T::AccountId: AsRef<[u8]>,
+	T::AccountId: AsRef<[u8; 32]>,
 {
 	fn is_reserved(contract: &sp_core::H160) -> bool {
 		contract == &T::ContractAddress::get()
