@@ -7,10 +7,9 @@
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
-import {IKeyringPair} from '@polkadot/types/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
-import { ICrossAccountIdLower, ICrossAccountId, TUniqueNetworks, IApiListeners, TApiAllowedListeners, TSigner, TSubstrateAccount, ICollectionLimits, ICollectionPermissions, INestingPermissions, IProperty, ITokenPropertyPermission, ICollectionCreationOptions, IToken, IChainProperties, TEthereumAccount } from './types';
-
+import {IKeyringPair} from '@polkadot/types/types';
+import {IApiListeners, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -44,44 +43,6 @@ const nesting = {
     return this.toChecksumAddress(`0xf8238ccfff8ed887463fd5e0${collectionId.toString(16).padStart(8, '0')}${tokenId.toString(16).padStart(8, '0')}`);
   },
 };
-
-
-interface IChainEvent {
-  data: any;
-  method: string;
-  section: string;
-}
-
-interface ITransactionResult {
-    status: 'Fail' | 'Success';
-    result: {
-        events: {
-          event: IChainEvent
-        }[];
-    },
-    moduleError?: string;
-}
-
-interface ILogger {
-  log: (msg: any, level?: string) => void;
-  level: {
-    ERROR: 'ERROR';
-    WARNING: 'WARNING';
-    INFO: 'INFO';
-    [key: string]: string;
-  }
-}
-
-interface IUniqueHelperLog {
-  executedAt: number;
-  executionTime: number;
-  type: 'extrinsic' | 'rpc';
-  status: 'Fail' | 'Success';
-  call: string;
-  params: any[];
-  moduleError?: string;
-  events?: any;
-}
 
 class UniqueUtil {
   static transactionStatus = {
