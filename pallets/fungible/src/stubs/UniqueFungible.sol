@@ -3,7 +3,17 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
+<<<<<<< HEAD
 /// @dev common stubs holder
+=======
+// Anonymous struct
+struct Tuple0 {
+	address field_0;
+	uint256 field_1;
+}
+
+// Common stubs holder
+>>>>>>> misk: Update stubs
 contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
@@ -21,8 +31,122 @@ contract ERC165 is Dummy {
 	}
 }
 
+<<<<<<< HEAD
 /// @title A contract that allows you to work with collections.
 /// @dev the ERC-165 identifier for this interface is 0xffe4da23
+=======
+// Inline
+contract ERC20Events {
+	event Transfer(address indexed from, address indexed to, uint256 value);
+	event Approval(
+		address indexed owner,
+		address indexed spender,
+		uint256 value
+	);
+}
+
+<<<<<<< HEAD
+// Selector: 79cc6790
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
+}
+
+// Selector: 942e8b22
+contract ERC20 is Dummy, ERC165, ERC20Events {
+	// Selector: name() 06fdde03
+	function name() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	// Selector: symbol() 95d89b41
+	function symbol() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	// Selector: decimals() 313ce567
+	function decimals() public view returns (uint8) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	// Selector: balanceOf(address) 70a08231
+	function balanceOf(address owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
+	}
+
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: transferFrom(address,address,uint256) 23b872dd
+	function transferFrom(
+		address from,
+		address to,
+		uint256 amount
+	) public returns (bool) {
+		require(false, stub_error);
+		from;
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: approve(address,uint256) 095ea7b3
+	function approve(address spender, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		spender;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	// Selector: allowance(address,address) dd62ed3e
+	function allowance(address owner, address spender)
+		public
+		view
+		returns (uint256)
+	{
+		require(false, stub_error);
+		owner;
+		spender;
+		dummy;
+		return 0;
+	}
+}
+
+// Selector: ffe4da23
+=======
+// Selector: 765e2fae
+>>>>>>> misk: Update stubs
+>>>>>>> misk: Update stubs
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -82,16 +206,45 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+<<<<<<< HEAD
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	/// @dev EVM selector for this function is: 0x3c50e97a,
 	///  or in textual repr: confirmCollectionSponsorship()
+=======
+	// Set the substrate sponsor of the collection.
+	//
+	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	//
+	// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	//
+	// Selector: setCollectionSponsorSubstrate(uint256) c74d6751
+	function setCollectionSponsorSubstrate(uint256 sponsor) public {
+		require(false, stub_error);
+		sponsor;
+		dummy = 0;
+	}
+
+	// Selector: hasCollectionPendingSponsor() 058ac185
+	function hasCollectionPendingSponsor() public view returns (bool) {
+		require(false, stub_error);
+		dummy;
+		return false;
+	}
+
+	// Collection sponsorship confirmation.
+	//
+	// @dev After setting the sponsor for the collection, it must be confirmed with this function.
+	//
+	// Selector: confirmCollectionSponsorship() 3c50e97a
+>>>>>>> misk: Update stubs
 	function confirmCollectionSponsorship() public {
 		require(false, stub_error);
 		dummy = 0;
 	}
 
+<<<<<<< HEAD
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
 	/// @param limit Name of the limit. Valid names:
@@ -104,6 +257,39 @@ contract Collection is Dummy, ERC165 {
 	/// @param value Value of the limit.
 	/// @dev EVM selector for this function is: 0x6a3841db,
 	///  or in textual repr: setCollectionLimit(string,uint32)
+=======
+	// Remove collection sponsor.
+	//
+	// Selector: removeCollectionSponsor() 6e0326a3
+	function removeCollectionSponsor() public {
+		require(false, stub_error);
+		dummy = 0;
+	}
+
+	// Get current sponsor.
+	//
+	// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	//
+	// Selector: getCollectionSponsor() b66bbc14
+	function getCollectionSponsor() public view returns (Tuple0 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple0(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	// Set limits for the collection.
+	// @dev Throws error if limit not found.
+	// @param limit Name of the limit. Valid names:
+	// 	"accountTokenOwnershipLimit",
+	// 	"sponsoredDataSize",
+	// 	"sponsoredDataRateLimit",
+	// 	"tokenLimit",
+	// 	"sponsorTransferTimeout",
+	// 	"sponsorApproveTimeout"
+	// @param value Value of the limit.
+	//
+	// Selector: setCollectionLimit(string,uint32) 6a3841db
+>>>>>>> misk: Update stubs
 	function setCollectionLimit(string memory limit, uint32 value) public {
 		require(false, stub_error);
 		limit;

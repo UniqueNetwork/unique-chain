@@ -170,6 +170,30 @@
   },
   {
     "inputs": [],
+    "name": "getCollectionSponsor",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple0",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "hasCollectionPendingSponsor",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "name",
     "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
     "stateMutability": "view",
@@ -189,6 +213,13 @@
       { "internalType": "uint256", "name": "admin", "type": "uint256" }
     ],
     "name": "removeCollectionAdminSubstrate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "removeCollectionSponsor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -278,6 +309,7 @@
   },
   {
     "inputs": [
+<<<<<<< HEAD
       { "internalType": "address", "name": "newOwner", "type": "address" }
     ],
     "name": "setOwner",
@@ -290,6 +322,11 @@
       { "internalType": "uint256", "name": "newOwner", "type": "uint256" }
     ],
     "name": "setOwnerSubstrate",
+=======
+      { "internalType": "uint256", "name": "sponsor", "type": "uint256" }
+    ],
+    "name": "setCollectionSponsorSubstrate",
+>>>>>>> misk: Update stubs
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
