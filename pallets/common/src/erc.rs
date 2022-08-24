@@ -26,7 +26,7 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
-	SponsoringRateLimit,
+	SponsoringRateLimit, SponsorshipState,
 };
 use alloc::format;
 
@@ -63,7 +63,7 @@ pub trait CommonEvmHandler {
 #[solidity_interface(name = Collection)]
 impl<T: Config> CollectionHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8]>,
 {
 	/// Set collection property.
 	///
@@ -128,6 +128,25 @@ where
 		save(self)
 	}
 
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	fn set_collection_sponsor_substrate(&mut self, caller: caller, sponsor: uint256) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+
+		let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
+		self.set_sponsor(sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)?;
+		save(self)
+	}
+
+	// /// Whether there is a pending sponsor.
+	fn has_collection_pending_sponsor(&self) -> Result<bool> {
+		Ok(matches!(self.collection.sponsorship, SponsorshipState::Unconfirmed(_)))
+	}
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
@@ -140,6 +159,26 @@ where
 			return Err("caller is not set as sponsor".into());
 		}
 		save(self)
+	}
+
+	/// Remove collection sponsor.
+	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+		self.remove_sponsor().map_err(dispatch_to_evm::<T>)?;
+		save(self)
+	}
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	fn get_collection_sponsor(&self) -> Result<(address, uint256)> {
+		let sponsor = match self.collection.sponsorship {
+			SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => return Ok(Default::default()),
+			SponsorshipState::Confirmed(ref sponsor) => sponsor,
+		};
+		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
+		let sponsor_sub = convert_cross_account_to_uint256::<T>(&sponsor)?;
+		Ok((*sponsor.as_eth(), sponsor_sub))
 	}
 
 	/// Set limits for the collection.
