@@ -22,7 +22,50 @@ interface ERC20Events {
 	);
 }
 
-// Selector: 6cf113cd
+// Selector: 79cc6790
+interface ERC20UniqueExtensions is Dummy, ERC165 {
+	// Selector: burnFrom(address,uint256) 79cc6790
+	function burnFrom(address from, uint256 amount) external returns (bool);
+}
+
+// Selector: 942e8b22
+interface ERC20 is Dummy, ERC165, ERC20Events {
+	// Selector: name() 06fdde03
+	function name() external view returns (string memory);
+
+	// Selector: symbol() 95d89b41
+	function symbol() external view returns (string memory);
+
+	// Selector: totalSupply() 18160ddd
+	function totalSupply() external view returns (uint256);
+
+	// Selector: decimals() 313ce567
+	function decimals() external view returns (uint8);
+
+	// Selector: balanceOf(address) 70a08231
+	function balanceOf(address owner) external view returns (uint256);
+
+	// Selector: transfer(address,uint256) a9059cbb
+	function transfer(address to, uint256 amount) external returns (bool);
+
+	// Selector: transferFrom(address,address,uint256) 23b872dd
+	function transferFrom(
+		address from,
+		address to,
+		uint256 amount
+	) external returns (bool);
+
+	// Selector: approve(address,uint256) 095ea7b3
+	function approve(address spender, uint256 amount) external returns (bool);
+
+	// Selector: allowance(address,address) dd62ed3e
+	function allowance(address owner, address spender)
+		external
+		view
+		returns (uint256);
+}
+
+// Selector: ffe4da23
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//
@@ -174,8 +217,16 @@ interface Collection is Dummy, ERC165 {
 	// @param user account to verify
 	// @return "true" if account is the owner or admin
 	//
-	// Selector: verifyOwnerOrAdmin(address) c2282493
-	function verifyOwnerOrAdmin(address user) external view returns (bool);
+	// Selector: isOwnerOrAdmin(address) 9811b0c7
+	function isOwnerOrAdmin(address user) external view returns (bool);
+
+	// Check that substrate account is the owner or admin of the collection
+	//
+	// @param user account to verify
+	// @return "true" if account is the owner or admin
+	//
+	// Selector: isOwnerOrAdminSubstrate(uint256) 68910e00
+	function isOwnerOrAdminSubstrate(uint256 user) external view returns (bool);
 
 	// Returns collection type
 	//
@@ -183,49 +234,22 @@ interface Collection is Dummy, ERC165 {
 	//
 	// Selector: uniqueCollectionType() d34b55b8
 	function uniqueCollectionType() external returns (string memory);
-}
 
-// Selector: 79cc6790
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-}
+	// Changes collection owner to another account
+	//
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner account
+	//
+	// Selector: setOwner(address) 13af4035
+	function setOwner(address newOwner) external;
 
-// Selector: 942e8b22
-interface ERC20 is Dummy, ERC165, ERC20Events {
-	// Selector: name() 06fdde03
-	function name() external view returns (string memory);
-
-	// Selector: symbol() 95d89b41
-	function symbol() external view returns (string memory);
-
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
-
-	// Selector: decimals() 313ce567
-	function decimals() external view returns (uint8);
-
-	// Selector: balanceOf(address) 70a08231
-	function balanceOf(address owner) external view returns (uint256);
-
-	// Selector: transfer(address,uint256) a9059cbb
-	function transfer(address to, uint256 amount) external returns (bool);
-
-	// Selector: transferFrom(address,address,uint256) 23b872dd
-	function transferFrom(
-		address from,
-		address to,
-		uint256 amount
-	) external returns (bool);
-
-	// Selector: approve(address,uint256) 095ea7b3
-	function approve(address spender, uint256 amount) external returns (bool);
-
-	// Selector: allowance(address,address) dd62ed3e
-	function allowance(address owner, address spender)
-		external
-		view
-		returns (uint256);
+	// Changes collection owner to another substrate account
+	//
+	// @dev Owner can be changed only by current owner
+	// @param newOwner new owner substrate account
+	//
+	// Selector: setOwnerSubstrate(uint256) b212138f
+	function setOwnerSubstrate(uint256 newOwner) external;
 }
 
 interface UniqueFungible is
