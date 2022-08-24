@@ -295,24 +295,24 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 	for HelpersContractSponsoring<T>
 {
 	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
-		let (contract, _) = call;
-		let mode = <Pallet<T>>::sponsoring_mode(*contract);
+		let (contract_address, _) = call;
+		let mode = <Pallet<T>>::sponsoring_mode(*contract_address);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
 
-		let sponsor = match <Pallet<T>>::get_sponsor(*contract) {
+		let sponsor = match <Pallet<T>>::get_sponsor(*contract_address) {
 			Some(sponsor) => sponsor,
 			None => return None,
 		};
 
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(*contract, *who.as_eth()) {
+		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(*contract_address, *who.as_eth()) {
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-		if let Some(last_tx_block) = <SponsorBasket<T>>::get(contract, who.as_eth()) {
-			let limit = <SponsoringRateLimit<T>>::get(contract);
+		if let Some(last_tx_block) = <SponsorBasket<T>>::get(contract_address, who.as_eth()) {
+			let limit = <SponsoringRateLimit<T>>::get(contract_address);
 
 			let timeout = last_tx_block + limit;
 			if block_number < timeout {
@@ -320,7 +320,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			}
 		}
 
-		<SponsorBasket<T>>::insert(contract, who.as_eth(), block_number);
+		<SponsorBasket<T>>::insert(contract_address, who.as_eth(), block_number);
 
 		Some(sponsor)
 	}

@@ -29,7 +29,6 @@ pub mod pallet {
 	use pallet_evm_coder_substrate::DispatchResult;
 	use sp_core::H160;
 	use pallet_evm::account::CrossAccountId;
-	use frame_system::pallet_prelude::BlockNumberFor;
 	use up_data_structs::SponsorshipState;
 
 	#[pallet::config]
@@ -66,9 +65,13 @@ pub mod pallet {
 	pub(super) type SelfSponsoring<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
+	/// Store for contract sponsorship state.
+	/// 
+	/// * **Key** - contract address.
+	/// * **Value** - sponsorship state.
 	#[pallet::storage]
 	pub(super) type Sponsoring<T: Config> = StorageMap<
-		Hasher = Twox128,
+		Hasher = Twox64Concat,
 		Key = H160,
 		Value = SponsorshipState<T::CrossAccountId>,
 		QueryKind = ValueQuery,
