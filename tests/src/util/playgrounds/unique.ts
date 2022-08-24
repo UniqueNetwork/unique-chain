@@ -9,6 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
+import { ICrossAccountIdLower, ICrossAccountId, TUniqueNetworks, IApiListeners, TApiAllowedListeners, TSigner, TSubstrateAccount, ICollectionLimits, ICollectionPermissions, INestingPermissions, IProperty, ITokenPropertyPermission, ICollectionCreationOptions, IToken, IChainProperties, TEthereumAccount } from './types';
 
 
 const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
@@ -81,95 +82,6 @@ interface IUniqueHelperLog {
   moduleError?: string;
   events?: any;
 }
-
-interface IApiListeners {
-  connected?: (...args: any[]) => any;
-  disconnected?: (...args: any[]) => any;
-  error?: (...args: any[]) => any;
-  ready?: (...args: any[]) => any; 
-  decorated?: (...args: any[]) => any;
-}
-
-interface ICrossAccountId {
-  Substrate?: TSubstrateAccount;
-  Ethereum?: TEthereumAccount;
-}
-
-interface ICrossAccountIdLower {
-  substrate?: TSubstrateAccount;
-  ethereum?: TEthereumAccount;
-}
-
-interface ICollectionLimits {
-  accountTokenOwnershipLimit?: number | null;
-  sponsoredDataSize?: number | null;
-  sponsoredDataRateLimit?: {blocks: number} | {sponsoringDisabled: null} | null;
-  tokenLimit?: number | null;
-  sponsorTransferTimeout?: number | null;
-  sponsorApproveTimeout?: number | null;
-  ownerCanTransfer?: boolean | null;
-  ownerCanDestroy?: boolean | null;
-  transfersEnabled?: boolean | null;
-}
-
-interface INestingPermissions {
-  tokenOwner?: boolean;
-  collectionAdmin?: boolean;
-  restricted?: number[] | null;
-}
-
-interface ICollectionPermissions {
-  access?: 'Normal' | 'AllowList';
-  mintMode?: boolean;
-  nesting?: INestingPermissions;
-}
-
-interface IProperty {
-  key: string;
-  value: string;
-}
-
-interface ITokenPropertyPermission {
-  key: string;
-  permission: {
-    mutable: boolean;
-    tokenOwner: boolean;
-    collectionAdmin: boolean;
-  }
-}
-
-interface IToken {
-  collectionId: number;
-  tokenId: number;
-}
-
-interface ICollectionCreationOptions {
-  name: string | number[];
-  description: string | number[];
-  tokenPrefix: string | number[];
-  mode?: {
-    nft?: null;
-    refungible?: null;
-    fungible?: number;
-  }
-  permissions?: ICollectionPermissions;
-  properties?: IProperty[];
-  tokenPropertyPermissions?: ITokenPropertyPermission[];
-  limits?: ICollectionLimits;
-  pendingSponsor?: TSubstrateAccount;
-}
-
-interface IChainProperties {
-  ss58Format: number;
-  tokenDecimals: number[];
-  tokenSymbol: string[]
-}
-
-type TSubstrateAccount = string;
-type TEthereumAccount = string;
-type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
-type TUniqueNetworks = 'opal' | 'quartz' | 'unique';
-type TSigner = IKeyringPair; // | 'string'
 
 class UniqueUtil {
   static transactionStatus = {

@@ -3,9 +3,9 @@
 
 import {mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper} from './unique';
-import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
+import { TSigner } from './types';
 
 
 export class DevUniqueHelper extends UniqueHelper {
@@ -69,7 +69,7 @@ class ArrangeGroup {
    * @returns array of newly created accounts
    * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor); 
    */
-  creteAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
+  creteAccounts = async (balances: bigint[], donor: TSigner): Promise<TSigner[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
