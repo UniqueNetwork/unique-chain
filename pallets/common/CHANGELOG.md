@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2022-08-24
+
+## Added
+ - Eth methods for collection
+    + set_collection_sponsor_substrate
+    + has_collection_pending_sponsor
+    + remove_collection_sponsor
+    + get_collection_sponsor
+- Add convert function from `uint256` to `CrossAccountId`.
+
 ## [0.1.7] - 2022-08-19
 
 ### Added
