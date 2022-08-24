@@ -306,7 +306,9 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			None => return None,
 		};
 
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(*contract_address, *who.as_eth()) {
+		if mode == SponsoringModeT::Allowlisted
+			&& !<Pallet<T>>::allowed(*contract_address, *who.as_eth())
+		{
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;

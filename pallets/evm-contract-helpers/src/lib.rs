@@ -66,7 +66,7 @@ pub mod pallet {
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
 	/// Store for contract sponsorship state.
-	/// 
+	///
 	/// * **Key** - contract address.
 	/// * **Value** - sponsorship state.
 	#[pallet::storage]
