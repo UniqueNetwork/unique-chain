@@ -203,8 +203,8 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Save collection to storage.
-	pub fn save(self) -> DispatchResult {
-		<CollectionById<T>>::insert(self.id, self.collection);
+	pub fn save(&self) -> DispatchResult {
+		<CollectionById<T>>::insert(self.id, &self.collection);
 		Ok(())
 	}
 
@@ -301,6 +301,17 @@ impl<T: Config> CollectionHandle<T> {
 			<Error<T>>::AddressNotInAllowlist
 		);
 		Ok(())
+	}
+
+	/// Changes collection owner to another account
+	fn set_owner_internal(
+		&mut self,
+		caller: T::CrossAccountId,
+		new_owner: T::CrossAccountId,
+	) -> DispatchResult {
+		self.check_is_owner(&caller)?;
+		self.collection.owner = new_owner.as_sub().clone();
+		self.save()
 	}
 }
 
