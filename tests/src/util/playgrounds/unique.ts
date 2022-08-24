@@ -525,6 +525,22 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
+   * Get the normalized addresses added to the collection allow-list.
+   * @param collectionId ID of collection
+   * @example await getAllowList(1)
+   * @returns array of allow-listed addresses
+   */
+  async getAllowList(collectionId: number): Promise<ICrossAccountId[]> {
+    const normalized = [];
+    const allowListed = (await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId])).toHuman();
+    for (const address of allowListed) {
+      if (address.Substrate) normalized.push({Substrate: this.helper.address.normalizeSubstrate(address.Substrate)});
+      else normalized.push(address);
+    }
+    return normalized;
+  }
+
+  /**
    * Get the effective limits of the collection instead of null for default values
    * 
    * @param collectionId ID of collection
@@ -665,6 +681,25 @@ class CollectionGroup extends HelperGroup {
     );
 
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded', label);
+  }
+
+  /**
+   * Adds an address to allow list 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param addressObj address to add to the allow list
+   * @param label extra label for log
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async addToAllowList(signer: TSigner, collectionId: number, addressObj: ICrossAccountId, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.addToAllowList', [collectionId, addressObj],
+      true, `Unable to add address to allow list for ${label}`,
+    );
+
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressAdded');
   }
 
   /**
@@ -1992,6 +2027,10 @@ class UniqueCollectionBase {
     return await this.helper.collection.getAdmins(this.collectionId);
   }
 
+  async getAllowList() {
+    return await this.helper.collection.getAllowList(this.collectionId);
+  }
+
   async getEffectiveLimits() {
     return await this.helper.collection.getEffectiveLimits(this.collectionId);
   }
@@ -2014,6 +2053,10 @@ class UniqueCollectionBase {
 
   async addAdmin(signer: TSigner, adminAddressObj: ICrossAccountId, label?: string) {
     return await this.helper.collection.addAdmin(signer, this.collectionId, adminAddressObj, label);
+  }
+
+  async addToAllowList(signer: TSigner, addressObj: ICrossAccountId, label?: string) {
+    return await this.helper.collection.addToAllowList(signer, this.collectionId, addressObj, label);
   }
 
   async removeAdmin(signer: TSigner, adminAddressObj: ICrossAccountId, label?: string) {
