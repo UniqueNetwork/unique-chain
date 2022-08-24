@@ -75,7 +75,7 @@ jobs:
 
 
     steps:
-      - name: Skip if pull request is in Draft
+#      - name: Skip if pull request is in Draft
         # `if: github.event.pull_request.draft == true` should be kept here, at
         # the step level, rather than at the job level. The latter is not
         # recommended because when the PR is moved from "Draft" to "Ready to
@@ -90,8 +90,8 @@ jobs:
         # 4. Move it to "Ready for review"; now the workflow is passing (it was
         #    skipped) and "Check reviews" is also passing (it won't be updated
         #    until the workflow is finished)
-        if: github.event.pull_request.draft == true
-        run: exit 1
+#        if: github.event.pull_request.draft == true
+#        run: exit 1
 
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -194,7 +194,7 @@ jobs:
           yarn install
           yarn add mochawesome
           echo "Ready to start tests"
-          node scripts/readyness.js
+#          node scripts/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
@@ -270,7 +270,7 @@ jobs:
           yarn install
           yarn add mochawesome
           echo "Ready to start tests"
-          node scripts/readyness.js
+#          node scripts/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
