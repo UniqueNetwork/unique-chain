@@ -126,8 +126,14 @@ where
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
-		let sponsor_sub = pallet_common::eth::convert_cross_account_to_uint256::<T>(&sponsor);
-		Ok((*sponsor.as_eth(), sponsor_sub))
+		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
+			let sponsor = pallet_common::eth::convert_cross_account_to_uint256::<T>(&sponsor);
+			(Default::default(), sponsor)
+		} else {
+			let sponsor =  *sponsor.as_eth();
+			(sponsor, Default::default())
+		};
+		Ok(result)
 	}
 
 	/// Check tat contract has confirmed sponsor.

@@ -129,8 +129,7 @@ describe('Sponsoring EVM contracts', () => {
     const result = await helpers.methods.getSponsor(flipper.options.address).call();
 
     expect(result[0]).to.be.eq(flipper.options.address);
-    const sponsorSub = api.registry.createType('AccountId', '0x' + BigInt(result[1]).toString(16).padStart(64, '0')).toJSON();
-    expect(sponsorSub).to.be.eq(evmToAddress(flipper.options.address));
+    expect(result[1]).to.be.eq('0');
   });
 
   itWeb3('Get confirmed sponsor', async ({api, web3, privateKeyWrapper}) => {
@@ -144,8 +143,7 @@ describe('Sponsoring EVM contracts', () => {
     const result = await helpers.methods.getSponsor(flipper.options.address).call();
 
     expect(result[0]).to.be.eq(sponsor);
-    const sponsorSub = api.registry.createType('AccountId', '0x' + BigInt(result[1]).toString(16).padStart(64, '0')).toJSON();
-    expect(sponsorSub).to.be.eq(evmToAddress(sponsor));
+    expect(result[1]).to.be.eq('0');
   });
 
   itWeb3('Sponsor can be removed by the address that deployed the contract', async ({api, web3, privateKeyWrapper}) => {
