@@ -67,7 +67,7 @@ WORKDIR /unique_parachain
 RUN git clone -b $ACALA_BUILD_BRANCH --depth 1 https://github.com/AcalaNetwork/Acala.git && \
     cd Acala && \
     make init && \
-    cargo build --release
+    make build-release
 
 # ===== BUILD MOONBEAM =====
 FROM rust-builder as builder-moonbeam
@@ -117,9 +117,9 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 
 COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
-COPY --from=builder-acala /unique_parachain/Acala/target/production/acala /acala/target/release/
 COPY --from=builder-moonbeam /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=builder-cumulus /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
+COPY --from=builder-acala /unique_parachain/Acala/target/production/acala /acala/target/release/
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
