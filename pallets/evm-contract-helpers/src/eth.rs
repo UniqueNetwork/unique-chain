@@ -71,6 +71,10 @@ where
 			&T::CrossAccountId::from_eth(sponsor),
 		)
 		.map_err(dispatch_to_evm::<T>)?;
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+		
 		Ok(())
 	}
 
@@ -80,6 +84,10 @@ where
 	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
 			.map_err(dispatch_to_evm::<T>)?;
+		
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		Ok(())
 	}
 
@@ -89,6 +97,10 @@ where
 	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		Pallet::<T>::remove_sponsor(&T::CrossAccountId::from_eth(caller), contract_address)
 			.map_err(dispatch_to_evm::<T>)?;
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+		
 		Ok(())
 	}
 
@@ -100,6 +112,10 @@ where
 	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
 		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
 			.map_err(dispatch_to_evm::<T>)?;
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		Ok(())
 	}
 
@@ -146,6 +162,10 @@ where
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
 		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		Ok(())
 	}
 
@@ -161,6 +181,10 @@ where
 	) -> Result<void> {
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		Ok(())
 	}
 
@@ -187,6 +211,10 @@ where
 	) -> Result<void> {
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		Ok(())
 	}
 
@@ -199,6 +227,10 @@ where
 	) -> Result<void> {
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
+
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+		
 		Ok(())
 	}
 }
