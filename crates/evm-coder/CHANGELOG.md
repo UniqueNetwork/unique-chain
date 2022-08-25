@@ -1,6 +1,8 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+
+<!-- bureaucrate goes here -->
 ## [v0.1.2] 2022-08-19
 
 ### Added
