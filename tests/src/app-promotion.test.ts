@@ -638,13 +638,9 @@ describe('app-promotion stopSponsoringContract', () => {
       palletAdmin = privateKeyWrapper('//palletAdmin');
       await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
       await helper.balance.transferToSubstrate(alice, calculatePalleteAddress('appstake'), 10n * helper.balance.getOneTokenNominal());
-       
-      const promotionStartBlock = await helper.chain.getLatestBlockNumber();
+      
       const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
       await helper.signTransaction(alice, tx);
-      
-      const txStart = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.startAppPromotion(promotionStartBlock));
-      await helper.signTransaction(alice, txStart);
       
       nominal = helper.balance.getOneTokenNominal();
     });
