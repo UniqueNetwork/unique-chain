@@ -65,6 +65,15 @@ pub enum RuntimeId {
 	Unknown(String),
 }
 
+
+#[cfg(not(feature = "unique-runtime"))]
+/// PARA_ID for Opal/Quartz
+const PARA_ID: u32 = 2095;
+
+#[cfg(feature = "unique-runtime")]
+/// PARA_ID for Unique
+const PARA_ID: u32 = 2037;
+
 pub trait RuntimeIdentification {
 	fn runtime_id(&self) -> RuntimeId;
 }
@@ -236,7 +245,7 @@ pub fn development_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				2037
+				PARA_ID
 			)
 		},
 		// Bootnodes
@@ -251,7 +260,7 @@ pub fn development_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-dev".into(),
-			para_id: 2037,
+			para_id: PARA_ID,
 		},
 	)
 }
@@ -304,7 +313,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				2037
+				PARA_ID
 			)
 		},
 		// Bootnodes
@@ -319,7 +328,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "westend-local".into(),
-			para_id: 2037,
+			para_id: PARA_ID,
 		},
 	)
 }
