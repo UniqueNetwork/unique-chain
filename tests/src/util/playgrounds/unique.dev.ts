@@ -5,19 +5,26 @@ import {mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper} from './unique';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
-import {TSigner} from './types';
+import {ICollectionCreationOptions, TSigner} from './types';
 import {IKeyringPair} from '@polkadot/types/types';
+import {expect} from 'chai';
 
+
+const defaultOptions: ICollectionCreationOptions = {
+  name: 'name', description: 'description', tokenPrefix: 'prefix', mode: {nft: null},
+};
 
 export class DevUniqueHelper extends UniqueHelper {
   /**
    * Arrange methods for tests
    */
   arrange: ArrangeGroup;
+  act: ActGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
     super(logger);
     this.arrange = new ArrangeGroup(this);
+    this.act = new ActGroup(this);
   }
 
   async connect(wsEndpoint: string, listeners?: any): Promise<void> {
@@ -131,5 +138,87 @@ class ArrangeGroup {
       });
     });
     return promise;
+  }
+}
+
+
+class ActGroup {
+  helper: UniqueHelper;
+
+  constructor(helper: UniqueHelper) {
+    this.helper = helper;
+  }
+
+  /**
+   * Creates collection creation tx object. Then it should be executed with expectSuccess or expectFailure methods
+   * @param signer 
+   * @param collectionOptions basic collection options and properties
+   * @example createCollection(alice, {name: 'Awesome Collection'}).expectSuccess();
+   * @returns id of a newly created collection
+   */
+  createCollection(signer: IKeyringPair, collectionOptions?: ICollectionCreationOptions) {
+    return new CreateCollectionTx(signer, {...defaultOptions, ...collectionOptions}, (collectionId) => collectionId, this.helper);
+  }
+
+  /**
+   * Creates NFT collection tx object. Then it should be executed with expectSuccess or expectFailure methods
+   * @param signer IKeyringPair
+   * @param collectionOptions basic collection options and properties
+   * @example createNFTCollection(alice, {name: 'Awesome Collection'}).expectSuccess();
+   * @returns UniqueNFTCollection object
+   */
+  createNFTCollection(signer: IKeyringPair, collectionOptions?: ICollectionCreationOptions) {
+    const mode = {nft: null};
+    return new CreateCollectionTx(signer, {...defaultOptions, ...collectionOptions, ...mode}, (collectionId) => this.helper.nft.getCollectionObject(collectionId), this.helper);
+  }
+}
+
+class CreateCollectionTx<T> {
+  readonly extrinsic = 'api.tx.unique.createCollectionEx';
+  readonly signer;
+  readonly transformationFn: (collectionId: number) => T;
+  private collectionOptions: ICollectionCreationOptions;
+  private helper: UniqueHelper;
+
+  constructor(signer: IKeyringPair, collectionOptions: ICollectionCreationOptions, transformationFn: (collectionId: number) => T, helper: UniqueHelper) {
+    this.helper = helper;
+    this.signer = signer;
+    this.collectionOptions = collectionOptions;
+    this.transformationFn = transformationFn;
+
+    // encode name, description, tokenPrefix properties
+    for (const key of ['name', 'description', 'tokenPrefix']) {
+      if (typeof this.collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') {
+        this.collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(this.collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
+      }
+    }
+  }
+
+  private async execute(expectSuccess = true): Promise<number> {
+    const result = await this.helper.executeExtrinsic(this.signer, this.extrinsic, [this.collectionOptions], expectSuccess);
+    const collectionId = this.helper.util.extractCollectionIdFromCreationResult(result);
+    return collectionId;
+  }
+
+  /**
+   * Executes the transaction and assert that the collection has been created
+   * @returns extended collection data
+   */
+  async expectSuccess() {
+    const collectionId = await this.execute(true);
+    const collectionData = await this.helper.collection.getData(collectionId);
+    
+    expect(this.helper.util.str2vec(collectionData!.name!)).to.equal(this.collectionOptions.name);
+    expect(this.helper.util.str2vec(collectionData!.description!)).to.deep.equal(this.collectionOptions.description);
+    expect(this.helper.util.str2vec(collectionData!.raw.tokenPrefix!)).to.deep.equal(this.collectionOptions.tokenPrefix);
+
+    return this.transformationFn(collectionId);
+  }
+
+  /**
+   * Executes the transaction and asserts that the transaction has been rejected
+   */
+  async expectFailure(): Promise<void> {
+    await expect(this.execute(false)).to.be.rejected;
   }
 }

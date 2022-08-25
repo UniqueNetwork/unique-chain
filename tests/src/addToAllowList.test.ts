@@ -17,119 +17,121 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {
-  addToAllowListExpectSuccess,
-  createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  destroyCollectionExpectSuccess,
-  enablePublicMintingExpectSuccess,
-  enableAllowListExpectSuccess,
-  normalizeAccountId,
-  addCollectionAdminExpectSuccess,
-  addToAllowListExpectFail,
-  getCreatedCollectionCount,
-} from './util/helpers';
+import {usingPlaygrounds} from './util/playgrounds';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-let alice: IKeyringPair;
-let bob: IKeyringPair;
-let charlie: IKeyringPair;
+let donor: IKeyringPair;
+
+before(async () => {
+  await usingPlaygrounds(async (_, privateKeyWrapper) => {
+    donor = privateKeyWrapper('//Alice');
+  });
+});
 
 describe('Integration Test ext. addToAllowList()', () => {
+  it('Execute the extrinsic with parameters: Collection ID and address to add to the allow list', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [alice, bob] = await helper.arrange.creteAccounts([10n, 0n], donor);
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
 
-  before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+      await collection.addToAllowList(alice, {Substrate: bob.address});
+
+      const allowList = await collection.getAllowList();
+      expect(allowList).to.deep.contain({Substrate: bob.address});
     });
   });
 
-  it('Execute the extrinsic with parameters: Collection ID and address to add to the allow list', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addToAllowListExpectSuccess(alice, collectionId, bob.address);
-  });
-
   it('Allowlisted minting: list restrictions', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addToAllowListExpectSuccess(alice, collectionId, bob.address);
-    await enableAllowListExpectSuccess(alice, collectionId);
-    await enablePublicMintingExpectSuccess(alice, collectionId);
-    await createItemExpectSuccess(bob, collectionId, 'NFT', bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n], donor);
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
+
+      await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+      
+      const collectionAfter = await collection.getData();
+      expect(collectionAfter?.raw.permissions).to.have.property('access').which.is.equal('AllowList');
+      expect(collectionAfter?.raw.permissions).to.have.property('mintMode').which.is.equal(true);
+
+      await collection.addToAllowList(alice, {Substrate: bob.address});
+      const token = await collection.mintToken(bob, {Substrate: bob.address});
+      expect(await token.getData()).not.null;
+    });
   });
 });
 
 describe('Negative Integration Test ext. addToAllowList()', () => {
-
   it('Allow list an address in the collection that does not exist', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await getCreatedCollectionCount(api) + 1;
-      const bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper) => {
+      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n], donor);
+      const collectionId = 99999;
 
-      const tx = api.tx.unique.addToAllowList(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
+      await expect(helper.collection.addToAllowList(alice, collectionId, {Substrate: bob.address})).to.be.rejected;
     });
   });
 
   it('Allow list an address in the collection that was destroyed', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await createCollectionExpectSuccess();
-      await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.unique.addToAllowList(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
+    await usingPlaygrounds(async (helper) => {
+      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n], donor);
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
+      
+      expect(await collection.burn(alice)).to.be.true;
+      await expect(collection.addToAllowList(alice, {Substrate: bob.address})).to.be.rejected;
     });
   });
 
   it('Allow list an address in the collection that does not have allow list access enabled', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const ferdie = privateKeyWrapper('//Ferdie');
-      const collectionId = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await enablePublicMintingExpectSuccess(alice, collectionId);
-      const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(ferdie.address), 'NFT');
-      await expect(submitTransactionExpectFailAsync(ferdie, tx)).to.be.rejected;
+    await usingPlaygrounds(async (helper) => {
+      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n], donor);
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
+
+      await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+      await expect(collection.mintToken(bob, {Substrate: bob.address})).to.be.rejected;
+      expect(await collection.getLastTokenId()).to.be.equal(0);
     });
   });
-
 });
 
 describe('Integration Test ext. addToAllowList() with collection admin permissions:', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.creteAccounts([20n, 20n, 20n], donor);
     });
   });
 
   it('Negative. Add to the allow list by regular user', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addToAllowListExpectFail(bob, collectionId, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
+      await expect(collection.addToAllowList(bob, {Substrate: charlie.address})).to.be.rejected;
+    });
   });
 
   it('Execute the extrinsic with parameters: Collection ID and address to add to the allow list', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await addToAllowListExpectSuccess(bob, collectionId, charlie.address);
+    await usingPlaygrounds(async (helper) =>  {
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
+      await collection.addAdmin(alice, {Substrate: bob.address});
+      await collection.addToAllowList(bob, {Substrate: charlie.address});
+      expect(await collection.getAllowList()).to.deep.contains({Substrate: charlie.address});
+    });
   });
 
   it('Allowlisted minting: list restrictions', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await addToAllowListExpectSuccess(bob, collectionId, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.act.createNFTCollection(alice).expectSuccess();
+      await collection.addAdmin(alice, {Substrate: bob.address});
+      await collection.addToAllowList(bob, {Substrate: charlie.address});
+      expect(await collection.getAllowList()).to.deep.contains({Substrate: charlie.address});
 
-    // allowed only for collection owner
-    await enableAllowListExpectSuccess(alice, collectionId);
-    await enablePublicMintingExpectSuccess(alice, collectionId);
-
-    await createItemExpectSuccess(charlie, collectionId, 'NFT', charlie.address);
+      // allowed only for collection owner
+      // TODO bob and charlie are not allowed
+      await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+      await collection.mintToken(charlie, {Substrate: charlie.address});
+      expect(await collection.getLastTokenId()).to.be.equal(1);
+    });
   });
 });
