@@ -3,7 +3,7 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-// Common stubs holder
+/// @dev common stubs holder
 contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
@@ -21,19 +21,10 @@ contract ERC165 is Dummy {
 	}
 }
 
-// Inline
-contract ERC20Events {
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
-}
-
-// Selector: 042f1106
+/// @dev the ERC-165 identifier for this interface is 0x042f1106
 contract ERC1633UniqueExtensions is Dummy, ERC165 {
-	// Selector: setParentNFT(address,uint256) 042f1106
+	/// @dev EVM selector for this function is: 0x042f1106,
+	///  or in textual repr: setParentNFT(address,uint256)
 	function setParentNFT(address collection, uint256 nftId)
 		public
 		returns (bool)
@@ -46,16 +37,18 @@ contract ERC1633UniqueExtensions is Dummy, ERC165 {
 	}
 }
 
-// Selector: 5755c3f2
+/// @dev the ERC-165 identifier for this interface is 0x5755c3f2
 contract ERC1633 is Dummy, ERC165 {
-	// Selector: parentToken() 80a54001
+	/// @dev EVM selector for this function is: 0x80a54001,
+	///  or in textual repr: parentToken()
 	function parentToken() public view returns (address) {
 		require(false, stub_error);
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	// Selector: parentTokenId() d7f083f3
+	/// @dev EVM selector for this function is: 0xd7f083f3,
+	///  or in textual repr: parentTokenId()
 	function parentTokenId() public view returns (uint256) {
 		require(false, stub_error);
 		dummy;
@@ -63,49 +56,92 @@ contract ERC1633 is Dummy, ERC165 {
 	}
 }
 
-// Selector: 942e8b22
+/// @dev the ERC-165 identifier for this interface is 0xab8deb37
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @dev Function that burns an amount of the token of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
+	/// @dev EVM selector for this function is: 0x79cc6790,
+	///  or in textual repr: burnFrom(address,uint256)
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev Function that changes total amount of the tokens.
+	///  Throws if `msg.sender` doesn't owns all of the tokens.
+	/// @param amount New total amount of the tokens.
+	/// @dev EVM selector for this function is: 0xd2418ca7,
+	///  or in textual repr: repartition(uint256)
+	function repartition(uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		amount;
+		dummy = 0;
+		return false;
+	}
+}
+
+/// @dev inlined interface
+contract ERC20Events {
+	event Transfer(address indexed from, address indexed to, uint256 value);
+	event Approval(
+		address indexed owner,
+		address indexed spender,
+		uint256 value
+	);
+}
+
+/// @title Standard ERC20 token
+///
+/// @dev Implementation of the basic standard token.
+/// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+/// @dev the ERC-165 identifier for this interface is 0x942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
-	// @return the name of the token.
-	//
-	// Selector: name() 06fdde03
+	/// @return the name of the token.
+	/// @dev EVM selector for this function is: 0x06fdde03,
+	///  or in textual repr: name()
 	function name() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
 		return "";
 	}
 
-	// @return the symbol of the token.
-	//
-	// Selector: symbol() 95d89b41
+	/// @return the symbol of the token.
+	/// @dev EVM selector for this function is: 0x95d89b41,
+	///  or in textual repr: symbol()
 	function symbol() public view returns (string memory) {
 		require(false, stub_error);
 		dummy;
 		return "";
 	}
 
-	// @dev Total number of tokens in existence
-	//
-	// Selector: totalSupply() 18160ddd
+	/// @dev Total number of tokens in existence
+	/// @dev EVM selector for this function is: 0x18160ddd,
+	///  or in textual repr: totalSupply()
 	function totalSupply() public view returns (uint256) {
 		require(false, stub_error);
 		dummy;
 		return 0;
 	}
 
-	// @dev Not supported
-	//
-	// Selector: decimals() 313ce567
+	/// @dev Not supported
+	/// @dev EVM selector for this function is: 0x313ce567,
+	///  or in textual repr: decimals()
 	function decimals() public view returns (uint8) {
 		require(false, stub_error);
 		dummy;
 		return 0;
 	}
 
-	// @dev Gets the balance of the specified address.
-	// @param owner The address to query the balance of.
-	// @return An uint256 representing the amount owned by the passed address.
-	//
-	// Selector: balanceOf(address) 70a08231
+	/// @dev Gets the balance of the specified address.
+	/// @param owner The address to query the balance of.
+	/// @return An uint256 representing the amount owned by the passed address.
+	/// @dev EVM selector for this function is: 0x70a08231,
+	///  or in textual repr: balanceOf(address)
 	function balanceOf(address owner) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
@@ -113,11 +149,11 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		return 0;
 	}
 
-	// @dev Transfer token for a specified address
-	// @param to The address to transfer to.
-	// @param amount The amount to be transferred.
-	//
-	// Selector: transfer(address,uint256) a9059cbb
+	/// @dev Transfer token for a specified address
+	/// @param to The address to transfer to.
+	/// @param amount The amount to be transferred.
+	/// @dev EVM selector for this function is: 0xa9059cbb,
+	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
@@ -126,12 +162,12 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		return false;
 	}
 
-	// @dev Transfer tokens from one address to another
-	// @param from address The address which you want to send tokens from
-	// @param to address The address which you want to transfer to
-	// @param amount uint256 the amount of tokens to be transferred
-	//
-	// Selector: transferFrom(address,address,uint256) 23b872dd
+	/// @dev Transfer tokens from one address to another
+	/// @param from address The address which you want to send tokens from
+	/// @param to address The address which you want to transfer to
+	/// @param amount uint256 the amount of tokens to be transferred
+	/// @dev EVM selector for this function is: 0x23b872dd,
+	///  or in textual repr: transferFrom(address,address,uint256)
 	function transferFrom(
 		address from,
 		address to,
@@ -145,15 +181,15 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		return false;
 	}
 
-	// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
-	// Beware that changing an allowance with this method brings the risk that someone may use both the old
-	// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-	// race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-	// https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-	// @param spender The address which will spend the funds.
-	// @param amount The amount of tokens to be spent.
-	//
-	// Selector: approve(address,uint256) 095ea7b3
+	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
+	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
+	/// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+	/// race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+	/// https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+	/// @param spender The address which will spend the funds.
+	/// @param amount The amount of tokens to be spent.
+	/// @dev EVM selector for this function is: 0x095ea7b3,
+	///  or in textual repr: approve(address,uint256)
 	function approve(address spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
@@ -162,12 +198,12 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		return false;
 	}
 
-	// @dev Function to check the amount of tokens that an owner allowed to a spender.
-	// @param owner address The address which owns the funds.
-	// @param spender address The address which will spend the funds.
-	// @return A uint256 specifying the amount of tokens still available for the spender.
-	//
-	// Selector: allowance(address,address) dd62ed3e
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner address The address which owns the funds.
+	/// @param spender address The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	/// @dev EVM selector for this function is: 0xdd62ed3e,
+	///  or in textual repr: allowance(address,address)
 	function allowance(address owner, address spender)
 		public
 		view
@@ -178,35 +214,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		spender;
 		dummy;
 		return 0;
-	}
-}
-
-// Selector: ab8deb37
-contract ERC20UniqueExtensions is Dummy, ERC165 {
-	// @dev Function that burns an amount of the token of a given account,
-	// deducting from the sender's allowance for said account.
-	// @param from The account whose tokens will be burnt.
-	// @param amount The amount that will be burnt.
-	//
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) public returns (bool) {
-		require(false, stub_error);
-		from;
-		amount;
-		dummy = 0;
-		return false;
-	}
-
-	// @dev Function that changes total amount of the tokens.
-	//  Throws if `msg.sender` doesn't owns all of the tokens.
-	// @param amount New total amount of the tokens.
-	//
-	// Selector: repartition(uint256) d2418ca7
-	function repartition(uint256 amount) public returns (bool) {
-		require(false, stub_error);
-		amount;
-		dummy = 0;
-		return false;
 	}
 }
 

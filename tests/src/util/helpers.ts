@@ -99,6 +99,10 @@ export async function requirePallets(mocha: Context, requiredPallets: string[]) 
   }
 }
 
+export function bigIntToSub(api: ApiPromise, number: bigint) {
+  return api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
+}
+
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
     if (input.length >= 47) {

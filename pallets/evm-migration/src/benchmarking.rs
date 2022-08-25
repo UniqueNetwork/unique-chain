@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#![allow(missing_docs)]
+
 use super::{Call, Config, Pallet};
 use frame_benchmarking::benchmarks;
 use frame_system::RawOrigin;

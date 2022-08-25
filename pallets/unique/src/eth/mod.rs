@@ -203,7 +203,7 @@ fn create_refungible_collection_internal<
 }
 
 /// @title Contract, which allows users to operate with collections
-#[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
+#[solidity_interface(name = CollectionHelpers, events(CollectionHelpersEvents))]
 impl<T> EvmCollectionHelpers<T>
 where
 	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
@@ -211,7 +211,7 @@ where
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
-	/// @param token_prefix Token prefix to represent the collection tokens in UI and user applications
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_nonfungible_collection(
@@ -304,7 +304,7 @@ where
 	}
 
 	/// Check if a collection exists
-	/// @param collection_address Address of the collection in question
+	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
 	fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {

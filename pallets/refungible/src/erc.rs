@@ -53,14 +53,14 @@ use crate::{
 pub const ADDRESS_FOR_PARTIALLY_OWNED_TOKENS: H160 = H160::repeat_byte(0xff);
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-#[solidity_interface(name = "TokenProperties")]
+#[solidity_interface(name = TokenProperties)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
 	/// @param key Property key.
-	/// @param is_mutable Permission to mutate property.
-	/// @param collection_admin Permission to mutate property by collection admin if property is mutable.
-	/// @param token_owner Permission to mutate property by token owner if property is mutable.
+	/// @param isMutable Permission to mutate property.
+	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
+	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
@@ -197,7 +197,7 @@ pub enum ERC721MintableEvents {
 	MintingFinished {},
 }
 
-#[solidity_interface(name = "ERC721Metadata")]
+#[solidity_interface(name = ERC721Metadata)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice A descriptive name for a collection of RFTs in this contract
 	fn name(&self) -> Result<string> {
@@ -258,7 +258,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = "ERC721Enumerable")]
+#[solidity_interface(name = ERC721Enumerable)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Enumerate valid RFTs
 	/// @param index A counter less than `totalSupply()`
@@ -285,7 +285,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-#[solidity_interface(name = "ERC721", events(ERC721Events))]
+#[solidity_interface(name = ERC721, events(ERC721Events))]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Count all RFTs assigned to an owner
 	/// @dev RFTs assigned to the zero address are considered invalid, and this
@@ -322,7 +322,6 @@ impl<T: Config> RefungibleHandle<T> {
 		_to: address,
 		_token_id: uint256,
 		_data: bytes,
-		_value: value,
 	) -> Result<void> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
@@ -334,7 +333,6 @@ impl<T: Config> RefungibleHandle<T> {
 		_from: address,
 		_to: address,
 		_token_id: uint256,
-		_value: value,
 	) -> Result<void> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
@@ -350,7 +348,6 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param from The current owner of the NFT
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	/// @param _value Not used for an NFT
 	#[weight(<SelfWeightOf<T>>::transfer_from_creating_removing())]
 	fn transfer_from(
 		&mut self,
@@ -358,7 +355,6 @@ impl<T: Config> RefungibleHandle<T> {
 		from: address,
 		to: address,
 		token_id: uint256,
-		_value: value,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
@@ -378,13 +374,7 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 
 	/// @dev Not implemented
-	fn approve(
-		&mut self,
-		_caller: caller,
-		_approved: address,
-		_token_id: uint256,
-		_value: value,
-	) -> Result<void> {
+	fn approve(&mut self, _caller: caller, _approved: address, _token_id: uint256) -> Result<void> {
 		Err("not implemented".into())
 	}
 
@@ -438,7 +428,7 @@ pub fn ensure_single_owner<T: Config>(
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
-#[solidity_interface(name = "ERC721Burnable")]
+#[solidity_interface(name = ERC721Burnable)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current RFT owner, or an authorized
@@ -458,7 +448,7 @@ impl<T: Config> RefungibleHandle<T> {
 }
 
 /// @title ERC721 minting logic.
-#[solidity_interface(name = "ERC721Mintable", events(ERC721MintableEvents))]
+#[solidity_interface(name = ERC721Mintable, events(ERC721MintableEvents))]
 impl<T: Config> RefungibleHandle<T> {
 	fn minting_finished(&self) -> Result<bool> {
 		Ok(false)
@@ -616,7 +606,7 @@ fn get_token_permission<T: Config>(
 }
 
 /// @title Unique extensions for ERC721.
-#[solidity_interface(name = "ERC721UniqueExtensions")]
+#[solidity_interface(name = ERC721UniqueExtensions)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -624,15 +614,8 @@ impl<T: Config> RefungibleHandle<T> {
 	///  Throws if RFT pieces have multiple owners.
 	/// @param to The new owner
 	/// @param tokenId The RFT to transfer
-	/// @param _value Not used for an RFT
 	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
-	fn transfer(
-		&mut self,
-		caller: caller,
-		to: address,
-		token_id: uint256,
-		_value: value,
-	) -> Result<void> {
+	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
@@ -655,15 +638,8 @@ impl<T: Config> RefungibleHandle<T> {
 	///  Throws if RFT pieces have multiple owners.
 	/// @param from The current owner of the RFT
 	/// @param tokenId The RFT to transfer
-	/// @param _value Not used for an RFT
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(
-		&mut self,
-		caller: caller,
-		from: address,
-		token_id: uint256,
-		_value: value,
-	) -> Result<void> {
+	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
@@ -801,7 +777,7 @@ impl<T: Config> RefungibleHandle<T> {
 }
 
 #[solidity_interface(
-	name = "UniqueRefungible",
+	name = UniqueRefungible,
 	is(
 		ERC721,
 		ERC721Metadata,
@@ -809,11 +785,11 @@ impl<T: Config> RefungibleHandle<T> {
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
-		via("CollectionHandle<T>", common_mut, Collection),
+		Collection(common_mut, CollectionHandle<T>),
 		TokenProperties,
 	)
 )]
-impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
+impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 
 // Not a tests, but code generators
 generate_stubgen!(gen_impl, UniqueRefungibleCall<()>, true);
@@ -821,7 +797,7 @@ generate_stubgen!(gen_iface, UniqueRefungibleCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for RefungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueRefungible.raw");
 	fn call(
