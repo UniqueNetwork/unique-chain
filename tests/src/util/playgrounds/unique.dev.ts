@@ -208,7 +208,7 @@ class CreateCollectionTx<T> {
     const collectionId = await this.execute(true);
     const collectionData = await this.helper.collection.getData(collectionId);
     
-    expect(this.helper.util.str2vec(collectionData!.name!)).to.equal(this.collectionOptions.name);
+    expect(this.helper.util.str2vec(collectionData!.name!)).to.deep.equal(this.collectionOptions.name);
     expect(this.helper.util.str2vec(collectionData!.description!)).to.deep.equal(this.collectionOptions.description);
     expect(this.helper.util.str2vec(collectionData!.raw.tokenPrefix!)).to.deep.equal(this.collectionOptions.tokenPrefix);
 
