@@ -128,23 +128,26 @@ jobs:
       - name: Generate accounts
         run: ts-node qa-tests/src/scripts/create-market-accounts.ts
 
-      - name: Wait 5 m for diagnostic activity
-        run: sleep 300s
+      - name: Deploy contracts
+        run: ts-node ./src/scripts/deploy-contract.ts
+
+      - name: Import test data
+        run: ts-node ./src/scripts/create-test-collections.ts
+
+      - name: Wait 2,5 m for diagnostic activity
+        run: sleep 150s
 
       - name: Stop nonce-app
         if: always()
         run: docker-compose -f "qa-tests/docker-compose.market.yml" down
 
-      - name: Reamove build cache nonce-app
-        if: always()
-        run: docker-compose -f "qa-tests/docker-compose.market.yml" rm -f
-
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
-      - name: Remove build cache 
+      - name: Remove builder cache
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" rm -f
+        run: docker builder prune -f
+
 
 
