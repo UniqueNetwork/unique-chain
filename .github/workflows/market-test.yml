@@ -128,6 +128,8 @@ jobs:
       - name: Generate accounts
         run: ts-node qa-tests/src/scripts/create-market-accounts.ts
 
+      - name: Wait 5 m for diagnostic activity
+        run: sleep 300s
 
       - name: Stop nonce-app
         if: always()
