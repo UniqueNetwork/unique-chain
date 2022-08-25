@@ -113,7 +113,7 @@ jobs:
         run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
 
       - name: Start nonce-app
-        run: docker-compose -f "qa-tests/docker-compose.market.yml" up -d --build nonce-app 
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build nonce-app 
      
       - uses: actions/setup-node@v3
         with:
@@ -139,7 +139,7 @@ jobs:
 
       - name: Stop nonce-app
         if: always()
-        run: docker-compose -f "qa-tests/docker-compose.market.yml" down
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" down
 
       - name: Stop running containers
         if: always()                   # run this step always
