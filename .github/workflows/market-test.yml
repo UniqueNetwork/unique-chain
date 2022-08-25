@@ -126,13 +126,19 @@ jobs:
           npm install -g ts-node
 
       - name: Generate accounts
-        run: ts-node qa-tests/src/scripts/create-market-accounts.ts
+        run: |
+          cd qa-tests
+          ts-node ./src/scripts/create-market-accounts.ts
 
       - name: Deploy contracts
-        run: ts-node qa-tests/src/scripts/deploy-contract.ts
+        run: |
+          cd qa-tests
+          ts-node ./src/scripts/deploy-contract.ts
 
       - name: Import test data
-        run: ts-node qa-tests/src/scripts/create-test-collections.ts
+        run: |
+          cd qa-tests/
+          ts-node ./src/scripts/create-test-collections.ts
 
       - name: Show content of qa-test .env
         run: cat qa-tests/.env
