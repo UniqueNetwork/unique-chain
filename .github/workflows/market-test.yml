@@ -123,6 +123,7 @@ jobs:
         run: |
           cd qa-tests
           npm install
+          npm install -g ts-node
 
       - name: Generate accounts
         run: ts-node qa-tests/src/scripts/create-market-accounts.ts
