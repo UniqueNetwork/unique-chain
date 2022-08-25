@@ -147,7 +147,10 @@ jobs:
 
       - name: Remove builder cache
         if: always()                   # run this step always
-        run: docker builder prune -f
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
 
 
 
