@@ -85,7 +85,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
     for (const arg of args) {
       if (typeof arg !== 'string')
         continue;
-      if (arg.includes('1000:: Normal connection closure' || arg === 'Normal connection closure'))
+      if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis: UniqueApi/2, RmrkApi/1') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
         return;
     }
     printer(...args);
