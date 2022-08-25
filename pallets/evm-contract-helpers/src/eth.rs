@@ -65,15 +65,15 @@ where
 		contract_address: address,
 		sponsor: address,
 	) -> Result<void> {
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		Pallet::<T>::set_sponsor(
 			&T::CrossAccountId::from_eth(caller),
 			contract_address,
 			&T::CrossAccountId::from_eth(sponsor),
 		)
 		.map_err(dispatch_to_evm::<T>)?;
-
-		self.recorder().consume_sload()?;
-		self.recorder().consume_sstore()?;
 
 		Ok(())
 	}
@@ -82,11 +82,11 @@ where
 	///
 	/// @param contract_address Contract for which a self sponsoring is being enabled.
 	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
-		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
-			.map_err(dispatch_to_evm::<T>)?;
-
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
 
 		Ok(())
 	}
@@ -95,11 +95,11 @@ where
 	///
 	/// @param contract_address Contract for which a sponsorship is being removed.
 	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
-		Pallet::<T>::remove_sponsor(&T::CrossAccountId::from_eth(caller), contract_address)
-			.map_err(dispatch_to_evm::<T>)?;
-
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::remove_sponsor(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
 
 		Ok(())
 	}
@@ -110,11 +110,11 @@ where
 	///
 	/// @param contract_address Сontract for which need to confirm sponsorship.
 	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
-		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
-			.map_err(dispatch_to_evm::<T>)?;
-
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
 
 		Ok(())
 	}
@@ -165,12 +165,12 @@ where
 		contract_address: address,
 		mode: uint8,
 	) -> Result<void> {
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
 		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
-
-		self.recorder().consume_sload()?;
-		self.recorder().consume_sstore()?;
 
 		Ok(())
 	}
@@ -185,11 +185,11 @@ where
 		contract_address: address,
 		rate_limit: uint32,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
-
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
 
 		Ok(())
 	}
@@ -215,11 +215,11 @@ where
 		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
-
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
 
 		Ok(())
 	}
@@ -231,11 +231,11 @@ where
 		user: address,
 		allowed: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
-
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
+		
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 
 		Ok(())
 	}
