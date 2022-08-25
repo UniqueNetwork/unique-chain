@@ -70,7 +70,7 @@ class ArrangeGroup {
    * @returns array of newly created accounts
    * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor); 
    */
-  creteAccounts = async (balances: bigint[], donor: TSigner): Promise<TSigner[]> => {
+  creteAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
@@ -101,11 +101,12 @@ class ArrangeGroup {
     };
 
     let accountsCreated = false;
-    // waiting up to 1 minute with .25 sec retry
-    for (let index = 0; index < 240; index++) {
+    // checkBalances retry up to 5 blocks
+    for (let index = 0; index < 5; index++) {
+      console.log(await this.helper.chain.getLatestBlockNumber());
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
-      await new Promise(resolve => setTimeout(resolve, 250));
+      await this.waitNewBlocks(1);
     }
 
     if (!accountsCreated) throw Error('Accounts generation failed');
@@ -113,4 +114,23 @@ class ArrangeGroup {
 
     return accounts;
   };
+
+  /**
+   * Wait for specified bnumber of blocks
+   * @param blocksCount number of blocks to wait
+   * @returns 
+   */
+  async waitNewBlocks(blocksCount = 1): Promise<void> {
+    const promise = new Promise<void>(async (resolve) => {
+      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
+        if (blocksCount > 0) {
+          blocksCount--;
+        } else {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+    return promise;
+  }
 }
