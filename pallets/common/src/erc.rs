@@ -32,7 +32,7 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties,
-	eth::convert_substrate_address_to_cross_account_id,
+	eth::{convert_cross_account_to_uint256, convert_uint256_to_cross_account},
 };
 
 /// Events for ethereum collection helper.
@@ -63,7 +63,7 @@ pub trait CommonEvmHandler {
 #[solidity_interface(name = Collection)]
 impl<T: Config> CollectionHandle<T>
 where
-	T::AccountId: From<[u8; 32]> + AsRef<[u8]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// Set collection property.
 	///
@@ -177,7 +177,7 @@ where
 			SponsorshipState::Confirmed(ref sponsor) => sponsor,
 		};
 		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
-		let sponsor_sub = convert_cross_account_to_uint256::<T>(&sponsor)?;
+		let sponsor_sub = convert_cross_account_to_uint256::<T>(&sponsor);
 		Ok((*sponsor.as_eth(), sponsor_sub))
 	}
 
@@ -274,7 +274,7 @@ where
 		new_admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let new_admin = convert_substrate_address_to_cross_account_id::<T>(new_admin);
+		let new_admin = convert_uint256_to_cross_account::<T>(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -287,7 +287,7 @@ where
 		admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let admin = convert_substrate_address_to_cross_account_id::<T>(admin);
+		let admin = convert_uint256_to_cross_account::<T>(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -461,7 +461,7 @@ where
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
 	fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
-		let user = convert_substrate_address_to_cross_account_id::<T>(user);
+		let user = convert_uint256_to_cross_account::<T>(user);
 		Ok(self.is_owner_or_admin(&user))
 	}
 
@@ -494,7 +494,7 @@ where
 	/// @param newOwner new owner substrate account
 	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let new_owner = convert_substrate_address_to_cross_account_id::<T>(new_owner);
+		let new_owner = convert_uint256_to_cross_account::<T>(new_owner);
 		self.set_owner_internal(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
