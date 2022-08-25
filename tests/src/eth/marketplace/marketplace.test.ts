@@ -39,6 +39,7 @@ const PRICE = 2000n;
 describe('Matcher contract usage', () => {
   itWeb3('With UNQ', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
@@ -48,7 +49,9 @@ describe('Matcher contract usage', () => {
     const helpers = contractHelpers(web3, matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
-    await transferBalanceToEth(api, alice, matcher.options.address);
+    
+    await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
+    await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
@@ -100,6 +103,7 @@ describe('Matcher contract usage', () => {
 
   itWeb3('With escrow', async ({api, web3, privateKeyWrapper}) => {
     const alice = privateKeyWrapper('//Alice');
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const escrow = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
@@ -111,7 +115,9 @@ describe('Matcher contract usage', () => {
     const helpers = contractHelpers(web3, matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
-    await transferBalanceToEth(api, alice, matcher.options.address);
+    
+    await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
+    await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});

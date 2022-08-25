@@ -342,6 +342,16 @@ macro_rules! impl_tuples {
 				))
 			}
 		}
+		#[allow(non_snake_case)]
+		impl<$($ident),+> AbiWrite for &($($ident,)+)
+		where
+			$($ident: AbiWrite,)+
+		{
+			fn abi_write(&self, writer: &mut AbiWriter) {
+				let ($($ident,)+) = self;
+				$($ident.abi_write(writer);)+
+			}
+		}
 	};
 }
 

@@ -25,9 +25,11 @@ pub mod eth;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use super::*;
-	use evm_coder::execution::Result;
 	use frame_support::pallet_prelude::*;
+	use pallet_evm_coder_substrate::DispatchResult;
 	use sp_core::H160;
+	use pallet_evm::account::CrossAccountId;
+	use up_data_structs::SponsorshipState;
 
 	#[pallet::config]
 	pub trait Config:
@@ -39,14 +41,21 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// This method is only executable by owner
+		/// This method is only executable by owner.
 		NoPermission,
+
+		/// No pending sponsor for contract.
+		NoPendingSponsor,
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	/// Store owner for contract.
+	///
+	/// * **Key** - contract address.
+	/// * **Value** - owner for contract.
 	#[pallet::storage]
 	pub(super) type Owner<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = H160, QueryKind = ValueQuery>;
@@ -56,10 +65,33 @@ pub mod pallet {
 	pub(super) type SelfSponsoring<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
+	/// Store for contract sponsorship state.
+	///
+	/// * **Key** - contract address.
+	/// * **Value** - sponsorship state.
+	#[pallet::storage]
+	pub(super) type Sponsoring<T: Config> = StorageMap<
+		Hasher = Twox64Concat,
+		Key = H160,
+		Value = SponsorshipState<T::CrossAccountId>,
+		QueryKind = ValueQuery,
+	>;
+
+	/// Store for sponsoring mode.
+	///
+	/// ### Usage
+	/// Prefer to delete collection from storage if mode chaged to [`Disabled`](SponsoringModeT::Disabled).
+	///
+	/// * **Key** - contract address.
+	/// * **Value** - [`sponsoring mode`](SponsoringModeT).
 	#[pallet::storage]
 	pub(super) type SponsoringMode<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = SponsoringModeT, QueryKind = OptionQuery>;
 
+	/// Storage for sponsoring rate limit in blocks.
+	///
+	/// * **Key** - contract address.
+	/// * **Value** - amount of sponsored blocks.
 	#[pallet::storage]
 	pub(super) type SponsoringRateLimit<T: Config> = StorageMap<
 		Hasher = Twox128,
@@ -69,6 +101,11 @@ pub mod pallet {
 		OnEmpty = T::DefaultSponsoringRateLimit,
 	>;
 
+	/// Storage for last sponsored block.
+	///
+	/// * **Key1** - contract address.
+	/// * **Key2** - sponsored user address.
+	/// * **Value** - last sponsored block number.
 	#[pallet::storage]
 	pub(super) type SponsorBasket<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
@@ -79,10 +116,25 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Storege for contracts with [`Allowlisted`](SponsoringModeT::Allowlisted) sponsoring mode.
+	///
+	/// ### Usage
+	/// Prefer to delete collection from storage if mode chaged to non `Allowlisted`, than set **Value** to **false**.
+	///
+	/// * **Key** - contract address.
+	/// * **Value** - is contract in [`Allowlisted`](SponsoringModeT::Allowlisted) mode.
 	#[pallet::storage]
 	pub(super) type AllowlistEnabled<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
+	/// Storage for users that allowed for sponsorship.
+	///
+	/// ### Usage
+	/// Prefer to delete record from storage if user no more allowed for sponsorship.
+	///
+	/// * **Key1** - contract address.
+	/// * **Key2** - user that allowed for sponsorship.
+	/// * **Value** - allowance for sponsorship.
 	#[pallet::storage]
 	pub(super) type Allowlist<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
@@ -94,6 +146,77 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
+		/// Get contract owner.
+		pub fn contract_owner(contract: H160) -> H160 {
+			<Owner<T>>::get(contract)
+		}
+
+		/// Set `sponsor` for `contract`.
+		///
+		/// `sender` must be owner of contract.
+		pub fn set_sponsor(
+			sender: &T::CrossAccountId,
+			contract: H160,
+			sponsor: &T::CrossAccountId,
+		) -> DispatchResult {
+			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
+			Sponsoring::<T>::insert(
+				contract,
+				SponsorshipState::<T::CrossAccountId>::Unconfirmed(sponsor.clone()),
+			);
+			Ok(())
+		}
+
+		/// Set `contract` as self sponsored.
+		///
+		/// `sender` must be owner of contract.
+		pub fn self_sponsored_enable(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
+			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
+			Sponsoring::<T>::insert(
+				contract,
+				SponsorshipState::<T::CrossAccountId>::Confirmed(T::CrossAccountId::from_eth(
+					contract,
+				)),
+			);
+			Ok(())
+		}
+
+		/// Remove sponsor for `contract`.
+		///
+		/// `sender` must be owner of contract.
+		pub fn remove_sponsor(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
+			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
+			Sponsoring::<T>::remove(contract);
+			Ok(())
+		}
+
+		/// Confirm sponsorship.
+		///
+		/// `sender` must be same that set via [`set_sponsor`].
+		pub fn confirm_sponsorship(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
+			match Sponsoring::<T>::get(contract) {
+				SponsorshipState::Unconfirmed(sponsor) => {
+					ensure!(sponsor == *sender, Error::<T>::NoPermission);
+					Sponsoring::<T>::insert(
+						contract,
+						SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor),
+					);
+					Ok(())
+				}
+				SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => {
+					Err(Error::<T>::NoPendingSponsor.into())
+				}
+			}
+		}
+
+		/// Get sponsor.
+		pub fn get_sponsor(contract: H160) -> Option<T::CrossAccountId> {
+			match Sponsoring::<T>::get(contract) {
+				SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => None,
+				SponsorshipState::Confirmed(sponsor) => Some(sponsor),
+			}
+		}
+
 		pub fn sponsoring_mode(contract: H160) -> SponsoringModeT {
 			<SponsoringMode<T>>::get(contract)
 				.or_else(|| {
@@ -101,6 +224,7 @@ pub mod pallet {
 				})
 				.unwrap_or_default()
 		}
+
 		pub fn set_sponsoring_mode(contract: H160, mode: SponsoringModeT) {
 			if mode == SponsoringModeT::Disabled {
 				<SponsoringMode<T>>::remove(contract);
@@ -108,17 +232,6 @@ pub mod pallet {
 				<SponsoringMode<T>>::insert(contract, mode);
 			}
 			<SelfSponsoring<T>>::remove(contract)
-		}
-
-		pub fn toggle_sponsoring(contract: H160, enabled: bool) {
-			Self::set_sponsoring_mode(
-				contract,
-				if enabled {
-					SponsoringModeT::Allowlisted
-				} else {
-					SponsoringModeT::Disabled
-				},
-			)
 		}
 
 		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
@@ -137,8 +250,8 @@ pub mod pallet {
 			<Allowlist<T>>::insert(contract, user, allowed);
 		}
 
-		pub fn ensure_owner(contract: H160, user: H160) -> Result<()> {
-			ensure!(<Owner<T>>::get(&contract) == user, "no permission");
+		pub fn ensure_owner(contract: H160, user: H160) -> DispatchResult {
+			ensure!(<Owner<T>>::get(&contract) == user, Error::<T>::NoPermission);
 			Ok(())
 		}
 	}

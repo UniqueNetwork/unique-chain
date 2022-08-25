@@ -2345,7 +2345,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2364,7 +2364,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -2380,7 +2380,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -2397,7 +2397,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2437,7 +2437,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2578,7 +2578,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "parity-scale-codec 3.1.5",
@@ -2590,7 +2590,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "evm",
  "frame-support",
@@ -2604,7 +2604,7 @@ dependencies = [
 [[package]]
 name = "fp-evm-mapping"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "frame-support",
  "sp-core",
@@ -2613,7 +2613,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2630,7 +2630,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -2646,7 +2646,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "parity-scale-codec 3.1.5",
 ]
@@ -5445,7 +5445,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -5552,7 +5552,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-common"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -5660,7 +5660,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5689,7 +5689,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#64915c0986fcf2bbe942794b838c0cf359c93c21"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
 dependencies = [
  "evm",
  "fp-evm",
@@ -5733,7 +5733,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-contract-helpers"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "evm-coder",
  "fp-evm-mapping",
@@ -12130,7 +12130,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",

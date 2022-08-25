@@ -16,14 +16,16 @@
 
 use core::marker::PhantomData;
 use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
 };
 use sp_core::H160;
+use up_data_structs::SponsorshipState;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
+	Sponsoring,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -41,25 +43,120 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 }
 
 #[solidity_interface(name = "ContractHelpers")]
-impl<T: Config> ContractHelpers<T> {
+impl<T: Config> ContractHelpers<T>
+where
+	T::AccountId: AsRef<[u8; 32]>,
+{
+	/// Get contract ovner
+	///
+	/// @param Contract_address contract for which the owner is being determined.
+	/// @return Contract owner.
 	fn contract_owner(&self, contract_address: address) -> Result<address> {
 		Ok(<Owner<T>>::get(contract_address))
 	}
 
-	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
-		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
-	}
-
-	/// Deprecated
-	fn toggle_sponsoring(
+	/// Set sponsor.
+	///
+	/// @param contract_address Contract for which a sponsor is being established.
+	/// @param sponsor User address who set as pending sponsor.
+	fn set_sponsor(
 		&mut self,
 		caller: caller,
 		contract_address: address,
-		enabled: bool,
+		sponsor: address,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
-		<Pallet<T>>::toggle_sponsoring(contract_address, enabled);
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::set_sponsor(
+			&T::CrossAccountId::from_eth(caller),
+			contract_address,
+			&T::CrossAccountId::from_eth(sponsor),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
 		Ok(())
+	}
+
+	/// Set contract as self sponsored.
+	///
+	/// @param contract_address Contract for which a self sponsoring is being enabled.
+	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(())
+	}
+
+	/// Remove sponsor.
+	///
+	/// @param contract_address Contract for which a sponsorship is being removed.
+	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::remove_sponsor(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(())
+	}
+
+	/// Confirm sponsorship.
+	///
+	/// @dev Caller must be same that set via [`set_sponsor`].
+	///
+	/// @param contract_address Сontract for which need to confirm sponsorship.
+	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		Pallet::<T>::confirm_sponsorship(&T::CrossAccountId::from_eth(caller), contract_address)
+			.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(())
+	}
+
+	/// Get current sponsor.
+	///
+	/// @param contract_address The contract for which a sponsor is requested.
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
+		let sponsor =
+			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
+		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
+			let sponsor = pallet_common::eth::convert_cross_account_to_uint256::<T>(&sponsor);
+			(Default::default(), sponsor)
+		} else {
+			let sponsor = *sponsor.as_eth();
+			(sponsor, Default::default())
+		};
+		Ok(result)
+	}
+
+	/// Check tat contract has confirmed sponsor.
+	///
+	/// @param contract_address The contract for which the presence of a confirmed sponsor is checked.
+	/// @return **true** if contract has confirmed sponsor.
+	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
+		Ok(Pallet::<T>::get_sponsor(contract_address).is_some())
+	}
+
+	/// Check tat contract has pending sponsor.
+	///
+	/// @param contract_address The contract for which the presence of a pending sponsor is checked.
+	/// @return **true** if contract has pending sponsor.
+	fn has_pending_sponsor(&self, contract_address: address) -> Result<bool> {
+		Ok(match Sponsoring::<T>::get(contract_address) {
+			SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => false,
+			SponsorshipState::Unconfirmed(_) => true,
+		})
+	}
+
+	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
+		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
 
 	fn set_sponsoring_mode(
@@ -68,9 +165,13 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		mode: uint8,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
 		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
+
 		Ok(())
 	}
 
@@ -84,8 +185,12 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		rate_limit: uint32,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::set_sponsoring_rate_limit(contract_address, rate_limit.into());
+
 		Ok(())
 	}
 
@@ -110,8 +215,12 @@ impl<T: Config> ContractHelpers<T> {
 		contract_address: address,
 		enabled: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowlist(contract_address, enabled);
+
 		Ok(())
 	}
 
@@ -122,14 +231,21 @@ impl<T: Config> ContractHelpers<T> {
 		user: address,
 		allowed: bool,
 	) -> Result<void> {
-		<Pallet<T>>::ensure_owner(contract_address, caller)?;
+		self.recorder().consume_sload()?;
+		self.recorder().consume_sstore()?;
+
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
+
 		Ok(())
 	}
 }
 
 pub struct HelpersOnMethodCall<T: Config>(PhantomData<*const T>);
-impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T> {
+impl<T: Config> OnMethodCall<T> for HelpersOnMethodCall<T>
+where
+	T::AccountId: AsRef<[u8; 32]>,
+{
 	fn is_reserved(contract: &sp_core::H160) -> bool {
 		contract == &T::ContractAddress::get()
 	}
@@ -179,18 +295,26 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 	for HelpersContractSponsoring<T>
 {
 	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
-		let mode = <Pallet<T>>::sponsoring_mode(call.0);
+		let (contract_address, _) = call;
+		let mode = <Pallet<T>>::sponsoring_mode(*contract_address);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
 
-		if mode == SponsoringModeT::Allowlisted && !<Pallet<T>>::allowed(call.0, *who.as_eth()) {
+		let sponsor = match <Pallet<T>>::get_sponsor(*contract_address) {
+			Some(sponsor) => sponsor,
+			None => return None,
+		};
+
+		if mode == SponsoringModeT::Allowlisted
+			&& !<Pallet<T>>::allowed(*contract_address, *who.as_eth())
+		{
 			return None;
 		}
 		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
 
-		if let Some(last_tx_block) = <SponsorBasket<T>>::get(&call.0, who.as_eth()) {
-			let limit = <SponsoringRateLimit<T>>::get(&call.0);
+		if let Some(last_tx_block) = <SponsorBasket<T>>::get(contract_address, who.as_eth()) {
+			let limit = <SponsoringRateLimit<T>>::get(contract_address);
 
 			let timeout = last_tx_block + limit;
 			if block_number < timeout {
@@ -198,9 +322,8 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			}
 		}
 
-		<SponsorBasket<T>>::insert(&call.0, who.as_eth(), block_number);
+		<SponsorBasket<T>>::insert(contract_address, who.as_eth(), block_number);
 
-		let sponsor = T::CrossAccountId::from_eth(call.0);
 		Some(sponsor)
 	}
 }

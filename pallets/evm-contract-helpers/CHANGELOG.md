@@ -1,4 +1,24 @@
-<!-- bureaucrate goes here -->
+# Change Log
+
+All notable changes to this project will be documented in this file.
+
+## [v0.2.0] - 2022-08-19
+
+### Added
+
+ - Set arbitrary evm address as contract sponsor.
+ - Ability to remove current sponsor.
+
+### Removed
+ - Remove methods
+   + sponsoring_enabled
+   + toggle_sponsoring
+
+ ### Changed
+
+ - Change `toggle_sponsoring` to `self_sponsored_enable`.
+
+
 ## [v0.1.2] 2022-08-16
 
 ### Other changes
