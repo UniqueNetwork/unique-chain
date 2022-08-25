@@ -188,7 +188,8 @@ impl<
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::weight_to_fee(&weight);
+		let amount: Currency::Balance = (0 as u32).into();
+		//let amount = WeightToFee::weight_to_fee(&weight);
 		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
 
 		// location to this parachain through relay chain
