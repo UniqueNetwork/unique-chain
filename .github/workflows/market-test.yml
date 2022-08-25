@@ -129,10 +129,10 @@ jobs:
         run: ts-node qa-tests/src/scripts/create-market-accounts.ts
 
       - name: Deploy contracts
-        run: ts-node ./src/scripts/deploy-contract.ts
+        run: ts-node qa-tests/src/scripts/deploy-contract.ts
 
       - name: Import test data
-        run: ts-node ./src/scripts/create-test-collections.ts
+        run: ts-node qa-tests/src/scripts/create-test-collections.ts
 
       - name: Wait 2,5 m for diagnostic activity
         run: sleep 150s
