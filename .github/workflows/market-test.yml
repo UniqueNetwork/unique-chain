@@ -119,6 +119,8 @@ jobs:
         with:
           node-version: 16
 
+      - name: Setup TypeScript
+        uses: npm install -D ts-node
 
       - name: Generate accounts
         run: ts-node qa-tests/src/scripts/create-market-accounts.ts
