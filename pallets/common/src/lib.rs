@@ -231,6 +231,12 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(true)
 	}
 
+	/// Remove collection sponsor.
+	pub fn remove_sponsor(&mut self) -> DispatchResult {
+		self.collection.sponsorship = SponsorshipState::Disabled;
+		Ok(())
+	}
+
 	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
 	/// Now check only the `external_collection` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
 	pub fn check_is_internal(&self) -> DispatchResult {
@@ -732,12 +738,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get the effective limits for the collection.
 	pub fn effective_collection_limits(collection: CollectionId) -> Option<CollectionLimits> {
-		let collection = <CollectionById<T>>::get(collection);
-		if collection.is_none() {
-			return None;
-		}
-
-		let collection = collection.unwrap();
+		let collection = <CollectionById<T>>::get(collection)?;
 		let limits = collection.limits;
 		let effective_limits = CollectionLimits {
 			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),

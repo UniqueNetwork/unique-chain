@@ -22,7 +22,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xffe4da23
+/// @dev the ERC-165 identifier for this interface is 0xe54be640
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -82,6 +82,27 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0xc74d6751,
+	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
+	function setCollectionSponsorSubstrate(uint256 sponsor) public {
+		require(false, stub_error);
+		sponsor;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x058ac185,
+	///  or in textual repr: hasCollectionPendingSponsor()
+	function hasCollectionPendingSponsor() public view returns (bool) {
+		require(false, stub_error);
+		dummy;
+		return false;
+	}
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
@@ -90,6 +111,25 @@ contract Collection is Dummy, ERC165 {
 	function confirmCollectionSponsorship() public {
 		require(false, stub_error);
 		dummy = 0;
+	}
+
+	/// Remove collection sponsor.
+	/// @dev EVM selector for this function is: 0x6e0326a3,
+	///  or in textual repr: removeCollectionSponsor()
+	function removeCollectionSponsor() public {
+		require(false, stub_error);
+		dummy = 0;
+	}
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	/// @dev EVM selector for this function is: 0xb66bbc14,
+	///  or in textual repr: getCollectionSponsor()
+	function getCollectionSponsor() public view returns (Tuple6 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple6(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -308,6 +348,12 @@ contract Collection is Dummy, ERC165 {
 		newOwner;
 		dummy = 0;
 	}
+}
+
+/// @dev anonymous struct
+struct Tuple6 {
+	address field_0;
+	uint256 field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x79cc6790

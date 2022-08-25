@@ -789,7 +789,7 @@ impl<T: Config> RefungibleHandle<T> {
 		TokenProperties,
 	)
 )]
-impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
+impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 
 // Not a tests, but code generators
 generate_stubgen!(gen_impl, UniqueRefungibleCall<()>, true);
@@ -797,7 +797,7 @@ generate_stubgen!(gen_iface, UniqueRefungibleCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for RefungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueRefungible.raw");
 	fn call(

@@ -65,7 +65,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xffe4da23
+/// @dev the ERC-165 identifier for this interface is 0xe54be640
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -105,12 +105,37 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionSponsor(address)
 	function setCollectionSponsor(address sponsor) external;
 
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0xc74d6751,
+	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
+	function setCollectionSponsorSubstrate(uint256 sponsor) external;
+
+	/// @dev EVM selector for this function is: 0x058ac185,
+	///  or in textual repr: hasCollectionPendingSponsor()
+	function hasCollectionPendingSponsor() external view returns (bool);
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	/// @dev EVM selector for this function is: 0x3c50e97a,
 	///  or in textual repr: confirmCollectionSponsorship()
 	function confirmCollectionSponsorship() external;
+
+	/// Remove collection sponsor.
+	/// @dev EVM selector for this function is: 0x6e0326a3,
+	///  or in textual repr: removeCollectionSponsor()
+	function removeCollectionSponsor() external;
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	/// @dev EVM selector for this function is: 0xb66bbc14,
+	///  or in textual repr: getCollectionSponsor()
+	function getCollectionSponsor() external view returns (Tuple17 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -250,6 +275,12 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xb212138f,
 	///  or in textual repr: setOwnerSubstrate(uint256)
 	function setOwnerSubstrate(uint256 newOwner) external;
+}
+
+/// @dev anonymous struct
+struct Tuple17 {
+	address field_0;
+	uint256 field_1;
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
