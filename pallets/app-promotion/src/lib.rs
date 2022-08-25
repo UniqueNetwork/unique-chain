@@ -36,10 +36,13 @@ mod tests;
 pub mod types;
 pub mod weights;
 
-use sp_std::{vec::Vec, iter::Sum};
+use sp_std::{vec::Vec, iter::Sum, borrow::ToOwned};
 use codec::EncodeLike;
 use pallet_balances::BalanceLock;
 pub use types::ExtendedLockableCurrency;
+
+// use up_common::constants::{DAYS, UNIQUE};
+use up_data_structs::CollectionId;
 
 use frame_support::{
 	dispatch::{DispatchResult},
@@ -55,38 +58,68 @@ pub use pallet::*;
 use pallet_evm::account::CrossAccountId;
 use sp_runtime::{
 	Perbill,
-	traits::{BlockNumberProvider, CheckedAdd, CheckedSub},
+	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, AccountIdConversion},
 	ArithmeticError,
 };
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-const SECONDS_TO_BLOCK: u32 = 6;
-const DAY: u32 = 60 * 60 * 24 / SECONDS_TO_BLOCK;
-const WEEK: u32 = 7 * DAY;
-const TWO_WEEK: u32 = 2 * WEEK;
-const YEAR: u32 = DAY * 365;
+// const SECONDS_TO_BLOCK: u32 = 6;
+// const DAY: u32 = 60 * 60 * 24 / SECONDS_TO_BLOCK;
+// const WEEK: u32 = 7 * DAY;
+// const TWO_WEEK: u32 = 2 * WEEK;
+// const YEAR: u32 = DAY * 365;
 
 pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
+	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId};
 	use frame_system::pallet_prelude::*;
+	use types::CollectionHandler;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
 		type Currency: ExtendedLockableCurrency<Self::AccountId>;
 
+		type CollectionHandler: CollectionHandler<
+			AccountId = Self::AccountId,
+			CollectionId = CollectionId,
+		>;
+
 		type TreasuryAccountId: Get<Self::AccountId>;
+
+		/// The app's pallet id, used for deriving its sovereign account ID.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+
+		/// In relay blocks.
+		#[pallet::constant]
+		type RecalculationInterval: Get<Self::BlockNumber>;
+		/// In chain blocks.
+		#[pallet::constant]
+		type PendingInterval: Get<Self::BlockNumber>;
+
+		/// In chain blocks.
+		#[pallet::constant]
+		type Day: Get<Self::BlockNumber>; // useless
+
+		#[pallet::constant]
+		type Nominal: Get<BalanceOf<Self>>;
+
+		#[pallet::constant]
+		type IntervalIncome: Get<Perbill>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
-		// The block number provider
-		type BlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
+		// The relay block number provider
+		type RelayBlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
+
+		/// Events compatible with [`frame_system::Config::Event`].
+		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
 
 		// /// Number of blocks that pass between treasury balance updates due to inflation
 		// #[pallet::constant]
@@ -99,6 +132,28 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
+	pub enum Event<T: Config> {
+		StakingRecalculation(
+			/// Base on which interest is calculated
+			BalanceOf<T>,
+			/// Amount of accrued interest
+			BalanceOf<T>,
+		),
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		AdminNotSet,
+		/// No permission to perform action
+		NoPermission,
+		/// Insufficient funds to perform an action
+		NotSufficientFounds,
+		InvalidArgument,
+		AlreadySponsored,
+	}
 
 	#[pallet::storage]
 	pub type TotalStaked<T: Config> = StorageValue<Value = BalanceOf<T>, QueryKind = ValueQuery>;
@@ -164,23 +219,33 @@ pub mod pallet {
 				});
 
 			let next_interest_block = Self::get_interest_block();
-
-			if next_interest_block != 0.into() && current_block >= next_interest_block {
+			let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
+			if next_interest_block != 0.into() && current_relay_block >= next_interest_block {
 				let mut acc = <BalanceOf<T>>::default();
+				let mut base_acc = <BalanceOf<T>>::default();
 
-				NextInterestBlock::<T>::set(current_block + DAY.into());
+				NextInterestBlock::<T>::set(
+					NextInterestBlock::<T>::get() + T::RecalculationInterval::get(),
+				);
 				add_weight(0, 1, 0);
 
 				Staked::<T>::iter()
-					.filter(|((_, block), _)| *block + DAY.into() <= current_block)
+					.filter(|((_, block), _)| {
+						*block + T::RecalculationInterval::get() <= current_relay_block
+					})
 					.for_each(|((staker, block), amount)| {
 						Self::recalculate_stake(&staker, block, amount, &mut acc);
 						add_weight(0, 0, T::WeightInfo::recalculate_stake());
+						base_acc += amount;
 					});
 				<TotalStaked<T>>::get()
 					.checked_add(&acc)
 					.map(|res| <TotalStaked<T>>::set(res));
+
+				Self::deposit_event(Event::StakingRecalculation(base_acc, acc));
 				add_weight(0, 1, 0);
+			} else {
+				add_weight(1, 0, 0)
 			};
 			consumed_weight
 		}
@@ -189,9 +254,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::WeightInfo::set_admin_address())]
-		pub fn set_admin_address(origin: OriginFor<T>, admin: T::AccountId) -> DispatchResult {
+		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
-			<Admin<T>>::set(Some(admin));
+			<Admin<T>>::set(Some(admin.as_sub().to_owned()));
 
 			Ok(())
 		}
@@ -199,7 +264,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::start_app_promotion())]
 		pub fn start_app_promotion(
 			origin: OriginFor<T>,
-			promotion_start_relay_block: T::BlockNumber,
+			promotion_start_relay_block: Option<T::BlockNumber>,
 		) -> DispatchResult
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
@@ -208,10 +273,13 @@ pub mod pallet {
 
 			// Start app-promotion mechanics if it has not been yet initialized
 			if <StartBlock<T>>::get() == 0u32.into() {
-				// Set promotion global start block
-				<StartBlock<T>>::set(promotion_start_relay_block);
+				let start_block = promotion_start_relay_block
+					.unwrap_or(T::RelayBlockNumberProvider::current_block_number());
 
-				<NextInterestBlock<T>>::set(promotion_start_relay_block + DAY.into());
+				// Set promotion global start block
+				<StartBlock<T>>::set(start_block);
+
+				<NextInterestBlock<T>>::set(start_block + T::RecalculationInterval::get());
 			}
 
 			Ok(())
@@ -220,6 +288,8 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
+
+			ensure!(amount >= T::Nominal::get(), ArithmeticError::Underflow);
 
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
@@ -235,7 +305,7 @@ pub mod pallet {
 
 			Self::add_lock_balance(&staker_id, amount)?;
 
-			let block_number = frame_system::Pallet::<T>::block_number();
+			let block_number = T::RelayBlockNumberProvider::current_block_number();
 
 			<Staked<T>>::insert(
 				(&staker_id, block_number),
@@ -271,7 +341,7 @@ pub mod pallet {
 					.ok_or(ArithmeticError::Underflow)?,
 			);
 
-			let block = frame_system::Pallet::<T>::block_number() + WEEK.into();
+			let block = frame_system::Pallet::<T>::block_number() + T::PendingInterval::get();
 			<PendingUnstake<T>>::insert(
 				(&staker_id, block),
 				<PendingUnstake<T>>::get((&staker_id, block))
@@ -310,6 +380,40 @@ pub mod pallet {
 				});
 
 			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn sponsor_collection(
+			admin: OriginFor<T>,
+			collection_id: CollectionId,
+		) -> DispatchResult {
+			let admin_id = ensure_signed(admin)?;
+			ensure!(
+				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
+				Error::<T>::NoPermission
+			);
+
+			T::CollectionHandler::set_sponsor(Self::account_id(), collection_id)
+		}
+		#[pallet::weight(0)]
+		pub fn stop_sponsorign_collection(
+			admin: OriginFor<T>,
+			collection_id: CollectionId,
+		) -> DispatchResult {
+			let admin_id = ensure_signed(admin)?;
+
+			ensure!(
+				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
+				Error::<T>::NoPermission
+			);
+
+			ensure!(
+				T::CollectionHandler::get_sponsor(collection_id)?
+					.ok_or(<Error<T>>::InvalidArgument)?
+					== Self::account_id(),
+				<Error<T>>::NoPermission
+			);
+			T::CollectionHandler::remove_collection_sponsor(collection_id)
 		}
 	}
 }
@@ -396,13 +500,13 @@ impl<T: Config> Pallet<T> {
 	// 	Ok(())
 	// }
 
-	pub fn sponsor_collection(admin: T::AccountId, collection_id: u32) -> DispatchResult {
-		Ok(())
-	}
+	// pub fn sponsor_collection(admin: T::AccountId, collection_id: u32) -> DispatchResult {
+	// 	Ok(())
+	// }
 
-	pub fn stop_sponsorign_collection(admin: T::AccountId, collection_id: u32) -> DispatchResult {
-		Ok(())
-	}
+	// pub fn stop_sponsorign_collection(admin: T::AccountId, collection_id: u32) -> DispatchResult {
+	// 	Ok(())
+	// }
 
 	pub fn sponsor_conract(admin: T::AccountId, app_id: u32) -> DispatchResult {
 		Ok(())
@@ -410,6 +514,10 @@ impl<T: Config> Pallet<T> {
 
 	pub fn stop_sponsorign_contract(admin: T::AccountId, app_id: u32) -> DispatchResult {
 		Ok(())
+	}
+
+	pub fn account_id() -> T::AccountId {
+		T::PalletId::get().into_account_truncating()
 	}
 }
 
@@ -514,8 +622,7 @@ impl<T: Config> Pallet<T> {
 	where
 		I: EncodeLike<BalanceOf<T>> + Balance,
 	{
-		let day_rate = Perbill::from_rational(5u32, 1_0000);
-		day_rate * base
+		T::IntervalIncome::get() * base
 	}
 }
 

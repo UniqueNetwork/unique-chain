@@ -277,7 +277,7 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
-		fn deposit_event() = default;
+		pub fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			0

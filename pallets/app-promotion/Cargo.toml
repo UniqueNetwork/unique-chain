@@ -104,6 +104,22 @@ default-features = false
 git = "https://github.com/uniquenetwork/frontier"
 branch = "unique-polkadot-v0.9.27"
 
+################################################################################
+# local dependencies
+[dependencies.up-data-structs]
+default-features = false
+path =  "../../primitives/data-structs"
+
+[dependencies.pallet-common]
+default-features = false
+path =  "../common"
+
+[dependencies.pallet-unique]
+default-features = false
+path =  "../unique"
+
+################################################################################
+
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",

@@ -425,6 +425,23 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    promotion: {
+      AdminNotSet: AugmentedError<ApiType>;
+      AlreadySponsored: AugmentedError<ApiType>;
+      InvalidArgument: AugmentedError<ApiType>;
+      /**
+       * No permission to perform action
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Insufficient funds to perform an action
+       **/
+      NotSufficientFounds: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     refungible: {
       /**
        * Not Refungible item data used to mint in Refungible collection.
