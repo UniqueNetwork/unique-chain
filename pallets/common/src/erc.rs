@@ -30,7 +30,10 @@ use up_data_structs::{
 };
 use alloc::format;
 
-use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
+use crate::{
+	Pallet, CollectionHandle, Config, CollectionProperties,
+	eth::convert_substrate_address_to_cross_account_id,
+};
 
 /// Events for ethereum collection helper.
 #[derive(ToLog)]
@@ -232,10 +235,7 @@ where
 		new_admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut new_admin_arr: [u8; 32] = Default::default();
-		new_admin.to_big_endian(&mut new_admin_arr);
-		let account_id = T::AccountId::from(new_admin_arr);
-		let new_admin = T::CrossAccountId::from_sub(account_id);
+		let new_admin = convert_substrate_address_to_cross_account_id::<T>(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -248,10 +248,7 @@ where
 		admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut admin_arr: [u8; 32] = Default::default();
-		admin.to_big_endian(&mut admin_arr);
-		let account_id = T::AccountId::from(admin_arr);
-		let admin = T::CrossAccountId::from_sub(account_id);
+		let admin = convert_substrate_address_to_cross_account_id::<T>(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -414,10 +411,19 @@ where
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	fn verify_owner_or_admin(&self, user: address) -> Result<bool> {
-		Ok(check_is_owner_or_admin(user, self)
-			.map(|_| true)
-			.unwrap_or(false))
+	#[solidity(rename_selector = "isOwnerOrAdmin")]
+	fn is_owner_or_admin_eth(&self, user: address) -> Result<bool> {
+		let user = T::CrossAccountId::from_eth(user);
+		Ok(self.is_owner_or_admin(&user))
+	}
+
+	/// Check that substrate account is the owner or admin of the collection
+	///
+	/// @param user account to verify
+	/// @return "true" if account is the owner or admin
+	fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
+		let user = convert_substrate_address_to_cross_account_id::<T>(user);
+		Ok(self.is_owner_or_admin(&user))
 	}
 
 	/// Returns collection type
@@ -431,6 +437,28 @@ where
 		};
 		Ok(mode.into())
 	}
+
+	/// Changes collection owner to another account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner account
+	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = T::CrossAccountId::from_eth(new_owner);
+		self.set_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Changes collection owner to another substrate account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner substrate account
+	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = convert_substrate_address_to_cross_account_id::<T>(new_owner);
+		self.set_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
+	}
 }
 
 fn check_is_owner_or_admin<T: Config>(
@@ -440,16 +468,17 @@ fn check_is_owner_or_admin<T: Config>(
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner_or_admin(&caller)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		.map_err(dispatch_to_evm::<T>)?;
 	Ok(caller)
 }
 
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	// TODO possibly delete for the lack of transaction
+	collection.consume_store_writes(1)?;
 	collection
 		.check_is_internal()
 		.map_err(dispatch_to_evm::<T>)?;
-	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
+	collection.save().map_err(dispatch_to_evm::<T>)?;
 	Ok(())
 }
 
