@@ -197,19 +197,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "contractAddress",
-        "type": "address"
-      }
-    ],
-    "name": "sponsoringMode",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
       { "internalType": "bytes4", "name": "interfaceID", "type": "bytes4" }
     ],
     "name": "supportsInterface",
@@ -225,7 +212,7 @@
         "type": "address"
       },
       { "internalType": "address", "name": "user", "type": "address" },
-      { "internalType": "bool", "name": "allowed", "type": "bool" }
+      { "internalType": "bool", "name": "isAllowed", "type": "bool" }
     ],
     "name": "toggleAllowed",
     "outputs": [],

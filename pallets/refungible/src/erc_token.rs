@@ -49,7 +49,7 @@ use crate::{
 
 pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
 
-#[solidity_interface(name = "ERC1633")]
+#[solidity_interface(name = ERC1633)]
 impl<T: Config> RefungibleTokenHandle<T> {
 	fn parent_token(&self) -> Result<address> {
 		self.consume_store_reads(2)?;
@@ -87,7 +87,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "ERC1633UniqueExtensions")]
+#[solidity_interface(name = ERC1633UniqueExtensions)]
 impl<T: Config> RefungibleTokenHandle<T> {
 	#[solidity(rename_selector = "setParentNFT")]
 	#[weight(<CommonWeights<T>>::token_owner() + <SelfWeightOf<T>>::set_parent_nft_unchecked())]
@@ -137,7 +137,7 @@ pub enum ERC20Events {
 ///
 /// @dev Implementation of the basic standard token.
 /// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-#[solidity_interface(name = "ERC20", events(ERC20Events))]
+#[solidity_interface(name = ERC20, events(ERC20Events))]
 impl<T: Config> RefungibleTokenHandle<T> {
 	/// @return the name of the token.
 	fn name(&self) -> Result<string> {
@@ -246,7 +246,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "ERC20UniqueExtensions")]
+#[solidity_interface(name = ERC20UniqueExtensions)]
 impl<T: Config> RefungibleTokenHandle<T> {
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
@@ -306,7 +306,7 @@ impl<T: Config> Deref for RefungibleTokenHandle<T> {
 }
 
 #[solidity_interface(
-	name = "UniqueRefungibleToken",
+	name = UniqueRefungibleToken,
 	is(ERC20, ERC20UniqueExtensions, ERC1633, ERC1633UniqueExtensions)
 )]
 impl<T: Config> RefungibleTokenHandle<T> where T::AccountId: From<[u8; 32]> {}

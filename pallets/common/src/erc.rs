@@ -60,7 +60,7 @@ pub trait CommonEvmHandler {
 }
 
 /// @title A contract that allows you to work with collections.
-#[solidity_interface(name = "Collection")]
+#[solidity_interface(name = Collection)]
 impl<T: Config> CollectionHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
@@ -228,7 +228,7 @@ where
 	}
 
 	/// Add collection admin by substrate address.
-	/// @param new_admin Substrate administrator address.
+	/// @param newAdmin Substrate administrator address.
 	fn add_collection_admin_substrate(
 		&mut self,
 		caller: caller,
@@ -254,7 +254,7 @@ where
 	}
 
 	/// Add collection admin.
-	/// @param new_admin Address of the added administrator.
+	/// @param newAdmin Address of the added administrator.
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
@@ -264,7 +264,7 @@ where
 
 	/// Remove collection admin.
 	///
-	/// @param new_admin Address of the removed administrator.
+	/// @param admin Address of the removed administrator.
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);

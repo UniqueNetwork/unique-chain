@@ -255,7 +255,7 @@
           { "internalType": "uint256", "name": "field_0", "type": "uint256" },
           { "internalType": "string", "name": "field_1", "type": "string" }
         ],
-        "internalType": "struct Tuple0[]",
+        "internalType": "struct Tuple8[]",
         "name": "tokens",
         "type": "tuple[]"
       }
@@ -361,7 +361,7 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       { "internalType": "bytes", "name": "data", "type": "bytes" }
     ],
-    "name": "safeTransferFromWithData",
+    "name": "safeTransferFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

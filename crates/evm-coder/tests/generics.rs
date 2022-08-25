@@ -19,14 +19,14 @@ use evm_coder::{execution::Result, generate_stubgen, solidity_interface, types::
 
 struct Generic<T>(PhantomData<T>);
 
-#[solidity_interface(name = "GenericIs")]
+#[solidity_interface(name = GenericIs)]
 impl<T> Generic<T> {
 	fn test_1(&self) -> Result<uint256> {
 		unreachable!()
 	}
 }
 
-#[solidity_interface(name = "Generic", is(GenericIs))]
+#[solidity_interface(name = Generic, is(GenericIs))]
 impl<T: Into<u32>> Generic<T> {
 	fn test_2(&self) -> Result<uint256> {
 		unreachable!()
@@ -35,7 +35,7 @@ impl<T: Into<u32>> Generic<T> {
 
 generate_stubgen!(gen_iface, GenericCall<()>, false);
 
-#[solidity_interface(name = "GenericWhere")]
+#[solidity_interface(name = GenericWhere)]
 impl<T> Generic<T>
 where
 	T: core::fmt::Debug,

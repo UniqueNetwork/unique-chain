@@ -199,6 +199,7 @@ impl Events {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
 					let interface = SolidityInterface {
+						docs: &[],
 						selector: [0; 4],
 						name: #solidity_name,
 						is: &[],
@@ -207,7 +208,7 @@ impl Events {
 						)*),
 					};
 					let mut out = string::new();
-					out.push_str("// Inline\n");
+					out.push_str("/// @dev inlined interface\n");
 					let _ = interface.format(is_impl, &mut out, tc);
 					tc.collect(out);
 				}
