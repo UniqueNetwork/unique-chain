@@ -3,9 +3,10 @@
 
 import {mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper} from './unique';
-import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
+import {TSigner} from './types';
+import {IKeyringPair} from '@polkadot/types/types';
 
 
 export class DevUniqueHelper extends UniqueHelper {
@@ -73,7 +74,7 @@ class ArrangeGroup {
     let nonce = await this.helper.chain.getNonce(donor.address);
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
-    const accounts = [];
+    const accounts: IKeyringPair[] = [];
     for (const balance of balances) {
       const recepient = this.helper.util.fromSeed(mnemonicGenerate());
       accounts.push(recepient);
@@ -84,7 +85,52 @@ class ArrangeGroup {
       }
     }
 
-    await Promise.all(transactions);
+    await Promise.all(transactions).catch(e => {});
+    
+    //#region TODO remove this region, when nonce problem will be solved
+    const checkBalances = async () => {
+      let isSuccess = true;
+      for (let i = 0; i < balances.length; i++) {
+        const balance = await this.helper.balance.getSubstrate(accounts[i].address);
+        if (balance !== balances[i] * tokenNominal) {
+          isSuccess = false;
+          break;
+        }
+      }
+      return isSuccess;
+    };
+
+    let accountsCreated = false;
+    // checkBalances retry up to 5 blocks
+    for (let index = 0; index < 5; index++) {
+      console.log(await this.helper.chain.getLatestBlockNumber());
+      accountsCreated = await checkBalances();
+      if(accountsCreated) break;
+      await this.waitNewBlocks(1);
+    }
+
+    if (!accountsCreated) throw Error('Accounts generation failed');
+    //#endregion
+
     return accounts;
   };
+
+  /**
+   * Wait for specified bnumber of blocks
+   * @param blocksCount number of blocks to wait
+   * @returns 
+   */
+  async waitNewBlocks(blocksCount = 1): Promise<void> {
+    const promise = new Promise<void>(async (resolve) => {
+      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
+        if (blocksCount > 0) {
+          blocksCount--;
+        } else {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+    return promise;
+  }
 }
