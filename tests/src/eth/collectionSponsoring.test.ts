@@ -2,7 +2,7 @@ import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createColl
 import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents, createEthAccountWithBalance, evmCollectionHelpers, getCollectionAddressFromResult, evmCollection, ethBalanceViaSub} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
-import { evmToAddress } from '@polkadot/util-crypto';
+import {evmToAddress} from '@polkadot/util-crypto';
 
 describe('evm collection sponsoring', () => {
   itWeb3('sponsors mint transactions', async ({web3, privateKeyWrapper}) => {

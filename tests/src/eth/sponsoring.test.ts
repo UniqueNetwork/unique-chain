@@ -51,8 +51,6 @@ describe('EVM sponsoring', () => {
   });
 
   itWeb3('...but this doesn\'t applies to payable value', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
