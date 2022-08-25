@@ -134,6 +134,9 @@ jobs:
       - name: Import test data
         run: ts-node qa-tests/src/scripts/create-test-collections.ts
 
+      - name: test-api
+        run: npx playwright test --workers=5 --quiet .*.api.test.ts"
+
       - name: Wait 2,5 m for diagnostic activity
         run: sleep 150s
 
