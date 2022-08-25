@@ -16,8 +16,7 @@
 
 #![allow(dead_code)] // This test only checks that macros is not panicking
 
-use evm_coder::{ToLog, execution::Result, solidity_interface, types::*};
-use evm_coder_macros::{solidity, weight};
+use evm_coder::{ToLog, execution::Result, solidity_interface, types::*, solidity, weight};
 
 struct Impls;
 
