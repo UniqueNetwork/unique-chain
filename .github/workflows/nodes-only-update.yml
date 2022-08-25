@@ -287,3 +287,8 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down
+
+        #docker-compose rm -f
+      - name: Remove Docker build artefacts
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" rm -f
