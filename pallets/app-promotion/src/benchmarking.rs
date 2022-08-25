@@ -59,7 +59,7 @@ benchmarks! {
 		let _ = T::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?;
 
-	} : {PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?}
+	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?}
 
 	recalculate_stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);

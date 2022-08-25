@@ -16,12 +16,36 @@
 
 use crate::{
 	runtime_common::config::pallets::{TreasuryAccountId, RelayChainBlockNumberProvider},
-	Runtime, Balances,
+	Runtime, Balances, BlockNumber, Unique, Event,
 };
 
+use frame_support::{parameter_types, PalletId};
+use sp_arithmetic::Perbill;
+use up_common::{
+	constants::{DAYS, UNIQUE},
+	types::Balance,
+};
+
+parameter_types! {
+	pub const AppPromotionId: PalletId = PalletId(*b"appstake");
+	pub const RecalculationInterval: BlockNumber = 20;
+	pub const PendingInterval: BlockNumber = 10;
+	pub const Nominal: Balance = UNIQUE;
+	pub const Day: BlockNumber = DAYS;
+	pub IntervalIncome: Perbill = Perbill::from_rational(RecalculationInterval::get(), 2 * DAYS) * Perbill::from_rational(5u32, 10_000);
+}
+
 impl pallet_app_promotion::Config for Runtime {
+	type PalletId = AppPromotionId;
+	type CollectionHandler = Unique;
 	type Currency = Balances;
 	type WeightInfo = pallet_app_promotion::weights::SubstrateWeight<Self>;
 	type TreasuryAccountId = TreasuryAccountId;
-	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
+	type RelayBlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
+	type RecalculationInterval = RecalculationInterval;
+	type PendingInterval = PendingInterval;
+	type Day = Day;
+	type Nominal = Nominal;
+	type IntervalIncome = IntervalIncome;
+	type Event = Event;
 }

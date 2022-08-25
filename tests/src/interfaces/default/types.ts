@@ -810,11 +810,11 @@ export interface OrmlVestingVestingSchedule extends Struct {
 export interface PalletAppPromotionCall extends Enum {
   readonly isSetAdminAddress: boolean;
   readonly asSetAdminAddress: {
-    readonly admin: AccountId32;
+    readonly admin: PalletEvmAccountBasicCrossAccountIdRepr;
   } & Struct;
   readonly isStartAppPromotion: boolean;
   readonly asStartAppPromotion: {
-    readonly promotionStartRelayBlock: u32;
+    readonly promotionStartRelayBlock: Option<u32>;
   } & Struct;
   readonly isStake: boolean;
   readonly asStake: {
@@ -824,7 +824,32 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asUnstake: {
     readonly amount: u128;
   } & Struct;
-  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'Stake' | 'Unstake';
+  readonly isSponsorCollection: boolean;
+  readonly asSponsorCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isStopSponsorignCollection: boolean;
+  readonly asStopSponsorignCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsorignCollection';
+}
+
+/** @name PalletAppPromotionError */
+export interface PalletAppPromotionError extends Enum {
+  readonly isAdminNotSet: boolean;
+  readonly isNoPermission: boolean;
+  readonly isNotSufficientFounds: boolean;
+  readonly isInvalidArgument: boolean;
+  readonly isAlreadySponsored: boolean;
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument' | 'AlreadySponsored';
+}
+
+/** @name PalletAppPromotionEvent */
+export interface PalletAppPromotionEvent extends Enum {
+  readonly isStakingRecalculation: boolean;
+  readonly asStakingRecalculation: ITuple<[u128, u128]>;
+  readonly type: 'StakingRecalculation';
 }
 
 /** @name PalletBalancesAccountData */

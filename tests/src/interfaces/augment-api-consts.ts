@@ -8,7 +8,7 @@ import '@polkadot/api-base/types/consts';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Permill } from '@polkadot/types/interfaces/runtime';
+import type { Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
@@ -61,6 +61,30 @@ declare module '@polkadot/api-base/types/consts' {
        * Number of blocks that pass between treasury balance updates due to inflation
        **/
       inflationBlockInterval: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    promotion: {
+      /**
+       * In chain blocks.
+       **/
+      day: u32 & AugmentedConst<ApiType>;
+      intervalIncome: Perbill & AugmentedConst<ApiType>;
+      nominal: u128 & AugmentedConst<ApiType>;
+      /**
+       * The app's pallet id, used for deriving its sovereign account ID.
+       **/
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * In chain blocks.
+       **/
+      pendingInterval: u32 & AugmentedConst<ApiType>;
+      /**
+       * In relay blocks.
+       **/
+      recalculationInterval: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

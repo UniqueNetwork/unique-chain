@@ -5345,9 +5345,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-common",
  "pallet-evm",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
+ "pallet-unique",
  "parity-scale-codec 3.1.5",
  "scale-info",
  "serde",
@@ -5355,6 +5357,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "up-data-structs",
 ]
 
 [[package]]
