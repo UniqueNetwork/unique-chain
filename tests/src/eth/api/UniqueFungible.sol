@@ -3,17 +3,7 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-<<<<<<< HEAD
 /// @dev common stubs holder
-=======
-// Anonymous struct
-struct Tuple0 {
-	address field_0;
-	uint256 field_1;
-}
-
-// Common stubs holder
->>>>>>> misk: Update stubs
 interface Dummy {
 
 }
@@ -22,72 +12,8 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-<<<<<<< HEAD
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xffe4da23
-=======
-// Inline
-interface ERC20Events {
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
-}
-
-// Selector: 79cc6790
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-}
-
-// Selector: 942e8b22
-interface ERC20 is Dummy, ERC165, ERC20Events {
-	// Selector: name() 06fdde03
-	function name() external view returns (string memory);
-
-	// Selector: symbol() 95d89b41
-	function symbol() external view returns (string memory);
-
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
-
-	// Selector: decimals() 313ce567
-	function decimals() external view returns (uint8);
-
-	// Selector: balanceOf(address) 70a08231
-	function balanceOf(address owner) external view returns (uint256);
-
-	// Selector: transfer(address,uint256) a9059cbb
-	function transfer(address to, uint256 amount) external returns (bool);
-
-	// Selector: transferFrom(address,address,uint256) 23b872dd
-	function transferFrom(
-		address from,
-		address to,
-		uint256 amount
-	) external returns (bool);
-
-	// Selector: approve(address,uint256) 095ea7b3
-	function approve(address spender, uint256 amount) external returns (bool);
-
-	// Selector: allowance(address,address) dd62ed3e
-	function allowance(address owner, address spender)
-		external
-		view
-		returns (uint256);
-}
-
-<<<<<<< HEAD
-// Selector: ffe4da23
-=======
-// Selector: 765e2fae
->>>>>>> misk: Update stubs
->>>>>>> misk: Update stubs
-=======
-// Selector: e54be640
->>>>>>> misc: update stubs
+/// @dev the ERC-165 identifier for this interface is 0xe54be640
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -127,13 +53,37 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionSponsor(address)
 	function setCollectionSponsor(address sponsor) external;
 
-<<<<<<< HEAD
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0xc74d6751,
+	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
+	function setCollectionSponsorSubstrate(uint256 sponsor) external;
+
+	/// @dev EVM selector for this function is: 0x058ac185,
+	///  or in textual repr: hasCollectionPendingSponsor()
+	function hasCollectionPendingSponsor() external view returns (bool);
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	/// @dev EVM selector for this function is: 0x3c50e97a,
 	///  or in textual repr: confirmCollectionSponsorship()
 	function confirmCollectionSponsorship() external;
+
+	/// Remove collection sponsor.
+	/// @dev EVM selector for this function is: 0x6e0326a3,
+	///  or in textual repr: removeCollectionSponsor()
+	function removeCollectionSponsor() external;
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	/// @dev EVM selector for this function is: 0xb66bbc14,
+	///  or in textual repr: getCollectionSponsor()
+	function getCollectionSponsor() external view returns (Tuple6 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -147,51 +97,6 @@ interface Collection is Dummy, ERC165 {
 	/// @param value Value of the limit.
 	/// @dev EVM selector for this function is: 0x6a3841db,
 	///  or in textual repr: setCollectionLimit(string,uint32)
-=======
-	// Set the substrate sponsor of the collection.
-	//
-	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	//
-	// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	//
-	// Selector: setCollectionSponsorSubstrate(uint256) c74d6751
-	function setCollectionSponsorSubstrate(uint256 sponsor) external;
-
-	// Selector: hasCollectionPendingSponsor() 058ac185
-	function hasCollectionPendingSponsor() external view returns (bool);
-
-	// Collection sponsorship confirmation.
-	//
-	// @dev After setting the sponsor for the collection, it must be confirmed with this function.
-	//
-	// Selector: confirmCollectionSponsorship() 3c50e97a
-	function confirmCollectionSponsorship() external;
-
-	// Remove collection sponsor.
-	//
-	// Selector: removeCollectionSponsor() 6e0326a3
-	function removeCollectionSponsor() external;
-
-	// Get current sponsor.
-	//
-	// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	//
-	// Selector: getCollectionSponsor() b66bbc14
-	function getCollectionSponsor() external view returns (Tuple0 memory);
-
-	// Set limits for the collection.
-	// @dev Throws error if limit not found.
-	// @param limit Name of the limit. Valid names:
-	// 	"accountTokenOwnershipLimit",
-	// 	"sponsoredDataSize",
-	// 	"sponsoredDataRateLimit",
-	// 	"tokenLimit",
-	// 	"sponsorTransferTimeout",
-	// 	"sponsorApproveTimeout"
-	// @param value Value of the limit.
-	//
-	// Selector: setCollectionLimit(string,uint32) 6a3841db
->>>>>>> misk: Update stubs
 	function setCollectionLimit(string memory limit, uint32 value) external;
 
 	/// Set limits for the collection.
@@ -318,6 +223,12 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xb212138f,
 	///  or in textual repr: setOwnerSubstrate(uint256)
 	function setOwnerSubstrate(uint256 newOwner) external;
+}
+
+/// @dev anonymous struct
+struct Tuple6 {
+	address field_0;
+	uint256 field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x79cc6790

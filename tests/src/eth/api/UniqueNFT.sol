@@ -3,23 +3,7 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-<<<<<<< HEAD
 /// @dev common stubs holder
-=======
-// Anonymous struct
-struct Tuple0 {
-	uint256 field_0;
-	string field_1;
-}
-
-// Anonymous struct
-struct Tuple1 {
-	address field_0;
-	uint256 field_1;
-}
-
-// Common stubs holder
->>>>>>> misk: Update stubs
 interface Dummy {
 
 }
@@ -81,7 +65,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xffe4da23
+/// @dev the ERC-165 identifier for this interface is 0xe54be640
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -121,12 +105,37 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionSponsor(address)
 	function setCollectionSponsor(address sponsor) external;
 
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0xc74d6751,
+	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
+	function setCollectionSponsorSubstrate(uint256 sponsor) external;
+
+	/// @dev EVM selector for this function is: 0x058ac185,
+	///  or in textual repr: hasCollectionPendingSponsor()
+	function hasCollectionPendingSponsor() external view returns (bool);
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	/// @dev EVM selector for this function is: 0x3c50e97a,
 	///  or in textual repr: confirmCollectionSponsorship()
 	function confirmCollectionSponsorship() external;
+
+	/// Remove collection sponsor.
+	/// @dev EVM selector for this function is: 0x6e0326a3,
+	///  or in textual repr: removeCollectionSponsor()
+	function removeCollectionSponsor() external;
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	/// @dev EVM selector for this function is: 0xb66bbc14,
+	///  or in textual repr: getCollectionSponsor()
+	function getCollectionSponsor() external view returns (Tuple17 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -268,6 +277,12 @@ interface Collection is Dummy, ERC165 {
 	function setOwnerSubstrate(uint256 newOwner) external;
 }
 
+/// @dev anonymous struct
+struct Tuple17 {
+	address field_0;
+	uint256 field_1;
+}
+
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
 /// @dev the ERC-165 identifier for this interface is 0x42966c68
 interface ERC721Burnable is Dummy, ERC165 {
@@ -321,42 +336,8 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	function finishMinting() external returns (bool);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /// @title Unique extensions for ERC721.
 /// @dev the ERC-165 identifier for this interface is 0xd74d154f
-=======
-<<<<<<< HEAD
-=======
->>>>>>> misc: update stubs
-// Selector: 780e9d63
-interface ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid NFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
-	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) external view returns (uint256);
-
-	// @dev Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		external
-		view
-		returns (uint256);
-
-	// @notice Count NFTs tracked by this contract
-	// @return A count of valid NFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() external view returns (uint256);
-}
-
-// Selector: d74d154f
->>>>>>> misk: Update stubs
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -405,31 +386,11 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 		returns (bool);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple8 {
 	uint256 field_0;
 	string field_1;
 }
-=======
-// Selector: ffe4da23
-=======
-// Selector: 765e2fae
->>>>>>> misk: Update stubs
-=======
-// Selector: e54be640
->>>>>>> misc: update stubs
-interface Collection is Dummy, ERC165 {
-	// Set collection property.
-	//
-	// @param key Property key.
-	// @param value Propery value.
-	//
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
->>>>>>> misk: Update stubs
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
@@ -449,87 +410,7 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	function tokenOfOwnerByIndex(address owner, uint256 index)
 		external
 		view
-<<<<<<< HEAD
 		returns (uint256);
-=======
-		returns (bytes memory);
-
-	// Set the sponsor of the collection.
-	//
-	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	//
-	// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
-	//
-	// Selector: setCollectionSponsor(address) 7623402e
-	function setCollectionSponsor(address sponsor) external;
-
-	// Set the substrate sponsor of the collection.
-	//
-	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	//
-	// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	//
-	// Selector: setCollectionSponsorSubstrate(uint256) c74d6751
-	function setCollectionSponsorSubstrate(uint256 sponsor) external;
-
-	// Selector: hasCollectionPendingSponsor() 058ac185
-	function hasCollectionPendingSponsor() external view returns (bool);
-
-	// Collection sponsorship confirmation.
-	//
-	// @dev After setting the sponsor for the collection, it must be confirmed with this function.
-	//
-	// Selector: confirmCollectionSponsorship() 3c50e97a
-	function confirmCollectionSponsorship() external;
-
-	// Remove collection sponsor.
-	//
-	// Selector: removeCollectionSponsor() 6e0326a3
-	function removeCollectionSponsor() external;
-
-	// Get current sponsor.
-	//
-	// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	//
-	// Selector: getCollectionSponsor() b66bbc14
-	function getCollectionSponsor() external view returns (Tuple1 memory);
-
-	// Set limits for the collection.
-	// @dev Throws error if limit not found.
-	// @param limit Name of the limit. Valid names:
-	// 	"accountTokenOwnershipLimit",
-	// 	"sponsoredDataSize",
-	// 	"sponsoredDataRateLimit",
-	// 	"tokenLimit",
-	// 	"sponsorTransferTimeout",
-	// 	"sponsorApproveTimeout"
-	// @param value Value of the limit.
-	//
-	// Selector: setCollectionLimit(string,uint32) 6a3841db
-	function setCollectionLimit(string memory limit, uint32 value) external;
-
-	// Set limits for the collection.
-	// @dev Throws error if limit not found.
-	// @param limit Name of the limit. Valid names:
-	// 	"ownerCanTransfer",
-	// 	"ownerCanDestroy",
-	// 	"transfersEnabled"
-	// @param value Value of the limit.
-	//
-	// Selector: setCollectionLimit(string,bool) 993b7fba
-	function setCollectionLimit(string memory limit, bool value) external;
-
-	// Get contract address.
-	//
-	// Selector: contractAddress() f6b4dfb4
-	function contractAddress() external view returns (address);
-
-	// Add collection admin by substrate address.
-	// @param new_admin Substrate administrator address.
-	//
-	// Selector: addCollectionAdminSubstrate(uint256) 5730062b
-	function addCollectionAdminSubstrate(uint256 newAdmin) external;
->>>>>>> misk: Update stubs
 
 	/// @notice Count NFTs tracked by this contract
 	/// @return A count of valid NFTs tracked by this contract, where each one of

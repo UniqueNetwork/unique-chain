@@ -3,23 +3,7 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-<<<<<<< HEAD
 /// @dev common stubs holder
-=======
-// Anonymous struct
-struct Tuple0 {
-	uint256 field_0;
-	string field_1;
-}
-
-// Anonymous struct
-struct Tuple1 {
-	address field_0;
-	uint256 field_1;
-}
-
-// Common stubs holder
->>>>>>> misk: Update stubs
 contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
@@ -115,7 +99,7 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xffe4da23
+/// @dev the ERC-165 identifier for this interface is 0xe54be640
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -175,6 +159,27 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0xc74d6751,
+	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
+	function setCollectionSponsorSubstrate(uint256 sponsor) public {
+		require(false, stub_error);
+		sponsor;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x058ac185,
+	///  or in textual repr: hasCollectionPendingSponsor()
+	function hasCollectionPendingSponsor() public view returns (bool) {
+		require(false, stub_error);
+		dummy;
+		return false;
+	}
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
@@ -183,6 +188,25 @@ contract Collection is Dummy, ERC165 {
 	function confirmCollectionSponsorship() public {
 		require(false, stub_error);
 		dummy = 0;
+	}
+
+	/// Remove collection sponsor.
+	/// @dev EVM selector for this function is: 0x6e0326a3,
+	///  or in textual repr: removeCollectionSponsor()
+	function removeCollectionSponsor() public {
+		require(false, stub_error);
+		dummy = 0;
+	}
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	/// @dev EVM selector for this function is: 0xb66bbc14,
+	///  or in textual repr: getCollectionSponsor()
+	function getCollectionSponsor() public view returns (Tuple17 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple17(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -403,6 +427,12 @@ contract Collection is Dummy, ERC165 {
 	}
 }
 
+/// @dev anonymous struct
+struct Tuple17 {
+	address field_0;
+	uint256 field_1;
+}
+
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
 /// @dev the ERC-165 identifier for this interface is 0x42966c68
 contract ERC721Burnable is Dummy, ERC165 {
@@ -481,58 +511,8 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /// @title Unique extensions for ERC721.
 /// @dev the ERC-165 identifier for this interface is 0x7c3bef89
-=======
-<<<<<<< HEAD
-=======
->>>>>>> misc: update stubs
-// Selector: 780e9d63
-contract ERC721Enumerable is Dummy, ERC165 {
-	// @notice Enumerate valid RFTs
-	// @param index A counter less than `totalSupply()`
-	// @return The token identifier for the `index`th NFT,
-	//  (sort order not specified)
-	//
-	// Selector: tokenByIndex(uint256) 4f6ccce7
-	function tokenByIndex(uint256 index) public view returns (uint256) {
-		require(false, stub_error);
-		index;
-		dummy;
-		return 0;
-	}
-
-	// Not implemented
-	//
-	// Selector: tokenOfOwnerByIndex(address,uint256) 2f745c59
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
-		require(false, stub_error);
-		owner;
-		index;
-		dummy;
-		return 0;
-	}
-
-	// @notice Count RFTs tracked by this contract
-	// @return A count of valid RFTs tracked by this contract, where each one of
-	//  them has an assigned and queryable owner not equal to the zero address
-	//
-	// Selector: totalSupply() 18160ddd
-	function totalSupply() public view returns (uint256) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-}
-
-// Selector: 7c3bef89
->>>>>>> misk: Update stubs
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -623,37 +603,11 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	}
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple8 {
 	uint256 field_0;
 	string field_1;
 }
-=======
-// Selector: ffe4da23
-=======
-// Selector: 765e2fae
->>>>>>> misk: Update stubs
-=======
-// Selector: e54be640
->>>>>>> misc: update stubs
-contract Collection is Dummy, ERC165 {
-	// Set collection property.
-	//
-	// @param key Property key.
-	// @param value Propery value.
-	//
-	// Selector: setCollectionProperty(string,bytes) 2f073f66
-	function setCollectionProperty(string memory key, bytes memory value)
-		public
-	{
-		require(false, stub_error);
-		key;
-		value;
-		dummy = 0;
-	}
->>>>>>> misk: Update stubs
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
@@ -684,92 +638,7 @@ contract ERC721Enumerable is Dummy, ERC165 {
 		owner;
 		index;
 		dummy;
-<<<<<<< HEAD
 		return 0;
-=======
-		return hex"";
-	}
-
-	// Set the sponsor of the collection.
-	//
-	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	//
-	// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
-	//
-	// Selector: setCollectionSponsor(address) 7623402e
-	function setCollectionSponsor(address sponsor) public {
-		require(false, stub_error);
-		sponsor;
-		dummy = 0;
-	}
-
-	// Set the substrate sponsor of the collection.
-	//
-	// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	//
-	// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	//
-	// Selector: setCollectionSponsorSubstrate(uint256) c74d6751
-	function setCollectionSponsorSubstrate(uint256 sponsor) public {
-		require(false, stub_error);
-		sponsor;
-		dummy = 0;
-	}
-
-	// Selector: hasCollectionPendingSponsor() 058ac185
-	function hasCollectionPendingSponsor() public view returns (bool) {
-		require(false, stub_error);
-		dummy;
-		return false;
-	}
-
-	// Collection sponsorship confirmation.
-	//
-	// @dev After setting the sponsor for the collection, it must be confirmed with this function.
-	//
-	// Selector: confirmCollectionSponsorship() 3c50e97a
-	function confirmCollectionSponsorship() public {
-		require(false, stub_error);
-		dummy = 0;
-	}
-
-	// Remove collection sponsor.
-	//
-	// Selector: removeCollectionSponsor() 6e0326a3
-	function removeCollectionSponsor() public {
-		require(false, stub_error);
-		dummy = 0;
-	}
-
-	// Get current sponsor.
-	//
-	// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	//
-	// Selector: getCollectionSponsor() b66bbc14
-	function getCollectionSponsor() public view returns (Tuple1 memory) {
-		require(false, stub_error);
-		dummy;
-		return Tuple1(0x0000000000000000000000000000000000000000, 0);
-	}
-
-	// Set limits for the collection.
-	// @dev Throws error if limit not found.
-	// @param limit Name of the limit. Valid names:
-	// 	"accountTokenOwnershipLimit",
-	// 	"sponsoredDataSize",
-	// 	"sponsoredDataRateLimit",
-	// 	"tokenLimit",
-	// 	"sponsorTransferTimeout",
-	// 	"sponsorApproveTimeout"
-	// @param value Value of the limit.
-	//
-	// Selector: setCollectionLimit(string,uint32) 6a3841db
-	function setCollectionLimit(string memory limit, uint32 value) public {
-		require(false, stub_error);
-		limit;
-		value;
-		dummy = 0;
->>>>>>> misk: Update stubs
 	}
 
 	/// @notice Count RFTs tracked by this contract
