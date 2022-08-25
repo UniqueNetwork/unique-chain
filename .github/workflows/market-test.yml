@@ -134,8 +134,16 @@ jobs:
       - name: Import test data
         run: ts-node qa-tests/src/scripts/create-test-collections.ts
 
-      - name: Wait 2,5 m for diagnostic activity
-        run: sleep 150s
+      - name: Show content of qa-test .env
+        run: cat qa-tests/.env
+
+      - name: Read qa -test .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-tests/
+
+#      - name: Wait 2,5 m for diagnostic activity
+#        run: sleep 150s
 
       - name: local-market:start
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build
