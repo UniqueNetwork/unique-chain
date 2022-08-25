@@ -233,7 +233,7 @@ where
 	) -> Result<void> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
-		
+
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::toggle_allowed(contract_address, user, allowed);
 
