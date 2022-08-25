@@ -1,4 +1,4 @@
-import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, getDetailedCollectionInfo, setCollectionSponsorExpectSuccess} from '../util/helpers';
+import {addToAllowListExpectSuccess, bigIntToSub, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, getDetailedCollectionInfo, setCollectionSponsorExpectSuccess} from '../util/helpers';
 import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents, createEthAccountWithBalance, evmCollectionHelpers, getCollectionAddressFromResult, evmCollection, ethBalanceViaSub, subToEth} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
@@ -57,7 +57,7 @@ describe('evm collection sponsoring', () => {
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
     
     const sponsorTuple = await collectionEvm.methods.getCollectionSponsor().call({from: owner});
-    expect(sponsorTuple.field_0).to.be.eq(subToEth(sponsor.address));
+    expect(bigIntToSub(api, BigInt(sponsorTuple[1]))).to.be.eq(sponsor.address);
   });
 
   itWeb3('Remove sponsor', async ({api, web3, privateKeyWrapper}) => {

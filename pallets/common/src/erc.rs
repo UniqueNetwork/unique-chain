@@ -179,15 +179,19 @@ where
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	fn get_collection_sponsor(&self) -> Result<(address, uint256)> {
-		let sponsor = match self.collection.sponsorship {
-			SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => {
-				return Ok(Default::default())
-			}
-			SponsorshipState::Confirmed(ref sponsor) => sponsor,
+		let sponsor = match self.collection.sponsorship.sponsor() {
+			Some(sponsor) => sponsor,
+			None => return Ok(Default::default()),
 		};
 		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
-		let sponsor_sub = convert_cross_account_to_uint256::<T>(&sponsor);
-		Ok((*sponsor.as_eth(), sponsor_sub))
+		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
+			let sponsor = convert_cross_account_to_uint256::<T>(&sponsor);
+			(Default::default(), sponsor)
+		} else {
+			let sponsor = *sponsor.as_eth();
+			(sponsor, Default::default())
+		};
+		Ok(result)
 	}
 
 	/// Set limits for the collection.

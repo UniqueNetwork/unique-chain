@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [v0.1.4] - 2022-08-24
 
 ### Change
- - Add bound `AsRef<[u8]>` to `T::CrossAccountId`.
+ - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
 
 <!-- bureaucrate goes here -->
 ## [v0.1.3] 2022-08-16
