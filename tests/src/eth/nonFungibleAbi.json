@@ -483,7 +483,15 @@
   },
   {
     "inputs": [
-<<<<<<< HEAD
+      { "internalType": "uint256", "name": "sponsor", "type": "uint256" }
+    ],
+    "name": "setCollectionSponsorSubstrate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "newOwner", "type": "address" }
     ],
     "name": "setOwner",
@@ -496,11 +504,6 @@
       { "internalType": "uint256", "name": "newOwner", "type": "uint256" }
     ],
     "name": "setOwnerSubstrate",
-=======
-      { "internalType": "uint256", "name": "sponsor", "type": "uint256" }
-    ],
-    "name": "setCollectionSponsorSubstrate",
->>>>>>> misk: Update stubs
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

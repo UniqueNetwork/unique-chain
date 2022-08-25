@@ -120,7 +120,6 @@
         "internalType": "address",
         "name": "contractAddress",
         "type": "address"
-<<<<<<< HEAD
       }
     ],
     "name": "removeSponsor",
@@ -147,8 +146,6 @@
         "internalType": "address",
         "name": "contractAddress",
         "type": "address"
-=======
->>>>>>> path: add stubs
       },
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],

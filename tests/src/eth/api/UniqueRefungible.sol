@@ -322,10 +322,13 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @title Unique extensions for ERC721.
 /// @dev the ERC-165 identifier for this interface is 0x7c3bef89
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> misc: update stubs
 // Selector: 780e9d63
 interface ERC721Enumerable is Dummy, ERC165 {
 	// @notice Enumerate valid RFTs
@@ -415,6 +418,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple8 {
 	uint256 field_0;
@@ -425,6 +429,9 @@ struct Tuple8 {
 =======
 // Selector: 765e2fae
 >>>>>>> misk: Update stubs
+=======
+// Selector: e54be640
+>>>>>>> misc: update stubs
 interface Collection is Dummy, ERC165 {
 	// Set collection property.
 	//

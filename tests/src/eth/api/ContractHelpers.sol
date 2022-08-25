@@ -13,6 +13,7 @@ interface ERC165 is Dummy {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @title Magic contract, which allows users to reconfigure other contracts
 /// @dev the ERC-165 identifier for this interface is 0xd77fab70
 =======
@@ -22,6 +23,9 @@ interface ERC165 is Dummy {
 // Selector: 06fc42e9
 >>>>>>> path: add stubs
 >>>>>>> path: add stubs
+=======
+// Selector: 6073d917
+>>>>>>> misc: update stubs
 interface ContractHelpers is Dummy, ERC165 {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
@@ -38,6 +42,7 @@ interface ContractHelpers is Dummy, ERC165 {
 		returns (address);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	/// Set sponsor.
 	/// @param contractAddress Contract for which a sponsor is being established.
 	/// @param sponsor User address who set as pending sponsor.
@@ -45,6 +50,8 @@ interface ContractHelpers is Dummy, ERC165 {
 	///  or in textual repr: setSponsor(address,address)
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> misc: update stubs
 	// Set sponsor.
 	//
 	// @param contract_address Contract for which a sponsor is being established.
@@ -90,14 +97,6 @@ interface ContractHelpers is Dummy, ERC165 {
 	// @param contract_address The contract for which a sponsor is requested.
 	// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	//
-=======
-	// Selector: setSponsor(address,address) f01fba93
-	function setSponsor(address contractAddress, address sponsor) external;
-
-	// Selector: confirmSponsorship(address) abc00001
-	function confirmSponsorship(address contractAddress) external;
-
->>>>>>> path: add stubs
 	// Selector: getSponsor(address) 743fc745
 >>>>>>> path: add stubs
 	function getSponsor(address contractAddress)
@@ -105,6 +104,7 @@ interface ContractHelpers is Dummy, ERC165 {
 		view
 		returns (Tuple0 memory);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	/// Check tat contract has confirmed sponsor.
 	///
@@ -122,6 +122,8 @@ interface ContractHelpers is Dummy, ERC165 {
 	///  or in textual repr: hasPendingSponsor(address)
 =======
 <<<<<<< HEAD
+=======
+>>>>>>> misc: update stubs
 	// Check tat contract has confirmed sponsor.
 	//
 	// @param contract_address The contract for which the presence of a confirmed sponsor is checked.
@@ -135,11 +137,6 @@ interface ContractHelpers is Dummy, ERC165 {
 	// @param contract_address The contract for which the presence of a pending sponsor is checked.
 	// @return **true** if contract has pending sponsor.
 	//
-=======
-	// Selector: hasSponsor(address) 97418603
-	function hasSponsor(address contractAddress) external view returns (bool);
-
->>>>>>> path: add stubs
 	// Selector: hasPendingSponsor(address) 39b9b242
 >>>>>>> path: add stubs
 	function hasPendingSponsor(address contractAddress)

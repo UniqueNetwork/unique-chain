@@ -36,7 +36,6 @@ interface ERC20Events {
 	);
 }
 
-<<<<<<< HEAD
 // Selector: 79cc6790
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	// Selector: burnFrom(address,uint256) 79cc6790
@@ -80,11 +79,15 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 		returns (uint256);
 }
 
+<<<<<<< HEAD
 // Selector: ffe4da23
 =======
 // Selector: 765e2fae
 >>>>>>> misk: Update stubs
 >>>>>>> misk: Update stubs
+=======
+// Selector: e54be640
+>>>>>>> misc: update stubs
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
