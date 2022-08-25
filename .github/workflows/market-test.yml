@@ -140,6 +140,13 @@ jobs:
       - name: Wait 2,5 m for diagnostic activity
         run: sleep 150s
 
+      - name: local-market:start
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build
+
+      - name: local-market:start
+        run: qa-tests/src/scripts/wait-market-ready.sh
+        shell: bash
+
       - name: Stop nonce-app
         if: always()
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" down
