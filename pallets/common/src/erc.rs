@@ -133,7 +133,11 @@ where
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
 	///
 	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	fn set_collection_sponsor_substrate(&mut self, caller: caller, sponsor: uint256) -> Result<void> {
+	fn set_collection_sponsor_substrate(
+		&mut self,
+		caller: caller,
+		sponsor: uint256,
+	) -> Result<void> {
 		check_is_owner_or_admin(caller, self)?;
 
 		let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
@@ -144,7 +148,10 @@ where
 
 	// /// Whether there is a pending sponsor.
 	fn has_collection_pending_sponsor(&self) -> Result<bool> {
-		Ok(matches!(self.collection.sponsorship, SponsorshipState::Unconfirmed(_)))
+		Ok(matches!(
+			self.collection.sponsorship,
+			SponsorshipState::Unconfirmed(_)
+		))
 	}
 
 	/// Collection sponsorship confirmation.
@@ -173,7 +180,9 @@ where
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	fn get_collection_sponsor(&self) -> Result<(address, uint256)> {
 		let sponsor = match self.collection.sponsorship {
-			SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => return Ok(Default::default()),
+			SponsorshipState::Disabled | SponsorshipState::Unconfirmed(_) => {
+				return Ok(Default::default())
+			}
 			SponsorshipState::Confirmed(ref sponsor) => sponsor,
 		};
 		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());

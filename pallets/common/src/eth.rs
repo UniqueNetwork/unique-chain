@@ -60,7 +60,7 @@ where
 }
 
 /// Convert `uint256` to `CrossAccountId`.
-pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId 
+pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
 where
 	T::AccountId: From<[u8; 32]>,
 {
