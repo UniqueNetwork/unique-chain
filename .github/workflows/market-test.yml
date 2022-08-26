@@ -190,7 +190,8 @@ jobs:
           docker builder prune -f
           docker system prune -f
 
-
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
 
 
 
