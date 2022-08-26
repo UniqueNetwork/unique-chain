@@ -5,7 +5,7 @@ import {mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper} from './unique';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
-import {ICollectionCreationOptions, TSigner} from './types';
+import {ICollectionCreationOptions} from './types';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 
@@ -122,7 +122,7 @@ class ArrangeGroup {
   };
 
   /**
-   * Wait for specified bnumber of blocks
+   * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
@@ -150,7 +150,9 @@ class ActGroup {
   }
 
   /**
-   * Creates collection creation tx object. Then it should be executed with expectSuccess or expectFailure methods
+   * Creates `CreateCollectionTx` object with default name, description, prefix and mode of nft,
+   * if they are not specified explicitly.
+   * It should be chained with `expectSuccess` or `expectFailure` methods.
    * @param signer 
    * @param collectionOptions basic collection options and properties
    * @example createCollection(alice, {name: 'Awesome Collection'}).expectSuccess();
@@ -161,7 +163,9 @@ class ActGroup {
   }
 
   /**
-   * Creates NFT collection tx object. Then it should be executed with expectSuccess or expectFailure methods
+   * Creates `CreateCollectionTx<UniqueNFTCollection>` object with default name, description and prefix
+   * if they are not specified explicitly.
+   * Then it should be executed with expectSuccess or expectFailure methods.
    * @param signer IKeyringPair
    * @param collectionOptions basic collection options and properties
    * @example createNFTCollection(alice, {name: 'Awesome Collection'}).expectSuccess();
