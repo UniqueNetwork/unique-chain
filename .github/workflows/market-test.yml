@@ -159,7 +159,9 @@ jobs:
         shell: bash
 
       - name: test-api
-        run: npx playwright test --workers=8 --quiet .*.api.test.ts
+        run: |
+          npm install -D @playwright/test
+          npx playwright test --workers=8 --quiet .*.api.test.ts
 
       - name: Stop nonce-app
         if: always()
