@@ -147,9 +147,6 @@ jobs:
         with:
           path: qa-tests/
 
-#      - name: Wait 2,5 m for diagnostic activity
-#        run: sleep 150s
-
       - name: local-market:start
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build
 
@@ -157,14 +154,18 @@ jobs:
         run: qa-tests/src/scripts/wait-market-ready.sh
         shell: bash
 
-      - name: test-api
+      - name: Install dependecies
         run: |
           cd qa-tests
+          npm ci
           npm install -D @playwright/test
-          export PLAYWRIGHT_JSON_OUTPUT_NAME=${{ github.run_id }}-market-e2e-test.xml
-          echo "$PLAYWRIGHT_JSON_OUTPUT_NAME"
-          printenv
-          npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=junit
+          npx playwright install-deps
+          npx playwright install
+          
+      - name: 
+        working-directory: qa-tests
+        run: 
+          PLAYWRIGHT_JSON_OUTPUT_NAME=${{ github.run_id }}-market-e2e-test.xml npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=junit --config playwright.config.ts
 
       - name: Show env variables
         if: success() || failure()
@@ -174,7 +175,7 @@ jobs:
         if: success() || failure()
         run: |
           ls -la 
-          ls -la qa-test/
+          ls -la qa-tests/
 
       - name: Upload tests result
         uses: actions/upload-artifact@v2  # upload test results
@@ -189,7 +190,7 @@ jobs:
 
 #      - name: Stop running containers
 #        if: always()                   # run this step always
-#        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+#        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always
