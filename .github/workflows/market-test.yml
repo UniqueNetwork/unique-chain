@@ -160,6 +160,7 @@ jobs:
 
       - name: test-api
         run: |
+          cd qa-tests
           npm install -D @playwright/test
           npx playwright test --workers=8 --quiet .*.api.test.ts
 
