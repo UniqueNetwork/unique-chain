@@ -14,36 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi, submitTransactionAsync} from './substrate/substrate-api';
-import {IKeyringPair, ITuple} from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import {
   
-  createMultipleItemsExpectSuccess,
-  isTokenExists,
-  getLastTokenId,
-  getAllowance,
-  approve,
-  transferFrom,
-  createCollection,
-  transfer,
-  burnItem,
   normalizeAccountId,
-  CrossAccountId,
-  createFungibleItemExpectSuccess,
-  U128_MAX,
-  burnFromExpectSuccess,
-  UNIQUE,
   getModuleNames,
   Pallets,
-  getBlockNumber,
 } from './util/helpers';
 
-import chai, {use} from 'chai';
+import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {usingPlaygrounds} from './util/playgrounds';
 import {default as waitNewBlocks} from './substrate/wait-new-blocks';
 
-import {encodeAddress, hdEthereum, mnemonicGenerate} from '@polkadot/util-crypto';
+import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
 import {UniqueHelper} from './util/playgrounds/unique';
 import {ApiPromise} from '@polkadot/api';
@@ -81,26 +65,25 @@ describe('app-promotions.stake extrinsic', () => {
     // assert:  query appPromotion.staked(Alice) equal [100, 200]
     // assert:  query appPromotion.totalStaked() increased by 200
     
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
+    await usingPlaygrounds(async (helper) => {
+      const totalStakedBefore = await helper.staking.getTotalStaked();
       const staker = await createUser();
    
+      await expect(helper.staking.stake(staker, nominal - 1n)).to.be.eventually.rejected;
+      await expect(helper.staking.stake(staker, nominal * 1n)).to.be.eventually.fulfilled;
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(nominal);
+
+      // TODO add helpers to assert bigints. Check balance close to 10
+      expect(await helper.balance.getSubstrate(staker.address) - 9n * nominal >= (nominal / 2n)).to.be.true;
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(nominal);
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + nominal);
+
+      await helper.arrange.waitNewBlocks(1);
       
+      await expect(helper.staking.stake(staker, 2n * nominal)).to.be.eventually.fulfilled;
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(3n * nominal);
       
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(nominal / 2n))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.totalStakingLocked(normalizeAccountId(staker))).toBigInt()).to.be.equal(nominal);
-      expect(9n * nominal - await helper.balance.getSubstrate(staker.address) <= nominal / 2n).to.be.true;
-      expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(staker))).toBigInt()).to.be.equal(nominal);
-      expect((await helper.api!.rpc.unique.totalStaked()).toBigInt()).to.be.equal(totalStakedBefore + nominal);
-      
-      await waitNewBlocks(helper.api!, 1);
-      
-      
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.totalStakingLocked(normalizeAccountId(staker))).toBigInt()).to.be.equal(3n * nominal);
-      
-      const stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([block, amount]) => [block.toBigInt(), amount.toBigInt()]);
+      const stakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       expect(stakedPerBlock.map((x) => x[1])).to.be.deep.equal([nominal, 2n * nominal]);
     });
   });
