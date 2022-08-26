@@ -159,7 +159,7 @@ jobs:
         shell: bash
 
       - name: test-api
-        run: npx playwright test --workers=5 --quiet .*.api.test.ts"
+        run: npx playwright test --workers=8 --quiet .*.api.test.ts
 
       - name: Stop nonce-app
         if: always()
