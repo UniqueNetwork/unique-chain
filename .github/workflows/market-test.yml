@@ -161,19 +161,19 @@ jobs:
         run: |
           cd qa-tests
           npm install -D @playwright/test
-          export PLAYWRIGHT_JSON_OUTPUT_NAME=${{ GITHUB_RUN_ID }}-market-e2e-test.json
+          export PLAYWRIGHT_JSON_OUTPUT_NAME=${{ github.run_id }}-market-e2e-test.json
           npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=json
           ls -la
 
-#      - name: API tests market e2e
-#        uses: phoenix-actions/test-reporting@v8
-#        id: test-report
-#        if: success() || failure()    # run this step even if previous step failed
-#        with:
-#          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
-#          path: tests/mochawesome-report/test-*.json    # Path to test results
-#          reporter: mochawesome-json
-#          fail-on-error: 'false'
+      - name: API tests market e2e
+        uses: phoenix-actions/test-reporting@v8
+        id: market-e2e-test
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: qa-tests/${{ github.run_id }}-market-e2e-test.json    # Path to test results
+          reporter: dart-json
+          fail-on-error: 'false'
 
       - name: Stop nonce-app
         if: always()
