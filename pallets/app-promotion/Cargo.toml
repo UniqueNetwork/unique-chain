@@ -118,6 +118,9 @@ path =  "../common"
 default-features = false
 path =  "../unique"
 
+[dependencies.pallet-evm-contract-helpers]
+default-features = false
+path =  "../evm-contract-helpers"
 ################################################################################
 
 [dependencies]

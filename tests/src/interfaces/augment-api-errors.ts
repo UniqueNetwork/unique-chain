@@ -265,7 +265,11 @@ declare module '@polkadot/api-base/types/errors' {
     };
     evmContractHelpers: {
       /**
-       * This method is only executable by owner
+       * No pending sponsor for contract.
+       **/
+      NoPendingSponsor: AugmentedError<ApiType>;
+      /**
+       * This method is only executable by owner.
        **/
       NoPermission: AugmentedError<ApiType>;
       /**

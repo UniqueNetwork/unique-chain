@@ -4,9 +4,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
-import * as defs from '../../interfaces/definitions';
-import {ApiPromise, WsProvider} from '@polkadot/api';
-import { UniqueHelper } from './unique';
+import {DevUniqueHelper} from './unique.dev';
 
 
 class SilentLogger {
@@ -19,45 +17,9 @@ class SilentLogger {
 }
 
 
-class DevUniqueHelper extends UniqueHelper {
-  async connect(wsEndpoint: string, listeners?: any): Promise<void> {
-    const wsProvider = new WsProvider(wsEndpoint);
-    this.api = new ApiPromise({
-      provider: wsProvider, 
-      signedExtensions: {
-        ContractHelpers: {
-          extrinsic: {},
-          payload: {},
-        },
-        FakeTransactionFinalizer: {
-          extrinsic: {},
-          payload: {},
-        },
-      },
-      rpc: {
-        unique: defs.unique.rpc,
-        rmrk: defs.rmrk.rpc,
-        eth: {
-          feeHistory: {
-            description: 'Dummy',
-            params: [],
-            type: 'u8',
-          },
-          maxPriorityFeePerGas: {
-            description: 'Dummy',
-            params: [],
-            type: 'u8',
-          },
-        },
-      },
-    });
-    await this.api.isReadyOrError;
-    this.network = await UniqueHelper.detectNetwork(this.api);
-  }
-}
 
 
-export const usingPlaygrounds = async <T = void> (code: (helper: UniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<T>) => {
+export const usingPlaygrounds = async <T = void> (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<T>) => {
   // TODO: Remove, this is temporary: Filter unneeded API output
   // (Jaco promised it will be removed in the next version)
   const consoleErr = console.error;

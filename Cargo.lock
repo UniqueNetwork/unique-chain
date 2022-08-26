@@ -5347,6 +5347,7 @@ dependencies = [
  "pallet-balances",
  "pallet-common",
  "pallet-evm",
+ "pallet-evm-contract-helpers",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-unique",
