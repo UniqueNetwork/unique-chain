@@ -50,12 +50,10 @@ pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId
 #[solidity_interface(name = ERC1633)]
 impl<T: Config> RefungibleTokenHandle<T> {
 	fn parent_token(&self) -> Result<address> {
-		self.consume_store_reads(2)?;
 		Ok(collection_id_to_address(self.id))
 	}
 
 	fn parent_token_id(&self) -> Result<uint256> {
-		self.consume_store_reads(2)?;
 		Ok(self.1.into())
 	}
 }
