@@ -162,7 +162,18 @@ jobs:
         run: |
           cd qa-tests
           npm install -D @playwright/test
-          npx playwright test --workers=8 --quiet .*.api.test.ts
+          npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=json
+          ls -la
+
+#      - name: API tests market e2e
+#        uses: phoenix-actions/test-reporting@v8
+#        id: test-report
+#        if: success() || failure()    # run this step even if previous step failed
+#        with:
+#          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
+#          path: tests/mochawesome-report/test-*.json    # Path to test results
+#          reporter: mochawesome-json
+#          fail-on-error: 'false'
 
       - name: Stop nonce-app
         if: always()
@@ -177,6 +188,7 @@ jobs:
         run: |
           docker builder prune -f
           docker system prune -f
+
 
 
 
