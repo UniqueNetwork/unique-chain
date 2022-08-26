@@ -150,19 +150,6 @@ class ActGroup {
   }
 
   /**
-   * Creates `CreateCollectionTx` object with default name, description, prefix and mode of nft,
-   * if they are not specified explicitly.
-   * It should be chained with `expectSuccess` or `expectFailure` methods.
-   * @param signer 
-   * @param collectionOptions basic collection options and properties
-   * @example createCollection(alice, {name: 'Awesome Collection'}).expectSuccess();
-   * @returns id of a newly created collection
-   */
-  createCollection(signer: IKeyringPair, collectionOptions?: ICollectionCreationOptions) {
-    return new CreateCollectionTx(signer, {...defaultOptions, ...collectionOptions}, (collectionId) => collectionId, this.helper);
-  }
-
-  /**
    * Creates `CreateCollectionTx<UniqueNFTCollection>` object with default name, description and prefix
    * if they are not specified explicitly.
    * Then it should be executed with expectSuccess or expectFailure methods.
@@ -173,56 +160,53 @@ class ActGroup {
    */
   createNFTCollection(signer: IKeyringPair, collectionOptions?: ICollectionCreationOptions) {
     const mode = {nft: null};
-    return new CreateCollectionTx(signer, {...defaultOptions, ...collectionOptions, ...mode}, (collectionId) => this.helper.nft.getCollectionObject(collectionId), this.helper);
+    return new CreateCollectionTx(
+      signer, 
+      {...defaultOptions, ...collectionOptions, mode}, 
+      (helper, signer, collectionOptions) => helper.nft.mintCollection(signer, collectionOptions),
+      this.helper,
+    );
   }
 }
 
-class CreateCollectionTx<T> {
-  readonly extrinsic = 'api.tx.unique.createCollectionEx';
-  readonly signer;
-  readonly transformationFn: (collectionId: number) => T;
+class CreateCollectionTx<T extends {collectionId: number}> {
+  readonly helper: UniqueHelper;
+  readonly signer: IKeyringPair;
+  readonly creationFn: (helper: UniqueHelper, signer: IKeyringPair, collectionOptions: ICollectionCreationOptions) => Promise<T>;
   private collectionOptions: ICollectionCreationOptions;
-  private helper: UniqueHelper;
 
-  constructor(signer: IKeyringPair, collectionOptions: ICollectionCreationOptions, transformationFn: (collectionId: number) => T, helper: UniqueHelper) {
+  constructor(
+    signer: IKeyringPair,
+    collectionOptions: ICollectionCreationOptions,
+    creationFn: (helper: UniqueHelper, signer: IKeyringPair, collectionOptions: ICollectionCreationOptions) => Promise<T>,
+    helper: UniqueHelper,
+  ) {
     this.helper = helper;
     this.signer = signer;
     this.collectionOptions = collectionOptions;
-    this.transformationFn = transformationFn;
-
-    // encode name, description, tokenPrefix properties
-    for (const key of ['name', 'description', 'tokenPrefix']) {
-      if (typeof this.collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') {
-        this.collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(this.collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
-      }
-    }
-  }
-
-  private async execute(expectSuccess = true): Promise<number> {
-    const result = await this.helper.executeExtrinsic(this.signer, this.extrinsic, [this.collectionOptions], expectSuccess);
-    const collectionId = this.helper.util.extractCollectionIdFromCreationResult(result);
-    return collectionId;
+    this.creationFn = creationFn;
   }
 
   /**
    * Executes the transaction and assert that the collection has been created
    * @returns extended collection data
    */
-  async expectSuccess() {
-    const collectionId = await this.execute(true);
-    const collectionData = await this.helper.collection.getData(collectionId);
-    
-    expect(this.helper.util.str2vec(collectionData!.name!)).to.deep.equal(this.collectionOptions.name);
-    expect(this.helper.util.str2vec(collectionData!.description!)).to.deep.equal(this.collectionOptions.description);
-    expect(this.helper.util.str2vec(collectionData!.raw.tokenPrefix!)).to.deep.equal(this.collectionOptions.tokenPrefix);
+  async expectSuccess(): Promise<T> {
+    const collection = await this.creationFn(this.helper, this.signer, this.collectionOptions);
+    const collectionData = await this.helper.collection.getData(collection.collectionId);
+    if (!collectionData) throw Error('collectionById returned null');
 
-    return this.transformationFn(collectionId);
+    expect(collectionData.name!).to.equal(this.collectionOptions.name);
+    expect(collectionData.description!).to.equal(this.collectionOptions.description);
+    expect(collectionData.raw.tokenPrefix!).to.equal(this.collectionOptions.tokenPrefix);
+
+    return collection;
   }
 
   /**
    * Executes the transaction and asserts that the transaction has been rejected
    */
   async expectFailure(): Promise<void> {
-    await expect(this.execute(false)).to.be.rejected;
+    await expect(this.creationFn(this.helper, this.signer, this.collectionOptions)).to.be.rejected;
   }
 }
