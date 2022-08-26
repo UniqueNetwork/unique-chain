@@ -33,13 +33,13 @@ FROM rust-builder as builder-unique
 
 ARG PROFILE=release
 ARG FEATURE=
-ARG REPO_URL=
 ARG BRANCH=
 
 
 WORKDIR /unique_parachain
 
-RUN git clone $REPO_URL -b $BRANCH . && \
+RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
+    cd unique-chain && \
     cargo build --features=$FEATURE --$PROFILE
 
 # ===== BUILD POLKADOT =====
@@ -93,11 +93,14 @@ WORKDIR /unique_parachain
 
 RUN git clone -b $CUMULUS_BUILD_BRANCH --depth 1 https://github.com/paritytech/cumulus.git && \
     cd cumulus && \
-    cargo build --release
+    cargo build --release --locked -p polkadot-parachain
 
 # ===== RUN ======
 
 FROM ubuntu:20.04
+
+ARG POLKADOT_LAUNCH_BRANCH=
+ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \
@@ -107,7 +110,7 @@ RUN apt-get -y update && \
       nvm install v16.16.0 && \
       nvm use v16.16.0
 
-RUN git clone https://github.com/uniquenetwork/polkadot-launch -b feature/runtime-upgrade-testing
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b $POLKADOT_LAUNCH_BRANCH
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -115,7 +118,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
-COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
+COPY --from=builder-unique /unique_parachain/unique-chain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=builder-moonbeam /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=builder-cumulus /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus

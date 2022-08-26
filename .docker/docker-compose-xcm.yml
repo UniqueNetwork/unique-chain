@@ -5,8 +5,6 @@ services:
     build:
       context: ../
       dockerfile: .docker/Dockerfile-xcm
-    image: xcm_nodes
-    container_name: xcm_nodes
     expose:
       - 9844
       - 9944
