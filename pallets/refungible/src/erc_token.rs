@@ -32,7 +32,8 @@ use core::{
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
 use pallet_common::{
 	CommonWeightInfo,
-	erc::{CommonEvmHandler, PrecompileResult}, eth::collection_id_to_address,
+	erc::{CommonEvmHandler, PrecompileResult},
+	eth::collection_id_to_address,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};

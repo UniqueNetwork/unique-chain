@@ -154,7 +154,6 @@ fn make_data<T: Config>(
 	Ok(data)
 }
 
-
 fn create_refungible_collection_internal<
 	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
 >(
