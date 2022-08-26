@@ -164,8 +164,8 @@ jobs:
           
       - name: 
         working-directory: qa-tests
-        run: 
-          PLAYWRIGHT_JSON_OUTPUT_NAME=${{ github.run_id }}-market-e2e-test.xml npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=junit --config playwright.config.ts
+        run: |
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME=${{ github.run_id }}-market-e2e-test.xml npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=junit --config playwright.config.ts
 
       - name: Show env variables
         if: success() || failure()
