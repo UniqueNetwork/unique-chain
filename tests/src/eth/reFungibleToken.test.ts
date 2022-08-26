@@ -668,7 +668,7 @@ describe('ERC 1633 implementation', () => {
 
     const tokenAddress = await refungibleTokenContract.methods.parentToken().call();
     const tokenId = await refungibleTokenContract.methods.parentTokenId().call();
-    expect(tokenAddress).to.be.equal(rftTokenAddress);
+    expect(tokenAddress).to.be.equal(collectionIdAddress);
     expect(tokenId).to.be.equal(refungibleTokenId);
   });
 });

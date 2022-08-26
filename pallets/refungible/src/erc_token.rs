@@ -32,13 +32,13 @@ use core::{
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
 use pallet_common::{
 	CommonWeightInfo,
-	erc::{CommonEvmHandler, PrecompileResult},
+	erc::{CommonEvmHandler, PrecompileResult}, eth::collection_id_to_address,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_std::vec::Vec;
-use up_data_structs::{mapping::TokenAddressMapping, TokenId};
+use up_data_structs::TokenId;
 
 use crate::{
 	Allowance, Balance, common::CommonWeights, Config, Pallet, RefungibleHandle, SelfWeightOf,
@@ -51,7 +51,7 @@ pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId
 impl<T: Config> RefungibleTokenHandle<T> {
 	fn parent_token(&self) -> Result<address> {
 		self.consume_store_reads(2)?;
-		Ok(*T::CrossTokenAddressMapping::token_to_address(self.id, self.1).as_eth())
+		Ok(collection_id_to_address(self.id))
 	}
 
 	fn parent_token_id(&self) -> Result<uint256> {
