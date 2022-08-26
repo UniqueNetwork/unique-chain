@@ -29,22 +29,20 @@ use core::{
 	convert::TryInto,
 	ops::Deref,
 };
-use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
+use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
 use pallet_common::{
 	CommonWeightInfo,
-	erc::{CommonEvmHandler, PrecompileResult, static_property::key},
-	eth::map_eth_to_id,
+	erc::{CommonEvmHandler, PrecompileResult},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::H160;
 use sp_std::vec::Vec;
-use up_data_structs::{mapping::TokenAddressMapping, PropertyScope, TokenId};
+use up_data_structs::{mapping::TokenAddressMapping, TokenId};
 
 use crate::{
 	Allowance, Balance, common::CommonWeights, Config, Pallet, RefungibleHandle, SelfWeightOf,
-	TokenProperties, TotalSupply, weights::WeightInfo,
+	TotalSupply, weights::WeightInfo,
 };
 
 pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
@@ -53,59 +51,12 @@ pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId
 impl<T: Config> RefungibleTokenHandle<T> {
 	fn parent_token(&self) -> Result<address> {
 		self.consume_store_reads(2)?;
-		let props = <TokenProperties<T>>::get((self.id, self.1));
-		let key = key::parent_nft();
-
-		let key_scoped = PropertyScope::Eth
-			.apply(key)
-			.expect("property key shouldn't exceed length limit");
-		if let Some(value) = props.get(&key_scoped) {
-			Ok(H160::from_slice(value.as_slice()))
-		} else {
-			Ok(*T::CrossTokenAddressMapping::token_to_address(self.id, self.1).as_eth())
-		}
+		Ok(*T::CrossTokenAddressMapping::token_to_address(self.id, self.1).as_eth())
 	}
 
 	fn parent_token_id(&self) -> Result<uint256> {
 		self.consume_store_reads(2)?;
-		let props = <TokenProperties<T>>::get((self.id, self.1));
-		let key = key::parent_nft();
-
-		let key_scoped = PropertyScope::Eth
-			.apply(key)
-			.expect("property key shouldn't exceed length limit");
-		if let Some(value) = props.get(&key_scoped) {
-			let nft_token_address = H160::from_slice(value.as_slice());
-			let nft_token_account = T::CrossAccountId::from_eth(nft_token_address);
-			let (_, token_id) = T::CrossTokenAddressMapping::address_to_token(&nft_token_account)
-				.ok_or("parent NFT should contain NFT token address")?;
-
-			Ok(token_id.into())
-		} else {
-			Ok(self.1.into())
-		}
-	}
-}
-
-#[solidity_interface(name = ERC1633UniqueExtensions)]
-impl<T: Config> RefungibleTokenHandle<T> {
-	#[solidity(rename_selector = "setParentNFT")]
-	#[weight(<CommonWeights<T>>::token_owner() + <SelfWeightOf<T>>::set_parent_nft_unchecked())]
-	fn set_parent_nft(
-		&mut self,
-		caller: caller,
-		collection: address,
-		nft_id: uint256,
-	) -> Result<bool> {
-		self.consume_store_reads(1)?;
-		let caller = T::CrossAccountId::from_eth(caller);
-		let nft_collection = map_eth_to_id(&collection).ok_or("collection not found")?;
-		let nft_token = nft_id.try_into()?;
-
-		<Pallet<T>>::set_parent_nft(&self.0, self.1, caller, nft_collection, nft_token)
-			.map_err(dispatch_to_evm::<T>)?;
-
-		Ok(true)
+		Ok(self.1.into())
 	}
 }
 
@@ -307,7 +258,7 @@ impl<T: Config> Deref for RefungibleTokenHandle<T> {
 
 #[solidity_interface(
 	name = UniqueRefungibleToken,
-	is(ERC20, ERC20UniqueExtensions, ERC1633, ERC1633UniqueExtensions)
+	is(ERC20, ERC20UniqueExtensions, ERC1633)
 )]
 impl<T: Config> RefungibleTokenHandle<T> where T::AccountId: From<[u8; 32]> {}
 

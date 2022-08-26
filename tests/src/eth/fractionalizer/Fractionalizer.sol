@@ -137,7 +137,6 @@ contract Fractionalizer {
             rft2nftMapping[rftTokenAddress] = Token(_collection, _token);
 
             rftTokenContract = UniqueRefungibleToken(rftTokenAddress);
-            rftTokenContract.setParentNFT(_collection, _token);
         } else {
             rftTokenId = nft2rftMapping[_collection][_token];
             rftTokenAddress = rftCollectionContract.tokenContractAddress(rftTokenId);

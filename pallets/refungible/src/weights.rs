@@ -53,7 +53,6 @@ pub trait WeightInfo {
 	fn set_token_properties(b: u32, ) -> Weight;
 	fn delete_token_properties(b: u32, ) -> Weight;
 	fn repartition_item() -> Weight;
-	fn set_parent_nft_unchecked() -> Weight;
 	fn token_owner() -> Weight;
 }
 
@@ -254,14 +253,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(22_356_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	// Storage: Refungible Balance (r:1 w:0)
-	// Storage: Refungible TotalSupply (r:1 w:0)
-	// Storage: Refungible TokenProperties (r:1 w:1)
-	fn set_parent_nft_unchecked() -> Weight {
-		(12_015_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Refungible Balance (r:2 w:0)
 	fn token_owner() -> Weight {
@@ -466,14 +457,6 @@ impl WeightInfo for () {
 		(22_356_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	// Storage: Refungible Balance (r:1 w:0)
-	// Storage: Refungible TotalSupply (r:1 w:0)
-	// Storage: Refungible TokenProperties (r:1 w:1)
-	fn set_parent_nft_unchecked() -> Weight {
-		(12_015_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Refungible Balance (r:2 w:0)
 	fn token_owner() -> Weight {
