@@ -165,7 +165,7 @@ jobs:
       - name: 
         working-directory: qa-tests
         run: |
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=${{ github.run_id }}-market-e2e-test.xml npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=junit --config playwright.config.ts
+          npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
 
       - name: Show env variables
         if: success() || failure()
@@ -177,12 +177,6 @@ jobs:
           ls -la 
           ls -la qa-tests/
 
-      - name: Upload tests result
-        uses: actions/upload-artifact@v2  # upload test results
-        if: success() || failure()        # run this step even if previous step failed
-        with:
-          name: test-results
-          path: qa-tests/${{ github.run_id }}-market-e2e-test.xml
 
       - name: Stop nonce-app
         if: always()
