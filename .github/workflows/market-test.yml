@@ -161,6 +161,7 @@ jobs:
         run: |
           cd qa-tests
           npm install -D @playwright/test
+          export PLAYWRIGHT_JSON_OUTPUT_NAME=${{ GITHUB_RUN_ID }}-market-e2e-test.json
           npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=json
           ls -la
 
@@ -176,7 +177,7 @@ jobs:
 
       - name: Stop nonce-app
         if: always()
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" down
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" down --volumes
 
 #      - name: Stop running containers
 #        if: always()                   # run this step always
