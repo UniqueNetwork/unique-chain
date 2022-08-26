@@ -2902,7 +2902,7 @@ export default {
     name: 'Vec<u16>',
     description: 'Vec<u16>',
     tokenPrefix: 'Bytes',
-    sponsorship: 'UpDataStructsSponsorshipState',
+    sponsorship: 'UpDataStructsSponsorshipStateAccountId32',
     limits: 'UpDataStructsCollectionLimits',
     permissions: 'UpDataStructsCollectionPermissions',
     externalCollection: 'bool'
@@ -2910,7 +2910,7 @@ export default {
   /**
    * Lookup361: up_data_structs::SponsorshipState<sp_core::crypto::AccountId32>
    **/
-  UpDataStructsSponsorshipState: {
+  UpDataStructsSponsorshipStateAccountId32: {
     _enum: {
       Disabled: 'Null',
       Unconfirmed: 'AccountId32',
@@ -2969,7 +2969,7 @@ export default {
     name: 'Vec<u16>',
     description: 'Vec<u16>',
     tokenPrefix: 'Bytes',
-    sponsorship: 'UpDataStructsSponsorshipState',
+    sponsorship: 'UpDataStructsSponsorshipStateAccountId32',
     limits: 'UpDataStructsCollectionLimits',
     permissions: 'UpDataStructsCollectionPermissions',
     tokenPropertyPermissions: 'Vec<UpDataStructsPropertyKeyPermission>',
@@ -3186,25 +3186,35 @@ export default {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
-   * Lookup431: pallet_evm_contract_helpers::SponsoringModeT
+   * Lookup431: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   **/
+  UpDataStructsSponsorshipStateBasicCrossAccountIdRepr: {
+    _enum: {
+      Disabled: 'Null',
+      Unconfirmed: 'PalletEvmAccountBasicCrossAccountIdRepr',
+      Confirmed: 'PalletEvmAccountBasicCrossAccountIdRepr'
+    }
+  },
+  /**
+   * Lookup432: pallet_evm_contract_helpers::SponsoringModeT
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
-   * Lookup433: pallet_evm_contract_helpers::pallet::Error<T>
+   * Lookup434: pallet_evm_contract_helpers::pallet::Error<T>
    **/
   PalletEvmContractHelpersError: {
-    _enum: ['NoPermission']
+    _enum: ['NoPermission', 'NoPendingSponsor']
   },
   /**
-   * Lookup434: pallet_evm_migration::pallet::Error<T>
+   * Lookup435: pallet_evm_migration::pallet::Error<T>
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating']
   },
   /**
-   * Lookup436: sp_runtime::MultiSignature
+   * Lookup437: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -3214,43 +3224,43 @@ export default {
     }
   },
   /**
-   * Lookup437: sp_core::ed25519::Signature
+   * Lookup438: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup439: sp_core::sr25519::Signature
+   * Lookup440: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup440: sp_core::ecdsa::Signature
+   * Lookup441: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup443: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup444: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup444: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup445: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup447: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup448: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup448: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup449: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup449: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup450: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup450: opal_runtime::Runtime
+   * Lookup451: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup451: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+   * Lookup452: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };

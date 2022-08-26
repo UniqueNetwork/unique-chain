@@ -3034,14 +3034,14 @@ declare module '@polkadot/types/lookup' {
     readonly name: Vec<u16>;
     readonly description: Vec<u16>;
     readonly tokenPrefix: Bytes;
-    readonly sponsorship: UpDataStructsSponsorshipState;
+    readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
     readonly limits: UpDataStructsCollectionLimits;
     readonly permissions: UpDataStructsCollectionPermissions;
     readonly externalCollection: bool;
   }
 
-  /** @name UpDataStructsSponsorshipState (361) */
-  interface UpDataStructsSponsorshipState extends Enum {
+  /** @name UpDataStructsSponsorshipStateAccountId32 (361) */
+  interface UpDataStructsSponsorshipStateAccountId32 extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
     readonly asUnconfirmed: AccountId32;
@@ -3093,7 +3093,7 @@ declare module '@polkadot/types/lookup' {
     readonly name: Vec<u16>;
     readonly description: Vec<u16>;
     readonly tokenPrefix: Bytes;
-    readonly sponsorship: UpDataStructsSponsorshipState;
+    readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
     readonly limits: UpDataStructsCollectionLimits;
     readonly permissions: UpDataStructsCollectionPermissions;
     readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
@@ -3379,7 +3379,17 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'OutOfGas' | 'OutOfFund';
   }
 
-  /** @name PalletEvmContractHelpersSponsoringModeT (431) */
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (431) */
+  interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
+    readonly isDisabled: boolean;
+    readonly isUnconfirmed: boolean;
+    readonly asUnconfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
+    readonly isConfirmed: boolean;
+    readonly asConfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
+    readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
+  }
+
+  /** @name PalletEvmContractHelpersSponsoringModeT (432) */
   interface PalletEvmContractHelpersSponsoringModeT extends Enum {
     readonly isDisabled: boolean;
     readonly isAllowlisted: boolean;
@@ -3387,20 +3397,21 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Allowlisted' | 'Generous';
   }
 
-  /** @name PalletEvmContractHelpersError (433) */
+  /** @name PalletEvmContractHelpersError (434) */
   interface PalletEvmContractHelpersError extends Enum {
     readonly isNoPermission: boolean;
-    readonly type: 'NoPermission';
+    readonly isNoPendingSponsor: boolean;
+    readonly type: 'NoPermission' | 'NoPendingSponsor';
   }
 
-  /** @name PalletEvmMigrationError (434) */
+  /** @name PalletEvmMigrationError (435) */
   interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
   }
 
-  /** @name SpRuntimeMultiSignature (436) */
+  /** @name SpRuntimeMultiSignature (437) */
   interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -3411,34 +3422,34 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
-  /** @name SpCoreEd25519Signature (437) */
+  /** @name SpCoreEd25519Signature (438) */
   interface SpCoreEd25519Signature extends U8aFixed {}
 
-  /** @name SpCoreSr25519Signature (439) */
+  /** @name SpCoreSr25519Signature (440) */
   interface SpCoreSr25519Signature extends U8aFixed {}
 
-  /** @name SpCoreEcdsaSignature (440) */
+  /** @name SpCoreEcdsaSignature (441) */
   interface SpCoreEcdsaSignature extends U8aFixed {}
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (443) */
+  /** @name FrameSystemExtensionsCheckSpecVersion (444) */
   type FrameSystemExtensionsCheckSpecVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckGenesis (444) */
+  /** @name FrameSystemExtensionsCheckGenesis (445) */
   type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name FrameSystemExtensionsCheckNonce (447) */
+  /** @name FrameSystemExtensionsCheckNonce (448) */
   interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-  /** @name FrameSystemExtensionsCheckWeight (448) */
+  /** @name FrameSystemExtensionsCheckWeight (449) */
   type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (449) */
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (450) */
   interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name OpalRuntimeRuntime (450) */
+  /** @name OpalRuntimeRuntime (451) */
   type OpalRuntimeRuntime = Null;
 
-  /** @name PalletEthereumFakeTransactionFinalizer (451) */
+  /** @name PalletEthereumFakeTransactionFinalizer (452) */
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module

@@ -2,13 +2,14 @@ use codec::EncodeLike;
 use frame_support::{
 	traits::LockableCurrency, WeakBoundedVec, Parameter, dispatch::DispatchResult, ensure,
 };
-use frame_system::Config;
+
 use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBalances};
 use pallet_common::CollectionHandle;
 use pallet_unique::{Event as UniqueEvent, Error as UniqueError};
 use sp_runtime::DispatchError;
 use up_data_structs::{CollectionId, SponsorshipState};
 use sp_std::borrow::ToOwned;
+
 
 pub trait ExtendedLockableCurrency<AccountId: Parameter>: LockableCurrency<AccountId> {
 	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
