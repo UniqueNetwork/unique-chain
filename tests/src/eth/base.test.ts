@@ -94,7 +94,7 @@ describe('ERC165 tests', async () => {
   });
 
   itWeb3('ERC721 support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x58800161').call()).to.be.true;
+    expect(await contract(web3).methods.supportsInterface('0x780e9d63').call()).to.be.true;
   });
 
   itWeb3('ERC721Metadata support', async ({web3}) => {
