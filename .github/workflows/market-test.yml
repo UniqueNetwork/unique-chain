@@ -85,15 +85,14 @@ jobs:
       - name: Copy qa-tests/.env.example to qa-tests/.env
         run: cp qa-tests/.env.example qa-tests/.env
 
-      - name: Show content of qa-test .env
+      - name: Show content of qa-test/.env
         run: cat qa-tests/.env
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
         with:
           path: qa-tests/
-          mode: example
-
+        
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
