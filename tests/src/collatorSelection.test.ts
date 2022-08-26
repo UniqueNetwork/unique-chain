@@ -27,19 +27,16 @@ let charlie: IKeyringPair;
 let dave: IKeyringPair;
 //let eve: IKeyringPair;
 
+// todo Most preferable to launch this test in parallel somehow -- or change the session period (6 hrs) for Opal specifically.
 describe('Integration Test: Dynamic shuffling of collators', () => {
   before(async () => {    
-    await usingApi(async () => {
+    await usingApi(async api => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
       charlie = privateKey('//Charlie');
       dave = privateKey('//Dave');
       //eve = privateKey('//Eve');
-    });
-  });
 
-  it('Change invulnerables and make sure they start producing blocks', async () => {
-    await usingApi(async (api) => {
       const txC = api.tx.session.setKeys(
         '0x' + Buffer.from(charlie.addressRaw).toString('hex'),
         '0x0',
@@ -56,6 +53,13 @@ describe('Integration Test: Dynamic shuffling of collators', () => {
       const resultD = getGenericResult(eventsD);
       expect(resultD.success).to.be.true;
 
+      const validators = (await api.query.session.validators()).toJSON();
+      expect(validators).to.contain(alice.address).and.contain(bob.address).and.be.length(2);
+    });
+  });
+
+  it('Change invulnerables and make sure they start producing blocks', async () => {
+    await usingApi(async (api) => {
       const tx = api.tx.collatorSelection.setInvulnerables([
         charlie.address,
         dave.address,
@@ -66,12 +70,12 @@ describe('Integration Test: Dynamic shuffling of collators', () => {
       expect(result.success).to.be.true;
 
       const newInvulnerables = (await api.query.collatorSelection.invulnerables()).toJSON();
-      expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address);
-      expect(newInvulnerables).to.be.length(2);
+      expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
 
       const expectedSessionIndex = (await api.query.session.currentIndex() as any).toNumber() + 2;
       let currentSessionIndex = -1;
-      console.log('Waiting for the session after the next. This might take a while...');
+      console.log('Waiting for the session after the next.' 
+        + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
       while (currentSessionIndex < expectedSessionIndex) {
         await waitNewBlocks(api, 1);
         currentSessionIndex = (await api.query.session.currentIndex() as any).toNumber();
@@ -79,8 +83,7 @@ describe('Integration Test: Dynamic shuffling of collators', () => {
       }
 
       const newValidators = (await api.query.session.validators()).toJSON();
-      expect(newValidators).to.contain(charlie.address).and.contain(dave.address);
-      expect(newValidators).to.be.length(2);
+      expect(newValidators).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
 
       const lastBlockNumber = await getBlockNumber(api);
       await waitNewBlocks(api, 1);
