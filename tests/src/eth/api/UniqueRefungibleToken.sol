@@ -12,15 +12,6 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x042f1106
-interface ERC1633UniqueExtensions is Dummy, ERC165 {
-	/// @dev EVM selector for this function is: 0x042f1106,
-	///  or in textual repr: setParentNFT(address,uint256)
-	function setParentNFT(address collection, uint256 nftId)
-		external
-		returns (bool);
-}
-
 /// @dev the ERC-165 identifier for this interface is 0x5755c3f2
 interface ERC1633 is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x80a54001,
@@ -140,6 +131,5 @@ interface UniqueRefungibleToken is
 	ERC165,
 	ERC20,
 	ERC20UniqueExtensions,
-	ERC1633,
-	ERC1633UniqueExtensions
+	ERC1633
 {}
