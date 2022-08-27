@@ -1983,17 +1983,36 @@ class StakingGroup extends HelperGroup {
   /**
    * Stake tokens for App Promotion
    * @param signer keyring of signer
-   * @param amount amount of tokens to stake
+   * @param amountToStake amount of tokens to stake
    * @param label extra label for log
+   * @returns
    */
-  async stake(signer: TSigner, amount: bigint, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `${signer.address} amount: ${amount}`;
+  async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
     const stakeResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.promotion.stake', [amount],
+      'api.tx.promotion.stake', [amountToStake],
       true, `stake failed for ${label}`,
     );
-    // TODO extract info from events
+    // TODO extract info from stakeResult
+    return true;
+  }
+
+  /**
+   * Unstake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToUnstake amount of tokens to unstake
+   * @param label extra label for log
+   * @returns 
+   */
+  async unstake(signer: TSigner, amountToUnstake: bigint, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToUnstake}`;
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.promotion.unstake', [amountToUnstake],
+      true, `unstake failed for ${label}`,
+    );
+    // TODO extract info from unstakeResult
     return true;
   }
 
@@ -2008,6 +2027,10 @@ class StakingGroup extends HelperGroup {
 
   async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
     return (await this.helper.callRpc('api.rpc.unique.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  }
+
+  async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.unique.pendingUnstake')).toBigInt();
   }
 }
 
