@@ -24,7 +24,6 @@ import {
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {usingPlaygrounds} from './util/playgrounds';
-import {default as waitNewBlocks} from './substrate/wait-new-blocks';
 
 import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
@@ -56,8 +55,9 @@ describe('app-promotions.stake extrinsic', () => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
    
-      await expect(helper.staking.stake(staker, nominal - 1n)).to.be.eventually.rejected; // minimum stake amount is 1
-      await expect(helper.staking.stake(staker, nominal)).to.be.eventually.fulfilled;
+      // Minimum stake amount is 1:
+      await expect(helper.staking.stake(staker, nominal - 1n)).to.be.eventually.rejected;
+      await helper.staking.stake(staker, nominal);
       expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(nominal);
 
       // TODO add helpers to assert bigints. Check balance close to 10
@@ -66,11 +66,11 @@ describe('app-promotions.stake extrinsic', () => {
       // it is potentially flaky test. Promotion can credited some tokens. Maybe we need to use closeTo? 
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + nominal); // total tokens amount staked in app-promotion increased 
 
-      await expect(helper.staking.stake(staker, 2n * nominal)).to.be.eventually.fulfilled;
+      await helper.staking.stake(staker, 2n * nominal);
       expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(3n * nominal);
       
-      const stakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(stakedPerBlock.map((x) => x[1])).to.be.deep.equal([nominal, 2n * nominal]);
+      const stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map((x) => x[1]);
+      expect(stakedPerBlock).to.be.deep.equal([nominal, 2n * nominal]);
     });
   });
   
@@ -78,9 +78,12 @@ describe('app-promotions.stake extrinsic', () => {
     await usingPlaygrounds(async helper => { 
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
 
-      await expect(helper.staking.stake(staker, 10n * nominal)).to.be.eventually.rejected; // because Alice needs some fee
-      await expect(helper.staking.stake(staker, 7n * nominal)).to.be.eventually.fulfilled;
-      await expect(helper.staking.stake(staker, 4n * nominal)).to.be.eventually.rejected; // because Alice has ~300 free QTZ and 700 locked
+      // Can't stake full balance because Alice needs to pay some fee
+      await expect(helper.staking.stake(staker, 10n * nominal)).to.be.eventually.rejected;
+      await helper.staking.stake(staker, 7n * nominal);
+
+      // Can't stake 4 tkn because Alice has ~3 free tkn, and 7 locked
+      await expect(helper.staking.stake(staker, 4n * nominal)).to.be.eventually.rejected; 
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(7n * nominal);
     });
   });
@@ -97,7 +100,9 @@ describe('app-promotions.stake extrinsic', () => {
     });
   });
   // TODO it('Staker stakes 5 times in one block with nonce');
-  // TODO it('Staked balance appears as locked in the balance pallet')
+  // TODO it('Staked balance appears as locked in the balance pallet');
+  // TODO it('Alice stakes huge amount of tokens');
+  // TODO it('Can stake from ethereum account')
 });
 
 describe('unstake balance extrinsic', () => {  
@@ -105,65 +110,61 @@ describe('unstake balance extrinsic', () => {
     await usingPlaygrounds(async helper => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
-      await expect(helper.staking.stake(staker, 5n * nominal)).to.be.eventually.fulfilled;
-      await expect(helper.staking.unstake(staker, 3n * nominal)).to.be.eventually.fulfilled;
+      await helper.staking.stake(staker, 5n * nominal);
+      await helper.staking.unstake(staker, 3n * nominal);
 
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(3n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(2n * nominal);
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + 2n * nominal);
     });
   });
+
   it('will remove from the "staked" map starting from the oldest entry', async () => {
-    // arrange: Alice balance = 1000
-    // arrange: Alice stakes 100
-    // arrange: Alice stakes 200
-    // arrange: Alice stakes 300
-
-    // assert Alice stake is [100, 200, 300]
-
-
-    // act:     Alice calls appPromotion.unstake(30)
-    // assert:  query appPromotion.staked(Alice) to equal [70, 200, 300] /// Can unstake part of stake
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30]
-
-    // act:     Alice calls appPromotion.unstake(170)
-    // assert:  query appPromotion.staked(Alice) to equal [100, 300] /// Can unstake one stake totally and one more partialy
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30, 170]
-
-    // act:     Alice calls appPromotion.unstake(400)
-    // assert:  query appPromotion.staked(Alice) to equal [100, 300] /// Can totally unstake 2 stakes in one tx
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30, 170, 400]
     await usingPlaygrounds(async helper => {
-      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
-      const staker = await createUser();
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(3n * nominal))).to.be.eventually.fulfilled;
-      let stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      expect(stakedPerBlock).to.be.deep.equal([nominal, 2n * nominal, 3n * nominal]);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(3n * nominal / 10n))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.pendingUnstake(normalizeAccountId(staker.address))).toBigInt()).to.be.equal(3n * nominal / 10n);
-      stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      
-      expect(stakedPerBlock).to.be.deep.equal([7n * nominal / 10n, 2n * nominal, 3n * nominal]);
-      
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(17n * nominal / 10n))).to.be.eventually.fulfilled;
-      stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      expect(stakedPerBlock).to.be.deep.equal([nominal, 3n * nominal]);
-      const unstakedPerBlock = (await helper.api!.rpc.unique.pendingUnstakePerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      
-      expect(unstakedPerBlock).to.be.deep.equal([3n * nominal / 10n, 17n * nominal / 10n]);
-      
-      await waitNewBlocks(helper.api!, 1);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(4n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt())).to.be.deep.equal([]);
-      expect((await helper.api!.rpc.unique.pendingUnstakePerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt())).to.be.deep.equal([3n * nominal / 10n, 17n * nominal / 10n, 4n * nominal]);
+      const [staker] = await helper.arrange.creteAccounts([100n], alice);
+      await helper.staking.stake(staker, 10n * nominal);
+      await helper.staking.stake(staker, 20n * nominal);
+      await helper.staking.stake(staker, 30n * nominal);
+
+      // staked: [10, 20, 30]; unstaked: 0
+      let pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      let unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      let stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.deep.equal(0n);
+      expect(unstakedPerBlock).to.be.deep.equal([]);
+      expect(stakedPerBlock).to.be.deep.equal([10n * nominal, 20n * nominal, 30n * nominal]);
+     
+      // Can unstake the part of a stake
+      await helper.staking.unstake(staker, 5n * nominal);
+      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.equal(5n * nominal);
+      expect(stakedPerBlock).to.be.deep.equal([5n * nominal, 20n * nominal, 30n * nominal]);
+      expect(unstakedPerBlock).to.be.deep.equal([5n * nominal]);
+
+      // Can unstake one stake totally and one more partially
+      await helper.staking.unstake(staker, 10n * nominal);
+      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.equal(15n * nominal);
+      expect(stakedPerBlock).to.be.deep.equal([15n * nominal, 30n * nominal]);
+      expect(unstakedPerBlock).to.deep.equal([5n * nominal, 10n * nominal]);
+
+      // Can totally unstake 2 stakes in one tx
+      await helper.staking.unstake(staker, 45n * nominal);
+      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.equal(60n * nominal);
+      expect(stakedPerBlock).to.deep.equal([]);
+      expect(unstakedPerBlock).to.deep.equal([5n * nominal, 10n * nominal, 45n * nominal]);
     });
-    
+
+    // TODO it('try to hack unstaking with nonce')
   });
 });
-
-
 
 describe('Admin adress', () => {
   before(async function () {

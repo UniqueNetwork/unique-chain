@@ -2030,7 +2030,11 @@ class StakingGroup extends HelperGroup {
   }
 
   async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.pendingUnstake')).toBigInt();
+    return (await this.helper.callRpc('api.rpc.unique.pendingUnstake', [address])).toBigInt();
+  }
+  
+  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<bigint[][]> {
+    return (await this.helper.callRpc('api.rpc.unique.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
   }
 }
 
