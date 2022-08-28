@@ -43,8 +43,7 @@ before(async function () {
     alice = privateKeyWrapper('//Alice');
     bob = privateKeyWrapper('//Bob');
     palletAdmin = privateKeyWrapper('//palletAdmin');
-    const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-    await helper.signTransaction(alice, tx);
+    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
     nominal = helper.balance.getOneTokenNominal();
   });
 });
@@ -161,86 +160,104 @@ describe('unstake balance extrinsic', () => {
       expect(stakedPerBlock).to.deep.equal([]);
       expect(unstakedPerBlock).to.deep.equal([5n * nominal, 10n * nominal, 45n * nominal]);
     });
-
-    // TODO it('try to hack unstaking with nonce')
   });
+
+  it('should reject transaction if unstake amount is greater than staked', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      
+      // can't unstsake more than one stake amount
+      await helper.staking.stake(staker, 1n * nominal);
+      await expect(helper.staking.unstake(staker, 1n * nominal + 1n)).to.be.eventually.rejected;
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(1n * nominal);
+
+      // can't unstsake more than two stakes amount
+      await helper.staking.stake(staker, 1n * nominal);
+      await expect(helper.staking.unstake(staker, 2n * nominal + 1n)).to.be.eventually.rejected;
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(2n * nominal);
+
+      // can't unstake more than have with nonce // TODO not sure we need this assertion
+      const nonce1 = await helper.chain.getNonce(staker.address);
+      const nonce2 = nonce1 + 1;
+      const unstakeMoreThanHaveWithNonce = Promise.all([
+        helper.signTransaction(staker, helper.constructApiCall('api.tx.promotion.unstake', [1n * nominal]), 'unstaking 1', {nonce: nonce1}),
+        helper.signTransaction(staker, helper.constructApiCall('api.tx.promotion.unstake', [1n * nominal + 1n]), 'unstaking 1+', {nonce: nonce2}),
+      ]);
+      await expect(unstakeMoreThanHaveWithNonce).to.be.rejected;
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(1n * nominal);
+    });
+  });
+
+  it('should allow to unstake even smallest unit', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      await helper.staking.stake(staker, nominal);
+      // unstake .000...001 is possible
+      await helper.staking.unstake(staker, 1n);
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(1n);
+    });
+  });
+
+  it('should work fine if stake amount is smallest unit', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      await helper.staking.stake(staker, nominal);
+      await helper.staking.unstake(staker, nominal - 1n);
+      await waitForRecalculationBlock(helper.api!);
+
+      // Everything fine, blockchain alive
+      await helper.nft.mintCollection(staker, {name: 'name', description: 'description', tokenPrefix: 'prefix'});
+    });
+  });
+
+  // TODO will return balance to "available" state after the period of unstaking is finished, and subtract it from "pendingUnstake
+  // TODO for different accounts in one block is possible
 });
 
 describe('Admin adress', () => {
-  before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-      
-      await helper.signTransaction(alice, tx);
-      
-      nominal = helper.balance.getOneTokenNominal();
-    });
-  });
-
   it('can be set by sudo only', async () => {
-    // assert:  Sudo calls appPromotion.setAdminAddress(Alice) /// Sudo successfully sets Alice as admin
-    // assert:  Bob calls appPromotion.setAdminAddress(Bob) throws /// Random account can not set admin
-    // assert:  Alice calls appPromotion.setAdminAddress(Bob) throws /// Admin account can not set admin
     await usingPlaygrounds(async (helper) => {
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(alice))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(bob, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(bob))))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(bob))))).to.be.eventually.fulfilled;
+      // Bob can not set admin not from himself nor as a sudo
+      await expect(helper.signTransaction(bob, helper.api!.tx.promotion.setAdminAddress({Substrate: bob.address}))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(bob, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: bob.address})))).to.be.eventually.rejected;
+
+      // Alice can
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
     });
-    
   });
   
   it('can be any valid CrossAccountId', async () => {
-    /// We are not going to set an eth address as a sponsor,
-    /// but we do want to check, it doesn't break anything;
-
-    // arrange: Charlie creates Punks
-    // arrange: Sudo calls appPromotion.setAdminAddress(0x0...) success
-    // arrange: Sudo calls appPromotion.setAdminAddress(Alice) success
-    
-    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) success
-    
+    // We are not going to set an eth address as a sponsor,
+    // but we do want to check, it doesn't break anything;
     await usingPlaygrounds(async (helper) => {
+      const [charlie] = await helper.arrange.creteAccounts([10n], alice);
+      const ethCharlie = helper.address.substrateToEth(charlie.address); 
+      // Alice sets Ethereum address as a sudo. Then Substrate address back...
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Ethereum: ethCharlie})))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
       
-      const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-      
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(ethAcc)))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin))))).to.be.eventually.fulfilled;
-      
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      // ...It doesn't break anything;
+      console.log(await helper.balance.getSubstrate(charlie.address));
+      console.log(await helper.balance.getSubstrate(palletAdmin.address));
+      const collection = await helper.nft.mintCollection(charlie, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      await expect(helper.signTransaction(charlie, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
     });
-    
   });
 
   it('can be reassigned', async () => {
-    // arrange: Charlie creates Punks
-    // arrange: Sudo calls appPromotion.setAdminAddress(Alice)
-    // act:     Sudo calls appPromotion.setAdminAddress(Bob)
-
-    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) throws /// Alice can not set collection sponsor
-    // assert:  Bob calls appPromotion.sponsorCollection(Punks.id) successful /// Bob can set collection sponsor
-
-    // act:     Sudo calls appPromotion.setAdminAddress(null) successful /// Sudo can set null as a sponsor
-    // assert:  Bob calls appPromotion.stopSponsoringCollection(Punks.id) throws /// Bob is no longer an admin
-    
     await usingPlaygrounds(async (helper) => {
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      const [oldAdmin, newAdmin, collectionOwner] = await helper.arrange.creteAccounts([10n, 10n, 10n], alice);
+      const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(alice))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(bob))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(oldAdmin))))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(newAdmin))))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(oldAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
       
-      await expect(helper.signTransaction(bob, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(newAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
     });
-    
   });
-
 });
 
 describe('App-promotion collection sponsoring', () => {
@@ -625,6 +642,8 @@ describe('app-promotion stopSponsoringContract', () => {
 
 describe('app-promotion rewards', () => {
   const DAY = 7200n;
+
+  // TODO (load test. Can pay reward for 10000 addresses)
   
   
   before(async function () {
@@ -768,7 +787,6 @@ async function waitForRelayBlock(api: ApiPromise, blocks = 1): Promise<void> {
       }
     });
   });
-  
 }
 
 
