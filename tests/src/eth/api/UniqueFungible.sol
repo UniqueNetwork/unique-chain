@@ -3,13 +3,7 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-// Anonymous struct
-struct Tuple0 {
-	address field_0;
-	uint256 field_1;
-}
-
-// Common stubs holder
+/// @dev common stubs holder
 interface Dummy {
 
 }
@@ -18,32 +12,8 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Inline
-interface ERC20Events {
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
-}
-
-// Selector: 40c10f19
-interface ERC20Mintable is Dummy, ERC165 {
-	// Selector: mint(address,uint256) 40c10f19
-	function mint(address to, uint256 amount) external returns (bool);
-}
-
-// Selector: 63034ac5
-interface ERC20UniqueExtensions is Dummy, ERC165 {
-	// Selector: burnFrom(address,uint256) 79cc6790
-	function burnFrom(address from, uint256 amount) external returns (bool);
-
-	// Selector: mintBulk((address,uint256)[]) 1acf2d55
-	function mintBulk(Tuple0[] memory amounts) external returns (bool);
-}
-
-// Selector: 6cf113cd
+/// @title A contract that allows you to work with collections.
+/// @dev the ERC-165 identifier for this interface is 0xe54be640
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -237,13 +207,56 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
 	function uniqueCollectionType() external returns (string memory);
+
+	/// Changes collection owner to another account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner account
+	/// @dev EVM selector for this function is: 0x13af4035,
+	///  or in textual repr: setOwner(address)
+	function setOwner(address newOwner) external;
+
+	/// Changes collection owner to another substrate account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner substrate account
+	/// @dev EVM selector for this function is: 0xb212138f,
+	///  or in textual repr: setOwnerSubstrate(uint256)
+	function setOwnerSubstrate(uint256 newOwner) external;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x79cc6790
+/// @dev the ERC-165 identifier for this interface is 0x63034ac5
 interface ERC20UniqueExtensions is Dummy, ERC165 {
+	/// Burn tokens from account
+	/// @dev Function that burns an `amount` of the tokens of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0x79cc6790,
 	///  or in textual repr: burnFrom(address,uint256)
 	function burnFrom(address from, uint256 amount) external returns (bool);
+
+	/// Mint tokens for multiple accounts.
+	/// @param amounts array of pairs of account address and amount
+	/// @dev EVM selector for this function is: 0x1acf2d55,
+	///  or in textual repr: mintBulk((address,uint256)[])
+	function mintBulk(Tuple6[] memory amounts) external returns (bool);
+}
+
+/// @dev anonymous struct
+struct Tuple6 {
+	address field_0;
+	uint256 field_1;
+}
+
+/// @dev the ERC-165 identifier for this interface is 0x40c10f19
+interface ERC20Mintable is Dummy, ERC165 {
+	/// Mint tokens for `to` account.
+	/// @param to account that will receive minted tokens
+	/// @param amount amount of tokens to mint
+	/// @dev EVM selector for this function is: 0x40c10f19,
+	///  or in textual repr: mint(address,uint256)
+	function mint(address to, uint256 amount) external returns (bool);
 }
 
 /// @dev inlined interface

@@ -28,9 +28,12 @@ use crate::{
 	types::{string, self},
 };
 use crate::execution::Result;
-use crate::solidity::SolidityTypeName;
 
 const ABI_ALIGNMENT: usize = 32;
+
+trait TypeHelper<T> {
+	fn is_dynamic() -> bool;
+}
 
 /// View into RLP data, which provides method to read typed items from it
 #[derive(Clone)]
@@ -330,11 +333,18 @@ impl AbiWriter {
 pub trait AbiRead<T> {
 	/// Read item from current position, advanding decoder
 	fn abi_read(&mut self) -> Result<T>;
+
+	/// Size for type aligned to [`ABI_ALIGNMENT`].
 	fn size() -> usize;
 }
 
 macro_rules! impl_abi_readable {
-	($ty:ty, $method:ident) => {
+	($ty:ty, $method:ident, $dynamic:literal) => {
+		impl TypeHelper<$ty> for $ty {
+			fn is_dynamic() -> bool {
+				$dynamic
+			}
+		}
 		impl AbiRead<$ty> for AbiReader<'_> {
 			fn abi_read(&mut self) -> Result<$ty> {
 				self.$method()
@@ -347,16 +357,16 @@ macro_rules! impl_abi_readable {
 	};
 }
 
-impl_abi_readable!(u8, uint8);
-impl_abi_readable!(u32, uint32);
-impl_abi_readable!(u64, uint64);
-impl_abi_readable!(u128, uint128);
-impl_abi_readable!(U256, uint256);
-impl_abi_readable!([u8; 4], bytes4);
-impl_abi_readable!(H160, address);
-impl_abi_readable!(Vec<u8>, bytes);
-impl_abi_readable!(bool, bool);
-impl_abi_readable!(string, string);
+impl_abi_readable!(u8, uint8, false);
+impl_abi_readable!(u32, uint32, false);
+impl_abi_readable!(u64, uint64, false);
+impl_abi_readable!(u128, uint128, false);
+impl_abi_readable!(U256, uint256, false);
+impl_abi_readable!([u8; 4], bytes4, false);
+impl_abi_readable!(H160, address, false);
+impl_abi_readable!(Vec<u8>, bytes, true);
+impl_abi_readable!(bool, bool, true);
+impl_abi_readable!(string, string, true);
 
 mod sealed {
 	/// Not all types can be placed in vec, i.e `Vec<u8>` is restricted, `bytes` should be used instead
@@ -389,16 +399,24 @@ where
 
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
+		impl<$($ident: TypeHelper<$ident>,)+> TypeHelper<($($ident,)+)> for ($($ident,)+) {
+			fn is_dynamic() -> bool {
+				false
+				$(
+					|| <$ident>::is_dynamic()
+				)*
+			}
+		}
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
 		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
 		where
 			$(
 				Self: AbiRead<$ident>,
 			)+
-			($($ident,)+): SolidityTypeName,
+			($($ident,)+): TypeHelper<($($ident,)+)>,
 		{
 			fn abi_read(&mut self) -> Result<($($ident,)+)> {
-				let size = if <($($ident,)+)>::is_simple() { Some(<Self as AbiRead<($($ident,)+)>>::size()) } else { None };
+				let size = if !<($($ident,)+)>::is_dynamic() { Some(<Self as AbiRead<($($ident,)+)>>::size()) } else { None };
 				let mut subresult = self.subresult(size)?;
 				Ok((
 					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+

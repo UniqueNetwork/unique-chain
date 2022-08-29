@@ -129,7 +129,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "ERC20Mintable")]
+#[solidity_interface(name = ERC20Mintable)]
 impl<T: Config> FungibleHandle<T> {
 	/// Mint tokens for `to` account.
 	/// @param to account that will receive minted tokens
@@ -148,7 +148,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "ERC20UniqueExtensions")]
+#[solidity_interface(name = ERC20UniqueExtensions)]
 impl<T: Config> FungibleHandle<T> {
 	/// Burn tokens from account
 	/// @dev Function that burns an `amount` of the tokens of a given account,
