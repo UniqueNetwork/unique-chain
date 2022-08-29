@@ -170,7 +170,7 @@ jobs:
         run: |
           rm -rf qa-tests/.env.docker
           cp qa-tests/.env qa-tests/.env.docker
-	  sed -i "/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944" qa-tests/.env.docker
+	  sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' qa-tests/.env.docker
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
