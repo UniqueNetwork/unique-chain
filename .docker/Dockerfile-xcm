@@ -95,6 +95,15 @@ RUN git clone -b $CUMULUS_BUILD_BRANCH --depth 1 https://github.com/paritytech/c
     cd cumulus && \
     cargo build --release --locked -p polkadot-parachain
 
+# ===== BUILD CHAINQL =====
+FROM rust-builder as builder-chainql
+
+RUN mkdir chainql
+WORKDIR /chainql
+
+RUN git clone -b v0.1.0 --depth 1 https://github.com/CertainLach/chainql.git . && \
+    cargo build --release
+
 # ===== RUN ======
 
 FROM ubuntu:20.04
@@ -103,7 +112,7 @@ ARG POLKADOT_LAUNCH_BRANCH=
 ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
 
 RUN apt-get -y update && \
-      apt-get -y install curl git && \
+      apt-get -y install curl git jsonnet && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -123,8 +132,15 @@ COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot 
 COPY --from=builder-moonbeam /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=builder-cumulus /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
 COPY --from=builder-acala /unique_parachain/Acala/target/production/acala /acala/target/release/
+COPY --from=builder-chainql /chainql/target/release/chainql /chainql/target/release/
 
-CMD export NVM_DIR="$HOME/.nvm" && \
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9946
+EXPOSE 9947
+EXPOSE 9948
+
+CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
     yarn start launch-config.json

@@ -2,6 +2,11 @@
     "relaychain": {
         "bin": "/polkadot/target/release/polkadot",
         "chain": "westend-local",
+        "chainInitializer": [
+                "chainql",
+                "--tla-code=spec=import '${spec}'",
+                "5validators.jsonnet"
+            ],	
         "nodes": [
             {
                 "name": "alice",

@@ -18,4 +18,8 @@ services:
        - type: bind
          source: ./xcm-config/launch-config-xcm-quartz.json
          target: /polkadot-launch/launch-config.json
-         read_only: true          
+         read_only: true
+       - type: bind
+         source: ./xcm-config/5validators.jsonnet
+         target: /polkadot-launch/5validators.jsonnet
+         read_only: true           
