@@ -33,10 +33,10 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-#          - network: "quartz"
-#            features: "quartz-runtime"
-#          - network: "unique"
-#            features: "unique-runtime"
+          - network: "quartz"
+            features: "quartz-runtime"
+          - network: "unique"
+            features: "unique-runtime"
 
     name: draft job
 
