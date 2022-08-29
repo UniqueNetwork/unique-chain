@@ -171,9 +171,8 @@ pub mod pallet {
 	/// Foreign collection flag
 	#[pallet::storage]
 	pub type ForeignCollection<T: Config> =
-	StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = bool, QueryKind = ValueQuery>;
+		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = bool, QueryKind = ValueQuery>;
 }
-
 
 /// Wrapper around untyped collection handle, asserting inner collection is of fungible type.
 /// Required for interaction with Fungible collections, type safety and implementation [`solidity_interface`][`evm_coder::solidity_interface`].
@@ -340,7 +339,7 @@ impl<T: Config> Pallet<T> {
 				to: H160::default(),
 				value: amount.into(),
 			}
-				.to_log(collection_id_to_address(collection.id)),
+			.to_log(collection_id_to_address(collection.id)),
 		);
 		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 			collection.id,
@@ -560,7 +559,7 @@ impl<T: Config> Pallet<T> {
 					to: *user.as_eth(),
 					value: amount.into(),
 				}
-					.to_log(collection_id_to_address(collection.id)),
+				.to_log(collection_id_to_address(collection.id)),
 			);
 			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 				collection.id,

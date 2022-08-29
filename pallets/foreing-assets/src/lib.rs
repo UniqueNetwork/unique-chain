@@ -458,7 +458,7 @@ pub use frame_support::{
 
 use xcm::latest::{Fungibility::Fungible as XcmFungible};
 
-pub struct UsingAnyCurrencyComponents<
+pub struct FreeForAll<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
 	AssetId: Get<MultiLocation>,
 	AccountId,
@@ -476,8 +476,7 @@ impl<
 		AccountId,
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> WeightTrader
-	for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+	> WeightTrader for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn new() -> Self {
 		Self(0, Zero::zero(), PhantomData)
@@ -485,46 +484,7 @@ impl<
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
 		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
-
-		let amount: Currency::Balance = (0 as u32).into();
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		let asset_id = payment
-			.fungible
-			.iter()
-			.next()
-			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
-
-		// First fungible pays fee
-		let required = MultiAsset {
-			id: asset_id.clone(),
-			fun: XcmFungible(u128_amount),
-		};
-
-		log::trace!(
-			target: "fassets::weight", "buy_weight payment: {:?}, required: {:?}",
-			payment, required,
-		);
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
-		}
+		Ok(payment)
 	}
 }
 impl<
@@ -533,7 +493,7 @@ impl<
 		AccountId,
 		Currency: CurrencyT<AccountId>,
 		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop for UsingAnyCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+	> Drop for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn drop(&mut self) {
 		OnUnbalanced::on_unbalanced(Currency::issue(self.1));

@@ -50,7 +50,7 @@ use up_common::{
 };
 use pallet_foreing_assets::{
     AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-    UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
+    FreeForAll, TryAsForeing, ForeignAssetId,
 };
 use crate::{
     Balances, Call, DmpQueue, Event, Origin, ParachainInfo,

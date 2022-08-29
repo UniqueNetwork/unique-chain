@@ -16,8 +16,8 @@
 
 use frame_support::{
 	traits::{
-		Contains, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get, Everything,
-		fungibles,
+		Contains, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get,
+		Everything, fungibles,
 	},
 	weights::{Weight, WeightToFeePolynomial, WeightToFee},
 	parameter_types, match_types,
@@ -37,21 +37,23 @@ use xcm::latest::{
 };
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
-	FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, ParentIsPreset,
-	ConvertedConcreteAssetId
+	FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	ParentIsPreset, ConvertedConcreteAssetId,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
-use xcm_executor::traits::{Convert as ConvertXcm, JustTry, MatchesFungible, WeightTrader, FilterAssetLocation};
+use xcm_executor::traits::{
+	Convert as ConvertXcm, JustTry, MatchesFungible, WeightTrader, FilterAssetLocation,
+};
 use pallet_foreing_assets::{
-	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
+	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency, FreeForAll,
+	TryAsForeing, ForeignAssetId,
 };
 use sp_std::{borrow::Borrow, marker::PhantomData, vec, vec::Vec};
 use crate::{
 	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
-	xcm_config::Barrier
+	xcm_config::Barrier,
 };
 #[cfg(feature = "foreign-assets")]
 use crate::ForeingAssets;
@@ -83,8 +85,22 @@ pub type LocationToAccountId = (
 pub struct OnlySelfCurrency;
 impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+		let paraid = Parachain(ParachainInfo::parachain_id().into());
 		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+			(
+				Concrete(MultiLocation {
+					parents: 1,
+					interior: X1(loc),
+				}),
+				XcmFungible(ref amount),
+			) if paraid == *loc => CheckedConversion::checked_from(*amount),
+			(
+				Concrete(MultiLocation {
+					parents: 0,
+					interior: Here,
+				}),
+				XcmFungible(ref amount),
+			) => CheckedConversion::checked_from(*amount),
 			_ => None,
 		}
 	}
@@ -188,48 +204,7 @@ impl<
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount: Currency::Balance = (0 as u32).into();
-		//let amount = WeightToFee::weight_to_fee(&weight);
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		// location to this parachain through relay chain
-		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
-		});
-		// direct location
-		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 0,
-			interior: Here,
-		});
-
-		let required = if payment.fungible.contains_key(&option1) {
-			(option1, u128_amount).into()
-		} else if payment.fungible.contains_key(&option2) {
-			(option2, u128_amount).into()
-		} else {
-			(Concrete(MultiLocation::default()), u128_amount).into()
-		};
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
-		}
+		Ok(payment)
 	}
 }
 impl<
@@ -255,9 +230,9 @@ pub struct NonZeroIssuance<AccountId, ForeingAssets>(PhantomData<(AccountId, For
 
 #[cfg(feature = "foreign-assets")]
 impl<AccountId, ForeingAssets> Contains<<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId>
-for NonZeroIssuance<AccountId, ForeingAssets>
-	where
-		ForeingAssets: fungibles::Inspect<AccountId>,
+	for NonZeroIssuance<AccountId, ForeingAssets>
+where
+	ForeingAssets: fungibles::Inspect<AccountId>,
 {
 	fn contains(id: &<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
 		!ForeingAssets::total_issuance(*id).is_zero()
@@ -268,11 +243,11 @@ for NonZeroIssuance<AccountId, ForeingAssets>
 pub struct AsInnerId<AssetId, ConvertAssetId>(PhantomData<(AssetId, ConvertAssetId)>);
 #[cfg(feature = "foreign-assets")]
 impl<AssetId: Clone + PartialEq, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
-ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
-	where
-		AssetId: Borrow<AssetId>,
-		AssetId: TryAsForeing<AssetId, ForeignAssetId>,
-		AssetIds: Borrow<AssetId>,
+	ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
+where
+	AssetId: Borrow<AssetId>,
+	AssetId: TryAsForeing<AssetId, ForeignAssetId>,
+	AssetIds: Borrow<AssetId>,
 {
 	fn convert_ref(id: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
 		let id = id.borrow();
@@ -377,10 +352,13 @@ pub type IsReserve = AllAsset;
 pub type IsReserve = NativeAsset;
 
 #[cfg(feature = "foreign-assets")]
-type Trader<T> =
-	UsingAnyCurrencyComponents<
-		pallet_configuration::WeightToFee<T, Balance>,
-		RelayLocation, AccountId, Balances, ()>;
+type Trader<T> = FreeForAll<
+	pallet_configuration::WeightToFee<T, Balance>,
+	RelayLocation,
+	AccountId,
+	Balances,
+	(),
+>;
 #[cfg(not(feature = "foreign-assets"))]
 type Trader<T> = UsingOnlySelfCurrencyComponents<
 	pallet_configuration::WeightToFee<T, Balance>,
@@ -451,4 +429,3 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }
-

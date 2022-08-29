@@ -32,9 +32,9 @@ use xcm::{
 	v1::{BodyId, Junction::*, Junctions::*, MultiLocation, NetworkId},
 };
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, LocationInverter, ParentAsSuperuser,
-	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin,
+	FixedWeightBounds, FungiblesAdapter, LocationInverter, ParentAsSuperuser, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
 	ConvertedConcreteAssetId,
 };
@@ -49,8 +49,8 @@ use up_common::{
 };
 
 use crate::{
-	Balances, Call, DmpQueue, Event, ForeingAssets, Origin, ParachainInfo,
-	ParachainSystem, PolkadotXcm, Runtime, XcmpQueue,
+	Balances, Call, DmpQueue, Event, ForeingAssets, Origin, ParachainInfo, ParachainSystem,
+	PolkadotXcm, Runtime, XcmpQueue,
 };
 use crate::runtime_common::config::substrate::{TreasuryModuleId, MaxLocks, MaxReserves};
 use crate::runtime_common::config::pallets::TreasuryAccountId;
@@ -58,8 +58,8 @@ use crate::runtime_common::config::xcm::*;
 use crate::*;
 
 use pallet_foreing_assets::{
-	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-	UsingAnyCurrencyComponents, TryAsForeing, ForeignAssetId,
+	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency, FreeForAll,
+	TryAsForeing, ForeignAssetId,
 };
 
 // Signed version of balance
@@ -330,7 +330,7 @@ impl Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type Trader =
-		UsingAnyCurrencyComponents<LinearFee<Balance>, RelayLocation, AccountId, Balances, ()>;
+		FreeForAll<LinearFee<Balance>, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;

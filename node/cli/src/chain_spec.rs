@@ -65,7 +65,6 @@ pub enum RuntimeId {
 	Unknown(String),
 }
 
-
 #[cfg(not(feature = "unique-runtime"))]
 /// PARA_ID for Opal/Quartz
 const PARA_ID: u32 = 2095;
