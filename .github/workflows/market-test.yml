@@ -128,9 +128,7 @@ jobs:
           npm install
           npm install -g ts-node
 
-      - name: local-market:start
-        run: qa-tests/src/scripts/wait-market-ready.sh
-        shell: bash
+
 
       - name: Generate accounts
         run: |
@@ -157,6 +155,10 @@ jobs:
 
       - name: local-market:start
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+
+      - name: local-market:start
+        run: qa-tests/src/scripts/wait-market-ready.sh
+        shell: bash
 
       - name: Install dependecies
         run: |
