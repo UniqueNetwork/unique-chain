@@ -112,8 +112,8 @@ jobs:
 #      - name: Build the stack
 #        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
 
-      - name: Start nonce-app
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build nonce-app 
+#      - name: Start nonce-app
+#        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build nonce-app 
      
       - uses: actions/setup-node@v3
         with:
@@ -124,6 +124,13 @@ jobs:
           cd qa-tests
           npm install
           npm install -g ts-node
+
+      - name: local-market:start
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
+
+      - name: local-market:start
+        run: qa-tests/src/scripts/wait-market-ready.sh
+        shell: bash
 
       - name: Generate accounts
         run: |
@@ -148,12 +155,7 @@ jobs:
         with:
           path: qa-tests/
 
-      - name: local-market:start
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
 
-      - name: local-market:start
-        run: qa-tests/src/scripts/wait-market-ready.sh
-        shell: bash
 
       - name: Install dependecies
         run: |
