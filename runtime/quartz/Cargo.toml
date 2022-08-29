@@ -471,6 +471,12 @@ up-sponsorship = { default-features = false, git = "https://github.com/uniquenet
 pallet-foreing-assets = { default-features = false, path = "../../pallets/foreing-assets" }
 
 ################################################################################
+# Dev Dependencies
+
+[dev-dependencies.logtest]
+version = "2.0.0"
+
+################################################################################
 # Build Dependencies
 
 [build-dependencies.substrate-wasm-builder]
