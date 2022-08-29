@@ -36,6 +36,7 @@ let bob: IKeyringPair;
 let palletAdmin: IKeyringPair;
 let nominal: bigint;
 let promotionStartBlock: number | null = null;
+const palletAddress = calculatePalleteAddress('appstake');
 
 before(async function () {
   await usingPlaygrounds(async (helper, privateKeyWrapper) => {
@@ -43,13 +44,24 @@ before(async function () {
     alice = privateKeyWrapper('//Alice');
     bob = privateKeyWrapper('//Bob');
     palletAdmin = privateKeyWrapper('//palletAdmin');
-    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
     nominal = helper.balance.getOneTokenNominal();
+    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 100n * nominal);
+    await helper.balance.transferToSubstrate(alice, palletAddress, 100n * nominal);
+    if (!promotionStartBlock) {
+      promotionStartBlock = (await helper.api!.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
+    }
+    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.startAppPromotion(promotionStartBlock!)));
+  });
+});
+
+after(async function () {
+  await usingPlaygrounds(async (helper) => {
+    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.stopAppPromotion()));
   });
 });
 
 describe('app-promotions.stake extrinsic', () => {
-  it('will change balance state to "locked", add it to "staked" map, and increase "totalStaked" amount', async () => {
+  it('should change balance state to "locked", add it to "staked" map, and increase "totalStaked" amount', async () => {
     await usingPlaygrounds(async (helper) => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
@@ -73,7 +85,7 @@ describe('app-promotions.stake extrinsic', () => {
     });
   });
   
-  it('will throws if stake amount is more than total free balance', async () => {
+  it('should reject transaction if stake amount is more than total free balance', async () => {
     await usingPlaygrounds(async helper => { 
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
 
@@ -101,11 +113,10 @@ describe('app-promotions.stake extrinsic', () => {
   // TODO it('Staker stakes 5 times in one block with nonce');
   // TODO it('Staked balance appears as locked in the balance pallet');
   // TODO it('Alice stakes huge amount of tokens');
-  // TODO it('Can stake from ethereum account')
 });
 
 describe('unstake balance extrinsic', () => {  
-  it('will change balance state to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
+  it('should change balance state to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
     await usingPlaygrounds(async helper => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
@@ -118,7 +129,7 @@ describe('unstake balance extrinsic', () => {
     });
   });
 
-  it('will remove from the "staked" map starting from the oldest entry', async () => {
+  it('should remove from the "staked" map starting from the oldest entry', async () => {
     await usingPlaygrounds(async helper => {
       const [staker] = await helper.arrange.creteAccounts([100n], alice);
       await helper.staking.stake(staker, 10n * nominal);
@@ -239,8 +250,6 @@ describe('Admin adress', () => {
       await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
       
       // ...It doesn't break anything;
-      console.log(await helper.balance.getSubstrate(charlie.address));
-      console.log(await helper.balance.getSubstrate(palletAdmin.address));
       const collection = await helper.nft.mintCollection(charlie, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       await expect(helper.signTransaction(charlie, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
     });
@@ -262,266 +271,137 @@ describe('Admin adress', () => {
 
 describe('App-promotion collection sponsoring', () => {
   before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
-      await helper.balance.transferToSubstrate(alice, calculatePalleteAddress('appstake'), 10n * helper.balance.getOneTokenNominal());
-       
-      
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
+    await usingPlaygrounds(async (helper) => {
+      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address}));
       await helper.signTransaction(alice, tx);
-      
-      // const txStart = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.startAppPromotion(promotionStartBlock));
-      // await helper.signTransaction(alice, txStart);
-      
-      nominal = helper.balance.getOneTokenNominal();
     });
   });
     
   it('can not be set by non admin', async () => {
-    
-    
-    // arrange: Charlie creates Punks
-    // arrange: Sudo calls appPromotion.setAdminAddress(Alice)
-
-    // assert:  Random calls appPromotion.sponsorCollection(Punks.id) throws /// Random account can not set sponsoring
-    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) success /// Admin account can set sponsoring
-    
     await usingPlaygrounds(async (helper) => {
-      const colletcion  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      const [collectionOwner, nonAdmin] = await helper.arrange.creteAccounts([10n, 10n], alice);
+
+      const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      const collectionId = colletcion.collectionId;
-      
-      await expect(helper.signTransaction(bob, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-    });
-    
-  });
-
-  it('will set pallet address as confirmed admin for collection without sponsor', async () => {
-    // arrange: Charlie creates Punks
-
-    // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
-
-    // assert:  query collectionById: Punks sponsoring is confirmed by PalleteAddress
-    
-    await usingPlaygrounds(async (helper) => {
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      const collectionId = collection.collectionId;
-
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: calculatePalleteAddress('appstake')});
-    });
-    
-  });
-
-  it('will set pallet address as confirmed admin for collection with unconfirmed sponsor', async () => {
-    // arrange: Charlie creates Punks
-    // arrange: Charlie calls setCollectionSponsor(Punks.Id, Dave) /// Dave is unconfirmed sponsor
-
-    // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
-
-    // assert:  query collectionById: Punks sponsoring is confirmed by PalleteAddress
-    
-    await usingPlaygrounds(async (helper) => {
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      await collection.setSponsor(alice, bob.address);
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: bob.address});
-      
-      const collectionId = collection.collectionId;
-      
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: calculatePalleteAddress('appstake')});
-    });
-    
-  });
-
-  it('will set pallet address as confirmed admin for collection with confirmed sponsor', async () => {
-    // arrange: Charlie creates Punks
-    // arrange: setCollectionSponsor(Punks.Id, Dave)
-    // arrange: confirmSponsorship(Punks.Id, Dave) /// Dave is confirmed sponsor
-
-    // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
-
-    // assert:  query collectionById: Punks sponsoring is confirmed by PalleteAddress
-    
-    await usingPlaygrounds(async (helper) => {
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      await collection.setSponsor(alice, bob.address);
-  
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: bob.address});
-      expect(await collection.confirmSponsorship(bob)).to.be.true;
-      
-      const collectionId = collection.collectionId;
-      
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: calculatePalleteAddress('appstake')});
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      expect((await collection.getData())?.raw.sponsorship).to.equal('Disabled');
     });
   });
 
-  it('can be overwritten by collection owner', async () => {
-    // arrange: Charlie creates Punks
-    // arrange: appPromotion.sponsorCollection(Punks.Id)  /// Sponsor of Punks is pallete
-
-    // act:     Charlie calls unique.setCollectionLimits(limits) /// Charlie as owner can successfully change limits
-    // assert:  query collectionById(Punks.id) 1. sponsored by pallete, 2. limits has been changed
-
-    // act:     Charlie calls setCollectionSponsor(Dave) /// Collection owner reasignes sponsoring
-    // assert:  query collectionById: Punks sponsoring is unconfirmed by Dave
-    
+  it('should set pallet address as confirmed admin', async () => {
     await usingPlaygrounds(async (helper) => {
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      const [collectionOwner, oldSponsor] = await helper.arrange.creteAccounts([20n, 20n], alice);
+      
+      // Can set sponsoring for collection without sponsor
+      const collectionWithoutSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'No-sponsor', description: 'New Collection', tokenPrefix: 'Promotion'});
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithoutSponsor.collectionId))).to.be.eventually.fulfilled;
+      expect((await collectionWithoutSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
+
+      // Can set sponsoring for collection with unconfirmed sponsor
+      const collectionWithUnconfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Unconfirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: oldSponsor.address});
+      expect((await collectionWithUnconfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: oldSponsor.address});
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithUnconfirmedSponsor.collectionId))).to.be.eventually.fulfilled;
+      expect((await collectionWithUnconfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
+
+      // Can set sponsoring for collection with confirmed sponsor
+      const collectionWithConfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Confirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: oldSponsor.address});
+      await collectionWithConfirmedSponsor.confirmSponsorship(oldSponsor);
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithConfirmedSponsor.collectionId))).to.be.eventually.fulfilled;
+      expect((await collectionWithConfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
+    });
+  });
+
+  it('can be overwritten by collection owner', async () => {    
+    await usingPlaygrounds(async (helper) => {
+      const [collectionOwner, newSponsor] = await helper.arrange.creteAccounts([20n, 0n], alice);
+      const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       const collectionId = collection.collectionId;
       
       await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: calculatePalleteAddress('appstake')});
       
-      expect(await collection.setLimits(alice, {sponsorTransferTimeout: 0})).to.be.true;
+      // Collection limits still can be changed by the owner
+      expect(await collection.setLimits(collectionOwner, {sponsorTransferTimeout: 0})).to.be.true;
       expect((await collection.getData())?.raw.limits.sponsorTransferTimeout).to.be.equal(0);
-      
-      expect((await collection.setSponsor(alice, bob.address))).to.be.true;
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: bob.address});
-    });
-    
-  });
-  
-  it('will keep collection limits set by the owner earlier', async () => {
-    // arrange: const limits = {...all possible collection limits}
-    // arrange: Charlie creates Punks
-    // arrange: Charlie calls unique.setCollectionLimits(limits) /// Owner sets all possible limits
+      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
 
-    // act:     Admin calls appPromotion.sponsorCollection(Punks.id)
-    // assert:  query collectionById(Punks.id) returns limits
-    
-    await usingPlaygrounds(async (helper) => {
-      
-      const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      expect(await collection.setLimits(alice, {sponsorTransferTimeout: 0})).to.be.true;
-      const limits = (await collection.getData())?.raw.limits;
-      
-      const collectionId = collection.collectionId;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-      expect((await collection.getData())?.raw.limits).to.be.deep.equal(limits);
+      // Collection sponsor can be changed too
+      expect((await collection.setSponsor(collectionOwner, newSponsor.address))).to.be.true;
+      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: newSponsor.address});
     });
-    
   });
   
-  it('will throw if collection doesn\'t exist', async () => {
-    // assert:  Admin calls appPromotion.sponsorCollection(999999999999999) throw 
+  it('should not overwrite collection limits set by the owner earlier', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const limits = {ownerCanDestroy: true, ownerCanTransfer: true, sponsorTransferTimeout: 0};
+      const collectionWithLimits = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits});
+
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithLimits.collectionId))).to.be.eventually.fulfilled;
+      expect((await collectionWithLimits.getData())?.raw.limits).to.be.deep.contain(limits);
+    });
+  });
+  
+  it('should reject transaction if collection doesn\'t exist', async () => {
     await usingPlaygrounds(async (helper) => {
       await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(999999999))).to.be.eventually.rejected;
     });
   });
 
-  it('will throw if collection was burnt', async () => {
-    // arrange: Charlie creates Punks
-    // arrange: Charlie burns Punks
-
-    // assert:  Admin calls appPromotion.sponsorCollection(Punks.id) throw
-    
+  it('should reject transaction if collection was burnt', async () => {
     await usingPlaygrounds(async (helper) => {
-      const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      const collectionId = collection.collectionId;
-      
-      expect((await collection.burn(alice))).to.be.true;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.rejected;
+      const [collectionOwner] = await helper.arrange.creteAccounts([10n], alice);
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      await collection.burn(collectionOwner);
+
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
     });
-    
   });
 });
 
-
 describe('app-promotion stopSponsoringCollection', () => {
-  before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
-      await helper.balance.transferToSubstrate(alice, calculatePalleteAddress('appstake'), 10n * helper.balance.getOneTokenNominal());
-       
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-      await helper.signTransaction(alice, tx);
-
-      nominal = helper.balance.getOneTokenNominal();
-    });
-  });
-  
-  it('can not be called by non-admin', async () => {
-    // arrange: Alice creates Punks
-    // arrange: appPromotion.sponsorCollection(Punks.Id)
-
-    // assert:  Random calls appPromotion.stopSponsoringCollection(Punks) throws
-    // assert:  query collectionById(Punks.id): sponsoring confirmed by PalleteAddress
-    
+  it('can not be called by non-admin', async () => {    
     await usingPlaygrounds(async (helper) => {
-      const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      const collectionId = collection.collectionId;
+      const [collectionOwner, nonAdmin] = await helper.arrange.creteAccounts([10n, 10n], alice);
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
       
-      await expect(helper.signTransaction(bob, helper.api!.tx.promotion.stopSponsorignCollection(collectionId))).to.be.eventually.rejected;
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: calculatePalleteAddress('appstake')});
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collection.collectionId))).to.be.eventually.rejected;
+      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
     });
   });
 
-  it('will set sponsoring as disabled', async () => {
-    // arrange: Alice creates Punks
-    // arrange: appPromotion.sponsorCollection(Punks.Id)
-
-    // act:     Admin calls appPromotion.stopSponsoringCollection(Punks)
-
-    // assert:  query collectionById(Punks.id): sponsoring unconfirmed
-    
+  it('should set sponsoring as disabled', async () => {
     await usingPlaygrounds(async (helper) => {
-      const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      const collectionId = collection.collectionId;
+      const [collectionOwner] = await helper.arrange.creteAccounts([10n, 10n], alice);
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collection.collectionId))).to.be.eventually.fulfilled;
       
       expect((await collection.getData())?.raw.sponsorship).to.be.equal('Disabled');
     });
   });
 
-  it('will not affect collection which is not sponsored by pallete', async () => {
-    // arrange: Alice creates Punks
-    // arrange: Alice calls setCollectionSponsoring(Punks)
-    // arrange: Alice calls confirmSponsorship(Punks)
-
-    // act:     Admin calls appPromotion.stopSponsoringCollection(A)
-    // assert:  query collectionById(Punks): Sponsoring: {Confirmed: Alice} /// Alice still collection owner
-    
+  it('should not affect collection which is not sponsored by pallete', async () => {
     await usingPlaygrounds(async (helper) => {
-      const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      const collectionId = collection.collectionId;
-      expect(await collection.setSponsor(alice, alice.address)).to.be.true;
-      expect(await collection.confirmSponsorship(alice)).to.be.true;
+      const [collectionOwner] = await helper.arrange.creteAccounts([10n, 10n], alice);
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: collectionOwner.address});
+      await collection.confirmSponsorship(collectionOwner);
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collection.collectionId))).to.be.eventually.rejected;
       
-      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: alice.address});
+      expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: collectionOwner.address});
     });
-    
   });
 
-  it('will throw if collection does not exist', async () => {
-    // arrange: Alice creates Punks
-    // arrange: Alice burns Punks
-
-    // assert:  Admin calls appPromotion.stopSponsoringCollection(Punks.id) throws
-    // assert:  Admin calls appPromotion.stopSponsoringCollection(999999999999999) throw
-    
+  it('should reject transaction if collection does not exist', async () => {    
     await usingPlaygrounds(async (helper) => {
-      const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      const collectionId = collection.collectionId;
+      const [collectionOwner] = await helper.arrange.creteAccounts([10n], alice);
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      expect((await collection.burn(alice))).to.be.true;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collectionId))).to.be.eventually.rejected;
+      await collection.burn(collectionOwner);
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsorignCollection(999999999))).to.be.eventually.rejected;
     });
   });
 });
@@ -593,7 +473,7 @@ describe('app-promotion stopSponsoringContract', () => {
       bob = privateKeyWrapper('//Bob');
       palletAdmin = privateKeyWrapper('//palletAdmin');
       await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
-      await helper.balance.transferToSubstrate(alice, calculatePalleteAddress('appstake'), 10n * helper.balance.getOneTokenNominal());
+      await helper.balance.transferToSubstrate(alice, palletAddress, 10n * helper.balance.getOneTokenNominal());
       
       const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
       await helper.signTransaction(alice, tx);
@@ -641,129 +521,47 @@ describe('app-promotion stopSponsoringContract', () => {
 });
 
 describe('app-promotion rewards', () => {
-  const DAY = 7200n;
-
-  // TODO (load test. Can pay reward for 10000 addresses)
-  
-  
-  before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      if (promotionStartBlock == null) {
-        promotionStartBlock = (await helper.api!.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
-      }
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-      await helper.signTransaction(alice, tx);
-      
-      const txStart = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.startAppPromotion(promotionStartBlock!));
-      await helper.signTransaction(alice, txStart);
-
-      nominal = helper.balance.getOneTokenNominal();
-    });
-  });
-  
-  it('will credit 0.05% for staking period', async () => {
-    // arrange: bob.stake(10000);
-    // arrange: bob.stake(20000);
-    // arrange: waitForRewards();
-
-    // assert:  bob.staked to equal [10005, 20010]
-    
+  it('should credit 0.05% for staking period', async () => {    
     await usingPlaygrounds(async helper => {
-      const staker = await createUser(50n * nominal);
+      const [staker] = await helper.arrange.creteAccounts([50n], alice);
       await waitForRecalculationBlock(helper.api!);
       
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
+      await helper.staking.stake(staker, 1n * nominal);
+      await helper.staking.stake(staker, 2n * nominal);
       await waitForRelayBlock(helper.api!, 36);
       
-      
-      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker)))
-        .map(([_, amount]) => amount.toBigInt()))
-        .to.be.deep.equal([calculateIncome(nominal, 10n), calculateIncome(2n * nominal, 10n)]);
+      const totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
+      expect(totalStakedPerBlock).to.be.deep.equal([calculateIncome(nominal, 10n), calculateIncome(2n * nominal, 10n)]);
     });
-    
   });
   
-  it('will not be credited for unstaked (reserved) balance', async () => {
-    // arrange: bob.stake(10000);
-    // arrange: bob.unstake(5000);
-    // arrange: waitForRewards();
-
-    // assert:  bob.staked to equal [5002.5]
+  it('should not be credited for unstaked (reserved) balance', async () => {
     await usingPlaygrounds(async helper => {
-      const staker = await createUser(20n * nominal);
-      await waitForRecalculationBlock(helper.api!);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(5n * nominal))).to.be.eventually.fulfilled;
-      await waitForRelayBlock(helper.api!, 38);
-
-      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker)))
-        .map(([_, amount]) => amount.toBigInt()))
-        .to.be.deep.equal([calculateIncome(5n * nominal, 10n)]);
-      
+      expect.fail('Implement me after unstake method will be fixed');
     });
-    
   });
   
-  it('will bring compound interest', async () => {
-    // arrange: bob balance = 30000
-    // arrange: bob.stake(10000);
-    // arrange: bob.stake(10000);
-    // arrange: waitForRewards();
-
-    // assert:  bob.staked() equal [10005, 10005, 10005] /// 10_000 * 1.0005
-    // act:     waitForRewards();
-
-    // assert:  bob.staked() equal [10010.0025, 10010.0025, 10010.0025] /// 10_005 * 1.0005
-    // act:     bob.unstake(10.0025)
-    // assert:  bob.staked() equal [10000, 10010.0025, 10010.0025] /// 10_005 * 1.0005
-
-    // act:     waitForRewards();
-    // assert:  bob.staked() equal [10005, 10015,00750125, 10015,00750125] ///
+  it('should bring compound interest', async () => {
     await usingPlaygrounds(async helper => {
-      const staker = await createUser(40n * nominal);
+      const [staker] = await helper.arrange.creteAccounts([80n], alice);
       
       await waitForRecalculationBlock(helper.api!);
-      // const foo = await helper.api!.registry.getChainProperties().
-
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      // await waitNewBlocks(helper.api!, 1);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      // await waitNewBlocks(helper.api!, 1);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      // console.log(await helper.balance.getSubstrate(staker.address));
-      // await waitNewBlocks(helper.api!, 17);
+      
+      await helper.staking.stake(staker, 10n * nominal);
+      await helper.staking.stake(staker, 20n * nominal);
+      await helper.staking.stake(staker, 30n * nominal);
+      
       await waitForRelayBlock(helper.api!, 34);
-      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker)))
-        .map(([_, amount]) => amount.toBigInt()))
-        .to.be.deep.equal([calculateIncome(10n * nominal, 10n), calculateIncome(10n * nominal, 10n), calculateIncome(10n * nominal, 10n)]);
+      let totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
+      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(10n * nominal, 10n), calculateIncome(20n * nominal, 10n), calculateIncome(30n * nominal, 10n)]);
       
-      // console.log(await getBlockNumber(helper.api!));
-      // console.log((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([block, amount]) => [block.toBigInt(), amount.toBigInt()]));
-      // console.log(`${calculateIncome(10n * nominal, 10n)} || ${calculateIncome(10n * nominal, 10n, 2)}`);
-      // await waitNewBlocks(helper.api!, 10);
       await waitForRelayBlock(helper.api!, 20);
-      // console.log((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt()));
-      // console.log(await helper.balance.getSubstrate(staker.address));
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(calculateIncome(10n * nominal, 10n, 2) - 10n * nominal))).to.be.eventually.fulfilled;
-      // console.log(calculateIncome(10n * nominal, 10n, 2));
-      // console.log(calculateIncome(10n * nominal, 10n, 3));
-      // console.log(calculateIncome(10n * nominal, 10n, 4));
-      // console.log(calculateIncome(10n * nominal, 10n, 5));
-      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker)))
-        .map(([_, amount]) => amount.toBigInt()))
-        .to.be.deep.equal([10n * nominal, calculateIncome(10n * nominal, 10n, 2), calculateIncome(10n * nominal, 10n, 2)]);
-      
-      // console.log((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt()));
-      
-      // console.log(await helper.balance.getSubstrate(staker.address));
+      totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
+      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(10n * nominal, 10n, 2), calculateIncome(20n * nominal, 10n, 2), calculateIncome(30n * nominal, 10n, 2)]);      
     });
-    
   });
+
+  // TODO (load test. Can pay reward for 10000 addresses)
 });
 
 
@@ -798,11 +596,11 @@ async function waitForRelayBlock(api: ApiPromise, blocks = 1): Promise<void> {
   });
 }
 
-
 function calculatePalleteAddress(palletId: any) {
   const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
   return encodeAddress(address);
 }
+
 function calculateIncome(base: bigint, calcPeriod: bigint, iter = 0): bigint {
   const DAY = 7200n;
   const ACCURACY = 1_000_000_000n;
@@ -811,12 +609,4 @@ function calculateIncome(base: bigint, calcPeriod: bigint, iter = 0): bigint {
   if (iter > 1) {
     return calculateIncome(income, calcPeriod, iter - 1);
   } else return income;
-}
-
-async function createUser(amount?: bigint) {
-  return await usingPlaygrounds(async helper => {
-    const user: IKeyringPair = helper.util.fromSeed(mnemonicGenerate());
-    await helper.balance.transferToSubstrate(alice, user.address, amount ? amount : 10n * helper.balance.getOneTokenNominal());
-    return user;
-  });
 }
