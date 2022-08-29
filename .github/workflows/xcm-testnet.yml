@@ -52,7 +52,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            #            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
             network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
             network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
 
@@ -114,7 +114,7 @@ jobs:
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
-            BRANCH=${{ github.head_ref }}
+            BRANCH=${{ matrix.mainnet_branch }}
             ACALA_BUILD_BRANCH=${{ env.ACALA_BUILD_BRANCH }}
             MOONBEAM_BUILD_BRANCH=${{ env.MOONBEAM_BUILD_BRANCH }}
             CUMULUS_BUILD_BRANCH=${{ env.CUMULUS_BUILD_BRANCH }}
