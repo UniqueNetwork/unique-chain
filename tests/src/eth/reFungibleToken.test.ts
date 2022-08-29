@@ -655,31 +655,6 @@ describe('ERC 1633 implementation', () => {
     await requirePallets(this, [Pallets.ReFungible]);
   });
 
-  itWeb3('Parent NFT token address and id', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-
-    const {collectionIdAddress:  nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
-    const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
-    const nftCollectionId = collectionIdFromAddress(nftCollectionAddress);
-
-    const {collectionIdAddress, collectionId} = await createRefungibleCollection(api, web3, owner);
-    const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
-    const refungibleTokenId = await refungibleContract.methods.nextTokenId().call();
-    await refungibleContract.methods.mint(owner, refungibleTokenId).send();
-
-    const rftTokenAddress = tokenIdToAddress(collectionId, refungibleTokenId);
-    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
-    await refungibleTokenContract.methods.setParentNFT(nftCollectionAddress, nftTokenId).send();
-
-    const tokenAddress = await refungibleTokenContract.methods.parentToken().call();
-    const tokenId = await refungibleTokenContract.methods.parentTokenId().call();
-    const nftTokenAddress = tokenIdToAddress(nftCollectionId, nftTokenId);
-    expect(tokenAddress).to.be.equal(nftTokenAddress);
-    expect(tokenId).to.be.equal(nftTokenId);
-  });
-
   itWeb3('Default parent token address and id', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
@@ -693,7 +668,7 @@ describe('ERC 1633 implementation', () => {
 
     const tokenAddress = await refungibleTokenContract.methods.parentToken().call();
     const tokenId = await refungibleTokenContract.methods.parentTokenId().call();
-    expect(tokenAddress).to.be.equal(rftTokenAddress);
+    expect(tokenAddress).to.be.equal(collectionIdAddress);
     expect(tokenId).to.be.equal(refungibleTokenId);
   });
 });
