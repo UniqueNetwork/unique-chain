@@ -69,6 +69,7 @@ pub type Amount = i128;
 pub type Barrier = DenyThenTry<
     DenyExchangeWithUnknownLocation,
     (
+        DenyTransact,
         TakeWeightCredit,
         AllowTopLevelPaidExecutionFrom<Everything>,
         // Parent and its exec plurality get free execution
@@ -93,27 +94,6 @@ pub fn get_allowed_locations() -> Vec<MultiLocation> {
         // Self parachain address
         MultiLocation { parents: 1, interior: X1(Parachain(ParachainInfo::get().into())) },
     ]
-}
-
-pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
-    where
-        Deny: ShouldExecute,
-        Allow: ShouldExecute;
-
-impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
-    where
-        Deny: ShouldExecute,
-        Allow: ShouldExecute,
-{
-    fn should_execute<Call>(
-        origin: &MultiLocation,
-        message: &mut Xcm<Call>,
-        max_weight: Weight,
-        weight_credit: &mut Weight,
-    ) -> Result<(), ()> {
-        Deny::should_execute(origin, message, max_weight, weight_credit)?;
-        Allow::should_execute(origin, message, max_weight, weight_credit)
-    }
 }
 
 // Allow xcm exchange only with locations in list

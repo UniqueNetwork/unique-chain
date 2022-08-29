@@ -34,6 +34,7 @@ use xcm::latest::{
 	AssetId::{Concrete},
 	Fungibility::Fungible as XcmFungible,
 	MultiAsset, Error as XcmError,
+	Instruction, Xcm,
 };
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
@@ -45,6 +46,7 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor, Assets};
 use xcm_executor::traits::{
 	Convert as ConvertXcm, JustTry, MatchesFungible, WeightTrader, FilterAssetLocation,
+	ShouldExecute,
 };
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency, FreeForAll,
@@ -171,13 +173,53 @@ match_types! {
 	};
 }
 
-/*
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	// ^^^ Parent & its unit plurality gets free execution
-);
- */
+pub struct DenyTransact;
+impl ShouldExecute for DenyTransact {
+	fn should_execute<Call>(
+		_origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+		_max_weight: Weight,
+		_weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		let transact_inst = message.0.iter()
+			.find(|inst| matches![inst, Instruction::Transact { .. }]);
+
+		match transact_inst {
+			Some(_) => {
+				log::warn!(
+					target: "xcm::barrier",
+					"transact XCM rejected"
+				);
+
+				Err(())
+			},
+			None => Ok(())
+		}
+	}
+}
+
+/// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
+/// If it passes the Deny, and matches one of the Allow cases then it is let through.
+pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
+    where
+        Deny: ShouldExecute,
+        Allow: ShouldExecute;
+
+impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
+    where
+        Deny: ShouldExecute,
+        Allow: ShouldExecute,
+{
+    fn should_execute<Call>(
+        origin: &MultiLocation,
+        message: &mut Xcm<Call>,
+        max_weight: Weight,
+        weight_credit: &mut Weight,
+    ) -> Result<(), ()> {
+        Deny::should_execute(origin, message, max_weight, weight_credit)?;
+        Allow::should_execute(origin, message, max_weight, weight_credit)
+    }
+}
 
 pub struct UsingOnlySelfCurrencyComponents<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,

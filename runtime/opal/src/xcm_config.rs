@@ -301,13 +301,16 @@ impl ShouldExecute for AllowAllDebug {
 	}
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
-	// ^^^ Parent & its unit plurality gets free execution
-	AllowAllDebug,
-);
+pub type Barrier = DenyThenTry<
+	DenyTransact,
+	(
+		TakeWeightCredit,
+		AllowTopLevelPaidExecutionFrom<Everything>,
+		AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
+		// ^^^ Parent & its unit plurality gets free execution
+		AllowAllDebug,
+	)
+>;
 
 pub struct AllAsset;
 impl FilterAssetLocation for AllAsset {

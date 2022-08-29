@@ -76,29 +76,6 @@ match_types! {
 	};
 }
 
-/// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
-/// If it passes the Deny, and matches one of the Allow cases then it is let through.
-pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
-    where
-        Deny: ShouldExecute,
-        Allow: ShouldExecute;
-
-impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
-    where
-        Deny: ShouldExecute,
-        Allow: ShouldExecute,
-{
-    fn should_execute<Call>(
-        origin: &MultiLocation,
-        message: &mut Xcm<Call>,
-        max_weight: Weight,
-        weight_credit: &mut Weight,
-    ) -> Result<(), ()> {
-        Deny::should_execute(origin, message, max_weight, weight_credit)?;
-        Allow::should_execute(origin, message, max_weight, weight_credit)
-    }
-}
-
 pub fn get_allowed_locations() -> Vec<MultiLocation> {
     vec![
         // Self location
@@ -151,6 +128,7 @@ impl ShouldExecute for DenyExchangeWithUnknownLocation {
 pub type Barrier = DenyThenTry<
     DenyExchangeWithUnknownLocation,
     (
+        DenyTransact,
         TakeWeightCredit,
         AllowTopLevelPaidExecutionFrom<Everything>,
         // Parent and its exec plurality get free execution
