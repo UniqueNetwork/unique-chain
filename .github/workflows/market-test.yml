@@ -86,14 +86,14 @@ jobs:
         run: cp qa-tests/.env.example qa-tests/.env
 
       - name: Show content of qa-test/.env
-        run: cat qa-tests/.env
+        run: |
+          cat qa-tests/.env
+          cat qa-tests/.env.docker
 
       - name: Show content of qa-test/.docker/.env
         working-directory: qa-tests
         run: |
           ls -la
-          ls -la .docker
-          cat .docker/.env
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
