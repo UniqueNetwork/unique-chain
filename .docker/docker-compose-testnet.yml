@@ -1,0 +1,17 @@
+version: "3.5"
+
+services:
+  xcm_nodes:
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile-testnet
+    expose:
+      - 9844
+      - 9944
+    ports:
+      - 127.0.0.1:9844:9844
+      - 127.0.0.1:9944:9944
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"
