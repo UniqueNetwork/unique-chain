@@ -166,8 +166,11 @@ jobs:
       - name: Show content of qa-test .env
         run: cat qa-tests/.env
 
-      - name: Show content of qa-test/.docker/.env
-        run: cat qa-tests/.env
+      - name: Copy qa-tests/.env.example to qa-tests/.env
+        run: |
+          rm -rf qa-tests/.env.docker
+          cp qa-tests/.env qa-tests/.env.docker
+	  sed -i "/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944" qa-tests/.env.docker
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -177,7 +180,7 @@ jobs:
       - name: local-market:start
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
-      - name: local-market:start
+      - name: Wait for market readyness
         run: qa-tests/src/scripts/wait-market-ready.sh
         shell: bash
 
