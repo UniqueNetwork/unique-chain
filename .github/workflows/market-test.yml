@@ -71,7 +71,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
-      - name: Checkout SDK repo
+      - name: Checkout Market e2e tests
         uses: actions/checkout@v3
         with:
           repository: 'UniqueNetwork/market-e2e-tests'
@@ -87,6 +87,9 @@ jobs:
 
       - name: Show content of qa-test/.env
         run: cat qa-tests/.env
+
+      - name: Show content of qa-test/.docker/.env
+        run: cat qa-tests/.docker/.env
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -146,6 +149,9 @@ jobs:
           ts-node ./src/scripts/create-test-collections.ts
 
       - name: Show content of qa-test .env
+        run: cat qa-tests/.env
+
+      - name: Show content of qa-test/.docker/.env
         run: cat qa-tests/.env
 
       - name: Read qa -test .env file
