@@ -33,8 +33,7 @@ use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
 use xcm::latest::{
 	AssetId::{Concrete},
 	Fungibility::Fungible as XcmFungible,
-	MultiAsset, Error as XcmError,
-	Instruction, Xcm,
+	MultiAsset, Error as XcmError, Instruction, Xcm,
 };
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
@@ -181,7 +180,9 @@ impl ShouldExecute for DenyTransact {
 		_max_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-		let transact_inst = message.0.iter()
+		let transact_inst = message
+			.0
+			.iter()
 			.find(|inst| matches![inst, Instruction::Transact { .. }]);
 
 		match transact_inst {
@@ -192,8 +193,8 @@ impl ShouldExecute for DenyTransact {
 				);
 
 				Err(())
-			},
-			None => Ok(())
+			}
+			None => Ok(()),
 		}
 	}
 }
@@ -201,24 +202,24 @@ impl ShouldExecute for DenyTransact {
 /// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
 /// If it passes the Deny, and matches one of the Allow cases then it is let through.
 pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
-    where
-        Deny: ShouldExecute,
-        Allow: ShouldExecute;
+where
+	Deny: ShouldExecute,
+	Allow: ShouldExecute;
 
 impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
-    where
-        Deny: ShouldExecute,
-        Allow: ShouldExecute,
+where
+	Deny: ShouldExecute,
+	Allow: ShouldExecute,
 {
-    fn should_execute<Call>(
-        origin: &MultiLocation,
-        message: &mut Xcm<Call>,
-        max_weight: Weight,
-        weight_credit: &mut Weight,
-    ) -> Result<(), ()> {
-        Deny::should_execute(origin, message, max_weight, weight_credit)?;
-        Allow::should_execute(origin, message, max_weight, weight_credit)
-    }
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		Deny::should_execute(origin, message, max_weight, weight_credit)?;
+		Allow::should_execute(origin, message, max_weight, weight_credit)
+	}
 }
 
 pub struct UsingOnlySelfCurrencyComponents<
