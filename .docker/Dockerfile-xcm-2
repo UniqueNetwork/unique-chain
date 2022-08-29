@@ -2,9 +2,9 @@
 FROM ubuntu:20.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
-ARG RUST_TOOLCHAIN=
+#ARG RUST_TOOLCHAIN=
 
-ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
+#ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
@@ -18,11 +18,11 @@ RUN apt-get update && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install $RUST_TOOLCHAIN && \
-    rustup default $RUST_TOOLCHAIN && \
+    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup default {{ RUST_TOOLCHAIN }} && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
+RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -32,39 +32,41 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique
 
 ARG PROFILE=release
-ARG FEATURE=
-ARG BRANCH=
-
+#ARG FEATURE=
+#ARG BRANCH=
 
 WORKDIR /unique_parachain
 
-RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
+COPY ./xcm-config/launch-config-xcm-{{ NETWORK }}.json ./launch-config-xcm-{{ NETWORK }}.json
+COPY ./xcm-config/5validators.jsonnet ./5validators.jsonnet
+
+RUN git clone -b {{ BRANCH }} https://github.com/UniqueNetwork/unique-chain.git && \
     cd unique-chain && \
-    cargo build --features=$FEATURE --$PROFILE
+    cargo build --features={{ FEATURE }} --$PROFILE
 
 # ===== BUILD POLKADOT =====
 FROM rust-builder as builder-polkadot
 
-ARG POLKADOT_BUILD_BRANCH=
-ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
+#ARG POLKADOT_BUILD_BRANCH=
+#ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
 
 
 WORKDIR /unique_parachain
 
-RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/polkadot.git && \
+RUN git clone -b {{ POLKADOT_BUILD_BRANCH }} --depth 1 https://github.com/paritytech/polkadot.git && \
     cd polkadot && \
     cargo build --release
 
 # ===== BUILD ACALA =====
 FROM rust-builder as builder-acala
 
-ARG ACALA_BUILD_BRANCH=
-ENV ACALA_BUILD_BRANCH $ACALA_BUILD_BRANCH
+#ARG ACALA_BUILD_BRANCH=
+#ENV ACALA_BUILD_BRANCH $ACALA_BUILD_BRANCH
 
 
 WORKDIR /unique_parachain
 
-RUN git clone -b $ACALA_BUILD_BRANCH --depth 1 https://github.com/AcalaNetwork/Acala.git && \
+RUN git clone -b {{ ACALA_BUILD_BRANCH }} --depth 1 https://github.com/AcalaNetwork/Acala.git && \
     cd Acala && \
     make init && \
     make build-release
@@ -72,26 +74,26 @@ RUN git clone -b $ACALA_BUILD_BRANCH --depth 1 https://github.com/AcalaNetwork/A
 # ===== BUILD MOONBEAM =====
 FROM rust-builder as builder-moonbeam
 
-ARG MOONBEAM_BUILD_BRANCH=
-ENV MOONBEAM_BUILD_BRANCH $MOONBEAM_BUILD_BRANCH
+#ARG MOONBEAM_BUILD_BRANCH=
+#ENV MOONBEAM_BUILD_BRANCH $MOONBEAM_BUILD_BRANCH
 
 
 WORKDIR /unique_parachain
 
-RUN git clone -b $MOONBEAM_BUILD_BRANCH --depth 1 https://github.com/PureStake/moonbeam.git && \
+RUN git clone -b {{ MOONBEAM_BUILD_BRANCH }} --depth 1 https://github.com/PureStake/moonbeam.git && \
     cd moonbeam && \
     cargo build --release
 
 # ===== BUILD CUMULUS =====
 FROM rust-builder as builder-cumulus
 
-ARG CUMULUS_BUILD_BRANCH=
-ENV CUMULUS_BUILD_BRANCH $CUMULUS_BUILD_BRANCH
+#ARG CUMULUS_BUILD_BRANCH=
+#ENV CUMULUS_BUILD_BRANCH $CUMULUS_BUILD_BRANCH
 
 
 WORKDIR /unique_parachain
 
-RUN git clone -b $CUMULUS_BUILD_BRANCH --depth 1 https://github.com/paritytech/cumulus.git && \
+RUN git clone -b {{ CUMULUS_BUILD_BRANCH }} --depth 1 https://github.com/paritytech/cumulus.git && \
     cd cumulus && \
     cargo build --release
 
@@ -108,18 +110,18 @@ RUN git clone -b v0.1.0 --depth 1 https://github.com/CertainLach/chainql.git . &
 
 FROM ubuntu:20.04
 
-ARG POLKADOT_LAUNCH_BRANCH=
-ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
+#ARG POLKADOT_LAUNCH_BRANCH=
+#ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
 
 RUN apt-get -y update && \
-      apt-get -y install curl git jsonnet && \
+      apt-get -y install curl git && \
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
       export NVM_DIR="$HOME/.nvm" && \
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
       nvm install v16.16.0 && \
       nvm use v16.16.0
 
-RUN git clone https://github.com/uniquenetwork/polkadot-launch -b $POLKADOT_LAUNCH_BRANCH
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b {{ POLKADOT_LAUNCH_BRANCH }}
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -128,6 +130,8 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     yarn install
 
 COPY --from=builder-unique /unique_parachain/unique-chain/target/release/unique-collator /unique-chain/target/release/
+COPY --from=builder-unique /unique_parachain/launch-config-xcm-{{ NETWORK }}.json /polkadot-launch/
+COPY --from=builder-unique /unique_parachain/5validators.jsonnet /polkadot-launch/5validators.jsonnet
 COPY --from=builder-polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=builder-moonbeam /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=builder-cumulus /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
@@ -143,4 +147,4 @@ EXPOSE 9948
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
-    yarn start launch-config.json
+    yarn start launch-config-xcm-{{ NETWORK }}.json
