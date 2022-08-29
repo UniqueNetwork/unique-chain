@@ -2463,6 +2463,7 @@ export default {
       start_app_promotion: {
         promotionStartRelayBlock: 'Option<u32>',
       },
+      stop_app_promotion: 'Null',
       stake: {
         amount: 'u128',
       },
@@ -2473,7 +2474,13 @@ export default {
         collectionId: 'u32',
       },
       stop_sponsorign_collection: {
-        collectionId: 'u32'
+        collectionId: 'u32',
+      },
+      sponsor_conract: {
+        contractId: 'H160',
+      },
+      stop_sponsorign_contract: {
+        contractId: 'H160'
       }
     }
   },
@@ -3098,7 +3105,7 @@ export default {
    * Lookup410: pallet_app_promotion::pallet::Error<T>
    **/
   PalletAppPromotionError: {
-    _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFounds', 'InvalidArgument', 'AlreadySponsored']
+    _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFounds', 'InvalidArgument']
   },
   /**
    * Lookup413: pallet_evm::pallet::Error<T>

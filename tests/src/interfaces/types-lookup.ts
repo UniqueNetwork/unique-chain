@@ -2669,6 +2669,7 @@ declare module '@polkadot/types/lookup' {
     readonly asStartAppPromotion: {
       readonly promotionStartRelayBlock: Option<u32>;
     } & Struct;
+    readonly isStopAppPromotion: boolean;
     readonly isStake: boolean;
     readonly asStake: {
       readonly amount: u128;
@@ -2685,7 +2686,15 @@ declare module '@polkadot/types/lookup' {
     readonly asStopSponsorignCollection: {
       readonly collectionId: u32;
     } & Struct;
-    readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsorignCollection';
+    readonly isSponsorConract: boolean;
+    readonly asSponsorConract: {
+      readonly contractId: H160;
+    } & Struct;
+    readonly isStopSponsorignContract: boolean;
+    readonly asStopSponsorignContract: {
+      readonly contractId: H160;
+    } & Struct;
+    readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'StopAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsorignCollection' | 'SponsorConract' | 'StopSponsorignContract';
   }
 
   /** @name PalletEvmCall (305) */
@@ -3288,8 +3297,7 @@ declare module '@polkadot/types/lookup' {
     readonly isNoPermission: boolean;
     readonly isNotSufficientFounds: boolean;
     readonly isInvalidArgument: boolean;
-    readonly isAlreadySponsored: boolean;
-    readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument' | 'AlreadySponsored';
+    readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument';
   }
 
   /** @name PalletEvmError (413) */

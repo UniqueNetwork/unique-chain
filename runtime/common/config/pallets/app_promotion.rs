@@ -16,28 +16,40 @@
 
 use crate::{
 	runtime_common::config::pallets::{TreasuryAccountId, RelayChainBlockNumberProvider},
-	Runtime, Balances, BlockNumber, Unique, Event,
+	Runtime, Balances, BlockNumber, Unique, Event, EvmContractHelpers,
 };
 
 use frame_support::{parameter_types, PalletId};
 use sp_arithmetic::Perbill;
 use up_common::{
-	constants::{DAYS, UNIQUE},
+	constants::{DAYS, UNIQUE, RELAY_DAYS},
 	types::Balance,
 };
 
+#[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 parameter_types! {
 	pub const AppPromotionId: PalletId = PalletId(*b"appstake");
 	pub const RecalculationInterval: BlockNumber = 20;
-	pub const PendingInterval: BlockNumber = 10;
+	pub const PendingInterval: BlockNumber = 20;
 	pub const Nominal: Balance = UNIQUE;
 	pub const Day: BlockNumber = DAYS;
-	pub IntervalIncome: Perbill = Perbill::from_rational(RecalculationInterval::get(), 2 * DAYS) * Perbill::from_rational(5u32, 10_000);
+	pub IntervalIncome: Perbill = Perbill::from_rational(RecalculationInterval::get(), RELAY_DAYS) * Perbill::from_rational(5u32, 10_000);
+}
+
+#[cfg(any(feature = "unique-runtime", feature = "quartz-runtime"))]
+parameter_types! {
+	pub const AppPromotionId: PalletId = PalletId(*b"appstake");
+	pub const RecalculationInterval: BlockNumber = RELAY_DAYS;
+	pub const PendingInterval: BlockNumber = 7 * RELAY_DAYS;
+	pub const Nominal: Balance = UNIQUE;
+	pub const Day: BlockNumber = RELAY_DAYS;
+	pub IntervalIncome: Perbill = Perbill::from_rational(5u32, 10_000);
 }
 
 impl pallet_app_promotion::Config for Runtime {
 	type PalletId = AppPromotionId;
 	type CollectionHandler = Unique;
+	type ContractHandler = EvmContractHelpers;
 	type Currency = Balances;
 	type WeightInfo = pallet_app_promotion::weights::SubstrateWeight<Self>;
 	type TreasuryAccountId = TreasuryAccountId;
