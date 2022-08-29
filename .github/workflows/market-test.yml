@@ -107,7 +107,7 @@ jobs:
 
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat qa-tests/.docker/docker-compose.${{ matrix.network }}.yml
 
 #      - name: Build the stack
 #        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
