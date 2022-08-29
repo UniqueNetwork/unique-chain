@@ -33,10 +33,10 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-#          - network: "quartz"
-#            features: "quartz-runtime"
-#          - network: "unique"
-#            features: "unique-runtime"
+          - network: "quartz"
+            features: "quartz-runtime"
+          - network: "unique"
+            features: "unique-runtime"
 
     name: draft job
 
@@ -96,7 +96,7 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-master.j2
+          template: .docker/docker-compose.tmp-market.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
@@ -104,6 +104,7 @@ jobs:
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
+
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
@@ -148,7 +149,7 @@ jobs:
           path: qa-tests/
 
       - name: local-market:start
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
 
       - name: local-market:start
         run: qa-tests/src/scripts/wait-market-ready.sh
@@ -182,9 +183,9 @@ jobs:
         if: always()
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" down --volumes
 
-#      - name: Stop running containers
-#        if: always()                   # run this step always
-#        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down --volumes
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always
@@ -195,6 +196,7 @@ jobs:
       - name: Clean Workspace
         if: always()
         uses: AutoModality/action-clean@v1.1.0
+
 
 
 
