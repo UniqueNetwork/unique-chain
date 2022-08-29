@@ -205,8 +205,10 @@ class CreateCollectionTx<T extends {collectionId: number}> {
 
   /**
    * Executes the transaction and asserts that the transaction has been rejected
+   * @param errorMessage error message a transaction should be rejected with
    */
-  async expectFailure(): Promise<void> {
-    await expect(this.creationFn(this.helper, this.signer, this.collectionOptions)).to.be.rejected;
+  async expectFailure(errorMessage?: string): Promise<void> {
+    if (errorMessage) await expect(this.creationFn(this.helper, this.signer, this.collectionOptions)).to.be.rejectedWith(errorMessage);
+    else await expect(this.creationFn(this.helper, this.signer, this.collectionOptions)).to.be.rejected;
   }
 }
