@@ -1979,6 +1979,64 @@ class AddressGroup extends HelperGroup {
   }
 }
 
+class StakingGroup extends HelperGroup {
+  /**
+   * Stake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToStake amount of tokens to stake
+   * @param label extra label for log
+   * @returns
+   */
+  async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
+    const stakeResult = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.promotion.stake', [amountToStake],
+      true, `stake failed for ${label}`,
+    );
+    // TODO extract info from stakeResult
+    return true;
+  }
+
+  /**
+   * Unstake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToUnstake amount of tokens to unstake
+   * @param label extra label for log
+   * @returns 
+   */
+  async unstake(signer: TSigner, amountToUnstake: bigint, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToUnstake}`;
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.promotion.unstake', [amountToUnstake],
+      true, `unstake failed for ${label}`,
+    );
+    // TODO extract info from unstakeResult
+    return true;
+  }
+
+  async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
+    if (address) return (await this.helper.callRpc('api.rpc.unique.totalStaked', [address])).toBigInt();
+    return (await this.helper.callRpc('api.rpc.unique.totalStaked')).toBigInt();
+  }
+
+  async getTotalStakingLocked(address: ICrossAccountId): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.unique.totalStakingLocked', [address])).toBigInt();
+  }
+
+  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
+    return (await this.helper.callRpc('api.rpc.unique.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  }
+
+  async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.unique.pendingUnstake', [address])).toBigInt();
+  }
+  
+  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<bigint[][]> {
+    return (await this.helper.callRpc('api.rpc.unique.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  }
+}
 
 export class UniqueHelper extends ChainHelperBase {
   chain: ChainGroup;
@@ -1988,6 +2046,7 @@ export class UniqueHelper extends ChainHelperBase {
   nft: NFTGroup;
   rft: RFTGroup;
   ft: FTGroup;
+  staking: StakingGroup;
 
   constructor(logger?: ILogger) {
     super(logger);
@@ -1998,6 +2057,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.nft = new NFTGroup(this);
     this.rft = new RFTGroup(this);
     this.ft = new FTGroup(this);
+    this.staking = new StakingGroup(this);
   }  
 }
 

@@ -14,38 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi, submitTransactionAsync} from './substrate/substrate-api';
-import {IKeyringPair, ITuple} from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import {
-  
-  createMultipleItemsExpectSuccess,
-  isTokenExists,
-  getLastTokenId,
-  getAllowance,
-  approve,
-  transferFrom,
-  createCollection,
-  transfer,
-  burnItem,
   normalizeAccountId,
-  CrossAccountId,
-  createFungibleItemExpectSuccess,
-  U128_MAX,
-  burnFromExpectSuccess,
-  UNIQUE,
   getModuleNames,
   Pallets,
-  getBlockNumber,
 } from './util/helpers';
 
-import chai, {use} from 'chai';
+import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {usingPlaygrounds} from './util/playgrounds';
-import {default as waitNewBlocks} from './substrate/wait-new-blocks';
 
-import {encodeAddress, hdEthereum, mnemonicGenerate} from '@polkadot/util-crypto';
+import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
-import {UniqueHelper} from './util/playgrounds/unique';
 import {ApiPromise} from '@polkadot/api';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -56,252 +37,227 @@ let palletAdmin: IKeyringPair;
 let nominal: bigint;
 let promotionStartBlock: number | null = null;
 
-describe('app-promotions.stake extrinsic', () => {
-  before(async function() {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-      nominal = helper.balance.getOneTokenNominal();
-      await helper.signTransaction(alice, tx);
-    });
+before(async function () {
+  await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+    if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
+    alice = privateKeyWrapper('//Alice');
+    bob = privateKeyWrapper('//Bob');
+    palletAdmin = privateKeyWrapper('//palletAdmin');
+    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
+    nominal = helper.balance.getOneTokenNominal();
   });
+});
+
+describe('app-promotions.stake extrinsic', () => {
   it('will change balance state to "locked", add it to "staked" map, and increase "totalStaked" amount', async () => {
-    // arrange: Alice balance = 1000
-    // act:     Alice calls appPromotion.stake(100)
-    // assert:  Alice locked balance equal 100
-    // assert:  Alice free balance closeTo 900
-    // assert:  query appPromotion.staked(Alice) equal [100]
-    // assert:  query appPromotion.totalStaked() increased by 100
-    // act:     Alice extrinsic appPromotion.stake(200)
-  
-    // assert:  Alice locked balance equal 300
-    // assert:  query appPromotion.staked(Alice) equal [100, 200]
-    // assert:  query appPromotion.totalStaked() increased by 200
-    
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
-      const staker = await createUser();
+    await usingPlaygrounds(async (helper) => {
+      const totalStakedBefore = await helper.staking.getTotalStaked();
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
    
+      // Minimum stake amount is 1:
+      await expect(helper.staking.stake(staker, nominal - 1n)).to.be.eventually.rejected;
+      await helper.staking.stake(staker, nominal);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(nominal);
+
+      // TODO add helpers to assert bigints. Check balance close to 10
+      expect(await helper.balance.getSubstrate(staker.address) - 9n * nominal >= (nominal / 2n)).to.be.true;
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(nominal);
+      // it is potentially flaky test. Promotion can credited some tokens. Maybe we need to use closeTo? 
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + nominal); // total tokens amount staked in app-promotion increased 
+
+      await helper.staking.stake(staker, 2n * nominal);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(3n * nominal);
       
-      
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(nominal / 2n))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.totalStakingLocked(normalizeAccountId(staker))).toBigInt()).to.be.equal(nominal);
-      expect(9n * nominal - await helper.balance.getSubstrate(staker.address) <= nominal / 2n).to.be.true;
-      expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(staker))).toBigInt()).to.be.equal(nominal);
-      expect((await helper.api!.rpc.unique.totalStaked()).toBigInt()).to.be.equal(totalStakedBefore + nominal);
-      
-      await waitNewBlocks(helper.api!, 1);
-      
-      
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.totalStakingLocked(normalizeAccountId(staker))).toBigInt()).to.be.equal(3n * nominal);
-      
-      const stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([block, amount]) => [block.toBigInt(), amount.toBigInt()]);
-      expect(stakedPerBlock.map((x) => x[1])).to.be.deep.equal([nominal, 2n * nominal]);
+      const stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map((x) => x[1]);
+      expect(stakedPerBlock).to.be.deep.equal([nominal, 2n * nominal]);
     });
   });
   
   it('will throws if stake amount is more than total free balance', async () => {
-    // arrange: Alice balance = 1000
-    // assert:  Alice calls appPromotion.stake(1000) throws /// because Alice needs some fee
-
-    // act:     Alice calls appPromotion.stake(700)
-    // assert:  Alice calls appPromotion.stake(400) throws /// because Alice has ~300 free QTZ and 700 locked
-
     await usingPlaygrounds(async helper => { 
-      
-      const staker = await createUser();
-      
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(7n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(4n * nominal))).to.be.eventually.rejected;
-      
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+
+      // Can't stake full balance because Alice needs to pay some fee
+      await expect(helper.staking.stake(staker, 10n * nominal)).to.be.eventually.rejected;
+      await helper.staking.stake(staker, 7n * nominal);
+
+      // Can't stake 4 tkn because Alice has ~3 free tkn, and 7 locked
+      await expect(helper.staking.stake(staker, 4n * nominal)).to.be.eventually.rejected; 
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(7n * nominal);
     });
   });
   
   it('for different accounts in one block is possible', async () => {
-    // arrange: Alice, Bob, Charlie, Dave balance = 1000
-    // arrange: Alice, Bob, Charlie, Dave calls appPromotion.stake(100) in the same time
-
-    // assert:  query appPromotion.staked(Alice/Bob/Charlie/Dave) equal [100]
     await usingPlaygrounds(async helper => {
-      const crowd = [];
-      for(let i = 4; i--;) crowd.push(await createUser());
+      const crowd = await helper.arrange.creteAccounts([10n, 10n, 10n, 10n], alice);
       
-      const promises = crowd.map(async user => helper.signTransaction(user, helper.api!.tx.promotion.stake(nominal)));
-      await expect(Promise.all(promises)).to.be.eventually.fulfilled;
-    
-      for (let i = 0; i < crowd.length; i++){
-        expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(crowd[i]))).toBigInt()).to.be.equal(nominal);  
-      }
+      const crowdStartsToStake = crowd.map(user => helper.staking.stake(user, nominal));
+      await expect(Promise.all(crowdStartsToStake)).to.be.eventually.fulfilled;
+
+      const crowdStakes = await Promise.all(crowd.map(address => helper.staking.getTotalStaked({Substrate: address.address})));
+      expect(crowdStakes).to.deep.equal([nominal, nominal, nominal, nominal]);
     });
   });
-
+  // TODO it('Staker stakes 5 times in one block with nonce');
+  // TODO it('Staked balance appears as locked in the balance pallet');
+  // TODO it('Alice stakes huge amount of tokens');
+  // TODO it('Can stake from ethereum account')
 });
 
-describe('unstake balance extrinsic', () => {
-  before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-      nominal = helper.balance.getOneTokenNominal();
-      await helper.signTransaction(alice, tx);
-    });
-  });
-  
+describe('unstake balance extrinsic', () => {  
   it('will change balance state to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
-    // arrange: Alice balance = 1000
-    // arrange: Alice calls appPromotion.stake(Alice, 500)
-
-    // act:     Alice calls appPromotion.unstake(300)
-    // assert:  Alice reserved balance to equal 300
-    // assert:  query appPromotion.staked(Alice) equal [200] /// 500 - 300
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [300]
-    // assert:  query appPromotion.totalStaked() decreased by 300
     await usingPlaygrounds(async helper => {
-      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
-      const staker = await createUser();
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(5n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(3n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.pendingUnstake(normalizeAccountId(staker.address))).toBigInt()).to.be.equal(3n * nominal);
-      expect((await helper.api!.rpc.unique.totalStaked(normalizeAccountId(staker))).toBigInt()).to.be.equal(2n * nominal);
-      expect((await helper.api!.rpc.unique.totalStaked()).toBigInt()).to.be.equal(totalStakedBefore + 2n * nominal);
+      const totalStakedBefore = await helper.staking.getTotalStaked();
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      await helper.staking.stake(staker, 5n * nominal);
+      await helper.staking.unstake(staker, 3n * nominal);
+
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(3n * nominal);
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(2n * nominal);
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + 2n * nominal);
     });
   });
+
   it('will remove from the "staked" map starting from the oldest entry', async () => {
-    // arrange: Alice balance = 1000
-    // arrange: Alice stakes 100
-    // arrange: Alice stakes 200
-    // arrange: Alice stakes 300
-
-    // assert Alice stake is [100, 200, 300]
-
-
-    // act:     Alice calls appPromotion.unstake(30)
-    // assert:  query appPromotion.staked(Alice) to equal [70, 200, 300] /// Can unstake part of stake
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30]
-
-    // act:     Alice calls appPromotion.unstake(170)
-    // assert:  query appPromotion.staked(Alice) to equal [100, 300] /// Can unstake one stake totally and one more partialy
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30, 170]
-
-    // act:     Alice calls appPromotion.unstake(400)
-    // assert:  query appPromotion.staked(Alice) to equal [100, 300] /// Can totally unstake 2 stakes in one tx
-    // assert:  query appPromotion.pendingUnstake(Alice) to equal [30, 170, 400]
     await usingPlaygrounds(async helper => {
-      const totalStakedBefore = (await helper.api!.rpc.unique.totalStaked()).toBigInt();
-      const staker = await createUser();
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(1n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(2n * nominal))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(3n * nominal))).to.be.eventually.fulfilled;
-      let stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      expect(stakedPerBlock).to.be.deep.equal([nominal, 2n * nominal, 3n * nominal]);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(3n * nominal / 10n))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.pendingUnstake(normalizeAccountId(staker.address))).toBigInt()).to.be.equal(3n * nominal / 10n);
-      stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      
-      expect(stakedPerBlock).to.be.deep.equal([7n * nominal / 10n, 2n * nominal, 3n * nominal]);
-      
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(17n * nominal / 10n))).to.be.eventually.fulfilled;
-      stakedPerBlock = (await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      expect(stakedPerBlock).to.be.deep.equal([nominal, 3n * nominal]);
-      const unstakedPerBlock = (await helper.api!.rpc.unique.pendingUnstakePerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt());
-      
-      expect(unstakedPerBlock).to.be.deep.equal([3n * nominal / 10n, 17n * nominal / 10n]);
-      
-      await waitNewBlocks(helper.api!, 1);
-      await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(4n * nominal))).to.be.eventually.fulfilled;
-      expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt())).to.be.deep.equal([]);
-      expect((await helper.api!.rpc.unique.pendingUnstakePerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt())).to.be.deep.equal([3n * nominal / 10n, 17n * nominal / 10n, 4n * nominal]);
+      const [staker] = await helper.arrange.creteAccounts([100n], alice);
+      await helper.staking.stake(staker, 10n * nominal);
+      await helper.staking.stake(staker, 20n * nominal);
+      await helper.staking.stake(staker, 30n * nominal);
+
+      // staked: [10, 20, 30]; unstaked: 0
+      let pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      let unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      let stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.deep.equal(0n);
+      expect(unstakedPerBlock).to.be.deep.equal([]);
+      expect(stakedPerBlock).to.be.deep.equal([10n * nominal, 20n * nominal, 30n * nominal]);
+     
+      // Can unstake the part of a stake
+      await helper.staking.unstake(staker, 5n * nominal);
+      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.equal(5n * nominal);
+      expect(stakedPerBlock).to.be.deep.equal([5n * nominal, 20n * nominal, 30n * nominal]);
+      expect(unstakedPerBlock).to.be.deep.equal([5n * nominal]);
+
+      // Can unstake one stake totally and one more partially
+      await helper.staking.unstake(staker, 10n * nominal);
+      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.equal(15n * nominal);
+      expect(stakedPerBlock).to.be.deep.equal([15n * nominal, 30n * nominal]);
+      expect(unstakedPerBlock).to.deep.equal([5n * nominal, 10n * nominal]);
+
+      // Can totally unstake 2 stakes in one tx
+      await helper.staking.unstake(staker, 45n * nominal);
+      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
+      expect(pendingUnstake).to.be.equal(60n * nominal);
+      expect(stakedPerBlock).to.deep.equal([]);
+      expect(unstakedPerBlock).to.deep.equal([5n * nominal, 10n * nominal, 45n * nominal]);
     });
-    
   });
+
+  it('should reject transaction if unstake amount is greater than staked', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      
+      // can't unstsake more than one stake amount
+      await helper.staking.stake(staker, 1n * nominal);
+      await expect(helper.staking.unstake(staker, 1n * nominal + 1n)).to.be.eventually.rejected;
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(1n * nominal);
+
+      // can't unstsake more than two stakes amount
+      await helper.staking.stake(staker, 1n * nominal);
+      await expect(helper.staking.unstake(staker, 2n * nominal + 1n)).to.be.eventually.rejected;
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(2n * nominal);
+
+      // can't unstake more than have with nonce // TODO not sure we need this assertion
+      const nonce1 = await helper.chain.getNonce(staker.address);
+      const nonce2 = nonce1 + 1;
+      const unstakeMoreThanHaveWithNonce = Promise.all([
+        helper.signTransaction(staker, helper.constructApiCall('api.tx.promotion.unstake', [1n * nominal]), 'unstaking 1', {nonce: nonce1}),
+        helper.signTransaction(staker, helper.constructApiCall('api.tx.promotion.unstake', [1n * nominal + 1n]), 'unstaking 1+', {nonce: nonce2}),
+      ]);
+      await expect(unstakeMoreThanHaveWithNonce).to.be.rejected;
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(1n * nominal);
+    });
+  });
+
+  it('should allow to unstake even smallest unit', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      await helper.staking.stake(staker, nominal);
+      // unstake .000...001 is possible
+      await helper.staking.unstake(staker, 1n);
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(1n);
+    });
+  });
+
+  it('should work fine if stake amount is smallest unit', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.creteAccounts([10n], alice);
+      await helper.staking.stake(staker, nominal);
+      await helper.staking.unstake(staker, nominal - 1n);
+      await waitForRecalculationBlock(helper.api!);
+
+      // Everything fine, blockchain alive
+      await helper.nft.mintCollection(staker, {name: 'name', description: 'description', tokenPrefix: 'prefix'});
+    });
+  });
+
+  // TODO will return balance to "available" state after the period of unstaking is finished, and subtract it from "pendingUnstake
+  // TODO for different accounts in one block is possible
 });
-
-
 
 describe('Admin adress', () => {
-  before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      palletAdmin = privateKeyWrapper('//palletAdmin');
-      await helper.balance.transferToSubstrate(alice, palletAdmin.address, 10n * helper.balance.getOneTokenNominal());
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin)));
-      
-      await helper.signTransaction(alice, tx);
-      
-      nominal = helper.balance.getOneTokenNominal();
-    });
-  });
-
   it('can be set by sudo only', async () => {
-    // assert:  Sudo calls appPromotion.setAdminAddress(Alice) /// Sudo successfully sets Alice as admin
-    // assert:  Bob calls appPromotion.setAdminAddress(Bob) throws /// Random account can not set admin
-    // assert:  Alice calls appPromotion.setAdminAddress(Bob) throws /// Admin account can not set admin
     await usingPlaygrounds(async (helper) => {
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(alice))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(bob, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(bob))))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(bob))))).to.be.eventually.fulfilled;
+      // Bob can not set admin not from himself nor as a sudo
+      await expect(helper.signTransaction(bob, helper.api!.tx.promotion.setAdminAddress({Substrate: bob.address}))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(bob, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: bob.address})))).to.be.eventually.rejected;
+
+      // Alice can
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
     });
-    
   });
   
   it('can be any valid CrossAccountId', async () => {
-    /// We are not going to set an eth address as a sponsor,
-    /// but we do want to check, it doesn't break anything;
-
-    // arrange: Charlie creates Punks
-    // arrange: Sudo calls appPromotion.setAdminAddress(0x0...) success
-    // arrange: Sudo calls appPromotion.setAdminAddress(Alice) success
-    
-    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) success
-    
+    // We are not going to set an eth address as a sponsor,
+    // but we do want to check, it doesn't break anything;
     await usingPlaygrounds(async (helper) => {
+      const [charlie] = await helper.arrange.creteAccounts([10n], alice);
+      const ethCharlie = helper.address.substrateToEth(charlie.address); 
+      // Alice sets Ethereum address as a sudo. Then Substrate address back...
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Ethereum: ethCharlie})))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
       
-      const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-      
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(ethAcc)))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(palletAdmin))))).to.be.eventually.fulfilled;
-      
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      // ...It doesn't break anything;
+      console.log(await helper.balance.getSubstrate(charlie.address));
+      console.log(await helper.balance.getSubstrate(palletAdmin.address));
+      const collection = await helper.nft.mintCollection(charlie, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      await expect(helper.signTransaction(charlie, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
     });
-    
   });
 
   it('can be reassigned', async () => {
-    // arrange: Charlie creates Punks
-    // arrange: Sudo calls appPromotion.setAdminAddress(Alice)
-    // act:     Sudo calls appPromotion.setAdminAddress(Bob)
-
-    // assert:  Alice calls appPromotion.sponsorCollection(Punks.id) throws /// Alice can not set collection sponsor
-    // assert:  Bob calls appPromotion.sponsorCollection(Punks.id) successful /// Bob can set collection sponsor
-
-    // act:     Sudo calls appPromotion.setAdminAddress(null) successful /// Sudo can set null as a sponsor
-    // assert:  Bob calls appPromotion.stopSponsoringCollection(Punks.id) throws /// Bob is no longer an admin
-    
     await usingPlaygrounds(async (helper) => {
-      const collection  = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      const [oldAdmin, newAdmin, collectionOwner] = await helper.arrange.creteAccounts([10n, 10n, 10n], alice);
+      const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(alice))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(bob))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(oldAdmin))))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(newAdmin))))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(oldAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
       
-      await expect(helper.signTransaction(bob, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(newAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
     });
-    
   });
-
 });
 
 describe('App-promotion collection sponsoring', () => {
@@ -686,6 +642,8 @@ describe('app-promotion stopSponsoringContract', () => {
 
 describe('app-promotion rewards', () => {
   const DAY = 7200n;
+
+  // TODO (load test. Can pay reward for 10000 addresses)
   
   
   before(async function () {
@@ -829,7 +787,6 @@ async function waitForRelayBlock(api: ApiPromise, blocks = 1): Promise<void> {
       }
     });
   });
-  
 }
 
 
@@ -854,22 +811,3 @@ async function createUser(amount?: bigint) {
     return user;
   });
 }
-
-const creteAccounts = async (balances: bigint[], donor: IKeyringPair, helper: UniqueHelper) => {
-  let nonce = await helper.chain.getNonce(donor.address);
-  const tokenNominal = helper.balance.getOneTokenNominal();
-  const transactions = [];
-  const accounts = [];
-  for (const balance of balances) {
-    const recepient = helper.util.fromSeed(mnemonicGenerate());
-    accounts.push(recepient);
-    if (balance !== 0n){
-      const tx = helper.constructApiCall('api.tx.balances.transfer', [{Id: recepient.address}, balance * tokenNominal]);
-      transactions.push(helper.signTransaction(donor, tx, 'account generation', {nonce}));
-      nonce++;
-    }
-  }
-
-  await Promise.all(transactions);
-  return accounts;
-};
