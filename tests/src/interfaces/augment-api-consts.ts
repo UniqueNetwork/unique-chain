@@ -78,7 +78,7 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * In chain blocks.
+       * In relay blocks.
        **/
       pendingInterval: u32 & AugmentedConst<ApiType>;
       /**

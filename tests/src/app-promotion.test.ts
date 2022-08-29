@@ -706,6 +706,12 @@ describe('app-promotion rewards', () => {
       nominal = helper.balance.getOneTokenNominal();
     });
   });
+
+  after(async function () {
+    await usingPlaygrounds(async (helper) => {
+      await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.stopAppPromotion()));
+    });
+  });
   
   it('will credit 0.05% for staking period', async () => {
     // arrange: bob.stake(10000);
@@ -770,39 +776,24 @@ describe('app-promotion rewards', () => {
       const staker = await createUser(40n * nominal);
       
       await waitForRecalculationBlock(helper.api!);
-      // const foo = await helper.api!.registry.getChainProperties().
+      
 
       await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      // await waitNewBlocks(helper.api!, 1);
+      
       await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      // await waitNewBlocks(helper.api!, 1);
+      
       await expect(helper.signTransaction(staker, helper.api!.tx.promotion.stake(10n * nominal))).to.be.eventually.fulfilled;
-      // console.log(await helper.balance.getSubstrate(staker.address));
-      // await waitNewBlocks(helper.api!, 17);
+      
       await waitForRelayBlock(helper.api!, 34);
       expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker)))
         .map(([_, amount]) => amount.toBigInt()))
         .to.be.deep.equal([calculateIncome(10n * nominal, 10n), calculateIncome(10n * nominal, 10n), calculateIncome(10n * nominal, 10n)]);
       
-      // console.log(await getBlockNumber(helper.api!));
-      // console.log((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([block, amount]) => [block.toBigInt(), amount.toBigInt()]));
-      // console.log(`${calculateIncome(10n * nominal, 10n)} || ${calculateIncome(10n * nominal, 10n, 2)}`);
-      // await waitNewBlocks(helper.api!, 10);
       await waitForRelayBlock(helper.api!, 20);
-      // console.log((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt()));
-      // console.log(await helper.balance.getSubstrate(staker.address));
       await expect(helper.signTransaction(staker, helper.api!.tx.promotion.unstake(calculateIncome(10n * nominal, 10n, 2) - 10n * nominal))).to.be.eventually.fulfilled;
-      // console.log(calculateIncome(10n * nominal, 10n, 2));
-      // console.log(calculateIncome(10n * nominal, 10n, 3));
-      // console.log(calculateIncome(10n * nominal, 10n, 4));
-      // console.log(calculateIncome(10n * nominal, 10n, 5));
       expect((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker)))
         .map(([_, amount]) => amount.toBigInt()))
         .to.be.deep.equal([10n * nominal, calculateIncome(10n * nominal, 10n, 2), calculateIncome(10n * nominal, 10n, 2)]);
-      
-      // console.log((await helper.api!.rpc.unique.totalStakedPerBlock(normalizeAccountId(staker))).map(([_, amount]) => amount.toBigInt()));
-      
-      // console.log(await helper.balance.getSubstrate(staker.address));
     });
     
   });

@@ -525,7 +525,7 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       staked: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<u128>, [AccountId32, u32]> & QueryableStorageEntry<ApiType, [AccountId32, u32]>;
       /**
-       * A block when app-promotion has started
+       * A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
        **/
       startBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       totalStaked: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
