@@ -354,6 +354,15 @@ macro_rules! impl_abi_readable {
 				ABI_ALIGNMENT
 			}
 		}
+		impl AbiRead<$ty> for $ty {
+			fn abi_read(&mut self) -> Result<$ty> {
+				todo!("Refactor requered.")
+			}
+
+			fn size() -> usize {
+				ABI_ALIGNMENT
+			}
+		}
 	};
 }
 
@@ -412,6 +421,7 @@ macro_rules! impl_tuples {
 		where
 			$(
 				Self: AbiRead<$ident>,
+				$ident: AbiRead<$ident>,
 			)+
 			($($ident,)+): TypeHelper<($($ident,)+)>,
 		{
@@ -424,7 +434,7 @@ macro_rules! impl_tuples {
 			}
 
 			fn size() -> usize {
-				0 $(+ {let _ : $ident; ABI_ALIGNMENT})+
+				0 $(+ <$ident>::size())+
 			}
 		}
 		#[allow(non_snake_case)]
