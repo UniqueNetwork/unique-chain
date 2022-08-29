@@ -81,19 +81,16 @@ jobs:
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
-
+      
       - name: Copy qa-tests/.env.example to qa-tests/.env
-        run: cp qa-tests/.env.example qa-tests/.env
+        run: cp qa-tests/.env.docker qa-tests/.env
+      
+     
 
       - name: Show content of qa-test/.env
         run: |
           cat qa-tests/.env
-          cat qa-tests/.env.docker
 
-      - name: Show content of qa-test/.docker/.env
-        working-directory: qa-tests
-        run: |
-          ls -la
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -135,7 +132,21 @@ jobs:
           npm install
           npm install -g ts-node
 
+      - name: Copy qa-tests/.env.example to qa-tests/.env
+        run: |
+          rm -rf qa-tests/.env
+          cp qa-tests/.env.example qa-tests/.env
+      
+     
+      - name: Show content of qa-test/.env
+        run: |
+          cat qa-tests/.env
 
+
+      - name: Read qa -test .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-tests/
 
       - name: Generate accounts
         run: |
