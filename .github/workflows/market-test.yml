@@ -210,7 +210,7 @@ jobs:
       - name: Stop running containers
         working-directory: qa-tests
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build nonce-app down --volumes
+        run: docker-compose -f ".docker/docker-compose.market.yml" nonce-app down --volumes
 
       - name: Stop running containers
         if: always()                   # run this step always
