@@ -140,7 +140,7 @@ jobs:
           node-version: 16
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
 
       #  🚀 POLKADOT LAUNCH COMPLETE 🚀
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
@@ -189,8 +189,8 @@ jobs:
         shell: bash
 
       - name: Run tests before Node Parachain upgrade
+        working-directory: tests
         run: |
-          cd tests
           yarn install
           yarn add mochawesome
           echo "Ready to start tests"
@@ -209,7 +209,7 @@ jobs:
           fail-on-error: 'false'
 
       - name: Send SIGUSR1 to polkadotlaunch process
-        if: success()
+        if: success() || failure()
         run: |
           #Get PID of polkadot-launch
           PID=$(docker exec node-parachain pidof 'polkadot-launch')
@@ -264,8 +264,8 @@ jobs:
         shell: bash
 
       - name: Run tests after Node Parachain upgrade
+        working-directory: tests
         run: |
-          cd tests
           yarn install
           yarn add mochawesome
           echo "Ready to start tests"
@@ -286,9 +286,14 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
 
-        #docker-compose rm -f
-      - name: Remove Docker build artefacts
+      - name: Remove builder cache
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" rm -f
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
+      - name: Clean Workspace
+        if: always()
+        uses: AutoModality/action-clean@v1.1.0
