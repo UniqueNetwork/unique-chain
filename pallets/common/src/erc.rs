@@ -26,11 +26,14 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
-	SponsoringRateLimit,
+	SponsoringRateLimit, SponsorshipState,
 };
 use alloc::format;
 
-use crate::{Pallet, CollectionHandle, Config, CollectionProperties};
+use crate::{
+	Pallet, CollectionHandle, Config, CollectionProperties,
+	eth::{convert_cross_account_to_uint256, convert_uint256_to_cross_account},
+};
 
 /// Events for ethereum collection helper.
 #[derive(ToLog)]
@@ -57,10 +60,10 @@ pub trait CommonEvmHandler {
 }
 
 /// @title A contract that allows you to work with collections.
-#[solidity_interface(name = "Collection")]
+#[solidity_interface(name = Collection)]
 impl<T: Config> CollectionHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// Set collection property.
 	///
@@ -125,6 +128,32 @@ where
 		save(self)
 	}
 
+	/// Set the substrate sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	fn set_collection_sponsor_substrate(
+		&mut self,
+		caller: caller,
+		sponsor: uint256,
+	) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+
+		let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
+		self.set_sponsor(sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)?;
+		save(self)
+	}
+
+	// /// Whether there is a pending sponsor.
+	fn has_collection_pending_sponsor(&self) -> Result<bool> {
+		Ok(matches!(
+			self.collection.sponsorship,
+			SponsorshipState::Unconfirmed(_)
+		))
+	}
+
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
@@ -137,6 +166,32 @@ where
 			return Err("caller is not set as sponsor".into());
 		}
 		save(self)
+	}
+
+	/// Remove collection sponsor.
+	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<void> {
+		check_is_owner_or_admin(caller, self)?;
+		self.remove_sponsor().map_err(dispatch_to_evm::<T>)?;
+		save(self)
+	}
+
+	/// Get current sponsor.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
+	fn get_collection_sponsor(&self) -> Result<(address, uint256)> {
+		let sponsor = match self.collection.sponsorship.sponsor() {
+			Some(sponsor) => sponsor,
+			None => return Ok(Default::default()),
+		};
+		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
+		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
+			let sponsor = convert_cross_account_to_uint256::<T>(&sponsor);
+			(Default::default(), sponsor)
+		} else {
+			let sponsor = *sponsor.as_eth();
+			(sponsor, Default::default())
+		};
+		Ok(result)
 	}
 
 	/// Set limits for the collection.
@@ -225,17 +280,14 @@ where
 	}
 
 	/// Add collection admin by substrate address.
-	/// @param new_admin Substrate administrator address.
+	/// @param newAdmin Substrate administrator address.
 	fn add_collection_admin_substrate(
 		&mut self,
 		caller: caller,
 		new_admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut new_admin_arr: [u8; 32] = Default::default();
-		new_admin.to_big_endian(&mut new_admin_arr);
-		let account_id = T::AccountId::from(new_admin_arr);
-		let new_admin = T::CrossAccountId::from_sub(account_id);
+		let new_admin = convert_uint256_to_cross_account::<T>(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -248,16 +300,13 @@ where
 		admin: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut admin_arr: [u8; 32] = Default::default();
-		admin.to_big_endian(&mut admin_arr);
-		let account_id = T::AccountId::from(admin_arr);
-		let admin = T::CrossAccountId::from_sub(account_id);
+		let admin = convert_uint256_to_cross_account::<T>(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	/// Add collection admin.
-	/// @param new_admin Address of the added administrator.
+	/// @param newAdmin Address of the added administrator.
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
@@ -267,7 +316,7 @@ where
 
 	/// Remove collection admin.
 	///
-	/// @param new_admin Address of the removed administrator.
+	/// @param admin Address of the removed administrator.
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
@@ -414,10 +463,19 @@ where
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	fn verify_owner_or_admin(&self, user: address) -> Result<bool> {
-		Ok(check_is_owner_or_admin(user, self)
-			.map(|_| true)
-			.unwrap_or(false))
+	#[solidity(rename_selector = "isOwnerOrAdmin")]
+	fn is_owner_or_admin_eth(&self, user: address) -> Result<bool> {
+		let user = T::CrossAccountId::from_eth(user);
+		Ok(self.is_owner_or_admin(&user))
+	}
+
+	/// Check that substrate account is the owner or admin of the collection
+	///
+	/// @param user account to verify
+	/// @return "true" if account is the owner or admin
+	fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
+		let user = convert_uint256_to_cross_account::<T>(user);
+		Ok(self.is_owner_or_admin(&user))
 	}
 
 	/// Returns collection type
@@ -431,6 +489,28 @@ where
 		};
 		Ok(mode.into())
 	}
+
+	/// Changes collection owner to another account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner account
+	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = T::CrossAccountId::from_eth(new_owner);
+		self.set_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Changes collection owner to another substrate account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner substrate account
+	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = convert_uint256_to_cross_account::<T>(new_owner);
+		self.set_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
+	}
 }
 
 fn check_is_owner_or_admin<T: Config>(
@@ -440,16 +520,17 @@ fn check_is_owner_or_admin<T: Config>(
 	let caller = T::CrossAccountId::from_eth(caller);
 	collection
 		.check_is_owner_or_admin(&caller)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		.map_err(dispatch_to_evm::<T>)?;
 	Ok(caller)
 }
 
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
 	// TODO possibly delete for the lack of transaction
+	collection.consume_store_writes(1)?;
 	collection
 		.check_is_internal()
 		.map_err(dispatch_to_evm::<T>)?;
-	<crate::CollectionById<T>>::insert(collection.id, collection.collection.clone());
+	collection.save().map_err(dispatch_to_evm::<T>)?;
 	Ok(())
 }
 

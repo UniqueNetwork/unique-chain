@@ -1,23 +1,20 @@
-name: yarn test para
+name: unit tests
 
 # Controls when the action will run.
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
   pull_request:
     branches:
+      - develop
       - master
     types:
       - opened
       - reopened
-      - synchronize #commit(s) pushed to the pull request
+      - synchronize   #commit(s) pushed to the pull request
       - ready_for_review
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-#Define Workflow variables
-env:
-  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,25 +22,16 @@ concurrency:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-  master-build-and-test:
+  
+  unit_tests:
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,large]
+    runs-on: [self-hosted-ci,medium]
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}
+    name: ${{ github.base_ref }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
-    strategy:
-      matrix:
-        include:
-          - network: "opal"
-            features: "opal-runtime"
-          - network: "quartz"
-            features: "quartz-runtime"
-          - network: "unique"
-            features: "unique-runtime"
 
     steps:
       - name: Skip if pull request is in Draft
@@ -70,7 +58,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -78,50 +66,19 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-master.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          template: .docker/docker-compose.tmp-unit.j2
+          output_file: .docker/docker-compose.unit.yml
           variables: |
-            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             FEATURE=${{ matrix.features }}
-            BRANCH=${{ github.head_ref }}
+    
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.unit.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Run tests
-        run: |
-          cd tests
-          yarn install
-          yarn add mochawesome
-          echo "Ready to start tests"
-          node scripts/readyness.js
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
-
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v8
-        id: test-report
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Tests ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-
-      - name: Read output variables
-        run: |
-          echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.unit.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from node-dev
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.unit.yml" down

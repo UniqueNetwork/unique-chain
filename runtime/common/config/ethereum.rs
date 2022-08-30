@@ -120,5 +120,4 @@ impl pallet_evm_coder_substrate::Config for Runtime {}
 
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
-	type Currency = Balances;
 }

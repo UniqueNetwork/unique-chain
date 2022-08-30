@@ -200,12 +200,54 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getCollectionSponsor",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple17",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "hasCollectionPendingSponsor",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "address", "name": "owner", "type": "address" },
       { "internalType": "address", "name": "operator", "type": "address" }
     ],
     "name": "isApprovedForAll",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "user", "type": "address" }
+    ],
+    "name": "isOwnerOrAdmin",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "user", "type": "uint256" }
+    ],
+    "name": "isOwnerOrAdminSubstrate",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -237,7 +279,7 @@
           { "internalType": "uint256", "name": "field_0", "type": "uint256" },
           { "internalType": "string", "name": "field_1", "type": "string" }
         ],
-        "internalType": "struct Tuple0[]",
+        "internalType": "struct Tuple8[]",
         "name": "tokens",
         "type": "tuple[]"
       }
@@ -317,6 +359,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "removeCollectionSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
@@ -343,7 +392,7 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       { "internalType": "bytes", "name": "data", "type": "bytes" }
     ],
-    "name": "safeTransferFromWithData",
+    "name": "safeTransferFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -428,6 +477,33 @@
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setCollectionSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "sponsor", "type": "uint256" }
+    ],
+    "name": "setCollectionSponsorSubstrate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "newOwner", "type": "address" }
+    ],
+    "name": "setOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "newOwner", "type": "uint256" }
+    ],
+    "name": "setOwnerSubstrate",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -532,15 +608,6 @@
     "name": "uniqueCollectionType",
     "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
-    ],
-    "name": "verifyOwnerOrAdmin",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

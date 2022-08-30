@@ -203,8 +203,8 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Save collection to storage.
-	pub fn save(self) -> DispatchResult {
-		<CollectionById<T>>::insert(self.id, self.collection);
+	pub fn save(&self) -> DispatchResult {
+		<CollectionById<T>>::insert(self.id, &self.collection);
 		Ok(())
 	}
 
@@ -229,6 +229,12 @@ impl<T: Config> CollectionHandle<T> {
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
 		Ok(true)
+	}
+
+	/// Remove collection sponsor.
+	pub fn remove_sponsor(&mut self) -> DispatchResult {
+		self.collection.sponsorship = SponsorshipState::Disabled;
+		Ok(())
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
@@ -301,6 +307,17 @@ impl<T: Config> CollectionHandle<T> {
 			<Error<T>>::AddressNotInAllowlist
 		);
 		Ok(())
+	}
+
+	/// Changes collection owner to another account
+	fn set_owner_internal(
+		&mut self,
+		caller: T::CrossAccountId,
+		new_owner: T::CrossAccountId,
+	) -> DispatchResult {
+		self.check_is_owner(&caller)?;
+		self.collection.owner = new_owner.as_sub().clone();
+		self.save()
 	}
 }
 
@@ -721,12 +738,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get the effective limits for the collection.
 	pub fn effective_collection_limits(collection: CollectionId) -> Option<CollectionLimits> {
-		let collection = <CollectionById<T>>::get(collection);
-		if collection.is_none() {
-			return None;
-		}
-
-		let collection = collection.unwrap();
+		let collection = <CollectionById<T>>::get(collection)?;
 		let limits = collection.limits;
 		let effective_limits = CollectionLimits {
 			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),

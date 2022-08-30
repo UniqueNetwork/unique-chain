@@ -50,7 +50,7 @@ pub enum ERC20Events {
 	},
 }
 
-#[solidity_interface(name = "ERC20", events(ERC20Events))]
+#[solidity_interface(name = ERC20, events(ERC20Events))]
 impl<T: Config> FungibleHandle<T> {
 	fn name(&self) -> Result<string> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -129,8 +129,32 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = "ERC20UniqueExtensions")]
+#[solidity_interface(name = ERC20Mintable)]
 impl<T: Config> FungibleHandle<T> {
+	/// Mint tokens for `to` account.
+	/// @param to account that will receive minted tokens
+	/// @param amount amount of tokens to mint
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint(&mut self, caller: caller, to: address, amount: uint256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+}
+
+#[solidity_interface(name = ERC20UniqueExtensions)]
+impl<T: Config> FungibleHandle<T> {
+	/// Burn tokens from account
+	/// @dev Function that burns an `amount` of the tokens of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -144,24 +168,48 @@ impl<T: Config> FungibleHandle<T> {
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	/// Mint tokens for multiple accounts.
+	/// @param amounts array of pairs of account address and amount
+	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
+	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(address, uint256)>) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let amounts = amounts
+			.into_iter()
+			.map(|(to, amount)| {
+				Ok((
+					T::CrossAccountId::from_eth(to),
+					amount.try_into().map_err(|_| "amount overflow")?,
+				))
+			})
+			.collect::<Result<_>>()?;
+
+		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
 }
 
 #[solidity_interface(
-	name = "UniqueFungible",
+	name = UniqueFungible,
 	is(
 		ERC20,
+		ERC20Mintable,
 		ERC20UniqueExtensions,
-		via("CollectionHandle<T>", common_mut, Collection)
+		Collection(common_mut, CollectionHandle<T>),
 	)
 )]
-impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
+impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 
 generate_stubgen!(gen_impl, UniqueFungibleCall<()>, true);
 generate_stubgen!(gen_iface, UniqueFungibleCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for FungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueFungible.raw");
 

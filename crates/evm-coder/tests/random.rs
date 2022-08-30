@@ -16,19 +16,18 @@
 
 #![allow(dead_code)] // This test only checks that macros is not panicking
 
-use evm_coder::{ToLog, execution::Result, solidity_interface, types::*};
-use evm_coder_macros::{solidity, weight};
+use evm_coder::{ToLog, execution::Result, solidity_interface, types::*, solidity, weight};
 
 struct Impls;
 
-#[solidity_interface(name = "OurInterface")]
+#[solidity_interface(name = OurInterface)]
 impl Impls {
 	fn fn_a(&self, _input: uint256) -> Result<bool> {
 		unreachable!()
 	}
 }
 
-#[solidity_interface(name = "OurInterface1")]
+#[solidity_interface(name = OurInterface1)]
 impl Impls {
 	fn fn_b(&self, _input: uint128) -> Result<uint32> {
 		unreachable!()
@@ -48,7 +47,7 @@ enum OurEvents {
 }
 
 #[solidity_interface(
-	name = "OurInterface2",
+	name = OurInterface2,
 	is(OurInterface),
 	inline_is(OurInterface1),
 	events(OurEvents)
@@ -79,3 +78,9 @@ impl Impls {
 		unreachable!()
 	}
 }
+
+#[solidity_interface(
+	name = ValidSelector,
+	expect_selector = 0x00000000,
+)]
+impl Impls {}
