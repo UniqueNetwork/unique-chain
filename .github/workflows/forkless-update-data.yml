@@ -52,9 +52,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {${{ env.OPAL_FORK_FROM }}}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, fork_from_address {${{ env.QUARTZ_FORK_FROM }}}
-            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, fork_from_address {${{ env.UNIQUE_FORK_FROM }}}
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
 
 
 
@@ -120,7 +120,7 @@ jobs:
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
-            FORK_FROM=${{ matrix.fork_from_address }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml

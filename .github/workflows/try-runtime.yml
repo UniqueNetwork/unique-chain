@@ -38,13 +38,13 @@ jobs:
         include:
           - network: opal
             features: try-runtime,opal-runtime
-            fork_from_address: wss://eu-ws-opal.unique.network:443
+            replica_from_address: wss://eu-ws-opal.unique.network:443
           - network: quartz
             features: try-runtime,quartz-runtime
-            fork_from_address: wss://eu-ws-quartz.unique.network:443
+            replica_from_address: wss://eu-ws-quartz.unique.network:443
           - network: unique
             features: try-runtime,unique-runtime
-            fork_from_address: wss://eu-ws.unique.network:443
+            replica_from_address: wss://eu-ws.unique.network:443
 
     steps:
       - name: Skip if pull request is in Draft
@@ -85,7 +85,7 @@ jobs:
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             FEATURE=${{ matrix.features }}
-            FORK_FROM=${{ matrix.fork_from_address }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml

@@ -1,0 +1,152 @@
+name: xcm testnet
+
+# Controls when the action will run.
+on:
+ # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - reopened
+      - synchronize   #commit(s) pushed to the pull request
+      - ready_for_review
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+#Define Workflow variables
+env:
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  prepare-execution-marix:
+
+    name: Prepare execution matrix
+
+    runs-on: XL2
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: fabiocaccamo/create-matrix-action@v2
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+
+  xcm-build:
+    needs: prepare-execution-marix
+    # The type of runner that the job will run on
+    runs-on: [XL2]
+
+    timeout-minutes: 600
+
+    name: ${{ matrix.network }}
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+
+    steps:
+      #- name: Skip if pull request is in Draft
+        # `if: github.event.pull_request.draft == true` should be kept here, at
+        # the step level, rather than at the job level. The latter is not
+        # recommended because when the PR is moved from "Draft" to "Ready to
+        # review" the workflow will immediately be passing (since it was skipped),
+        # even though it hasn't actually ran, since it takes a few seconds for
+        # the workflow to start. This is also disclosed in:
+        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/17
+        # That scenario would open an opportunity for the check to be bypassed:
+        # 1. Get your PR approved
+        # 2. Move it to Draft
+        # 3. Push whatever commits you want
+        # 4. Move it to "Ready for review"; now the workflow is passing (it was
+        #    skipped) and "Check reviews" is also passing (it won't be updated
+        #    until the workflow is finished)
+        #    if: github.event.pull_request.draft == true
+        #run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Generate ENV related extend Dockerfile file
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-xcm.j2
+          output_file: .docker/Dockerfile-xcm.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            NETWORK=${{ matrix.network }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
+            BRANCH=${{ github.head_ref }}
+            ACALA_BUILD_BRANCH=${{ env.ACALA_BUILD_BRANCH }}
+            MOONBEAM_BUILD_BRANCH=${{ env.MOONBEAM_BUILD_BRANCH }}
+            CUMULUS_BUILD_BRANCH=${{ env.CUMULUS_BUILD_BRANCH }}
+
+      - name: Show build Dockerfile
+        run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
+
+      - name: Show launch-config-xcm-${{ matrix.network }} configuration
+        run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
+
+      - name: Build the stack
+        run: cd .docker/ && docker build --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag xcm-nodes-${{ matrix.network }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ github.sha }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest .
+
+          #      - name: Collect Docker Logs
+          #        if: success() || failure()
+          #        uses: jwalton/gh-docker-logs@v2.2.0
+          #        with:
+          #          dest: './xcm-build-logs.${{ matrix.features }}'
+          #          images: 'xcm-nodes-${{ matrix.network }}'
+
+          #      - name: Show docker logs
+          #        if: success() || failure()
+          #        run: cat './xcm-build-logs.${{ matrix.features }}/xcm-nodes-${{ matrix.network }}.log'
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.0.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Push docker version image 
+        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ github.sha }}
+
+      - name: Push docker image latest
+        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest

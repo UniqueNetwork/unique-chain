@@ -1,0 +1,21 @@
+version: "3.5"
+
+services:
+  xcm_nodes:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "BRANCH={{ BRANCH }}"
+        - "FEATURE={{ FEATURE }}"
+        - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
+        - "ACALA_BUILD_BRANCH={{ ACALA_BUILD_BRANCH }}"
+        - "MOONBEAM_BUILD_BRANCH={{ MOONBEAM_BUILD_BRANCH }}"
+        - "CUMULUS_BUILD_BRANCH={{ CUMULUS_BUILD_BRANCH }}"
+        - "POLKADOT_LAUNCH_BRANCH={{ POLKADOT_LAUNCH_BRANCH }}"
+    image: xcm_nodes_{{ NETWORK }}
+    container_name: xcm_nodes_{{ NETWORK }}
+    volumes:
+       - type: bind
+         source: ./xcm-config/launch-config-xcm-{{ NETWORK }}.json
+         target: /polkadot-launch/launch-config.json
+         read_only: true          

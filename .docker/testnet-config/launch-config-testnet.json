@@ -1,9 +1,7 @@
 {
-      "relaychain": {
-        "bin": "/polkadot/target/release/polkadot",
-        "upgradeBin": "/polkadot/target/release/polkadot",
-        "upgradeWasm": "/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm",
-        "chain": "westend-local",
+    "relaychain": {
+        "bin": "../polkadot/target/release/polkadot",
+        "chain": "rococo-local",
         "nodes": [
             {
                 "name": "alice",
@@ -84,20 +82,11 @@
             }
         }
     },
-      "parachains": [
+    "parachains": [
         {
-            "bin": "/unique-chain/target/release/unique-collator",
-            "upgradeBin": "/unique-chain/target/release/unique-collator",
-            "upgradeWasm": "/unique-chain/target/release/wbuild/{{ FEATURE }}/{{ RUNTIME }}_runtime.compact.compressed.wasm",
+            "bin": "../unique-chain/target/release/unique-collator",
             "id": "1000",
             "balance": "1000000000000000000000000",
-            "chainRawInitializer": [
-                "chainql",
-                "--ext-str=REPLICA_FROM",
-                "--tla-code=rawSpec=import '${rawSpec}'",
-                "--tla-code=forkFrom=std.extVar('REPLICA_FROM')",
-                "fork.jsonnet"
-            ],
             "nodes": [
                 {
                     "port": 31200,
