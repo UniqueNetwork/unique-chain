@@ -98,9 +98,8 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          working-directory: qa-tests
-          template: .docker/docker-compose.tmp-market.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          template: qa-tests/.docker/docker-compose.tmp-market.j2
+          output_file: qa-tests/.docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
