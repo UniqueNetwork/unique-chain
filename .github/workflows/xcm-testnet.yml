@@ -126,7 +126,7 @@ jobs:
         run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
 
       - name: Build the stack
-        run: cd .docker/ && docker build --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag xcm-nodes-${{ matrix.network }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ github.head_ref }}-${{ github.sha }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest .
+        run: cd .docker/ && docker build --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag xcm-nodes-${{ matrix.network }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ github.sha }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest .
 
           #      - name: Collect Docker Logs
           #        if: success() || failure()
@@ -146,7 +146,7 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Push docker version image 
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ github.head_ref }}-${{ github.sha }}
+        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ github.sha }}
 
       - name: Push docker image latest
         run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest
