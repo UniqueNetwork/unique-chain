@@ -430,11 +430,16 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     promotion: {
+      /**
+       * Error due to action requiring admin to be set
+       **/
       AdminNotSet: AugmentedError<ApiType>;
-      AlreadySponsored: AugmentedError<ApiType>;
+      /**
+       * An error related to the fact that an invalid argument was passed to perform an action
+       **/
       InvalidArgument: AugmentedError<ApiType>;
       /**
-       * No permission to perform action
+       * No permission to perform an action
        **/
       NoPermission: AugmentedError<ApiType>;
       /**

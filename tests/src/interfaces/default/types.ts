@@ -816,6 +816,7 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asStartAppPromotion: {
     readonly promotionStartRelayBlock: Option<u32>;
   } & Struct;
+  readonly isStopAppPromotion: boolean;
   readonly isStake: boolean;
   readonly asStake: {
     readonly amount: u128;
@@ -832,7 +833,15 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asStopSponsorignCollection: {
     readonly collectionId: u32;
   } & Struct;
-  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsorignCollection';
+  readonly isSponsorConract: boolean;
+  readonly asSponsorConract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isStopSponsorignContract: boolean;
+  readonly asStopSponsorignContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'StopAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsorignCollection' | 'SponsorConract' | 'StopSponsorignContract';
 }
 
 /** @name PalletAppPromotionError */
@@ -841,8 +850,7 @@ export interface PalletAppPromotionError extends Enum {
   readonly isNoPermission: boolean;
   readonly isNotSufficientFounds: boolean;
   readonly isInvalidArgument: boolean;
-  readonly isAlreadySponsored: boolean;
-  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument' | 'AlreadySponsored';
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument';
 }
 
 /** @name PalletAppPromotionEvent */

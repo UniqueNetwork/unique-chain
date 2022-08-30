@@ -9,7 +9,7 @@ use pallet_unique::{Event as UniqueEvent, Error as UniqueError};
 use sp_runtime::DispatchError;
 use up_data_structs::{CollectionId, SponsorshipState};
 use sp_std::borrow::ToOwned;
-
+use pallet_evm_contract_helpers::{Pallet as EvmHelpersPallet, Config as EvmHelpersConfig, Sponsoring};
 
 pub trait ExtendedLockableCurrency<AccountId: Parameter>: LockableCurrency<AccountId> {
 	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
@@ -92,5 +92,42 @@ impl<T: pallet_unique::Config> CollectionHandler for pallet_unique::Pallet<T> {
 			.sponsorship
 			.pending_sponsor()
 			.map(|acc| acc.to_owned()))
+	}
+}
+
+pub trait ContractHandler {
+	type ContractId;
+	type AccountId;
+
+	fn set_sponsor(sponsor_id: Self::AccountId, contract_id: Self::ContractId) -> DispatchResult;
+
+	fn remove_contract_sponsor(collection_id: Self::ContractId) -> DispatchResult;
+
+	fn get_sponsor(contract_id: Self::ContractId)
+		-> Result<Option<Self::AccountId>, DispatchError>;
+}
+
+impl<T: EvmHelpersConfig> ContractHandler for EvmHelpersPallet<T> {
+	type ContractId = sp_core::H160;
+
+	type AccountId = T::CrossAccountId;
+
+	fn set_sponsor(sponsor_id: Self::AccountId, contract_id: Self::ContractId) -> DispatchResult {
+		Sponsoring::<T>::insert(
+			contract_id,
+			SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor_id),
+		);
+		Ok(())
+	}
+
+	fn remove_contract_sponsor(contract_id: Self::ContractId) -> DispatchResult {
+		Sponsoring::<T>::remove(contract_id);
+		Ok(())
+	}
+
+	fn get_sponsor(
+		contract_id: Self::ContractId,
+	) -> Result<Option<Self::AccountId>, DispatchError> {
+		Ok(Self::get_sponsor(contract_id))
 	}
 }

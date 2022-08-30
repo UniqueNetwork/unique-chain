@@ -37,9 +37,10 @@ pub mod types;
 pub mod weights;
 
 use sp_std::{vec::Vec, iter::Sum, borrow::ToOwned};
+use sp_core::H160;
 use codec::EncodeLike;
 use pallet_balances::BalanceLock;
-pub use types::ExtendedLockableCurrency;
+pub use types::*;
 
 // use up_common::constants::{DAYS, UNIQUE};
 use up_data_structs::CollectionId;
@@ -78,7 +79,6 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId};
 	use frame_system::pallet_prelude::*;
-	use types::CollectionHandler;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
@@ -89,6 +89,8 @@ pub mod pallet {
 			CollectionId = CollectionId,
 		>;
 
+		type ContractHandler: ContractHandler<AccountId = Self::CrossAccountId, ContractId = H160>;
+
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		/// The app's pallet id, used for deriving its sovereign account ID.
@@ -98,7 +100,7 @@ pub mod pallet {
 		/// In relay blocks.
 		#[pallet::constant]
 		type RecalculationInterval: Get<Self::BlockNumber>;
-		/// In chain blocks.
+		/// In relay blocks.
 		#[pallet::constant]
 		type PendingInterval: Get<Self::BlockNumber>;
 
@@ -120,13 +122,6 @@ pub mod pallet {
 
 		/// Events compatible with [`frame_system::Config::Event`].
 		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
-
-		// /// Number of blocks that pass between treasury balance updates due to inflation
-		// #[pallet::constant]
-		// type InterestBlockInterval: Get<Self::BlockNumber>;
-
-		// // Weight information for functions of this pallet.
-		// type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -146,13 +141,14 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Error due to action requiring admin to be set
 		AdminNotSet,
-		/// No permission to perform action
+		/// No permission to perform an action
 		NoPermission,
 		/// Insufficient funds to perform an action
 		NotSufficientFounds,
+		/// An error related to the fact that an invalid argument was passed to perform an action
 		InvalidArgument,
-		AlreadySponsored,
 	}
 
 	#[pallet::storage]
@@ -183,7 +179,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// A block when app-promotion has started
+	/// A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
 	#[pallet::storage]
 	pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
@@ -285,6 +281,21 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::weight(0)]
+		pub fn stop_app_promotion(origin: OriginFor<T>) -> DispatchResult
+		where
+			<T as frame_system::Config>::BlockNumber: From<u32>,
+		{
+			ensure_root(origin)?;
+
+			if <StartBlock<T>>::get() != 0u32.into() {
+				<StartBlock<T>>::set(T::BlockNumber::default());
+				<NextInterestBlock<T>>::set(T::BlockNumber::default());
+			}
+
+			Ok(())
+		}
+
 		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
@@ -341,7 +352,8 @@ pub mod pallet {
 					.ok_or(ArithmeticError::Underflow)?,
 			);
 
-			let block = frame_system::Pallet::<T>::block_number() + T::PendingInterval::get();
+			let block =
+				T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
 			<PendingUnstake<T>>::insert(
 				(&staker_id, block),
 				<PendingUnstake<T>>::get((&staker_id, block))
@@ -415,113 +427,46 @@ pub mod pallet {
 			);
 			T::CollectionHandler::remove_collection_sponsor(collection_id)
 		}
+
+		#[pallet::weight(0)]
+		pub fn sponsor_conract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
+			let admin_id = ensure_signed(admin)?;
+
+			ensure!(
+				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
+				Error::<T>::NoPermission
+			);
+
+			T::ContractHandler::set_sponsor(
+				T::CrossAccountId::from_sub(Self::account_id()),
+				contract_id,
+			)
+		}
+
+		#[pallet::weight(0)]
+		pub fn stop_sponsorign_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
+			let admin_id = ensure_signed(admin)?;
+
+			ensure!(
+				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
+				Error::<T>::NoPermission
+			);
+
+			ensure!(
+				T::ContractHandler::get_sponsor(contract_id)?.ok_or(<Error<T>>::InvalidArgument)?
+					== T::CrossAccountId::from_sub(Self::account_id()),
+				<Error<T>>::NoPermission
+			);
+			T::ContractHandler::remove_contract_sponsor(contract_id)
+		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	// pub fn stake(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-	// 	let balance = <<T as Config>::Currency as Currency<T::AccountId>>::free_balance(staker);
-
-	// 	ensure!(balance >= amount, ArithmeticError::Underflow);
-
-	// 	Self::set_lock_unchecked(staker, amount);
-
-	// 	let block_number = <T::BlockNumberProvider as BlockNumberProvider>::current_block_number();
-
-	// 	<Staked<T>>::insert(
-	// 		(staker, block_number),
-	// 		<Staked<T>>::get((staker, block_number))
-	// 			.checked_add(&amount)
-	// 			.ok_or(ArithmeticError::Overflow)?,
-	// 	);
-
-	// 	<TotalStaked<T>>::set(
-	// 		<TotalStaked<T>>::get()
-	// 			.checked_add(&amount)
-	// 			.ok_or(ArithmeticError::Overflow)?,
-	// 	);
-
-	// 	Ok(())
-	// }
-
-	// pub fn unstake(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-	// 	let mut stakes = Staked::<T>::iter_prefix((staker,)).collect::<Vec<_>>();
-
-	// 	let total_staked = stakes
-	// 		.iter()
-	// 		.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + *amount);
-
-	// 	ensure!(total_staked >= amount, ArithmeticError::Underflow);
-
-	// 	<TotalStaked<T>>::set(
-	// 		<TotalStaked<T>>::get()
-	// 			.checked_sub(&amount)
-	// 			.ok_or(ArithmeticError::Underflow)?,
-	// 	);
-
-	// 	let block = <T::BlockNumberProvider>::current_block_number() + WEEK.into();
-	// 	<PendingUnstake<T>>::insert(
-	// 		(staker, block),
-	// 		<PendingUnstake<T>>::get((staker, block))
-	// 			.checked_add(&amount)
-	// 			.ok_or(ArithmeticError::Overflow)?,
-	// 	);
-
-	// 	stakes.sort_by_key(|(block, _)| *block);
-
-	// 	let mut acc_amount = amount;
-	// 	let new_state = stakes
-	// 		.into_iter()
-	// 		.map_while(|(block, balance_per_block)| {
-	// 			if acc_amount == <BalanceOf<T>>::default() {
-	// 				return None;
-	// 			}
-	// 			if acc_amount <= balance_per_block {
-	// 				let res = (block, balance_per_block - acc_amount, acc_amount);
-	// 				acc_amount = <BalanceOf<T>>::default();
-	// 				return Some(res);
-	// 			} else {
-	// 				acc_amount -= balance_per_block;
-	// 				return Some((block, <BalanceOf<T>>::default(), acc_amount));
-	// 			}
-	// 		})
-	// 		.collect::<Vec<_>>();
-
-	// 	new_state
-	// 		.into_iter()
-	// 		.for_each(|(block, to_staked, _to_pending)| {
-	// 			if to_staked == <BalanceOf<T>>::default() {
-	// 				<Staked<T>>::remove((staker, block));
-	// 			} else {
-	// 				<Staked<T>>::insert((staker, block), to_staked);
-	// 			}
-	// 		});
-
-	// 	Ok(())
-	// }
-
-	// pub fn sponsor_collection(admin: T::AccountId, collection_id: u32) -> DispatchResult {
-	// 	Ok(())
-	// }
-
-	// pub fn stop_sponsorign_collection(admin: T::AccountId, collection_id: u32) -> DispatchResult {
-	// 	Ok(())
-	// }
-
-	pub fn sponsor_conract(admin: T::AccountId, app_id: u32) -> DispatchResult {
-		Ok(())
-	}
-
-	pub fn stop_sponsorign_contract(admin: T::AccountId, app_id: u32) -> DispatchResult {
-		Ok(())
-	}
-
 	pub fn account_id() -> T::AccountId {
 		T::PalletId::get().into_account_truncating()
 	}
-}
 
-impl<T: Config> Pallet<T> {
 	fn unlock_balance_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
 		let mut locked_balance = Self::get_locked_balance(staker).map(|l| l.amount).unwrap();
 		locked_balance -= amount;
