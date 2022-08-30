@@ -25,9 +25,10 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {usingPlaygrounds} from './util/playgrounds';
 
-import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
+import {encodeAddress} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
 import {ApiPromise} from '@polkadot/api';
+import {contractHelpers, createEthAccountWithBalance, deployFlipper, itWeb3} from './eth/util/helpers';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
@@ -43,10 +44,11 @@ before(async function () {
     if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
     alice = privateKeyWrapper('//Alice');
     bob = privateKeyWrapper('//Bob');
-    palletAdmin = privateKeyWrapper('//palletAdmin');
+    palletAdmin = privateKeyWrapper('//Charlie');
+    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})));
     nominal = helper.balance.getOneTokenNominal();
-    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 100n * nominal);
-    await helper.balance.transferToSubstrate(alice, palletAddress, 100n * nominal);
+    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);
+    await helper.balance.transferToSubstrate(alice, palletAddress, 1000n * nominal);
     if (!promotionStartBlock) {
       promotionStartBlock = (await helper.api!.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
     }
@@ -216,7 +218,6 @@ describe('unstake balance extrinsic', () => {
       const [staker] = await helper.arrange.creteAccounts([10n], alice);
       await helper.staking.stake(staker, nominal);
       await helper.staking.unstake(staker, nominal - 1n);
-      await waitForRecalculationBlock(helper.api!);
 
       // Everything fine, blockchain alive
       await helper.nft.mintCollection(staker, {name: 'name', description: 'description', tokenPrefix: 'prefix'});
@@ -407,45 +408,98 @@ describe('app-promotion stopSponsoringCollection', () => {
 });
 
 describe('app-promotion contract sponsoring', () => {
-  it('will set contract sponsoring mode and set palletes address as a sponsor', async () => {
-    // arrange: Alice deploys Flipper
-    
-    // act:     Admin calls appPromotion.sponsorContract(Flipper.address)
+  itWeb3('should set palletes address as a sponsor', async ({api, web3, privateKeyWrapper}) => {
+    await usingPlaygrounds(async (helper) => {
+      const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
+      const flipper = await deployFlipper(web3, contractOwner);
+      const contractMethods = contractHelpers(web3, contractOwner);
 
-    // assert:  contract.sponsoringMode = TODO
-    // assert:  contract.sponsor to be PalleteAddress
+      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
+      
+      expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
+      expect((await api.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
+      expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
+        confirmed: {
+          substrate: palletAddress,
+        },
+      });
+    });
   });
 
-  it('will overwrite sponsoring mode and existed sponsor', async () => {
-    // arrange: Alice deploys Flipper
-    // arrange: Alice sets self sponsoring for Flipper
+  itWeb3('should overwrite sponsoring mode and existed sponsor', async ({api, web3, privateKeyWrapper}) => {
+    await usingPlaygrounds(async (helper) => {
+      const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
+      const flipper = await deployFlipper(web3, contractOwner);
+      const contractMethods = contractHelpers(web3, contractOwner);
 
-    // act:     Admin calls appPromotion.sponsorContract(Flipper.address)
+      await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
 
-    // assert:  contract.sponsoringMode = TODO
-    // assert:  contract.sponsor to be PalleteAddress
+      // Contract is self sponsored
+      expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.be.deep.equal({
+        confirmed: {
+          ethereum: flipper.options.address.toLowerCase(),
+        },
+      });
+
+      // set promotion sponsoring
+      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
+
+      // new sponsor is pallet address
+      expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
+      expect((await api.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
+      expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
+        confirmed: {
+          substrate: palletAddress,
+        },
+      });
+    });
   });
 
-  it('can be overwritten by contract owner', async () => {
-    // arrange: Alice deploys Flipper
-    // arrange: Admin calls appPromotion.sponsorContract(Flipper.address)
+  itWeb3('can be overwritten by contract owner', async ({api, web3, privateKeyWrapper}) => {
+    await usingPlaygrounds(async (helper) => {      
+      const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
+      const flipper = await deployFlipper(web3, contractOwner);
+      const contractMethods = contractHelpers(web3, contractOwner);
 
-    // act:     Alice sets self sponsoring for Flipper
+      // contract sponsored by pallet
+      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
 
-    // assert:  contract.sponsoringMode = Self
-    // assert:  contract.sponsor to be contract
+      // owner sets self sponsoring
+      await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
+
+      expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
+      expect((await api.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
+      expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
+        confirmed: {
+          ethereum: flipper.options.address.toLowerCase(),
+        },
+      });
+    });
   });
 
-  it('can not be set by non admin', async () => {
-    // arrange: Alice deploys Flipper
-    // arrange: Alice sets self sponsoring for Flipper
+  itWeb3('can not be set by non admin', async ({api, web3, privateKeyWrapper}) => {
+    await usingPlaygrounds(async (helper) => {      
+      const [nonAdmin] = await helper.arrange.creteAccounts([50n], alice);
+      const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
+      const flipper = await deployFlipper(web3, contractOwner);
+      const contractMethods = contractHelpers(web3, contractOwner);
 
-    // assert:  Random calls appPromotion.sponsorContract(Flipper.address) throws
-    // assert:  contract.sponsoringMode = Self
-    // assert:  contract.sponsor to be contract
+      await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
+
+      // nonAdmin calls sponsorConract
+      await expect(helper.signTransaction(nonAdmin, api.tx.promotion.sponsorConract(flipper.options.address))).to.be.rejected;
+
+      // contract still self-sponsored 
+      expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
+        confirmed: {
+          ethereum: flipper.options.address.toLowerCase(),
+        },
+      });
+    });
   });
 
   it('will return unused gas fee to app-promotion pallete', async () => {
+    // TODO
     // arrange: Alice deploys Flipper
     // arrange: Admin calls appPromotion.sponsorContract(Flipper.address)
 
@@ -524,7 +578,6 @@ describe('app-promotion rewards', () => {
   it('should credit 0.05% for staking period', async () => {    
     await usingPlaygrounds(async helper => {
       const [staker] = await helper.arrange.creteAccounts([50n], alice);
-      await waitForRecalculationBlock(helper.api!);
       
       await helper.staking.stake(staker, 1n * nominal);
       await helper.staking.stake(staker, 2n * nominal);
@@ -544,9 +597,7 @@ describe('app-promotion rewards', () => {
   it('should bring compound interest', async () => {
     await usingPlaygrounds(async helper => {
       const [staker] = await helper.arrange.creteAccounts([80n], alice);
-      
-      await waitForRecalculationBlock(helper.api!);
-      
+            
       await helper.staking.stake(staker, 10n * nominal);
       await helper.staking.stake(staker, 20n * nominal);
       await helper.staking.stake(staker, 30n * nominal);
@@ -563,25 +614,6 @@ describe('app-promotion rewards', () => {
 
   // TODO (load test. Can pay reward for 10000 addresses)
 });
-
-
-function waitForRecalculationBlock(api: ApiPromise): Promise<void> {
-  return new Promise<void>(async (resolve, reject) => {
-    const unsubscribe = await  api.query.system.events((events) => {
-     
-      events.forEach((record) => {
-      
-        const {event, phase} = record;
-        const types = event.typeDef;
-        
-        if (event.section === 'promotion' && event.method === 'StakingRecalculation') {
-          unsubscribe();
-          resolve();
-        }
-      });
-    });
-  });
-}
 
 async function waitForRelayBlock(api: ApiPromise, blocks = 1): Promise<void> {
   const current_block = (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
