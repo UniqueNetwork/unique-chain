@@ -361,7 +361,7 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     promotion: {
-      StakingRecalculation: AugmentedEvent<ApiType, [u128, u128]>;
+      StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
       /**
        * Generic event
        **/

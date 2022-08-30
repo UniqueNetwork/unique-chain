@@ -132,6 +132,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
 		StakingRecalculation(
+			/// An recalculated staker
+			T::AccountId,
 			/// Base on which interest is calculated
 			BalanceOf<T>,
 			/// Amount of accrued interest
@@ -164,7 +166,7 @@ pub mod pallet {
 			Key<Blake2_128Concat, T::AccountId>,
 			Key<Twox64Concat, T::BlockNumber>,
 		),
-		Value = BalanceOf<T>,
+		Value = (BalanceOf<T>, T::BlockNumber),
 		QueryKind = ValueQuery,
 	>;
 
@@ -189,6 +191,13 @@ pub mod pallet {
 	pub type NextInterestBlock<T: Config> =
 		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
+	/// Stores the address of the staker for which the last revenue recalculation was performed.
+	/// If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
+	#[pallet::storage]
+	#[pallet::getter(fn get_last_calculated_staker)]
+	pub type LastCalcucaltedStaker<T: Config> =
+		StorageValue<Value = T::AccountId, QueryKind = OptionQuery>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(current_block: T::BlockNumber) -> Weight
@@ -196,10 +205,10 @@ pub mod pallet {
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
 			let mut consumed_weight = 0;
-			let mut add_weight = |reads, writes, weight| {
-				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-				consumed_weight += weight;
-			};
+			// let mut add_weight = |reads, writes, weight| {
+			// 	consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+			// 	consumed_weight += weight;
+			// };
 
 			PendingUnstake::<T>::iter()
 				.filter_map(|((staker, block), amount)| {
@@ -214,41 +223,44 @@ pub mod pallet {
 					<PendingUnstake<T>>::remove((staker, block));
 				});
 
-			let next_interest_block = Self::get_interest_block();
-			let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
-			if next_interest_block != 0.into() && current_relay_block >= next_interest_block {
-				let mut acc = <BalanceOf<T>>::default();
-				let mut base_acc = <BalanceOf<T>>::default();
+			// let next_interest_block = Self::get_interest_block();
+			// let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
+			// if next_interest_block != 0.into() && current_relay_block >= next_interest_block {
+			// 	let mut acc = <BalanceOf<T>>::default();
+			// 	let mut base_acc = <BalanceOf<T>>::default();
 
-				NextInterestBlock::<T>::set(
-					NextInterestBlock::<T>::get() + T::RecalculationInterval::get(),
-				);
-				add_weight(0, 1, 0);
+			// 	NextInterestBlock::<T>::set(
+			// 		NextInterestBlock::<T>::get() + T::RecalculationInterval::get(),
+			// 	);
+			// 	add_weight(0, 1, 0);
 
-				Staked::<T>::iter()
-					.filter(|((_, block), _)| {
-						*block + T::RecalculationInterval::get() <= current_relay_block
-					})
-					.for_each(|((staker, block), amount)| {
-						Self::recalculate_stake(&staker, block, amount, &mut acc);
-						add_weight(0, 0, T::WeightInfo::recalculate_stake());
-						base_acc += amount;
-					});
-				<TotalStaked<T>>::get()
-					.checked_add(&acc)
-					.map(|res| <TotalStaked<T>>::set(res));
+			// 	Staked::<T>::iter()
+			// 		.filter(|((_, block), _)| {
+			// 			*block + T::RecalculationInterval::get() <= current_relay_block
+			// 		})
+			// 		.for_each(|((staker, block), amount)| {
+			// 			Self::recalculate_stake(&staker, block, amount, &mut acc);
+			// 			add_weight(0, 0, T::WeightInfo::recalculate_stake());
+			// 			base_acc += amount;
+			// 		});
+			// 	<TotalStaked<T>>::get()
+			// 		.checked_add(&acc)
+			// 		.map(|res| <TotalStaked<T>>::set(res));
 
-				Self::deposit_event(Event::StakingRecalculation(base_acc, acc));
-				add_weight(0, 1, 0);
-			} else {
-				add_weight(1, 0, 0)
-			};
+			// 	Self::deposit_event(Event::StakingRecalculation(base_acc, acc));
+			// 	add_weight(0, 1, 0);
+			// } else {
+			// 	add_weight(1, 0, 0)
+			// };
 			consumed_weight
 		}
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		T::BlockNumber: From<u32>,
+	{
 		#[pallet::weight(T::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
@@ -281,7 +293,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::stop_app_promotion())]
 		pub fn stop_app_promotion(origin: OriginFor<T>) -> DispatchResult
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
@@ -317,19 +329,24 @@ pub mod pallet {
 			Self::add_lock_balance(&staker_id, amount)?;
 
 			let block_number = T::RelayBlockNumberProvider::current_block_number();
+			let recalc_block = (block_number / T::RecalculationInterval::get() + 2u32.into())
+				* T::RecalculationInterval::get();
 
-			<Staked<T>>::insert(
-				(&staker_id, block_number),
-				<Staked<T>>::get((&staker_id, block_number))
+			<Staked<T>>::insert((&staker_id, block_number), {
+				let mut balance_and_recalc_block = <Staked<T>>::get((&staker_id, block_number));
+				balance_and_recalc_block.0 = balance_and_recalc_block
+					.0
 					.checked_add(&amount)
-					.ok_or(ArithmeticError::Overflow)?,
-			);
+					.ok_or(ArithmeticError::Overflow)?;
+				balance_and_recalc_block.1 = recalc_block;
+				balance_and_recalc_block
+			});
 
-			<TotalStaked<T>>::set(
-				<TotalStaked<T>>::get()
-					.checked_add(&amount)
-					.ok_or(ArithmeticError::Overflow)?,
-			);
+			// <TotalStaked<T>>::set(
+			// 	<TotalStaked<T>>::get()
+			// 		.checked_add(&amount)
+			// 		.ok_or(ArithmeticError::Overflow)?,
+			// );
 
 			Ok(())
 		}
@@ -338,63 +355,120 @@ pub mod pallet {
 		pub fn unstake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
 
-			let mut stakes = Staked::<T>::iter_prefix((&staker_id,)).collect::<Vec<_>>();
+			let mut stakes = Staked::<T>::drain_prefix((&staker_id,));
 
-			let total_staked = stakes
-				.iter()
-				.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + *amount);
+			// let total_staked = stakes
+			// 	.iter()
+			// 	.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + *amount);
 
-			ensure!(total_staked >= amount, ArithmeticError::Underflow);
+			// ensure!(total_staked >= amount, ArithmeticError::Underflow);
 
-			<TotalStaked<T>>::set(
-				<TotalStaked<T>>::get()
-					.checked_sub(&amount)
-					.ok_or(ArithmeticError::Underflow)?,
-			);
+			// <TotalStaked<T>>::set(
+			// 	<TotalStaked<T>>::get()
+			// 		.checked_sub(&amount)
+			// 		.ok_or(ArithmeticError::Underflow)?,
+			// );
 
-			let block =
-				T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
-			<PendingUnstake<T>>::insert(
-				(&staker_id, block),
-				<PendingUnstake<T>>::get((&staker_id, block))
-					.checked_add(&amount)
-					.ok_or(ArithmeticError::Overflow)?,
-			);
+			// let block =
+			// 	T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
+			// <PendingUnstake<T>>::insert(
+			// 	(&staker_id, block),
+			// 	<PendingUnstake<T>>::get((&staker_id, block))
+			// 		.checked_add(&amount)
+			// 		.ok_or(ArithmeticError::Overflow)?,
+			// );
 
-			stakes.sort_by_key(|(block, _)| *block);
+			// stakes.sort_by_key(|(block, _)| *block);
 
-			let mut acc_amount = amount;
-			let new_state = stakes
-				.into_iter()
-				.map_while(|(block, balance_per_block)| {
-					if acc_amount == <BalanceOf<T>>::default() {
-						return None;
-					}
-					if acc_amount <= balance_per_block {
-						let res = (block, balance_per_block - acc_amount, acc_amount);
-						acc_amount = <BalanceOf<T>>::default();
-						return Some(res);
-					} else {
-						acc_amount -= balance_per_block;
-						return Some((block, <BalanceOf<T>>::default(), acc_amount));
-					}
-				})
-				.collect::<Vec<_>>();
+			// let mut acc_amount = amount;
+			// let new_state = stakes
+			// 	.into_iter()
+			// 	.map_while(|(block, balance_per_block)| {
+			// 		if acc_amount == <BalanceOf<T>>::default() {
+			// 			return None;
+			// 		}
+			// 		if acc_amount <= balance_per_block {
+			// 			let res = (block, balance_per_block - acc_amount, acc_amount);
+			// 			acc_amount = <BalanceOf<T>>::default();
+			// 			return Some(res);
+			// 		} else {
+			// 			acc_amount -= balance_per_block;
+			// 			return Some((block, <BalanceOf<T>>::default(), acc_amount));
+			// 		}
+			// 	})
+			// 	.collect::<Vec<_>>();
 
-			new_state
-				.into_iter()
-				.for_each(|(block, to_staked, _to_pending)| {
-					if to_staked == <BalanceOf<T>>::default() {
-						<Staked<T>>::remove((&staker_id, block));
-					} else {
-						<Staked<T>>::insert((&staker_id, block), to_staked);
-					}
-				});
+			// new_state
+			// 	.into_iter()
+			// 	.for_each(|(block, to_staked, _to_pending)| {
+			// 		if to_staked == <BalanceOf<T>>::default() {
+			// 			<Staked<T>>::remove((&staker_id, block));
+			// 		} else {
+			// 			<Staked<T>>::insert((&staker_id, block), to_staked);
+			// 		}
+			// 	});
 
 			Ok(())
+
+			// let staker_id = ensure_signed(staker)?;
+
+			// let mut stakes = Staked::<T>::iter_prefix((&staker_id,)).collect::<Vec<_>>();
+
+			// let total_staked = stakes
+			// 	.iter()
+			// 	.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + *amount);
+
+			// ensure!(total_staked >= amount, ArithmeticError::Underflow);
+
+			// <TotalStaked<T>>::set(
+			// 	<TotalStaked<T>>::get()
+			// 		.checked_sub(&amount)
+			// 		.ok_or(ArithmeticError::Underflow)?,
+			// );
+
+			// let block =
+			// 	T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
+			// <PendingUnstake<T>>::insert(
+			// 	(&staker_id, block),
+			// 	<PendingUnstake<T>>::get((&staker_id, block))
+			// 		.checked_add(&amount)
+			// 		.ok_or(ArithmeticError::Overflow)?,
+			// );
+
+			// stakes.sort_by_key(|(block, _)| *block);
+
+			// let mut acc_amount = amount;
+			// let new_state = stakes
+			// 	.into_iter()
+			// 	.map_while(|(block, balance_per_block)| {
+			// 		if acc_amount == <BalanceOf<T>>::default() {
+			// 			return None;
+			// 		}
+			// 		if acc_amount <= balance_per_block {
+			// 			let res = (block, balance_per_block - acc_amount, acc_amount);
+			// 			acc_amount = <BalanceOf<T>>::default();
+			// 			return Some(res);
+			// 		} else {
+			// 			acc_amount -= balance_per_block;
+			// 			return Some((block, <BalanceOf<T>>::default(), acc_amount));
+			// 		}
+			// 	})
+			// 	.collect::<Vec<_>>();
+
+			// new_state
+			// 	.into_iter()
+			// 	.for_each(|(block, to_staked, _to_pending)| {
+			// 		if to_staked == <BalanceOf<T>>::default() {
+			// 			<Staked<T>>::remove((&staker_id, block));
+			// 		} else {
+			// 			<Staked<T>>::insert((&staker_id, block), to_staked);
+			// 		}
+			// 	});
+
+			// Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::sponsor_collection())]
 		pub fn sponsor_collection(
 			admin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -407,8 +481,8 @@ pub mod pallet {
 
 			T::CollectionHandler::set_sponsor(Self::account_id(), collection_id)
 		}
-		#[pallet::weight(0)]
-		pub fn stop_sponsorign_collection(
+		#[pallet::weight(T::WeightInfo::stop_sponsoring_collection())]
+		pub fn stop_sponsoring_collection(
 			admin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
@@ -428,7 +502,7 @@ pub mod pallet {
 			T::CollectionHandler::remove_collection_sponsor(collection_id)
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::sponsor_contract())]
 		pub fn sponsor_conract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 
@@ -443,8 +517,8 @@ pub mod pallet {
 			)
 		}
 
-		#[pallet::weight(0)]
-		pub fn stop_sponsorign_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
+		#[pallet::weight(T::WeightInfo::stop_sponsoring_contract())]
+		pub fn stop_sponsoring_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 
 			ensure!(
@@ -458,6 +532,18 @@ pub mod pallet {
 				<Error<T>>::NoPermission
 			);
 			T::ContractHandler::remove_contract_sponsor(contract_id)
+		}
+
+		#[pallet::weight(0)]
+		pub fn payout_stakers(admin: OriginFor<T>, stakers_number: Option<u8>) -> DispatchResult {
+			let admin_id = ensure_signed(admin)?;
+
+			ensure!(
+				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
+				Error::<T>::NoPermission
+			);
+
+			Ok(())
 		}
 	}
 }
@@ -501,7 +587,9 @@ impl<T: Config> Pallet<T> {
 	pub fn total_staked_by_id(staker: impl EncodeLike<T::AccountId>) -> Option<BalanceOf<T>> {
 		let staked = Staked::<T>::iter_prefix((staker,))
 			.into_iter()
-			.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + amount);
+			.fold(<BalanceOf<T>>::default(), |acc, (_, (amount, _))| {
+				acc + amount
+			});
 		if staked != <BalanceOf<T>>::default() {
 			Some(staked)
 		} else {
@@ -514,7 +602,7 @@ impl<T: Config> Pallet<T> {
 	) -> Option<Vec<(T::BlockNumber, BalanceOf<T>)>> {
 		let mut staked = Staked::<T>::iter_prefix((staker,))
 			.into_iter()
-			.map(|(block, amount)| (block, amount))
+			.map(|(block, (amount, _))| (block, amount))
 			.collect::<Vec<_>>();
 		staked.sort_by_key(|(block, _)| *block);
 		if !staked.is_empty() {
@@ -550,17 +638,17 @@ impl<T: Config> Pallet<T> {
 		income_acc: &mut BalanceOf<T>,
 	) {
 		let income = Self::calculate_income(base);
-		base.checked_add(&income).map(|res| {
-			<Staked<T>>::insert((staker, block), res);
-			*income_acc += income;
-			<T::Currency as Currency<T::AccountId>>::transfer(
-				&T::TreasuryAccountId::get(),
-				staker,
-				income,
-				ExistenceRequirement::KeepAlive,
-			)
-			.and_then(|_| Self::add_lock_balance(staker, income));
-		});
+		// base.checked_add(&income).map(|res| {
+		// 	<Staked<T>>::insert((staker, block), res);
+		// 	*income_acc += income;
+		// 	<T::Currency as Currency<T::AccountId>>::transfer(
+		// 		&T::TreasuryAccountId::get(),
+		// 		staker,
+		// 		income,
+		// 		ExistenceRequirement::KeepAlive,
+		// 	)
+		// 	.and_then(|_| Self::add_lock_balance(staker, income));
+		// });
 	}
 
 	fn calculate_income<I>(base: I) -> I

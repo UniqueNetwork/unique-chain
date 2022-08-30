@@ -20,53 +20,109 @@ use super::*;
 use crate::Pallet as PromototionPallet;
 
 use sp_runtime::traits::Bounded;
+use sp_std::vec;
 
 use frame_benchmarking::{benchmarks, account};
-use frame_support::traits::OnInitialize;
+
 use frame_system::{Origin, RawOrigin};
+use pallet_unique::benchmarking::create_nft_collection;
+use pallet_evm_migration::Pallet as EvmMigrationPallet;
+
+// trait BenchmarkingConfig: Config + pallet_unique::Config { }
+
+// impl<T: Config + pallet_unique::Config> BenchmarkingConfig for T { }
 
 const SEED: u32 = 0;
 benchmarks! {
 	where_clause{
-		where T: Config
-
+		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
+		T::BlockNumber: From<u32>
 	}
-	on_initialize {
-		let block1: T::BlockNumber = T::BlockNumber::from(1u32);
-		let block2: T::BlockNumber = T::BlockNumber::from(2u32);
-		PromototionPallet::<T>::on_initialize(block1); // Create Treasury account
-	}: { PromototionPallet::<T>::on_initialize(block2); } // Benchmark deposit_into_existing path
-
 	start_app_promotion {
-		let caller = account::<T::AccountId>("caller", 0, SEED);
 
-	} : {PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), T::BlockNumber::from(2u32))?}
+	} : {PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), None)?}
+
+	stop_app_promotion{
+		PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), Some(25.into()))?;
+	} : {PromototionPallet::<T>::stop_app_promotion(RawOrigin::Root.into())?}
 
 	set_admin_address {
-		let caller = account::<T::AccountId>("caller", 0, SEED);
-		let _ = T::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-	} : {PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), caller)?}
+		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+	} : {PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin))?}
+
+	payout_stakers{
+		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		let share = Perbill::from_rational(1u32, 10);
+		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
+		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let staker: T::AccountId = account("caller", 0, SEED);
+		let _ = <T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), share * <T as Config>::Currency::total_balance(&staker))?;
+	} : {PromototionPallet::<T>::payout_stakers(RawOrigin::Signed(pallet_admin.clone()).into(), Some(1))?}
 
 	stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 10);
-		let _ = T::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-	} : {PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?}
+		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+	} : {PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?}
 
 	unstake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 10);
-		let _ = T::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?;
+		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
 
-	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?}
+	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?}
 
 	recalculate_stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 10);
-		let _ = T::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * T::Currency::total_balance(&caller))?;
-		let block = <T::BlockNumberProvider as BlockNumberProvider>::current_block_number();
+		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
+		let block = <T::RelayBlockNumberProvider as BlockNumberProvider>::current_block_number();
 		let mut acc = <BalanceOf<T>>::default();
-	} : {PromototionPallet::<T>::recalculate_stake(&caller, block, share * T::Currency::total_balance(&caller), &mut acc)}
+	} : {PromototionPallet::<T>::recalculate_stake(&caller, block, share * <T as Config>::Currency::total_balance(&caller), &mut acc)}
+
+	sponsor_collection {
+		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
+		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let collection = create_nft_collection::<T>(caller.clone())?;
+	} : {PromototionPallet::<T>::sponsor_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?}
+
+	stop_sponsoring_collection {
+		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
+		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let caller: T::AccountId = account("caller", 0, SEED);
+		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let collection = create_nft_collection::<T>(caller.clone())?;
+		PromototionPallet::<T>::sponsor_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?;
+	} : {PromototionPallet::<T>::stop_sponsoring_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?}
+
+	sponsor_contract {
+		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
+
+		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let address = H160::from_low_u64_be(SEED as u64);
+		let data: Vec<u8> = (0..20 as u8).collect();
+		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
+		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
+	} : {PromototionPallet::<T>::sponsor_conract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?}
+
+	stop_sponsoring_contract {
+		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
+
+		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let address = H160::from_low_u64_be(SEED as u64);
+		let data: Vec<u8> = (0..20 as u8).collect();
+		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
+		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
+		PromototionPallet::<T>::sponsor_conract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?;
+	} : {PromototionPallet::<T>::stop_sponsoring_contract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?}
 }

@@ -101,7 +101,7 @@ pub trait ContractHandler {
 
 	fn set_sponsor(sponsor_id: Self::AccountId, contract_id: Self::ContractId) -> DispatchResult;
 
-	fn remove_contract_sponsor(collection_id: Self::ContractId) -> DispatchResult;
+	fn remove_contract_sponsor(contract_id: Self::ContractId) -> DispatchResult;
 
 	fn get_sponsor(contract_id: Self::ContractId)
 		-> Result<Option<Self::AccountId>, DispatchError>;

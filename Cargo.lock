@@ -5307,6 +5307,7 @@ dependencies = [
  "pallet-common",
  "pallet-evm",
  "pallet-evm-contract-helpers",
+ "pallet-evm-migration",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-unique",

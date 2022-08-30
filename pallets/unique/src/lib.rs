@@ -98,7 +98,7 @@ use pallet_common::{
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+pub mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 

@@ -829,19 +829,23 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asSponsorCollection: {
     readonly collectionId: u32;
   } & Struct;
-  readonly isStopSponsorignCollection: boolean;
-  readonly asStopSponsorignCollection: {
+  readonly isStopSponsoringCollection: boolean;
+  readonly asStopSponsoringCollection: {
     readonly collectionId: u32;
   } & Struct;
   readonly isSponsorConract: boolean;
   readonly asSponsorConract: {
     readonly contractId: H160;
   } & Struct;
-  readonly isStopSponsorignContract: boolean;
-  readonly asStopSponsorignContract: {
+  readonly isStopSponsoringContract: boolean;
+  readonly asStopSponsoringContract: {
     readonly contractId: H160;
   } & Struct;
-  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'StopAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsorignCollection' | 'SponsorConract' | 'StopSponsorignContract';
+  readonly isPayoutStakers: boolean;
+  readonly asPayoutStakers: {
+    readonly stakersNumber: Option<u8>;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'StopAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorConract' | 'StopSponsoringContract' | 'PayoutStakers';
 }
 
 /** @name PalletAppPromotionError */
@@ -856,7 +860,7 @@ export interface PalletAppPromotionError extends Enum {
 /** @name PalletAppPromotionEvent */
 export interface PalletAppPromotionEvent extends Enum {
   readonly isStakingRecalculation: boolean;
-  readonly asStakingRecalculation: ITuple<[u128, u128]>;
+  readonly asStakingRecalculation: ITuple<[AccountId32, u128, u128]>;
   readonly type: 'StakingRecalculation';
 }
 
