@@ -31,7 +31,7 @@ use crate::execution::Result;
 
 const ABI_ALIGNMENT: usize = 32;
 
-trait TypeHelper<T> {
+trait TypeHelper {
 	fn is_dynamic() -> bool;
 }
 
@@ -340,7 +340,7 @@ pub trait AbiRead<T> {
 
 macro_rules! impl_abi_readable {
 	($ty:ty, $method:ident, $dynamic:literal) => {
-		impl TypeHelper<$ty> for $ty {
+		impl TypeHelper for $ty {
 			fn is_dynamic() -> bool {
 				$dynamic
 			}
@@ -399,7 +399,7 @@ where
 
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
-		impl<$($ident: TypeHelper<$ident>,)+> TypeHelper<($($ident,)+)> for ($($ident,)+) {
+		impl<$($ident: TypeHelper,)+> TypeHelper for ($($ident,)+) {
 			fn is_dynamic() -> bool {
 				false
 				$(
@@ -413,7 +413,7 @@ macro_rules! impl_tuples {
 			$(
 				Self: AbiRead<$ident>,
 			)+
-			($($ident,)+): TypeHelper<($($ident,)+)>,
+			($($ident,)+): TypeHelper,
 		{
 			fn abi_read(&mut self) -> Result<($($ident,)+)> {
 				let size = if !<($($ident,)+)>::is_dynamic() { Some(<Self as AbiRead<($($ident,)+)>>::size()) } else { None };
