@@ -118,7 +118,7 @@ jobs:
 
       - name: Start nonce-app
         working-directory: qa-tests
-        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build nonce-app 
+        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build --remove-orphans --force-recreate nonce-app 
      
       - uses: actions/setup-node@v3
         with:
@@ -207,6 +207,10 @@ jobs:
           ls -la 
           ls -la qa-tests/
 
+      - name: Stop running containers
+        working-directory: qa-tests
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build nonce-app down --volumes
 
       - name: Stop running containers
         if: always()                   # run this step always
