@@ -118,6 +118,11 @@
             "id": 2023,
             "balance": "1000000000000000000000",
             "chain": "moonriver-local",
+            "chainInitializer": [
+                "chainql",
+                "--tla-code=spec=import '${spec}'",
+                "minBondFix.jsonnet"
+            ],		    
             "nodes": [
                 {
                     "wsPort": 9947,
