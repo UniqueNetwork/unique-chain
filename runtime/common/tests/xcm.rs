@@ -34,7 +34,7 @@ fn catch_xcm_barrier_log(logger: &mut Logger, expected_msg: &str) {
 }
 
 #[test]
-fn xcm_barrier_does_not_allow_transact() {
+fn xcm_barrier_denies_transact() {
     // We have a `AllowTopLevelPaidExecutionFrom` barrier,
     // so an XCM program should start from one of the following commands: 
     // * `WithdrawAsset`

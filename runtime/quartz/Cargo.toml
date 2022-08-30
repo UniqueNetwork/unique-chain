@@ -471,6 +471,11 @@ up-sponsorship = { default-features = false, git = "https://github.com/uniquenet
 pallet-foreing-assets = { default-features = false, path = "../../pallets/foreing-assets" }
 
 ################################################################################
+# Other Dependencies
+
+impl-trait-for-tuples = "0.2.2"
+
+################################################################################
 # Dev Dependencies
 
 [dev-dependencies.logtest]

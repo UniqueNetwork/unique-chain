@@ -4572,6 +4572,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "logtest"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb3e43a8657c1d64516dcc9db8ca03826a4aceaf89d5ce1b37b59f6ff0e43026"
+dependencies = [
+ "lazy_static",
+ "log",
+]
+
+[[package]]
 name = "lru"
 version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5148,7 +5158,9 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "impl-trait-for-tuples",
  "log",
+ "logtest",
  "orml-tokens",
  "orml-traits",
  "orml-vesting",
@@ -8466,7 +8478,9 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "impl-trait-for-tuples",
  "log",
+ "logtest",
  "orml-tokens",
  "orml-traits",
  "orml-vesting",
@@ -12206,7 +12220,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
@@ -12459,7 +12473,9 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "impl-trait-for-tuples",
  "log",
+ "logtest",
  "orml-tokens",
  "orml-traits",
  "orml-vesting",

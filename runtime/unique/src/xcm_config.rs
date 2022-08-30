@@ -41,7 +41,7 @@ use xcm_builder::{
 };
 use xcm_executor::{
     {Config, XcmExecutor},
-    traits::{Convert as ConvertXcm, FilterAssetLocation, JustTry, MatchesFungible, ShouldExecute},
+    traits::{Convert as ConvertXcm, FilterAssetLocation, JustTry, MatchesFungible},
 };
 
 use up_common::{
@@ -67,9 +67,11 @@ pub type Amount = i128;
 
 
 pub type Barrier = DenyThenTry<
-    DenyExchangeWithUnknownLocation,
     (
         DenyTransact,
+        DenyExchangeWithUnknownLocation,
+    ),
+    (
         TakeWeightCredit,
         AllowTopLevelPaidExecutionFrom<Everything>,
         // Parent and its exec plurality get free execution
@@ -98,12 +100,10 @@ pub fn get_allowed_locations() -> Vec<MultiLocation> {
 
 // Allow xcm exchange only with locations in list
 pub struct DenyExchangeWithUnknownLocation;
-impl ShouldExecute for DenyExchangeWithUnknownLocation {
-    fn should_execute<Call>(
+impl TryPass for DenyExchangeWithUnknownLocation {
+    fn try_pass<Call>(
         origin: &MultiLocation,
         message: &mut Xcm<Call>,
-        _max_weight: Weight,
-        _weight_credit: &mut Weight,
     ) -> Result<(), ()> {
 
         // Check if deposit or transfer belongs to allowed parachains

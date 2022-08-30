@@ -172,13 +172,32 @@ match_types! {
 	};
 }
 
+pub trait TryPass {
+	fn try_pass<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+	) -> Result<(), ()>;
+}
+
+#[impl_trait_for_tuples::impl_for_tuples(30)]
+impl TryPass for Tuple {
+	fn try_pass<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+	)  -> Result<(), ()> {
+		for_tuples!( #(
+			Tuple::try_pass(origin, message)?;
+		)* );
+
+		Ok(())
+	}
+}
+
 pub struct DenyTransact;
-impl ShouldExecute for DenyTransact {
-	fn should_execute<Call>(
+impl TryPass for DenyTransact {
+	fn try_pass<Call>(
 		_origin: &MultiLocation,
 		message: &mut Xcm<Call>,
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {
 		let transact_inst = message
 			.0
@@ -203,12 +222,12 @@ impl ShouldExecute for DenyTransact {
 /// If it passes the Deny, and matches one of the Allow cases then it is let through.
 pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
 where
-	Deny: ShouldExecute,
+	Deny: TryPass,
 	Allow: ShouldExecute;
 
 impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
 where
-	Deny: ShouldExecute,
+	Deny: TryPass,
 	Allow: ShouldExecute,
 {
 	fn should_execute<Call>(
@@ -217,7 +236,7 @@ where
 		max_weight: Weight,
 		weight_credit: &mut Weight,
 	) -> Result<(), ()> {
-		Deny::should_execute(origin, message, max_weight, weight_credit)?;
+		Deny::try_pass(origin, message)?;
 		Allow::should_execute(origin, message, max_weight, weight_credit)
 	}
 }
