@@ -2005,11 +2005,11 @@ class StakingGroup extends HelperGroup {
    * @param label extra label for log
    * @returns 
    */
-  async unstake(signer: TSigner, amountToUnstake: bigint, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToUnstake}`;
+  async unstake(signer: TSigner, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address}`;
     const unstakeResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.promotion.unstake', [amountToUnstake],
+      'api.tx.promotion.unstake', [],
       true, `unstake failed for ${label}`,
     );
     // TODO extract info from unstakeResult
