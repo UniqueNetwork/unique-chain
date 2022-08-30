@@ -31,6 +31,10 @@ use crate::execution::Result;
 
 const ABI_ALIGNMENT: usize = 32;
 
+trait TypeHelper {
+	fn is_dynamic() -> bool;
+}
+
 /// View into RLP data, which provides method to read typed items from it
 #[derive(Clone)]
 pub struct AbiReader<'i> {
@@ -77,8 +81,8 @@ impl<'i> AbiReader<'i> {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
-		// Verify padding is empty
-		if !buf[pad_start..pad_size].iter().all(|&v| v == 0) {
+		let is_pad_zeroed = buf[pad_start..pad_size].iter().all(|&v| v == 0);
+		if !is_pad_zeroed {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
 		block.copy_from_slice(&buf[block_start..block_size]);
@@ -133,7 +137,7 @@ impl<'i> AbiReader<'i> {
 
 	/// Read [`Vec<u8>`] at current position, then advance
 	pub fn bytes(&mut self) -> Result<Vec<u8>> {
-		let mut subresult = self.subresult()?;
+		let mut subresult = self.subresult(None)?;
 		let length = subresult.uint32()? as usize;
 		if subresult.buf.len() < subresult.offset + length {
 			return Err(Error::Error(ExitError::OutOfOffset));
@@ -179,15 +183,26 @@ impl<'i> AbiReader<'i> {
 	}
 
 	/// Slice recursive buffer, advance one word for buffer offset
-	fn subresult(&mut self) -> Result<AbiReader<'i>> {
-		let offset = self.uint32()? as usize;
+	/// If `size` is [`None`] then [`Self::offset`] and [`Self::subresult_offset`] evals from [`Self::buf`].
+	fn subresult(&mut self, size: Option<usize>) -> Result<AbiReader<'i>> {
+		let subresult_offset = self.subresult_offset;
+		let offset = if let Some(size) = size {
+			self.offset += size;
+			self.subresult_offset += size;
+			0
+		} else {
+			self.uint32()? as usize
+		};
+
 		if offset + self.subresult_offset > self.buf.len() {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
+
+		let new_offset = offset + subresult_offset;
 		Ok(AbiReader {
 			buf: self.buf,
-			subresult_offset: offset + self.subresult_offset,
-			offset: offset + self.subresult_offset,
+			subresult_offset: new_offset,
+			offset: new_offset,
 		})
 	}
 
@@ -318,28 +333,40 @@ impl AbiWriter {
 pub trait AbiRead<T> {
 	/// Read item from current position, advanding decoder
 	fn abi_read(&mut self) -> Result<T>;
+
+	/// Size for type aligned to [`ABI_ALIGNMENT`].
+	fn size() -> usize;
 }
 
 macro_rules! impl_abi_readable {
-	($ty:ty, $method:ident) => {
+	($ty:ty, $method:ident, $dynamic:literal) => {
+		impl TypeHelper for $ty {
+			fn is_dynamic() -> bool {
+				$dynamic
+			}
+		}
 		impl AbiRead<$ty> for AbiReader<'_> {
 			fn abi_read(&mut self) -> Result<$ty> {
 				self.$method()
+			}
+
+			fn size() -> usize {
+				ABI_ALIGNMENT
 			}
 		}
 	};
 }
 
-impl_abi_readable!(u8, uint8);
-impl_abi_readable!(u32, uint32);
-impl_abi_readable!(u64, uint64);
-impl_abi_readable!(u128, uint128);
-impl_abi_readable!(U256, uint256);
-impl_abi_readable!([u8; 4], bytes4);
-impl_abi_readable!(H160, address);
-impl_abi_readable!(Vec<u8>, bytes);
-impl_abi_readable!(bool, bool);
-impl_abi_readable!(string, string);
+impl_abi_readable!(u8, uint8, false);
+impl_abi_readable!(u32, uint32, false);
+impl_abi_readable!(u64, uint64, false);
+impl_abi_readable!(u128, uint128, false);
+impl_abi_readable!(U256, uint256, false);
+impl_abi_readable!([u8; 4], bytes4, false);
+impl_abi_readable!(H160, address, false);
+impl_abi_readable!(Vec<u8>, bytes, true);
+impl_abi_readable!(bool, bool, true);
+impl_abi_readable!(string, string, true);
 
 mod sealed {
 	/// Not all types can be placed in vec, i.e `Vec<u8>` is restricted, `bytes` should be used instead
@@ -355,7 +382,7 @@ where
 	Self: AbiRead<R>,
 {
 	fn abi_read(&mut self) -> Result<Vec<R>> {
-		let mut sub = self.subresult()?;
+		let mut sub = self.subresult(None)?;
 		let size = sub.uint32()? as usize;
 		sub.subresult_offset = sub.offset;
 		let mut out = Vec::with_capacity(size);
@@ -364,20 +391,40 @@ where
 		}
 		Ok(out)
 	}
+
+	fn size() -> usize {
+		ABI_ALIGNMENT
+	}
 }
 
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
+		impl<$($ident: TypeHelper,)+> TypeHelper for ($($ident,)+) {
+			fn is_dynamic() -> bool {
+				false
+				$(
+					|| <$ident>::is_dynamic()
+				)*
+			}
+		}
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
 		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
 		where
-			$(Self: AbiRead<$ident>),+
+			$(
+				Self: AbiRead<$ident>,
+			)+
+			($($ident,)+): TypeHelper,
 		{
 			fn abi_read(&mut self) -> Result<($($ident,)+)> {
-				let mut subresult = self.subresult()?;
+				let size = if !<($($ident,)+)>::is_dynamic() { Some(<Self as AbiRead<($($ident,)+)>>::size()) } else { None };
+				let mut subresult = self.subresult(size)?;
 				Ok((
 					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+
 				))
+			}
+
+			fn size() -> usize {
+				0 $(+ <AbiReader<'_> as AbiRead<$ident>>::size())+
 			}
 		}
 		#[allow(non_snake_case)]
@@ -535,7 +582,7 @@ pub mod test {
 		assert_eq!(encoded, alternative_encoded);
 
 		let mut decoder = AbiReader::new(&encoded);
-		assert_eq!(decoder.bool().unwrap(), true);
+		assert!(decoder.bool().unwrap());
 		assert_eq!(decoder.string().unwrap(), "test");
 	}
 
@@ -601,6 +648,51 @@ pub mod test {
 				(1.into(), "Test URI 0".to_string()),
 				(11.into(), "Test URI 1".to_string()),
 				(12.into(), "Test URI 2".to_string())
+			]
+		);
+	}
+
+	#[test]
+	fn parse_vec_with_simple_type() {
+		use crate::types::address;
+		use primitive_types::{H160, U256};
+
+		let (call, mut decoder) = AbiReader::new_call(&hex!(
+			"
+				1ACF2D55
+				0000000000000000000000000000000000000000000000000000000000000020 // offset of (address, uint256)[]
+				0000000000000000000000000000000000000000000000000000000000000003 // length of (address, uint256)[]
+
+				0000000000000000000000002D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC // address
+				000000000000000000000000000000000000000000000000000000000000000A // uint256
+
+				000000000000000000000000AB8E3D9134955566483B11E6825C9223B6737B10 // address
+				0000000000000000000000000000000000000000000000000000000000000014 // uint256
+
+				0000000000000000000000008C582BDF2953046705FC56F189385255EFC1BE18 // address
+				000000000000000000000000000000000000000000000000000000000000001E // uint256
+			"
+		))
+		.unwrap();
+		assert_eq!(call, u32::to_be_bytes(0x1ACF2D55));
+		let data =
+			<AbiReader<'_> as AbiRead<Vec<(address, uint256)>>>::abi_read(&mut decoder).unwrap();
+		assert_eq!(data.len(), 3);
+		assert_eq!(
+			data,
+			vec![
+				(
+					H160(hex!("2D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC")),
+					U256([10, 0, 0, 0])
+				),
+				(
+					H160(hex!("AB8E3D9134955566483B11E6825C9223B6737B10")),
+					U256([20, 0, 0, 0])
+				),
+				(
+					H160(hex!("8C582BDF2953046705FC56F189385255EFC1BE18")),
+					U256([30, 0, 0, 0])
+				),
 			]
 		);
 	}
