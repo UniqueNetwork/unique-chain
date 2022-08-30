@@ -114,7 +114,7 @@ jobs:
 
       - name: Start node-parachain
         working-directory: qa-tests
-        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate node-parachain --remove-orphans
+        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
 
       - name: Start nonce-app
         working-directory: qa-tests
