@@ -24,15 +24,35 @@ import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import {getGenericResult} from './util/helpers';
 import waitNewBlocks from './substrate/wait-new-blocks';
 import {normalizeAccountId} from './util/helpers';
+import getBalance from './substrate/get-balance';
 
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+// const STATEMINE_CHAIN = 1000;
+// const UNIQUE_CHAIN = 2037;
+
+let UNIQUE_CHAIN = 0;
+let STATEMINE_CHAIN = 0;
+
+// parse parachain id numbers
+process.argv.forEach((val) => {
+
+  const ai = val.indexOf('statemineId=');
+  const ui = val.indexOf('uniqueId=');
+  if (ai != -1)
+  {
+    STATEMINE_CHAIN = Number(val.substring('statemineId='.length));
+  }
+  if (ui != -1)
+  {
+    UNIQUE_CHAIN = Number(val.substring('uniqueId='.length));
+  }
+});
+
 const RELAY_PORT = '9844';
-const UNIQUE_CHAIN = 2037;
 const UNIQUE_PORT = '9944';
-const STATEMINE_CHAIN = 1000;
 const STATEMINE_PORT = '9946';
 const STATEMINE_PALLET_INSTANCE = 50;
 const ASSET_ID = 100;
@@ -41,10 +61,17 @@ const ASSET_METADATA_NAME = 'USDT';
 const ASSET_METADATA_DESCRIPTION = 'USDT';
 const ASSET_METADATA_MINIMAL_BALANCE = 1;
 
+const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
+const TRANSFER_AMOUNT2 = 10_000_000_000_000_000n;
+
 describe('Integration test: Exchanging USDT with Statemine', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   
+  let balanceStmnBefore: bigint;
+  let balanceStmnAfter: bigint;
+  let balanceStmnFinal: bigint;
+
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
@@ -238,7 +265,7 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
               },
             },
             fun: {
-              Fungible: 1_000_000_000_000_000_000n,
+              Fungible: TRANSFER_AMOUNT,
             },
           },
         ],
@@ -250,10 +277,16 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
         Limited: 5000000000,
       };
 
+      [balanceStmnBefore] = await getBalance(api, [alice.address]);
+
       const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(dest, beneficiary, assets, feeAssetItem, weightLimit);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
+
+      [balanceStmnAfter] = await getBalance(api, [alice.address]);
+      expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
+
     }, statemineApiOptions);
 
 
@@ -262,7 +295,8 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
       await waitNewBlocks(api, 3);
       // expext collection id will be with id 1
       const free = (await api.query.fungible.balance(1, normalizeAccountId(alice.address))).toBigInt();
-      expect(free > 0).to.be.true;
+      expect(free == TRANSFER_AMOUNT).to.be.true;
+
     }, uniqueApiOptions);
   });
 
@@ -312,6 +346,10 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
+
+      
+      [balanceStmnFinal] = await getBalance(api, [alice.address]);
+      expect(balanceStmnFinal > balanceStmnBefore).to.be.true;
 
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);

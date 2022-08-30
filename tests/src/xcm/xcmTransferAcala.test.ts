@@ -28,8 +28,24 @@ import getBalance from './substrate/get-balance';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const UNIQUE_CHAIN = 5000;
-const ACALA_CHAIN = 2000;
+let UNIQUE_CHAIN = 0;
+let ACALA_CHAIN = 0;
+
+// parse parachain id numbers
+process.argv.forEach((val) => {
+
+  const ai = val.indexOf('acalaId=');
+  const ui = val.indexOf('uniqueId=');
+  if (ai != -1)
+  {
+    ACALA_CHAIN = Number(val.substring('acalaId='.length));
+  }
+  if (ui != -1)
+  {
+    UNIQUE_CHAIN = Number(val.substring('uniqueId='.length));
+  }
+});
+
 const ACALA_PORT = '9946';
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 

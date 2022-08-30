@@ -30,8 +30,25 @@ import waitNewBlocks from './substrate/wait-new-blocks';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const UNIQUE_CHAIN = 5000;
-const MOONBEAM_CHAIN = 1000;
+
+let UNIQUE_CHAIN = 0;
+let MOONBEAM_CHAIN = 0;
+
+// parse parachain id numbers
+process.argv.forEach((val) => {
+
+  const ai = val.indexOf('moonbeamId=');
+  const ui = val.indexOf('uniqueId=');
+  if (ai != -1)
+  {
+    MOONBEAM_CHAIN = Number(val.substring('moonbeamId='.length));
+  }
+  if (ui != -1)
+  {
+    UNIQUE_CHAIN = Number(val.substring('uniqueId='.length));
+  }
+});
+
 const UNIQUE_PORT = '9944';
 const MOONBEAM_PORT = '9946';
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
