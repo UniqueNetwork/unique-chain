@@ -40,7 +40,7 @@ jobs:
 
     name: draft job
 
-    #continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
 
     steps:
@@ -83,14 +83,12 @@ jobs:
         uses: xom9ikk/dotenv@v1.0.2
       
       - name: Copy qa-tests/.env.example to qa-tests/.env
-        run: cp qa-tests/.env.docker qa-tests/.env
-      
-     
+        working-directory: qa-tests
+        run: cp .env.docker .env
 
       - name: Show content of qa-test/.env
-        run: |
-          cat qa-tests/.env
-
+        working-directory: qa-tests
+        run: cat .env
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -98,10 +96,11 @@ jobs:
           path: qa-tests/
         
       - name: Generate ENV related extend file for docker-compose
+        working-directory: qa-tests
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: qa-tests/.docker/docker-compose.tmp-market.j2
-          output_file: qa-tests/.docker/docker-compose.${{ matrix.network }}.yml
+          template: .docker/docker-compose.tmp-market.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
@@ -111,36 +110,37 @@ jobs:
 
 
       - name: Show build configuration
-        run: cat qa-tests/.docker/docker-compose.${{ matrix.network }}.yml
+        working-directory: qa-tests
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Start node-parachain
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate node-parachain
-
-#      - name: Build the stack
-#        run: docker-compose -f ".docker/docker-compose-master.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate
+        working-directory: qa-tests
+        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --force-recreate node-parachain --remove-orphans
 
       - name: Start nonce-app
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" up -d --build nonce-app 
+        working-directory: qa-tests
+        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build nonce-app 
      
       - uses: actions/setup-node@v3
         with:
           node-version: 16
 
       - name: Setup TypeScript
+        working-directory: qa-tests
         run: |
-          cd qa-tests
           npm install
           npm install -g ts-node
 
       - name: Copy qa-tests/.env.example to qa-tests/.env
-        run: |
-          rm -rf qa-tests/.env
-          cp qa-tests/.env.example qa-tests/.env
+        working-directory: qa-tests
+        run: | 
+          rm -rf .env
+          cp .env.example .env
       
      
       - name: Show content of qa-test/.env
-        run: |
-          cat qa-tests/.env
+        working-directory: qa-tests
+        run: cat .env
 
 
       - name: Read qa -test .env file
@@ -149,9 +149,8 @@ jobs:
           path: qa-tests/
 
       - name: Generate accounts
-        run: |
-          cd qa-tests
-          ts-node ./src/scripts/create-market-accounts.ts
+        working-directory: qa-tests
+        run: ts-node ./src/scripts/create-market-accounts.ts
 
       - name: Deploy contracts
         run: |
@@ -159,18 +158,19 @@ jobs:
           ts-node ./src/scripts/deploy-contract.ts
 
       - name: Import test data
-        run: |
-          cd qa-tests/
-          ts-node ./src/scripts/create-test-collections.ts
+        working-directory: qa-tests
+        run: ts-node ./src/scripts/create-test-collections.ts
 
       - name: Show content of qa-test .env
-        run: cat qa-tests/.env
+        working-directory: qa-tests
+        run: cat .env
 
       - name: Copy qa-tests/.env.example to qa-tests/.env
+        working-directory: qa-tests
         run: |
-          rm -rf qa-tests/.env.docker
-          cp qa-tests/.env qa-tests/.env.docker
-          sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' qa-tests/.env.docker
+          rm -rf .env.docker
+          cp .env .env.docker
+          sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' .env.docker
 
       - name: Read qa -test .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -181,12 +181,13 @@ jobs:
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
       - name: Wait for market readyness
-        run: qa-tests/src/scripts/wait-market-ready.sh
+        working-directory: qa-tests
+        run: src/scripts/wait-market-ready.sh
         shell: bash
 
       - name: Install dependecies
+        working-directory: qa-tests
         run: |
-          cd qa-tests
           npm ci
           npm install -D @playwright/test
           npx playwright install-deps
@@ -207,10 +208,6 @@ jobs:
           ls -la 
           ls -la qa-tests/
 
-
-#      - name: Stop nonce-app
-#        if: always()
-#        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" down --volumes
 
       - name: Stop running containers
         if: always()                   # run this step always
