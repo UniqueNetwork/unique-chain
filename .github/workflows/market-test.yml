@@ -96,9 +96,9 @@ jobs:
           path: qa-tests/
         
       - name: Generate ENV related extend file for docker-compose
-        working-directory: qa-tests
         uses: cuchi/jinja2-action@v1.2.0
         with:
+          working-directory: qa-tests
           template: .docker/docker-compose.tmp-market.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
