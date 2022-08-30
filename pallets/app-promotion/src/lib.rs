@@ -260,6 +260,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	where
 		T::BlockNumber: From<u32>,
+		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
 	{
 		#[pallet::weight(T::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
@@ -311,8 +312,9 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
+			
 
-			ensure!(amount >= T::Nominal::get(), ArithmeticError::Underflow);
+			ensure!(amount >= Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get(), ArithmeticError::Underflow);
 
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
@@ -342,73 +344,40 @@ pub mod pallet {
 				balance_and_recalc_block
 			});
 
-			// <TotalStaked<T>>::set(
-			// 	<TotalStaked<T>>::get()
-			// 		.checked_add(&amount)
-			// 		.ok_or(ArithmeticError::Overflow)?,
-			// );
+			<TotalStaked<T>>::set(
+				<TotalStaked<T>>::get()
+					.checked_add(&amount)
+					.ok_or(ArithmeticError::Overflow)?,
+			);
 
 			Ok(())
 		}
 
 		#[pallet::weight(T::WeightInfo::unstake())]
-		pub fn unstake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
+		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let staker_id = ensure_signed(staker)?;
 
-			let mut stakes = Staked::<T>::drain_prefix((&staker_id,));
+			let mut total_stakes = 0u64;
 
-			// let total_staked = stakes
-			// 	.iter()
-			// 	.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + *amount);
+			let total_staked: BalanceOf<T> = Staked::<T>::drain_prefix((&staker_id,))
+				.map(|(_, (amount, _))| {
+					*&mut total_stakes += 1;
+					amount
+				})
+				.sum();
+				
+			let block =
+				T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
+			<PendingUnstake<T>>::insert(
+				(&staker_id, block),
+				<PendingUnstake<T>>::get((&staker_id, block))
+					.checked_add(&total_staked)
+					.ok_or(ArithmeticError::Overflow)?,
+			);
+			
+			TotalStaked::<T>::set(TotalStaked::<T>::get().checked_sub(&total_staked).ok_or(ArithmeticError::Underflow)?); // when error we should recover stake state for the staker
 
-			// ensure!(total_staked >= amount, ArithmeticError::Underflow);
-
-			// <TotalStaked<T>>::set(
-			// 	<TotalStaked<T>>::get()
-			// 		.checked_sub(&amount)
-			// 		.ok_or(ArithmeticError::Underflow)?,
-			// );
-
-			// let block =
-			// 	T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
-			// <PendingUnstake<T>>::insert(
-			// 	(&staker_id, block),
-			// 	<PendingUnstake<T>>::get((&staker_id, block))
-			// 		.checked_add(&amount)
-			// 		.ok_or(ArithmeticError::Overflow)?,
-			// );
-
-			// stakes.sort_by_key(|(block, _)| *block);
-
-			// let mut acc_amount = amount;
-			// let new_state = stakes
-			// 	.into_iter()
-			// 	.map_while(|(block, balance_per_block)| {
-			// 		if acc_amount == <BalanceOf<T>>::default() {
-			// 			return None;
-			// 		}
-			// 		if acc_amount <= balance_per_block {
-			// 			let res = (block, balance_per_block - acc_amount, acc_amount);
-			// 			acc_amount = <BalanceOf<T>>::default();
-			// 			return Some(res);
-			// 		} else {
-			// 			acc_amount -= balance_per_block;
-			// 			return Some((block, <BalanceOf<T>>::default(), acc_amount));
-			// 		}
-			// 	})
-			// 	.collect::<Vec<_>>();
-
-			// new_state
-			// 	.into_iter()
-			// 	.for_each(|(block, to_staked, _to_pending)| {
-			// 		if to_staked == <BalanceOf<T>>::default() {
-			// 			<Staked<T>>::remove((&staker_id, block));
-			// 		} else {
-			// 			<Staked<T>>::insert((&staker_id, block), to_staked);
-			// 		}
-			// 	});
-
-			Ok(())
+			Ok(None.into())
 
 			// let staker_id = ensure_signed(staker)?;
 
@@ -542,6 +511,15 @@ pub mod pallet {
 				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
 				Error::<T>::NoPermission
 			);
+			
+			let raw_key = Staked::<T>::hashed_key_for((admin_id, T::BlockNumber::default()));
+			
+			let key_iterator = Staked::<T>::iter_keys_from(raw_key).skip(1).into_iter();
+			
+			match Self::get_last_calculated_staker() {
+				Some(last_staker) => {},
+				None  => {}
+			};
 
 			Ok(())
 		}
@@ -661,7 +639,7 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> Pallet<T>
 where
-	<<T as pallet::Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
+	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
 {
 	pub fn cross_id_pending_unstake(staker: Option<T::CrossAccountId>) -> BalanceOf<T> {
 		staker.map_or(PendingUnstake::<T>::iter_values().sum(), |s| {
