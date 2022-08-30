@@ -37,20 +37,15 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
-  let actuallySent1: bigint;
-  let actuallySent2: bigint;
-
-  let balanceUnique1: bigint;
-  let balanceUnique2: bigint;
-  let balanceUnique3: bigint;
-  
-  let balanceAcalaUnq1: bigint;
-  let balanceAcalaUnq2: bigint;
-  let balanceAcalaUnq3: bigint;
-
-  let balanceAcalaAca1: bigint;
-  let balanceAcalaAca2: bigint;
-  let balanceAcalaAca3: bigint;
+  let balanceUniqueTokenBefore: bigint;
+  let balanceUniqueTokenAfter: bigint;
+  let balanceUniqueTokenFinal: bigint;
+  let balanceAcalaTokenBefore: bigint;
+  let balanceAcalaTokenAfter: bigint;
+  let balanceAcalaTokenFinal: bigint;
+  let balanceUniqueForeignTokenAfter: bigint;
+  let balanceUniqueForeignTokenBefore: bigint;
+  let balanceUniqueForeignTokenFinal: bigint;
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -93,10 +88,10 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
         const result1 = getGenericResult(events1);
         expect(result1.success).to.be.true;
 
-        [balanceAcalaAca1] = await getBalance(api, [randomAccount.address]);
+        [balanceAcalaTokenBefore] = await getBalance(api, [randomAccount.address]);
         {
           const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-          balanceAcalaUnq1 = BigInt(free);
+          balanceUniqueForeignTokenBefore = BigInt(free);
         }
       },
       acalaApiOptions,
@@ -108,7 +103,7 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
 
-      [balanceUnique1] = await getBalance(api, [randomAccount.address]);
+      [balanceUniqueTokenBefore] = await getBalance(api, [randomAccount.address]);
     });
   });
 
@@ -165,12 +160,9 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      [balanceUnique2] = await getBalance(api, [randomAccount.address]);
+      [balanceUniqueTokenAfter] = await getBalance(api, [randomAccount.address]);
 
-      const transactionFees = balanceUnique1 - balanceUnique2 - TRANSFER_AMOUNT;
-      actuallySent1 = TRANSFER_AMOUNT;  // Why not TRANSFER_AMOUNT - transactionFees ???
-      console.log('Unique to Acala transaction fees on Unique: %s UNQ', transactionFees);
-      expect(transactionFees > 0).to.be.true;
+      expect((balanceUniqueTokenBefore - balanceUniqueTokenAfter) > 0n).to.be.true;
     });
 
     await usingApi(
@@ -178,13 +170,11 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
         // todo do something about instant sealing, where there might not be any new blocks
         await waitNewBlocks(api, 3);
         const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-        balanceAcalaUnq2 = BigInt(free);
-        expect(balanceAcalaUnq2 > balanceAcalaUnq1).to.be.true;
+        balanceUniqueForeignTokenAfter = BigInt(free);
 
-        [balanceAcalaAca2] = await getBalance(api, [randomAccount.address]);
-
-        const acaFees = balanceAcalaAca1 - balanceAcalaAca2;
-        const unqFees = actuallySent1 - balanceAcalaUnq2 + balanceAcalaUnq1;
+        [balanceAcalaTokenAfter] = await getBalance(api, [randomAccount.address]);
+        const acaFees = balanceAcalaTokenBefore - balanceAcalaTokenAfter;
+        const unqFees = balanceUniqueForeignTokenBefore - balanceUniqueForeignTokenAfter;
         console.log('Unique to Acala transaction fees on Acala: %s ACA', acaFees);
         console.log('Unique to Acala transaction fees on Acala: %s UNQ', unqFees);
         expect(acaFees == 0n).to.be.true;
@@ -227,15 +217,14 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        [balanceAcalaAca3] = await getBalance(api, [randomAccount.address]);
+        [balanceAcalaTokenFinal] = await getBalance(api, [randomAccount.address]);
         {
           const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-          balanceAcalaUnq3 = BigInt(free);
+          balanceUniqueForeignTokenFinal = BigInt(free);
         }
 
-        const acaFees = balanceAcalaAca2 - balanceAcalaAca3;
-        const unqFees = balanceAcalaUnq2 - balanceAcalaUnq3 - amount;
-        actuallySent2 = amount;  // Why not amount - UNQFees ???
+        const acaFees = balanceAcalaTokenFinal - balanceAcalaTokenAfter;
+        const unqFees = balanceUniqueForeignTokenFinal - balanceUniqueForeignTokenAfter;
         console.log('Acala to Unique transaction fees on Acala: %s ACA', acaFees);
         console.log('Acala to Unique transaction fees on Acala: %s UNQ', unqFees);
         expect(acaFees > 0).to.be.true;
@@ -248,11 +237,11 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
 
-      [balanceUnique3] = await getBalance(api, [randomAccount.address]);
-      const actuallyDelivered = balanceUnique3 - balanceUnique2;
+      [balanceUniqueTokenFinal] = await getBalance(api, [randomAccount.address]);
+      const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenAfter;
       expect(actuallyDelivered > 0).to.be.true;
 
-      const unqFees = actuallySent2 - actuallyDelivered;
+      const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
       console.log('Acala to Unique transaction fees on Unique: %s UNQ', unqFees);
       expect(unqFees > 0).to.be.true;
     });

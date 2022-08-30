@@ -70,16 +70,23 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
     minimalBalance: 1,
   };
 
-  let actuallySent1: bigint;
-  let actuallySent2: bigint;
+  // let actuallySent1: bigint;
+  // let actuallySent2: bigint;
 
-  let balanceUnique1: bigint;
-  let balanceUnique2: bigint;
-  let balanceUnique3: bigint;
+  // let balanceUnique1: bigint;
+  // let balanceUnique2: bigint;
+  // let balanceUnique3: bigint;
   
-  let balanceMoonbeamGlmr1: bigint;
-  let balanceMoonbeamGlmr2: bigint;
-  let balanceMoonbeamGlmr3: bigint;
+  // let balanceMoonbeamGlmr1: bigint;
+  // let balanceMoonbeamGlmr2: bigint;
+  // let balanceMoonbeamGlmr3: bigint;
+
+  let balanceUniqueTokenBefore: bigint;
+  let balanceUniqueTokenAfter: bigint;
+  let balanceUniqueTokenFinal: bigint;
+  let balanceGlmrTokenBefore: bigint;
+  let balanceGlmrTokenAfter: bigint;
+  let balanceGlmrTokenFinal: bigint;
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -234,7 +241,7 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
         expect(result9.success).to.be.true;
         // <<< Sponsoring random Account <<<
 
-        [balanceMoonbeamGlmr1] = await getBalance(api, [randomAccountMoonbeam.address]);
+        [balanceGlmrTokenBefore] = await getBalance(api, [randomAccountMoonbeam.address]);
       },
       moonbeamApiOptions,
     );
@@ -245,7 +252,7 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
 
-      [balanceUnique1] = await getBalance(api, [randomAccountUnique.address]);
+      [balanceUniqueTokenBefore] = await getBalance(api, [randomAccountUnique.address]);
     });
   });
 
@@ -273,11 +280,10 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      [balanceUnique2] = await getBalance(api, [randomAccountUnique.address]);
-      expect(balanceUnique2 < balanceUnique1).to.be.true;
+      [balanceUniqueTokenAfter] = await getBalance(api, [randomAccountUnique.address]);
+      expect(balanceUniqueTokenAfter < balanceUniqueTokenBefore).to.be.true;
 
-      const transactionFees = balanceUnique1 - balanceUnique2 - TRANSFER_AMOUNT;
-      actuallySent1 = TRANSFER_AMOUNT;  // Why not TRANSFER_AMOUNT - transactionFees ???
+      const transactionFees = balanceUniqueTokenBefore - balanceUniqueTokenAfter - TRANSFER_AMOUNT;
       console.log('Unique to Moonbeam transaction fees on Unique: %s UNQ', transactionFees);
       expect(transactionFees > 0).to.be.true;
     });
@@ -287,9 +293,9 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
         // todo do something about instant sealing, where there might not be any new blocks
         await waitNewBlocks(api, 3);
 
-        [balanceMoonbeamGlmr2] = await getBalance(api, [randomAccountMoonbeam.address]);
+        [balanceGlmrTokenAfter] = await getBalance(api, [randomAccountMoonbeam.address]);
 
-        const glmrFees = balanceMoonbeamGlmr1 - balanceMoonbeamGlmr2;
+        const glmrFees = balanceGlmrTokenBefore - balanceGlmrTokenAfter;
         console.log('Unique to Moonbeam transaction fees on Moonbeam: %s GLMR', glmrFees);
         expect(glmrFees == 0n).to.be.true;
       },
@@ -334,10 +340,9 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        [balanceMoonbeamGlmr3] = await getBalance(api, [randomAccountMoonbeam.address]);
+        [balanceGlmrTokenFinal] = await getBalance(api, [randomAccountMoonbeam.address]);
 
-        const glmrFees = balanceMoonbeamGlmr2 - balanceMoonbeamGlmr3;
-        actuallySent2 = amount;
+        const glmrFees = balanceGlmrTokenAfter - balanceGlmrTokenFinal;
         console.log('Moonbeam to Unique transaction fees on Moonbeam: %s GLMR', glmrFees);
         expect(glmrFees > 0).to.be.true;
       },
@@ -348,11 +353,11 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
 
-      [balanceUnique3] = await getBalance(api, [randomAccountUnique.address]);
-      const actuallyDelivered = balanceUnique3 - balanceUnique2;
+      [balanceUniqueTokenFinal] = await getBalance(api, [randomAccountUnique.address]);
+      const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenAfter;
       expect(actuallyDelivered > 0).to.be.true;
 
-      const unqFees = actuallySent2 - actuallyDelivered;
+      const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
       console.log('Moonbeam to Unique transaction fees on Unique: %s UNQ', unqFees);
       expect(unqFees > 0).to.be.true;
     });
