@@ -17,20 +17,17 @@ concurrency:
 
 
 jobs:
-  forkless-update:
-    runs-on: self-hosted-ci
-    steps:
-      - name: Test forkless update with data
-        if: contains( github.event.pull_request.labels.*.name, 'forkless')
-        uses: ./.github/workflows/forkless-update-data_v2.yml
-    
-      - name: Test forkless update without data
-        if: contains( github.event.pull_request.labels.*.name, 'forkless')
-        uses: ./.github/workflows/forkless-update-nodata_v2.yml
+  forkless-update-data:
+    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+    uses: ./.github/workflows/forkless-update-data_v2.yml
 
-      - name: Test forkless update without data
-        if: contains( github.event.pull_request.labels.*.name, 'forkless')
-        uses: ./.github/workflows/try-runtime_v2.yml
+  forkless-update-no-data:
+    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+    uses: ./.github/workflows/forkless-update-nodata_v2.yml
+
+  try-runtime:
+    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+    uses: ./.github/workflows/try-runtime_v2.yml
 
 
 
