@@ -53,7 +53,8 @@ jobs:
     needs: prepare-execution-marix
 #    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-data_v2.yml
-
+    with:
+      input: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 #
 #
 #  forkless-update-no-data:
