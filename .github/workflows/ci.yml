@@ -16,66 +16,12 @@ concurrency:
   cancel-in-progress: true
 
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
-  prepare-execution-marix:
-
-    name: Prepare execution matrix
-    
-    timeout-minutes: 60
-
-    runs-on: self-hosted-ci
-    outputs:
-      matrix: ${{ steps.create_matrix.outputs.matrix }}
-
-    steps:
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v1.0.2
-
-      - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
-        id: create_matrix
-        with:
-          matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
-
-      - name: Print all env
-        run: printenv
-
-#      - name: Dump GitHub context
-#        id: github_context_step
-#        run: echo "${{ toJSON(github) }}"
-#      - name: Dump job context
-#        run: echo "${{ toJSON(job) }}"
-#      - name: Dump steps context
-#        run: echo "${{ toJSON(steps) }}"
-#      - name: Dump runner context
-#        run: echo "${{ toJSON(runner) }}"
-#      - name: Dump strategy context
-#        run: echo "${{ toJSON(strategy) }}"
-#      - name: Dump matrix context
-#        run: echo "${{ toJSON(matrix) }}"
-
-  test:
-##github.event.issue.labels.*.name, 'bug'
-#    if: github.event.label.name == 'xcm'
-    
-    runs-on: self-hosted-ci
-    
+  check:
     if: github.event.pull_request.labels.name == 'xcm'
     uses: ./.github/workflows/test_codestyle_v2.yml@feature/CI-94-workflows-по-label
+
+
 
 
 # ci.yml  codestyle.yml  dev-build-tests.yml  forkless-update-data.yml  forkless-update-nodata.yml  nodes-only-update.yml  tests_codestyle.yml  try-runtime.yml  unit-test.yml
