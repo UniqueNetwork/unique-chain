@@ -60,6 +60,8 @@ jobs:
       network: ${{ matrix.network }}
       runtime: ${{ matrix.runtime }}
       features: ${{ matrix.features }}
+      mainnet_branch: ${{ matrix.mainnet_branch }}
+      replica_from_address: ${{ matrix.replica_from_address }}
 #
 #
 #  forkless-update-no-data:
