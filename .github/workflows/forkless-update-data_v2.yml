@@ -4,7 +4,7 @@ name: upgrade replica
 on:
   workflow_call:
     inputs:
-      networks:
+      network:
         required: true
         type: string
       runtime:
