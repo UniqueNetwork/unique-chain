@@ -54,7 +54,7 @@ jobs:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
     needs: prepare-execution-marix
-#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-data_v2.yml
     with:
       network: ${{ matrix.network }}

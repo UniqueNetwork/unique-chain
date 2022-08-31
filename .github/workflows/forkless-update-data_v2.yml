@@ -1,12 +1,12 @@
-name: upgrade replica
-
 # Controls when the action will run.
 on:
   workflow_call:
     inputs:
       network:
+        description: 'Chain Network'
+        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
         required: true
-        type: string
+        type: string					# This must be one of: boolean, number, or string.
       runtime:
         required: true 
         type: string
@@ -32,16 +32,12 @@ concurrency:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-
-
   forkless-update-data:
 #    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
-
-    name: ${{ inputs.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
