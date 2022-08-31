@@ -71,9 +71,12 @@ jobs:
   test:
 ##github.event.issue.labels.*.name, 'bug'
 #    if: github.event.label.name == 'xcm'
-    if: github.event.pull_request.labels.name == 'xcm'
+    
     runs-on: self-hosted-ci
-    uses: ./.github/workflows/test_codestyle_v2.yml
+    
+    if: github.event.pull_request.labels.name == 'xcm'
+    uses: ./.github/workflows/test_codestyle_v2.yml@feature/CI-94-workflows-по-label
+
 
 # ci.yml  codestyle.yml  dev-build-tests.yml  forkless-update-data.yml  forkless-update-nodata.yml  nodes-only-update.yml  tests_codestyle.yml  try-runtime.yml  unit-test.yml
 
