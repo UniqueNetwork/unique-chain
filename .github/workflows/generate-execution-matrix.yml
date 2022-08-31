@@ -4,7 +4,7 @@ on:
   workflow_call:
     # Map the workflow outputs to job outputs
     outputs:
-      description: Matix output
+      description: "Matix output"
       matrix: ${{ jobs.prepare-execution-matrix.outputs.matrix }}
 
 
