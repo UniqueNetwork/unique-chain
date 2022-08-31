@@ -70,7 +70,7 @@ class ArrangeGroup {
    * @returns array of newly created accounts
    * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor); 
    */
-  creteAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
+  createAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
