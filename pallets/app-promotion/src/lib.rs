@@ -191,12 +191,12 @@ pub mod pallet {
 	pub type NextInterestBlock<T: Config> =
 		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
-	/// Stores the address of the staker for which the last revenue recalculation was performed.
+	/// Stores hash a record for which the last revenue recalculation was performed.
 	/// If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
 	#[pallet::storage]
-	#[pallet::getter(fn get_last_calculated_staker)]
-	pub type LastCalcucaltedStaker<T: Config> =
-		StorageValue<Value = T::AccountId, QueryKind = OptionQuery>;
+	#[pallet::getter(fn get_next_calculated_record)]
+	pub type NextCalculatedRecord<T: Config> =
+		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -259,8 +259,8 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		T::BlockNumber: From<u32>,
-		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
+		T::BlockNumber: From<u32> + Into<u32>,
+		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>,
 	{
 		#[pallet::weight(T::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
@@ -312,9 +312,11 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
-			
 
-			ensure!(amount >= Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get(), ArithmeticError::Underflow);
+			ensure!(
+				amount >= Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get(),
+				ArithmeticError::Underflow
+			);
 
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
@@ -365,7 +367,7 @@ pub mod pallet {
 					amount
 				})
 				.sum();
-				
+
 			let block =
 				T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
 			<PendingUnstake<T>>::insert(
@@ -374,8 +376,12 @@ pub mod pallet {
 					.checked_add(&total_staked)
 					.ok_or(ArithmeticError::Overflow)?,
 			);
-			
-			TotalStaked::<T>::set(TotalStaked::<T>::get().checked_sub(&total_staked).ok_or(ArithmeticError::Underflow)?); // when error we should recover stake state for the staker
+
+			TotalStaked::<T>::set(
+				TotalStaked::<T>::get()
+					.checked_sub(&total_staked)
+					.ok_or(ArithmeticError::Underflow)?,
+			); // when error we should recover initial stake state for the staker
 
 			Ok(None.into())
 
@@ -511,15 +517,63 @@ pub mod pallet {
 				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
 				Error::<T>::NoPermission
 			);
-			
-			let raw_key = Staked::<T>::hashed_key_for((admin_id, T::BlockNumber::default()));
-			
-			let key_iterator = Staked::<T>::iter_keys_from(raw_key).skip(1).into_iter();
-			
-			match Self::get_last_calculated_staker() {
-				Some(last_staker) => {},
-				None  => {}
-			};
+
+			let current_recalc_block =
+				Self::get_current_recalc_block(T::RelayBlockNumberProvider::current_block_number());
+			let next_recalc_block = current_recalc_block + T::RecalculationInterval::get();
+
+			let mut storage_iterator = Self::get_next_calculated_key()
+				.map_or(Staked::<T>::iter().skip(0), |key| {
+					Staked::<T>::iter_from(key).skip(1)
+				});
+
+			NextCalculatedRecord::<T>::set(None);
+
+			{
+				let mut stakers_number = stakers_number.unwrap_or(20);
+				let mut current_id = admin_id;
+				let mut income_acc = BalanceOf::<T>::default();
+
+				while let Some(((id, staked_block), (amount, next_recalc_block_for_stake))) =
+					storage_iterator.next()
+				{
+					if current_id != id {
+						if income_acc != BalanceOf::<T>::default() {
+							<T::Currency as Currency<T::AccountId>>::transfer(
+								&T::TreasuryAccountId::get(),
+								&current_id,
+								income_acc,
+								ExistenceRequirement::KeepAlive,
+							)
+							.and_then(|_| Self::add_lock_balance(&current_id, income_acc))?;
+
+							Self::deposit_event(Event::StakingRecalculation(
+								current_id, amount, income_acc,
+							));
+						}
+
+						stakers_number -= 1;
+						if stakers_number == 0 {
+							NextCalculatedRecord::<T>::set(Some((id, staked_block)));
+							break;
+						}
+						income_acc = BalanceOf::<T>::default();
+						current_id = id;
+					};
+					if next_recalc_block_for_stake >= current_recalc_block {
+						Self::recalculate_and_insert_stake(
+							&current_id,
+							staked_block,
+							next_recalc_block,
+							amount,
+							((next_recalc_block_for_stake - current_recalc_block)
+								/ T::RecalculationInterval::get())
+							.into() + 1,
+							&mut income_acc,
+						);
+					}
+				}
+			}
 
 			Ok(())
 		}
@@ -609,31 +663,43 @@ impl<T: Config> Pallet<T> {
 		Self::total_staked_by_id_per_block(staker.as_sub()).unwrap_or_default()
 	}
 
-	fn recalculate_stake(
+	fn recalculate_and_insert_stake(
 		staker: &T::AccountId,
-		block: T::BlockNumber,
+		staked_block: T::BlockNumber,
+		next_recalc_block: T::BlockNumber,
 		base: BalanceOf<T>,
+		iters: u32,
 		income_acc: &mut BalanceOf<T>,
 	) {
-		let income = Self::calculate_income(base);
-		// base.checked_add(&income).map(|res| {
-		// 	<Staked<T>>::insert((staker, block), res);
-		// 	*income_acc += income;
-		// 	<T::Currency as Currency<T::AccountId>>::transfer(
-		// 		&T::TreasuryAccountId::get(),
-		// 		staker,
-		// 		income,
-		// 		ExistenceRequirement::KeepAlive,
-		// 	)
-		// 	.and_then(|_| Self::add_lock_balance(staker, income));
-		// });
+		let income = Self::calculate_income(base, iters);
+
+		base.checked_add(&income).map(|res| {
+			<Staked<T>>::insert((staker, staked_block), (res, next_recalc_block));
+			*income_acc += income;
+		});
 	}
 
-	fn calculate_income<I>(base: I) -> I
+	fn calculate_income<I>(base: I, iters: u32) -> I
 	where
 		I: EncodeLike<BalanceOf<T>> + Balance,
 	{
-		T::IntervalIncome::get() * base
+		let mut income = base;
+
+		(0..iters).for_each(|_| income += T::IntervalIncome::get() * income);
+
+		income - base
+	}
+
+	fn get_current_recalc_block(current_relay_block: T::BlockNumber) -> T::BlockNumber {
+		(current_relay_block / T::RecalculationInterval::get()) * T::RecalculationInterval::get()
+	}
+
+	// fn get_next_recalc_block(current_relay_block: T::BlockNumber) -> T::BlockNumber {
+	// 	Self::get_current_recalc_block(current_relay_block) + T::RecalculationInterval::get()
+	// }
+
+	fn get_next_calculated_key() -> Option<Vec<u8>> {
+		Self::get_next_calculated_record().map(|key| Staked::<T>::hashed_key_for(key))
 	}
 }
 

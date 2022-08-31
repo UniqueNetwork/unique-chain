@@ -36,7 +36,8 @@ const SEED: u32 = 0;
 benchmarks! {
 	where_clause{
 		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
-		T::BlockNumber: From<u32>
+		T::BlockNumber: From<u32> + Into<u32>,
+		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
 	}
 	start_app_promotion {
 
@@ -73,16 +74,16 @@ benchmarks! {
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
 
-	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?}
+	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into())?}
 
-	recalculate_stake {
-		let caller = account::<T::AccountId>("caller", 0, SEED);
-		let share = Perbill::from_rational(1u32, 10);
-		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
-		let block = <T::RelayBlockNumberProvider as BlockNumberProvider>::current_block_number();
-		let mut acc = <BalanceOf<T>>::default();
-	} : {PromototionPallet::<T>::recalculate_stake(&caller, block, share * <T as Config>::Currency::total_balance(&caller), &mut acc)}
+	// recalculate_and_insert_stake{
+	// 	let caller = account::<T::AccountId>("caller", 0, SEED);
+	// 	let share = Perbill::from_rational(1u32, 10);
+	// 	let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+	// 	let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
+	// 	let block = <T::RelayBlockNumberProvider as BlockNumberProvider>::current_block_number();
+	// 	let mut acc = <BalanceOf<T>>::default();
+	// } : {PromototionPallet::<T>::recalculate_and_insert_stake(&caller, block, share * <T as Config>::Currency::total_balance(&caller), &mut acc)}
 
 	sponsor_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
