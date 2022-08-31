@@ -3,6 +3,17 @@ name: upgrade replica
 # Controls when the action will run.
 on:
   workflow_call:
+    inputs:
+      networks:
+        required: true
+        type: string
+      runtime:
+        required: true 
+        type: string
+      features:
+        required: true
+        type: string
+
 
 #Define Workflow variables
 env:
