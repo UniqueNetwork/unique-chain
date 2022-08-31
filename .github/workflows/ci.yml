@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   check:
-    if: github.event.pull_request.labels.name == 'xcm'
+    if: contains( github.event.pull_request.labels.*.name, 'xcm')
     uses: ./.github/workflows/test_codestyle_v2.yml
 
 
