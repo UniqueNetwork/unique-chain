@@ -48,22 +48,27 @@ jobs:
             network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
             network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
 
-    
-  forkless-update-data:
+
+  job2:
+    runs-on: self-hosted-ci
     needs: prepare-execution-marix
-    if: contains( github.event.pull_request.labels.*.name, 'forkless')
-    uses: ./.github/workflows/forkless-update-data_v2.yml
-    with:
-      network: ${{ matrix.network }}
-      runtime: ${{ matrix.runtime }}
+    steps:
+      - run: echo ${{ needs.prepare-execution-marix.outputs.matrix }}
 
-  forkless-update-no-data:
-    if: contains( github.event.pull_request.labels.*.name, 'forkless')
-    uses: ./.github/workflows/forkless-update-nodata_v2.yml
+    
+#  forkless-update-data:
+#    needs: prepare-execution-marix
+#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+#    uses: ./.github/workflows/forkless-update-data_v2.yml
+#
+#
+#  forkless-update-no-data:
+#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+#    uses: ./.github/workflows/forkless-update-nodata_v2.yml
 
-  try-runtime:
-    if: contains( github.event.pull_request.labels.*.name, 'forkless')
-    uses: ./.github/workflows/try-runtime_v2.yml
+#  try-runtime:
+#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+#    uses: ./.github/workflows/try-runtime_v2.yml
 
 
 
