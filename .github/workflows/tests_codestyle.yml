@@ -1,6 +1,8 @@
 name: yarn eslint
 
 on:
+  workflow_call:
+
   pull_request:
     branches:
       - develop
