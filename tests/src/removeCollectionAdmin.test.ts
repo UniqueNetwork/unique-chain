@@ -27,6 +27,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
       const alice = privateKey('//Alice');
       const bob = privateKey('//Bob');
       const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+      
       const collectionInfo = await collection.getData();
       expect(collectionInfo?.raw.owner.toString()).to.be.deep.eq(alice.address);
       // first - add collection admin Bob
