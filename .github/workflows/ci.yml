@@ -17,9 +17,15 @@ concurrency:
 
 
 jobs:
+
+  prepare-execution-marix:
+    uses: ./.github/workflows/generate-execution-matrix.yml
+    
   forkless-update-data:
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-data_v2.yml
+    with:
+      network: ${{ matrix.network }}
 
   forkless-update-no-data:
     if: contains( github.event.pull_request.labels.*.name, 'forkless')

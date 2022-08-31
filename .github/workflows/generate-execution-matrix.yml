@@ -1,0 +1,46 @@
+name: Prepare execution matrix
+
+on:
+  workflow_call:
+    # Map the workflow outputs to job outputs
+    outputs:
+      description: Matix output
+      matrix: ${{ jobs.prepare-execution-matrix.outputs.matrix }}
+
+
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.head_ref }}
+#  cancel-in-progress: true
+
+
+jobs:
+  prepare-execution-matrix:
+    name: Generate output
+    runs-on: self-hosted-ci
+    # Map the job outputs to step outputs
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v3
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
+
+
