@@ -48,7 +48,7 @@ jobs:
 
 
   forkless-update-data:
-    needs: prepare-execution-marix
+#    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
@@ -62,7 +62,6 @@ jobs:
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-
 
     steps:
       - name: Skip if pull request is in Draft

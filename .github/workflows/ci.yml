@@ -56,10 +56,10 @@ jobs:
       - run: echo ${{ needs.prepare-execution-marix.outputs.matrix }}
 
     
-#  forkless-update-data:
-#    needs: prepare-execution-marix
-#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
-#    uses: ./.github/workflows/forkless-update-data_v2.yml
+  forkless-update-data:
+    needs: prepare-execution-marix
+    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+    uses: ./.github/workflows/forkless-update-data_v2.yml
 #
 #
 #  forkless-update-no-data:
