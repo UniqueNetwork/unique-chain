@@ -11,9 +11,9 @@ on:
       - synchronize   #commit(s) pushed to the pull request
       - ready_for_review
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.head_ref }}
+#  cancel-in-progress: true
 
 
 jobs:
