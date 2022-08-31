@@ -33,7 +33,7 @@ before(async () => {
 describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
   it('Add collection admin.', async () => {
     await usingPlaygrounds(async (helper) => {
-      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n], donor);
+      const [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
       const collection = await helper.collection.getData(collectionId);
@@ -50,7 +50,7 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
 describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
   it("Not owner can't add collection admin.", async () => {
     await usingPlaygrounds(async (helper) => {
-      const [alice, bob, charlie] = await helper.arrange.creteAccounts([10n, 10n, 10n], donor);
+      const [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
       const collection = await helper.collection.getData(collectionId);
@@ -69,7 +69,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   it("Admin can't add collection admin.", async () => {
     await usingPlaygrounds(async (helper) => {
-      const [alice, bob, charlie] = await helper.arrange.creteAccounts([10n, 10n, 10n], donor);
+      const [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
       await collection.addAdmin(alice, {Substrate: bob.address});
@@ -88,7 +88,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   it("Can't add collection admin of not existing collection.", async () => {
     await usingPlaygrounds(async (helper) => {
-      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n, 10n], donor);
+      const [alice, bob] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
       // tslint:disable-next-line: no-bitwise
       const collectionId = (1 << 32) - 1;
 
@@ -102,7 +102,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   it("Can't add an admin to a destroyed collection.", async () => {
     await usingPlaygrounds(async (helper) => {
-      const [alice, bob] = await helper.arrange.creteAccounts([10n, 10n, 10n], donor);
+      const [alice, bob] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
       await collection.burn(alice);
@@ -116,7 +116,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
     await usingPlaygrounds(async (helper) => {
-      const [alice, ...accounts] = await helper.arrange.creteAccounts([10n, 0n, 0n, 0n, 0n, 0n, 0n, 0n], donor);
+      const [alice, ...accounts] = await helper.arrange.createAccounts([10n, 0n, 0n, 0n, 0n, 0n, 0n, 0n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
       const chainAdminLimit = (helper.api!.consts.common.collectionAdminsLimit as any).toNumber();
