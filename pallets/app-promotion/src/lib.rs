@@ -552,11 +552,11 @@ pub mod pallet {
 							));
 						}
 
-						stakers_number -= 1;
 						if stakers_number == 0 {
 							NextCalculatedRecord::<T>::set(Some((id, staked_block)));
 							break;
 						}
+						stakers_number -= 1;
 						income_acc = BalanceOf::<T>::default();
 						current_id = id;
 					};
