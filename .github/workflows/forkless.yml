@@ -25,6 +25,7 @@ on:
 jobs:
     
   forkless-update-data:
+    name: forkless with data
     uses: ./.github/workflows/forkless-update-data_v2.yml
     with:
       network: ${{ inputs.network }}
@@ -35,6 +36,7 @@ jobs:
 
 
   forkless-update-no-data:
+    name: forkless no data
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
     with:
       network: ${{ inputs.network }}
@@ -43,7 +45,7 @@ jobs:
       mainnet_branch: ${{ inputs.mainnet_branch }}
 
   try-runtime:
-    name: ${{ inputs.network }} try-runtime
+    name: try-runtime
     uses: ./.github/workflows/try-runtime_v2.yml
     with:
       network: ${{ inputs.network }}
