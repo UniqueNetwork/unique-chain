@@ -209,17 +209,18 @@ pub mod pallet {
 			// 	consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
 			// 	consumed_weight += weight;
 			// };
-
+			
+			let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
 			PendingUnstake::<T>::iter()
 				.filter_map(|((staker, block), amount)| {
-					if block <= current_block {
+					if block <= current_relay_block {
 						Some((staker, block, amount))
 					} else {
 						None
 					}
 				})
 				.for_each(|(staker, block, amount)| {
-					Self::unlock_balance_unchecked(&staker, amount); // TO-DO : Replace with a method that will check that the unstack is less than it was blocked, otherwise take the delta from the treasuries
+					Self::unlock_balance_unchecked(&staker, amount); 
 					<PendingUnstake<T>>::remove((staker, block));
 				});
 
