@@ -1367,7 +1367,8 @@ export interface PalletEvmCoderSubstrateError extends Enum {
 /** @name PalletEvmContractHelpersError */
 export interface PalletEvmContractHelpersError extends Enum {
   readonly isNoPermission: boolean;
-  readonly type: 'NoPermission';
+  readonly isNoPendingSponsor: boolean;
+  readonly type: 'NoPermission' | 'NoPendingSponsor';
 }
 
 /** @name PalletEvmContractHelpersSponsoringModeT */
@@ -2736,7 +2737,7 @@ export interface UpDataStructsCollection extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
   readonly externalCollection: bool;
@@ -2897,8 +2898,7 @@ export interface UpDataStructsPropertyPermission extends Struct {
 export interface UpDataStructsPropertyScope extends Enum {
   readonly isNone: boolean;
   readonly isRmrk: boolean;
-  readonly isEth: boolean;
-  readonly type: 'None' | 'Rmrk' | 'Eth';
+  readonly type: 'None' | 'Rmrk';
 }
 
 /** @name UpDataStructsRpcCollection */
@@ -2908,7 +2908,7 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
@@ -2924,13 +2924,23 @@ export interface UpDataStructsSponsoringRateLimit extends Enum {
   readonly type: 'SponsoringDisabled' | 'Blocks';
 }
 
-/** @name UpDataStructsSponsorshipState */
-export interface UpDataStructsSponsorshipState extends Enum {
+/** @name UpDataStructsSponsorshipStateAccountId32 */
+export interface UpDataStructsSponsorshipStateAccountId32 extends Enum {
   readonly isDisabled: boolean;
   readonly isUnconfirmed: boolean;
   readonly asUnconfirmed: AccountId32;
   readonly isConfirmed: boolean;
   readonly asConfirmed: AccountId32;
+  readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
+}
+
+/** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr */
+export interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
+  readonly isDisabled: boolean;
+  readonly isUnconfirmed: boolean;
+  readonly asUnconfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
+  readonly isConfirmed: boolean;
+  readonly asConfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
   readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
 }
 
