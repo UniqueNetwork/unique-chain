@@ -78,9 +78,18 @@ jobs:
       features: ${{ matrix.features }}
       mainnet_branch: ${{ matrix.mainnet_branch }}
 
-#  try-runtime:
-#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
-#    uses: ./.github/workflows/try-runtime_v2.yml
+  try-runtime:
+    name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+    if: contains( github.event.pull_request.labels.*.name, 'forkless')
+    uses: ./.github/workflows/try-runtime_v2.yml
+    with:
+      network: ${{ matrix.network }}
+      runtime: ${{ matrix.runtime }}
+      features: ${{ matrix.features }}
+
 
 
 
