@@ -6,7 +6,7 @@ on:
     outputs:
       matrix:
         description: "The first output string"
-        value: ${{ jobs.create-matrix.outputs.matrix }}
+        value: ${{ jobs.create-matrix.outputs.matrix_output }}
 
 jobs:
 
@@ -16,7 +16,7 @@ jobs:
 
     runs-on: self-hosted-ci
     outputs:
-      matrix: ${{ steps.create_matrix.outputs.matrix }}
+      matrix_output: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
 

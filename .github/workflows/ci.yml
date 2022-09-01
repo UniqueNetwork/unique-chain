@@ -72,7 +72,7 @@ jobs:
     name: ${{ matrix.network }}
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-inputs.outputs.matrix)}}
     needs: prepare-inputs
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
@@ -86,7 +86,7 @@ jobs:
     name: ${{ matrix.network }}
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-inputs.outputs.matrix)}}
     needs: prepare-inputs
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/try-runtime_v2.yml
