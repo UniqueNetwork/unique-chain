@@ -35,7 +35,7 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
     
-    name: Forkless with Data
+    name: ${{ inputs.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
