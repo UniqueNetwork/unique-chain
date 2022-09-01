@@ -5,7 +5,6 @@ on:
     inputs:
       network:
         description: 'Chain Network'
-#        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
         required: true
         type: string					# This must be one of: boolean, number, or string.
       runtime:
@@ -26,12 +25,6 @@ on:
 jobs:
     
   forkless-update-data:
-#    name: ${{ matrix.network }}
-#    strategy:
-#      matrix:
-#        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-#    needs: prepare-execution-marix
-#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-data_v2.yml
     with:
       network: ${{ inputs.network }}
@@ -42,12 +35,6 @@ jobs:
 
 
   forkless-update-no-data:
-#    name: ${{ matrix.network }}
-#    strategy:
-#      matrix:
-#        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-#    needs: prepare-execution-marix
-#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
     with:
       network: ${{ inputs.network }}
@@ -56,12 +43,6 @@ jobs:
       mainnet_branch: ${{ inputs.mainnet_branch }}
 
   try-runtime:
-#    name: ${{ matrix.network }}
-#    strategy:
-#      matrix:
-#        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-#    needs: prepare-execution-marix
-#    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/try-runtime_v2.yml
     with:
       network: ${{ inputs.network }}
