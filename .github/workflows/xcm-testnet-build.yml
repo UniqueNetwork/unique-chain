@@ -56,7 +56,7 @@ jobs:
             network {quartz}, runtime {quartz}, features {quartz-runtime}
             network {unique}, runtime {unique}, features {unique-runtime}
 
-  xcm-build:
+  xcm_build:
     
     needs: prepare-execution-marix
     # The type of runner that the job will run on
