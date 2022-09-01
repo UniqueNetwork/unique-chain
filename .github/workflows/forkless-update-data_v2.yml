@@ -51,7 +51,7 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
     
-    name: ${{ inputs.network }}
+    name: ${{ matrix.network }}
     strategy:
       matrix:
         include: ${{fromJson(needs.execution-marix.outputs.matrix)}}

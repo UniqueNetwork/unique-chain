@@ -6,11 +6,11 @@ on:
 jobs:
     
   forkless-update-data:
-    name: forkless with data
+    name: with data
     uses: ./.github/workflows/forkless-update-data_v2.yml
 
   forkless-update-no-data:
-    name: forkless no data
+    name: no data
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
 
   try-runtime:
