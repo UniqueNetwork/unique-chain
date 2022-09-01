@@ -83,6 +83,7 @@ jobs:
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+    needs: prepare-execution-marix
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/try-runtime_v2.yml
     with:
