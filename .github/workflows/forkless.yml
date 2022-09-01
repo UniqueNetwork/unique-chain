@@ -34,11 +34,11 @@ jobs:
 #    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-data_v2.yml
     with:
-      network: ${{ matrix.network }}
-      runtime: ${{ matrix.runtime }}
-      features: ${{ matrix.features }}
-      mainnet_branch: ${{ matrix.mainnet_branch }}
-      replica_from_address: ${{ matrix.replica_from_address }}
+      network: ${{ inputs.network }}
+      runtime: ${{ inputs.runtime }}
+      features: ${{ inputs.features }}
+      mainnet_branch: ${{ inputs.mainnet_branch }}
+      replica_from_address: ${{ inputs.replica_from_address }}
 
 
   forkless-update-no-data:
@@ -50,10 +50,10 @@ jobs:
 #    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
     with:
-      network: ${{ matrix.network }}
-      runtime: ${{ matrix.runtime }}
-      features: ${{ matrix.features }}
-      mainnet_branch: ${{ matrix.mainnet_branch }}
+      network: ${{ inputs.network }}
+      runtime: ${{ inputs.runtime }}
+      features: ${{ inputs.features }}
+      mainnet_branch: ${{ inputs.mainnet_branch }}
 
   try-runtime:
 #    name: ${{ matrix.network }}
@@ -64,9 +64,9 @@ jobs:
 #    if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/try-runtime_v2.yml
     with:
-      network: ${{ matrix.network }}
-      features: ${{ matrix.features }}
-      replica_from_address: ${{ matrix.replica_from_address }}
+      network: ${{ inputs.network }}
+      features: ${{ inputs.features }}
+      replica_from_address: ${{ inputs.replica_from_address }}
 
 
 
