@@ -15,7 +15,7 @@
 
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
-import { UNIQUE } from '../util/helpers';
+import {UNIQUE} from '../util/helpers';
 import {
   createEthAccount,
   createEthAccountWithBalance, 

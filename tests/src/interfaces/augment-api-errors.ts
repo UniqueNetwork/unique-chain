@@ -1,16 +1,10 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-// import type lookup before we augment - in some environments
-// this is required to allow for ambient/previous definitions
-import '@polkadot/api-base/types/errors';
-
-import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
-
-export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
+import type { ApiTypes } from '@polkadot/api-base/types';
 
 declare module '@polkadot/api-base/types/errors' {
-  interface AugmentedErrors<ApiType extends ApiTypes> {
+  export interface AugmentedErrors<ApiType extends ApiTypes> {
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -276,6 +270,29 @@ declare module '@polkadot/api-base/types/errors' {
     evmMigration: {
       AccountIsNotMigrating: AugmentedError<ApiType>;
       AccountNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    foreingAssets: {
+      /**
+       * AssetId exists
+       **/
+      AssetIdExisted: AugmentedError<ApiType>;
+      /**
+       * AssetId not exists
+       **/
+      AssetIdNotExists: AugmentedError<ApiType>;
+      /**
+       * The given location could not be used (e.g. because it cannot be expressed in the
+       * desired version of XCM).
+       **/
+      BadLocation: AugmentedError<ApiType>;
+      /**
+       * MultiLocation existed
+       **/
+      MultiLocationExisted: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -657,6 +674,41 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    tokens: {
+      /**
+       * Cannot convert Amount into Balance type
+       **/
+      AmountIntoBalanceFailed: AugmentedError<ApiType>;
+      /**
+       * The balance is too low
+       **/
+      BalanceTooLow: AugmentedError<ApiType>;
+      /**
+       * Beneficiary account must pre-exist
+       **/
+      DeadAccount: AugmentedError<ApiType>;
+      /**
+       * Value too low to create account due to existential deposit
+       **/
+      ExistentialDeposit: AugmentedError<ApiType>;
+      /**
+       * Transfer/payment would kill account
+       **/
+      KeepAlive: AugmentedError<ApiType>;
+      /**
+       * Failed because liquidity restrictions due to locking
+       **/
+      LiquidityRestrictions: AugmentedError<ApiType>;
+      /**
+       * Failed because the maximum locks was exceeded
+       **/
+      MaxLocksExceeded: AugmentedError<ApiType>;
+      TooManyReserves: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     treasury: {
       /**
        * The spend origin is valid but the amount it is allowed to spend is lower than the
@@ -757,6 +809,91 @@ declare module '@polkadot/api-base/types/errors' {
        * Provided weight is possibly not enough to execute the message.
        **/
       WeightOverLimit: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    xTokens: {
+      /**
+       * Asset has no reserve location.
+       **/
+      AssetHasNoReserve: AugmentedError<ApiType>;
+      /**
+       * The specified index does not exist in a MultiAssets struct.
+       **/
+      AssetIndexNonExistent: AugmentedError<ApiType>;
+      /**
+       * The version of the `Versioned` value used is not able to be
+       * interpreted.
+       **/
+      BadVersion: AugmentedError<ApiType>;
+      /**
+       * Could not re-anchor the assets to declare the fees for the
+       * destination chain.
+       **/
+      CannotReanchor: AugmentedError<ApiType>;
+      /**
+       * The destination `MultiLocation` provided cannot be inverted.
+       **/
+      DestinationNotInvertible: AugmentedError<ApiType>;
+      /**
+       * We tried sending distinct asset and fee but they have different
+       * reserve chains.
+       **/
+      DistinctReserveForAssetAndFee: AugmentedError<ApiType>;
+      /**
+       * Fee is not enough.
+       **/
+      FeeNotEnough: AugmentedError<ApiType>;
+      /**
+       * Could not get ancestry of asset reserve location.
+       **/
+      InvalidAncestry: AugmentedError<ApiType>;
+      /**
+       * The MultiAsset is invalid.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
+      /**
+       * Invalid transfer destination.
+       **/
+      InvalidDest: AugmentedError<ApiType>;
+      /**
+       * MinXcmFee not registered for certain reserve location
+       **/
+      MinXcmFeeNotDefined: AugmentedError<ApiType>;
+      /**
+       * Not cross-chain transfer.
+       **/
+      NotCrossChainTransfer: AugmentedError<ApiType>;
+      /**
+       * Currency is not cross-chain transferable.
+       **/
+      NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
+      /**
+       * Not supported MultiLocation
+       **/
+      NotSupportedMultiLocation: AugmentedError<ApiType>;
+      /**
+       * The number of assets to be sent is over the maximum.
+       **/
+      TooManyAssetsBeingSent: AugmentedError<ApiType>;
+      /**
+       * The message's weight could not be determined.
+       **/
+      UnweighableMessage: AugmentedError<ApiType>;
+      /**
+       * XCM execution failed.
+       **/
+      XcmExecutionFailed: AugmentedError<ApiType>;
+      /**
+       * The transfering asset amount is zero.
+       **/
+      ZeroAmount: AugmentedError<ApiType>;
+      /**
+       * The fee is zero.
+       **/
+      ZeroFee: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
