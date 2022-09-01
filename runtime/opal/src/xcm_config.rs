@@ -480,7 +480,7 @@ parameter_types! {
 
 parameter_type_with_key! {
 	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
-		Some(100_000_000)
+		Some(100_000_000_000)
 	};
 }
 
