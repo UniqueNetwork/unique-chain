@@ -3,15 +3,7 @@ name: market api tests
 # Controls when the action will run.
 on:
   workflow_call:
-    inputs:
-      network:
-        description: 'Chain Network'
-#        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
-        required: true
-        type: string					# This must be one of: boolean, number, or string.
-      features:
-        required: true
-        type: string
+
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -21,10 +13,19 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
-    name: ${{ inputs.network }}    
+    name: ${{ matrix.network }}    
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
+    
+    strategy:
+      matrix:
+        include:
+          - network: "opal"
+            features: "opal-runtime"
+          - network: "quartz"
+            features: "quartz-runtime"
+          - network: "unique"
+            features: "unique-runtime"
 
     steps:
 
@@ -66,22 +67,22 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: qa-tests/.docker/docker-compose.tmp-market.j2
-          output_file: qa-tests/.docker/docker-compose.${{ inputs.network }}.yml
+          output_file: qa-tests/.docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            FEATURE=${{ inputs.features }}
+            FEATURE=${{ matrix.features }}
             BRANCH=${{ github.head_ref }}
 
 
       - name: Show build configuration
         working-directory: qa-tests
-        run: cat .docker/docker-compose.${{ inputs.network }}.yml
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Start node-parachain
         working-directory: qa-tests
-        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ inputs.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
+        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
 
       - name: Start nonce-app
         working-directory: qa-tests
@@ -144,7 +145,7 @@ jobs:
           path: qa-tests/
 
       - name: local-market:start
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ inputs.network }}.yml" up -d --build
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
       - name: Wait for market readyness
         working-directory: qa-tests
@@ -177,7 +178,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ inputs.network }}.yml" down --volumes
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always

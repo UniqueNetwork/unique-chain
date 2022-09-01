@@ -1,26 +1,11 @@
 on:
   workflow_call:
-    inputs:
-      network:
-        description: 'Chain Network'
-        required: true
-        type: string					# This must be one of: boolean, number, or string.
-      features:
-        required: true
-        type: string
-    
-
-
- 
 
 jobs:
   
   market-e2e-test:
     name: market e2e tests    
     uses: ./.github/workflows/market-test_v2.yml
-    with:
-      network: ${{ inputs.network }}
-      features: ${{ inputs.features }}
     secrets: inherit
 
 
