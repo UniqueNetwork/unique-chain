@@ -49,7 +49,7 @@ jobs:
 
 
   forkless:
-    name: forkless
+    name: "label: forkless"
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
