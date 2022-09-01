@@ -1,0 +1,188 @@
+name: xcm-tests
+
+# Controls when the action will run.
+on:
+ # Triggers the workflow after xcm-testnet-build 
+  workflow_run:
+    workflows: ["xcm-testnet-build"]
+    types: [requested]  
+ # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - reopened
+      - synchronize   #commit(s) pushed to the pull request
+      - ready_for_review
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+#Define Workflow variables
+env:
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  prepare-execution-marix:
+
+    name: Prepare execution matrix
+
+    runs-on: XL
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: fabiocaccamo/create-matrix-action@v2
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, runtime {opal}, features {opal-runtime}, runtest {testXcmOpal}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, runtest {testXcmQuartz}
+            network {unique}, runtime {unique}, features {unique-runtime}, runtest {testXcmUnique}
+
+  xcm-tests:
+    needs: prepare-execution-marix
+    # The type of runner that the job will run on
+    runs-on: [XL]
+
+    timeout-minutes: 600
+
+    name: ${{ matrix.network }}
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+
+    steps:
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-xcm-tests.j2
+          output_file: .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
+          variables: |
+            NETWORK=${{ matrix.network }}
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+
+      #  🚀 POLKADOT LAUNCH COMPLETE 🚀
+      - name: Check if docker logs consist messages related to testing of xcm tests 
+        if: success()
+        run: |
+          counter=160
+          function check_container_status {
+                docker inspect -f {{.State.Running}} xcm-${{ matrix.network }}-testnet-local
+          }
+          function do_docker_logs {
+                docker logs --details xcm-${{ matrix.network }}-testnet-local 2>&1
+          }
+          function is_started {
+                if [ "$(check_container_status)" == "true" ]; then
+                        echo "Container: xcm-${{ matrix.network }}-testnet-local RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
+                                echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
+                                return 0
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
+                else
+                        echo "Container xcm-${{ matrix.network }}-testnet-local NOT RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
+                fi
+          echo "something goes wrong"
+          exit 1
+          }
+          while ! is_started; do
+                echo "Waiting for special message in log files "
+                sleep 30s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                         continue
+                else
+                         break
+                fi
+          done
+          echo "Halting script"
+          exit 0
+        shell: bash
+
+      - name: Run XCM tests 
+        working-directory: tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          echo "Ready to start tests"
+          NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+
+      - name: XCM Test Report
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: XCM Tests ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" down
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker system prune -a -f
+
+      - name: Clean Workspace
+        if: always()
+        uses: AutoModality/action-clean@v1.1.0
