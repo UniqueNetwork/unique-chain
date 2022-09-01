@@ -1,4 +1,4 @@
-name: Forkless Update NO data
+
 
 # Controls when the action will run.
 on:
@@ -39,7 +39,7 @@ jobs:
 
     timeout-minutes: 1380
 
-    name: ${{ inputs.network }}
+    name: Forkless NO Data
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
