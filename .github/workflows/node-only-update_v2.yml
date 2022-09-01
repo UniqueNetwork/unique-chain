@@ -3,23 +3,6 @@ name: nodes-only update
 # Controls when the action will run.
 on:
   workflow_call:
-    inputs:
-      network:
-        description: 'Chain Network'
-#        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
-        required: true
-        type: string					# This must be one of: boolean, number, or string.
-      runtime:
-        required: true 
-        type: string
-      features:
-        required: true
-        type: string
-      mainnet_branch:
-        required: true
-        type: string
-
-
 #Define Workflow variables
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
@@ -27,9 +10,40 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  execution-marix:
+
+    name: execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: fabiocaccamo/create-matrix-action@v2
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+
+
 
   forkless-update-nodata:
-    needs: prepare-execution-marix
+    needs: execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
@@ -37,10 +51,13 @@ jobs:
 
     timeout-minutes: 1380
 
-    name: ${{ inputs.network }}
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
     steps:
 
@@ -59,20 +76,20 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp-node.j2
-          output_file: .docker/docker-compose.node.${{ inputs.network }}.yml
+          output_file: .docker/docker-compose.node.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ inputs.mainnet_tag }}
-            MAINNET_BRANCH=${{ inputs.mainnet_branch }}
-            FEATURE=${{ inputs.features }}
-            RUNTIME=${{ inputs.runtime }}
+            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.node.${{ inputs.network }}.yml
+        run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
 
       - name: Generate launch-config-forkless-nodata.json
         uses: cuchi/jinja2-action@v1.2.0
@@ -80,8 +97,8 @@ jobs:
           template: .docker/forkless-config/launch-config-forkless-nodata.j2
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
-            FEATURE=${{ inputs.features }}
-            RUNTIME=${{ inputs.runtime }}
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
@@ -91,7 +108,7 @@ jobs:
           node-version: 16
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ inputs.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
 
       #  🚀 POLKADOT LAUNCH COMPLETE 🚀
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
@@ -154,7 +171,7 @@ jobs:
         id: test-report-before
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: Tests before node upgrade ${{ inputs.network }}            # Name of the check run which will be created
+          name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
@@ -229,7 +246,7 @@ jobs:
         id: test-report-after
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: Tests after node upgrade ${{ inputs.network }}            # Name of the check run which will be created
+          name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
@@ -237,7 +254,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ inputs.network }}.yml" down --volumes
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always

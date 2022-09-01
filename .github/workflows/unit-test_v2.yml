@@ -4,11 +4,6 @@ name: unit tests
 on:
  # Triggers the workflow on push or pull request events but only for the master branch
   workflow_call:
-    inputs:
-      features:
-        required: true
-        type: string
-
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -43,7 +38,6 @@ jobs:
           output_file: .docker/docker-compose.unit.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            FEATURE=${{ inputs.features }}
     
 
       - name: Show build configuration

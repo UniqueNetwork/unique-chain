@@ -7,7 +7,6 @@ services:
       dockerfile: .docker/Dockerfile-chain-dev-unit
       args:
         - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
-        - "FEATURE={{ FEATURE }}"
     logging:
       options:
         max-size: "1m"

@@ -1,10 +1,9 @@
-name: Main CI
+name: Master
 
 on:
   pull_request:
     branches:
       - master
-      - develop
     types:
       - opened
       - reopened
@@ -17,6 +16,14 @@ concurrency:
 
 jobs:
 
+  unit-test:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/unit-test_v2.yml
+
+  node-only-update:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/node-only-update_v2.yml
+
   forkless:
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless.yml
@@ -25,6 +32,7 @@ jobs:
     if: contains( github.event.pull_request.labels.*.name, 'canary')
     uses: ./.github/workflows/canary.yml
     secrets: inherit # pass all secrets
+
 
 
   xcm:
