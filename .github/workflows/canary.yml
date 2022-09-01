@@ -10,6 +10,8 @@ on:
       features:
         required: true
         type: string
+    
+
 
  
 
@@ -20,6 +22,8 @@ jobs:
     with:
       network: ${{ inputs.network }}
       features: ${{ inputs.features }}
+    secrets:
+      ssh-key: '${{ secrets.GH_PAT }}'
 
 
 
