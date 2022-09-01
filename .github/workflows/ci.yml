@@ -75,7 +75,7 @@ jobs:
     with:
       network: ${{ matrix.network }}
       features: ${{ matrix.features }}
-    secrets: inherit
+    secrets: inherit # pass all secrets
 
 
   xcm:
