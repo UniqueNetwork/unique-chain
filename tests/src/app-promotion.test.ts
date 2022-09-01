@@ -63,16 +63,21 @@ after(async function () {
 });
 
 describe('app-promotions.stake extrinsic', () => {
-  it('should change balance state to "locked", add it to "staked" map, and increase "totalStaked" amount', async () => {
+  it('should "lock" some balance in system.account, add it to "staked" map, and increase "totalStaked" amount', async () => {
     await usingPlaygrounds(async (helper) => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
-      const [staker] = await helper.arrange.createAccounts([400n], alice);
+      const [staker, recepient] = await helper.arrange.createAccounts([400n, 0n], alice);
    
       // Minimum stake amount is 100:
       await expect(helper.staking.stake(staker, 100n * nominal - 1n)).to.be.eventually.rejected;
       await helper.staking.stake(staker, 100n * nominal);
-      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(100n * nominal);
 
+      // Staker balance is: miscFrozen: 100, feeFrozen: 100, reserved: 0n, free less than 300...
+      // ...so he can not transfer 300
+      expect (await helper.balance.getSubstrateFull(staker.address)).to.contain({miscFrozen: 100n * nominal, feeFrozen: 100n * nominal, reserved: 0n});
+      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 300n * nominal)).to.be.rejected;
+      
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(100n * nominal);
       // TODO add helpers to assert bigints. Check balance close to 100
       expect(await helper.balance.getSubstrate(staker.address) - 99n * nominal >= (nominal / 2n)).to.be.true;
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(100n * nominal);
@@ -121,17 +126,27 @@ describe('unstake balance extrinsic', () => {
   it('should change balance state to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
     await usingPlaygrounds(async helper => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
-      const [staker] = await helper.arrange.createAccounts([1000n], alice);
+      const [staker, recepient] = await helper.arrange.createAccounts([600n, 0n], alice);
       await helper.staking.stake(staker, 500n * nominal);
       await helper.staking.unstake(staker);
+
+      // Stakers balance now: {free: <100n, reserved: 500n, miscFrozen: 0, feeFrozen: 0};
+      // Staker can not transfer 
+      // TODO expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 500n * nominal, miscFrozen: 0n, feeFrozen: 0n});
+      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejected;
 
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(500n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
+
+      // Wait for unstaking period. Balance now free ~600, and reserved, frozen, miscFrozeb 0n
+      await waitForRelayBlock(helper.api!, 20);
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n * nominal, miscFrozen: 0n, feeFrozen: 0n});
+      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(599n);
     });
   });
 
-  it('should remove multiple stakes', async () => {
+  it('should successfully unstake multiple stakes', async () => {
     await usingPlaygrounds(async helper => {
       const [staker] = await helper.arrange.createAccounts([1000n], alice);
       await helper.staking.stake(staker, 100n * nominal);
@@ -154,6 +169,11 @@ describe('unstake balance extrinsic', () => {
       expect(pendingUnstake).to.be.equal(600n * nominal);
       expect(stakedPerBlock).to.be.deep.equal([]);
       expect(unstakedPerBlock).to.be.deep.equal([600n * nominal]);
+
+      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 600n * nominal, miscFrozen: 600n * nominal});
+      await waitForRelayBlock(helper.api!, 20);
+      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
+      expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
     });
   });
 
@@ -200,6 +220,8 @@ describe('unstake balance extrinsic', () => {
       const [staker] = await helper.arrange.createAccounts([1000n], alice);
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstake(staker);
+      await waitForRelayBlock(helper.api!, 20);
+      // expect balance unlocked
       expect.fail('Not implemented');
     });
   });

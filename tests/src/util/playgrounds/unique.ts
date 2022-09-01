@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -1891,6 +1891,16 @@ class BalanceGroup extends HelperGroup {
    */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
     return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
+  }
+
+  /**
+   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
+   * @param address substrate address
+   * @returns 
+   */
+  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
+    return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
   }
 
   /**

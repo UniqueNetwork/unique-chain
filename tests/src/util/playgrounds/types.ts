@@ -123,6 +123,13 @@ export interface IChainProperties {
   tokenSymbol: string[]
 }
 
+export interface ISubstrateBalance {
+  free: bigint,
+  reserved: bigint,
+  miscFrozen: bigint,
+  feeFrozen: bigint
+}
+
 export type TSubstrateAccount = string;
 export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
