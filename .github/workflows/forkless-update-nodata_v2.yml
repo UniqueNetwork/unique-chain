@@ -3,44 +3,64 @@
 # Controls when the action will run.
 on:
   workflow_call:
-    inputs:
-      network:
-        description: 'Chain Network'
-#        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
-        required: true
-        type: string					# This must be one of: boolean, number, or string.
-      runtime:
-        required: true 
-        type: string
-      features:
-        required: true
-        type: string
-      mainnet_branch:
-        required: true
-        type: string
-
 
 
 #Define Workflow variables
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  execution-marix:
+
+    name: Prepare execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+
+      - name: Create Execution matrix
+        uses: fabiocaccamo/create-matrix-action@v2
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
 
 
   forkless-update-nodata:
+    needs: execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
     timeout-minutes: 1380
 
-    name: ${{ inputs.network }}
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
-    
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}    
+
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -57,20 +77,20 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp-forkless-nodata.j2
-          output_file: .docker/docker-compose.${{ inputs.network }}.yml
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ inputs.mainnet_tag }}
-            MAINNET_BRANCH=${{ inputs.mainnet_branch }}
-            FEATURE=${{ inputs.features }}
-            RUNTIME=${{ inputs.runtime }}
+            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ inputs.network }}.yml
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Generate launch-config-forkless-nodata.json
         uses: cuchi/jinja2-action@v1.2.0
@@ -78,15 +98,15 @@ jobs:
           template: .docker/forkless-config/launch-config-forkless-nodata.j2
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
-            FEATURE=${{ inputs.features }}
-            RUNTIME=${{ inputs.runtime }}
+            FEATURE=${{ matrix.features }}
+            RUNTIME=${{ matrix.runtime }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ inputs.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -139,13 +159,13 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './forkless-parachain-upgrade-nodata-logs.${{ inputs.features }}'
+          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
           images: 'node-parachain'
 
       - name: Show docker logs
         if: success() || failure()
-        run: cat './forkless-parachain-upgrade-nodata-logs.${{ inputs.features }}/node-parachain.log'
+        run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ inputs.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down

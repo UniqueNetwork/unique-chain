@@ -27,22 +27,12 @@ jobs:
   forkless-update-data:
     name: forkless with data
     uses: ./.github/workflows/forkless-update-data_v2.yml
-    with:
-      network: ${{ inputs.network }}
-      runtime: ${{ inputs.runtime }}
-      features: ${{ inputs.features }}
-      mainnet_branch: ${{ inputs.mainnet_branch }}
-      replica_from_address: ${{ inputs.replica_from_address }}
-
 
   forkless-update-no-data:
     name: forkless no data
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
-    with:
-      network: ${{ inputs.network }}
-      runtime: ${{ inputs.runtime }}
-      features: ${{ inputs.features }}
-      mainnet_branch: ${{ inputs.mainnet_branch }}
+    
+
 
   try-runtime:
     name: try-runtime

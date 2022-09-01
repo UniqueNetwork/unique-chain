@@ -49,19 +49,8 @@ jobs:
 
 
   forkless:
-    strategy:
-      matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-    needs: prepare-execution-marix
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless.yml
-    with:
-      network: ${{ matrix.network }}
-      runtime: ${{ matrix.runtime }}
-      features: ${{ matrix.features }}
-      mainnet_branch: ${{ matrix.mainnet_branch }}
-      replica_from_address: ${{ matrix.replica_from_address }}
-
 
   canary:
     strategy:
