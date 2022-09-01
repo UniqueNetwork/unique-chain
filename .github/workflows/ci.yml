@@ -64,27 +64,37 @@ jobs:
       replica_from_address: ${{ matrix.replica_from_address }}
 
 
+  canary:
+#    name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+    needs: prepare-execution-marix
+    if: contains( github.event.pull_request.labels.*.name, 'canary')
+    uses: ./.github/workflows/canary.yml
+    with:
+      network: ${{ matrix.network }}
+      runtime: ${{ matrix.runtime }}
+      features: ${{ matrix.features }}
+      mainnet_branch: ${{ matrix.mainnet_branch }}
+      replica_from_address: ${{ matrix.replica_from_address }}
 
 
-# ci.yml  codestyle.yml  dev-build-tests.yml  forkless-update-data.yml  forkless-update-nodata.yml  nodes-only-update.yml  tests_codestyle.yml  try-runtime.yml  unit-test.yml
+  xcm:
+#    name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+    needs: prepare-execution-marix
+    if: contains( github.event.pull_request.labels.*.name, 'xcm')
+    uses: ./.github/workflows/xcm.yml
+    with:
+      network: ${{ matrix.network }}
+      runtime: ${{ matrix.runtime }}
+      features: ${{ matrix.features }}
+      mainnet_branch: ${{ matrix.mainnet_branch }}
+      replica_from_address: ${{ matrix.replica_from_address }}
 
 
-#Как пример: 
-#PR on develop feature-foreighn_assets
-#выставляем label xcm
-#Результат: помимо осн набора тестов PR на develop дополнительно активируется xcm конвеер
-#label: forkless активирует
-#           try-runtime
-#           forkless upgrade nodata
-#           forkless upgrade replica
-
-#label: xcm активирует
-#          xcm-unique
-#          xcm-quartz
-#          xcm-opal
-
-#lable: canary активирует
-#          canary marketplace  (отредактировано)
-#name: nodes-only update
 
 
