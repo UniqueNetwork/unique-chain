@@ -1,17 +1,5 @@
 on:
   workflow_call:
-    inputs:
-      network:
-        description: 'Chain Network'
-#        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
-        required: true
-        type: string					# This must be one of: boolean, number, or string.
-      features:
-        required: true
-        type: string
-      replica_from_address:
-        required: true
-        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -19,9 +7,22 @@ jobs:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
     
-    name: ${{ inputs.network }}
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include:
+          - network: opal
+            features: opal-runtime
+            replica_from_address: wss://eu-ws-opal.unique.network:443
+          - network: quartz
+            features: quartz-runtime
+            replica_from_address: wss://eu-ws-quartz.unique.network:443
+          - network: unique
+            features: unique-runtime
+            replica_from_address: wss://eu-ws.unique.network:443
 
     steps:
 
@@ -40,28 +41,28 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.try-runtime.j2
-          output_file: .docker/docker-compose.try-runtime.${{ inputs.network }}.yml
+          output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            FEATURE=${{ inputs.features }}
-            REPLICA_FROM=${{ inputs.replica_from_address }}
+            FEATURE=${{ matrix.features }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.try-runtime.${{ inputs.network }}.yml
+        run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ inputs.network }}.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from try-runtime
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from try-runtime
  
       - name: Collect Docker Logs
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './try-runtime-logs.${{ inputs.network }}'
+          dest: './try-runtime-logs.${{ matrix.network }}'
           images: 'try-runtime' 
 
       - name: Show docker logs
-        run: cat './try-runtime-logs.${{ inputs.network }}/try-runtime.log'
+        run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ inputs.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
