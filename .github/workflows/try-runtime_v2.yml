@@ -40,7 +40,7 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.try-runtime.j2
-          output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
+          output_file: .docker/docker-compose.try-runtime.${{ inputs.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             FEATURE=${{ inputs.features }}
