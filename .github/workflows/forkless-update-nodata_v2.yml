@@ -34,7 +34,6 @@ jobs:
 
 
   forkless-update-nodata:
-    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
