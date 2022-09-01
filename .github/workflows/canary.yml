@@ -1,5 +1,3 @@
-name: Nesting Canary
-
 on:
   workflow_call:
     inputs:
@@ -16,7 +14,7 @@ on:
  
 
 jobs:
-    
+  name: market e2e tests    
   market-e2e-test:
     uses: ./.github/workflows/market-test_v2.yml
     with:
