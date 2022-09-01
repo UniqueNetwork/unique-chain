@@ -1,10 +1,16 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/errors';
+
+import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
+
+export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
 
 declare module '@polkadot/api-base/types/errors' {
-  export interface AugmentedErrors<ApiType extends ApiTypes> {
+  interface AugmentedErrors<ApiType extends ApiTypes> {
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -259,7 +265,11 @@ declare module '@polkadot/api-base/types/errors' {
     };
     evmContractHelpers: {
       /**
-       * This method is only executable by owner
+       * No pending sponsor for contract.
+       **/
+      NoPendingSponsor: AugmentedError<ApiType>;
+      /**
+       * This method is only executable by contract owner
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
@@ -268,7 +278,13 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     evmMigration: {
+      /**
+       * Migration of this account is not yet started, or already finished.
+       **/
       AccountIsNotMigrating: AugmentedError<ApiType>;
+      /**
+       * Can only migrate to empty address.
+       **/
       AccountNotEmpty: AugmentedError<ApiType>;
       /**
        * Generic error
