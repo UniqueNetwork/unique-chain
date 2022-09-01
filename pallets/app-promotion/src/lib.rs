@@ -59,7 +59,7 @@ pub use pallet::*;
 use pallet_evm::account::CrossAccountId;
 use sp_runtime::{
 	Perbill,
-	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, AccountIdConversion},
+	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, AccountIdConversion, Zero},
 	ArithmeticError,
 };
 
@@ -169,6 +169,10 @@ pub mod pallet {
 		Value = (BalanceOf<T>, T::BlockNumber),
 		QueryKind = ValueQuery,
 	>;
+	/// Amount of stakes for an Account
+	#[pallet::storage]
+	pub type StakesPerAccount<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, u8, ValueQuery>;
 
 	/// Amount of tokens pending unstake per user per block.
 	#[pallet::storage]
@@ -209,7 +213,7 @@ pub mod pallet {
 			// 	consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
 			// 	consumed_weight += weight;
 			// };
-			
+
 			let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
 			PendingUnstake::<T>::iter()
 				.filter_map(|((staker, block), amount)| {
@@ -220,7 +224,7 @@ pub mod pallet {
 					}
 				})
 				.for_each(|(staker, block, amount)| {
-					Self::unlock_balance_unchecked(&staker, amount); 
+					Self::unlock_balance_unchecked(&staker, amount);
 					<PendingUnstake<T>>::remove((staker, block));
 				});
 
@@ -315,9 +319,16 @@ pub mod pallet {
 			let staker_id = ensure_signed(staker)?;
 
 			ensure!(
+				StakesPerAccount::<T>::get(&staker_id) < 10,
+				Error::<T>::NoPermission
+			);
+
+			ensure!(
 				amount >= Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get(),
 				ArithmeticError::Underflow
 			);
+
+			let count = Staked::<T>::iter_prefix((staker_id.clone(),)).count();
 
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
@@ -353,6 +364,7 @@ pub mod pallet {
 					.ok_or(ArithmeticError::Overflow)?,
 			);
 
+			StakesPerAccount::<T>::mutate(&staker_id, |stakes| *stakes += 1);
 			Ok(())
 		}
 
@@ -364,11 +376,14 @@ pub mod pallet {
 
 			let total_staked: BalanceOf<T> = Staked::<T>::drain_prefix((&staker_id,))
 				.map(|(_, (amount, _))| {
-					*&mut total_stakes += 1;
+					total_stakes += 1;
 					amount
 				})
 				.sum();
-
+			
+			if total_staked.is_zero() {
+				return Ok(None.into());
+			}
 			let block =
 				T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
 			<PendingUnstake<T>>::insert(
@@ -384,64 +399,9 @@ pub mod pallet {
 					.ok_or(ArithmeticError::Underflow)?,
 			); // when error we should recover initial stake state for the staker
 
+			StakesPerAccount::<T>::remove(&staker_id);
+
 			Ok(None.into())
-
-			// let staker_id = ensure_signed(staker)?;
-
-			// let mut stakes = Staked::<T>::iter_prefix((&staker_id,)).collect::<Vec<_>>();
-
-			// let total_staked = stakes
-			// 	.iter()
-			// 	.fold(<BalanceOf<T>>::default(), |acc, (_, amount)| acc + *amount);
-
-			// ensure!(total_staked >= amount, ArithmeticError::Underflow);
-
-			// <TotalStaked<T>>::set(
-			// 	<TotalStaked<T>>::get()
-			// 		.checked_sub(&amount)
-			// 		.ok_or(ArithmeticError::Underflow)?,
-			// );
-
-			// let block =
-			// 	T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
-			// <PendingUnstake<T>>::insert(
-			// 	(&staker_id, block),
-			// 	<PendingUnstake<T>>::get((&staker_id, block))
-			// 		.checked_add(&amount)
-			// 		.ok_or(ArithmeticError::Overflow)?,
-			// );
-
-			// stakes.sort_by_key(|(block, _)| *block);
-
-			// let mut acc_amount = amount;
-			// let new_state = stakes
-			// 	.into_iter()
-			// 	.map_while(|(block, balance_per_block)| {
-			// 		if acc_amount == <BalanceOf<T>>::default() {
-			// 			return None;
-			// 		}
-			// 		if acc_amount <= balance_per_block {
-			// 			let res = (block, balance_per_block - acc_amount, acc_amount);
-			// 			acc_amount = <BalanceOf<T>>::default();
-			// 			return Some(res);
-			// 		} else {
-			// 			acc_amount -= balance_per_block;
-			// 			return Some((block, <BalanceOf<T>>::default(), acc_amount));
-			// 		}
-			// 	})
-			// 	.collect::<Vec<_>>();
-
-			// new_state
-			// 	.into_iter()
-			// 	.for_each(|(block, to_staked, _to_pending)| {
-			// 		if to_staked == <BalanceOf<T>>::default() {
-			// 			<Staked<T>>::remove((&staker_id, block));
-			// 		} else {
-			// 			<Staked<T>>::insert((&staker_id, block), to_staked);
-			// 		}
-			// 	});
-
-			// Ok(())
 		}
 
 		#[pallet::weight(T::WeightInfo::sponsor_collection())]
@@ -601,12 +561,16 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn set_lock_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
-		<T::Currency as LockableCurrency<T::AccountId>>::set_lock(
-			LOCK_IDENTIFIER,
-			staker,
-			amount,
-			WithdrawReasons::all(),
-		)
+		if amount.is_zero() {
+			<T::Currency as LockableCurrency<T::AccountId>>::remove_lock(LOCK_IDENTIFIER, &staker);
+		} else {
+			<T::Currency as LockableCurrency<T::AccountId>>::set_lock(
+				LOCK_IDENTIFIER,
+				staker,
+				amount,
+				WithdrawReasons::all(),
+			)
+		}
 	}
 
 	pub fn get_locked_balance(
