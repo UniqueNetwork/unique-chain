@@ -328,8 +328,6 @@ pub mod pallet {
 				ArithmeticError::Underflow
 			);
 
-			let count = Staked::<T>::iter_prefix((staker_id.clone(),)).count();
-
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
 
@@ -380,7 +378,7 @@ pub mod pallet {
 					amount
 				})
 				.sum();
-			
+
 			if total_staked.is_zero() {
 				return Ok(None.into());
 			}
@@ -521,13 +519,13 @@ pub mod pallet {
 						income_acc = BalanceOf::<T>::default();
 						current_id = id;
 					};
-					if next_recalc_block_for_stake >= current_recalc_block {
+					if current_recalc_block >= next_recalc_block_for_stake {
 						Self::recalculate_and_insert_stake(
 							&current_id,
 							staked_block,
 							next_recalc_block,
 							amount,
-							((next_recalc_block_for_stake - current_recalc_block)
+							((current_recalc_block - next_recalc_block_for_stake)
 								/ T::RecalculationInterval::get())
 							.into() + 1,
 							&mut income_acc,
