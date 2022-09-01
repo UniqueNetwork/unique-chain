@@ -23,7 +23,7 @@ jobs:
       network: ${{ inputs.network }}
       features: ${{ inputs.features }}
     secrets:
-      ssh-key: '${{ secrets.GH_PAT }}'
+      ssh-key: ${{ secrets.GH_PAT }}
 
 
 

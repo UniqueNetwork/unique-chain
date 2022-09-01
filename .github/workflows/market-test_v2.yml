@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'UniqueNetwork/market-e2e-tests'
-#          ssh-key: '${{ secrets.GH_PAT }}'
+          ssh-key: ${{ secrets.GH_PAT }}
           path: 'qa-tests'
           ref: 'QA-65_maxandreev'
 
