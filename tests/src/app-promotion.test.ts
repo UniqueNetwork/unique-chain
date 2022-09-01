@@ -621,7 +621,7 @@ describe('app-promotion rewards', () => {
       
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
-      await waitForRelayBlock(helper.api!, 55);
+      await waitForRelayBlock(helper.api!, 40);
       await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(50));
       
       const totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
@@ -663,7 +663,7 @@ describe('app-promotion rewards', () => {
       await waitForRelayBlock(helper.api!, 20);
       await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(50));
       totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
-      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(10n * nominal, 10n, 2), calculateIncome(20n * nominal, 10n, 2), calculateIncome(30n * nominal, 10n, 2)]);      
+      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n, 2), calculateIncome(200n * nominal, 10n, 2), calculateIncome(300n * nominal, 10n, 2)]);      
     });
   });
 
