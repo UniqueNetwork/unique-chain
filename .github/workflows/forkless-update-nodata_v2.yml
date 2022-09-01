@@ -39,7 +39,7 @@ jobs:
 
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}
+    name: ${{ inputs.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -60,20 +60,20 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp-forkless-nodata.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          output_file: .docker/docker-compose.${{ inputs.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ matrix.mainnet_tag }}
-            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            MAINNET_TAG=${{ inputs.mainnet_tag }}
+            MAINNET_BRANCH=${{ inputs.mainnet_branch }}
+            FEATURE=${{ inputs.features }}
+            RUNTIME=${{ inputs.runtime }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.${{ inputs.network }}.yml
 
       - name: Generate launch-config-forkless-nodata.json
         uses: cuchi/jinja2-action@v1.2.0
@@ -81,15 +81,15 @@ jobs:
           template: .docker/forkless-config/launch-config-forkless-nodata.j2
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            FEATURE=${{ inputs.features }}
+            RUNTIME=${{ inputs.runtime }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ inputs.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -142,13 +142,13 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.0
         with:
-          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
+          dest: './forkless-parachain-upgrade-nodata-logs.${{ inputs.features }}'
           images: 'node-parachain'
 
       - name: Show docker logs
         if: success() || failure()
-        run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
+        run: cat './forkless-parachain-upgrade-nodata-logs.${{ inputs.features }}/node-parachain.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ inputs.network }}.yml" down
