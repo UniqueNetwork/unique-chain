@@ -67,7 +67,7 @@ jobs:
             FEATURE=${{ inputs.features }}
             RUNTIME=${{ inputs.runtime }}
             BRANCH=${{ github.head_ref }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}
+            REPLICA_FROM=${{ inputs.replica_from_address }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ inputs.network }}.yml
