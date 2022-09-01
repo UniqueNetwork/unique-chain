@@ -1,0 +1,193 @@
+name: market api tests
+
+# Controls when the action will run.
+on:
+  workflow_call:
+    inputs:
+      network:
+        description: 'Chain Network'
+#        default: 'opal'				#If a default parameter is not set, the default value of the input is false for a boolean, 0 for a number, and "" for a string.
+        required: true
+        type: string					# This must be one of: boolean, number, or string.
+      features:
+        required: true
+        type: string
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  market_test:
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci,large]
+    timeout-minutes: 1380
+    
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+
+    steps:
+
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout master repo
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Checkout Market e2e tests
+        uses: actions/checkout@v3
+        with:
+          repository: 'UniqueNetwork/market-e2e-tests'
+          ssh-key: '${{ secrets.GH_PAT }}'
+          path: 'qa-tests'
+          ref: 'QA-65_maxandreev'
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
+      
+      - name: Copy qa-tests/.env.example to qa-tests/.env
+        working-directory: qa-tests
+        run: cp .env.docker .env
+
+      - name: Show content of qa-test/.env
+        working-directory: qa-tests
+        run: cat .env
+
+      - name: Read qa -test .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-tests/
+        
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: qa-tests/.docker/docker-compose.tmp-market.j2
+          output_file: qa-tests/.docker/docker-compose.${{ inputs.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            FEATURE=${{ inputs.features }}
+            BRANCH=${{ github.head_ref }}
+
+
+      - name: Show build configuration
+        working-directory: qa-tests
+        run: cat .docker/docker-compose.${{ inputs.network }}.yml
+
+      - name: Start node-parachain
+        working-directory: qa-tests
+        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ inputs.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
+
+      - name: Start nonce-app
+        working-directory: qa-tests
+        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build --remove-orphans --force-recreate nonce-app 
+     
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Setup TypeScript
+        working-directory: qa-tests
+        run: |
+          npm install
+          npm install -g ts-node
+
+      - name: Copy qa-tests/.env.example to qa-tests/.env
+        working-directory: qa-tests
+        run: | 
+          rm -rf .env
+          cp .env.example .env
+      
+     
+      - name: Show content of qa-test/.env
+        working-directory: qa-tests
+        run: cat .env
+
+
+      - name: Read qa -test .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-tests/
+
+      - name: Generate accounts
+        working-directory: qa-tests
+        run: ts-node ./src/scripts/create-market-accounts.ts
+
+      - name: Deploy contracts
+        run: |
+          cd qa-tests
+          ts-node ./src/scripts/deploy-contract.ts
+
+      - name: Import test data
+        working-directory: qa-tests
+        run: ts-node ./src/scripts/create-test-collections.ts
+
+      - name: Show content of qa-test .env
+        working-directory: qa-tests
+        run: cat .env
+
+      - name: Copy qa-tests/.env.example to qa-tests/.env
+        working-directory: qa-tests
+        run: |
+          rm -rf .env.docker
+          cp .env .env.docker
+          sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' .env.docker
+
+      - name: Read qa -test .env file
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-tests/
+
+      - name: local-market:start
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ inputs.network }}.yml" up -d --build
+
+      - name: Wait for market readyness
+        working-directory: qa-tests
+        run: src/scripts/wait-market-ready.sh
+        shell: bash
+
+      - name: Install dependecies
+        working-directory: qa-tests
+        run: |
+          npm ci
+          npm install -D @playwright/test
+          npx playwright install-deps
+          npx playwright install
+          
+      - name: 
+        working-directory: qa-tests
+        run: |
+          npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
+
+      - name: Show env variables
+        if: success() || failure()
+        run: printenv
+
+      - name: look up for report
+        if: success() || failure()
+        run: |
+          ls -la 
+          ls -la qa-tests/
+
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ inputs.network }}.yml" down --volumes
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
+      - name: Clean Workspace
+        if: always()
+        uses: AutoModality/action-clean@v1.1.0
+
+
+
+

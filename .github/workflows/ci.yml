@@ -95,6 +95,5 @@ jobs:
       mainnet_branch: ${{ matrix.mainnet_branch }}
       replica_from_address: ${{ matrix.replica_from_address }}
 
-
-
-
+  codestyle:
+    uses: ./.github/workflows/codestyle_v2.yml
