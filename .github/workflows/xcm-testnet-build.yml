@@ -56,7 +56,7 @@ jobs:
             network {quartz}, runtime {quartz}, features {quartz-runtime}
             network {unique}, runtime {unique}, features {unique-runtime}
 
-  xcm_build:
+  xcm-build:
     
     needs: prepare-execution-marix
     # The type of runner that the job will run on
@@ -112,7 +112,7 @@ jobs:
       - name: Show launch-config-xcm-${{ matrix.network }} configuration
         run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
 
-     - name: Run find-and-replace to remove slashes from branch name
+      - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@2
         id: branchname
         with:
