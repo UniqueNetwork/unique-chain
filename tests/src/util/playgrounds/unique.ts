@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -1858,6 +1858,13 @@ class ChainGroup extends HelperGroup {
     const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])).toJSON();
     if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
     return blockHash;
+  }
+
+  // TODO add docs
+  async getBlock(blockHashOrNumber: string | number): Promise<IBlock | null> {
+    const blockHash = typeof blockHashOrNumber === 'string' ? blockHashOrNumber : await this.getBlockHashByNumber(blockHashOrNumber);
+    if (!blockHash) return null;
+    return (await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash])).toHuman().block;
   }
 
   /**

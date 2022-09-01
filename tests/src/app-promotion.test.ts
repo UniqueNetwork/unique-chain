@@ -63,36 +63,37 @@ after(async function () {
 });
 
 describe('app-promotions.stake extrinsic', () => {
-  it('should "lock" some balance in system.account, add it to "staked" map, and increase "totalStaked" amount', async () => {
+  it('should "lock" staking balance, add it to "staked" map, and increase "totalStaked" amount', async () => {
     await usingPlaygrounds(async (helper) => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
       const [staker, recepient] = await helper.arrange.createAccounts([400n, 0n], alice);
-   
+
       // Minimum stake amount is 100:
       await expect(helper.staking.stake(staker, 100n * nominal - 1n)).to.be.eventually.rejected;
       await helper.staking.stake(staker, 100n * nominal);
 
-      // Staker balance is: miscFrozen: 100, feeFrozen: 100, reserved: 0n, free less than 300...
+      // Staker balance is: miscFrozen: 100, feeFrozen: 100, reserved: 0n...
       // ...so he can not transfer 300
       expect (await helper.balance.getSubstrateFull(staker.address)).to.contain({miscFrozen: 100n * nominal, feeFrozen: 100n * nominal, reserved: 0n});
       await expect(helper.balance.transferToSubstrate(staker, recepient.address, 300n * nominal)).to.be.rejected;
       
+      // 100 -> 24 locked 100; staked 0; 24 => locked 100 staked 100
       expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(100n * nominal);
-      // TODO add helpers to assert bigints. Check balance close to 100
-      expect(await helper.balance.getSubstrate(staker.address) - 99n * nominal >= (nominal / 2n)).to.be.true;
+      // TODO should be 0
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(100n * nominal);
+      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(399n);
       // it is potentially flaky test. Promotion can credited some tokens. Maybe we need to use closeTo? 
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + 100n * nominal); // total tokens amount staked in app-promotion increased 
 
       await helper.staking.stake(staker, 200n * nominal);
-      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(300n * nominal);
       
-      const stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map((x) => x[1]);
-      expect(stakedPerBlock).to.be.deep.equal([100n * nominal, 200n * nominal]);
+      expect(await helper.staking.getTotalStakingLocked({Substrate: staker.address})).to.be.equal(300n * nominal);
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(300n * nominal);
+      expect((await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map((x) => x[1])).to.be.deep.equal([100n * nominal, 200n * nominal]);
     });
   });
   
-  it('should reject transaction if stake amount is more than total free balance', async () => {
+  it('should reject transaction if stake amount is more than total free balance minus frozen', async () => {
     await usingPlaygrounds(async helper => { 
       const [staker] = await helper.arrange.createAccounts([300n], alice);
 
@@ -100,7 +101,7 @@ describe('app-promotions.stake extrinsic', () => {
       await expect(helper.staking.stake(staker, 300n * nominal)).to.be.eventually.rejected;
       await helper.staking.stake(staker, 150n * nominal);
 
-      // Can't stake 4 tkn because Alice has ~3 free tkn, and 7 locked
+      // Can't stake 150 tkn because Alice has Less than 150 free - frozen tokens;
       await expect(helper.staking.stake(staker, 150n * nominal)).to.be.eventually.rejected; 
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(150n * nominal);
     });
@@ -117,9 +118,6 @@ describe('app-promotions.stake extrinsic', () => {
       expect(crowdStakes).to.deep.equal([100n * nominal, 100n * nominal, 100n * nominal, 100n * nominal]);
     });
   });
-  // TODO it('Staker stakes 5 times in one block with nonce');
-  // TODO it('Staked balance appears as locked in the balance pallet');
-  // TODO it('Alice stakes huge amount of tokens');
 });
 
 describe('unstake balance extrinsic', () => {  
@@ -130,6 +128,8 @@ describe('unstake balance extrinsic', () => {
       await helper.staking.stake(staker, 500n * nominal);
       await helper.staking.unstake(staker);
 
+      // balance state still
+
       // Stakers balance now: {free: <100n, reserved: 500n, miscFrozen: 0, feeFrozen: 0};
       // Staker can not transfer 
       // TODO expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 500n * nominal, miscFrozen: 0n, feeFrozen: 0n});
@@ -138,11 +138,20 @@ describe('unstake balance extrinsic', () => {
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(500n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
+    });
+  });
 
-      // Wait for unstaking period. Balance now free ~600, and reserved, frozen, miscFrozeb 0n
+  it('should unlock balance after unlocking period ends and subtract it from "pendingUnstake"', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [staker] = await helper.arrange.createAccounts([1000n], alice);
+      await helper.staking.stake(staker, 100n * nominal);
+      await helper.staking.unstake(staker);
+      await waitForRelayBlock(helper.api!, 20);
+
+      // Wait for unstaking period. Balance now free ~1000; reserved, frozen, miscFrozeb: 0n
       await waitForRelayBlock(helper.api!, 20);
       expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n * nominal, miscFrozen: 0n, feeFrozen: 0n});
-      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(599n);
+      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
     });
   });
 
@@ -212,17 +221,6 @@ describe('unstake balance extrinsic', () => {
       expect(unstakingPerBlock).has.length(2);
       expect(unstakingPerBlock[0][1]).to.equal(100n * nominal);
       expect(unstakingPerBlock[1][1]).to.equal(120n * nominal);
-    });
-  });
-
-  it('should unlock balance after unlocking period ends and subtract it from "pendingUnstake"', async () => {
-    await usingPlaygrounds(async (helper) => {
-      const [staker] = await helper.arrange.createAccounts([1000n], alice);
-      await helper.staking.stake(staker, 100n * nominal);
-      await helper.staking.unstake(staker);
-      await waitForRelayBlock(helper.api!, 20);
-      // expect balance unlocked
-      expect.fail('Not implemented');
     });
   });
 
@@ -376,13 +374,11 @@ describe('App-promotion collection sponsoring', () => {
   
   it('should reject transaction if collection doesn\'t exist', async () => {
     await usingPlaygrounds(async (helper) => {
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(999999999))).to.be.eventually.rejected;
-    });
-  });
-
-  it('should reject transaction if collection was burnt', async () => {
-    await usingPlaygrounds(async (helper) => {
       const [collectionOwner] = await helper.arrange.createAccounts([10n], alice);
+      
+      // collection has never existed
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(999999999))).to.be.eventually.rejected;
+      // collection has been burned
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       await collection.burn(collectionOwner);
 
@@ -406,13 +402,20 @@ describe('app-promotion stopSponsoringCollection', () => {
 
   it('should set sponsoring as disabled', async () => {
     await usingPlaygrounds(async (helper) => {
-      const [collectionOwner] = await helper.arrange.createAccounts([10n, 10n], alice);
-      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
+      const [collectionOwner, recepient] = await helper.arrange.createAccounts([10n, 0n], alice);
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits: {sponsorTransferTimeout: 0}});
+      const token = await collection.mintToken(collectionOwner, {Substrate: collectionOwner.address});
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsoringCollection(collection.collectionId));
       
       expect((await collection.getData())?.raw.sponsorship).to.be.equal('Disabled');
+
+      // Transactions are not sponsored anymore:
+      const ownerBalanceBefore = await helper.balance.getSubstrate(collectionOwner.address);
+      await token.transfer(collectionOwner, {Substrate: recepient.address});
+      const ownerBalanceAfter = await helper.balance.getSubstrate(collectionOwner.address);
+      expect(ownerBalanceAfter < ownerBalanceBefore).to.be.equal(true);
     });
   });
 
@@ -615,39 +618,57 @@ describe('app-promotion stopSponsoringContract', () => {
 });
 
 describe('app-promotion rewards', () => {
+  it('can not be called by non admin', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const [nonAdmin] = await helper.arrange.createAccounts([10n], alice);
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.payoutStakers(50))).to.be.rejected;
+    });
+  });
+
   it('should credit 0.05% for staking period', async () => {    
+    // TODO flaky test
     await usingPlaygrounds(async helper => {
       const [staker] = await helper.arrange.createAccounts([5000n], alice);
       
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
-      await waitForRelayBlock(helper.api!, 40);
+      await waitForRelayBlock(helper.api!, 30);
       await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(50));
-      
+
       const totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
       expect(totalStakedPerBlock).to.be.deep.equal([calculateIncome(100n * nominal, 10n), calculateIncome(200n * nominal, 10n)]);
     });
   });
 
-  it('can not be initialized by non admin', async () => {
-    await usingPlaygrounds(async (helper) => {
-      expect.fail('Test not implemented');
-    });
-  });
-
   it('shoud be paid for more than one period if payments was missed', async () => {
     await usingPlaygrounds(async (helper) => {
-      expect.fail('Test not implemented');
+      const [staker] = await helper.arrange.createAccounts([400n], alice);
+
+      await helper.staking.stake(staker, 100n * nominal);
+      await helper.staking.stake(staker, 200n * nominal);
+
+      await waitForRelayBlock(helper.api!, 55);
+      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(50));
+      const stakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(stakedPerBlock[0][1]).to.be.equal(calculateIncome(100n * nominal, 10n, 2));
+      expect(stakedPerBlock[1][1]).to.be.equal(calculateIncome(200n * nominal, 10n, 2));
+
+      const stakerFullBalance = await helper.balance.getSubstrateFull(staker.address);
+      const frozenBalanceShouldBe = calculateIncome(300n * nominal, 10n, 2);
+
+      expect(stakerFullBalance).to.contain({reserved: 0n, feeFrozen: frozenBalanceShouldBe, miscFrozen: frozenBalanceShouldBe});
     });
   });
   
   it('should not be credited for unstaked (reserved) balance', async () => {
+    expect.fail('Test not implemented');
     await usingPlaygrounds(async helper => {
-      expect.fail('Implement me after unstake method will be fixed');
+      const staker = await helper.arrange.createAccounts([1000n], alice);
     });
   });
   
   it('should bring compound interest', async () => {
+    // TODO flaky test
     await usingPlaygrounds(async helper => {
       const [staker] = await helper.arrange.createAccounts([800n], alice);
             

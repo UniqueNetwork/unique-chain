@@ -101,6 +101,23 @@ export interface IToken {
   tokenId: number;
 }
 
+export interface IBlock {
+  extrinsics: IExtrinsic[]
+  header: {
+    parentHash: string,
+    number: number,
+  };
+}
+
+export interface IExtrinsic {
+  isSigned: boolean,
+  method: {
+    method: string,
+    section: string,
+    args: any[]
+  }
+}
+
 export interface ICollectionCreationOptions {
   name: string | number[];
   description: string | number[];
