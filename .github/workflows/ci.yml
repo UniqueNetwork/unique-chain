@@ -66,6 +66,11 @@ jobs:
 
 
   forkless-update-no-data:
+    name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+    needs: prepare-execution-marix
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
     uses: ./.github/workflows/forkless-update-nodata_v2.yml
     with:
