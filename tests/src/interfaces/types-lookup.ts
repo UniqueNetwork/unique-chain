@@ -2675,9 +2675,6 @@ declare module '@polkadot/types/lookup' {
       readonly amount: u128;
     } & Struct;
     readonly isUnstake: boolean;
-    readonly asUnstake: {
-      readonly amount: u128;
-    } & Struct;
     readonly isSponsorCollection: boolean;
     readonly asSponsorCollection: {
       readonly collectionId: u32;
@@ -3238,8 +3235,7 @@ declare module '@polkadot/types/lookup' {
   interface UpDataStructsPropertyScope extends Enum {
     readonly isNone: boolean;
     readonly isRmrk: boolean;
-    readonly isEth: boolean;
-    readonly type: 'None' | 'Rmrk' | 'Eth';
+    readonly type: 'None' | 'Rmrk';
   }
 
   /** @name PalletNonfungibleError (405) */

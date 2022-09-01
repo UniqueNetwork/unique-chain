@@ -822,9 +822,6 @@ export interface PalletAppPromotionCall extends Enum {
     readonly amount: u128;
   } & Struct;
   readonly isUnstake: boolean;
-  readonly asUnstake: {
-    readonly amount: u128;
-  } & Struct;
   readonly isSponsorCollection: boolean;
   readonly asSponsorCollection: {
     readonly collectionId: u32;
@@ -2639,8 +2636,7 @@ export interface UpDataStructsPropertyPermission extends Struct {
 export interface UpDataStructsPropertyScope extends Enum {
   readonly isNone: boolean;
   readonly isRmrk: boolean;
-  readonly isEth: boolean;
-  readonly type: 'None' | 'Rmrk' | 'Eth';
+  readonly type: 'None' | 'Rmrk';
 }
 
 /** @name UpDataStructsRpcCollection */

@@ -269,7 +269,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoPendingSponsor: AugmentedError<ApiType>;
       /**
-       * This method is only executable by owner.
+       * This method is only executable by contract owner
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
@@ -278,7 +278,13 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     evmMigration: {
+      /**
+       * Migration of this account is not yet started, or already finished.
+       **/
       AccountIsNotMigrating: AugmentedError<ApiType>;
+      /**
+       * Can only migrate to empty address.
+       **/
       AccountNotEmpty: AugmentedError<ApiType>;
       /**
        * Generic error

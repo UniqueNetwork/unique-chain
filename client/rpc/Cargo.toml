@@ -8,6 +8,7 @@ edition = "2021"
 pallet-common = { default-features = false, path = '../../pallets/common' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
 up-rpc = { path = "../../primitives/rpc" }
+app-promotion-rpc = { path = "../../primitives/app_promotion_rpc"}
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 codec = { package = "parity-scale-codec", version = "3.1.2" }
 jsonrpsee = { version = "0.14.0", features = ["server", "macros"] }

@@ -318,6 +318,7 @@ fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-p
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
+app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false}
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 
 [features]

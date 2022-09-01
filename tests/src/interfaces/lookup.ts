@@ -2467,9 +2467,7 @@ export default {
       stake: {
         amount: 'u128',
       },
-      unstake: {
-        amount: 'u128',
-      },
+      unstake: 'Null',
       sponsor_collection: {
         collectionId: 'u32',
       },
@@ -3078,7 +3076,7 @@ export default {
    * Lookup403: up_data_structs::PropertyScope
    **/
   UpDataStructsPropertyScope: {
-    _enum: ['None', 'Rmrk', 'Eth']
+    _enum: ['None', 'Rmrk']
   },
   /**
    * Lookup405: pallet_nonfungible::pallet::Error<T>

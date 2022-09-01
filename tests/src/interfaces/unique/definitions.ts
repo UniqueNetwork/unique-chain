@@ -175,30 +175,5 @@ export default {
       [collectionParam, tokenParam], 
       'Option<u128>',
     ),
-    totalStaked: fun(
-      'Returns the total amount of staked tokens',
-      [{name: 'staker', type: CROSS_ACCOUNT_ID_TYPE, isOptional: true}],
-      'u128',
-    ),
-    totalStakedPerBlock: fun(
-      'Returns the total amount of staked tokens per block when staked',
-      [crossAccountParam('staker')],
-      'Vec<(u32, u128)>',
-    ),
-    totalStakingLocked: fun(
-      'Return the total amount locked by staking tokens',
-      [crossAccountParam('staker')],
-      'u128',
-    ),
-    pendingUnstake: fun(
-      'Returns the total amount of unstaked tokens',
-      [{name: 'staker', type: CROSS_ACCOUNT_ID_TYPE, isOptional: true}],
-      'u128',
-    ),
-    pendingUnstakePerBlock: fun(
-      'Returns the total amount of unstaked tokens per block',
-      [crossAccountParam('staker')],
-      'Vec<(u32, u128)>',
-    ),
   },
 };

@@ -35,6 +35,28 @@ export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
 declare module '@polkadot/rpc-core/types/jsonrpc' {
   interface RpcInterface {
+    appPromotion: {
+      /**
+       * Returns the total amount of unstaked tokens
+       **/
+      pendingUnstake: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Returns the total amount of unstaked tokens per block
+       **/
+      pendingUnstakePerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
+      /**
+       * Returns the total amount of staked tokens
+       **/
+      totalStaked: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Returns the total amount of staked tokens per block when staked
+       **/
+      totalStakedPerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
+      /**
+       * Return the total amount locked by staking tokens
+       **/
+      totalStakingLocked: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+    };
     author: {
       /**
        * Returns true if the keystore has private keys for the given public key and key type.
@@ -703,14 +725,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
       /**
-       * Returns the total amount of unstaked tokens
-       **/
-      pendingUnstake: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Returns the total amount of unstaked tokens per block
-       **/
-      pendingUnstakePerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
-      /**
        * Get property permissions, optionally limited to the provided keys
        **/
       propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
@@ -746,18 +760,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get the total amount of pieces of an RFT
        **/
       totalPieces: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u128>>>;
-      /**
-       * Returns the total amount of staked tokens
-       **/
-      totalStaked: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Returns the total amount of staked tokens per block when staked
-       **/
-      totalStakedPerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
-      /**
-       * Return the total amount locked by staking tokens
-       **/
-      totalStakingLocked: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
        * Get the amount of distinctive tokens present in a collection
        **/

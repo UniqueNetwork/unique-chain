@@ -2027,24 +2027,24 @@ class StakingGroup extends HelperGroup {
   }
 
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
-    if (address) return (await this.helper.callRpc('api.rpc.unique.totalStaked', [address])).toBigInt();
-    return (await this.helper.callRpc('api.rpc.unique.totalStaked')).toBigInt();
+    if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
+    return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
   }
 
   async getTotalStakingLocked(address: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.totalStakingLocked', [address])).toBigInt();
+    return (await this.helper.callRpc('api.rpc.appPromotion.totalStakingLocked', [address])).toBigInt();
   }
 
   async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
-    return (await this.helper.callRpc('api.rpc.unique.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+    return (await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
   }
 
   async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.pendingUnstake', [address])).toBigInt();
+    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
   }
   
   async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<bigint[][]> {
-    return (await this.helper.callRpc('api.rpc.unique.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
   }
 }
 

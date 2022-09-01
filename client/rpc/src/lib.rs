@@ -31,6 +31,7 @@ use up_data_structs::{
 use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
+use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
 
 // RMRK
 use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
@@ -38,6 +39,7 @@ use up_data_structs::{
 	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkResourceId,
 };
 
+pub use app_promotion_unique_rpc::AppPromotionApiServer;
 pub use rmrk_unique_rpc::RmrkApiServer;
 
 #[rpc(server)]
@@ -244,39 +246,48 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 		token_id: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<String>>;
+}
 
-	/// Returns the total amount of staked tokens.
-	#[method(name = "unique_totalStaked")]
-	fn total_staked(&self, staker: Option<CrossAccountId>, at: Option<BlockHash>)
-		-> Result<String>;
+mod app_promotion_unique_rpc {
+	use super::*;
+	
+	#[rpc(server)]
+	#[async_trait]
+	pub trait AppPromotionApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
+		/// Returns the total amount of staked tokens.
+		#[method(name = "appPromotion_totalStaked")]
+		fn total_staked(&self, staker: Option<CrossAccountId>, at: Option<BlockHash>)
+			-> Result<String>;
 
-	///Returns the total amount of staked tokens per block when staked.
-	#[method(name = "unique_totalStakedPerBlock")]
-	fn total_staked_per_block(
-		&self,
-		staker: CrossAccountId,
-		at: Option<BlockHash>,
-	) -> Result<Vec<(BlockNumber, String)>>;
+		///Returns the total amount of staked tokens per block when staked.
+		#[method(name = "appPromotion_totalStakedPerBlock")]
+		fn total_staked_per_block(
+			&self,
+			staker: CrossAccountId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<(BlockNumber, String)>>;
 
-	/// Returns the total amount locked by staking tokens.
-	#[method(name = "unique_totalStakingLocked")]
-	fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>)
-		-> Result<String>;
+		/// Returns the total amount locked by staking tokens.
+		#[method(name = "appPromotion_totalStakingLocked")]
+		fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>)
+			-> Result<String>;
 
-	/// Returns the total amount of tokens pending withdrawal from staking.
-	#[method(name = "unique_pendingUnstake")]
-	fn pending_unstake(
-		&self,
-		staker: Option<CrossAccountId>,
-		at: Option<BlockHash>,
-	) -> Result<String>;
-	/// Returns the total amount of tokens pending withdrawal from staking per block.
-	#[method(name = "unique_pendingUnstakePerBlock")]
-	fn pending_unstake_per_block(
-		&self,
-		staker: CrossAccountId,
-		at: Option<BlockHash>,
-	) -> Result<Vec<(BlockNumber, String)>>;
+		/// Returns the total amount of tokens pending withdrawal from staking.
+		#[method(name = "appPromotion_pendingUnstake")]
+		fn pending_unstake(
+			&self,
+			staker: Option<CrossAccountId>,
+			at: Option<BlockHash>,
+		) -> Result<String>;
+
+		/// Returns the total amount of tokens pending withdrawal from staking per block.
+		#[method(name = "appPromotion_pendingUnstakePerBlock")]
+		fn pending_unstake_per_block(
+			&self,
+			staker: CrossAccountId,
+			at: Option<BlockHash>,
+		) -> Result<Vec<(BlockNumber, String)>>;
+	}
 }
 
 mod rmrk_unique_rpc {
@@ -415,6 +426,20 @@ impl<C, P> Unique<C, P> {
 	}
 }
 
+pub struct AppPromotion<C, P> {
+	client: Arc<C>,
+	_marker: std::marker::PhantomData<P>,
+}
+
+impl<C, P> AppPromotion<C, P> {
+	pub fn new(client: Arc<C>) -> Self {
+		Self {
+			client,
+			_marker: Default::default(),
+		}
+	}
+}
+
 pub struct Rmrk<C, P> {
 	client: Arc<C>,
 	_marker: std::marker::PhantomData<P>,
@@ -471,6 +496,12 @@ macro_rules! pass_method {
 macro_rules! unique_api {
 	() => {
 		dyn UniqueRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>
+	};
+}
+
+macro_rules! app_promotion_api {
+	() => {
+		dyn AppPromotionRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>
 	};
 }
 
@@ -556,7 +587,20 @@ where
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<String> => |o| o.map(|number| number.to_string()) , unique_api);
 	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
-	pass_method!(total_staked(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), unique_api);
+}
+
+impl<C, Block, BlockNumber, CrossAccountId, AccountId>
+ 	app_promotion_unique_rpc::AppPromotionApiServer<<Block as BlockT>::Hash, BlockNumber, CrossAccountId, AccountId>
+	for AppPromotion<C, Block>
+where
+	Block: BlockT,
+	BlockNumber: Decode + Member + AtLeast32BitUnsigned,
+	AccountId: Decode,
+	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+	C::Api: AppPromotionRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>,
+	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
+{
+	pass_method!(total_staked(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), app_promotion_api);
 	pass_method!(total_staked_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, String)> =>
 		|v| v
 		.into_iter()

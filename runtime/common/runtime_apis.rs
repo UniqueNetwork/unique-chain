@@ -187,25 +187,47 @@ macro_rules! impl_common_runtime_apis {
                 fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
+            }
 
+            impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
                 fn total_staked(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
-                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default())
-                }
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
 
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default());
+                }
+                
                 fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
-                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker))
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+                    
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
                 }
 
                 fn total_staking_locked(staker: CrossAccountId) -> Result<u128, DispatchError> {
-                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_locked_balance(staker))
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+                    
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_locked_balance(staker));
                 }
 
                 fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
-                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker))
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+                    
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker));
                 }
 
                 fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
-                    Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+                    
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
                 }
             }
 
