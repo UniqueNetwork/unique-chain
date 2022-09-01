@@ -22,8 +22,7 @@ jobs:
     with:
       network: ${{ inputs.network }}
       features: ${{ inputs.features }}
-    secrets:
-      ssh-key: ${{ secrets.GH_PAT }}
+    secrets: inherit
 
 
 
