@@ -43,6 +43,7 @@ jobs:
       mainnet_branch: ${{ inputs.mainnet_branch }}
 
   try-runtime:
+    name: ${{ inputs.network }} try-runtime
     uses: ./.github/workflows/try-runtime_v2.yml
     with:
       network: ${{ inputs.network }}
