@@ -33,6 +33,7 @@ jobs:
 
   xcm-testnet-build:
     uses: ./.github/workflows/xcm-testnet-build.yml
+    secrets: inherit
 
   prepare-execution-marix:
 
