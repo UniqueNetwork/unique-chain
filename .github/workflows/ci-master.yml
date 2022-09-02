@@ -2,7 +2,7 @@ name: master
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ 'master' ]
     types: [ opened, reopened, synchronize, ready_for_review ]
 
 concurrency:
