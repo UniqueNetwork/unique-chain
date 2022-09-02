@@ -972,12 +972,12 @@ class NFTnRFT extends CollectionGroup {
    * 
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
-   * @param propertyKeys
+   * @param propertyKeys optionally filter the token properties to only these keys
+   * @param blockHashAt optionally query the data at some block with this hash
    * @example getToken(10, 5);
    * @returns human readable token data 
    */
-  async getToken(collectionId: number, tokenId: number, blockHashAt?: string, propertyKeys?: string[]): Promise<{
+  async getToken(collectionId: number, tokenId: number, propertyKeys: string[] = [], blockHashAt?: string): Promise<{
     properties: IProperty[];
     owner: ICrossAccountId;
     normalizedOwner: ICrossAccountId;
@@ -987,7 +987,7 @@ class NFTnRFT extends CollectionGroup {
       tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', [collectionId, tokenId]);
     }
     else {
-      if(typeof propertyKeys === 'undefined') {
+      if(propertyKeys.length == 0) {
         const collection = (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
         if(!collection) return null;
         propertyKeys = collection.tokenPropertyPermissions.map((x: ITokenPropertyPermission) => x.key);
@@ -1031,7 +1031,7 @@ class NFTnRFT extends CollectionGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param properties 
+   * @param properties key-value pairs of metadata which to add to a token. Keys must be permitted in the collection
    * @example setTokenProperties(aliceKeyring, 10, 5, [{key: "gender", value: "female"}, {key: "age", value: "23"}])
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
@@ -1123,7 +1123,7 @@ class NFTGroup extends NFTnRFT {
    * Get token's owner
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
+   * @param blockHashAt optionally query the data at the block with this hash
    * @example getTokenOwner(10, 5);
    * @returns Address in CrossAccountId format, e.g. {Substrate: "5DnSF6RRjwteE3BrCj..."}
    */
@@ -1205,7 +1205,7 @@ class NFTGroup extends NFTnRFT {
    * Get tokens nested in the provided token
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
+   * @param blockHashAt optionally query the data at the block with this hash
    * @example getTokenChildren(10, 5);
    * @returns tokens whose depth of nesting is <= 5 
    */
@@ -1699,7 +1699,7 @@ class FTGroup extends CollectionGroup {
    * Transfer tokens to address
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param toAddressObj address recepient
+   * @param toAddressObj address recipient
    * @param amount amount of tokens to be sent
    * @example transfer(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
    * @returns ```true``` if extrinsic success, otherwise ```false``` 
@@ -1865,7 +1865,7 @@ class BalanceGroup extends HelperGroup {
   /**
    * Transfer tokens to substrate address
    * @param signer keyring of signer
-   * @param address substrate address of a recepient
+   * @param address substrate address of a recipient
    * @param amount amount of tokens to be transfered
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
@@ -2070,7 +2070,7 @@ class UniqueNFTCollection extends UniqueCollectionBase {
   }
 
   async getToken(tokenId: number, blockHashAt?: string) {
-    return await this.helper.nft.getToken(this.collectionId, tokenId, blockHashAt);
+    return await this.helper.nft.getToken(this.collectionId, tokenId, [], blockHashAt);
   }
 
   async getTokenOwner(tokenId: number, blockHashAt?: string) {
