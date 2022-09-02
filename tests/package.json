@@ -79,6 +79,7 @@
     "testXcmTransferAcala": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferAcala.test.ts acalaId=2000 uniqueId=5000",
     "testXcmTransferStatemine": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferStatemine.test.ts statemineId=1000 uniqueId=5000",
     "testXcmTransferMoonbeam": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferMoonbeam.test.ts moonbeamId=2000 uniqueId=5000",
+    "testXcmVersions": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/testXcmVersions.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
