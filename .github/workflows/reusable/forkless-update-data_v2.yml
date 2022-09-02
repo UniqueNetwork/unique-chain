@@ -1,34 +1,23 @@
-name: upgrade replica
-
 # Controls when the action will run.
 on:
- # Triggers the workflow on push or pull request events but only for the master branch
-  pull_request:
-    branches:
-      - master
-    types:
-      - opened
-      - reopened
-      - synchronize   #commit(s) pushed to the pull request
-      - ready_for_review
+  workflow_call:
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
 
 #Define Workflow variables
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
+
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.head_ref }}
+#  cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  prepare-execution-marix:
+  execution-marix:
 
-    name: Prepare execution matrix
+    name: execution matrix
 
     runs-on: self-hosted-ci
     outputs:
@@ -56,44 +45,21 @@ jobs:
             network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
             network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
 
-
-
   forkless-update-data:
-    needs: prepare-execution-marix
+    needs: execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
-
-
-
+    
     name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
-    strategy:
-      matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-
 
     steps:
-      - name: Skip if pull request is in Draft
-        # `if: github.event.pull_request.draft == true` should be kept here, at
-        # the step level, rather than at the job level. The latter is not
-        # recommended because when the PR is moved from "Draft" to "Ready to
-        # review" the workflow will immediately be passing (since it was skipped),
-        # even though it hasn't actually ran, since it takes a few seconds for
-        # the workflow to start. This is also disclosed in:
-        # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/17
-        # That scenario would open an opportunity for the check to be bypassed:
-        # 1. Get your PR approved
-        # 2. Move it to Draft
-        # 3. Push whatever commits you want
-        # 4. Move it to "Ready for review"; now the workflow is passing (it was
-        #    skipped) and "Check reviews" is also passing (it won't be updated
-        #    until the workflow is finished)
-        if: github.event.pull_request.draft == true
-        run: exit 1
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -201,4 +167,4 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down --volumes
