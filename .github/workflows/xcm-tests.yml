@@ -3,10 +3,10 @@ name: xcm-tests
 # Controls when the action will run.
 on:
  # Triggers the workflow after xcm-testnet-build 
-  workflow_run:
-    workflows: ["xcm-testnet-build"]
-    types: 
-      - completed  
+ # workflow_run:
+ #   workflows: ["xcm-testnet-build"]
+ #   types: 
+ #     - completed  
  # Triggers the workflow on push or pull request events but only for the master branch
   pull_request:
     branches:
@@ -31,9 +31,12 @@ concurrency:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  xcm-testnet-build:
+    uses: ./.github/workflows/xcm-testnet-build.yml
+
   prepare-execution-marix:
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: [xcm-testnet-build]
 
     name: Prepare execution matrix
 
