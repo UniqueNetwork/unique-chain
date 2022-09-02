@@ -2,26 +2,14 @@ name: xcm-testnet-build
 
 # Controls when the action will run.
 on:
- # Triggers the workflow on push or pull request events but only for the master branch
-  pull_request:
-    branches:
-      - master
-    types:
-      - opened
-      - reopened
-      - synchronize   #commit(s) pushed to the pull request
-      - ready_for_review
-
+  workflow_call:
+  
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 #Define Workflow variables
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
-  cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -72,11 +60,10 @@ jobs:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
-
     steps:
-      #- name: Skip if pull request is in Draft
-      #  if: github.event.pull_request.draft == true
-      #  run: exit 1
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
 
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
