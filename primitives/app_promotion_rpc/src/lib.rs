@@ -16,11 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use up_data_structs::{
-	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData, TokenChild,
-};
-
 use sp_std::vec::Vec;
 use codec::Decode;
 use sp_runtime::{

@@ -17,6 +17,35 @@ export type __QueryableStorageEntry<ApiType extends ApiTypes> = QueryableStorage
 
 declare module '@polkadot/api-base/types/storage' {
   interface AugmentedQueries<ApiType extends ApiTypes> {
+    appPromotion: {
+      admin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Stores hash a record for which the last revenue recalculation was performed.
+       * If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
+       **/
+      nextCalculatedRecord: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[AccountId32, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Amount of tokens pending unstake per user per block.
+       **/
+      pendingUnstake: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Vec<ITuple<[AccountId32, u128]>>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * Amount of tokens staked by account in the blocknumber.
+       **/
+      staked: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<ITuple<[u128, u32]>>, [AccountId32, u32]> & QueryableStorageEntry<ApiType, [AccountId32, u32]>;
+      /**
+       * Amount of stakes for an Account
+       **/
+      stakesPerAccount: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<u8>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      /**
+       * A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
+       **/
+      startBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      totalStaked: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
     balances: {
       /**
        * The Balances pallet example of storing the balance of an account.
@@ -505,39 +534,6 @@ declare module '@polkadot/api-base/types/storage' {
        * in the trie.
        **/
       validationData: AugmentedQuery<ApiType, () => Observable<Option<PolkadotPrimitivesV2PersistedValidationData>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Generic query
-       **/
-      [key: string]: QueryableStorageEntry<ApiType>;
-    };
-    promotion: {
-      admin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Stores hash a record for which the last revenue recalculation was performed.
-       * If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
-       **/
-      nextCalculatedRecord: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[AccountId32, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Next target block when interest is recalculated
-       **/
-      nextInterestBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Amount of tokens pending unstake per user per block.
-       **/
-      pendingUnstake: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<u128>, [AccountId32, u32]> & QueryableStorageEntry<ApiType, [AccountId32, u32]>;
-      /**
-       * Amount of tokens staked by account in the blocknumber.
-       **/
-      staked: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<ITuple<[u128, u32]>>, [AccountId32, u32]> & QueryableStorageEntry<ApiType, [AccountId32, u32]>;
-      /**
-       * Amount of stakes for an Account
-       **/
-      stakesPerAccount: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<u8>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
-      /**
-       * A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
-       **/
-      startBlock: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
-      totalStaked: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/

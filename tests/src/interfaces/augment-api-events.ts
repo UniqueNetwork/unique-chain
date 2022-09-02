@@ -15,6 +15,13 @@ export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>
 
 declare module '@polkadot/api-base/types/events' {
   interface AugmentedEvents<ApiType extends ApiTypes> {
+    appPromotion: {
+      StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     balances: {
       /**
        * A balance was set by root.
@@ -355,13 +362,6 @@ declare module '@polkadot/api-base/types/events' {
        * \[ destination, result \]
        **/
       VersionChangeNotified: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    promotion: {
-      StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
       /**
        * Generic event
        **/

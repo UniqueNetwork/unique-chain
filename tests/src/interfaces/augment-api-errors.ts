@@ -11,6 +11,29 @@ export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>
 
 declare module '@polkadot/api-base/types/errors' {
   interface AugmentedErrors<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * Error due to action requiring admin to be set
+       **/
+      AdminNotSet: AugmentedError<ApiType>;
+      /**
+       * An error related to the fact that an invalid argument was passed to perform an action
+       **/
+      InvalidArgument: AugmentedError<ApiType>;
+      /**
+       * No permission to perform an action
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Insufficient funds to perform an action
+       **/
+      NotSufficientFounds: AugmentedError<ApiType>;
+      PendingForBlockOverflow: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -430,28 +453,6 @@ declare module '@polkadot/api-base/types/errors' {
        * The message's weight could not be determined.
        **/
       UnweighableMessage: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    promotion: {
-      /**
-       * Error due to action requiring admin to be set
-       **/
-      AdminNotSet: AugmentedError<ApiType>;
-      /**
-       * An error related to the fact that an invalid argument was passed to perform an action
-       **/
-      InvalidArgument: AugmentedError<ApiType>;
-      /**
-       * No permission to perform an action
-       **/
-      NoPermission: AugmentedError<ApiType>;
-      /**
-       * Insufficient funds to perform an action
-       **/
-      NotSufficientFounds: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

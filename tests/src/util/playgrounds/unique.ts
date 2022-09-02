@@ -2008,7 +2008,7 @@ class StakingGroup extends HelperGroup {
     if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
     const stakeResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.promotion.stake', [amountToStake],
+      'api.tx.appPromotion.stake', [amountToStake],
       true, `stake failed for ${label}`,
     );
     // TODO extract info from stakeResult
@@ -2026,7 +2026,7 @@ class StakingGroup extends HelperGroup {
     if(typeof label === 'undefined') label = `${signer.address}`;
     const unstakeResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.promotion.unstake', [],
+      'api.tx.appPromotion.unstake', [],
       true, `unstake failed for ${label}`,
     );
     // TODO extract info from unstakeResult

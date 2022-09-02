@@ -812,11 +812,6 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asSetAdminAddress: {
     readonly admin: PalletEvmAccountBasicCrossAccountIdRepr;
   } & Struct;
-  readonly isStartAppPromotion: boolean;
-  readonly asStartAppPromotion: {
-    readonly promotionStartRelayBlock: Option<u32>;
-  } & Struct;
-  readonly isStopAppPromotion: boolean;
   readonly isStake: boolean;
   readonly asStake: {
     readonly amount: u128;
@@ -842,7 +837,7 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asPayoutStakers: {
     readonly stakersNumber: Option<u8>;
   } & Struct;
-  readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'StopAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorConract' | 'StopSponsoringContract' | 'PayoutStakers';
+  readonly type: 'SetAdminAddress' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorConract' | 'StopSponsoringContract' | 'PayoutStakers';
 }
 
 /** @name PalletAppPromotionError */
@@ -850,8 +845,9 @@ export interface PalletAppPromotionError extends Enum {
   readonly isAdminNotSet: boolean;
   readonly isNoPermission: boolean;
   readonly isNotSufficientFounds: boolean;
+  readonly isPendingForBlockOverflow: boolean;
   readonly isInvalidArgument: boolean;
-  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument';
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'PendingForBlockOverflow' | 'InvalidArgument';
 }
 
 /** @name PalletAppPromotionEvent */

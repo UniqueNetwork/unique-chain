@@ -78,7 +78,7 @@ macro_rules! construct_runtime {
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
                 #[runtimes(opal)]
-                Promotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
+                AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
                 // Frontier
                 EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,

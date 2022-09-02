@@ -38,29 +38,20 @@ let nominal: bigint;
 const palletAddress = calculatePalleteAddress('appstake');
 let accounts: IKeyringPair[] = [];
 
-before(async function () {
-  await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-    if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-    alice = privateKeyWrapper('//Alice');
-    palletAdmin = privateKeyWrapper('//Charlie'); // TODO use custom address
-    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})));
-    nominal = helper.balance.getOneTokenNominal();
-    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);
-    await helper.balance.transferToSubstrate(alice, palletAddress, 1000n * nominal);
-    if (!promotionStartBlock) {
-      promotionStartBlock = (await helper.api!.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
-    }
-    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.startAppPromotion(promotionStartBlock!)));
-    accounts = await helper.arrange.createCrowd(100, 1000n, alice); // create accounts-pool to speed up tests
-  });
-});
-
-after(async function () {
-  await usingPlaygrounds(async (helper) => {
-  });
-});
-
 describe('app-promotions.stake extrinsic', () => {
+  before(async function () {
+    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
+      alice = privateKeyWrapper('//Alice');
+      palletAdmin = privateKeyWrapper('//Charlie'); // TODO use custom address
+      await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+      nominal = helper.balance.getOneTokenNominal();
+      await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);
+      await helper.balance.transferToSubstrate(alice, palletAddress, 1000n * nominal);
+      accounts = await helper.arrange.createCrowd(100, 1000n, alice); // create accounts-pool to speed up tests
+    });
+  });
+
   it('should "lock" staking balance, add it to "staked" map, and increase "totalStaked" amount', async () => {
     await usingPlaygrounds(async (helper) => {
       const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
@@ -264,11 +255,11 @@ describe('Admin adress', () => {
     await usingPlaygrounds(async (helper) => {
       const nonAdmin = accounts.pop()!;
       // nonAdmin can not set admin not from himself nor as a sudo
-      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.setAdminAddress({Substrate: nonAdmin.address}))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: nonAdmin.address})))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address}))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address})))).to.be.eventually.rejected;
 
       // Alice can
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
     });
   });
   
@@ -279,12 +270,12 @@ describe('Admin adress', () => {
       const account = accounts.pop()!;
       const ethAccount = helper.address.substrateToEth(account.address); 
       // Alice sets Ethereum address as a sudo. Then Substrate address back...
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Ethereum: ethAccount})))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Ethereum: ethAccount})))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.eventually.fulfilled;
       
       // ...It doesn't break anything;
       const collection = await helper.nft.mintCollection(account, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      await expect(helper.signTransaction(account, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(account, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
     });
   });
 
@@ -293,11 +284,11 @@ describe('Admin adress', () => {
       const [oldAdmin, newAdmin, collectionOwner] = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(oldAdmin))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress(normalizeAccountId(newAdmin))))).to.be.eventually.fulfilled;
-      await expect(helper.signTransaction(oldAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress(normalizeAccountId(oldAdmin))))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress(normalizeAccountId(newAdmin))))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(oldAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
       
-      await expect(helper.signTransaction(newAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(newAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
     });
   });
 });
@@ -305,7 +296,7 @@ describe('Admin adress', () => {
 describe('App-promotion collection sponsoring', () => {
   before(async function () {
     await usingPlaygrounds(async (helper) => {
-      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.setAdminAddress({Substrate: palletAdmin.address}));
+      const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address}));
       await helper.signTransaction(alice, tx);
     });
   });
@@ -315,7 +306,7 @@ describe('App-promotion collection sponsoring', () => {
       const [collectionOwner, tokenSender, receiver] = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'Name', description: 'Description', tokenPrefix: 'Prefix', limits: {sponsorTransferTimeout: 0}});
       const token = await collection.mintToken(collectionOwner, {Substrate: tokenSender.address});
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId));
       const palletBalanceBefore = await helper.balance.getSubstrate(palletAddress);
 
       await token.transfer(tokenSender, {Substrate: receiver.address});
@@ -334,7 +325,7 @@ describe('App-promotion collection sponsoring', () => {
 
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
       expect((await collection.getData())?.raw.sponsorship).to.equal('Disabled');
     });
   });
@@ -345,19 +336,19 @@ describe('App-promotion collection sponsoring', () => {
       
       // Can set sponsoring for collection without sponsor
       const collectionWithoutSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'No-sponsor', description: 'New Collection', tokenPrefix: 'Promotion'});
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithoutSponsor.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collectionWithoutSponsor.collectionId))).to.be.eventually.fulfilled;
       expect((await collectionWithoutSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
 
       // Can set sponsoring for collection with unconfirmed sponsor
       const collectionWithUnconfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Unconfirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: oldSponsor.address});
       expect((await collectionWithUnconfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: oldSponsor.address});
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithUnconfirmedSponsor.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collectionWithUnconfirmedSponsor.collectionId))).to.be.eventually.fulfilled;
       expect((await collectionWithUnconfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
 
       // Can set sponsoring for collection with confirmed sponsor
       const collectionWithConfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Confirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: oldSponsor.address});
       await collectionWithConfirmedSponsor.confirmSponsorship(oldSponsor);
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithConfirmedSponsor.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collectionWithConfirmedSponsor.collectionId))).to.be.eventually.fulfilled;
       expect((await collectionWithConfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
     });
   });
@@ -368,7 +359,7 @@ describe('App-promotion collection sponsoring', () => {
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       const collectionId = collection.collectionId;
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collectionId))).to.be.eventually.fulfilled;
       
       // Collection limits still can be changed by the owner
       expect(await collection.setLimits(collectionOwner, {sponsorTransferTimeout: 0})).to.be.true;
@@ -386,7 +377,7 @@ describe('App-promotion collection sponsoring', () => {
       const limits = {ownerCanDestroy: true, ownerCanTransfer: true, sponsorTransferTimeout: 0};
       const collectionWithLimits = await helper.nft.mintCollection(alice, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits});
 
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collectionWithLimits.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collectionWithLimits.collectionId))).to.be.eventually.fulfilled;
       expect((await collectionWithLimits.getData())?.raw.limits).to.be.deep.contain(limits);
     });
   });
@@ -396,12 +387,12 @@ describe('App-promotion collection sponsoring', () => {
       const collectionOwner = accounts.pop()!;
       
       // collection has never existed
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(999999999))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(999999999))).to.be.eventually.rejected;
       // collection has been burned
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       await collection.burn(collectionOwner);
 
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.eventually.rejected;
     });
   });
 });
@@ -412,9 +403,9 @@ describe('app-promotion stopSponsoringCollection', () => {
       const [collectionOwner, nonAdmin] = [accounts.pop()!, accounts.pop()!];
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.eventually.fulfilled;
       
-      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.rejected;
       expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
     });
   });
@@ -425,8 +416,8 @@ describe('app-promotion stopSponsoringCollection', () => {
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits: {sponsorTransferTimeout: 0}});
       const token = await collection.mintToken(collectionOwner, {Substrate: collectionOwner.address});
       
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.sponsorCollection(collection.collectionId));
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsoringCollection(collection.collectionId));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.sponsorCollection(collection.collectionId));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(collection.collectionId));
       
       expect((await collection.getData())?.raw.sponsorship).to.be.equal('Disabled');
 
@@ -444,7 +435,7 @@ describe('app-promotion stopSponsoringCollection', () => {
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: collectionOwner.address});
       await collection.confirmSponsorship(collectionOwner);
       
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.rejected;
       
       expect((await collection.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: collectionOwner.address});
     });
@@ -456,8 +447,8 @@ describe('app-promotion stopSponsoringCollection', () => {
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
       await collection.burn(collectionOwner);
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.rejected;
-      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.promotion.stopSponsoringCollection(999999999))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(collection.collectionId))).to.be.eventually.rejected;
+      await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(999999999))).to.be.eventually.rejected;
     });
   });
 });
@@ -469,7 +460,7 @@ describe('app-promotion contract sponsoring', () => {
       const flipper = await deployFlipper(web3, contractOwner);
       const contractMethods = contractHelpers(web3, contractOwner);
 
-      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
       
       expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
       expect((await api.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
@@ -497,7 +488,7 @@ describe('app-promotion contract sponsoring', () => {
       });
 
       // set promotion sponsoring
-      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
 
       // new sponsor is pallet address
       expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
@@ -517,7 +508,7 @@ describe('app-promotion contract sponsoring', () => {
       const contractMethods = contractHelpers(web3, contractOwner);
 
       // contract sponsored by pallet
-      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
 
       // owner sets self sponsoring
       await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
@@ -542,7 +533,7 @@ describe('app-promotion contract sponsoring', () => {
       await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
 
       // nonAdmin calls sponsorConract
-      await expect(helper.signTransaction(nonAdmin, api.tx.promotion.sponsorConract(flipper.options.address))).to.be.rejected;
+      await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address))).to.be.rejected;
 
       // contract still self-sponsored 
       expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
@@ -569,7 +560,7 @@ describe('app-promotion contract sponsoring', () => {
       await contractHelper.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: contractOwner});
       await transferBalanceToEth(api, alice, flipper.options.address, 1000n);
 
-      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
       await flipper.methods.flip().send({from: caller});
       expect(await flipper.methods.getValue().call()).to.be.true;
 
@@ -591,8 +582,8 @@ describe('app-promotion stopSponsoringContract', () => {
       await transferBalanceToEth(api, alice, flipper.options.address);
       const contractHelper = contractHelpers(web3, contractOwner);
       await contractHelper.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: contractOwner});
-      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
-      await helper.signTransaction(palletAdmin, api.tx.promotion.stopSponsoringContract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.stopSponsoringContract(flipper.options.address));
 
       expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.false;  
       expect((await api.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
@@ -618,8 +609,8 @@ describe('app-promotion stopSponsoringContract', () => {
       const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
       const flipper = await deployFlipper(web3, contractOwner);
 
-      await helper.signTransaction(palletAdmin, api.tx.promotion.sponsorConract(flipper.options.address));
-      await expect(helper.signTransaction(nonAdmin, api.tx.promotion.stopSponsoringContract(flipper.options.address))).to.be.rejected;
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.stopSponsoringContract(flipper.options.address))).to.be.rejected;
     });
   });
 
@@ -631,7 +622,7 @@ describe('app-promotion stopSponsoringContract', () => {
       const contractHelper = contractHelpers(web3, contractOwner);
       await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
 
-      await expect(helper.signTransaction(nonAdmin, api.tx.promotion.stopSponsoringContract(flipper.options.address))).to.be.rejected;
+      await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.stopSponsoringContract(flipper.options.address))).to.be.rejected;
     });
   });
 });
@@ -640,7 +631,7 @@ describe('app-promotion rewards', () => {
   it('can not be called by non admin', async () => {
     await usingPlaygrounds(async (helper) => {
       const nonAdmin = accounts.pop()!;
-      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.promotion.payoutStakers(100))).to.be.rejected;
+      await expect(helper.signTransaction(nonAdmin, helper.api!.tx.appPromotion.payoutStakers(100))).to.be.rejected;
     });
   });
 
@@ -652,7 +643,7 @@ describe('app-promotion rewards', () => {
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
       await waitForRelayBlock(helper.api!, 30);
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(100));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
 
       const totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
       expect(totalStakedPerBlock).to.be.deep.equal([calculateIncome(100n * nominal, 10n), calculateIncome(200n * nominal, 10n)]);
@@ -668,7 +659,7 @@ describe('app-promotion rewards', () => {
       await helper.staking.stake(staker, 200n * nominal);
 
       await waitForRelayBlock(helper.api!, 55);
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(100));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
       const stakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       expect(stakedPerBlock[0][1]).to.be.equal(calculateIncome(100n * nominal, 10n, 2));
       expect(stakedPerBlock[1][1]).to.be.equal(calculateIncome(200n * nominal, 10n, 2));
@@ -707,12 +698,12 @@ describe('app-promotion rewards', () => {
       await helper.staking.stake(staker, 300n * nominal);
       
       await waitForRelayBlock(helper.api!, 34);
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(100));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
       let totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
       expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n), calculateIncome(200n * nominal, 10n), calculateIncome(300n * nominal, 10n)]);
       
       await waitForRelayBlock(helper.api!, 20);
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(100));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
       totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
       expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n, 2), calculateIncome(200n * nominal, 10n, 2), calculateIncome(300n * nominal, 10n, 2)]);      
     });

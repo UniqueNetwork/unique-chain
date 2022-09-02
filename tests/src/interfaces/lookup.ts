@@ -2460,10 +2460,6 @@ export default {
       set_admin_address: {
         admin: 'PalletEvmAccountBasicCrossAccountIdRepr',
       },
-      start_app_promotion: {
-        promotionStartRelayBlock: 'Option<u32>',
-      },
-      stop_app_promotion: 'Null',
       stake: {
         amount: 'u128',
       },
@@ -3103,19 +3099,19 @@ export default {
     _enum: ['PermissionError', 'NoAvailableBaseId', 'NoAvailablePartId', 'BaseDoesntExist', 'NeedsDefaultThemeFirst', 'PartDoesntExist', 'NoEquippableOnFixedPart']
   },
   /**
-   * Lookup412: pallet_app_promotion::pallet::Error<T>
+   * Lookup415: pallet_app_promotion::pallet::Error<T>
    **/
   PalletAppPromotionError: {
-    _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFounds', 'InvalidArgument']
+    _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFounds', 'PendingForBlockOverflow', 'InvalidArgument']
   },
   /**
-   * Lookup415: pallet_evm::pallet::Error<T>
+   * Lookup418: pallet_evm::pallet::Error<T>
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce']
   },
   /**
-   * Lookup418: fp_rpc::TransactionStatus
+   * Lookup421: fp_rpc::TransactionStatus
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -3127,11 +3123,11 @@ export default {
     logsBloom: 'EthbloomBloom'
   },
   /**
-   * Lookup420: ethbloom::Bloom
+   * Lookup423: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
   /**
-   * Lookup422: ethereum::receipt::ReceiptV3
+   * Lookup425: ethereum::receipt::ReceiptV3
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -3141,7 +3137,7 @@ export default {
     }
   },
   /**
-   * Lookup423: ethereum::receipt::EIP658ReceiptData
+   * Lookup426: ethereum::receipt::EIP658ReceiptData
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -3150,7 +3146,7 @@ export default {
     logs: 'Vec<EthereumLog>'
   },
   /**
-   * Lookup424: ethereum::block::Block<ethereum::transaction::TransactionV2>
+   * Lookup427: ethereum::block::Block<ethereum::transaction::TransactionV2>
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -3158,7 +3154,7 @@ export default {
     ommers: 'Vec<EthereumHeader>'
   },
   /**
-   * Lookup425: ethereum::header::Header
+   * Lookup428: ethereum::header::Header
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -3178,23 +3174,23 @@ export default {
     nonce: 'EthereumTypesHashH64'
   },
   /**
-   * Lookup426: ethereum_types::hash::H64
+   * Lookup429: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
   /**
-   * Lookup431: pallet_ethereum::pallet::Error<T>
+   * Lookup434: pallet_ethereum::pallet::Error<T>
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
   },
   /**
-   * Lookup432: pallet_evm_coder_substrate::pallet::Error<T>
+   * Lookup435: pallet_evm_coder_substrate::pallet::Error<T>
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
-   * Lookup433: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup436: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsSponsorshipStateBasicCrossAccountIdRepr: {
     _enum: {
@@ -3204,25 +3200,25 @@ export default {
     }
   },
   /**
-   * Lookup434: pallet_evm_contract_helpers::SponsoringModeT
+   * Lookup437: pallet_evm_contract_helpers::SponsoringModeT
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
-   * Lookup436: pallet_evm_contract_helpers::pallet::Error<T>
+   * Lookup439: pallet_evm_contract_helpers::pallet::Error<T>
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission', 'NoPendingSponsor']
   },
   /**
-   * Lookup437: pallet_evm_migration::pallet::Error<T>
+   * Lookup440: pallet_evm_migration::pallet::Error<T>
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating']
   },
   /**
-   * Lookup439: sp_runtime::MultiSignature
+   * Lookup442: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -3232,43 +3228,43 @@ export default {
     }
   },
   /**
-   * Lookup440: sp_core::ed25519::Signature
+   * Lookup443: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup442: sp_core::sr25519::Signature
+   * Lookup445: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup443: sp_core::ecdsa::Signature
+   * Lookup446: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup446: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup449: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup447: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup450: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup450: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup453: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup451: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup454: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup452: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup455: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup453: opal_runtime::Runtime
+   * Lookup456: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup454: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+   * Lookup457: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };

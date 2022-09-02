@@ -2665,11 +2665,6 @@ declare module '@polkadot/types/lookup' {
     readonly asSetAdminAddress: {
       readonly admin: PalletEvmAccountBasicCrossAccountIdRepr;
     } & Struct;
-    readonly isStartAppPromotion: boolean;
-    readonly asStartAppPromotion: {
-      readonly promotionStartRelayBlock: Option<u32>;
-    } & Struct;
-    readonly isStopAppPromotion: boolean;
     readonly isStake: boolean;
     readonly asStake: {
       readonly amount: u128;
@@ -2695,7 +2690,7 @@ declare module '@polkadot/types/lookup' {
     readonly asPayoutStakers: {
       readonly stakersNumber: Option<u8>;
     } & Struct;
-    readonly type: 'SetAdminAddress' | 'StartAppPromotion' | 'StopAppPromotion' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorConract' | 'StopSponsoringContract' | 'PayoutStakers';
+    readonly type: 'SetAdminAddress' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorConract' | 'StopSponsoringContract' | 'PayoutStakers';
   }
 
   /** @name PalletEvmCall (306) */
@@ -3291,16 +3286,17 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'PermissionError' | 'NoAvailableBaseId' | 'NoAvailablePartId' | 'BaseDoesntExist' | 'NeedsDefaultThemeFirst' | 'PartDoesntExist' | 'NoEquippableOnFixedPart';
   }
 
-  /** @name PalletAppPromotionError (412) */
+  /** @name PalletAppPromotionError (415) */
   interface PalletAppPromotionError extends Enum {
     readonly isAdminNotSet: boolean;
     readonly isNoPermission: boolean;
     readonly isNotSufficientFounds: boolean;
+    readonly isPendingForBlockOverflow: boolean;
     readonly isInvalidArgument: boolean;
-    readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'InvalidArgument';
+    readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'PendingForBlockOverflow' | 'InvalidArgument';
   }
 
-  /** @name PalletEvmError (415) */
+  /** @name PalletEvmError (418) */
   interface PalletEvmError extends Enum {
     readonly isBalanceLow: boolean;
     readonly isFeeOverflow: boolean;
@@ -3311,7 +3307,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce';
   }
 
-  /** @name FpRpcTransactionStatus (418) */
+  /** @name FpRpcTransactionStatus (421) */
   interface FpRpcTransactionStatus extends Struct {
     readonly transactionHash: H256;
     readonly transactionIndex: u32;
@@ -3322,10 +3318,10 @@ declare module '@polkadot/types/lookup' {
     readonly logsBloom: EthbloomBloom;
   }
 
-  /** @name EthbloomBloom (420) */
+  /** @name EthbloomBloom (423) */
   interface EthbloomBloom extends U8aFixed {}
 
-  /** @name EthereumReceiptReceiptV3 (422) */
+  /** @name EthereumReceiptReceiptV3 (425) */
   interface EthereumReceiptReceiptV3 extends Enum {
     readonly isLegacy: boolean;
     readonly asLegacy: EthereumReceiptEip658ReceiptData;
@@ -3336,7 +3332,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Legacy' | 'Eip2930' | 'Eip1559';
   }
 
-  /** @name EthereumReceiptEip658ReceiptData (423) */
+  /** @name EthereumReceiptEip658ReceiptData (426) */
   interface EthereumReceiptEip658ReceiptData extends Struct {
     readonly statusCode: u8;
     readonly usedGas: U256;
@@ -3344,14 +3340,14 @@ declare module '@polkadot/types/lookup' {
     readonly logs: Vec<EthereumLog>;
   }
 
-  /** @name EthereumBlock (424) */
+  /** @name EthereumBlock (427) */
   interface EthereumBlock extends Struct {
     readonly header: EthereumHeader;
     readonly transactions: Vec<EthereumTransactionTransactionV2>;
     readonly ommers: Vec<EthereumHeader>;
   }
 
-  /** @name EthereumHeader (425) */
+  /** @name EthereumHeader (428) */
   interface EthereumHeader extends Struct {
     readonly parentHash: H256;
     readonly ommersHash: H256;
@@ -3370,24 +3366,24 @@ declare module '@polkadot/types/lookup' {
     readonly nonce: EthereumTypesHashH64;
   }
 
-  /** @name EthereumTypesHashH64 (426) */
+  /** @name EthereumTypesHashH64 (429) */
   interface EthereumTypesHashH64 extends U8aFixed {}
 
-  /** @name PalletEthereumError (431) */
+  /** @name PalletEthereumError (434) */
   interface PalletEthereumError extends Enum {
     readonly isInvalidSignature: boolean;
     readonly isPreLogExists: boolean;
     readonly type: 'InvalidSignature' | 'PreLogExists';
   }
 
-  /** @name PalletEvmCoderSubstrateError (432) */
+  /** @name PalletEvmCoderSubstrateError (435) */
   interface PalletEvmCoderSubstrateError extends Enum {
     readonly isOutOfGas: boolean;
     readonly isOutOfFund: boolean;
     readonly type: 'OutOfGas' | 'OutOfFund';
   }
 
-  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (433) */
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (436) */
   interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
@@ -3397,7 +3393,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
   }
 
-  /** @name PalletEvmContractHelpersSponsoringModeT (434) */
+  /** @name PalletEvmContractHelpersSponsoringModeT (437) */
   interface PalletEvmContractHelpersSponsoringModeT extends Enum {
     readonly isDisabled: boolean;
     readonly isAllowlisted: boolean;
@@ -3405,21 +3401,21 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Allowlisted' | 'Generous';
   }
 
-  /** @name PalletEvmContractHelpersError (436) */
+  /** @name PalletEvmContractHelpersError (439) */
   interface PalletEvmContractHelpersError extends Enum {
     readonly isNoPermission: boolean;
     readonly isNoPendingSponsor: boolean;
     readonly type: 'NoPermission' | 'NoPendingSponsor';
   }
 
-  /** @name PalletEvmMigrationError (437) */
+  /** @name PalletEvmMigrationError (440) */
   interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
   }
 
-  /** @name SpRuntimeMultiSignature (439) */
+  /** @name SpRuntimeMultiSignature (442) */
   interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -3430,34 +3426,34 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
-  /** @name SpCoreEd25519Signature (440) */
+  /** @name SpCoreEd25519Signature (443) */
   interface SpCoreEd25519Signature extends U8aFixed {}
 
-  /** @name SpCoreSr25519Signature (442) */
+  /** @name SpCoreSr25519Signature (445) */
   interface SpCoreSr25519Signature extends U8aFixed {}
 
-  /** @name SpCoreEcdsaSignature (443) */
+  /** @name SpCoreEcdsaSignature (446) */
   interface SpCoreEcdsaSignature extends U8aFixed {}
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (446) */
+  /** @name FrameSystemExtensionsCheckSpecVersion (449) */
   type FrameSystemExtensionsCheckSpecVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckGenesis (447) */
+  /** @name FrameSystemExtensionsCheckGenesis (450) */
   type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name FrameSystemExtensionsCheckNonce (450) */
+  /** @name FrameSystemExtensionsCheckNonce (453) */
   interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-  /** @name FrameSystemExtensionsCheckWeight (451) */
+  /** @name FrameSystemExtensionsCheckWeight (454) */
   type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (452) */
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (455) */
   interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name OpalRuntimeRuntime (453) */
+  /** @name OpalRuntimeRuntime (456) */
   type OpalRuntimeRuntime = Null;
 
-  /** @name PalletEthereumFakeTransactionFinalizer (454) */
+  /** @name PalletEthereumFakeTransactionFinalizer (457) */
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module
