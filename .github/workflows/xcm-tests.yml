@@ -7,6 +7,15 @@ on:
     workflows: ["xcm-testnet-build"]
     types: 
       - completed  
+ # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - reopened
+      - synchronize   #commit(s) pushed to the pull request
+      - ready_for_review
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -23,6 +32,8 @@ concurrency:
 jobs:
 
   prepare-execution-marix:
+
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     name: Prepare execution matrix
 
