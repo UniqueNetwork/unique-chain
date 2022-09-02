@@ -21,7 +21,7 @@ import {WsProvider, Keyring} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {getGenericResult, generateKeyringPair} from '../util/helpers';
+import {getGenericResult, generateKeyringPair, waitEvent, describe_xcm} from '../util/helpers';
 import {MultiLocation} from '@polkadot/types/interfaces';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import waitNewBlocks from '../substrate/wait-new-blocks';
@@ -53,7 +53,7 @@ function moonbeamOptions(): ApiOptions {
   return parachainApiOptions(MOONBEAM_PORT);
 }
 
-describe('Integration test: Exchanging UNQ with Acala', () => {
+describe_xcm('Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
   
@@ -181,7 +181,7 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
   
       [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccount.address]);
   
-      const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle + TRANSFER_AMOUNT;
+      const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
       console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', unqFees);
       expect(unqFees > 0n).to.be.true;
     });
@@ -273,9 +273,53 @@ describe('Integration test: Exchanging UNQ with Acala', () => {
       expect(unqFees == 0n).to.be.true;
     });
   });
+
+  it('Unique rejects ACA tokens from Acala', async () => {
+    // This test is relevant only when the foreign asset pallet is disabled
+
+    await usingApi(async (api) => {
+      const destination = {
+        V1: {
+          parents: 1,
+          interior: {
+            X2: [
+              {Parachain: UNIQUE_CHAIN},
+              {
+                AccountId32: {
+                  network: 'Any',
+                  id: randomAccount.addressRaw,
+                },
+              },
+            ],
+          },
+        },
+      };
+
+      const id = {
+        Token: 'ACA',
+      };
+
+      const destWeight = 50000000;
+
+      const tx = api.tx.xTokens.transfer(id, 100_000_000_000, destination, destWeight);
+      const events = await submitTransactionAsync(alice, tx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
+    }, acalaOptions());
+
+    await usingApi(async api => {
+      const maxWaitBlocks = 3;
+      const xcmpQueueFailEvent = await waitEvent(api, maxWaitBlocks, 'xcmpQueue', 'Fail');
+
+      expect(
+        xcmpQueueFailEvent != null,
+        'Only native token is supported when the Foreign-Assets pallet is not connected',
+      ).to.be.true;
+    });
+  });
 });
 
-describe('Integration test: Exchanging UNQ with Moonbeam', () => {
+describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
 
   // Unique constants
   let uniqueAlice: IKeyringPair;
@@ -536,7 +580,7 @@ describe('Integration test: Exchanging UNQ with Moonbeam', () => {
       [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccountUnique.address]);
       expect(balanceUniqueTokenMiddle < balanceUniqueTokenInit).to.be.true;
 
-      const transactionFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle + TRANSFER_AMOUNT;
+      const transactionFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
       console.log('[Unique -> Moonbeam] transaction fees on Unique: %s UNQ', transactionFees);
       expect(transactionFees > 0).to.be.true;
     });
