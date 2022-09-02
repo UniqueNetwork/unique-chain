@@ -18,25 +18,25 @@ jobs:
 
   unit-test:
     if: github.event.pull_request.draft != true
-    uses: ./.github/workflows/reusable/unit-test_v2.yml
+    uses: ./.github/workflows/unit-test_v2.yml
 
   node-only-update:
     if: github.event.pull_request.draft == false
-    uses: ./.github/workflows/reusable/node-only-update_v2.yml
+    uses: ./.github/workflows/node-only-update_v2.yml
 
   forkless:
     if: contains( github.event.pull_request.labels.*.name, 'forkless')
-    uses: ./.github/workflows/reusable/forkless.yml
+    uses: ./.github/workflows/forkless.yml
 
   canary:
     if: contains( github.event.pull_request.labels.*.name, 'canary')
-    uses: ./.github/workflows/reusable/canary.yml
+    uses: ./.github/workflows/canary.yml
     secrets: inherit # pass all secrets
 
   xcm:
     if: contains( github.event.pull_request.labels.*.name, 'xcm')
-    uses: ./.github/workflows/reusable/xcm.yml
+    uses: ./.github/workflows/xcm.yml
 
   codestyle:
     if: github.event.pull_request.draft == false
-    uses: ./.github/workflows/reusable/codestyle_v2.yml
+    uses: ./.github/workflows/codestyle_v2.yml
