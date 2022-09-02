@@ -36,6 +36,7 @@ jobs:
   xcm:
     if: contains( github.event.pull_request.labels.*.name, 'xcm')
     uses: ./.github/workflows/xcm.yml
+    secrets: inherit # pass all secrets
 
   codestyle:
     if: github.event.pull_request.draft == false
