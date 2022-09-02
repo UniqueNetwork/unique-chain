@@ -2,13 +2,8 @@ name: master
 
 on:
   pull_request:
-    branches:
-      - master
-    types:
-      - opened
-      - reopened
-      - synchronize   #commit(s) pushed to the pull request
-      - ready_for_review
+    branches: [ master ]
+    types: [ opened, reopened, synchronize, ready_for_review ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
