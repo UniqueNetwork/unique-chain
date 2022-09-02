@@ -51,14 +51,12 @@ before(async function () {
     if (!promotionStartBlock) {
       promotionStartBlock = (await helper.api!.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
     }
-    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.startAppPromotion(promotionStartBlock!)));
     accounts = await helper.arrange.createCrowd(100, 1000n, alice); // create accounts-pool to speed up tests
   });
 });
 
 after(async function () {
   await usingPlaygrounds(async (helper) => {
-    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.promotion.stopAppPromotion()));
   });
 });
 
@@ -241,7 +239,7 @@ describe('unstake balance extrinsic', () => {
 
   it('should be possible for different accounts in one block', async () => {
     await usingPlaygrounds(async (helper) => {
-      const stakers = [accounts.pop()!, accounts.pop()!, accounts.pop()!, accounts.pop()!, accounts.pop()!];
+      const stakers = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
 
       await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
       await Promise.all(stakers.map(staker => helper.staking.unstake(staker)));

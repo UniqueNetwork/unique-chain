@@ -358,7 +358,7 @@ pub mod pallet {
 			let block = <frame_system::Pallet<T>>::block_number() + T::PendingInterval::get();
 			let mut pendings = <PendingUnstake<T>>::get(block);
 
-			ensure!(pendings.is_full(), Error::<T>::PendingForBlockOverflow);
+			ensure!(!pendings.is_full(), Error::<T>::PendingForBlockOverflow);
 
 			let mut total_stakes = 0u64;
 
@@ -370,7 +370,7 @@ pub mod pallet {
 				.sum();
 
 			if total_staked.is_zero() {
-				return Ok(None.into());
+				return Ok(None.into()); // TO-DO
 			}
 
 			pendings
@@ -387,7 +387,7 @@ pub mod pallet {
 				TotalStaked::<T>::get()
 					.checked_sub(&total_staked)
 					.ok_or(ArithmeticError::Underflow)?,
-			); // when error we should recover initial stake state for the staker
+			);
 
 			StakesPerAccount::<T>::remove(&staker_id);
 
@@ -474,46 +474,46 @@ pub mod pallet {
 			let next_recalc_block = current_recalc_block + T::RecalculationInterval::get();
 
 			let mut storage_iterator = Self::get_next_calculated_key()
-				.map_or(Staked::<T>::iter().skip(0), |key| {
-					Staked::<T>::iter_from(key).skip(1)
+				.map_or(Staked::<T>::iter(), |key| {
+					Staked::<T>::iter_from(key)
 				});
 
 			NextCalculatedRecord::<T>::set(None);
 
 			{
 				let mut stakers_number = stakers_number.unwrap_or(20);
-				let mut current_id = admin_id;
+				let mut last_id = admin_id;
 				let mut income_acc = BalanceOf::<T>::default();
 
-				while let Some(((id, staked_block), (amount, next_recalc_block_for_stake))) =
+				while let Some(((current_id, staked_block), (amount, next_recalc_block_for_stake))) =
 					storage_iterator.next()
 				{
-					if current_id != id {
+					if last_id != current_id {
 						if income_acc != BalanceOf::<T>::default() {
 							<T::Currency as Currency<T::AccountId>>::transfer(
 								&T::TreasuryAccountId::get(),
-								&current_id,
+								&last_id,
 								income_acc,
 								ExistenceRequirement::KeepAlive,
 							)
-							.and_then(|_| Self::add_lock_balance(&current_id, income_acc))?;
+							.and_then(|_| Self::add_lock_balance(&last_id, income_acc))?;
 
 							Self::deposit_event(Event::StakingRecalculation(
-								current_id, amount, income_acc,
+								last_id, amount, income_acc,
 							));
 						}
 
 						if stakers_number == 0 {
-							NextCalculatedRecord::<T>::set(Some((id, staked_block)));
+							NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
 							break;
 						}
 						stakers_number -= 1;
 						income_acc = BalanceOf::<T>::default();
-						current_id = id;
+						last_id = current_id;
 					};
 					if current_recalc_block >= next_recalc_block_for_stake {
 						Self::recalculate_and_insert_stake(
-							&current_id,
+							&last_id,
 							staked_block,
 							next_recalc_block,
 							amount,
