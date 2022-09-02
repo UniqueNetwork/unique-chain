@@ -12,11 +12,9 @@ concurrency:
 jobs:
 
   unit-test:
-    if:  ${{ github.event.pull_request.draft != 'true' }}
     uses: ./.github/workflows/unit-test_v2.yml
 
   node-only-update:
-    if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/node-only-update_v2.yml
 
   forkless:
@@ -34,5 +32,4 @@ jobs:
     secrets: inherit # pass all secrets
 
   codestyle:
-    if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/codestyle_v2.yml
