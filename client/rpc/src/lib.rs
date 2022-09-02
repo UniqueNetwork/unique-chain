@@ -412,47 +412,27 @@ mod rmrk_unique_rpc {
 	}
 }
 
-pub struct Unique<C, P> {
-	client: Arc<C>,
-	_marker: std::marker::PhantomData<P>,
-}
-
-impl<C, P> Unique<C, P> {
-	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
+macro_rules! define_struct_for_server_api {
+	($name:ident) => {
+		pub struct $name<C, P> {
+			client: Arc<C>,
+			_marker: std::marker::PhantomData<P>,
 		}
-	}
-}
-
-pub struct AppPromotion<C, P> {
-	client: Arc<C>,
-	_marker: std::marker::PhantomData<P>,
-}
-
-impl<C, P> AppPromotion<C, P> {
-	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
+		
+		impl<C, P> $name<C, P> {
+			pub fn new(client: Arc<C>) -> Self {
+				Self {
+					client,
+					_marker: Default::default(),
+				}
+			}
 		}
-	}
+	};
 }
 
-pub struct Rmrk<C, P> {
-	client: Arc<C>,
-	_marker: std::marker::PhantomData<P>,
-}
-
-impl<C, P> Rmrk<C, P> {
-	pub fn new(client: Arc<C>) -> Self {
-		Self {
-			client,
-			_marker: Default::default(),
-		}
-	}
-}
+define_struct_for_server_api!(Unique);
+define_struct_for_server_api!(AppPromotion);
+define_struct_for_server_api!(Rmrk);
 
 macro_rules! pass_method {
 	(
@@ -605,14 +585,14 @@ where
 		|v| v
 		.into_iter()
 		.map(|(b, a)| (b, a.to_string()))
-		.collect::<Vec<_>>(), unique_api);
-	pass_method!(total_staking_locked(staker: CrossAccountId) -> String => |v| v.to_string(), unique_api);
-	pass_method!(pending_unstake(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), unique_api);
+		.collect::<Vec<_>>(), app_promotion_api);
+	pass_method!(total_staking_locked(staker: CrossAccountId) -> String => |v| v.to_string(), app_promotion_api);
+	pass_method!(pending_unstake(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), app_promotion_api);
 	pass_method!(pending_unstake_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, String)> =>
 		|v| v
 		.into_iter()
 		.map(|(b, a)| (b, a.to_string()))
-		.collect::<Vec<_>>(), unique_api);
+		.collect::<Vec<_>>(), app_promotion_api);
 }
 
 #[allow(deprecated)]
