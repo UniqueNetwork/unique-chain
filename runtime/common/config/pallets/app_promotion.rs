@@ -30,7 +30,7 @@ use up_common::{
 parameter_types! {
 	pub const AppPromotionId: PalletId = PalletId(*b"appstake");
 	pub const RecalculationInterval: BlockNumber = 20;
-	pub const PendingInterval: BlockNumber = 20;
+	pub const PendingInterval: BlockNumber = 10;
 	pub const Nominal: Balance = UNIQUE;
 	pub const Day: BlockNumber = DAYS;
 	pub IntervalIncome: Perbill = Perbill::from_rational(RecalculationInterval::get(), RELAY_DAYS) * Perbill::from_rational(5u32, 10_000);

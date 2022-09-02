@@ -41,6 +41,7 @@ use sp_std::{
 	vec,
 	iter::Sum,
 	borrow::ToOwned,
+	cell::RefCell,
 };
 use sp_core::H160;
 use codec::EncodeLike;
@@ -474,57 +475,120 @@ pub mod pallet {
 			let next_recalc_block = current_recalc_block + T::RecalculationInterval::get();
 
 			let mut storage_iterator = Self::get_next_calculated_key()
-				.map_or(Staked::<T>::iter(), |key| {
-					Staked::<T>::iter_from(key)
-				});
+				.map_or(Staked::<T>::iter(), |key| Staked::<T>::iter_from(key));
 
 			NextCalculatedRecord::<T>::set(None);
 
+			// {
+			// 	let mut stakers_number = stakers_number.unwrap_or(20);
+			// 	let mut last_id = admin_id;
+			// 	let mut income_acc = BalanceOf::<T>::default();
+			// 	let mut amount_acc = BalanceOf::<T>::default();
+
+			// 	while let Some((
+			// 		(current_id, staked_block),
+			// 		(amount, next_recalc_block_for_stake),
+			// 	)) = storage_iterator.next()
+			// 	{
+			// 		if last_id != current_id {
+			// 			if income_acc != BalanceOf::<T>::default() {
+			// 				<T::Currency as Currency<T::AccountId>>::transfer(
+			// 					&T::TreasuryAccountId::get(),
+			// 					&last_id,
+			// 					income_acc,
+			// 					ExistenceRequirement::KeepAlive,
+			// 				)
+			// 				.and_then(|_| Self::add_lock_balance(&last_id, income_acc))?;
+
+			// 				Self::deposit_event(Event::StakingRecalculation(
+			// 					last_id, amount, income_acc,
+			// 				));
+			// 			}
+
+			// 			if stakers_number == 0 {
+			// 				NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
+			// 				break;
+			// 			}
+			// 			stakers_number -= 1;
+			// 			income_acc = BalanceOf::<T>::default();
+			// 			last_id = current_id;
+			// 		};
+			// 		if current_recalc_block >= next_recalc_block_for_stake {
+			// 			Self::recalculate_and_insert_stake(
+			// 				&last_id,
+			// 				staked_block,
+			// 				next_recalc_block,
+			// 				amount,
+			// 				((current_recalc_block - next_recalc_block_for_stake)
+			// 					/ T::RecalculationInterval::get())
+			// 				.into() + 1,
+			// 				&mut income_acc,
+			// 			);
+			// 		}
+			// 	}
+			// }
+			
 			{
 				let mut stakers_number = stakers_number.unwrap_or(20);
-				let mut last_id = admin_id;
-				let mut income_acc = BalanceOf::<T>::default();
-
-				while let Some(((current_id, staked_block), (amount, next_recalc_block_for_stake))) =
-					storage_iterator.next()
-				{
-					if last_id != current_id {
-						if income_acc != BalanceOf::<T>::default() {
+				let  last_id = RefCell::new(None);
+				let income_acc = RefCell::new(BalanceOf::<T>::default());
+				let amount_acc = RefCell::new(BalanceOf::<T>::default());
+				
+				let flush_stake = || -> DispatchResult {
+					if let Some(last_id) = &*last_id.borrow() {
+						if !income_acc.borrow().is_zero() {
 							<T::Currency as Currency<T::AccountId>>::transfer(
 								&T::TreasuryAccountId::get(),
-								&last_id,
-								income_acc,
+								last_id,
+								*income_acc.borrow(),
 								ExistenceRequirement::KeepAlive,
 							)
-							.and_then(|_| Self::add_lock_balance(&last_id, income_acc))?;
+							.and_then(|_| Self::add_lock_balance(last_id, *income_acc.borrow()))?;
 
 							Self::deposit_event(Event::StakingRecalculation(
-								last_id, amount, income_acc,
+								last_id.clone(),
+								*amount_acc.borrow(),
+								*income_acc.borrow(),
 							));
 						}
 
-						if stakers_number == 0 {
-							NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
-							break;
-						}
-						stakers_number -= 1;
-						income_acc = BalanceOf::<T>::default();
-						last_id = current_id;
+						*income_acc.borrow_mut() = BalanceOf::<T>::default();
+						*amount_acc.borrow_mut() = BalanceOf::<T>::default();
+					}
+					Ok(())
+				};
+
+				while let Some((
+					(current_id, staked_block),
+					(amount, next_recalc_block_for_stake),
+				)) = storage_iterator.next()
+				{
+					if stakers_number == 0 {
+						NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
+						break;
+					}
+					stakers_number -= 1;
+					if last_id.borrow().as_ref() != Some(&current_id) {
+						flush_stake()?;
 					};
+					*last_id.borrow_mut() = Some(current_id.clone());
 					if current_recalc_block >= next_recalc_block_for_stake {
+						*amount_acc.borrow_mut() += amount;  
 						Self::recalculate_and_insert_stake(
-							&last_id,
+							&current_id,
 							staked_block,
 							next_recalc_block,
 							amount,
 							((current_recalc_block - next_recalc_block_for_stake)
 								/ T::RecalculationInterval::get())
 							.into() + 1,
-							&mut income_acc,
+							&mut *income_acc.borrow_mut(),
 						);
 					}
 				}
+				flush_stake()?;
 			}
+
 
 			Ok(())
 		}

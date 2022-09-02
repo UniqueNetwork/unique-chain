@@ -424,7 +424,7 @@ macro_rules! define_struct_for_server_api {
 			client: Arc<C>,
 			_marker: std::marker::PhantomData<P>,
 		}
-		
+
 		impl<C, P> $name<C, P> {
 			pub fn new(client: Arc<C>) -> Self {
 				Self {
