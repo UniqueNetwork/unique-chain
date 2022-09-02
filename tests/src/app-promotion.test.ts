@@ -38,20 +38,20 @@ let nominal: bigint;
 const palletAddress = calculatePalleteAddress('appstake');
 let accounts: IKeyringPair[] = [];
 
-describe('app-promotions.stake extrinsic', () => {
-  before(async function () {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKeyWrapper('//Alice');
-      palletAdmin = privateKeyWrapper('//Charlie'); // TODO use custom address
-      await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
-      nominal = helper.balance.getOneTokenNominal();
-      await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);
-      await helper.balance.transferToSubstrate(alice, palletAddress, 1000n * nominal);
-      accounts = await helper.arrange.createCrowd(100, 1000n, alice); // create accounts-pool to speed up tests
-    });
+before(async function () {
+  await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+    if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
+    alice = privateKeyWrapper('//Alice');
+    palletAdmin = privateKeyWrapper('//Charlie'); // TODO use custom address
+    await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+    nominal = helper.balance.getOneTokenNominal();
+    await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);
+    await helper.balance.transferToSubstrate(alice, palletAddress, 1000n * nominal);
+    accounts = await helper.arrange.createCrowd(100, 1000n, alice); // create accounts-pool to speed up tests
   });
+});
 
+describe('app-promotions.stake extrinsic', () => {
   it('should "lock" staking balance, add it to "staked" map, and increase "totalStaked" amount', async () => {
     await usingPlaygrounds(async (helper) => {
       const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
@@ -681,7 +681,7 @@ describe('app-promotion rewards', () => {
       
       // so he did not receive any rewards
       const totalBalanceBefore = await helper.balance.getSubstrate(staker.address);
-      await helper.signTransaction(palletAdmin, helper.api!.tx.promotion.payoutStakers(100));
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
       const totalBalanceAfter = await helper.balance.getSubstrate(staker.address);
 
       expect(totalBalanceBefore).to.be.equal(totalBalanceAfter);
