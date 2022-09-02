@@ -498,7 +498,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type CurrencyId = AssetIds;
+	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = CurrencyIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
