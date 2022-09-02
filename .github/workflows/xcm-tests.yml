@@ -26,8 +26,6 @@ jobs:
 
     name: Prepare execution matrix
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
     runs-on: XL
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
