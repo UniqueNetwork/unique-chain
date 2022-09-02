@@ -250,14 +250,17 @@ pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 
 mod app_promotion_unique_rpc {
 	use super::*;
-	
+
 	#[rpc(server)]
 	#[async_trait]
 	pub trait AppPromotionApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
 		/// Returns the total amount of staked tokens.
 		#[method(name = "appPromotion_totalStaked")]
-		fn total_staked(&self, staker: Option<CrossAccountId>, at: Option<BlockHash>)
-			-> Result<String>;
+		fn total_staked(
+			&self,
+			staker: Option<CrossAccountId>,
+			at: Option<BlockHash>,
+		) -> Result<String>;
 
 		///Returns the total amount of staked tokens per block when staked.
 		#[method(name = "appPromotion_totalStakedPerBlock")]
@@ -269,8 +272,11 @@ mod app_promotion_unique_rpc {
 
 		/// Returns the total amount locked by staking tokens.
 		#[method(name = "appPromotion_totalStakingLocked")]
-		fn total_staking_locked(&self, staker: CrossAccountId, at: Option<BlockHash>)
-			-> Result<String>;
+		fn total_staking_locked(
+			&self,
+			staker: CrossAccountId,
+			at: Option<BlockHash>,
+		) -> Result<String>;
 
 		/// Returns the total amount of tokens pending withdrawal from staking.
 		#[method(name = "appPromotion_pendingUnstake")]
@@ -570,8 +576,12 @@ where
 }
 
 impl<C, Block, BlockNumber, CrossAccountId, AccountId>
- 	app_promotion_unique_rpc::AppPromotionApiServer<<Block as BlockT>::Hash, BlockNumber, CrossAccountId, AccountId>
-	for AppPromotion<C, Block>
+	app_promotion_unique_rpc::AppPromotionApiServer<
+		<Block as BlockT>::Hash,
+		BlockNumber,
+		CrossAccountId,
+		AccountId,
+	> for AppPromotion<C, Block>
 where
 	Block: BlockT,
 	BlockNumber: Decode + Member + AtLeast32BitUnsigned,

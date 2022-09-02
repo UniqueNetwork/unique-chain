@@ -39,13 +39,13 @@ benchmarks! {
 		T::BlockNumber: From<u32> + Into<u32>,
 		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
 	}
-	start_app_promotion {
+	// start_app_promotion {
 
-	} : {PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), None)?}
+	// } : {PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), None)?}
 
-	stop_app_promotion{
-		PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), Some(25.into()))?;
-	} : {PromototionPallet::<T>::stop_app_promotion(RawOrigin::Root.into())?}
+	// stop_app_promotion{
+	// 	PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), Some(25.into()))?;
+	// } : {PromototionPallet::<T>::stop_app_promotion(RawOrigin::Root.into())?}
 
 	set_admin_address {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -58,6 +58,10 @@ benchmarks! {
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let staker: T::AccountId = account("caller", 0, SEED);
+		let stakers: Vec<T::AccountId> = (0..100).map(|index| account("staker", index, SEED)).collect();
+		stakers.iter().for_each(|staker| {
+			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		});
 		let _ = <T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), share * <T as Config>::Currency::total_balance(&staker))?;
 	} : {PromototionPallet::<T>::payout_stakers(RawOrigin::Signed(pallet_admin.clone()).into(), Some(1))?}
@@ -70,9 +74,9 @@ benchmarks! {
 
 	unstake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
-		let share = Perbill::from_rational(1u32, 10);
+		let share = Perbill::from_rational(1u32, 20);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
+		(0..10).map(|_| PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))).collect::<Result<Vec<_>, _>>()?;
 
 	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into())?}
 
