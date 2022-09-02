@@ -36,7 +36,12 @@ mod tests;
 pub mod types;
 pub mod weights;
 
-use sp_std::{vec::Vec, iter::Sum, borrow::ToOwned};
+use sp_std::{
+	vec::{Vec},
+	vec,
+	iter::Sum,
+	borrow::ToOwned,
+};
 use sp_core::H160;
 use codec::EncodeLike;
 use pallet_balances::BalanceLock;
@@ -63,6 +68,9 @@ use sp_runtime::{
 	ArithmeticError,
 };
 
+pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
+const PENDING_LIMIT_PER_BLOCK: u32 = 3;
+
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
@@ -72,17 +80,19 @@ type BalanceOf<T> =
 // const TWO_WEEK: u32 = 2 * WEEK;
 // const YEAR: u32 = DAY * 365;
 
-pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId};
+	use frame_support::{
+		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId,
+		traits::ReservableCurrency,
+	};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
-		type Currency: ExtendedLockableCurrency<Self::AccountId>;
+		type Currency: ExtendedLockableCurrency<Self::AccountId>
+			+ ReservableCurrency<Self::AccountId>;
 
 		type CollectionHandler: CollectionHandler<
 			AccountId = Self::AccountId,
@@ -149,6 +159,7 @@ pub mod pallet {
 		NoPermission,
 		/// Insufficient funds to perform an action
 		NotSufficientFounds,
+		PendingForBlockOverflow,
 		/// An error related to the fact that an invalid argument was passed to perform an action
 		InvalidArgument,
 	}
@@ -175,25 +186,33 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::AccountId, u8, ValueQuery>;
 
 	/// Amount of tokens pending unstake per user per block.
+	// #[pallet::storage]
+	// pub type PendingUnstake<T: Config> = StorageNMap<
+	// 	Key = (
+	// 		Key<Blake2_128Concat, T::AccountId>,
+	// 		Key<Twox64Concat, T::BlockNumber>,
+	// 	),
+	// 	Value = BalanceOf<T>,
+	// 	QueryKind = ValueQuery,
+	// >;
 	#[pallet::storage]
-	pub type PendingUnstake<T: Config> = StorageNMap<
-		Key = (
-			Key<Blake2_128Concat, T::AccountId>,
-			Key<Twox64Concat, T::BlockNumber>,
-		),
-		Value = BalanceOf<T>,
-		QueryKind = ValueQuery,
+	pub type PendingUnstake<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		T::BlockNumber,
+		BoundedVec<(T::AccountId, BalanceOf<T>), ConstU32<PENDING_LIMIT_PER_BLOCK>>,
+		ValueQuery,
 	>;
 
 	/// A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
 	#[pallet::storage]
 	pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
-	/// Next target block when interest is recalculated
-	#[pallet::storage]
-	#[pallet::getter(fn get_interest_block)]
-	pub type NextInterestBlock<T: Config> =
-		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+	// /// Next target block when interest is recalculated
+	// #[pallet::storage]
+	// #[pallet::getter(fn get_interest_block)]
+	// pub type NextInterestBlock<T: Config> =
+	// 	StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
 	/// Stores hash a record for which the last revenue recalculation was performed.
 	/// If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
@@ -204,59 +223,26 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(current_block: T::BlockNumber) -> Weight
+		fn on_initialize(current_block_number: T::BlockNumber) -> Weight
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
 			let mut consumed_weight = 0;
-			// let mut add_weight = |reads, writes, weight| {
-			// 	consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-			// 	consumed_weight += weight;
-			// };
+			let mut add_weight = |reads, writes, weight| {
+				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+				consumed_weight += weight;
+			};
 
-			let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
-			PendingUnstake::<T>::iter()
-				.filter_map(|((staker, block), amount)| {
-					if block <= current_relay_block {
-						Some((staker, block, amount))
-					} else {
-						None
-					}
-				})
-				.for_each(|(staker, block, amount)| {
-					Self::unlock_balance_unchecked(&staker, amount);
-					<PendingUnstake<T>>::remove((staker, block));
+			let block_pending = PendingUnstake::<T>::take(current_block_number);
+
+			add_weight(0, 1, 0);
+
+			if !block_pending.is_empty() {
+				block_pending.into_iter().for_each(|(staker, amount)| {
+					<T::Currency as ReservableCurrency<T::AccountId>>::unreserve(&staker, amount);
 				});
+			}
 
-			// let next_interest_block = Self::get_interest_block();
-			// let current_relay_block = T::RelayBlockNumberProvider::current_block_number();
-			// if next_interest_block != 0.into() && current_relay_block >= next_interest_block {
-			// 	let mut acc = <BalanceOf<T>>::default();
-			// 	let mut base_acc = <BalanceOf<T>>::default();
-
-			// 	NextInterestBlock::<T>::set(
-			// 		NextInterestBlock::<T>::get() + T::RecalculationInterval::get(),
-			// 	);
-			// 	add_weight(0, 1, 0);
-
-			// 	Staked::<T>::iter()
-			// 		.filter(|((_, block), _)| {
-			// 			*block + T::RecalculationInterval::get() <= current_relay_block
-			// 		})
-			// 		.for_each(|((staker, block), amount)| {
-			// 			Self::recalculate_stake(&staker, block, amount, &mut acc);
-			// 			add_weight(0, 0, T::WeightInfo::recalculate_stake());
-			// 			base_acc += amount;
-			// 		});
-			// 	<TotalStaked<T>>::get()
-			// 		.checked_add(&acc)
-			// 		.map(|res| <TotalStaked<T>>::set(res));
-
-			// 	Self::deposit_event(Event::StakingRecalculation(base_acc, acc));
-			// 	add_weight(0, 1, 0);
-			// } else {
-			// 	add_weight(1, 0, 0)
-			// };
 			consumed_weight
 		}
 	}
@@ -275,44 +261,44 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::start_app_promotion())]
-		pub fn start_app_promotion(
-			origin: OriginFor<T>,
-			promotion_start_relay_block: Option<T::BlockNumber>,
-		) -> DispatchResult
-		where
-			<T as frame_system::Config>::BlockNumber: From<u32>,
-		{
-			ensure_root(origin)?;
+		// #[pallet::weight(T::WeightInfo::start_app_promotion())]
+		// pub fn start_app_promotion(
+		// 	origin: OriginFor<T>,
+		// 	promotion_start_relay_block: Option<T::BlockNumber>,
+		// ) -> DispatchResult
+		// where
+		// 	<T as frame_system::Config>::BlockNumber: From<u32>,
+		// {
+		// 	ensure_root(origin)?;
 
-			// Start app-promotion mechanics if it has not been yet initialized
-			if <StartBlock<T>>::get() == 0u32.into() {
-				let start_block = promotion_start_relay_block
-					.unwrap_or(T::RelayBlockNumberProvider::current_block_number());
+		// 	// Start app-promotion mechanics if it has not been yet initialized
+		// 	if <StartBlock<T>>::get() == 0u32.into() {
+		// 		let start_block = promotion_start_relay_block
+		// 			.unwrap_or(T::RelayBlockNumberProvider::current_block_number());
 
-				// Set promotion global start block
-				<StartBlock<T>>::set(start_block);
+		// 		// Set promotion global start block
+		// 		<StartBlock<T>>::set(start_block);
 
-				<NextInterestBlock<T>>::set(start_block + T::RecalculationInterval::get());
-			}
+		// 		<NextInterestBlock<T>>::set(start_block + T::RecalculationInterval::get());
+		// 	}
 
-			Ok(())
-		}
+		// 	Ok(())
+		// }
 
-		#[pallet::weight(T::WeightInfo::stop_app_promotion())]
-		pub fn stop_app_promotion(origin: OriginFor<T>) -> DispatchResult
-		where
-			<T as frame_system::Config>::BlockNumber: From<u32>,
-		{
-			ensure_root(origin)?;
+		// #[pallet::weight(T::WeightInfo::stop_app_promotion())]
+		// pub fn stop_app_promotion(origin: OriginFor<T>) -> DispatchResult
+		// where
+		// 	<T as frame_system::Config>::BlockNumber: From<u32>,
+		// {
+		// 	ensure_root(origin)?;
 
-			if <StartBlock<T>>::get() != 0u32.into() {
-				<StartBlock<T>>::set(T::BlockNumber::default());
-				<NextInterestBlock<T>>::set(T::BlockNumber::default());
-			}
+		// 	if <StartBlock<T>>::get() != 0u32.into() {
+		// 		<StartBlock<T>>::set(T::BlockNumber::default());
+		// 		<NextInterestBlock<T>>::set(T::BlockNumber::default());
+		// 	}
 
-			Ok(())
-		}
+		// 	Ok(())
+		// }
 
 		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
@@ -369,6 +355,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::unstake())]
 		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let staker_id = ensure_signed(staker)?;
+			let block = <frame_system::Pallet<T>>::block_number() + T::PendingInterval::get();
+			let mut pendings = <PendingUnstake<T>>::get(block);
+
+			ensure!(pendings.is_full(), Error::<T>::PendingForBlockOverflow);
 
 			let mut total_stakes = 0u64;
 
@@ -382,14 +372,16 @@ pub mod pallet {
 			if total_staked.is_zero() {
 				return Ok(None.into());
 			}
-			let block =
-				T::RelayBlockNumberProvider::current_block_number() + T::PendingInterval::get();
-			<PendingUnstake<T>>::insert(
-				(&staker_id, block),
-				<PendingUnstake<T>>::get((&staker_id, block))
-					.checked_add(&total_staked)
-					.ok_or(ArithmeticError::Overflow)?,
-			);
+
+			pendings
+				.try_push((staker_id.clone(), total_staked))
+				.map_err(|_| Error::<T>::PendingForBlockOverflow)?;
+
+			<PendingUnstake<T>>::insert(block, pendings);
+
+			Self::unlock_balance_unchecked(&staker_id, total_staked);
+
+			<T::Currency as ReservableCurrency<T::AccountId>>::reserve(&staker_id, total_staked)?;
 
 			TotalStaked::<T>::set(
 				TotalStaked::<T>::get()
@@ -671,17 +663,37 @@ where
 	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
 {
 	pub fn cross_id_pending_unstake(staker: Option<T::CrossAccountId>) -> BalanceOf<T> {
-		staker.map_or(PendingUnstake::<T>::iter_values().sum(), |s| {
-			PendingUnstake::<T>::iter_prefix_values((s.as_sub(),)).sum()
-		})
+		staker.map_or(
+			PendingUnstake::<T>::iter_values()
+				.flat_map(|pendings| pendings.into_iter().map(|(_, amount)| amount))
+				.sum(),
+			|s| {
+				PendingUnstake::<T>::iter_values()
+					.flatten()
+					.filter_map(|(id, amount)| {
+						if id == *s.as_sub() {
+							Some(amount)
+						} else {
+							None
+						}
+					})
+					.sum()
+			},
+		)
 	}
 
 	pub fn cross_id_pending_unstake_per_block(
 		staker: T::CrossAccountId,
 	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
-		let mut unsorted_res = PendingUnstake::<T>::iter_prefix((staker.as_sub(),))
-			.into_iter()
-			.collect::<Vec<_>>();
+		let mut unsorted_res = vec![];
+		PendingUnstake::<T>::iter().for_each(|(block, pendings)| {
+			pendings.into_iter().for_each(|(id, amount)| {
+				if id == *staker.as_sub() {
+					unsorted_res.push((block, amount));
+				};
+			})
+		});
+
 		unsorted_res.sort_by_key(|(block, _)| *block);
 		unsorted_res
 	}

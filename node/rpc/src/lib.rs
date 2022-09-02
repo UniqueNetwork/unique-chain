@@ -148,7 +148,12 @@ where
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api:
 		up_rpc::UniqueApi<Block, BlockNumber, <R as RuntimeInstance>::CrossAccountId, AccountId>,
-	C::Api: app_promotion_rpc::AppPromotionApi<Block, BlockNumber, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	C::Api: app_promotion_rpc::AppPromotionApi<
+		Block,
+		BlockNumber,
+		<R as RuntimeInstance>::CrossAccountId,
+		AccountId,
+	>,
 	C::Api: rmrk_rpc::RmrkApi<
 		Block,
 		AccountId,

@@ -16,20 +16,20 @@
 
 #![cfg(test)]
 #![allow(clippy::from_over_into)]
-use crate as pallet_promotion;
+// use crate as pallet_promotion;
 
-use frame_benchmarking::{add_benchmark, BenchmarkBatch};
-use frame_support::{
-	assert_ok, parameter_types,
-	traits::{Currency, OnInitialize, Everything, ConstU32},
-};
-use frame_system::RawOrigin;
-use sp_core::H256;
-use sp_runtime::{
-	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
-	testing::Header,
-	Perbill, Perquintill,
-};
+// use frame_benchmarking::{add_benchmark, BenchmarkBatch};
+// use frame_support::{
+// 	assert_ok, parameter_types,
+// 	traits::{Currency, OnInitialize, Everything, ConstU32},
+// };
+// use frame_system::RawOrigin;
+// use sp_core::H256;
+// use sp_runtime::{
+// 	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
+// 	testing::Header,
+// 	Perbill, Perquintill,
+// };
 
 // type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 // type Block = frame_system::mocking::MockBlock<Test>;
@@ -127,24 +127,24 @@ use sp_runtime::{
 // 	} )
 // }
 
-#[test]
-fn test_perbill() {
-	const ONE_UNIQE: u128 = 1_000_000_000_000_000_000;
-	const SECONDS_TO_BLOCK: u32 = 12;
-	const DAY: u32 = 60 * 60 * 24 / SECONDS_TO_BLOCK;
-	const RECALCULATION_INTERVAL: u32 = 10;
-	let day_rate = Perbill::from_rational(5u64, 10_000);
-	let interval_rate =
-		Perbill::from_rational::<u64>(RECALCULATION_INTERVAL.into(), DAY.into()) * day_rate;
-	println!("{:?}", interval_rate * ONE_UNIQE + ONE_UNIQE);
-	println!("{:?}", day_rate * ONE_UNIQE);
-	println!("{:?}", Perbill::one() * ONE_UNIQE);
-	println!("{:?}", ONE_UNIQE);
-	let mut next_iters = ONE_UNIQE + interval_rate * ONE_UNIQE;
-	next_iters += interval_rate * next_iters;
-	println!("{:?}", next_iters);
-	let day_income = day_rate * ONE_UNIQE;
-	let interval_income = interval_rate * ONE_UNIQE;
-	let ratio = day_income / interval_income;
-	println!("{:?} || {:?}", ratio, DAY / RECALCULATION_INTERVAL);
-}
+// #[test]
+// fn test_perbill() {
+// 	const ONE_UNIQE: u128 = 1_000_000_000_000_000_000;
+// 	const SECONDS_TO_BLOCK: u32 = 12;
+// 	const DAY: u32 = 60 * 60 * 24 / SECONDS_TO_BLOCK;
+// 	const RECALCULATION_INTERVAL: u32 = 10;
+// 	let day_rate = Perbill::from_rational(5u64, 10_000);
+// 	let interval_rate =
+// 		Perbill::from_rational::<u64>(RECALCULATION_INTERVAL.into(), DAY.into()) * day_rate;
+// 	println!("{:?}", interval_rate * ONE_UNIQE + ONE_UNIQE);
+// 	println!("{:?}", day_rate * ONE_UNIQE);
+// 	println!("{:?}", Perbill::one() * ONE_UNIQE);
+// 	println!("{:?}", ONE_UNIQE);
+// 	let mut next_iters = ONE_UNIQE + interval_rate * ONE_UNIQE;
+// 	next_iters += interval_rate * next_iters;
+// 	println!("{:?}", next_iters);
+// 	let day_income = day_rate * ONE_UNIQE;
+// 	let interval_income = interval_rate * ONE_UNIQE;
+// 	let ratio = day_income / interval_income;
+// 	println!("{:?} || {:?}", ratio, DAY / RECALCULATION_INTERVAL);
+// }

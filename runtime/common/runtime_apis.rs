@@ -197,11 +197,11 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "app-promotion")]
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default());
                 }
-                
+
                 fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
-                    
+
                     #[cfg(feature = "app-promotion")]
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
                 }
@@ -209,7 +209,7 @@ macro_rules! impl_common_runtime_apis {
                 fn total_staking_locked(staker: CrossAccountId) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
-                    
+
                     #[cfg(feature = "app-promotion")]
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_locked_balance(staker));
                 }
@@ -217,7 +217,7 @@ macro_rules! impl_common_runtime_apis {
                 fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
-                    
+
                     #[cfg(feature = "app-promotion")]
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker));
                 }
@@ -225,7 +225,7 @@ macro_rules! impl_common_runtime_apis {
                 fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
-                    
+
                     #[cfg(feature = "app-promotion")]
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
                 }
