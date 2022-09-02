@@ -62,7 +62,7 @@ jobs:
 
 
     steps:
-       - name: Skip if pull request is in Draft
+      - name: Skip if pull request is in Draft
         if: github.event.pull_request.draft == true
         run: exit 1
 

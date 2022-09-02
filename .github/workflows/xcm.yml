@@ -8,12 +8,12 @@ jobs:
 
   xcm-testnet-build:
     name: testnet build
-    uses: ./.github/workflows/reusable/xcm-testnet-build.yml
+    uses: ./.github/workflows/xcm-testnet-build.yml
     secrets: inherit
 
   xcm-tests:
     name: tests
     needs: [ xcm-testnet-build ]
-    uses: ./.github/workflows/reusable/xcm-tests_v2.yml
+    uses: ./.github/workflows/xcm-tests_v2.yml
 
 
