@@ -35,6 +35,8 @@ jobs:
 
     name: Prepare execution matrix
 
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     runs-on: XL
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
@@ -63,6 +65,9 @@ jobs:
 
   xcm-tests:
     needs: prepare-execution-marix
+
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     # The type of runner that the job will run on
     runs-on: [XL]
 
