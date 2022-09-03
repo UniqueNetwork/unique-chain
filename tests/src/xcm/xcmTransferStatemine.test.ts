@@ -53,7 +53,7 @@ process.argv.forEach((val) => {
 
 const RELAY_PORT = '9844';
 const UNIQUE_PORT = '9944';
-const STATEMINE_PORT = '9946';
+const STATEMINE_PORT = '9948';
 const STATEMINE_PALLET_INSTANCE = 50;
 const ASSET_ID = 100;
 const ASSET_METADATA_DECIMALS = 18;

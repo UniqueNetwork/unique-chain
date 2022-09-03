@@ -50,7 +50,7 @@ process.argv.forEach((val) => {
 });
 
 const UNIQUE_PORT = '9944';
-const MOONBEAM_PORT = '9946';
+const MOONBEAM_PORT = '9947';
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
 describe('Integration test: Exchanging UNQ with Moonbeam', () => {
