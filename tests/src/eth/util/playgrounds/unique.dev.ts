@@ -3,14 +3,20 @@
 
 /* eslint-disable function-call-argument-newline */
 
+import {readFile} from 'fs/promises';
+
 import Web3 from 'web3';
 import {WebsocketProvider} from 'web3-core';
 import {Contract} from 'web3-eth-contract';
+
+import * as solc from 'solc';
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
+
+import {ContractImports, CompiledContract} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';
@@ -27,19 +33,75 @@ class EthGroupBase {
     this.helper = helper;
   }
 }
+
+
+class ContractGroup extends EthGroupBase {
+  async findImports(imports?: ContractImports[]){
+    if(!imports) return function(path: string) {
+      return {error: 'File not found'};
+    };
   
+    const knownImports = {} as any;
+    for(let imp of imports) {
+      knownImports[imp.solPath] = (await readFile(imp.fsPath)).toString();
+    }
+  
+    return function(path: string) {
+      if(knownImports.hasOwnProperty(path)) return {contents: knownImports[path]};
+      return {error: 'File not found'};
+    }
+  }
+
+  async compile(name: string, src: string, imports?: ContractImports[]): Promise<CompiledContract> {
+    const out = JSON.parse(solc.compile(JSON.stringify({
+      language: 'Solidity',
+      sources: {
+        [`${name}.sol`]: {
+          content: src,
+        },
+      },
+      settings: {
+        outputSelection: {
+          '*': {
+            '*': ['*'],
+          },
+        },
+      },
+    }), {import: await this.findImports(imports)})).contracts[`${name}.sol`][name];
+  
+    return {
+      abi: out.abi,
+      object: '0x' + out.evm.bytecode.object,
+    };
+  }
+
+  async deployByCode(signer: string, name: string, src: string, imports?: ContractImports[]): Promise<Contract> {
+    const compiledContract = await this.compile(name, src, imports);
+    return this.deployByAbi(signer, compiledContract.abi, compiledContract.object);
+  }
+
+  async deployByAbi(signer: string, abi: any, object: string): Promise<Contract> {
+    const web3 = this.helper.getWeb3();
+    const contract = new web3.eth.Contract(abi, undefined, {
+      data: object,
+      from: signer,
+      gas: this.helper.eth.DEFAULT_GAS
+    });
+    return await contract.deploy({data: object}).send({from: signer});
+  }
+
+}
   
 class NativeContractGroup extends EthGroupBase {
-  DEFAULT_GAS = 2_500_000;
 
   contractHelpers(caller: string): Contract {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, gas: this.DEFAULT_GAS});
+    return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
   collectionHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.DEFAULT_GAS});
+    return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
   collection(address: string, mode: 'nft' | 'rft' | 'ft', caller?: string): Contract {
@@ -49,12 +111,12 @@ class NativeContractGroup extends EthGroupBase {
       'ft': fungibleAbi
     }[mode];
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(abi as any, address, {gas: this.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
+    return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
   rftTokenByAddress(address: string, caller?: string): Contract {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
+    return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
   rftToken(collectionId: number, tokenId: number, caller?: string): Contract {
@@ -64,6 +126,8 @@ class NativeContractGroup extends EthGroupBase {
 
   
 class EthGroup extends EthGroupBase {
+  DEFAULT_GAS = 2_500_000;
+
   createAccount() {
     const web3 = this.helper.getWeb3();
     const account = web3.eth.accounts.create();
@@ -78,8 +142,20 @@ class EthGroup extends EthGroupBase {
     return account;
   }
 
-  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=1000n) {
-    return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * this.helper.balance.getOneTokenNominal());
+  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=1000n, inTokens=true) {
+    return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
+  }
+
+  async callEVM(signer: IKeyringPair, contractAddress: string, abi: any, value: string, gasLimit?: number) {
+    if(!gasLimit) gasLimit = this.DEFAULT_GAS;
+    const web3 = this.helper.getWeb3();
+    const gasPrice = await web3.eth.getGasPrice();
+    // TODO: check execution status
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.evm.call', [this.helper.address.substrateToEth(signer.address), contractAddress, abi, value, gasLimit, gasPrice, null, null, []],
+      true, `Unable to perform evm.call`
+    );
   }
 
   async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
@@ -91,6 +167,34 @@ class EthGroup extends EthGroupBase {
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
 
     return {collectionId, collectionAddress};
+  }
+
+  async deployCollectorContract(signer: string): Promise<Contract> {
+    return await this.helper.ethContract.deployByCode(signer, 'Collector', `
+    // SPDX-License-Identifier: UNLICENSED
+    pragma solidity ^0.8.6;
+
+    contract Collector {
+      uint256 collected;
+      fallback() external payable {
+        giveMoney();
+      }
+      function giveMoney() public payable {
+        collected += msg.value;
+      }
+      function getCollected() public view returns (uint256) {
+        return collected;
+      }
+      function getUnaccounted() public view returns (uint256) {
+        return address(this).balance - collected;
+      }
+
+      function withdraw(address payable target) public {
+        target.transfer(collected);
+        collected = 0;
+      }
+    }
+  `);
   }
 }
   
@@ -134,12 +238,14 @@ export class EthUniqueHelper extends DevUniqueHelper {
   eth: EthGroup;
   ethAddress: EthAddressGroup;
   ethNativeContract: NativeContractGroup;
+  ethContract: ContractGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
     super(logger);
     this.eth = new EthGroup(this);
     this.ethAddress = new EthAddressGroup(this);
     this.ethNativeContract = new NativeContractGroup(this);
+    this.ethContract = new ContractGroup(this);
   }
 
   getWeb3(): Web3 {

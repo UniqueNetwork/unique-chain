@@ -30,6 +30,7 @@
     "testEth": "mocha --timeout 9999999 -r ts-node/register './**/eth/**/*.test.ts'",
     "testEthMarketplace": "mocha --timeout 9999999 -r ts-node/register './**/eth/marketplace/**/*.test.ts'",
     "testEthNesting": "mocha --timeout 9999999 -r ts-node/register './**/eth/nesting/**/*.test.ts'",
+    "testEthPayable": "mocha --timeout 9999999 -r ts-node/register './**/eth/payable.test.ts'",
     "load": "mocha --timeout 9999999 -r ts-node/register './**/*.load.ts'",
     "loadTransfer": "ts-node src/transfer.nload.ts",
     "testCollision": "mocha --timeout 9999999 -r ts-node/register ./src/collision-tests/*.test.ts",

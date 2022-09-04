@@ -388,6 +388,7 @@ class ChainHelperBase {
       type: this.chainLogType.EXTRINSIC,
       status: result.status,
       call: extrinsic,
+      signer: this.getSignerAddress(sender),
       params,
     } as IUniqueHelperLog;
 
