@@ -6,7 +6,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import config from '../../../config';
 
 import {EthUniqueHelper} from './unique.dev';
-import {SilentLogger} from '../../../util/playgrounds/unique.dev';
+import {SilentLogger, SilentConsole} from '../../../util/playgrounds/unique.dev';
 
 export {EthUniqueHelper} from './unique.dev';
 
@@ -16,25 +16,9 @@ chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
 export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
-  // TODO: Remove, this is temporary: Filter unneeded API output
-  // (Jaco promised it will be removed in the next version)
-  const consoleErr = console.error;
-  const consoleLog = console.log;
-  const consoleWarn = console.warn;
+  const silentConsole = new SilentConsole();
+  silentConsole.enable();
 
-  const outFn = (printer: any) => (...args: any[]) => {
-    for (const arg of args) {
-      if (typeof arg !== 'string')
-        continue;
-      if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis: UniqueApi/2, RmrkApi/1') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
-        return;
-    }
-    printer(...args);
-  };
-
-  console.error = outFn(consoleErr.bind(console));
-  console.log = outFn(consoleLog.bind(console));
-  console.warn = outFn(consoleWarn.bind(console));
   const helper = new EthUniqueHelper(new SilentLogger());
 
   try {
@@ -47,9 +31,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
   finally {
     await helper.disconnect();
     await helper.disconnectWeb3();
-    console.error = consoleErr;
-    console.log = consoleLog;
-    console.warn = consoleWarn;
+    silentConsole.disable();
   }
 }
   

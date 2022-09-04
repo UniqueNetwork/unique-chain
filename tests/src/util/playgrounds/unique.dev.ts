@@ -5,8 +5,56 @@ import {mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper} from './unique';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
-import {TSigner} from './types';
 import {IKeyringPair} from '@polkadot/types/types';
+
+
+export class SilentLogger {
+  log(msg: any, level: any): void { }
+  level = {
+    ERROR: 'ERROR' as const,
+    WARNING: 'WARNING' as const,
+    INFO: 'INFO' as const,
+  };
+}
+
+
+export class SilentConsole {
+  // TODO: Remove, this is temporary: Filter unneeded API output
+  // (Jaco promised it will be removed in the next version)
+  consoleErr: any;
+  consoleLog: any;
+  consoleWarn: any;
+
+  constructor() {
+    this.consoleErr = console.error;
+    this.consoleLog = console.log;
+    this.consoleWarn = console.warn;
+  }
+
+  enable() {  
+    const outFn = (printer: any) => (...args: any[]) => {
+      for (const arg of args) {
+        for (const arg of args) {
+          if (typeof arg !== 'string')
+            continue;
+          if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis: UniqueApi/2, RmrkApi/1') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
+            return;
+        }
+      }
+      printer(...args);
+    };
+  
+    console.error = outFn(this.consoleErr.bind(console));
+    console.log = outFn(this.consoleLog.bind(console));
+    console.warn = outFn(this.consoleWarn.bind(console));
+  }
+
+  disable() {
+    console.error = this.consoleErr;
+    console.log = this.consoleLog;
+    console.warn = this.consoleWarn;
+  }
+}
 
 
 export class DevUniqueHelper extends UniqueHelper {
