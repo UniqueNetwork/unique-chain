@@ -18,7 +18,7 @@ jobs:
 
     name: Prepare execution matrix
 
-    runs-on: XL
+    runs-on: [XL]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -40,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}
-            network {unique}, runtime {unique}, features {unique-runtime}
+            network {opal}, runtime {opal}, features {opal-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}
+            network {unique}, runtime {unique}, features {unique-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}
 
   xcm-build:
     
@@ -89,9 +89,9 @@ jobs:
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
-            ACALA_BUILD_BRANCH=${{ env.ACALA_BUILD_BRANCH }}
-            MOONBEAM_BUILD_BRANCH=${{ env.MOONBEAM_BUILD_BRANCH }}
-            CUMULUS_BUILD_BRANCH=${{ env.CUMULUS_BUILD_BRANCH }}
+            ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
+            MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
+            CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
 
       - name: Show build Dockerfile
         run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
@@ -114,13 +114,13 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Pull acala docker image
-        run: docker pull uniquenetwork/builder-acala:${{ env.ACALA_BUILD_BRANCH }}
+        run: docker pull uniquenetwork/builder-acala:${{ matrix.acala_version }}
 
       - name: Pull moonbeam docker image
-        run: docker pull uniquenetwork/builder-moonbeam:${{ env.MOONBEAM_BUILD_BRANCH }}
+        run: docker pull uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
 
       - name: Pull cumulus docker image
-        run: docker pull uniquenetwork/builder-cumulus:${{ env.CUMULUS_BUILD_BRANCH }}
+        run: docker pull uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
 
       - name: Pull polkadot docker image
         run: docker pull uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}
