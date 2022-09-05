@@ -88,6 +88,7 @@ jobs:
 
       - name: Checkou repo UniqueNetwork/unique-types-js
         uses: actions/checkout@v3
+        working-directory: tests
         with:
           repository: 'UniqueNetwork/unique-types-js'
 #          ssh-key: ${{ secrets.GH_PAT }}
@@ -95,6 +96,7 @@ jobs:
 #          ref: 'QA-65_maxandreev'
  
       - name: Copy files
+        working-directory: tests
         run: |
           rsync -ar --exclude .gitignore src/interfaces/ unique-types-js
           for file in unique-types-js/augment-* unique-types-js/**/types.ts unique-types-js/registry.ts; do
