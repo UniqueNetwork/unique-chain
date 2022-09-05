@@ -33,7 +33,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
     await helper.disconnectWeb3();
     silentConsole.disable();
   }
-}
+};
   
 export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean } = {}) {
   let i: any = it;

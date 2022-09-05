@@ -38,18 +38,18 @@ class EthGroupBase {
 class ContractGroup extends EthGroupBase {
   async findImports(imports?: ContractImports[]){
     if(!imports) return function(path: string) {
-      return {error: 'File not found'};
+      return {error: `File not found: ${path}`};
     };
   
     const knownImports = {} as any;
-    for(let imp of imports) {
+    for(const imp of imports) {
       knownImports[imp.solPath] = (await readFile(imp.fsPath)).toString();
     }
   
     return function(path: string) {
-      if(knownImports.hasOwnProperty(path)) return {contents: knownImports[path]};
-      return {error: 'File not found'};
-    }
+      if(knownImports.hasOwnPropertyDescriptor(path)) return {contents: knownImports[path]};
+      return {error: `File not found: ${path}`};
+    };
   }
 
   async compile(name: string, src: string, imports?: ContractImports[]): Promise<CompiledContract> {
@@ -85,7 +85,7 @@ class ContractGroup extends EthGroupBase {
     const contract = new web3.eth.Contract(abi, undefined, {
       data: object,
       from: signer,
-      gas: this.helper.eth.DEFAULT_GAS
+      gas: this.helper.eth.DEFAULT_GAS,
     });
     return await contract.deploy({data: object}).send({from: signer});
   }
@@ -108,7 +108,7 @@ class NativeContractGroup extends EthGroupBase {
     const abi = {
       'nft': nonFungibleAbi,
       'rft': refungibleAbi,
-      'ft': fungibleAbi
+      'ft': fungibleAbi,
     }[mode];
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
@@ -154,7 +154,7 @@ class EthGroup extends EthGroupBase {
     await this.helper.executeExtrinsic(
       signer,
       'api.tx.evm.call', [this.helper.address.substrateToEth(signer.address), contractAddress, abi, value, gasLimit, gasPrice, null, null, []],
-      true, `Unable to perform evm.call`
+      true, 'Unable to perform evm.call',
     );
   }
 

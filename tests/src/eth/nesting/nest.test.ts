@@ -1,7 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 
-import {itEth, EthUniqueHelper, usingEthPlaygrounds, expect} from '../util/playgrounds'
+import {itEth, EthUniqueHelper, usingEthPlaygrounds, expect} from '../util/playgrounds';
 
 const createNestingCollection = async (
   helper: EthUniqueHelper,
