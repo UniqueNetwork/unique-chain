@@ -5,7 +5,7 @@ on:
 
 jobs:
   code_style:
-    runs-on: self-hosted-ci
+    runs-on: [ self-hosted-ci ]
 
     steps:
       - uses: actions/checkout@v3
