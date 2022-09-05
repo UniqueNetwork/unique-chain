@@ -88,11 +88,10 @@ jobs:
 
       - name: Checkou repo UniqueNetwork/unique-types-js
         uses: actions/checkout@v3
-        working-directory: tests
         with:
           repository: 'UniqueNetwork/unique-types-js'
 #          ssh-key: ${{ secrets.GH_PAT }}
-          path: 'unique-types-js'
+          path: 'tests/unique-types-js'
 #          ref: 'QA-65_maxandreev'
  
       - name: Copy files
