@@ -66,7 +66,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.arrange = new ArrangeGroup(this);
   }
 
-  async connect(wsEndpoint: string/*, listeners?: any*/): Promise<void> {
+  async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
     const wsProvider = new WsProvider(wsEndpoint);
     this.api = new ApiPromise({
       provider: wsProvider,
