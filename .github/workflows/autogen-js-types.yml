@@ -83,6 +83,7 @@ jobs:
       - name: Run tests
         working-directory: tests
         run: |
+          yarn install
           yarn polkadot-types
 
       - name: Enumerate files after generation
