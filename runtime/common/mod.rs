@@ -25,7 +25,7 @@ pub mod sponsoring;
 pub mod weights;
 
 #[cfg(test)]
-mod tests;
+pub mod tests;
 
 use sp_core::H160;
 use frame_support::traits::{Currency, OnUnbalanced, Imbalance};
