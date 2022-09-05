@@ -75,6 +75,7 @@
     "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.test.ts",
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
     "testXcmUnique": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmUnique.test.ts",
+    "testXcmQuartz": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmQuartz.test.ts",
     "testXcmOpal": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmOpal.test.ts",
     "testXcmTransferAcala": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferAcala.test.ts acalaId=2000 uniqueId=5000",
     "testXcmTransferStatemine": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferStatemine.test.ts statemineId=1000 uniqueId=5000",
