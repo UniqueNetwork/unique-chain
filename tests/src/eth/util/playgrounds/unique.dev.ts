@@ -154,7 +154,7 @@ class EthGroup extends EthGroupBase {
     await this.helper.executeExtrinsic(
       signer,
       'api.tx.evm.call', [this.helper.address.substrateToEth(signer.address), contractAddress, abi, value, gasLimit, gasPrice, null, null, []],
-      true, 'Unable to perform evm.call',
+      true,
     );
   }
 
