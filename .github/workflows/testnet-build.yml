@@ -72,9 +72,9 @@ jobs:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
     steps:
-       - name: Skip if pull request is in Draft
-         if: github.event.pull_request.draft == true
-         run: exit 1
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
 
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
