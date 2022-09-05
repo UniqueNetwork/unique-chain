@@ -86,7 +86,8 @@ jobs:
 
       - name: Enumerate files after generation
         working-directory: tests
-	run: ls -la
+        run: |
+          ls -la
 
       - name: Stop running containers
         if: always()                   # run this step always
