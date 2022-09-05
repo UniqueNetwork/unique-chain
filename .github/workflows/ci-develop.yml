@@ -1,0 +1,34 @@
+name: develop
+
+on:
+  pull_request:
+    branches: [ 'develop' ]
+    types: [ opened, reopened, synchronize, ready_for_review ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  yarn-test-dev:
+    uses: ./.github/workflows/dev-build-tests_v2.yml
+
+  unit-test:
+    uses: ./.github/workflows/unit-test_v2.yml
+
+  canary:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'canary') }}
+    uses: ./.github/workflows/canary.yml
+    secrets: inherit # pass all secrets
+
+  xcm:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'xcm') }}
+    uses: ./.github/workflows/xcm.yml
+    secrets: inherit # pass all secrets
+
+  codestyle:
+    uses: ./.github/workflows/codestyle_v2.yml
+  
+  yarn_eslint:
+    uses: ./.github/workflows/test_codestyle_v2.yml

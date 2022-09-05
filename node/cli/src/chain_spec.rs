@@ -65,6 +65,14 @@ pub enum RuntimeId {
 	Unknown(String),
 }
 
+#[cfg(not(feature = "unique-runtime"))]
+/// PARA_ID for Opal/Quartz
+const PARA_ID: u32 = 2095;
+
+#[cfg(feature = "unique-runtime")]
+/// PARA_ID for Unique
+const PARA_ID: u32 = 2037;
+
 pub trait RuntimeIdentification {
 	fn runtime_id(&self) -> RuntimeId;
 }
@@ -115,7 +123,7 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
 		.public()
 }
 
-/// The extensions for the [`ChainSpec`].
+/// The extensions for the [`DefaultChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
 #[serde(deny_unknown_fields)]
 pub struct Extensions {
@@ -167,6 +175,7 @@ macro_rules! testnet_genesis {
 					.collect(),
 			},
 			treasury: Default::default(),
+			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},
@@ -235,7 +244,7 @@ pub fn development_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000
+				PARA_ID
 			)
 		},
 		// Bootnodes
@@ -250,7 +259,7 @@ pub fn development_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "rococo-dev".into(),
-			para_id: 1000,
+			para_id: PARA_ID,
 		},
 	)
 }
@@ -303,7 +312,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
-				1000
+				PARA_ID
 			)
 		},
 		// Bootnodes
@@ -318,7 +327,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		// Extensions
 		Extensions {
 			relay_chain: "westend-local".into(),
-			para_id: 1000,
+			para_id: PARA_ID,
 		},
 	)
 }

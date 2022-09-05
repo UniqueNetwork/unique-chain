@@ -167,7 +167,7 @@ impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 }
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo, MaxEncodedLen)]
-pub struct TestCrossAccountId(u64, sp_core::H160);
+pub struct TestCrossAccountId(u64, sp_core::H160, bool);
 impl CrossAccountId<u64> for TestCrossAccountId {
 	fn as_sub(&self) -> &u64 {
 		&self.0
@@ -178,16 +178,19 @@ impl CrossAccountId<u64> for TestCrossAccountId {
 	fn from_sub(sub: u64) -> Self {
 		let mut eth = [0; 20];
 		eth[12..20].copy_from_slice(&sub.to_be_bytes());
-		Self(sub, sp_core::H160(eth))
+		Self(sub, sp_core::H160(eth), true)
 	}
 	fn from_eth(eth: sp_core::H160) -> Self {
 		let mut sub_raw = [0; 8];
 		sub_raw.copy_from_slice(&eth.0[0..8]);
 		let sub = u64::from_be_bytes(sub_raw);
-		Self(sub, eth)
+		Self(sub, eth, false)
 	}
 	fn conv_eq(&self, other: &Self) -> bool {
 		self.as_sub() == other.as_sub()
+	}
+	fn is_canonical_substrate(&self) -> bool {
+		self.2
 	}
 }
 

@@ -16,12 +16,10 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
-use evm_coder::{types::*};
-pub use pallet_evm::account::CrossAccountId;
+use evm_coder::types::uint256;
+pub use pallet_evm::account::{Config, CrossAccountId};
 use sp_core::H160;
 use up_data_structs::CollectionId;
-
-use crate::Config;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
 // TODO: Unhardcode prefix
@@ -52,15 +50,22 @@ pub fn is_collection(address: &H160) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
-/// Converts Substrate address to CrossAccountId
-pub fn convert_substrate_address_to_cross_account_id<T: Config>(
-	address: uint256,
-) -> T::CrossAccountId
+/// Convert `CrossAccountId` to `uint256`.
+pub fn convert_cross_account_to_uint256<T: Config>(from: &T::CrossAccountId) -> uint256
+where
+	T::AccountId: AsRef<[u8; 32]>,
+{
+	let slice = from.as_sub().as_ref();
+	uint256::from_big_endian(slice)
+}
+
+/// Convert `uint256` to `CrossAccountId`.
+pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
 where
 	T::AccountId: From<[u8; 32]>,
 {
-	let mut address_arr: [u8; 32] = Default::default();
-	address.to_big_endian(&mut address_arr);
-	let account_id = T::AccountId::from(address_arr);
+	let mut new_admin_arr = [0_u8; 32];
+	from.to_big_endian(&mut new_admin_arr);
+	let account_id = T::AccountId::from(new_admin_arr);
 	T::CrossAccountId::from_sub(account_id)
 }

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! Contract execution related types
+
 #[cfg(not(feature = "std"))]
 use alloc::string::{String, ToString};
 use evm_core::{ExitError, ExitFatal};
@@ -22,10 +24,14 @@ use std::string::{String, ToString};
 
 use crate::Weight;
 
+/// Execution error, should be convertible between EVM and Substrate.
 #[derive(Debug, Clone)]
 pub enum Error {
+	/// Non-fatal contract error occured
 	Revert(String),
+	/// EVM fatal error
 	Fatal(ExitFatal),
+	/// EVM normal error
 	Error(ExitError),
 }
 
@@ -38,9 +44,12 @@ where
 	}
 }
 
+/// To be used in [`crate::solidity_interface`] implementation.
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// Static information collected from [`crate::weight`].
 pub struct DispatchInfo {
+	/// Statically predicted call weight
 	pub weight: Weight,
 }
 
@@ -55,16 +64,22 @@ impl From<()> for DispatchInfo {
 	}
 }
 
+/// Weight information that is only available post dispatch.
+/// Note: This can only be used to reduce the weight or fee, not increase it.
 #[derive(Default, Clone)]
 pub struct PostDispatchInfo {
+	/// Actual weight consumed by call
 	actual_weight: Option<Weight>,
 }
 
 impl PostDispatchInfo {
+	/// Calculate amount to be returned back to user
 	pub fn calc_unspent(&self, info: &DispatchInfo) -> Weight {
 		info.weight - self.calc_actual_weight(info)
 	}
 
+	/// Calculate actual consumed weight, saturating to weight reported
+	/// pre-dispatch
 	pub fn calc_actual_weight(&self, info: &DispatchInfo) -> Weight {
 		if let Some(actual_weight) = self.actual_weight {
 			actual_weight.min(info.weight)
@@ -74,9 +89,12 @@ impl PostDispatchInfo {
 	}
 }
 
+/// Wrapper for PostDispatchInfo and any user-provided data
 #[derive(Clone)]
 pub struct WithPostDispatchInfo<T> {
+	/// User provided data
 	pub data: T,
+	/// Info known after dispatch
 	pub post_info: PostDispatchInfo,
 }
 
@@ -89,5 +107,6 @@ impl<T> From<T> for WithPostDispatchInfo<T> {
 	}
 }
 
+/// Return type of items in [`crate::solidity_interface`] definition
 pub type ResultWithPostInfo<T> =
 	core::result::Result<WithPostDispatchInfo<T>, WithPostDispatchInfo<Error>>;

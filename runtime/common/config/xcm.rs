@@ -16,7 +16,8 @@
 
 use frame_support::{
 	traits::{
-		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get, Everything,
+		Contains, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get,
+		Everything, fungibles,
 	},
 	weights::{Weight, WeightToFeePolynomial, WeightToFee},
 	parameter_types, match_types,
@@ -34,18 +35,29 @@ use xcm::latest::{
 	Fungibility::Fungible as XcmFungible,
 	MultiAsset, Error as XcmError,
 };
-use xcm_executor::traits::{MatchesFungible, WeightTrader};
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
-	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, ParentIsPreset,
+	FixedWeightBounds, FungiblesAdapter, LocationInverter, NativeAsset, ParentAsSuperuser,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	ParentIsPreset, ConvertedConcreteAssetId,
 };
 use xcm_executor::{Config, XcmExecutor, Assets};
-use sp_std::marker::PhantomData;
+use xcm_executor::traits::{
+	Convert as ConvertXcm, JustTry, MatchesFungible, WeightTrader, FilterAssetLocation,
+};
+use pallet_foreing_assets::{
+	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency, FreeForAll,
+	TryAsForeing, ForeignAssetId,
+};
+use sp_std::{borrow::Borrow, marker::PhantomData, vec, vec::Vec};
 use crate::{
 	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
+	xcm_config::Barrier,
 };
+#[cfg(feature = "foreign-assets")]
+use crate::ForeingAssets;
+
 use up_common::{
 	types::{AccountId, Balance},
 	constants::*,
@@ -73,8 +85,22 @@ pub type LocationToAccountId = (
 pub struct OnlySelfCurrency;
 impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
 	fn matches_fungible(a: &MultiAsset) -> Option<B> {
+		let paraid = Parachain(ParachainInfo::parachain_id().into());
 		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
+			(
+				Concrete(MultiLocation {
+					parents: 1,
+					interior: X1(loc),
+				}),
+				XcmFungible(ref amount),
+			) if paraid == *loc => CheckedConversion::checked_from(*amount),
+			(
+				Concrete(MultiLocation {
+					parents: 0,
+					interior: Here,
+				}),
+				XcmFungible(ref amount),
+			) => CheckedConversion::checked_from(*amount),
 			_ => None,
 		}
 	}
@@ -145,11 +171,13 @@ match_types! {
 	};
 }
 
+/*
 pub type Barrier = (
 	TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	// ^^^ Parent & its unit plurality gets free execution
 );
+ */
 
 pub struct UsingOnlySelfCurrencyComponents<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
@@ -176,47 +204,7 @@ impl<
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::weight_to_fee(&weight);
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		// location to this parachain through relay chain
-		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
-		});
-		// direct location
-		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 0,
-			interior: Here,
-		});
-
-		let required = if payment.fungible.contains_key(&option1) {
-			(option1, u128_amount).into()
-		} else if payment.fungible.contains_key(&option2) {
-			(option2, u128_amount).into()
-		} else {
-			(Concrete(MultiLocation::default()), u128_amount).into()
-		};
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
-		}
+		Ok(payment)
 	}
 }
 impl<
@@ -233,6 +221,153 @@ impl<
 	}
 }
 
+parameter_types! {
+	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
+}
+/// Allow checking in assets that have issuance > 0.
+#[cfg(feature = "foreign-assets")]
+pub struct NonZeroIssuance<AccountId, ForeingAssets>(PhantomData<(AccountId, ForeingAssets)>);
+
+#[cfg(feature = "foreign-assets")]
+impl<AccountId, ForeingAssets> Contains<<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId>
+	for NonZeroIssuance<AccountId, ForeingAssets>
+where
+	ForeingAssets: fungibles::Inspect<AccountId>,
+{
+	fn contains(id: &<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
+		!ForeingAssets::total_issuance(*id).is_zero()
+	}
+}
+
+#[cfg(feature = "foreign-assets")]
+pub struct AsInnerId<AssetId, ConvertAssetId>(PhantomData<(AssetId, ConvertAssetId)>);
+#[cfg(feature = "foreign-assets")]
+impl<AssetId: Clone + PartialEq, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
+	ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
+where
+	AssetId: Borrow<AssetId>,
+	AssetId: TryAsForeing<AssetId, ForeignAssetId>,
+	AssetIds: Borrow<AssetId>,
+{
+	fn convert_ref(id: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
+		let id = id.borrow();
+
+		log::trace!(
+			target: "xcm::AsInnerId::Convert",
+			"AsInnerId {:?}",
+			id
+		);
+
+		let parent = MultiLocation::parent();
+		let here = MultiLocation::here();
+		let self_location = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+
+		if *id == parent {
+			return ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent));
+		}
+
+		if *id == here || *id == self_location {
+			return ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here));
+		}
+
+		match XcmForeignAssetIdMapping::<Runtime>::get_currency_id(id.clone()) {
+			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => {
+				ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(foreign_asset_id))
+			}
+			_ => ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(0)),
+		}
+	}
+
+	fn reverse_ref(what: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
+		log::trace!(
+			target: "xcm::AsInnerId::Reverse",
+			"AsInnerId",
+		);
+
+		let asset_id = what.borrow();
+
+		let parent_id =
+			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Parent)).unwrap();
+		let here_id =
+			ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here)).unwrap();
+
+		if asset_id.clone() == parent_id {
+			return Ok(MultiLocation::parent());
+		}
+
+		if asset_id.clone() == here_id {
+			return Ok(MultiLocation::new(
+				1,
+				X1(Parachain(ParachainInfo::get().into())),
+			));
+		}
+
+		match <AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(asset_id.clone()) {
+			Some(fid) => match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(fid) {
+				Some(location) => Ok(location),
+				None => Err(()),
+			},
+			None => Err(()),
+		}
+	}
+}
+
+/// Means for transacting assets besides the native currency on this chain.
+#[cfg(feature = "foreign-assets")]
+pub type FungiblesTransactor = FungiblesAdapter<
+	// Use this fungibles implementation:
+	ForeingAssets,
+	// Use this currency when it is a fungible asset matching the given location or name:
+	ConvertedConcreteAssetId<AssetIds, Balance, AsInnerId<AssetIds, JustTry>, JustTry>,
+	// Convert an XCM MultiLocation into a local account id:
+	LocationToAccountId,
+	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+	AccountId,
+	// We only want to allow teleports of known assets. We use non-zero issuance as an indication
+	// that this asset is known.
+	NonZeroIssuance<AccountId, ForeingAssets>,
+	// The account to use for tracking teleports.
+	CheckingAccount,
+>;
+
+/// Means for transacting assets on this chain.
+#[cfg(feature = "foreign-assets")]
+pub type AssetTransactors = FungiblesTransactor;
+
+#[cfg(not(feature = "foreign-assets"))]
+pub type AssetTransactors = LocalAssetTransactor;
+
+#[cfg(feature = "foreign-assets")]
+pub struct AllAsset;
+#[cfg(feature = "foreign-assets")]
+impl FilterAssetLocation for AllAsset {
+	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+		true
+	}
+}
+
+#[cfg(feature = "foreign-assets")]
+pub type IsReserve = AllAsset;
+#[cfg(not(feature = "foreign-assets"))]
+pub type IsReserve = NativeAsset;
+
+#[cfg(feature = "foreign-assets")]
+type Trader<T> = FreeForAll<
+	pallet_configuration::WeightToFee<T, Balance>,
+	RelayLocation,
+	AccountId,
+	Balances,
+	(),
+>;
+#[cfg(not(feature = "foreign-assets"))]
+type Trader<T> = UsingOnlySelfCurrencyComponents<
+	pallet_configuration::WeightToFee<T, Balance>,
+	RelayLocation,
+	AccountId,
+	Balances,
+	(),
+>;
+
 pub struct XcmConfig<T>(PhantomData<T>);
 impl<T> Config for XcmConfig<T>
 where
@@ -241,20 +376,14 @@ where
 	type Call = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
+	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingOnlySelfCurrencyComponents<
-		pallet_configuration::WeightToFee<T, Balance>,
-		RelayLocation,
-		AccountId,
-		Balances,
-		(),
-	>;
+	type Trader = Trader<T>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 

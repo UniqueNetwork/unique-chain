@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
@@ -129,6 +129,17 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    tokens: {
+      maxLocks: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of named reserves that can exist on an account.
+       **/
+      maxReserves: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     transactionPayment: {
       /**
        * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
@@ -201,6 +212,23 @@ declare module '@polkadot/api-base/types/consts' {
        * The minimum amount transferred to call `vested_transfer`.
        **/
       minVestedTransfer: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    xTokens: {
+      /**
+       * Base XCM weight.
+       * 
+       * The actually weight for an XCM message is `T::BaseXcmWeight +
+       * T::Weigher::weight(&msg)`.
+       **/
+      baseXcmWeight: u64 & AugmentedConst<ApiType>;
+      /**
+       * Self chain location.
+       **/
+      selfLocation: XcmV1MultiLocation & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

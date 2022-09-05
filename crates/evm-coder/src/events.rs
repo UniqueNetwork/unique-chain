@@ -19,11 +19,23 @@ use primitive_types::{H160, H256};
 
 use crate::types::*;
 
+/// Implementation of this trait should not be written manually,
+/// instead use [`crate::ToLog`] proc macros.
+///
+/// See also [`evm_coder_procedural::ToLog`], [solidity docs on events](https://docs.soliditylang.org/en/develop/contracts.html#events)
 pub trait ToLog {
+	/// Convert event to [`ethereum::Log`].
+	/// Because event by itself doesn't contains current contract
+	/// address, it should be specified manually.
 	fn to_log(&self, contract: H160) -> Log;
 }
 
+/// Only items implementing `ToTopic` may be used as `#[indexed]` field
+/// in [`crate::ToLog`] macro usage.
+///
+/// See also (solidity docs on events)[<https://docs.soliditylang.org/en/develop/contracts.html#events>]
 pub trait ToTopic {
+	/// Convert value to topic to be used in [`ethereum::Log`]
 	fn to_topic(&self) -> H256;
 }
 

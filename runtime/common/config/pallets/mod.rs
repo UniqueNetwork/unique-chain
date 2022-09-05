@@ -40,6 +40,9 @@ pub mod rmrk;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 
+#[cfg(feature = "foreign-assets")]
+pub mod foreign_asset;
+
 parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;

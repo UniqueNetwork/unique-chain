@@ -16,7 +16,7 @@
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
-import {ApiPromise} from '@polkadot/api';
+import {ApiPromise, Keyring} from '@polkadot/api';
 import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
 import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
@@ -97,6 +97,10 @@ export async function requirePallets(mocha: Context, requiredPallets: string[]) 
 
     mocha.skip();
   }
+}
+
+export function bigIntToSub(api: ApiPromise, number: bigint) {
+  return api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
 }
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
@@ -1096,6 +1100,16 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   return balance;
 }
 
+export async function paraSiblingSovereignAccount(paraid: number): Promise<string> {
+  return usingApi(async api => {
+    const siblingPrefix = '0x7369626c';
+    const encodedParaId = api.createType('u32', paraid).toHex(true).substring(2);
+    const suffix = '000000000000000000000000000000000000000000000000';
+
+    return siblingPrefix + encodedParaId + suffix;
+  });
+}
+
 export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
   const tx = api.tx.balances.transfer(target, amount);
   const events = await submitTransactionAsync(source, tx);
@@ -1732,6 +1746,12 @@ export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
+export const describe_xcm = (
+  process.env.RUN_XCM_TESTS
+    ? describe
+    : describe.skip
+);
+
 export async function waitNewBlocks(blocksCount = 1): Promise<void> {
   await usingApi(async (api) => {
     const promise = new Promise<void>(async (resolve) => {
@@ -1746,6 +1766,35 @@ export async function waitNewBlocks(blocksCount = 1): Promise<void> {
     });
     return promise;
   });
+}
+
+export async function waitEvent(
+  api: ApiPromise,
+  maxBlocksToWait: number,
+  eventSection: string,
+  eventMethod: string,
+): Promise<EventRecord | null> {
+
+  const promise = new Promise<EventRecord | null>(async (resolve) => {
+    const unsubscribe = await api.query.system.events(eventRecords => {
+      const neededEvent = eventRecords.find(r => {
+        return r.event.section == eventSection && r.event.method == eventMethod;
+      });
+
+      if (neededEvent) {
+        unsubscribe();
+        resolve(neededEvent);
+      }
+
+      if (maxBlocksToWait > 0) {
+        maxBlocksToWait--;
+      } else {
+        unsubscribe();
+        resolve(null);
+      }
+    });
+  });
+  return promise;
 }
 
 export async function repartitionRFT(
@@ -1775,3 +1824,19 @@ export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateK
 
 itApi.only = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {only: true});
 itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {skip: true});
+
+let accountSeed = 10000;
+
+const keyringEth = new Keyring({type: 'ethereum'});
+const keyringEd25519 = new Keyring({type: 'ed25519'});
+const keyringSr25519 = new Keyring({type: 'sr25519'});
+
+export function generateKeyringPair(type: 'ethereum' | 'sr25519' | 'ed25519' = 'sr25519') {
+  const privateKey = `0xDEADBEEF${(accountSeed++).toString(16).padStart(56, '0')}`;
+  if (type == 'sr25519') {
+    return keyringSr25519.addFromUri(privateKey);
+  } else if (type == 'ed25519') {
+    return keyringEd25519.addFromUri(privateKey);
+  }
+  return keyringEth.addFromUri(privateKey);
+}

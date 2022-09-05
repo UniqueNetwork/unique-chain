@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U256, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeingAssetsAssetIds, PalletForeingAssetsModuleAssetMetadata, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
@@ -203,6 +203,28 @@ declare module '@polkadot/api-base/types/events' {
        * Ethereum events from contracts.
        **/
       Log: AugmentedEvent<ApiType, [EthereumLog]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    foreingAssets: {
+      /**
+       * The asset registered.
+       **/
+      AssetRegistered: AugmentedEvent<ApiType, [assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata }>;
+      /**
+       * The asset updated.
+       **/
+      AssetUpdated: AugmentedEvent<ApiType, [assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata }>;
+      /**
+       * The foreign asset registered.
+       **/
+      ForeignAssetRegistered: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata }>;
+      /**
+       * The foreign asset updated.
+       **/
+      ForeignAssetUpdated: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata }>;
       /**
        * Generic event
        **/
@@ -469,6 +491,66 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    tokens: {
+      /**
+       * A balance was set by root.
+       **/
+      BalanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, free: u128, reserved: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, free: u128, reserved: u128 }>;
+      /**
+       * Deposited some balance into an account
+       **/
+      Deposited: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * An account was removed whose balance was non-zero but below
+       * ExistentialDeposit, resulting in an outright loss.
+       **/
+      DustLost: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * An account was created with some free balance.
+       **/
+      Endowed: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some locked funds were unlocked
+       **/
+      LockRemoved: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32], { lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32 }>;
+      /**
+       * Some funds are locked
+       **/
+      LockSet: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some balance was reserved (moved from free to reserved).
+       **/
+      Reserved: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some reserved balance was repatriated (moved from reserved to
+       * another account).
+       **/
+      ReserveRepatriated: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus], { currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus }>;
+      /**
+       * Some balances were slashed (e.g. due to mis-behavior)
+       **/
+      Slashed: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128 }>;
+      /**
+       * The total issuance of an currency has been set
+       **/
+      TotalIssuanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, amount: u128], { currencyId: PalletForeingAssetsAssetIds, amount: u128 }>;
+      /**
+       * Transfer succeeded.
+       **/
+      Transfer: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128 }>;
+      /**
+       * Some balance was unreserved (moved from reserved to free).
+       **/
+      Unreserved: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some balances were withdrawn (e.g. pay for transaction fee)
+       **/
+      Withdrawn: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     transactionPayment: {
       /**
        * A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
@@ -652,6 +734,16 @@ declare module '@polkadot/api-base/types/events' {
        * An HRMP message was sent to a sibling parachain.
        **/
       XcmpMessageSent: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    xTokens: {
+      /**
+       * Transferred `MultiAsset` with fee.
+       **/
+      TransferredMultiAssets: AugmentedEvent<ApiType, [sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation], { sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation }>;
       /**
        * Generic event
        **/

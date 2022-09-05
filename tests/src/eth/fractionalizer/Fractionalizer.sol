@@ -16,8 +16,8 @@ contract Fractionalizer {
     }
     address rftCollection;
     mapping(address => bool) nftCollectionAllowList;
-    mapping(address => mapping(uint256 => uint256)) nft2rftMapping;
-    mapping(address => Token) rft2nftMapping;
+    mapping(address => mapping(uint256 => uint256)) public nft2rftMapping;
+    mapping(address => Token) public rft2nftMapping;
     bytes32 refungibleCollectionType = keccak256(bytes("ReFungible"));
 
     receive() external payable onlyOwner {}
@@ -137,7 +137,6 @@ contract Fractionalizer {
             rft2nftMapping[rftTokenAddress] = Token(_collection, _token);
 
             rftTokenContract = UniqueRefungibleToken(rftTokenAddress);
-            rftTokenContract.setParentNFT(_collection, _token);
         } else {
             rftTokenId = nft2rftMapping[_collection][_token];
             rftTokenAddress = rftCollectionContract.tokenContractAddress(rftTokenId);

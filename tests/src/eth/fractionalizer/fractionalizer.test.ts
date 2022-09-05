@@ -223,6 +223,28 @@ describe('Fractionalizer contract usage', () => {
       },
     });
   });
+
+  itWeb3('Test fractionalizer NFT <-> RFT mapping ', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const {fractionalizer, rftCollectionAddress} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
+    const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await createRFTToken(api, web3, owner, fractionalizer, 100n);
+
+    const {collectionId, tokenId} = tokenIdFromAddress(rftTokenAddress);
+    const refungibleAddress = collectionIdToAddress(collectionId);
+    expect(rftCollectionAddress).to.be.equal(refungibleAddress);
+    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send();
+
+    const rft2nft = await fractionalizer.methods.rft2nftMapping(rftTokenAddress).call();
+    expect(rft2nft).to.be.like({
+      _collection: nftCollectionAddress,
+      _tokenId: nftTokenId,
+    });
+
+    const nft2rft = await fractionalizer.methods.nft2rftMapping(nftCollectionAddress, nftTokenId).call();
+    expect(nft2rft).to.be.eq(tokenId.toString());
+  });
 });
 
 

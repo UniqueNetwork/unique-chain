@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.1.5] - 2022-08-29
+
+### Added
+
+ - Implementation of `mint` and `mint_bulk` methods for ERC20 API.
+
+## [v0.1.4] - 2022-08-24
+
+### Change
+ - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
+
 <!-- bureaucrate goes here -->
 ## [v0.1.3] 2022-08-16
 

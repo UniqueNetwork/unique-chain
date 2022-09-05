@@ -154,17 +154,6 @@ fn make_data<T: Config>(
 	Ok(data)
 }
 
-fn parent_nft_property_permissions() -> PropertyKeyPermission {
-	PropertyKeyPermission {
-		key: key::parent_nft(),
-		permission: PropertyPermission {
-			mutable: false,
-			collection_admin: false,
-			token_owner: true,
-		},
-	}
-}
-
 fn create_refungible_collection_internal<
 	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
 >(
@@ -188,22 +177,12 @@ fn create_refungible_collection_internal<
 
 	let collection_id = T::CollectionDispatch::create(caller.clone(), data)
 		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-	let handle = <CollectionHandle<T>>::try_get(collection_id).map_err(dispatch_to_evm::<T>)?;
-	<PalletCommon<T>>::set_scoped_token_property_permissions(
-		&handle,
-		&caller,
-		PropertyScope::Eth,
-		vec![parent_nft_property_permissions()],
-	)
-	.map_err(dispatch_to_evm::<T>)?;
-
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
 }
 
 /// @title Contract, which allows users to operate with collections
-#[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
+#[solidity_interface(name = CollectionHelpers, events(CollectionHelpersEvents))]
 impl<T> EvmCollectionHelpers<T>
 where
 	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
@@ -211,7 +190,7 @@ where
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
-	/// @param token_prefix Token prefix to represent the collection tokens in UI and user applications
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_nonfungible_collection(
@@ -304,7 +283,7 @@ where
 	}
 
 	/// Check if a collection exists
-	/// @param collection_address Address of the collection in question
+	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
 	fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {

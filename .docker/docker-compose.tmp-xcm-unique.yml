@@ -1,0 +1,27 @@
+version: "3.5"
+
+services:
+  xcm_nodes:
+    build:
+      args:
+        - "RUST_TOOLCHAIN=nightly-2022-07-24"
+        - "BRANCH=release-v927020"
+        - "REPO_URL=https://github.com/UniqueNetwork/unique-chain.git"
+        - "FEATURE=unique-runtime"
+        - "POLKADOT_BUILD_BRANCH=release-v0.9.27"
+        - "ACALA_BUILD_BRANCH=2.9.0"
+        - "MOONBEAM_BUILD_BRANCH=v0.25.0"
+        - "CUMULUS_BUILD_BRANCH=release-v0.9.230"
+        - "POLKADOT_LAUNCH_BRANCH=feature/rewrite-chain-id-in-spec"          
+    image: xcm_nodes_unique
+    container_name: xcm_nodes_unique         
+    volumes:
+       - type: bind
+         source: ./xcm-config/launch-config-xcm-unique.json
+         target: /polkadot-launch/launch-config.json
+         read_only: true
+       - type: bind
+         source: ./xcm-config/5validators.jsonnet
+         target: /polkadot-launch/5validators.jsonnet
+         read_only: true
+
