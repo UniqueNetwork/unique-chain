@@ -219,7 +219,11 @@ pub mod pallet {
 		/// Set sponsor as already confirmed.
 		///
 		/// `sender` must be owner of contract.
-		pub fn force_set_sponsor(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
+		pub fn force_set_sponsor(
+			sender: &T::CrossAccountId,
+			contract: H160,
+			sponsor: &T::CrossAccountId,
+		) -> DispatchResult {
 			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
 			Sponsoring::<T>::insert(
 				contract,
@@ -227,6 +231,34 @@ pub mod pallet {
 					contract,
 				)),
 			);
+
+			let eth_sponsor = *sponsor.as_eth();
+			let sub_sponsor = sponsor.as_sub().clone();
+
+			<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorSet(
+				contract,
+				sub_sponsor.clone(),
+			));
+			<PalletEvm<T>>::deposit_log(
+				ContractHelpersEvents::ContractSponsorSet {
+					contract,
+					sponsor: eth_sponsor,
+				}
+				.to_log(contract),
+			);
+
+			<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorshipConfirmed(
+				contract,
+				sub_sponsor,
+			));
+			<PalletEvm<T>>::deposit_log(
+				ContractHelpersEvents::ContractSponsorshipConfirmed {
+					contract,
+					sponsor: eth_sponsor,
+				}
+				.to_log(contract),
+			);
+
 			Ok(())
 		}
 
