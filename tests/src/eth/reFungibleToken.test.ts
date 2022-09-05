@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {approve, createCollection, createRefungibleToken, transfer, transferFrom, UNIQUE, requirePallets, Pallets} from '../util/helpers';
-import {collectionIdFromAddress, collectionIdToAddress, createEthAccount, createEthAccountWithBalance, createNonfungibleCollection, createRefungibleCollection, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth, uniqueNFT, uniqueRefungible, uniqueRefungibleToken} from './util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, createRefungibleCollection, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth, uniqueRefungible, uniqueRefungibleToken} from './util/helpers';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';

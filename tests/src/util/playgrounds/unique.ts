@@ -317,6 +317,7 @@ class ChainHelperBase {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       try {
         const unsub = await sign((result: any) => {
@@ -388,6 +389,7 @@ class ChainHelperBase {
       type: this.chainLogType.EXTRINSIC,
       status: result.status,
       call: extrinsic,
+      signer: this.getSignerAddress(sender),
       params,
     } as IUniqueHelperLog;
 
@@ -1087,11 +1089,11 @@ class NFTnRFT extends CollectionGroup {
     return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
   }
 
-  getCollectionObject(collectionId: number): any {
+  getCollectionObject(_collectionId: number): any {
     return null;
   }
 
-  getTokenObject(collectionId: number, tokenId: number): any {
+  getTokenObject(_collectionId: number, _tokenId: number): any {
     return null;
   }
 }

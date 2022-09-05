@@ -1,5 +1,5 @@
 import {addToAllowListExpectSuccess, bigIntToSub, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, getDetailedCollectionInfo, setCollectionSponsorExpectSuccess} from '../util/helpers';
-import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents, createEthAccountWithBalance, evmCollectionHelpers, getCollectionAddressFromResult, evmCollection, ethBalanceViaSub, subToEth} from './util/helpers';
+import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents, createEthAccountWithBalance, evmCollectionHelpers, getCollectionAddressFromResult, evmCollection, ethBalanceViaSub} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
 import {evmToAddress} from '@polkadot/util-crypto';
