@@ -175,7 +175,6 @@ impl orml_xtokens::Config for Runtime {
     type ReserveProvider = AbsoluteReserveProvider;
 }
 
-
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
 		match currency_id {
@@ -195,7 +194,6 @@ impl Contains<AccountId> for DustRemovalWhitelist {
     }
 }
 
-
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
     fn convert(id: AssetIds) -> Option<MultiLocation> {
@@ -209,31 +207,6 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
         }
     }
 }
-/*
-impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
-    fn convert(location: MultiLocation) -> Option<CurrencyId> {
-        if location == MultiLocation::here()
-            || location == MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())))
-        {
-            return Some(AssetIds::NativeAssetId(NativeCurrency::Here));
-        }
-
-        if location == MultiLocation::parent() {
-            return Some(AssetIds::NativeAssetId(NativeCurrency::Parent));
-        }
-
-        if let Some(currency_id) =
-        XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone())
-        {
-            return Some(currency_id);
-        }
-
-        None
-    }
-}
-
- */
-
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
