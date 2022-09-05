@@ -81,8 +81,6 @@ jobs:
         working-directory: tests
         run: |
           yarn polkadot-types
-        env:
-          RPC_URL: http://127.0.0.1:9933/
 
       - name: Enumerate files after generation
         working-directory: tests
