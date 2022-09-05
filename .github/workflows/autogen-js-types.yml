@@ -72,6 +72,9 @@ jobs:
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
+ 
+      - name: Wait untill node-dev started.
+        run: sleep 600s
 
       - uses: actions/setup-node@v3
         with:
