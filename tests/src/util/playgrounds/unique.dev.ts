@@ -9,7 +9,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 
 export class SilentLogger {
-  log(msg: any, level: any): void { }
+  log(_msg: any, _level: any): void { }
   level = {
     ERROR: 'ERROR' as const,
     WARNING: 'WARNING' as const,
@@ -34,12 +34,10 @@ export class SilentConsole {
   enable() {  
     const outFn = (printer: any) => (...args: any[]) => {
       for (const arg of args) {
-        for (const arg of args) {
-          if (typeof arg !== 'string')
-            continue;
-          if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis: UniqueApi/2, RmrkApi/1') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
-            return;
-        }
+        if (typeof arg !== 'string')
+          continue;
+        if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis: UniqueApi/2, RmrkApi/1') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
+          return;
       }
       printer(...args);
     };
@@ -68,7 +66,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.arrange = new ArrangeGroup(this);
   }
 
-  async connect(wsEndpoint: string, listeners?: any): Promise<void> {
+  async connect(wsEndpoint: string/*, listeners?: any*/): Promise<void> {
     const wsProvider = new WsProvider(wsEndpoint);
     this.api = new ApiPromise({
       provider: wsProvider,
@@ -133,7 +131,7 @@ class ArrangeGroup {
       }
     }
 
-    await Promise.all(transactions).catch(e => {});
+    await Promise.all(transactions).catch(_e => {});
     
     //#region TODO remove this region, when nonce problem will be solved
     const checkBalances = async () => {
@@ -162,13 +160,14 @@ class ArrangeGroup {
 
     return accounts;
   };
-
+ 
   /**
    * Wait for specified bnumber of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
   async waitNewBlocks(blocksCount = 1): Promise<void> {
+    // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
         if (blocksCount > 0) {
