@@ -80,14 +80,34 @@ jobs:
         with:
           node-version: 16
 
-      - name: Run tests
+      - name: Generate 
         working-directory: tests
         run: |
           yarn install
           yarn polkadot-types
 
+      - name: Checkou repo UniqueNetwork/unique-types-js
+        uses: actions/checkout@v3
+        with:
+          repository: 'UniqueNetwork/unique-types-js'
+#          ssh-key: ${{ secrets.GH_PAT }}
+          path: 'unique-types-js'
+#          ref: 'QA-65_maxandreev'
+ 
+      - name: Copy files
+        run: |
+          rsync -ar --exclude .gitignore src/interfaces/ unique-types-js
+          for file in unique-types-js/augment-* unique-types-js/**/types.ts unique-types-js/registry.ts; do
+              sed -i '1s;^;//@ts-nocheck\n;' $file
+          done
+
       - name: Enumerate files after generation
-        working-directory: tests
+        working-directory: tests/unique-types-js
+        run: |
+          ls -la
+
+      - name: Enumerate files after generation
+        working-directory: tests/
         run: |
           ls -la
 
