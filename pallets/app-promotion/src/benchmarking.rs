@@ -54,7 +54,7 @@ benchmarks! {
 
 	payout_stakers{
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
-		let share = Perbill::from_rational(1u32, 10);
+		let share = Perbill::from_rational(1u32, 100);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let staker: T::AccountId = account("caller", 0, SEED);

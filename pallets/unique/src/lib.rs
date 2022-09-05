@@ -1103,3 +1103,35 @@ decl_module! {
 		}
 	}
 }
+
+impl<T: Config> Pallet<T> {
+	pub fn force_set_sponsor(sponsor: T::AccountId, collection_id: CollectionId) -> DispatchResult {
+		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		target_collection.check_is_internal()?;
+		target_collection.set_sponsor(sponsor.clone())?;
+
+		Self::deposit_event(Event::<T>::CollectionSponsorSet(
+			collection_id,
+			sponsor.clone(),
+		));
+
+		ensure!(
+			target_collection.confirm_sponsorship(&sponsor)?,
+			Error::<T>::ConfirmUnsetSponsorFail
+		);
+
+		Self::deposit_event(Event::<T>::SponsorshipConfirmed(collection_id, sponsor));
+
+		target_collection.save()
+	}
+
+	pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
+		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		target_collection.check_is_internal()?;
+		target_collection.sponsorship = SponsorshipState::Disabled;
+
+		Self::deposit_event(Event::<T>::CollectionSponsorRemoved(collection_id));
+
+		target_collection.save()
+	}
+}

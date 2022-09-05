@@ -70,16 +70,11 @@ use sp_runtime::{
 };
 
 pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
+
 const PENDING_LIMIT_PER_BLOCK: u32 = 3;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-// const SECONDS_TO_BLOCK: u32 = 6;
-// const DAY: u32 = 60 * 60 * 24 / SECONDS_TO_BLOCK;
-// const WEEK: u32 = 7 * DAY;
-// const TWO_WEEK: u32 = 2 * WEEK;
-// const YEAR: u32 = DAY * 365;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -115,9 +110,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type PendingInterval: Get<Self::BlockNumber>;
 
-		/// In chain blocks.
-		#[pallet::constant]
-		type Day: Get<Self::BlockNumber>; // useless
+		// /// In chain blocks.
+		// #[pallet::constant]
+		// type Day: Get<Self::BlockNumber>; // useless
 
 		#[pallet::constant]
 		type Nominal: Get<BalanceOf<Self>>;
@@ -150,6 +145,9 @@ pub mod pallet {
 			/// Amount of accrued interest
 			BalanceOf<T>,
 		),
+		Stake(T::AccountId, BalanceOf<T>),
+		Unstake(T::AccountId, BalanceOf<T>),
+		SetAdmin(T::AccountId),
 	}
 
 	#[pallet::error]
@@ -205,9 +203,9 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
-	#[pallet::storage]
-	pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+	// /// A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
+	// #[pallet::storage]
+	// pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
 	// /// Next target block when interest is recalculated
 	// #[pallet::storage]
@@ -257,49 +255,13 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
+
 			<Admin<T>>::set(Some(admin.as_sub().to_owned()));
+
+			Self::deposit_event(Event::SetAdmin(admin.as_sub().to_owned()));
 
 			Ok(())
 		}
-
-		// #[pallet::weight(T::WeightInfo::start_app_promotion())]
-		// pub fn start_app_promotion(
-		// 	origin: OriginFor<T>,
-		// 	promotion_start_relay_block: Option<T::BlockNumber>,
-		// ) -> DispatchResult
-		// where
-		// 	<T as frame_system::Config>::BlockNumber: From<u32>,
-		// {
-		// 	ensure_root(origin)?;
-
-		// 	// Start app-promotion mechanics if it has not been yet initialized
-		// 	if <StartBlock<T>>::get() == 0u32.into() {
-		// 		let start_block = promotion_start_relay_block
-		// 			.unwrap_or(T::RelayBlockNumberProvider::current_block_number());
-
-		// 		// Set promotion global start block
-		// 		<StartBlock<T>>::set(start_block);
-
-		// 		<NextInterestBlock<T>>::set(start_block + T::RecalculationInterval::get());
-		// 	}
-
-		// 	Ok(())
-		// }
-
-		// #[pallet::weight(T::WeightInfo::stop_app_promotion())]
-		// pub fn stop_app_promotion(origin: OriginFor<T>) -> DispatchResult
-		// where
-		// 	<T as frame_system::Config>::BlockNumber: From<u32>,
-		// {
-		// 	ensure_root(origin)?;
-
-		// 	if <StartBlock<T>>::get() != 0u32.into() {
-		// 		<StartBlock<T>>::set(T::BlockNumber::default());
-		// 		<NextInterestBlock<T>>::set(T::BlockNumber::default());
-		// 	}
-
-		// 	Ok(())
-		// }
 
 		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
@@ -350,6 +312,9 @@ pub mod pallet {
 			);
 
 			StakesPerAccount::<T>::mutate(&staker_id, |stakes| *stakes += 1);
+
+			Self::deposit_event(Event::Stake(staker_id, amount));
+
 			Ok(())
 		}
 
@@ -391,6 +356,8 @@ pub mod pallet {
 			);
 
 			StakesPerAccount::<T>::remove(&staker_id);
+
+			Self::deposit_event(Event::Unstake(staker_id, total_staked));
 
 			Ok(None.into())
 		}
@@ -527,13 +494,13 @@ pub mod pallet {
 			// 		}
 			// 	}
 			// }
-			
+
 			{
 				let mut stakers_number = stakers_number.unwrap_or(20);
-				let  last_id = RefCell::new(None);
+				let last_id = RefCell::new(None);
 				let income_acc = RefCell::new(BalanceOf::<T>::default());
 				let amount_acc = RefCell::new(BalanceOf::<T>::default());
-				
+
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
@@ -573,7 +540,7 @@ pub mod pallet {
 					};
 					*last_id.borrow_mut() = Some(current_id.clone());
 					if current_recalc_block >= next_recalc_block_for_stake {
-						*amount_acc.borrow_mut() += amount;  
+						*amount_acc.borrow_mut() += amount;
 						Self::recalculate_and_insert_stake(
 							&current_id,
 							staked_block,
@@ -588,7 +555,6 @@ pub mod pallet {
 				}
 				flush_stake()?;
 			}
-
 
 			Ok(())
 		}

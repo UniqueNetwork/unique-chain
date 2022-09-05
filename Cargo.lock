@@ -6473,7 +6473,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-unique"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "ethereum",
  "evm-coder",

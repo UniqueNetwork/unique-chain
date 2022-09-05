@@ -5,7 +5,7 @@ use frame_support::{
 
 use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBalances};
 use pallet_common::CollectionHandle;
-use pallet_unique::{Event as UniqueEvent, Error as UniqueError};
+
 use sp_runtime::DispatchError;
 use up_data_structs::{CollectionId, SponsorshipState};
 use sp_std::borrow::ToOwned;
@@ -53,36 +53,11 @@ impl<T: pallet_unique::Config> CollectionHandler for pallet_unique::Pallet<T> {
 		sponsor_id: Self::AccountId,
 		collection_id: Self::CollectionId,
 	) -> DispatchResult {
-		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		target_collection.check_is_internal()?;
-		target_collection.set_sponsor(sponsor_id.clone())?;
-
-		Self::deposit_event(UniqueEvent::<T>::CollectionSponsorSet(
-			collection_id,
-			sponsor_id.clone(),
-		));
-
-		ensure!(
-			target_collection.confirm_sponsorship(&sponsor_id)?,
-			UniqueError::<T>::ConfirmUnsetSponsorFail
-		);
-
-		Self::deposit_event(UniqueEvent::<T>::SponsorshipConfirmed(
-			collection_id,
-			sponsor_id,
-		));
-
-		target_collection.save()
+		Self::force_set_sponsor(sponsor_id, collection_id)
 	}
 
 	fn remove_collection_sponsor(collection_id: Self::CollectionId) -> DispatchResult {
-		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		target_collection.check_is_internal()?;
-		target_collection.sponsorship = SponsorshipState::Disabled;
-
-		Self::deposit_event(UniqueEvent::<T>::CollectionSponsorRemoved(collection_id));
-
-		target_collection.save()
+		Self::force_remove_collection_sponsor(collection_id)
 	}
 
 	fn get_sponsor(
