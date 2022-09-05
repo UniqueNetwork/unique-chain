@@ -42,9 +42,8 @@ pub enum ContractHelpersEvents {
 	ContractSponsorSet {
 		/// Contract address of the affected collection.
 		#[indexed]
-		contract: address,
+		contract_address: address,
 		/// New sponsor address.
-		#[indexed]
 		sponsor: address,
 	},
 
@@ -52,9 +51,8 @@ pub enum ContractHelpersEvents {
 	ContractSponsorshipConfirmed {
 		/// Contract address of the affected collection.
 		#[indexed]
-		contract: address,
+		contract_address: address,
 		/// New sponsor address.
-		#[indexed]
 		sponsor: address,
 	},
 
@@ -62,7 +60,7 @@ pub enum ContractHelpersEvents {
 	ContractSponsorRemoved {
 		/// Contract address of the affected collection.
 		#[indexed]
-		contract: address,
+		contract_address: address,
 	},
 }
 
