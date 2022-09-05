@@ -17,7 +17,9 @@
 //! Implementation of magic contract
 
 use core::marker::PhantomData;
-use evm_coder::{abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*};
+use evm_coder::{
+	abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*, ToLog,
+};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
@@ -33,6 +35,37 @@ use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
 use sp_std::vec::Vec;
 
+/// Pallet events.
+#[derive(ToLog)]
+pub enum ContractHelpersEvents {
+	/// Contract sponsor was set.
+	ContractSponsorSet {
+		/// Contract address of the affected collection.
+		#[indexed]
+		contract: address,
+		/// New sponsor address.
+		#[indexed]
+		sponsor: address,
+	},
+
+	/// New sponsor was confirm.
+	ContractSponsorshipConfirmed {
+		/// Contract address of the affected collection.
+		#[indexed]
+		contract: address,
+		/// New sponsor address.
+		#[indexed]
+		sponsor: address,
+	},
+
+	/// Collection sponsor was removed.
+	ContractSponsorRemoved {
+		/// Contract address of the affected collection.
+		#[indexed]
+		contract: address,
+	},
+}
+
 /// See [`ContractHelpersCall`]
 pub struct ContractHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
@@ -46,7 +79,7 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 }
 
 /// @title Magic contract, which allows users to reconfigure other contracts
-#[solidity_interface(name = ContractHelpers)]
+#[solidity_interface(name = ContractHelpers, events(ContractHelpersEvents))]
 impl<T: Config> ContractHelpers<T>
 where
 	T::AccountId: AsRef<[u8; 32]>,
@@ -91,7 +124,7 @@ where
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
-		Pallet::<T>::self_sponsored_enable(&T::CrossAccountId::from_eth(caller), contract_address)
+		Pallet::<T>::force_set_sponsor(&T::CrossAccountId::from_eth(caller), contract_address)
 			.map_err(dispatch_to_evm::<T>)?;
 
 		Ok(())

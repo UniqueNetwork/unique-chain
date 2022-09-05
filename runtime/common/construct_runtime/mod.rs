@@ -85,7 +85,7 @@ macro_rules! construct_runtime {
                 Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin} = 101,
 
                 EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
-                EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
+                EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
                 EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
             }
