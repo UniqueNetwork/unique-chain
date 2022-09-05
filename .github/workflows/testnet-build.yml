@@ -125,7 +125,7 @@ jobs:
         run: docker pull uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}           
 
       - name: Build the stack
-        run: cd .docker/ && docker build --file ./Dockerfile-testnet.${{ matrix.network }}.yml --tag uniquenetwork/${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }} --tag uniquenetwork/${{ matrix.network }}-testnet-local::latest . 
+        run: cd .docker/ && docker build --file ./Dockerfile-testnet.${{ matrix.network }}.yml --tag uniquenetwork/${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }} --tag uniquenetwork/${{ matrix.network }}-testnet-local:latest . 
 
       - name: Push docker version image
         run: docker push uniquenetwork/${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }}
