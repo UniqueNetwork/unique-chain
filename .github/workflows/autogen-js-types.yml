@@ -122,17 +122,17 @@ jobs:
           git config user.email github-actions@github.com
           git add .
           git commit -m "chore: regenerate types"
-
    
-      - name: Push changes
-        uses: ad-m/github-push-action@master
+      - name: Pushes to another repository
+        id: push_directory
+        uses: cpina/github-action-push-to-another-repository@main
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.GH_MAK }}
         with:
-          github_token: ${{ secrets.GH_MAK }}
-          branch: ${{ matrix.branch }}
-          repository: 'lzadjsf/unique-types-js.git'
-          ssh: true
-
-
+          source-directory: tests/unique-types-js
+          destination-repository-name: 'lzadjsf/unique-types-js'
+          commit-message: 'chore: regenerate types'
+          target-branch: ${{ matrix.branch }}
 
 
       - name: Stop running containers
