@@ -96,10 +96,12 @@ jobs:
           node-version: 16
 
       - name: Run tests
+        working-directory: tests
         run: |
-          cd tests
           yarn install
           yarn add mochawesome
+          yarn polkadot-types
+          
           echo "Ready to start tests"
           node scripts/readyness.js
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}

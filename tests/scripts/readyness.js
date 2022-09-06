@@ -6,9 +6,9 @@ const connect = async () => {
   await api.isReadyOrError;
 
   const head = (await api.rpc.chain.getHeader()).number.toNumber();
+  await api.disconnect();
   if(head < 1) throw Error('No block #1');
 
-  await api.disconnect();
 }
 
 const sleep = time => {
