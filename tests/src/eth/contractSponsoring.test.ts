@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
+import { expectSubstrateEventsAtBlock } from '../util/helpers';
 import {
   contractHelpers,
   createEthAccountWithBalance,
@@ -43,8 +44,9 @@ describe('Sponsoring EVM contracts', () => {
     const helpers = contractHelpers(web3, owner);
     
     const result = await helpers.methods.selfSponsoredEnable(flipper.options.address).send();
-    const events = normalizeEvents(result.events);
-    expect(events).to.be.deep.equal([
+    // console.log(result);
+    const ethEvents = normalizeEvents(result.events);
+    expect(ethEvents).to.be.deep.equal([
       {
         address: flipper.options.address,
         event: 'ContractSponsorSet',
@@ -62,6 +64,13 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorSet','ContractSponsorshipConfirmed'],
+    );
   });
 
   itWeb3('Self sponsored can not be set by the address that did not deployed the contract', async ({api, web3, privateKeyWrapper}) => {
@@ -121,6 +130,13 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorSet'],
+    );
   });
   
   itWeb3('Sponsor can not be set by the address that did not deployed the contract', async ({api, web3, privateKeyWrapper}) => {
@@ -163,6 +179,13 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorshipConfirmed'],
+    );
   });
 
   itWeb3('Sponsorship can not be confirmed by the address that not pending as sponsor', async ({api, web3, privateKeyWrapper}) => {
@@ -248,6 +271,13 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorRemoved'],
+    );
   });
 
   itWeb3('Sponsor can not be removed by the address that did not deployed the contract', async ({api, web3, privateKeyWrapper}) => {
