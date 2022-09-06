@@ -1202,7 +1202,13 @@ declare module '@polkadot/types/lookup' {
   interface PalletAppPromotionEvent extends Enum {
     readonly isStakingRecalculation: boolean;
     readonly asStakingRecalculation: ITuple<[AccountId32, u128, u128]>;
-    readonly type: 'StakingRecalculation';
+    readonly isStake: boolean;
+    readonly asStake: ITuple<[AccountId32, u128]>;
+    readonly isUnstake: boolean;
+    readonly asUnstake: ITuple<[AccountId32, u128]>;
+    readonly isSetAdmin: boolean;
+    readonly asSetAdmin: AccountId32;
+    readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
   }
 
   /** @name PalletEvmEvent (104) */
@@ -3290,10 +3296,10 @@ declare module '@polkadot/types/lookup' {
   interface PalletAppPromotionError extends Enum {
     readonly isAdminNotSet: boolean;
     readonly isNoPermission: boolean;
-    readonly isNotSufficientFounds: boolean;
+    readonly isNotSufficientFunds: boolean;
     readonly isPendingForBlockOverflow: boolean;
     readonly isInvalidArgument: boolean;
-    readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFounds' | 'PendingForBlockOverflow' | 'InvalidArgument';
+    readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'InvalidArgument';
   }
 
   /** @name PalletEvmError (418) */

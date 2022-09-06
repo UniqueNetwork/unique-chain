@@ -28,11 +28,8 @@ use frame_system::{Origin, RawOrigin};
 use pallet_unique::benchmarking::create_nft_collection;
 use pallet_evm_migration::Pallet as EvmMigrationPallet;
 
-// trait BenchmarkingConfig: Config + pallet_unique::Config { }
-
-// impl<T: Config + pallet_unique::Config> BenchmarkingConfig for T { }
-
 const SEED: u32 = 0;
+
 benchmarks! {
 	where_clause{
 		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
@@ -53,18 +50,32 @@ benchmarks! {
 	} : {PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin))?}
 
 	payout_stakers{
+		let b in 1..101;
+
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
-		let share = Perbill::from_rational(1u32, 100);
+		let share = Perbill::from_rational(1u32, 20);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		<T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+
 		let staker: T::AccountId = account("caller", 0, SEED);
-		let stakers: Vec<T::AccountId> = (0..100).map(|index| account("staker", index, SEED)).collect();
+		<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let stakers: Vec<T::AccountId> = (0..b).map(|index| account("staker", index, SEED)).collect();
 		stakers.iter().for_each(|staker| {
 			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		});
-		let _ = <T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), share * <T as Config>::Currency::total_balance(&staker))?;
-	} : {PromototionPallet::<T>::payout_stakers(RawOrigin::Signed(pallet_admin.clone()).into(), Some(1))?}
+		(0..10).try_for_each(|_| {
+			stakers.iter()
+				.map(|staker| {
+				
+					PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())
+				}).collect::<Result<Vec<_>, _>>()?;
+			<frame_system::Pallet<T>>::finalize();
+			Result::<(), sp_runtime::DispatchError>::Ok(())
+		})?;
+
+		// let _ = <T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		// let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), share * <T as Config>::Currency::total_balance(&staker))?;
+	} : {PromototionPallet::<T>::payout_stakers(RawOrigin::Signed(pallet_admin.clone()).into(), Some(b as u8))?}
 
 	stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
@@ -76,7 +87,10 @@ benchmarks! {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		(0..10).map(|_| PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))).collect::<Result<Vec<_>, _>>()?;
+		(0..10).map(|_| {
+			<frame_system::Pallet<T>>::finalize();
+			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))
+		}).collect::<Result<Vec<_>, _>>()?;
 
 	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into())?}
 

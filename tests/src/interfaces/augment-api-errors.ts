@@ -27,7 +27,7 @@ declare module '@polkadot/api-base/types/errors' {
       /**
        * Insufficient funds to perform an action
        **/
-      NotSufficientFounds: AugmentedError<ApiType>;
+      NotSufficientFunds: AugmentedError<ApiType>;
       PendingForBlockOverflow: AugmentedError<ApiType>;
       /**
        * Generic error

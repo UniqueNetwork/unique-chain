@@ -16,10 +16,6 @@ export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>
 declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
     appPromotion: {
-      /**
-       * In chain blocks.
-       **/
-      day: u32 & AugmentedConst<ApiType>;
       intervalIncome: Perbill & AugmentedConst<ApiType>;
       nominal: u128 & AugmentedConst<ApiType>;
       /**

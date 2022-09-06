@@ -1061,7 +1061,10 @@ export default {
    **/
   PalletAppPromotionEvent: {
     _enum: {
-      StakingRecalculation: '(AccountId32,u128,u128)'
+      StakingRecalculation: '(AccountId32,u128,u128)',
+      Stake: '(AccountId32,u128)',
+      Unstake: '(AccountId32,u128)',
+      SetAdmin: 'AccountId32'
     }
   },
   /**
@@ -3102,7 +3105,7 @@ export default {
    * Lookup415: pallet_app_promotion::pallet::Error<T>
    **/
   PalletAppPromotionError: {
-    _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFounds', 'PendingForBlockOverflow', 'InvalidArgument']
+    _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFunds', 'PendingForBlockOverflow', 'InvalidArgument']
   },
   /**
    * Lookup418: pallet_evm::pallet::Error<T>

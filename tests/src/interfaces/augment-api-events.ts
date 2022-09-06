@@ -16,7 +16,10 @@ export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>
 declare module '@polkadot/api-base/types/events' {
   interface AugmentedEvents<ApiType extends ApiTypes> {
     appPromotion: {
+      SetAdmin: AugmentedEvent<ApiType, [AccountId32]>;
+      Stake: AugmentedEvent<ApiType, [AccountId32, u128]>;
       StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      Unstake: AugmentedEvent<ApiType, [AccountId32, u128]>;
       /**
        * Generic event
        **/

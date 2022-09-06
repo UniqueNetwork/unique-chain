@@ -1,7 +1,5 @@
 use codec::EncodeLike;
-use frame_support::{
-	traits::LockableCurrency, WeakBoundedVec, Parameter, dispatch::DispatchResult, ensure,
-};
+use frame_support::{traits::LockableCurrency, WeakBoundedVec, Parameter, dispatch::DispatchResult};
 
 use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBalances};
 use pallet_common::CollectionHandle;

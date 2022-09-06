@@ -680,7 +680,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
-                    list_benchmark!(list, extra, pallet_app_promotion, Promotion);
+                    list_benchmark!(list, extra, pallet_app_promotion, AppPromotion);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 
@@ -736,7 +736,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
-                    add_benchmark!(params, batches, pallet_app_promotion, Promotion);
+                    add_benchmark!(params, batches, pallet_app_promotion, AppPromotion);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 

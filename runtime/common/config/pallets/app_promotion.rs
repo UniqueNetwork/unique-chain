@@ -22,7 +22,7 @@ use crate::{
 use frame_support::{parameter_types, PalletId};
 use sp_arithmetic::Perbill;
 use up_common::{
-	constants::{ UNIQUE, RELAY_DAYS},
+	constants::{UNIQUE, RELAY_DAYS},
 	types::Balance,
 };
 
