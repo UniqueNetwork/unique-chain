@@ -35,7 +35,7 @@ const UNIQUE_CHAIN = 2095;
 
 const RELAY_PORT = '9844';
 const UNIQUE_PORT = '9944';
-const STATEMINE_PORT = '9948';
+const STATEMINE_PORT = '9946';
 const STATEMINE_PALLET_INSTANCE = 50;
 const ASSET_ID = 100;
 const ASSET_METADATA_DECIMALS = 18;
@@ -61,6 +61,11 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
 
   let balanceBobBefore: bigint;
   let balanceBobAfter: bigint;
+  let balanceBobFinal: bigint;
+
+  let balanceBobRelayTokenBefore: bigint;
+  let balanceBobRelayTokenAfter: bigint;
+
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -380,8 +385,12 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
       provider: new WsProvider('ws://127.0.0.1:' + RELAY_PORT),
     };
 
+    const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
+
     await usingApi(async (api) => {
-      [balanceBobBefore] = await getBalance(api, [alice.address]);
+      [balanceBobBefore] = await getBalance(api, [bob.address]);
+      balanceBobRelayTokenBefore = BigInt(((await api.query.tokens.accounts(bob.addressRaw, {NativeAssetId: 'Parent'})).toJSON() as any).free);
+
     }, uniqueApiOptions);
 
     // Providing the relay currency to the unique sender account
@@ -417,7 +426,7 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
               },
             },
             fun: {
-              Fungible: 50_000_000_000_000_000n,
+              Fungible: TRANSFER_AMOUNT_RELAY,
             },
           },
         ],
@@ -439,16 +448,18 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
     await usingApi(async (api) => {
       await waitNewBlocks(api, 3);
 
-      [balanceBobAfter] = await getBalance(api, [alice.address]);
-      expect(balanceBobBefore == balanceBobAfter).to.be.true;
+      [balanceBobAfter] = await getBalance(api, [bob.address]);
+      balanceBobRelayTokenAfter = BigInt(((await api.query.tokens.accounts(bob.addressRaw, {NativeAssetId: 'Parent'})).toJSON() as any).free);
+      const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore; 
       console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobBefore);
-
+      console.log('Relay (Westend) to Opal transaction fees: %s WND', wndFee);
+      expect(balanceBobBefore == balanceBobAfter).to.be.true;
+      expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
     }, uniqueApiOptions2);
 
   });
 
   it('Should connect and send Relay token back', async () => {
-
     const uniqueApiOptions: ApiOptions = {
       provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
     };
@@ -486,6 +497,10 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
       const events = await submitTransactionAsync(bob, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
+
+      [balanceBobFinal] = await getBalance(api, [bob.address]);
+      console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobFinal);
+
     }, uniqueApiOptions);
   });
 
