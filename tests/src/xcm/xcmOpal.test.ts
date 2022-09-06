@@ -35,7 +35,7 @@ const UNIQUE_CHAIN = 2095;
 
 const RELAY_PORT = '9844';
 const UNIQUE_PORT = '9944';
-const STATEMINE_PORT = '9946';
+const STATEMINE_PORT = '9948';
 const STATEMINE_PALLET_INSTANCE = 50;
 const ASSET_ID = 100;
 const ASSET_METADATA_DECIMALS = 18;
@@ -146,7 +146,7 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
         minimalBalance: ASSET_METADATA_MINIMAL_BALANCE,
       };
       //registerForeignAsset(owner, location, metadata)
-      const tx = api.tx.foreingAssets.registerForeignAsset(alice.addressRaw, location, metadata);
+      const tx = api.tx.foreignAssets.registerForeignAsset(alice.addressRaw, location, metadata);
       const sudoTx = api.tx.sudo.sudo(tx as any);
       const events = await submitTransactionAsync(alice, sudoTx);
       const result = getGenericResult(events);
