@@ -17,10 +17,11 @@
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
 import {ApiPromise} from '@polkadot/api';
-import type {AccountId, EventRecord, Event} from '@polkadot/types/interfaces';
+import type {AccountId, EventRecord, Event, BlockNumber} from '@polkadot/types/interfaces';
 import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
+import {AnyNumber} from '@polkadot/types-codec/types';
 import BN from 'bn.js';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -1780,3 +1781,23 @@ export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateK
 
 itApi.only = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {only: true});
 itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {skip: true});
+
+
+export async function expectSubstrateEventsAtBlock(api: ApiPromise, blockNumber: AnyNumber | BlockNumber, section: string, methods: string[], dryRun = false) {
+  const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
+  const subEvents = (await api.query.system.events.at(blockHash))
+    .filter(x => x.event.section === section)
+    .map((x) => x.toHuman());
+  const events = methods.map((m) => {
+    return {
+      event: {
+        method: m,
+        section,
+      },
+    };
+  });
+  if (!dryRun) {
+    expect(subEvents).to.be.like(events);
+  }
+  return subEvents;
+}
