@@ -22,10 +22,10 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-#          - network: "quartz"
-#            features: "quartz-runtime"
-#          - network: "unique"
-#            features: "unique-runtime"
+          - network: "quartz"
+            features: "quartz-runtime"
+          - network: "unique"
+            features: "unique-runtime"
 
     steps:
 
@@ -119,14 +119,14 @@ jobs:
         run: sleep 900s
 
 
-      - name: Generate accounts
-        working-directory: qa-tests
-        run: ts-node ./src/scripts/create-market-accounts.ts
+#      - name: Generate accounts
+#        working-directory: qa-tests
+#        run: ts-node ./src/scripts/create-market-accounts.ts
 
-      - name: Deploy contracts
-        run: |
-          cd qa-tests
-          ts-node ./src/scripts/deploy-contract.ts
+#      - name: Deploy contracts
+#        run: |
+#          cd qa-tests
+#          ts-node ./src/scripts/deploy-contract.ts
 
       - name: Import test data
         working-directory: qa-tests
