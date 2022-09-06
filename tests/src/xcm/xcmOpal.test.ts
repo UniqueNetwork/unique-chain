@@ -21,7 +21,7 @@ import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from './../substrate/substrate-api';
-import {getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
+import {bigIntToDecimals, getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
 import waitNewBlocks from './../substrate/wait-new-blocks';
 import {normalizeAccountId} from './../util/helpers';
 import getBalance from './../substrate/get-balance';
@@ -42,6 +42,8 @@ const ASSET_METADATA_DECIMALS = 18;
 const ASSET_METADATA_NAME = 'USDT';
 const ASSET_METADATA_DESCRIPTION = 'USDT';
 const ASSET_METADATA_MINIMAL_BALANCE = 1;
+
+const WESTMINT_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 
@@ -281,7 +283,10 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
       [balanceStmnAfter] = await getBalance(api, [alice.address]);
 
       // common good parachain take commission in it native token
-      console.log('Opal to Westmint transaction fees on Westmint: %s WND', balanceStmnBefore - balanceStmnAfter);
+      console.log(
+        'Opal to Westmint transaction fees on Westmint: %s WND',
+        bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, WESTMINT_DECIMALS),
+      );
       expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
 
     }, statemineApiOptions);
@@ -297,10 +302,16 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
 
       // commission has not paid in USDT token
       expect(free == TRANSFER_AMOUNT).to.be.true;
-      console.log('Opal to Westmint transaction fees on Opal: %s USDT', TRANSFER_AMOUNT - free);
+      console.log(
+        'Opal to Westmint transaction fees on Opal: %s USDT',
+        bigIntToDecimals(TRANSFER_AMOUNT - free),
+      );
       // ... and parachain native token
       expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
-      console.log('Opal to Westmint transaction fees on Opal: %s WND', balanceOpalAfter - balanceOpalBefore);
+      console.log(
+        'Opal to Westmint transaction fees on Opal: %s WND',
+        bigIntToDecimals(balanceOpalAfter - balanceOpalBefore, WESTMINT_DECIMALS),
+      );
 
     }, uniqueApiOptions);
     
@@ -451,8 +462,14 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
       [balanceBobAfter] = await getBalance(api, [bob.address]);
       balanceBobRelayTokenAfter = BigInt(((await api.query.tokens.accounts(bob.addressRaw, {NativeAssetId: 'Parent'})).toJSON() as any).free);
       const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore; 
-      console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobBefore);
-      console.log('Relay (Westend) to Opal transaction fees: %s WND', wndFee);
+      console.log(
+        'Relay (Westend) to Opal transaction fees: %s OPL',
+        bigIntToDecimals(balanceBobAfter - balanceBobBefore),
+      );
+      console.log(
+        'Relay (Westend) to Opal transaction fees: %s WND',
+        bigIntToDecimals(wndFee, WESTMINT_DECIMALS),
+      );
       expect(balanceBobBefore == balanceBobAfter).to.be.true;
       expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
     }, uniqueApiOptions2);

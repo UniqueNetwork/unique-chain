@@ -103,6 +103,24 @@ export function bigIntToSub(api: ApiPromise, number: bigint) {
   return api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
 }
 
+export function bigIntToDecimals(number: bigint, decimals = 18): string {
+  let numberStr = number.toString();
+  console.log('[0] str = ', numberStr);
+
+  // Get rid of `n` at the end
+  numberStr = numberStr.substring(0, numberStr.length - 1);
+  console.log('[1] str = ', numberStr);
+
+  const dotPos = numberStr.length - decimals;
+  if (dotPos <= 0) {
+    return '0.' + numberStr;
+  } else {
+    const intPart = numberStr.substring(0, dotPos);
+    const fractPart = numberStr.substring(dotPos);
+    return intPart + '.' + fractPart;
+  }
+}
+
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
   if (typeof input === 'string') {
     if (input.length >= 47) {

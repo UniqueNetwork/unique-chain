@@ -21,7 +21,7 @@ import {WsProvider, Keyring} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {getGenericResult, generateKeyringPair, waitEvent, describe_xcm} from '../util/helpers';
+import {getGenericResult, generateKeyringPair, waitEvent, describe_xcm, bigIntToDecimals} from '../util/helpers';
 import {MultiLocation} from '@polkadot/types/interfaces';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import waitNewBlocks from '../substrate/wait-new-blocks';
@@ -36,6 +36,8 @@ const MOONBEAM_CHAIN = 2004;
 
 const ACALA_PORT = 9946;
 const MOONBEAM_PORT = 9947;
+
+const ACALA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -182,7 +184,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccount.address]);
   
       const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
-      console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', unqFees);
+      console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', bigIntToDecimals(unqFees));
       expect(unqFees > 0n).to.be.true;
     });
   
@@ -198,8 +200,11 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
         const acaFees = balanceAcalaTokenInit - balanceAcalaTokenMiddle;
         const unqIncomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenInit;
 
-        console.log('[Unique -> Acala] transaction fees on Acala: %s ACA', acaFees);
-        console.log('[Unique -> Acala] income %s UNQ', unqIncomeTransfer);
+        console.log(
+          '[Unique -> Acala] transaction fees on Acala: %s ACA',
+          bigIntToDecimals(acaFees, ACALA_DECIMALS),
+        );
+        console.log('[Unique -> Acala] income %s UNQ', bigIntToDecimals(unqIncomeTransfer));
         expect(acaFees == 0n).to.be.true;
         expect(unqIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
@@ -249,8 +254,11 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
         const acaFees = balanceAcalaTokenMiddle - balanceAcalaTokenFinal;
         const unqOutcomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenFinal;
 
-        console.log('[Acala -> Unique] transaction fees on Acala: %s ACA', acaFees);
-        console.log('[Acala -> Unique] outcome %s UNQ', unqOutcomeTransfer);
+        console.log(
+          '[Acala -> Unique] transaction fees on Acala: %s ACA',
+          bigIntToDecimals(acaFees, ACALA_DECIMALS),
+        );
+        console.log('[Acala -> Unique] outcome %s UNQ', bigIntToDecimals(unqOutcomeTransfer));
 
         expect(acaFees > 0).to.be.true;
         expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
@@ -266,10 +274,10 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
       expect(actuallyDelivered > 0).to.be.true;
 
-      console.log('[Acala -> Unique] actually delivered %s UNQ', actuallyDelivered);
+      console.log('[Acala -> Unique] actually delivered %s UNQ', bigIntToDecimals(actuallyDelivered));
   
       const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
-      console.log('[Acala -> Unique] transaction fees on Unique: %s UNQ', unqFees);
+      console.log('[Acala -> Unique] transaction fees on Unique: %s UNQ', bigIntToDecimals(unqFees));
       expect(unqFees == 0n).to.be.true;
     });
   });
@@ -581,7 +589,7 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
       expect(balanceUniqueTokenMiddle < balanceUniqueTokenInit).to.be.true;
 
       const transactionFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
-      console.log('[Unique -> Moonbeam] transaction fees on Unique: %s UNQ', transactionFees);
+      console.log('[Unique -> Moonbeam] transaction fees on Unique: %s UNQ', bigIntToDecimals(transactionFees));
       expect(transactionFees > 0).to.be.true;
     });
 
@@ -592,7 +600,7 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
         [balanceGlmrTokenMiddle] = await getBalance(api, [randomAccountMoonbeam.address]);
 
         const glmrFees = balanceGlmrTokenInit - balanceGlmrTokenMiddle;
-        console.log('[Unique -> Moonbeam] transaction fees on Moonbeam: %s GLMR', glmrFees);
+        console.log('[Unique -> Moonbeam] transaction fees on Moonbeam: %s GLMR', bigIntToDecimals(glmrFees));
         expect(glmrFees == 0n).to.be.true;
 
         const unqRandomAccountAsset = (
@@ -601,7 +609,7 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
 
         balanceForeignUnqTokenMiddle = BigInt(unqRandomAccountAsset['balance']);
         const unqIncomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenInit;
-        console.log('[Unique -> Moonbeam] income %s UNQ', unqIncomeTransfer);
+        console.log('[Unique -> Moonbeam] income %s UNQ', bigIntToDecimals(unqIncomeTransfer));
         expect(unqIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
       moonbeamOptions(),
@@ -647,7 +655,7 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
         [balanceGlmrTokenFinal] = await getBalance(api, [randomAccountMoonbeam.address]);
 
         const glmrFees = balanceGlmrTokenMiddle - balanceGlmrTokenFinal;
-        console.log('[Moonbeam -> Unique] transaction fees on Moonbeam: %s GLMR', glmrFees);
+        console.log('[Moonbeam -> Unique] transaction fees on Moonbeam: %s GLMR', bigIntToDecimals(glmrFees));
         expect(glmrFees > 0).to.be.true;
 
         const unqRandomAccountAsset = (
@@ -659,7 +667,7 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
         balanceForeignUnqTokenFinal = 0n;
 
         const unqOutcomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenFinal;
-        console.log('[Unique -> Moonbeam] outcome %s UNQ', unqOutcomeTransfer);
+        console.log('[Unique -> Moonbeam] outcome %s UNQ', bigIntToDecimals(unqOutcomeTransfer));
         expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
       moonbeamOptions(),
@@ -672,10 +680,10 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
       const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
       expect(actuallyDelivered > 0).to.be.true;
 
-      console.log('[Moonbeam -> Unique] actually delivered %s UNQ', actuallyDelivered);
+      console.log('[Moonbeam -> Unique] actually delivered %s UNQ', bigIntToDecimals(actuallyDelivered));
 
       const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
-      console.log('[Moonbeam -> Unique] transaction fees on Unique: %s UNQ', unqFees);
+      console.log('[Moonbeam -> Unique] transaction fees on Unique: %s UNQ', bigIntToDecimals(unqFees));
       expect(unqFees == 0n).to.be.true;
     });
   });
