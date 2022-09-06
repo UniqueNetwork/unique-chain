@@ -14,19 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{traits::Everything, weights::Weight, parameter_types};
+use frame_support::{
+	traits::{Everything, Get},
+	weights::Weight,
+	parameter_types,
+};
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{Junction::*, MultiLocation, NetworkId};
-use xcm::latest::{Instruction, Xcm};
+use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, traits::ShouldExecute};
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, vec::Vec};
 use crate::{
 	Runtime, Call, Event, Origin, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
 	xcm_config::Barrier,
@@ -35,16 +39,16 @@ use crate::{
 use up_common::types::AccountId;
 
 #[cfg(feature = "foreign-assets")]
-mod foreignassets;
+pub mod foreignassets;
 
 #[cfg(not(feature = "foreign-assets"))]
-mod nativeassets;
+pub mod nativeassets;
 
 #[cfg(feature = "foreign-assets")]
-use foreignassets as xcm_assets;
+pub use foreignassets as xcm_assets;
 
 #[cfg(not(feature = "foreign-assets"))]
-use nativeassets as xcm_assets;
+pub use nativeassets as xcm_assets;
 
 use xcm_assets::{AssetTransactors, IsReserve, Trader};
 
@@ -53,6 +57,11 @@ parameter_types! {
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+
+	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
+	pub UnitWeightCost: Weight = 1_000_000;
+	pub const MaxInstructions: u32 = 100;
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -102,12 +111,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<Origin>,
 );
-
-parameter_types! {
-	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
-	pub const MaxInstructions: u32 = 100;
-}
 
 pub trait TryPass {
 	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()>;
@@ -169,6 +172,40 @@ where
 	}
 }
 
+// Allow xcm exchange only with locations in list
+pub struct DenyExchangeWithUnknownLocation<T>(PhantomData<T>);
+impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> {
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+		let allowed_locations = T::get();
+
+		// Check if deposit or transfer belongs to allowed parachains
+		let mut allowed = allowed_locations.contains(origin);
+
+		message.0.iter().for_each(|inst| match inst {
+			DepositReserveAsset { dest: dst, .. } => {
+				allowed |= allowed_locations.contains(dst);
+			}
+			TransferReserveAsset { dest: dst, .. } => {
+				allowed |= allowed_locations.contains(dst);
+			}
+			_ => {}
+		});
+
+		if allowed {
+			return Ok(());
+		}
+
+		log::warn!(
+			target: "xcm::barrier",
+			"Unexpected deposit or transfer location"
+		);
+		// Deny
+		Err(())
+	}
+}
+
+pub type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+
 pub struct XcmConfig<T>(PhantomData<T>);
 impl<T> Config for XcmConfig<T>
 where
@@ -183,7 +220,7 @@ where
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type Weigher = Weigher;
 	type Trader = Trader<T>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;

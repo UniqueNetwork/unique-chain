@@ -15,39 +15,17 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	{match_types, parameter_types, weights::Weight},
-	pallet_prelude::Get,
-	traits::{Contains, Everything},
+	{match_types, weights::Weight},
+	traits::Everything,
 };
-use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
-use sp_runtime::traits::{AccountIdConversion, Convert};
-use sp_std::{vec, vec::Vec};
 use xcm::{
 	latest::Xcm,
-	v1::{BodyId, Junction::*, Junctions::*, MultiLocation, NetworkId},
+	v1::{BodyId, Junction::*, Junctions::*, MultiLocation},
 };
-use xcm_builder::{
-	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, FixedWeightBounds, LocationInverter,
-	TakeWeightCredit,
-};
-use xcm_executor::{XcmExecutor, traits::ShouldExecute};
+use xcm_builder::{AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, TakeWeightCredit};
+use xcm_executor::traits::ShouldExecute;
 
-use up_common::types::{AccountId, Balance};
-use crate::{
-	Call, Event, ParachainInfo, Runtime,
-	runtime_common::config::{
-		substrate::{TreasuryModuleId, MaxLocks, MaxReserves},
-		pallets::TreasuryAccountId,
-		xcm::*,
-	},
-};
-
-use pallet_foreing_assets::{
-	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, CurrencyId, NativeCurrency,
-};
-
-// Signed version of balance
-pub type Amount = i128;
+use crate::runtime_common::config::xcm::{DenyThenTry, DenyTransact};
 
 match_types! {
 	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
@@ -83,123 +61,3 @@ pub type Barrier = DenyThenTry<
 		AllowAllDebug,
 	),
 >;
-
-impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
-	fn convert(location: MultiLocation) -> Option<CurrencyId> {
-		if location == MultiLocation::here()
-			|| location == MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())))
-		{
-			return Some(AssetIds::NativeAssetId(NativeCurrency::Here));
-		}
-
-		if location == MultiLocation::parent() {
-			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent));
-		}
-
-		if let Some(currency_id) =
-			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone())
-		{
-			return Some(currency_id);
-		}
-
-		None
-	}
-}
-
-impl orml_tokens::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
-	type MaxLocks = MaxLocks;
-	type MaxReserves = MaxReserves;
-	// TODO: Add all module accounts
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	/// The id type for named reserves.
-	type ReserveIdentifier = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-}
-
-impl orml_xtokens::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type CurrencyId = CurrencyId;
-	type CurrencyIdConvert = CurrencyIdConvert;
-	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type SelfLocation = SelfLocation;
-	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type BaseXcmWeight = BaseXcmWeight;
-	type LocationInverter = LocationInverter<Ancestry>;
-	type MaxAssetsForTransfer = MaxAssetsForTransfer;
-	type MinXcmFee = ParachainMinFee;
-	type MultiLocationsFilter = Everything;
-	type ReserveProvider = AbsoluteReserveProvider;
-}
-
-parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		match currency_id {
-			CurrencyId::NativeAssetId(symbol) => match symbol {
-				NativeCurrency::Here => 0,
-				NativeCurrency::Parent=> 0,
-			},
-			_ => 100_000
-		}
-	};
-}
-
-pub struct DustRemovalWhitelist;
-impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		get_all_module_accounts().contains(a)
-	}
-}
-
-pub struct CurrencyIdConvert;
-impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
-	fn convert(id: AssetIds) -> Option<MultiLocation> {
-		match id {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(
-				1,
-				X1(Parachain(ParachainInfo::get().into())),
-			)),
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => Some(MultiLocation::parent()),
-			AssetIds::ForeignAssetId(foreign_asset_id) => {
-				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
-			}
-		}
-	}
-}
-
-parameter_types! {
-	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
-	pub const MaxAssetsForTransfer: usize = 2;
-
-	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-}
-
-parameter_type_with_key! {
-	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
-		Some(100_000_000_000)
-	};
-}
-
-pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![TreasuryModuleId::get().into_account_truncating()]
-}
-pub struct AccountIdToMultiLocation;
-impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 {
-			network: NetworkId::Any,
-			id: account.into(),
-		})
-		.into()
-	}
-}

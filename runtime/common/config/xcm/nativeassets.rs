@@ -18,7 +18,7 @@ use frame_support::{
 	traits::{tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get},
 	weights::{Weight, WeightToFeePolynomial},
 };
-use sp_runtime::traits::{CheckedConversion, Zero};
+use sp_runtime::traits::{CheckedConversion, Zero, Convert};
 use xcm::v1::{Junction::*, MultiLocation, Junctions::*};
 use xcm::latest::{
 	AssetId::{Concrete},
@@ -30,6 +30,7 @@ use xcm_executor::{
 	Assets,
 	traits::{MatchesFungible, WeightTrader},
 };
+use pallet_foreing_assets::{AssetIds, NativeCurrency};
 use sp_std::marker::PhantomData;
 use crate::{Balances, ParachainInfo};
 use super::{LocationToAccountId, RelayLocation};
@@ -127,3 +128,16 @@ pub type Trader<T> = UsingOnlySelfCurrencyComponents<
 	Balances,
 	(),
 >;
+
+pub struct CurrencyIdConvert;
+impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
+	fn convert(id: AssetIds) -> Option<MultiLocation> {
+		match id {
+			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(
+				1,
+				X1(Parachain(ParachainInfo::get().into())),
+			)),
+			_ => None,
+		}
+	}
+}

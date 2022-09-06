@@ -18,14 +18,14 @@ use frame_support::{
 	traits::{Contains, Get, fungibles},
 	parameter_types,
 };
-use sp_runtime::traits::Zero;
+use sp_runtime::traits::{Zero, Convert};
 use xcm::v1::{Junction::*, MultiLocation, Junctions::*};
 use xcm::latest::MultiAsset;
 use xcm_builder::{FungiblesAdapter, ConvertedConcreteAssetId};
 use xcm_executor::traits::{Convert as ConvertXcm, JustTry, FilterAssetLocation};
 use pallet_foreing_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, NativeCurrency, FreeForAll, TryAsForeing,
-	ForeignAssetId,
+	ForeignAssetId, CurrencyId,
 };
 use sp_std::{borrow::Borrow, marker::PhantomData};
 use crate::{Runtime, Balances, ParachainInfo, PolkadotXcm, ForeingAssets};
@@ -158,3 +158,41 @@ pub type Trader<T> = FreeForAll<
 	Balances,
 	(),
 >;
+
+pub struct CurrencyIdConvert;
+impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
+	fn convert(id: AssetIds) -> Option<MultiLocation> {
+		match id {
+			AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(
+				1,
+				X1(Parachain(ParachainInfo::get().into())),
+			)),
+			AssetIds::NativeAssetId(NativeCurrency::Parent) => Some(MultiLocation::parent()),
+			AssetIds::ForeignAssetId(foreign_asset_id) => {
+				XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
+			}
+		}
+	}
+}
+
+impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
+	fn convert(location: MultiLocation) -> Option<CurrencyId> {
+		if location == MultiLocation::here()
+			|| location == MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())))
+		{
+			return Some(AssetIds::NativeAssetId(NativeCurrency::Here));
+		}
+
+		if location == MultiLocation::parent() {
+			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent));
+		}
+
+		if let Some(currency_id) =
+			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone())
+		{
+			return Some(currency_id);
+		}
+
+		None
+	}
+}
