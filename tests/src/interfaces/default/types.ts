@@ -1188,6 +1188,17 @@ export interface PalletEvmContractHelpersError extends Enum {
   readonly type: 'NoPermission' | 'NoPendingSponsor';
 }
 
+/** @name PalletEvmContractHelpersEvent */
+export interface PalletEvmContractHelpersEvent extends Enum {
+  readonly isContractSponsorSet: boolean;
+  readonly asContractSponsorSet: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorshipConfirmed: boolean;
+  readonly asContractSponsorshipConfirmed: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorRemoved: boolean;
+  readonly asContractSponsorRemoved: H160;
+  readonly type: 'ContractSponsorSet' | 'ContractSponsorshipConfirmed' | 'ContractSponsorRemoved';
+}
+
 /** @name PalletEvmContractHelpersSponsoringModeT */
 export interface PalletEvmContractHelpersSponsoringModeT extends Enum {
   readonly isDisabled: boolean;

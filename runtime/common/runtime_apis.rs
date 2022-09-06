@@ -61,7 +61,7 @@ macro_rules! impl_common_runtime_apis {
         impl_runtime_apis! {
             $($($custom_apis)+)?
 
-            impl up_rpc::UniqueApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
+            impl up_rpc::UniqueApi<Block, CrossAccountId, AccountId> for Runtime {
                 fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>, DispatchError> {
                     dispatch_unique_runtime!(collection.account_tokens(account))
                 }

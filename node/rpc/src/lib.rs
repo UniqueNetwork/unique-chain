@@ -100,8 +100,7 @@ where
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api:
-		up_rpc::UniqueApi<Block, BlockNumber, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
 	R: RuntimeInstance + Send + Sync + 'static,
@@ -145,8 +144,7 @@ where
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
-	C::Api:
-		up_rpc::UniqueApi<Block, BlockNumber, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
 	C::Api: app_promotion_rpc::AppPromotionApi<
 		Block,
 		BlockNumber,
@@ -236,7 +234,7 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	#[cfg(any(feature = "opal-runtime"))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(not(feature = "unique-runtime"))]

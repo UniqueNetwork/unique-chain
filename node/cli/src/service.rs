@@ -363,7 +363,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-		+ up_rpc::UniqueApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
 		+ rmrk_rpc::RmrkApi<
 			Block,
@@ -665,7 +665,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-		+ up_rpc::UniqueApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
 		+ rmrk_rpc::RmrkApi<
 			Block,
@@ -810,7 +810,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-		+ up_rpc::UniqueApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
 		+ rmrk_rpc::RmrkApi<
 			Block,

@@ -226,15 +226,15 @@ pub mod pallet {
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
-			let mut consumed_weight = 0;
-			let mut add_weight = |reads, writes, weight| {
-				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-				consumed_weight += weight;
-			};
+			// let mut consumed_weight = 0;
+			// let mut add_weight = |reads, writes, weight| {
+			// 	consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+			// 	consumed_weight += weight;
+			// };
 
 			let block_pending = PendingUnstake::<T>::take(current_block_number);
-
-			add_weight(0, 1, 0);
+			let counter = block_pending.len() as u32;
+			// add_weight(0, 1, 0);
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
@@ -242,7 +242,8 @@ pub mod pallet {
 				});
 			}
 
-			consumed_weight
+			T::WeightInfo::on_initialize(counter)
+			// consumed_weight
 		}
 	}
 
@@ -280,7 +281,7 @@ pub mod pallet {
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
 
-			ensure!(balance >= amount, ArithmeticError::Underflow);
+			// ensure!(balance >= amount, ArithmeticError::Underflow);
 
 			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
 				&staker_id,
@@ -672,7 +673,7 @@ impl<T: Config> Pallet<T> {
 				LOCK_IDENTIFIER,
 				staker,
 				amount,
-				WithdrawReasons::all(),
+				WithdrawReasons::RESERVE,
 			)
 		}
 	}

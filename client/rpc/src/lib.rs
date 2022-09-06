@@ -44,7 +44,7 @@ pub use rmrk_unique_rpc::RmrkApiServer;
 
 #[rpc(server)]
 #[async_trait]
-pub trait UniqueApi<BlockHash, BlockNumber, CrossAccountId, AccountId> {
+pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 	/// Get tokens owned by account.
 	#[method(name = "unique_accountTokens")]
 	fn account_tokens(
@@ -481,7 +481,7 @@ macro_rules! pass_method {
 
 macro_rules! unique_api {
 	() => {
-		dyn UniqueRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>
+		dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>
 	};
 }
 
@@ -498,15 +498,13 @@ macro_rules! rmrk_api {
 }
 
 #[allow(deprecated)]
-impl<C, Block, BlockNumber, CrossAccountId, AccountId>
-	UniqueApiServer<<Block as BlockT>::Hash, BlockNumber, CrossAccountId, AccountId>
-	for Unique<C, Block>
+impl<C, Block, CrossAccountId, AccountId>
+	UniqueApiServer<<Block as BlockT>::Hash, CrossAccountId, AccountId> for Unique<C, Block>
 where
 	Block: BlockT,
-	BlockNumber: Decode + Member + AtLeast32BitUnsigned,
 	AccountId: Decode,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: UniqueRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>,
+	C::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
 	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 {
 	pass_method!(

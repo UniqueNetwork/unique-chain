@@ -72,12 +72,16 @@ pub trait ContractHandler {
 	type ContractId;
 	type AccountId;
 
-	fn set_sponsor(sponsor_id: Self::AccountId, contract_id: Self::ContractId) -> DispatchResult;
+	fn set_sponsor(
+		sponsor_id: Self::AccountId,
+		contract_address: Self::ContractId,
+	) -> DispatchResult;
 
-	fn remove_contract_sponsor(contract_id: Self::ContractId) -> DispatchResult;
+	fn remove_contract_sponsor(contract_address: Self::ContractId) -> DispatchResult;
 
-	fn get_sponsor(contract_id: Self::ContractId)
-		-> Result<Option<Self::AccountId>, DispatchError>;
+	fn get_sponsor(
+		contract_address: Self::ContractId,
+	) -> Result<Option<Self::AccountId>, DispatchError>;
 }
 
 impl<T: EvmHelpersConfig> ContractHandler for EvmHelpersPallet<T> {
@@ -85,22 +89,20 @@ impl<T: EvmHelpersConfig> ContractHandler for EvmHelpersPallet<T> {
 
 	type AccountId = T::CrossAccountId;
 
-	fn set_sponsor(sponsor_id: Self::AccountId, contract_id: Self::ContractId) -> DispatchResult {
-		Sponsoring::<T>::insert(
-			contract_id,
-			SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor_id),
-		);
-		Ok(())
+	fn set_sponsor(
+		sponsor_id: Self::AccountId,
+		contract_address: Self::ContractId,
+	) -> DispatchResult {
+		Self::force_set_sponsor(contract_address, &sponsor_id)
 	}
 
-	fn remove_contract_sponsor(contract_id: Self::ContractId) -> DispatchResult {
-		Sponsoring::<T>::remove(contract_id);
-		Ok(())
+	fn remove_contract_sponsor(contract_address: Self::ContractId) -> DispatchResult {
+		Self::force_remove_sponsor(contract_address)
 	}
 
 	fn get_sponsor(
-		contract_id: Self::ContractId,
+		contract_address: Self::ContractId,
 	) -> Result<Option<Self::AccountId>, DispatchError> {
-		Ok(Self::get_sponsor(contract_id))
+		Ok(Self::get_sponsor(contract_address))
 	}
 }

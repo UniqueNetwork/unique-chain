@@ -216,20 +216,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Set sponsor as already confirmed.
+		/// TO-DO
 		///
-		/// `sender` must be owner of contract.
+		///
 		pub fn force_set_sponsor(
-			sender: &T::CrossAccountId,
 			contract_address: H160,
 			sponsor: &T::CrossAccountId,
 		) -> DispatchResult {
-			Pallet::<T>::ensure_owner(contract_address, *sender.as_eth())?;
 			Sponsoring::<T>::insert(
 				contract_address,
-				SponsorshipState::<T::CrossAccountId>::Confirmed(T::CrossAccountId::from_eth(
-					contract_address,
-				)),
+				SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor.clone()),
 			);
 
 			let eth_sponsor = *sponsor.as_eth();
@@ -265,13 +261,24 @@ pub mod pallet {
 		/// Remove sponsor for `contract`.
 		///
 		/// `sender` must be owner of contract.
-		pub fn remove_sponsor(sender: &T::CrossAccountId, contract_address: H160) -> DispatchResult {
-			Pallet::<T>::ensure_owner(contract_address, *sender.as_eth())?;
+		pub fn remove_sponsor(
+			sender: &T::CrossAccountId,
+			contract_address: H160,
+		) -> DispatchResult {
+			Self::ensure_owner(contract_address, *sender.as_eth())?;
+			Self::force_remove_sponsor(contract_address)
+		}
+
+		/// TO-DO
+		///
+		///
+		pub fn force_remove_sponsor(contract_address: H160) -> DispatchResult {
 			Sponsoring::<T>::remove(contract_address);
 
-			<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorRemoved(contract_address));
+			Self::deposit_event(Event::<T>::ContractSponsorRemoved(contract_address));
 			<PalletEvm<T>>::deposit_log(
-				ContractHelpersEvents::ContractSponsorRemoved { contract_address }.to_log(contract_address),
+				ContractHelpersEvents::ContractSponsorRemoved { contract_address }
+					.to_log(contract_address),
 			);
 
 			Ok(())
@@ -280,7 +287,10 @@ pub mod pallet {
 		/// Confirm sponsorship.
 		///
 		/// `sender` must be same that set via [`set_sponsor`].
-		pub fn confirm_sponsorship(sender: &T::CrossAccountId, contract_address: H160) -> DispatchResult {
+		pub fn confirm_sponsorship(
+			sender: &T::CrossAccountId,
+			contract_address: H160,
+		) -> DispatchResult {
 			match Sponsoring::<T>::get(contract_address) {
 				SponsorshipState::Unconfirmed(sponsor) => {
 					ensure!(sponsor == *sender, Error::<T>::NoPermission);

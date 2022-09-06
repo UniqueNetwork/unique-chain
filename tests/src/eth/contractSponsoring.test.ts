@@ -37,7 +37,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
   });
 
-  itWeb3.only('Set self sponsored events', async ({api, web3, privateKeyWrapper}) => {
+  itWeb3('Set self sponsored events', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);

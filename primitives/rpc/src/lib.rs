@@ -33,8 +33,7 @@ type Result<T> = core::result::Result<T, DispatchError>;
 sp_api::decl_runtime_apis! {
 	#[api_version(2)]
 	/// Trait for generate rpc.
-	pub trait UniqueApi<BlockNumber ,CrossAccountId, AccountId> where
-		BlockNumber: Decode + Member + AtLeast32BitUnsigned,
+	pub trait UniqueApi<CrossAccountId, AccountId> where
 		AccountId: Decode,
 		CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 	{

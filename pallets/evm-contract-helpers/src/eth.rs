@@ -122,8 +122,12 @@ where
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		Pallet::<T>::ensure_owner(contract_address, *caller.as_eth())
+			.map_err(dispatch_to_evm::<T>)?;
+
 		Pallet::<T>::force_set_sponsor(
-			&T::CrossAccountId::from_eth(caller),
 			contract_address,
 			&T::CrossAccountId::from_eth(contract_address),
 		)

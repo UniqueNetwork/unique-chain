@@ -23,12 +23,31 @@ use sp_runtime::traits::Bounded;
 use sp_std::vec;
 
 use frame_benchmarking::{benchmarks, account};
-
+use frame_support::traits::OnInitialize;
 use frame_system::{Origin, RawOrigin};
 use pallet_unique::benchmarking::create_nft_collection;
 use pallet_evm_migration::Pallet as EvmMigrationPallet;
 
 const SEED: u32 = 0;
+
+fn set_admin<T>() -> DispatchResult
+where
+	T: Config + pallet_unique::Config + pallet_evm_migration::Config,
+	T::BlockNumber: From<u32> + Into<u32>,
+	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>,
+{
+	let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+
+	<T as Config>::Currency::make_free_balance_be(
+		&pallet_admin,
+		Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value(),
+	);
+
+	PromototionPallet::<T>::set_admin_address(
+		RawOrigin::Root.into(),
+		T::CrossAccountId::from_sub(pallet_admin.clone()),
+	)
+}
 
 benchmarks! {
 	where_clause{
@@ -36,13 +55,20 @@ benchmarks! {
 		T::BlockNumber: From<u32> + Into<u32>,
 		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
 	}
-	// start_app_promotion {
 
-	// } : {PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), None)?}
+	on_initialize {
+		let b in 0..PENDING_LIMIT_PER_BLOCK;
+		set_admin::<T>()?;
 
-	// stop_app_promotion{
-	// 	PromototionPallet::<T>::start_app_promotion(RawOrigin::Root.into(), Some(25.into()))?;
-	// } : {PromototionPallet::<T>::stop_app_promotion(RawOrigin::Root.into())?}
+		(0..b).try_for_each(|index| {
+			let staker = account::<T::AccountId>("staker", index, SEED);
+			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+			PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())?;
+			PromototionPallet::<T>::unstake(RawOrigin::Signed(staker.clone()).into()).map_err(|e| e.error)?;
+			Result::<(), sp_runtime::DispatchError>::Ok(())
+		})?;
+		let block_number = <frame_system::Pallet<T>>::current_block_number() + T::PendingInterval::get();
+	}: {PromototionPallet::<T>::on_initialize(block_number)}
 
 	set_admin_address {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -66,7 +92,7 @@ benchmarks! {
 		(0..10).try_for_each(|_| {
 			stakers.iter()
 				.map(|staker| {
-				
+
 					PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())
 				}).collect::<Result<Vec<_>, _>>()?;
 			<frame_system::Pallet<T>>::finalize();

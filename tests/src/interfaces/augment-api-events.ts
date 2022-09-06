@@ -218,6 +218,24 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    evmContractHelpers: {
+      /**
+       * Collection sponsor was removed.
+       **/
+      ContractSponsorRemoved: AugmentedEvent<ApiType, [H160]>;
+      /**
+       * Contract sponsor was set.
+       **/
+      ContractSponsorSet: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * New sponsor was confirm.
+       **/
+      ContractSponsorshipConfirmed: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     parachainSystem: {
       /**
        * Downward messages were processed using the given weight.
