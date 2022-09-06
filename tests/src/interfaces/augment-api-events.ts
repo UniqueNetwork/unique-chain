@@ -6,10 +6,9 @@
 import '@polkadot/api-base/types/events';
 
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U256, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
-import type { ITuple } from '@polkadot/types-codec/types';
+import type { Bytes, Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeingAssetsAssetIds, PalletForeingAssetsModuleAssetMetadata, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
@@ -208,28 +207,6 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    foreingAssets: {
-      /**
-       * The asset registered.
-       **/
-      AssetRegistered: AugmentedEvent<ApiType, [assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata }>;
-      /**
-       * The asset updated.
-       **/
-      AssetUpdated: AugmentedEvent<ApiType, [assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: PalletForeingAssetsAssetIds, metadata: PalletForeingAssetsModuleAssetMetadata }>;
-      /**
-       * The foreign asset registered.
-       **/
-      ForeignAssetRegistered: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata }>;
-      /**
-       * The foreign asset updated.
-       **/
-      ForeignAssetUpdated: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeingAssetsModuleAssetMetadata }>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
     parachainSystem: {
       /**
        * Downward messages were processed using the given weight.
@@ -382,57 +359,6 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    rmrkCore: {
-      CollectionCreated: AugmentedEvent<ApiType, [issuer: AccountId32, collectionId: u32], { issuer: AccountId32, collectionId: u32 }>;
-      CollectionDestroyed: AugmentedEvent<ApiType, [issuer: AccountId32, collectionId: u32], { issuer: AccountId32, collectionId: u32 }>;
-      CollectionLocked: AugmentedEvent<ApiType, [issuer: AccountId32, collectionId: u32], { issuer: AccountId32, collectionId: u32 }>;
-      IssuerChanged: AugmentedEvent<ApiType, [oldIssuer: AccountId32, newIssuer: AccountId32, collectionId: u32], { oldIssuer: AccountId32, newIssuer: AccountId32, collectionId: u32 }>;
-      NFTAccepted: AugmentedEvent<ApiType, [sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32], { sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32 }>;
-      NFTBurned: AugmentedEvent<ApiType, [owner: AccountId32, nftId: u32], { owner: AccountId32, nftId: u32 }>;
-      NftMinted: AugmentedEvent<ApiType, [owner: AccountId32, collectionId: u32, nftId: u32], { owner: AccountId32, collectionId: u32, nftId: u32 }>;
-      NFTRejected: AugmentedEvent<ApiType, [sender: AccountId32, collectionId: u32, nftId: u32], { sender: AccountId32, collectionId: u32, nftId: u32 }>;
-      NFTSent: AugmentedEvent<ApiType, [sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32, approvalRequired: bool], { sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32, approvalRequired: bool }>;
-      PrioritySet: AugmentedEvent<ApiType, [collectionId: u32, nftId: u32], { collectionId: u32, nftId: u32 }>;
-      PropertySet: AugmentedEvent<ApiType, [collectionId: u32, maybeNftId: Option<u32>, key: Bytes, value: Bytes], { collectionId: u32, maybeNftId: Option<u32>, key: Bytes, value: Bytes }>;
-      ResourceAccepted: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      ResourceAdded: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      ResourceRemoval: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      ResourceRemovalAccepted: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    rmrkEquip: {
-      BaseCreated: AugmentedEvent<ApiType, [issuer: AccountId32, baseId: u32], { issuer: AccountId32, baseId: u32 }>;
-      EquippablesUpdated: AugmentedEvent<ApiType, [baseId: u32, slotId: u32], { baseId: u32, slotId: u32 }>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    scheduler: {
-      /**
-       * The call for the provided hash was not found so the task has been aborted.
-       **/
-      CallLookupFailed: AugmentedEvent<ApiType, [task: ITuple<[u32, u32]>, id: Option<U8aFixed>, error: FrameSupportScheduleLookupError], { task: ITuple<[u32, u32]>, id: Option<U8aFixed>, error: FrameSupportScheduleLookupError }>;
-      /**
-       * Canceled some task.
-       **/
-      Canceled: AugmentedEvent<ApiType, [when: u32, index: u32], { when: u32, index: u32 }>;
-      /**
-       * Dispatched some task.
-       **/
-      Dispatched: AugmentedEvent<ApiType, [task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError>], { task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError> }>;
-      /**
-       * Scheduled some task.
-       **/
-      Scheduled: AugmentedEvent<ApiType, [when: u32, index: u32], { when: u32, index: u32 }>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
     structure: {
       /**
        * Executed call on behalf of the token.
@@ -495,57 +421,57 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * A balance was set by root.
        **/
-      BalanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, free: u128, reserved: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, free: u128, reserved: u128 }>;
+      BalanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, free: u128, reserved: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, free: u128, reserved: u128 }>;
       /**
        * Deposited some balance into an account
        **/
-      Deposited: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      Deposited: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * An account was removed whose balance was non-zero but below
        * ExistentialDeposit, resulting in an outright loss.
        **/
-      DustLost: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      DustLost: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * An account was created with some free balance.
        **/
-      Endowed: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      Endowed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Some locked funds were unlocked
        **/
-      LockRemoved: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32], { lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32 }>;
+      LockRemoved: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32 }>;
       /**
        * Some funds are locked
        **/
-      LockSet: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { lockId: U8aFixed, currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      LockSet: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Some balance was reserved (moved from free to reserved).
        **/
-      Reserved: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      Reserved: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Some reserved balance was repatriated (moved from reserved to
        * another account).
        **/
-      ReserveRepatriated: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus], { currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus }>;
+      ReserveRepatriated: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus }>;
       /**
        * Some balances were slashed (e.g. due to mis-behavior)
        **/
-      Slashed: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128 }>;
+      Slashed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128 }>;
       /**
        * The total issuance of an currency has been set
        **/
-      TotalIssuanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, amount: u128], { currencyId: PalletForeingAssetsAssetIds, amount: u128 }>;
+      TotalIssuanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, amount: u128], { currencyId: PalletForeignAssetsAssetIds, amount: u128 }>;
       /**
        * Transfer succeeded.
        **/
-      Transfer: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128 }>;
+      Transfer: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128 }>;
       /**
        * Some balance was unreserved (moved from reserved to free).
        **/
-      Unreserved: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      Unreserved: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Some balances were withdrawn (e.g. pay for transaction fee)
        **/
-      Withdrawn: AugmentedEvent<ApiType, [currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeingAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      Withdrawn: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Generic event
        **/
