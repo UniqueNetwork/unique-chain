@@ -88,6 +88,8 @@ pub fn get_allowed_locations() -> Vec<MultiLocation> {
         MultiLocation { parents: 1, interior: Here },
         // Karura/Acala location
         MultiLocation { parents: 1, interior: X1(Parachain(2000)) },
+        // Moonbeam location
+        MultiLocation { parents: 1, interior: X1(Parachain(2004)) },
         // Self parachain address
         MultiLocation { parents: 1, interior: X1(Parachain(ParachainInfo::get().into())) },
     ]
@@ -201,10 +203,42 @@ impl orml_tokens::Config for Runtime {
     type OnKilledTokenAccount = ();
 }
 
+impl orml_xtokens::Config for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type CurrencyId = CurrencyId;
+    type CurrencyIdConvert = CurrencyIdConvert;
+    type AccountIdToMultiLocation = AccountIdToMultiLocation;
+    type SelfLocation = SelfLocation;
+    type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
+    type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+    type BaseXcmWeight = BaseXcmWeight;
+    type LocationInverter = LocationInverter<Ancestry>;
+    type MaxAssetsForTransfer = MaxAssetsForTransfer;
+    type MinXcmFee = ParachainMinFee;
+    type MultiLocationsFilter = Everything;
+    type ReserveProvider = AbsoluteReserveProvider;
+}
+
+pub struct CurrencyIdConvert;
+impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
+    fn convert(id: AssetIds) -> Option<MultiLocation> {
+        match id {
+            AssetIds::NativeAssetId(NativeCurrency::Here) => Some(MultiLocation::new(
+                1,
+                X1(Parachain(ParachainInfo::get().into())),
+            )),
+            _ => None,
+        }
+    }
+}
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
 	pub const MaxAssetsForTransfer: usize = 2;
+
+    pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+    pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 }
 
 parameter_type_with_key! {

@@ -12,22 +12,15 @@ concurrency:
 jobs:
 
   yarn-test-dev:
-    if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/dev-build-tests_v2.yml
 
   unit-test:
-    if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/unit-test_v2.yml
-
-  forkless:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'forkless') }}
-    uses: ./.github/workflows/forkless.yml
 
   canary:
     if: ${{ contains( github.event.pull_request.labels.*.name, 'canary') }}
     uses: ./.github/workflows/canary.yml
     secrets: inherit # pass all secrets
-
 
   xcm:
     if: ${{ contains( github.event.pull_request.labels.*.name, 'xcm') }}
@@ -36,3 +29,6 @@ jobs:
 
   codestyle:
     uses: ./.github/workflows/codestyle_v2.yml
+  
+  yarn_eslint:
+    uses: ./.github/workflows/test_codestyle_v2.yml

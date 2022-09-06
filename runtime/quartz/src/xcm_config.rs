@@ -180,11 +180,10 @@ impl orml_tokens::Config for Runtime {
     type OnKilledTokenAccount = ();
 }
 
-/*
 impl orml_xtokens::Config for Runtime {
     type Event = Event;
     type Balance = Balance;
-    type CurrencyId = AssetIds;
+    type CurrencyId = CurrencyId;
     type CurrencyIdConvert = CurrencyIdConvert;
     type AccountIdToMultiLocation = AccountIdToMultiLocation;
     type SelfLocation = SelfLocation;
@@ -197,7 +196,7 @@ impl orml_xtokens::Config for Runtime {
     type MultiLocationsFilter = Everything;
     type ReserveProvider = AbsoluteReserveProvider;
 }
- */
+
 
 parameter_type_with_key! {
 	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
@@ -218,7 +217,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
     }
 }
 
-/*
+
 pub struct CurrencyIdConvert;
 impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
     fn convert(id: AssetIds) -> Option<MultiLocation> {
@@ -228,12 +227,11 @@ impl Convert<AssetIds, Option<MultiLocation>> for CurrencyIdConvert {
                 X1(Parachain(ParachainInfo::get().into())),
             )),
             AssetIds::NativeAssetId(NativeCurrency::Parent) => Some(MultiLocation::parent()),
-            AssetIds::ForeignAssetId(foreign_asset_id) => {
-                XcmForeignAssetIdMapping::<Runtime>::get_multi_location(foreign_asset_id)
-            }
+            AssetIds::ForeignAssetId(_) => None,
         }
     }
 }
+/*
 impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
     fn convert(location: MultiLocation) -> Option<CurrencyId> {
         if location == MultiLocation::here()

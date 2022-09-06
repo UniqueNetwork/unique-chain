@@ -103,7 +103,6 @@ class ArrangeGroup {
     let accountsCreated = false;
     // checkBalances retry up to 5 blocks
     for (let index = 0; index < 5; index++) {
-      console.log(await this.helper.chain.getLatestBlockNumber());
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
       await this.waitNewBlocks(1);

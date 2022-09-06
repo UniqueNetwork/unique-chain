@@ -30,12 +30,12 @@ import getBalance from '../substrate/get-balance';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const UNIQUE_CHAIN = 2037;
-const ACALA_CHAIN = 2000;
-const MOONBEAM_CHAIN = 2004;
+const QUARTZ_CHAIN = 2095;
+const KARURA_CHAIN = 2000;
+const MOONRIVER_CHAIN = 2023;
 
-const ACALA_PORT = 9946;
-const MOONBEAM_PORT = 9947;
+const KARURA_PORT = 9946;
+const MOONRIVER_PORT = 9947;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -45,27 +45,27 @@ function parachainApiOptions(port: number): ApiOptions {
   };
 }
 
-function acalaOptions(): ApiOptions {
-  return parachainApiOptions(ACALA_PORT);
+function karuraOptions(): ApiOptions {
+  return parachainApiOptions(KARURA_PORT);
 }
 
-function moonbeamOptions(): ApiOptions {
-  return parachainApiOptions(MOONBEAM_PORT);
+function moonriverOptions(): ApiOptions {
+  return parachainApiOptions(MOONRIVER_PORT);
 }
 
-describe_xcm('Integration test: Exchanging tokens with Acala', () => {
+describe_xcm('Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
   
-  let balanceUniqueTokenInit: bigint;
-  let balanceUniqueTokenMiddle: bigint;
-  let balanceUniqueTokenFinal: bigint;
-  let balanceAcalaTokenInit: bigint;
-  let balanceAcalaTokenMiddle: bigint;
-  let balanceAcalaTokenFinal: bigint;
-  let balanceUniqueForeignTokenInit: bigint;
-  let balanceUniqueForeignTokenMiddle: bigint;
-  let balanceUniqueForeignTokenFinal: bigint;
+  let balanceQuartzTokenInit: bigint;
+  let balanceQuartzTokenMiddle: bigint;
+  let balanceQuartzTokenFinal: bigint;
+  let balanceKaruraTokenInit: bigint;
+  let balanceKaruraTokenMiddle: bigint;
+  let balanceKaruraTokenFinal: bigint;
+  let balanceQuartzForeignTokenInit: bigint;
+  let balanceQuartzForeignTokenMiddle: bigint;
+  let balanceQuartzForeignTokenFinal: bigint;
   
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -73,7 +73,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       randomAccount = generateKeyringPair();
     });
 
-    // Acala side
+    // Karura side
     await usingApi(
       async (api) => {
         const destination = {
@@ -81,15 +81,15 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
             X2: [
               'Parent',
               {
-                Parachain: UNIQUE_CHAIN,
+                Parachain: QUARTZ_CHAIN,
               },
             ],
           },
         };
   
         const metadata = {
-          name: 'UNQ',
-          symbol: 'UNQ',
+          name: 'QTZ',
+          symbol: 'QTZ',
           decimals: 18,
           minimalBalance: 1,
         };
@@ -105,29 +105,29 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
         const result1 = getGenericResult(events1);
         expect(result1.success).to.be.true;
   
-        [balanceAcalaTokenInit] = await getBalance(api, [randomAccount.address]);
+        [balanceKaruraTokenInit] = await getBalance(api, [randomAccount.address]);
         {
           const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-          balanceUniqueForeignTokenInit = BigInt(free);
+          balanceQuartzForeignTokenInit = BigInt(free);
         }
       },
-      acalaOptions(),
+      karuraOptions(),
     );
   
-    // Unique side
+    // Quartz side
     await usingApi(async (api) => {
       const tx0 = api.tx.balances.transfer(randomAccount.address, 10n * TRANSFER_AMOUNT);
       const events0 = await submitTransactionAsync(alice, tx0);
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
   
-      [balanceUniqueTokenInit] = await getBalance(api, [randomAccount.address]);
+      [balanceQuartzTokenInit] = await getBalance(api, [randomAccount.address]);
     });
   });
   
-  it('Should connect and send UNQ to Acala', async () => {
+  it('Should connect and send QTZ to Karura', async () => {
   
-    // Unique side
+    // Quartz side
     await usingApi(async (api) => {
   
       const destination = {
@@ -135,7 +135,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
           X2: [
             'Parent',
             {
-              Parachain: ACALA_CHAIN,
+              Parachain: KARURA_CHAIN,
             },
           ],
         },
@@ -179,37 +179,37 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
   
-      [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccount.address]);
+      [balanceQuartzTokenMiddle] = await getBalance(api, [randomAccount.address]);
   
-      const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
-      console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', unqFees);
-      expect(unqFees > 0n).to.be.true;
+      const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
+      console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', qtzFees);
+      expect(qtzFees > 0n).to.be.true;
     });
   
-    // Acala side
+    // Karura side
     await usingApi(
       async (api) => {
         await waitNewBlocks(api, 3);
         const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-        balanceUniqueForeignTokenMiddle = BigInt(free);
+        balanceQuartzForeignTokenMiddle = BigInt(free);
   
-        [balanceAcalaTokenMiddle] = await getBalance(api, [randomAccount.address]);
+        [balanceKaruraTokenMiddle] = await getBalance(api, [randomAccount.address]);
 
-        const acaFees = balanceAcalaTokenInit - balanceAcalaTokenMiddle;
-        const unqIncomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenInit;
+        const karFees = balanceKaruraTokenInit - balanceKaruraTokenMiddle;
+        const qtzIncomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenInit;
 
-        console.log('[Unique -> Acala] transaction fees on Acala: %s ACA', acaFees);
-        console.log('[Unique -> Acala] income %s UNQ', unqIncomeTransfer);
-        expect(acaFees == 0n).to.be.true;
-        expect(unqIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
+        console.log('[Quartz -> Karura] transaction fees on Karura: %s KAR', karFees);
+        console.log('[Quartz -> Karura] income %s QTZ', qtzIncomeTransfer);
+        expect(karFees == 0n).to.be.true;
+        expect(qtzIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
-      acalaOptions(),
+      karuraOptions(),
     );
   });
   
-  it('Should connect to Acala and send UNQ back', async () => {
+  it('Should connect to Karura and send QTZ back', async () => {
   
-    // Acala side
+    // Karura side
     await usingApi(
       async (api) => {
         const destination = {
@@ -217,7 +217,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
             parents: 1,
             interior: {
               X2: [
-                {Parachain: UNIQUE_CHAIN},
+                {Parachain: QUARTZ_CHAIN},
                 {
                   AccountId32: {
                     network: 'Any',
@@ -240,41 +240,41 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
   
-        [balanceAcalaTokenFinal] = await getBalance(api, [randomAccount.address]);
+        [balanceKaruraTokenFinal] = await getBalance(api, [randomAccount.address]);
         {
           const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-          balanceUniqueForeignTokenFinal = BigInt(free);
+          balanceQuartzForeignTokenFinal = BigInt(free);
         }
   
-        const acaFees = balanceAcalaTokenMiddle - balanceAcalaTokenFinal;
-        const unqOutcomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenFinal;
+        const karFees = balanceKaruraTokenMiddle - balanceKaruraTokenFinal;
+        const qtzOutcomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenFinal;
 
-        console.log('[Acala -> Unique] transaction fees on Acala: %s ACA', acaFees);
-        console.log('[Acala -> Unique] outcome %s UNQ', unqOutcomeTransfer);
+        console.log('[Karura -> Quartz] transaction fees on Karura: %s KAR', karFees);
+        console.log('[Karura -> Quartz] outcome %s QTZ', qtzOutcomeTransfer);
 
-        expect(acaFees > 0).to.be.true;
-        expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
+        expect(karFees > 0).to.be.true;
+        expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
-      acalaOptions(),
+      karuraOptions(),
     );
 
-    // Unique side
+    // Quartz side
     await usingApi(async (api) => {
       await waitNewBlocks(api, 3);
   
-      [balanceUniqueTokenFinal] = await getBalance(api, [randomAccount.address]);
-      const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
+      [balanceQuartzTokenFinal] = await getBalance(api, [randomAccount.address]);
+      const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
       expect(actuallyDelivered > 0).to.be.true;
 
-      console.log('[Acala -> Unique] actually delivered %s UNQ', actuallyDelivered);
+      console.log('[Karura -> Quartz] actually delivered %s QTZ', actuallyDelivered);
   
-      const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
-      console.log('[Acala -> Unique] transaction fees on Unique: %s UNQ', unqFees);
-      expect(unqFees == 0n).to.be.true;
+      const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
+      console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', qtzFees);
+      expect(qtzFees == 0n).to.be.true;
     });
   });
 
-  it('Unique rejects ACA tokens from Acala', async () => {
+  it('Quartz rejects KAR tokens from Karura', async () => {
     // This test is relevant only when the foreign asset pallet is disabled
 
     await usingApi(async (api) => {
@@ -283,7 +283,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
           parents: 1,
           interior: {
             X2: [
-              {Parachain: UNIQUE_CHAIN},
+              {Parachain: QUARTZ_CHAIN},
               {
                 AccountId32: {
                   network: 'Any',
@@ -296,7 +296,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       };
 
       const id = {
-        Token: 'ACA',
+        Token: 'KAR',
       };
 
       const destWeight = 50000000;
@@ -305,7 +305,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
-    }, acalaOptions());
+    }, karuraOptions());
 
     await usingApi(async api => {
       const maxWaitBlocks = 3;
@@ -319,57 +319,57 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
   });
 });
 
-describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
+describe_xcm('Integration test: Exchanging QTZ with Moonriver', () => {
 
-  // Unique constants
-  let uniqueAlice: IKeyringPair;
-  let uniqueAssetLocation;
+  // Quartz constants
+  let quartzAlice: IKeyringPair;
+  let quartzAssetLocation;
 
-  let randomAccountUnique: IKeyringPair;
-  let randomAccountMoonbeam: IKeyringPair;
+  let randomAccountQuartz: IKeyringPair;
+  let randomAccountMoonriver: IKeyringPair;
 
-  // Moonbeam constants
+  // Moonriver constants
   let assetId: string;
 
-  const moonbeamKeyring = new Keyring({type: 'ethereum'});
+  const moonriverKeyring = new Keyring({type: 'ethereum'});
   const alithPrivateKey = '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
   const baltatharPrivateKey = '0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b';
   const dorothyPrivateKey = '0x39539ab1876910bbf3a223d84a29e28f1cb4e2e456503e7e91ed39b2e7223d68';
 
-  const alithAccount = moonbeamKeyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
-  const baltatharAccount = moonbeamKeyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
-  const dorothyAccount = moonbeamKeyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
+  const alithAccount = moonriverKeyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
+  const baltatharAccount = moonriverKeyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
+  const dorothyAccount = moonriverKeyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
 
   const councilVotingThreshold = 2;
   const technicalCommitteeThreshold = 2;
   const votingPeriod = 3;
   const delayPeriod = 0;
 
-  const uniqueAssetMetadata = {
-    name: 'xcUnique',
-    symbol: 'xcUNQ',
+  const quartzAssetMetadata = {
+    name: 'xcQuartz',
+    symbol: 'xcQTZ',
     decimals: 18,
     isFrozen: false,
     minimalBalance: 1,
   };
 
-  let balanceUniqueTokenInit: bigint;
-  let balanceUniqueTokenMiddle: bigint;
-  let balanceUniqueTokenFinal: bigint;
-  let balanceForeignUnqTokenInit: bigint;
-  let balanceForeignUnqTokenMiddle: bigint;
-  let balanceForeignUnqTokenFinal: bigint;
-  let balanceGlmrTokenInit: bigint;
-  let balanceGlmrTokenMiddle: bigint;
-  let balanceGlmrTokenFinal: bigint;
+  let balanceQuartzTokenInit: bigint;
+  let balanceQuartzTokenMiddle: bigint;
+  let balanceQuartzTokenFinal: bigint;
+  let balanceForeignQtzTokenInit: bigint;
+  let balanceForeignQtzTokenMiddle: bigint;
+  let balanceForeignQtzTokenFinal: bigint;
+  let balanceMovrTokenInit: bigint;
+  let balanceMovrTokenMiddle: bigint;
+  let balanceMovrTokenFinal: bigint;
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
-      uniqueAlice = privateKeyWrapper('//Alice');
-      randomAccountUnique = generateKeyringPair();
-      randomAccountMoonbeam = generateKeyringPair('ethereum');
+      quartzAlice = privateKeyWrapper('//Alice');
+      randomAccountQuartz = generateKeyringPair();
+      randomAccountMoonriver = generateKeyringPair('ethereum');
 
-      balanceForeignUnqTokenInit = 0n;
+      balanceForeignQtzTokenInit = 0n;
     });
 
     await usingApi(
@@ -388,26 +388,26 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
           'MultiLocation',
           {
             parents: 1,
-            interior: {X1: {Parachain: UNIQUE_CHAIN}},
+            interior: {X1: {Parachain: QUARTZ_CHAIN}},
           },
         );
 
-        uniqueAssetLocation = {XCM: sourceLocation};
+        quartzAssetLocation = {XCM: sourceLocation};
         const existentialDeposit = 1;
         const isSufficient = true;
         const unitsPerSecond = '1';
         const numAssetsWeightHint = 0;
 
         const registerTx = api.tx.assetManager.registerForeignAsset(
-          uniqueAssetLocation,
-          uniqueAssetMetadata,
+          quartzAssetLocation,
+          quartzAssetMetadata,
           existentialDeposit,
           isSufficient,
         );
         console.log('Encoded proposal for registerAsset is %s', registerTx.method.toHex() || '');
 
         const setUnitsTx = api.tx.assetManager.setAssetUnitsPerSecond(
-          uniqueAssetLocation,
+          quartzAssetLocation,
           unitsPerSecond,
           numAssetsWeightHint,
         );
@@ -515,8 +515,8 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
         console.log('Referendum voting.......DONE');
         // <<< Referendum voting <<<
 
-        // >>> Acquire Unique AssetId Info on Moonbeam >>>
-        console.log('Acquire Unique AssetId Info on Moonbeam.......');
+        // >>> Acquire Quartz AssetId Info on Moonriver >>>
+        console.log('Acquire Quartz AssetId Info on Moonriver.......');
 
         // Wait for the democracy execute
         await waitNewBlocks(api, 5);
@@ -525,35 +525,35 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
           XCM: sourceLocation,
         })).toString();
 
-        console.log('UNQ asset ID is %s', assetId);
-        console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
-        // >>> Acquire Unique AssetId Info on Moonbeam >>>
+        console.log('QTZ asset ID is %s', assetId);
+        console.log('Acquire Quartz AssetId Info on Moonriver.......DONE');
+        // >>> Acquire Quartz AssetId Info on Moonriver >>>
 
         // >>> Sponsoring random Account >>>
         console.log('Sponsoring random Account.......');
-        const tx10 = api.tx.balances.transfer(randomAccountMoonbeam.address, 11_000_000_000_000_000_000n);
+        const tx10 = api.tx.balances.transfer(randomAccountMoonriver.address, 11_000_000_000_000_000_000n);
         const events10 = await submitTransactionAsync(baltatharAccount, tx10);
         const result10 = getGenericResult(events10);
         expect(result10.success).to.be.true;
         console.log('Sponsoring random Account.......DONE');
         // <<< Sponsoring random Account <<<
 
-        [balanceGlmrTokenInit] = await getBalance(api, [randomAccountMoonbeam.address]);
+        [balanceMovrTokenInit] = await getBalance(api, [randomAccountMoonriver.address]);
       },
-      moonbeamOptions(),
+      moonriverOptions(),
     );
 
     await usingApi(async (api) => {
-      const tx0 = api.tx.balances.transfer(randomAccountUnique.address, 10n * TRANSFER_AMOUNT);
-      const events0 = await submitTransactionAsync(uniqueAlice, tx0);
+      const tx0 = api.tx.balances.transfer(randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
+      const events0 = await submitTransactionAsync(quartzAlice, tx0);
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
 
-      [balanceUniqueTokenInit] = await getBalance(api, [randomAccountUnique.address]);
+      [balanceQuartzTokenInit] = await getBalance(api, [randomAccountQuartz.address]);
     });
   });
 
-  it('Should connect and send UNQ to Moonbeam', async () => {
+  it('Should connect and send QTZ to Moonriver', async () => {
     await usingApi(async (api) => {
       const currencyId = {
         NativeAssetId: 'Here',
@@ -563,8 +563,8 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
           parents: 1,
           interior: {
             X2: [
-              {Parachain: MOONBEAM_CHAIN},
-              {AccountKey20: {network: 'Any', key: randomAccountMoonbeam.address}},
+              {Parachain: MOONRIVER_CHAIN},
+              {AccountKey20: {network: 'Any', key: randomAccountMoonriver.address}},
             ],
           },
         },
@@ -573,15 +573,15 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
       const destWeight = 850000000;
 
       const tx = api.tx.xTokens.transfer(currencyId, amount, dest, destWeight);
-      const events = await submitTransactionAsync(randomAccountUnique, tx);
+      const events = await submitTransactionAsync(randomAccountQuartz, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
-      [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccountUnique.address]);
-      expect(balanceUniqueTokenMiddle < balanceUniqueTokenInit).to.be.true;
+      [balanceQuartzTokenMiddle] = await getBalance(api, [randomAccountQuartz.address]);
+      expect(balanceQuartzTokenMiddle < balanceQuartzTokenInit).to.be.true;
 
-      const transactionFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
-      console.log('[Unique -> Moonbeam] transaction fees on Unique: %s UNQ', transactionFees);
+      const transactionFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
+      console.log('[Quartz -> Moonriver] transaction fees on Quartz: %s QTZ', transactionFees);
       expect(transactionFees > 0).to.be.true;
     });
 
@@ -589,26 +589,26 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
       async (api) => {
         await waitNewBlocks(api, 3);
 
-        [balanceGlmrTokenMiddle] = await getBalance(api, [randomAccountMoonbeam.address]);
+        [balanceMovrTokenMiddle] = await getBalance(api, [randomAccountMoonriver.address]);
 
-        const glmrFees = balanceGlmrTokenInit - balanceGlmrTokenMiddle;
-        console.log('[Unique -> Moonbeam] transaction fees on Moonbeam: %s GLMR', glmrFees);
-        expect(glmrFees == 0n).to.be.true;
+        const movrFees = balanceMovrTokenInit - balanceMovrTokenMiddle;
+        console.log('[Quartz -> Moonriver] transaction fees on Moonriver: %s MOVR', movrFees);
+        expect(movrFees == 0n).to.be.true;
 
-        const unqRandomAccountAsset = (
-          await api.query.assets.account(assetId, randomAccountMoonbeam.address)
+        const qtzRandomAccountAsset = (
+          await api.query.assets.account(assetId, randomAccountMoonriver.address)
         ).toJSON()! as any;
 
-        balanceForeignUnqTokenMiddle = BigInt(unqRandomAccountAsset['balance']);
-        const unqIncomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenInit;
-        console.log('[Unique -> Moonbeam] income %s UNQ', unqIncomeTransfer);
-        expect(unqIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
+        balanceForeignQtzTokenMiddle = BigInt(qtzRandomAccountAsset['balance']);
+        const qtzIncomeTransfer = balanceForeignQtzTokenMiddle - balanceForeignQtzTokenInit;
+        console.log('[Quartz -> Moonriver] income %s QTZ', qtzIncomeTransfer);
+        expect(qtzIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
-      moonbeamOptions(),
+      moonriverOptions(),
     );
   });
 
-  it('Should connect to Moonbeam and send UNQ back', async () => {
+  it('Should connect to Moonriver and send QTZ back', async () => {
     await usingApi(
       async (api) => {
         const asset = {
@@ -617,7 +617,7 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
               Concrete: {
                 parents: 1,
                 interior: {
-                  X1: {Parachain: UNIQUE_CHAIN},
+                  X1: {Parachain: QUARTZ_CHAIN},
                 },
               },
             },
@@ -631,8 +631,8 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
             parents: 1,
             interior: {
               X2: [
-                {Parachain: UNIQUE_CHAIN},
-                {AccountId32: {network: 'Any', id: randomAccountUnique.addressRaw}},
+                {Parachain: QUARTZ_CHAIN},
+                {AccountId32: {network: 'Any', id: randomAccountQuartz.addressRaw}},
               ],
             },
           },
@@ -640,43 +640,43 @@ describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
         const destWeight = 50000000;
 
         const tx = api.tx.xTokens.transferMultiasset(asset, destination, destWeight);
-        const events = await submitTransactionAsync(randomAccountMoonbeam, tx);
+        const events = await submitTransactionAsync(randomAccountMoonriver, tx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
 
-        [balanceGlmrTokenFinal] = await getBalance(api, [randomAccountMoonbeam.address]);
+        [balanceMovrTokenFinal] = await getBalance(api, [randomAccountMoonriver.address]);
 
-        const glmrFees = balanceGlmrTokenMiddle - balanceGlmrTokenFinal;
-        console.log('[Moonbeam -> Unique] transaction fees on Moonbeam: %s GLMR', glmrFees);
-        expect(glmrFees > 0).to.be.true;
+        const movrFees = balanceMovrTokenMiddle - balanceMovrTokenFinal;
+        console.log('[Moonriver -> Quartz] transaction fees on Moonriver: %s MOVR', movrFees);
+        expect(movrFees > 0).to.be.true;
 
-        const unqRandomAccountAsset = (
-          await api.query.assets.account(assetId, randomAccountMoonbeam.address)
+        const qtzRandomAccountAsset = (
+          await api.query.assets.account(assetId, randomAccountMoonriver.address)
         ).toJSON()! as any;
 
-        expect(unqRandomAccountAsset).to.be.null;
+        expect(qtzRandomAccountAsset).to.be.null;
 
-        balanceForeignUnqTokenFinal = 0n;
+        balanceForeignQtzTokenFinal = 0n;
 
-        const unqOutcomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenFinal;
-        console.log('[Unique -> Moonbeam] outcome %s UNQ', unqOutcomeTransfer);
-        expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
+        const qtzOutcomeTransfer = balanceForeignQtzTokenMiddle - balanceForeignQtzTokenFinal;
+        console.log('[Quartz -> Moonriver] outcome %s QTZ', qtzOutcomeTransfer);
+        expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
       },
-      moonbeamOptions(),
+      moonriverOptions(),
     );
 
     await usingApi(async (api) => {
       await waitNewBlocks(api, 3);
 
-      [balanceUniqueTokenFinal] = await getBalance(api, [randomAccountUnique.address]);
-      const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
+      [balanceQuartzTokenFinal] = await getBalance(api, [randomAccountQuartz.address]);
+      const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
       expect(actuallyDelivered > 0).to.be.true;
 
-      console.log('[Moonbeam -> Unique] actually delivered %s UNQ', actuallyDelivered);
+      console.log('[Moonriver -> Quartz] actually delivered %s QTZ', actuallyDelivered);
 
-      const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
-      console.log('[Moonbeam -> Unique] transaction fees on Unique: %s UNQ', unqFees);
-      expect(unqFees == 0n).to.be.true;
+      const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
+      console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', qtzFees);
+      expect(qtzFees == 0n).to.be.true;
     });
   });
 });

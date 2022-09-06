@@ -1,7 +1,7 @@
 {
     "relaychain": {
         "bin": "/polkadot/target/release/polkadot",
-        "chain": "westend-local",
+        "chain": "rococo-local",
         "chainInitializer": [
                 "chainql",
                 "--tla-code=spec=import '${spec}'",
@@ -90,6 +90,8 @@
                     "rpcPort": 9933,
                     "name": "alice",
                     "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
 		    ]
@@ -105,13 +107,15 @@
                     "chainql",
                     "-e",
                     "(import '${spec}') {id+: '-local'}"
-            ],	    
+            ],
             "nodes": [
                 {
                     "wsPort": 9946,
                     "port": 31202,
                     "name": "alice",
                     "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
 		    ]
@@ -129,6 +133,8 @@
                     "port": 31203,
                     "name": "alice",
                     "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
   			"--",
@@ -148,6 +154,8 @@
                     "port": 31204,
                     "name": "alice",
                     "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
 		    ]

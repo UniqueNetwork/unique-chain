@@ -1746,6 +1746,12 @@ export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
+export const describe_xcm = (
+  process.env.RUN_XCM_TESTS
+    ? describe
+    : describe.skip
+);
+
 export async function waitNewBlocks(blocksCount = 1): Promise<void> {
   await usingApi(async (api) => {
     const promise = new Promise<void>(async (resolve) => {
@@ -1760,6 +1766,35 @@ export async function waitNewBlocks(blocksCount = 1): Promise<void> {
     });
     return promise;
   });
+}
+
+export async function waitEvent(
+  api: ApiPromise,
+  maxBlocksToWait: number,
+  eventSection: string,
+  eventMethod: string,
+): Promise<EventRecord | null> {
+
+  const promise = new Promise<EventRecord | null>(async (resolve) => {
+    const unsubscribe = await api.query.system.events(eventRecords => {
+      const neededEvent = eventRecords.find(r => {
+        return r.event.section == eventSection && r.event.method == eventMethod;
+      });
+
+      if (neededEvent) {
+        unsubscribe();
+        resolve(neededEvent);
+      }
+
+      if (maxBlocksToWait > 0) {
+        maxBlocksToWait--;
+      } else {
+        unsubscribe();
+        resolve(null);
+      }
+    });
+  });
+  return promise;
 }
 
 export async function repartitionRFT(

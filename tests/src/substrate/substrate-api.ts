@@ -85,7 +85,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
     for (const arg of args) {
       if (typeof arg !== 'string')
         continue;
-      if (arg.includes('1000:: Normal connection closure' || arg === 'Normal connection closure'))
+      if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis:') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
         return;
     }
     printer(...args);
@@ -169,13 +169,24 @@ submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<A
   /* eslint no-async-promise-executor: "off" */
   return new Promise(async (resolve, reject) => {
     try {
-      await transaction.signAndSend(sender, ({events = [], status}) => {
+      await transaction.signAndSend(sender, ({events = [], status, dispatchError}) => {
         const transactionStatus = getTransactionStatus(events, status);
 
         if (transactionStatus === TransactionStatus.Success) {
           resolve(events);
         } else if (transactionStatus === TransactionStatus.Fail) {
-          console.log(`Something went wrong with transaction. Status: ${status}`);
+          let moduleError = null;
+
+          if (dispatchError) {
+            if (dispatchError.isModule) {
+              const modErr = dispatchError.asModule;
+              const errorMeta = dispatchError.registry.findMetaError(modErr);
+
+              moduleError = JSON.stringify(errorMeta, null, 4);
+            }
+          }
+
+          console.log(`Something went wrong with transaction. Status: ${status}\nModule error: ${moduleError}`);
           reject(events);
         }
       });
