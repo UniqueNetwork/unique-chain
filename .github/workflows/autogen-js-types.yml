@@ -127,10 +127,13 @@ jobs:
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_MAK }}
           branch: ${{ matrix.branch }}
-          repository: 'UniqueNetwork/unique-types-js'
-#          ssh: true
+          repository: 'lzadjsf/unique-types-js.git'
+          ssh: true
+
+
+
 
       - name: Stop running containers
         if: always()                   # run this step always
