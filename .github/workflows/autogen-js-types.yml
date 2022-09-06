@@ -40,10 +40,13 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
+            branch: "opal-testnet"
           - network: "quartz"
             features: "quartz-runtime"
+            branch: "quartz-mainnet"
           - network: "unique"
             features: "unique-runtime"
+            branch: "master"
 
     steps:
       - name: Clean Workspace
@@ -124,7 +127,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+          branch: ${{ matrix.branch }}
           repository: 'UniqueNetwork/unique-types-js'
           ssh: true
 
