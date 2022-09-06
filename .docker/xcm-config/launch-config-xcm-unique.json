@@ -101,6 +101,11 @@
             "id": "2000",
             "chain":  "acala-dev",
             "balance": "1000000000000000000000",
+            "chainInitializer": [
+                    "chainql",
+                    "-e",
+                    "(import '${spec}') {id+: '-local'}"
+            ],	    
             "nodes": [
                 {
                     "wsPort": 9946,
