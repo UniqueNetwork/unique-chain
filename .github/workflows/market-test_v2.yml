@@ -118,6 +118,7 @@ jobs:
       - name: Run tests
         working-directory: tests
         run: |
+          yarn install
           node scripts/readyness.js
         env:
           RPC_URL: http://127.0.0.1:9933/
