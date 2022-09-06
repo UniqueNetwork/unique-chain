@@ -89,7 +89,7 @@ jobs:
           yarn install
           yarn polkadot-types
 
-      - name: Checkou repo UniqueNetwork/unique-types-js
+      - name: Checkout repo UniqueNetwork/unique-types-js
         uses: actions/checkout@v3
         with:
           repository: 'UniqueNetwork/unique-types-js'
@@ -123,13 +123,14 @@ jobs:
           git add .
           git commit -m "chore: regenerate types"
 
+   
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ matrix.branch }}
           repository: 'UniqueNetwork/unique-types-js'
-          ssh: true
+#          ssh: true
 
       - name: Stop running containers
         if: always()                   # run this step always
