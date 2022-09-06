@@ -26,6 +26,7 @@ import {MultiLocation} from '@polkadot/types/interfaces';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import waitNewBlocks from '../substrate/wait-new-blocks';
 import getBalance from '../substrate/get-balance';
+import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -34,6 +35,7 @@ const QUARTZ_CHAIN = 2095;
 const KARURA_CHAIN = 2000;
 const MOONRIVER_CHAIN = 2023;
 
+const RELAY_PORT = 9844;
 const KARURA_PORT = 9946;
 const MOONRIVER_PORT = 9947;
 
@@ -53,6 +55,10 @@ function karuraOptions(): ApiOptions {
 
 function moonriverOptions(): ApiOptions {
   return parachainApiOptions(MOONRIVER_PORT);
+}
+
+function relayOptions(): ApiOptions {
+  return parachainApiOptions(RELAY_PORT);
 }
 
 describe_xcm('Integration test: Exchanging tokens with Karura', () => {
@@ -200,8 +206,8 @@ describe_xcm('Integration test: Exchanging tokens with Karura', () => {
         const karFees = balanceKaruraTokenInit - balanceKaruraTokenMiddle;
         const qtzIncomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenInit;
 
-        console.log('
-          [Quartz -> Karura] transaction fees on Karura: %s KAR',
+        console.log(
+          '[Quartz -> Karura] transaction fees on Karura: %s KAR',
           bigIntToDecimals(karFees, KARURA_DECIMALS),
         );
         console.log('[Quartz -> Karura] income %s QTZ', bigIntToDecimals(qtzIncomeTransfer));
@@ -281,10 +287,100 @@ describe_xcm('Integration test: Exchanging tokens with Karura', () => {
       expect(qtzFees == 0n).to.be.true;
     });
   });
+});
+
+// These tests are relevant only when the foreign asset pallet is disabled
+describe('Integration test: Quartz rejects non-native tokens', () => {
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+    });
+  });
+  
+  it('Quartz rejects tokens from the Relay', async () => {
+    await usingApi(async (api) => {
+      const destination = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: 'Here',
+              },
+            },
+            fun: {
+              Fungible: 50_000_000_000_000_000n,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+
+      const weightLimit = {
+        Limited: 5_000_000_000,
+      };
+
+      const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
+      const events = await submitTransactionAsync(alice, tx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
+    }, relayOptions());
+
+    await usingApi(async api => {
+      const maxWaitBlocks = 3;
+      const dmpQueueExecutedDownward = await waitEvent(
+        api,
+        maxWaitBlocks,
+        'dmpQueue',
+        'ExecutedDownward',
+      );
+
+      expect(
+        dmpQueueExecutedDownward != null,
+        '[Relay] dmpQueue.ExecutedDownward event is expected',
+      ).to.be.true;
+
+      const event = dmpQueueExecutedDownward!.event;
+      const outcome = event.data[1] as XcmV2TraitsOutcome;
+
+      expect(
+        outcome.isIncomplete,
+        '[Relay] The outcome of the XCM should be `Incomplete`',
+      ).to.be.true;
+
+      const incomplete = outcome.asIncomplete;
+      expect(
+        incomplete[1].toString() == 'AssetNotFound',
+        '[Relay] The XCM error should be `AssetNotFound`',
+      ).to.be.true;
+    });
+  });
 
   it('Quartz rejects KAR tokens from Karura', async () => {
-    // This test is relevant only when the foreign asset pallet is disabled
-
     await usingApi(async (api) => {
       const destination = {
         V1: {
@@ -295,7 +391,7 @@ describe_xcm('Integration test: Exchanging tokens with Karura', () => {
               {
                 AccountId32: {
                   network: 'Any',
-                  id: randomAccount.addressRaw,
+                  id: alice.addressRaw,
                 },
               },
             ],
@@ -321,7 +417,15 @@ describe_xcm('Integration test: Exchanging tokens with Karura', () => {
 
       expect(
         xcmpQueueFailEvent != null,
-        'Only native token is supported when the Foreign-Assets pallet is not connected',
+        '[Karura] xcmpQueue.FailEvent event is expected',
+      ).to.be.true;
+
+      const event = xcmpQueueFailEvent!.event;
+      const outcome = event.data[1] as XcmV2TraitsError;
+
+      expect(
+        outcome.isUntrustedReserveLocation,
+        '[Karura] The XCM error should be `UntrustedReserveLocation`',
       ).to.be.true;
     });
   });

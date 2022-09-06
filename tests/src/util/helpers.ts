@@ -104,14 +104,9 @@ export function bigIntToSub(api: ApiPromise, number: bigint) {
 }
 
 export function bigIntToDecimals(number: bigint, decimals = 18): string {
-  let numberStr = number.toString();
-  console.log('[0] str = ', numberStr);
-
-  // Get rid of `n` at the end
-  numberStr = numberStr.substring(0, numberStr.length - 1);
-  console.log('[1] str = ', numberStr);
-
+  const numberStr = number.toString();
   const dotPos = numberStr.length - decimals;
+
   if (dotPos <= 0) {
     return '0.' + numberStr;
   } else {
@@ -1794,19 +1789,31 @@ export async function waitEvent(
 ): Promise<EventRecord | null> {
 
   const promise = new Promise<EventRecord | null>(async (resolve) => {
-    const unsubscribe = await api.query.system.events(eventRecords => {
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads(async header => {
+      const blockNumber = header.number.toHuman();
+      const blockHash = header.hash;
+      const eventIdStr = `${eventSection}.${eventMethod}`;
+      const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
+
+      console.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
+
+      const apiAt = await api.at(blockHash);
+      const eventRecords = await apiAt.query.system.events();
+
       const neededEvent = eventRecords.find(r => {
         return r.event.section == eventSection && r.event.method == eventMethod;
       });
 
       if (neededEvent) {
+        console.log(`Event \`${eventIdStr}\` is found`);
+
         unsubscribe();
         resolve(neededEvent);
-      }
-
-      if (maxBlocksToWait > 0) {
+      } else if (maxBlocksToWait > 0) {
         maxBlocksToWait--;
       } else {
+        console.log(`Event \`${eventIdStr}\` is NOT found`);
+
         unsubscribe();
         resolve(null);
       }

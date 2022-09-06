@@ -26,6 +26,7 @@ import {MultiLocation} from '@polkadot/types/interfaces';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import waitNewBlocks from '../substrate/wait-new-blocks';
 import getBalance from '../substrate/get-balance';
+import {XcmV2TraitsError, XcmV2TraitsOutcome} from '../interfaces';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -34,6 +35,7 @@ const UNIQUE_CHAIN = 2037;
 const ACALA_CHAIN = 2000;
 const MOONBEAM_CHAIN = 2004;
 
+const RELAY_PORT = 9844;
 const ACALA_PORT = 9946;
 const MOONBEAM_PORT = 9947;
 
@@ -53,6 +55,10 @@ function acalaOptions(): ApiOptions {
 
 function moonbeamOptions(): ApiOptions {
   return parachainApiOptions(MOONBEAM_PORT);
+}
+
+function relayOptions(): ApiOptions {
+  return parachainApiOptions(RELAY_PORT);
 }
 
 describe_xcm('Integration test: Exchanging tokens with Acala', () => {
@@ -281,10 +287,100 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
       expect(unqFees == 0n).to.be.true;
     });
   });
+});
+
+// These tests are relevant only when the foreign asset pallet is disabled
+describe('Integration test: Unique rejects non-native tokens', () => {
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingApi(async (api, privateKeyWrapper) => {
+      alice = privateKeyWrapper('//Alice');
+    });
+  });
+  
+  it('Unique rejects tokens from the Relay', async () => {
+    await usingApi(async (api) => {
+      const destination = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: 'Here',
+              },
+            },
+            fun: {
+              Fungible: 50_000_000_000_000_000n,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+
+      const weightLimit = {
+        Limited: 5_000_000_000,
+      };
+
+      const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
+      const events = await submitTransactionAsync(alice, tx);
+      const result = getGenericResult(events);
+      expect(result.success).to.be.true;
+    }, relayOptions());
+
+    await usingApi(async api => {
+      const maxWaitBlocks = 3;
+      const dmpQueueExecutedDownward = await waitEvent(
+        api,
+        maxWaitBlocks,
+        'dmpQueue',
+        'ExecutedDownward',
+      );
+
+      expect(
+        dmpQueueExecutedDownward != null,
+        '[Relay] dmpQueue.ExecutedDownward event is expected',
+      ).to.be.true;
+
+      const event = dmpQueueExecutedDownward!.event;
+      const outcome = event.data[1] as XcmV2TraitsOutcome;
+
+      expect(
+        outcome.isIncomplete,
+        '[Relay] The outcome of the XCM should be `Incomplete`',
+      ).to.be.true;
+
+      const incomplete = outcome.asIncomplete;
+      expect(
+        incomplete[1].toString() == 'AssetNotFound',
+        '[Relay] The XCM error should be `AssetNotFound`',
+      ).to.be.true;
+    });
+  });
 
   it('Unique rejects ACA tokens from Acala', async () => {
-    // This test is relevant only when the foreign asset pallet is disabled
-
     await usingApi(async (api) => {
       const destination = {
         V1: {
@@ -295,7 +391,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
               {
                 AccountId32: {
                   network: 'Any',
-                  id: randomAccount.addressRaw,
+                  id: alice.addressRaw,
                 },
               },
             ],
@@ -321,7 +417,15 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
 
       expect(
         xcmpQueueFailEvent != null,
-        'Only native token is supported when the Foreign-Assets pallet is not connected',
+        '[Acala] xcmpQueue.FailEvent event is expected',
+      ).to.be.true;
+
+      const event = xcmpQueueFailEvent!.event;
+      const outcome = event.data[1] as XcmV2TraitsError;
+
+      expect(
+        outcome.isUntrustedReserveLocation,
+        '[Acala] The XCM error should be `UntrustedReserveLocation`',
       ).to.be.true;
     });
   });
