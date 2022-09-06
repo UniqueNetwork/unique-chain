@@ -119,14 +119,14 @@ jobs:
         run: sleep 900s
 
 
-#      - name: Generate accounts
-#        working-directory: qa-tests
-#        run: ts-node ./src/scripts/create-market-accounts.ts
+      - name: Generate accounts
+        working-directory: qa-tests
+        run: ts-node ./src/scripts/create-market-accounts.ts
 
-#      - name: Deploy contracts
-#        run: |
-#          cd qa-tests
-#          ts-node ./src/scripts/deploy-contract.ts
+      - name: Deploy contracts
+        run: |
+          cd qa-tests
+          ts-node ./src/scripts/deploy-contract.ts
 
       - name: Import test data
         working-directory: qa-tests
@@ -136,14 +136,14 @@ jobs:
         working-directory: qa-tests
         run: cat .env
 
-      - name: Copy qa-tests/.env.example to qa-tests/.env
+      - name: Copy qa-tests/.env.example to qa-tests/.env.docker
         working-directory: qa-tests
         run: |
           rm -rf .env.docker
           cp .env .env.docker
           sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' .env.docker
 
-      - name: Read qa -test .env file
+      - name: Read qa -test .env file Before market start
         uses: xom9ikk/dotenv@v1.0.2
         with:
           path: qa-tests/
