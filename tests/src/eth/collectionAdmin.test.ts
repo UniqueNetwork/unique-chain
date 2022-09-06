@@ -15,7 +15,7 @@
 
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
-import { UNIQUE } from '../util/helpers';
+import {UNIQUE} from '../util/helpers';
 import {
   createEthAccount,
   createEthAccountWithBalance, 
@@ -24,7 +24,6 @@ import {
   getCollectionAddressFromResult, 
   itWeb3,
   recordEthFee,
-  subToEth,
 } from './util/helpers';
 
 describe('Add collection admins', () => {
@@ -37,7 +36,7 @@ describe('Add collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const newAdmin = await createEthAccount(web3);
+    const newAdmin = createEthAccount(web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
     const adminList = await api.rpc.unique.adminlist(collectionId);
@@ -92,7 +91,7 @@ describe('Add collection admins', () => {
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
     
-    const user = await createEthAccount(web3);
+    const user = createEthAccount(web3);
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
@@ -114,7 +113,7 @@ describe('Add collection admins', () => {
     const notAdmin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     
-    const user = await createEthAccount(web3);
+    const user = createEthAccount(web3);
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: notAdmin}))
       .to.be.rejectedWith('NoPermission');
 
@@ -175,7 +174,7 @@ describe('Remove collection admins', () => {
       .send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const newAdmin = await createEthAccount(web3);
+    const newAdmin = createEthAccount(web3);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
     {
@@ -226,7 +225,7 @@ describe('Remove collection admins', () => {
 
     const admin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     await collectionEvm.methods.addCollectionAdmin(admin0).send();
-    const admin1 = await createEthAccount(web3);
+    const admin1 = createEthAccount(web3);
     await collectionEvm.methods.addCollectionAdmin(admin1).send();
 
     await expect(collectionEvm.methods.removeCollectionAdmin(admin1).call({from: admin0}))
@@ -253,7 +252,7 @@ describe('Remove collection admins', () => {
 
     const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
-    const notAdmin = await createEthAccount(web3);
+    const notAdmin = createEthAccount(web3);
 
     await expect(collectionEvm.methods.removeCollectionAdmin(admin).call({from: notAdmin}))
       .to.be.rejectedWith('NoPermission');

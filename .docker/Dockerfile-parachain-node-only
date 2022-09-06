@@ -27,6 +27,7 @@ RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
+
 # ===== BUILD current version ======
 FROM rust-builder as builder-unique-current
 
@@ -45,8 +46,6 @@ FROM rust-builder as builder-unique-target
 
 ARG PROFILE=release
 ARG FEATURE=
-ARG BRANCH=
-ARG REPO_URL=
 
 COPY . /unique_parachain
 WORKDIR /unique_parachain

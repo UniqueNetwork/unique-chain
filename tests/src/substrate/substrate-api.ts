@@ -25,6 +25,8 @@ import * as defs from '../interfaces/definitions';
 import privateKey from './privateKey';
 import promisifySubstrate from './promisify-substrate';
 
+import {SilentConsole} from '../util/playgrounds/unique.dev';
+
 
 
 function defaultApiOptions(): ApiOptions {
@@ -76,25 +78,8 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
   const api: ApiPromise = new ApiPromise(settings);
   let result: T = null as unknown as T;
 
-  // TODO: Remove, this is temporary: Filter unneeded API output
-  // (Jaco promised it will be removed in the next version)
-  const consoleErr = console.error;
-  const consoleLog = console.log;
-  const consoleWarn = console.warn;
-
-  const outFn = (printer: any) => (...args: any[]) => {
-    for (const arg of args) {
-      if (typeof arg !== 'string')
-        continue;
-      if (arg.includes('1000:: Normal connection closure' || arg === 'Normal connection closure'))
-        return;
-    }
-    printer(...args);
-  };
-
-  console.error = outFn(consoleErr.bind(console));
-  console.log = outFn(consoleLog.bind(console));
-  console.warn = outFn(consoleWarn.bind(console));
+  const silentConsole = new SilentConsole();
+  silentConsole.enable();
 
   try {
     await promisifySubstrate(api, async () => {
@@ -107,9 +92,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
     })();
   } finally {
     await api.disconnect();
-    console.error = consoleErr;
-    console.log = consoleLog;
-    console.warn = consoleWarn;
+    silentConsole.disable();
   }
   return result as T;
 }

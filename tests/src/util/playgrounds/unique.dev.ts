@@ -8,6 +8,53 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 
 
+export class SilentLogger {
+  log(_msg: any, _level: any): void { }
+  level = {
+    ERROR: 'ERROR' as const,
+    WARNING: 'WARNING' as const,
+    INFO: 'INFO' as const,
+  };
+}
+
+
+export class SilentConsole {
+  // TODO: Remove, this is temporary: Filter unneeded API output
+  // (Jaco promised it will be removed in the next version)
+  consoleErr: any;
+  consoleLog: any;
+  consoleWarn: any;
+
+  constructor() {
+    this.consoleErr = console.error;
+    this.consoleLog = console.log;
+    this.consoleWarn = console.warn;
+  }
+
+  enable() {  
+    const outFn = (printer: any) => (...args: any[]) => {
+      for (const arg of args) {
+        if (typeof arg !== 'string')
+          continue;
+        if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis: UniqueApi/2, RmrkApi/1') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
+          return;
+      }
+      printer(...args);
+    };
+  
+    console.error = outFn(this.consoleErr.bind(console));
+    console.log = outFn(this.consoleLog.bind(console));
+    console.warn = outFn(this.consoleWarn.bind(console));
+  }
+
+  disable() {
+    console.error = this.consoleErr;
+    console.log = this.consoleLog;
+    console.warn = this.consoleWarn;
+  }
+}
+
+
 export class DevUniqueHelper extends UniqueHelper {
   /**
    * Arrange methods for tests
@@ -19,7 +66,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.arrange = new ArrangeGroup(this);
   }
 
-  async connect(wsEndpoint: string, listeners?: any): Promise<void> {
+  async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
     const wsProvider = new WsProvider(wsEndpoint);
     this.api = new ApiPromise({
       provider: wsProvider,
@@ -85,7 +132,7 @@ class ArrangeGroup {
       }
     }
 
-    await Promise.all(transactions).catch(e => {});
+    await Promise.all(transactions).catch(_e => {});
     
     //#region TODO remove this region, when nonce problem will be solved
     const checkBalances = async () => {
@@ -186,6 +233,7 @@ class ArrangeGroup {
    * @returns 
    */
   async waitNewBlocks(blocksCount = 1): Promise<void> {
+    // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
         if (blocksCount > 0) {
