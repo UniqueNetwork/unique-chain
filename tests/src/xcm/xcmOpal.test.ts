@@ -48,7 +48,7 @@ const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 // 10,000.00 (ten thousands) USDT
 const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n; 
 
-describe('Integration test: Exchanging USDT with Statemine', () => {
+describe('Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   
@@ -61,7 +61,6 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
 
   let balanceBobBefore: bigint;
   let balanceBobAfter: bigint;
-  let balanceBobFinal: bigint;
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
@@ -204,7 +203,7 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
   
   });
 
-  it('Should connect and send USDT from Statemine to Unique', async () => {
+  it('Should connect and send USDT from Westmint to Opal', async () => {
     
     const statemineApiOptions: ApiOptions = {
       provider: new WsProvider('ws://127.0.0.1:' + STATEMINE_PORT),
@@ -277,6 +276,7 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
       [balanceStmnAfter] = await getBalance(api, [alice.address]);
 
       // common good parachain take commission in it native token
+      console.log('Opal to Westmint transaction fees on Westmint: %s WND', balanceStmnBefore - balanceStmnAfter);
       expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
 
     }, statemineApiOptions);
@@ -292,9 +292,10 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
 
       // commission has not paid in USDT token
       expect(free == TRANSFER_AMOUNT).to.be.true;
+      console.log('Opal to Westmint transaction fees on Opal: %s USDT', TRANSFER_AMOUNT - free);
       // ... and parachain native token
       expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
-
+      console.log('Opal to Westmint transaction fees on Opal: %s WND', balanceOpalAfter - balanceOpalBefore);
 
     }, uniqueApiOptions);
     
@@ -440,6 +441,8 @@ describe('Integration test: Exchanging USDT with Statemine', () => {
 
       [balanceBobAfter] = await getBalance(api, [alice.address]);
       expect(balanceBobBefore == balanceBobAfter).to.be.true;
+      console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobBefore);
+
     }, uniqueApiOptions2);
 
   });
