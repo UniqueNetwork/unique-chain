@@ -14,11 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{match_types, parameter_types, traits::Get};
+use frame_support::{
+	match_types, parameter_types,
+	traits::{Get, Everything},
+};
 use sp_std::{vec, vec::Vec};
 use xcm::v1::{BodyId, Junction::*, Junctions::*, MultiLocation};
 use xcm_builder::{
 	AllowKnownQueryResponses, AllowSubscriptionsFrom, AllowUnpaidExecutionFrom, TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom,
 };
 
 use crate::{
@@ -74,6 +78,7 @@ pub type Barrier = DenyThenTry<
 	),
 	(
 		TakeWeightCredit,
+		AllowTopLevelPaidExecutionFrom<Everything>,
 		// Parent and its exec plurality get free execution
 		AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
 		// Expected responses are OK.
