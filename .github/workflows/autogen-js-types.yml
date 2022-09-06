@@ -112,6 +112,15 @@ jobs:
         run: |
           ls -la
 
+      - name: Upload JS types to repo
+        working-directory: tests/unique-types-js
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "chore: regenerate types"
+          git push
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
