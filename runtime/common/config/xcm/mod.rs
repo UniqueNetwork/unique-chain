@@ -33,7 +33,7 @@ use xcm_executor::{Config, XcmExecutor, traits::ShouldExecute};
 use sp_std::{marker::PhantomData, vec::Vec};
 use crate::{
 	Runtime, Call, Event, Origin, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
-	xcm_config::Barrier,
+	xcm_barrier::Barrier,
 };
 
 use up_common::types::AccountId;

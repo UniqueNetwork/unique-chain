@@ -35,7 +35,7 @@ use up_common::types::*;
 #[path = "../../common/mod.rs"]
 mod runtime_common;
 
-pub mod xcm_config;
+pub mod xcm_barrier;
 
 #[cfg(test)]
 mod tests;
