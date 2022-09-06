@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use logtest::Logger;
-use crate::{runtime_common::tests::xcm::*, xcm_config::Barrier};
+use crate::{runtime_common::tests::xcm::*, xcm_barrier::Barrier};
 
 const QUARTZ_PARA_ID: u32 = 2095;
 
