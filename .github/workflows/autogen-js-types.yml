@@ -121,12 +121,12 @@ jobs:
           git commit -m "chore: regenerate types"
 
       - name: Push changes
-        working-directory: tests/unique-types-js
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
-
+          ssh: true
+        
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
