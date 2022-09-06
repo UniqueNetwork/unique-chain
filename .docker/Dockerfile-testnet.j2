@@ -31,8 +31,6 @@ ARG PROFILE=release
 
 WORKDIR /unique_parachain
 
-COPY ../launch-config.yml ./launch-config.yml
-
 RUN git clone -b {{ BRANCH }} https://github.com/UniqueNetwork/unique-chain.git && \
     cd unique-chain && \
     cargo build --features={{ FEATURE }} --$PROFILE
