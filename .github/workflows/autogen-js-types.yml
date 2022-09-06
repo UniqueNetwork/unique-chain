@@ -126,6 +126,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
+          repository: 'UniqueNetwork/unique-types-js'
 
       - name: Stop running containers
         if: always()                   # run this step always
