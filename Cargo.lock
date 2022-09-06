@@ -5176,7 +5176,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
- "pallet-foreing-assets",
+ "pallet-foreign-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -5846,7 +5846,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-foreing-assets"
+name = "pallet-foreign-assets"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -8496,7 +8496,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
- "pallet-foreing-assets",
+ "pallet-foreign-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -12491,7 +12491,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
- "pallet-foreing-assets",
+ "pallet-foreign-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",

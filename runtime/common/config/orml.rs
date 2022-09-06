@@ -26,7 +26,7 @@ use xcm::v1::{Junction::*, Junctions::*, MultiLocation, NetworkId};
 use xcm_builder::LocationInverter;
 use xcm_executor::XcmExecutor;
 use sp_std::{vec, vec::Vec};
-use pallet_foreing_assets::{CurrencyId, NativeCurrency};
+use pallet_foreign_assets::{CurrencyId, NativeCurrency};
 use crate::{
 	Runtime, Event, RelayChainBlockNumberProvider,
 	runtime_common::config::{

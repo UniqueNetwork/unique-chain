@@ -34,7 +34,7 @@ where
 	type Balance = BalanceOf<T>;
 
 	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible total_issuance");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible total_issuance");
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
@@ -88,7 +88,7 @@ where
 	}
 
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible minimum_balance");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible minimum_balance");
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
 				let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<
@@ -134,7 +134,7 @@ where
 	}
 
 	fn balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible balance");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible balance");
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
 				let parent_amount =
@@ -193,7 +193,7 @@ where
 		who: &<T as SystemConfig>::AccountId,
 		keep_alive: bool,
 	) -> Self::Balance {
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible reducible_balance");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible reducible_balance");
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
@@ -243,7 +243,7 @@ where
 		amount: Self::Balance,
 		mint: bool,
 	) -> DepositConsequence {
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible can_deposit");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible can_deposit");
 
 		let value: u128 = match amount.try_into() {
 			Ok(val) => val,
@@ -312,7 +312,7 @@ where
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
 	) -> WithdrawConsequence<Self::Balance> {
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible can_withdraw");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible can_withdraw");
 		let value: u128 = match amount.try_into() {
 			Ok(val) => val,
 			Err(_) => return WithdrawConsequence::UnknownAsset,
@@ -380,7 +380,7 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		//Self::do_mint(asset, who, amount, None)
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible mint_into {:?}", asset);
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible mint_into {:?}", asset);
 
 		let value: u128 = match amount.try_into() {
 			Ok(val) => val,
@@ -452,7 +452,7 @@ where
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible burn_from");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible burn_from");
 
 		let value: u128 = match amount.try_into() {
 			Ok(val) => val,
@@ -525,7 +525,7 @@ where
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: true };
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible slash");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible slash");
 		Self::burn_from(asset, who, amount)?;
 		Ok(amount)
 	}
@@ -543,7 +543,7 @@ where
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
-		log::trace!(target: "fassets::impl_foreing_assets", "impl_fungible transfer");
+		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible transfer");
 
 		let value: u128 = match amount.try_into() {
 			Ok(val) => val,

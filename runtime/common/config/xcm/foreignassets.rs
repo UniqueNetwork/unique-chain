@@ -23,12 +23,12 @@ use xcm::v1::{Junction::*, MultiLocation, Junctions::*};
 use xcm::latest::MultiAsset;
 use xcm_builder::{FungiblesAdapter, ConvertedConcreteAssetId};
 use xcm_executor::traits::{Convert as ConvertXcm, JustTry, FilterAssetLocation};
-use pallet_foreing_assets::{
-	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, NativeCurrency, FreeForAll, TryAsForeing,
+use pallet_foreign_assets::{
+	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, NativeCurrency, FreeForAll, TryAsForeign,
 	ForeignAssetId, CurrencyId,
 };
 use sp_std::{borrow::Borrow, marker::PhantomData};
-use crate::{Runtime, Balances, ParachainInfo, PolkadotXcm, ForeingAssets};
+use crate::{Runtime, Balances, ParachainInfo, PolkadotXcm, ForeignAssets};
 
 use super::{LocationToAccountId, RelayLocation};
 
@@ -39,15 +39,15 @@ parameter_types! {
 }
 
 /// Allow checking in assets that have issuance > 0.
-pub struct NonZeroIssuance<AccountId, ForeingAssets>(PhantomData<(AccountId, ForeingAssets)>);
+pub struct NonZeroIssuance<AccountId, ForeignAssets>(PhantomData<(AccountId, ForeignAssets)>);
 
-impl<AccountId, ForeingAssets> Contains<<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId>
-	for NonZeroIssuance<AccountId, ForeingAssets>
+impl<AccountId, ForeignAssets> Contains<<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId>
+	for NonZeroIssuance<AccountId, ForeignAssets>
 where
-	ForeingAssets: fungibles::Inspect<AccountId>,
+	ForeignAssets: fungibles::Inspect<AccountId>,
 {
-	fn contains(id: &<ForeingAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
-		!ForeingAssets::total_issuance(*id).is_zero()
+	fn contains(id: &<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
+		!ForeignAssets::total_issuance(*id).is_zero()
 	}
 }
 
@@ -56,7 +56,7 @@ impl<AssetId: Clone + PartialEq, ConvertAssetId: ConvertXcm<AssetId, AssetId>>
 	ConvertXcm<MultiLocation, AssetId> for AsInnerId<AssetId, ConvertAssetId>
 where
 	AssetId: Borrow<AssetId>,
-	AssetId: TryAsForeing<AssetId, ForeignAssetId>,
+	AssetId: TryAsForeign<AssetId, ForeignAssetId>,
 	AssetIds: Borrow<AssetId>,
 {
 	fn convert_ref(id: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
@@ -112,7 +112,7 @@ where
 			));
 		}
 
-		match <AssetId as TryAsForeing<AssetId, ForeignAssetId>>::try_as_foreing(asset_id.clone()) {
+		match <AssetId as TryAsForeign<AssetId, ForeignAssetId>>::try_as_foreign(asset_id.clone()) {
 			Some(fid) => match XcmForeignAssetIdMapping::<Runtime>::get_multi_location(fid) {
 				Some(location) => Ok(location),
 				None => Err(()),
@@ -125,7 +125,7 @@ where
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
-	ForeingAssets,
+	ForeignAssets,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	ConvertedConcreteAssetId<AssetIds, Balance, AsInnerId<AssetIds, JustTry>, JustTry>,
 	// Convert an XCM MultiLocation into a local account id:
@@ -134,7 +134,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	AccountId,
 	// We only want to allow teleports of known assets. We use non-zero issuance as an indication
 	// that this asset is known.
-	NonZeroIssuance<AccountId, ForeingAssets>,
+	NonZeroIssuance<AccountId, ForeignAssets>,
 	// The account to use for tracking teleports.
 	CheckingAccount,
 >;

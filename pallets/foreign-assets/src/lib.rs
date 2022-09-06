@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! # Foreing assets
+//! # Foreign assets
 //!
 //! - [`Config`]
 //! - [`Call`]
@@ -22,7 +22,7 @@
 //!
 //! ## Overview
 //!
-//! The foreing assests pallet provides functions for:
+//! The foreign assests pallet provides functions for:
 //!
 //! - Local and foreign assets management. The foreign assets can be updated without runtime upgrade.
 //! - Bounds between asset and target collection for cross chain transfer and inner transfers.
@@ -105,12 +105,12 @@ pub enum AssetIds {
 	NativeAssetId(NativeCurrency),
 }
 
-pub trait TryAsForeing<T, F> {
-	fn try_as_foreing(asset: T) -> Option<F>;
+pub trait TryAsForeign<T, F> {
+	fn try_as_foreign(asset: T) -> Option<F>;
 }
 
-impl TryAsForeing<AssetIds, ForeignAssetId> for AssetIds {
-	fn try_as_foreing(asset: AssetIds) -> Option<ForeignAssetId> {
+impl TryAsForeign<AssetIds, ForeignAssetId> for AssetIds {
+	fn try_as_foreign(asset: AssetIds) -> Option<ForeignAssetId> {
 		match asset {
 			AssetIds::ForeignAssetId(id) => Some(id),
 			_ => None,
@@ -296,7 +296,7 @@ pub mod module {
 
 			let md = metadata.clone();
 			let name: Vec<u16> = md.name.into_iter().map(|x| x as u16).collect::<Vec<u16>>();
-			let mut description: Vec<u16> = "Foreing assets collection for "
+			let mut description: Vec<u16> = "Foreign assets collection for "
 				.encode_utf16()
 				.collect::<Vec<u16>>();
 			description.append(&mut name.clone());

@@ -123,7 +123,7 @@ std = [
     "orml-tokens/std",
     "orml-xtokens/std",
     "orml-traits/std",
-    "pallet-foreing-assets/std"
+    "pallet-foreign-assets/std"
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 opal-runtime = ['refungible', 'scheduler', 'rmrk', 'foreign-assets']
@@ -460,7 +460,7 @@ fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/fro
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.27' }
-pallet-foreing-assets = { default-features = false, path = "../../pallets/foreing-assets" }
+pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
 
 ################################################################################
 # Other Dependencies

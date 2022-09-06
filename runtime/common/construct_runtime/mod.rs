@@ -81,7 +81,7 @@ macro_rules! construct_runtime {
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
                 #[runtimes(opal)]
-                ForeingAssets: pallet_foreing_assets::{Pallet, Call, Storage, Event<T>} = 80,
+                ForeignAssets: pallet_foreign_assets::{Pallet, Call, Storage, Event<T>} = 80,
 
                 // Frontier
                 EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,

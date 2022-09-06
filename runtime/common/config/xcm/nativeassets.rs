@@ -30,7 +30,7 @@ use xcm_executor::{
 	Assets,
 	traits::{MatchesFungible, WeightTrader},
 };
-use pallet_foreing_assets::{AssetIds, NativeCurrency};
+use pallet_foreign_assets::{AssetIds, NativeCurrency};
 use sp_std::marker::PhantomData;
 use crate::{Balances, ParachainInfo};
 use super::{LocationToAccountId, RelayLocation};
