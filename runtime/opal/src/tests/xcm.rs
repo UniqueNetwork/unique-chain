@@ -15,18 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use logtest::Logger;
-use crate::{
-    runtime_common::tests::xcm::*,
-    xcm_config::Barrier,
-};
+use crate::{runtime_common::tests::xcm::*, xcm_config::Barrier};
 
 const OPAL_PARA_ID: u32 = 2095; // Same as Quartz
 
 pub fn opal_xcm_tests(logger: &mut Logger) {
-    barrier_denies_transact::<Barrier>(logger);
+	barrier_denies_transact::<Barrier>(logger);
 
-    barrier_denies_transfer_from_unknown_location::<Barrier>(
-        logger,
-        OPAL_PARA_ID,
-    ).expect_err("opal runtime allows any location");
+	barrier_denies_transfer_from_unknown_location::<Barrier>(logger, OPAL_PARA_ID)
+		.expect_err("opal runtime allows any location");
 }

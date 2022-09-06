@@ -19,7 +19,7 @@ use super::xcm::unique_xcm_tests;
 
 #[test]
 fn unique_log_capture_tests() {
-    let mut logger = Logger::start();
-    
-    unique_xcm_tests(&mut logger);
+	let mut logger = Logger::start();
+
+	unique_xcm_tests(&mut logger);
 }

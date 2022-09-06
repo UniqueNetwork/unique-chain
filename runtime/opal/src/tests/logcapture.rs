@@ -19,7 +19,7 @@ use super::xcm::opal_xcm_tests;
 
 #[test]
 fn opal_log_capture_tests() {
-    let mut logger = Logger::start();
-    
-    opal_xcm_tests(&mut logger);
+	let mut logger = Logger::start();
+
+	opal_xcm_tests(&mut logger);
 }

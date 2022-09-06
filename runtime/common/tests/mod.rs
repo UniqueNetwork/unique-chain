@@ -29,20 +29,18 @@ fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
 }
 
 fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
-    let cfg = GenesisConfig {
-        aura: AuraConfig {
-            authorities: vec![
-                get_from_seed::<AuraId>("Alice"),
-                get_from_seed::<AuraId>("Bob"),
-            ],
-        },
-        parachain_info: ParachainInfoConfig {
-            parachain_id: para_id.into(),
-        },
-        ..GenesisConfig::default()
-    };
+	let cfg = GenesisConfig {
+		aura: AuraConfig {
+			authorities: vec![
+				get_from_seed::<AuraId>("Alice"),
+				get_from_seed::<AuraId>("Bob"),
+			],
+		},
+		parachain_info: ParachainInfoConfig {
+			parachain_id: para_id.into(),
+		},
+		..GenesisConfig::default()
+	};
 
-	cfg.build_storage()
-        .unwrap()
-		.into()
+	cfg.build_storage().unwrap().into()
 }

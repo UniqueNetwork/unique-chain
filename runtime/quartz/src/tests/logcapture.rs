@@ -19,7 +19,7 @@ use super::xcm::quartz_xcm_tests;
 
 #[test]
 fn quartz_log_capture_tests() {
-    let mut logger = Logger::start();
-    
-    quartz_xcm_tests(&mut logger);
+	let mut logger = Logger::start();
+
+	quartz_xcm_tests(&mut logger);
 }

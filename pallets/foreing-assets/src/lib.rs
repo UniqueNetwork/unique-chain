@@ -54,7 +54,7 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-use xcm::opaque::latest::{prelude::XcmError, MultiAsset};
+use xcm::opaque::latest::prelude::XcmError;
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
 
@@ -445,8 +445,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-use sp_runtime::SaturatedConversion;
-use sp_runtime::traits::Saturating;
 pub use frame_support::{
 	traits::{
 		fungibles::{Balanced, CreditOf},
@@ -455,8 +453,6 @@ pub use frame_support::{
 	},
 	weights::{WeightToFeePolynomial, WeightToFee},
 };
-
-use xcm::latest::{Fungibility::Fungible as XcmFungible};
 
 pub struct FreeForAll<
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
