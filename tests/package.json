@@ -48,6 +48,7 @@
     "testRemoveCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionAdmin.test.ts",
     "testRemoveCollectionSponsor": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionSponsor.test.ts",
     "testRemoveFromAllowList": "mocha --timeout 9999999 -r ts-node/register ./**/removeFromAllowList.test.ts",
+    "testAllowLists": "mocha --timeout 9999999 -r ts-node/register ./**/allowLists.test.ts",
     "testConnection": "mocha --timeout 9999999 -r ts-node/register ./**/connection.test.ts",
     "testContracts": "mocha --timeout 9999999 -r ts-node/register ./**/contracts.test.ts",
     "testCreateItem": "mocha --timeout 9999999 -r ts-node/register ./**/createItem.test.ts",
