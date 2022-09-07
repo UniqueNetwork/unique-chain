@@ -27,7 +27,6 @@ import {usingPlaygrounds} from './util/playgrounds';
 
 import {encodeAddress} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
-import {ApiPromise} from '@polkadot/api';
 import {SponsoringMode, contractHelpers, createEthAccountWithBalance, deployFlipper, itWeb3, transferBalanceToEth} from './eth/util/helpers';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -42,10 +41,10 @@ const UNLOCKING_PERIOD = 10n; // 20 blocks of parachain
 const rewardAvailableInBlock = (stakedInBlock: bigint) => (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
 
 before(async function () {
-  await usingPlaygrounds(async (helper, privateKeyWrapper) => {
+  await usingPlaygrounds(async (helper, privateKey) => {
     if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-    alice = privateKeyWrapper('//Alice');
-    palletAdmin = privateKeyWrapper('//Charlie'); // TODO use custom address
+    alice = privateKey('//Alice');
+    palletAdmin = privateKey('//Charlie'); // TODO use custom address
     await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
     nominal = helper.balance.getOneTokenNominal();
     await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);
@@ -675,7 +674,8 @@ describe('app-promotion rewards', () => {
       // staker unstakes before rewards has been payed
       const staker = accounts.pop()!;
       await helper.staking.stake(staker, 100n * nominal);
-      await waitForRelayBlock(helper.api!, 40);
+      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock) + LOCKING_PERIOD);
       await helper.staking.unstake(staker);
       
       // so he did not receive any rewards
@@ -693,24 +693,32 @@ describe('app-promotion rewards', () => {
       const staker = accounts.pop()!;
             
       await helper.staking.stake(staker, 100n * nominal);
-      await helper.staking.stake(staker, 200n * nominal);
-      await helper.staking.stake(staker, 300n * nominal);
+
+      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
       
-      await waitForRelayBlock(helper.api!, 34);
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
       let totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
-      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n), calculateIncome(200n * nominal, 10n), calculateIncome(300n * nominal, 10n)]);
+      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n)]);
       
-      await waitForRelayBlock(helper.api!, 20);
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock) + LOCKING_PERIOD);
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
       totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
-      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n, 2), calculateIncome(200n * nominal, 10n, 2), calculateIncome(300n * nominal, 10n, 2)]);      
+      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n, 2)]);      
     });
   });
 
-  it('can be paid 1000 rewards in a time', async () => {
+  it.skip('can be paid 1000 rewards in a time', async () => {
+    // all other stakes should be unstaked
     await usingPlaygrounds(async (helper) => {
-      expect.fail('Test not implemented');
+      const oneHundredStakers = await helper.arrange.createCrowd(100, 1050n, alice);
+
+      // stakers stakes 10 times each
+      for (let i = 0; i < 10; i++) {
+        await Promise.all(oneHundredStakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
+      }
+      await helper.wait.newBlocks(40);
+      const result = await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
     });
   });
 
@@ -733,19 +741,6 @@ describe('app-promotion rewards', () => {
     });
   });
 });
-
-async function waitForRelayBlock(api: ApiPromise, blocks = 1): Promise<void> {
-  const current_block = (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
-  return new Promise<void>(async (resolve, reject) => {
-    const unsubscribe = await api.query.parachainSystem.validationData(async (data) => {
-      // console.log(`${current_block} || ${data.value.relayParentNumber.toNumber()}`);
-      if (data.value.relayParentNumber.toNumber() - current_block >= blocks) {
-        unsubscribe();
-        resolve();
-      }
-    });
-  });
-}
 
 function calculatePalleteAddress(palletId: any) {
   const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
