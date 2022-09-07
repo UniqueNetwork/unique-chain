@@ -38,7 +38,7 @@ describe('Integration Test ext. Allow list tests', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper) => {
-      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
