@@ -22,9 +22,6 @@ type RpcParam = {
 
 const CROSS_ACCOUNT_ID_TYPE = 'PalletEvmAccountBasicCrossAccountIdRepr';
 
-const collectionParam = {name: 'collection', type: 'u32'};
-const tokenParam = {name: 'tokenId', type: 'u32'};
-const propertyKeysParam = {name: 'propertyKeys', type: 'Vec<String>', isOptional: true};
 const crossAccountParam = (name = 'account') => ({name, type: CROSS_ACCOUNT_ID_TYPE});
 const atParam = {name: 'at', type: 'Hash', isOptional: true};
 
@@ -46,11 +43,6 @@ export default {
       'Returns the total amount of staked tokens per block when staked',
       [crossAccountParam('staker')],
       'Vec<(u32, u128)>',
-    ),
-    totalStakingLocked: fun(
-      'Return the total amount locked by staking tokens',
-      [crossAccountParam('staker')],
-      'u128',
     ),
     pendingUnstake: fun(
       'Returns the total amount of unstaked tokens',

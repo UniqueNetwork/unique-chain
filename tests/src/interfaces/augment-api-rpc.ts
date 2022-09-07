@@ -52,10 +52,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Returns the total amount of staked tokens per block when staked
        **/
       totalStakedPerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
-      /**
-       * Return the total amount locked by staking tokens
-       **/
-      totalStakingLocked: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
     };
     author: {
       /**

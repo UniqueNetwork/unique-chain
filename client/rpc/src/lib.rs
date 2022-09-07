@@ -270,14 +270,6 @@ mod app_promotion_unique_rpc {
 			at: Option<BlockHash>,
 		) -> Result<Vec<(BlockNumber, String)>>;
 
-		/// Returns the total amount locked by staking tokens.
-		#[method(name = "appPromotion_totalStakingLocked")]
-		fn total_staking_locked(
-			&self,
-			staker: CrossAccountId,
-			at: Option<BlockHash>,
-		) -> Result<String>;
-
 		/// Returns the total amount of tokens pending withdrawal from staking.
 		#[method(name = "appPromotion_pendingUnstake")]
 		fn pending_unstake(
@@ -594,7 +586,6 @@ where
 		.into_iter()
 		.map(|(b, a)| (b, a.to_string()))
 		.collect::<Vec<_>>(), app_promotion_api);
-	pass_method!(total_staking_locked(staker: CrossAccountId) -> String => |v| v.to_string(), app_promotion_api);
 	pass_method!(pending_unstake(staker: Option<CrossAccountId>) -> String => |v| v.to_string(), app_promotion_api);
 	pass_method!(pending_unstake_per_block(staker: CrossAccountId) -> Vec<(BlockNumber, String)> =>
 		|v| v

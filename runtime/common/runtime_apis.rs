@@ -206,14 +206,6 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
                 }
 
-                fn total_staking_locked(staker: CrossAccountId) -> Result<u128, DispatchError> {
-                    #[cfg(not(feature = "app-promotion"))]
-                    return unsupported!();
-
-                    #[cfg(feature = "app-promotion")]
-                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_locked_balance(staker));
-                }
-
                 fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
