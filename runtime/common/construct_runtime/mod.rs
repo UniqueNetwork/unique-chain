@@ -45,7 +45,6 @@ macro_rules! construct_runtime {
 
                 XTokens: orml_xtokens = 38,
                 Tokens: orml_tokens = 39,
-                // Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
                 // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
                 // XCM helpers.
