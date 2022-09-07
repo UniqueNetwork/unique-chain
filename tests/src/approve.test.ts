@@ -35,8 +35,18 @@ import {
   requirePallets,
   Pallets,
 } from './util/helpers';
+import { usingPlaygrounds } from './util/playgrounds';
+
+let donor: IKeyringPair;
+
+before(async () => {
+  await usingPlaygrounds(async (_, privateKeyWrapper) => {
+    donor = privateKeyWrapper('//Alice');
+  });
+});
 
 chai.use(chaiAsPromised);
+const expect = chai.expect;
 
 describe('Integration Test approve(spender, collection_id, item_id, amount):', () => {
   let alice: IKeyringPair;
@@ -44,63 +54,88 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
   it('[nft] Execute the extrinsic and check approvedList', async () => {
-    const nftCollectionId = await createCollectionExpectSuccess();
-    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
+      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
+    });
   });
 
   it('[fungible] Execute the extrinsic and check approvedList', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      const amount = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amount).to.be.equal(BigInt(1));
+    });
   });
 
   it('[refungible] Execute the extrinsic and check approvedList', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const reFungibleCollectionId =
-      await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      const amount = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amount).to.be.equal(BigInt(100));
+    });
   });
 
   it('[nft] Remove approval by using 0 amount', async () => {
-    const nftCollectionId = await createCollectionExpectSuccess();
-    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address, 1);
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, alice, bob.address, 0);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
+      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
+      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
+    });
   });
 
   it('[fungible] Remove approval by using 0 amount', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 1);
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 0);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      const amountBefore = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountBefore).to.be.equal(BigInt(1));
+
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      const amountAfter = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountAfter).to.be.equal(BigInt(0));
+    });
   });
 
   it('[refungible] Remove approval by using 0 amount', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountBefore).to.be.equal(BigInt(100));
 
-    const reFungibleCollectionId =
-      await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 1);
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 0);
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountAfter).to.be.equal(BigInt(0));
+    });
   });
 
   it('can`t be called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
-
-    await adminApproveFromExpectFail(collectionId, itemId, alice, bob.address, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+      const approveTokenTx = async () => helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
+      await expect(approveTokenTx()).to.be.rejected;
+    });
   });
 });
 
@@ -110,31 +145,39 @@ describe('Normal user can approve other users to transfer:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
-  });  
+  });
 
   it('NFT', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+      await helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.true;
+    });
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', bob.address); 
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, bob.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      const amount = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: charlie.address}, {Substrate: bob.address});
+      expect(amount).to.be.equal(BigInt(1));
+    });
   });
 
   it('ReFungible up to an approved amount', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: bob.address, pieces: 100n});
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      const amount = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: charlie.address}, {Substrate: bob.address});
+      expect(amount).to.be.equal(BigInt(100));
+    });
   });
 });
 
@@ -144,34 +187,45 @@ describe('Approved users can transferFrom up to approved amount:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
-  });  
+  });
 
   it('NFT', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'NFT');
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+      await helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      await helper.nft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
+      expect(owner.Substrate).to.be.equal(alice.address);
+    });
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', bob.address); 
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'Fungible');
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, bob.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      const before = await helper.ft.getBalance(collectionId, {Substrate: alice.address});
+      await helper.ft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 1n);
+      const after = await helper.ft.getBalance(collectionId, {Substrate: alice.address});
+      expect(after - before).to.be.equal(BigInt(1));
+    });
   });
 
   it('ReFungible up to an approved amount', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'ReFungible');
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: bob.address, pieces: 100n});
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      const before = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
+      await helper.rft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 1n);
+      const after = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
+      expect(after - before).to.be.equal(BigInt(1));
+    });
   });
 });
 
@@ -181,37 +235,52 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
-  });  
+  });
 
   it('NFT', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'NFT');
-    await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+      await helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      await helper.nft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
+      expect(owner.Substrate).to.be.equal(alice.address);
+      const transferTokenFromTx = async () => helper.nft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      await expect(transferTokenFromTx()).to.be.rejected;
+    });
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', bob.address); 
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'Fungible');
-    await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, bob.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      const before = await helper.ft.getBalance(collectionId, {Substrate: alice.address});
+      await helper.ft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 1n);
+      const after = await helper.ft.getBalance(collectionId, {Substrate: alice.address});
+      expect(after - before).to.be.equal(BigInt(1));
+
+      const transferTokenFromTx = async () => helper.ft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 1n);
+      await expect(transferTokenFromTx()).to.be.rejected;
+    });
   });
 
   it('ReFungible up to an approved amount', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', bob.address);
-    await approveExpectSuccess(collectionId, itemId, bob, charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, charlie, bob, alice, 1, 'ReFungible');
-    await transferFromExpectFail(collectionId, itemId, charlie, bob, alice, 1);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: bob.address, pieces: 100n});
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      const before = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
+      await helper.rft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 100n);
+      const after = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
+      expect(after - before).to.be.equal(BigInt(100));
+      const transferTokenFromTx = async () => helper.rft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 100n);
+      await expect(transferTokenFromTx()).to.be.rejected;
+    });
   });
 });
 
@@ -222,20 +291,28 @@ describe('Approved amount decreases by the transferred amount.:', () => {
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
-      dave =  privateKeyWrapper('//Dave');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
-  });  
+  });
 
   it('If a user B is approved to transfer 10 Fungible tokens from user A, they can transfer 2 tokens to user C, which will result in decreasing approval from 10 to 8. Then user B can transfer 8 tokens to user D.', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', alice.address); 
-    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 10);
-    await transferFromExpectSuccess(collectionId, itemId, bob, alice, charlie, 2, 'Fungible');
-    await transferFromExpectSuccess(collectionId, itemId, bob, alice, dave, 8, 'Fungible');
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 10n);
+
+      const charlieBefore = await helper.ft.getBalance(collectionId, {Substrate: charlie.address});
+      await helper.ft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address}, 2n);
+      const charlieAfter = await helper.ft.getBalance(collectionId, {Substrate: charlie.address});
+      expect(charlieAfter - charlieBefore).to.be.equal(BigInt(2));
+
+      const daveBefore = await helper.ft.getBalance(collectionId, {Substrate: dave.address});
+      await helper.ft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: alice.address}, {Substrate: dave.address}, 8n);
+      const daveAfter = await helper.ft.getBalance(collectionId, {Substrate: dave.address});
+      expect(daveAfter - daveBefore).to.be.equal(BigInt(8));
+    });
   });
 });
 
@@ -245,38 +322,57 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
   it('NFT', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 1);
-    await approveExpectSuccess(collectionId, itemId, alice, bob.address, 0);
-    await transferFromExpectFail(collectionId, itemId, bob, bob, charlie, 1);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
+      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
+      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
+      const transferTokenFromTx = async () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
+      await expect(transferTokenFromTx()).to.be.rejected;
+    });
   });
 
   it('Fungible', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 1);
-    await approveExpectSuccess(fungibleCollectionId, newFungibleTokenId, alice, bob.address, 0);
-    await transferFromExpectFail(fungibleCollectionId, newFungibleTokenId, bob, bob, charlie, 1);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      const amountBefore = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountBefore).to.be.equal(BigInt(1));
+
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      const amountAfter = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountAfter).to.be.equal(BigInt(0));
+
+      const transferTokenFromTx = async () => helper.ft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address}, 1n);
+      await expect(transferTokenFromTx()).to.be.rejected;
+    });
   });
 
   it('ReFungible', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
+      const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountBefore).to.be.equal(BigInt(100));
 
-    const reFungibleCollectionId =
-      await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 1);
-    await approveExpectSuccess(reFungibleCollectionId, newReFungibleTokenId, alice, bob.address, 0);
-    await transferFromExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, bob, charlie, 1);
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
+      expect(amountAfter).to.be.equal(BigInt(0));
+
+      const transferTokenFromTx = async () => helper.rft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address}, 100n);
+      await expect(transferTokenFromTx()).to.be.rejected;
+    });
   });
 });
 
@@ -286,31 +382,37 @@ describe('User cannot approve for the amount greater than they own:', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
   it('1 for NFT', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
-    await approveExpectFail(collectionId, itemId, bob, charlie, 2);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+      await helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2).signAndSend(bob);
+      expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.false;
+    });
   });
 
   it('Fungible', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
-    await approveExpectFail(fungibleCollectionId, newFungibleTokenId, bob, charlie, 11);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      const approveTx = async () => helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 11n);
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('ReFungible', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const reFungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, charlie, 101);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
+      const approveTx = async () => helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 101n);
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 });
 
@@ -321,41 +423,67 @@ describe('Administrator and collection owner do not need approval in order to ex
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
-      dave =  privateKeyWrapper('//Dave');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
-  });  
+  });
 
   it('NFT', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'NFT');
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'NFT');
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: charlie.address});
+
+      await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: charlie.address}, {Substrate: dave.address});
+      const owner1 = await helper.nft.getTokenOwner(collectionId, tokenId);
+      expect(owner1.Substrate).to.be.equal(dave.address);
+
+      await helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
+      await helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: dave.address}, {Substrate: alice.address});
+      const owner2 = await helper.nft.getTokenOwner(collectionId, tokenId);
+      expect(owner2.Substrate).to.be.equal(alice.address);
+    });
   });
 
   it('Fungible up to an approved amount', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'Fungible', charlie.address); 
-    await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'Fungible');
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'Fungible');
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+      await helper.ft.mintTokens(alice, collectionId, charlie.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+
+      const daveBalanceBefore = await helper.ft.getBalance(collectionId, {Substrate: dave.address});
+      await helper.ft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: charlie.address}, {Substrate: dave.address}, 1n);
+      const daveBalanceAfter = await helper.ft.getBalance(collectionId, {Substrate: dave.address});
+      expect(daveBalanceAfter - daveBalanceBefore).to.be.equal(BigInt(1));
+
+      await helper.collection.addAdmin(alice ,collectionId, {Substrate: bob.address});
+
+      const aliceBalanceBefore = await helper.ft.getBalance(collectionId, {Substrate: alice.address});
+      await helper.ft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: dave.address}, {Substrate: alice.address}, 1n);
+      const aliceBalanceAfter = await helper.ft.getBalance(collectionId, {Substrate: alice.address});
+      expect(aliceBalanceAfter - aliceBalanceBefore).to.be.equal(BigInt(1));
+    });
   });
 
   it('ReFungible up to an approved amount', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: charlie.address, pieces: 100n});
 
-    const collectionId = await createCollectionExpectSuccess({mode:{type: 'ReFungible'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'ReFungible', charlie.address);
-    await transferFromExpectSuccess(collectionId, itemId, alice, charlie, dave, 1, 'ReFungible');
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await transferFromExpectSuccess(collectionId, itemId, bob, dave, alice, 1, 'ReFungible');
+      const daveBefore = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: dave.address});
+      await helper.rft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: charlie.address}, {Substrate: dave.address}, 1n);
+      const daveAfter = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: dave.address});
+      expect(daveAfter - daveBefore).to.be.equal(BigInt(1));
+
+      await helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
+
+      const aliceBefore = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
+      await helper.rft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: dave.address}, {Substrate: alice.address}, 1n);
+      const aliceAfter = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
+      expect(aliceAfter - aliceBefore).to.be.equal(BigInt(1));
+    });
   });
 });
 
@@ -366,13 +494,10 @@ describe('Repeated approvals add up', () => {
   let dave: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
-      dave =  privateKeyWrapper('//Dave');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
-  });  
+  });
 
   it.skip('Owned 10, approval 1: 1, approval 2: 1, resulting approved value: 2. Fungible', async () => {
     const collectionId = await createCollectionExpectSuccess({mode:{type: 'Fungible', decimalPoints: 0}});
@@ -417,19 +542,19 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
   it('can be called by collection admin on non-owned item', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
-
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await adminApproveFromExpectFail(collectionId, itemId, bob, alice.address, charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
+      await helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
+      const approveTx = async () => helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 });
 
@@ -439,114 +564,139 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice =  privateKeyWrapper('//Alice');
-      bob =  privateKeyWrapper('//Bob');
-      charlie =  privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
   it('[nft] Approve for a collection that does not exist', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const nftCollectionCount = await getCreatedCollectionCount(api);
-      await approveExpectFail(nftCollectionCount + 1, 1, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const collectionId = 1 << 32 - 1;
+      const approveTx = async () => helper.nft.approveToken(bob, collectionId, 1, {Substrate: charlie.address});
+      await expect(approveTx()).to.be.rejected;
     });
   });
 
   it('[fungible] Approve for a collection that does not exist', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const fungibleCollectionCount = await getCreatedCollectionCount(api);
-      await approveExpectFail(fungibleCollectionCount + 1, 0, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const collectionId = 1 << 32 - 1;
+      const approveTx = async () => helper.ft.approveToken(bob, collectionId, 1, {Substrate: charlie.address});
+      await expect(approveTx()).to.be.rejected;
     });
   });
 
   it('[refungible] Approve for a collection that does not exist', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async (api: ApiPromise) => {
-      const reFungibleCollectionCount = await getCreatedCollectionCount(api);
-      await approveExpectFail(reFungibleCollectionCount + 1, 1, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const collectionId = 1 << 32 - 1;
+      const approveTx = async () => helper.rft.approveToken(bob, collectionId, 1, {Substrate: charlie.address});
+      await expect(approveTx()).to.be.rejected;
     });
   });
 
   it('[nft] Approve for a collection that was destroyed', async () => {
-    const nftCollectionId = await createCollectionExpectSuccess();
-    await destroyCollectionExpectSuccess(nftCollectionId);
-    await approveExpectFail(nftCollectionId, 1, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.nft.burn(alice, collectionId);
+      const approveTx = async () => helper.nft.approveToken(alice, collectionId, 1, {Substrate: bob.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
-  it('Approve for a collection that was destroyed', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await destroyCollectionExpectSuccess(fungibleCollectionId);
-    await approveExpectFail(fungibleCollectionId, 0, alice, bob);
+  it('[fungible] Approve for a collection that was destroyed', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.ft.burn(alice, collectionId);
+      const approveTx = async () => helper.ft.approveToken(alice, collectionId, 1, {Substrate: bob.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('[refungible] Approve for a collection that was destroyed', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const reFungibleCollectionId =
-      await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await destroyCollectionExpectSuccess(reFungibleCollectionId);
-    await approveExpectFail(reFungibleCollectionId, 1, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.rft.burn(alice, collectionId);
+      const approveTx = async () => helper.rft.approveToken(alice, collectionId, 1, {Substrate: bob.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('[nft] Approve transfer of a token that does not exist', async () => {
-    const nftCollectionId = await createCollectionExpectSuccess();
-    await approveExpectFail(nftCollectionId, 2, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const approveTx = async () => helper.nft.approveToken(alice, collectionId, 2, {Substrate: bob.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('[refungible] Approve transfer of a token that does not exist', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const reFungibleCollectionId =
-      await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await approveExpectFail(reFungibleCollectionId, 2, alice, bob);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const approveTx = async () => helper.rft.approveToken(alice, collectionId, 2, {Substrate: bob.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('[nft] Approve using the address that does not own the approved token', async () => {
-    const nftCollectionId = await createCollectionExpectSuccess();
-    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
-    await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
+      const approveTx = async () => helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('[fungible] Approve using the address that does not own the approved token', async () => {
-    const fungibleCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newFungibleTokenId = await createItemExpectSuccess(alice, fungibleCollectionId, 'Fungible');
-    await approveExpectFail(fungibleCollectionId, newFungibleTokenId, bob, alice);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+      const approveTx = async () => helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('[refungible] Approve using the address that does not own the approved token', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const reFungibleCollectionId =
-      await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newReFungibleTokenId = await createItemExpectSuccess(alice, reFungibleCollectionId, 'ReFungible');
-    await approveExpectFail(reFungibleCollectionId, newReFungibleTokenId, bob, alice);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
+      const approveTx = async () => helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('should fail if approved more ReFungibles than owned', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
+      await helper.rft.transferToken(alice, collectionId, tokenId, {Substrate: bob.address}, 100n);
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 100n);
 
-    const nftCollectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'ReFungible');
-    await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 100, 'ReFungible');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, bob, alice.address, 100);
-    await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice, 101);
+      const approveTx = async () => helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 101n);
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('should fail if approved more Fungibles than owned', async () => {
-    const nftCollectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'Fungible');
-    await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 10, 'Fungible');
-    await approveExpectSuccess(nftCollectionId, newNftTokenId, bob, alice.address, 10);
-    await approveExpectFail(nftCollectionId, newNftTokenId, bob, alice, 11);
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
+      const tokenId = await helper.ft.getLastTokenId(collectionId);
+
+      await helper.ft.transferToken(alice, collectionId, tokenId, {Substrate: bob.address}, 10n);
+      await helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 10n);
+      const approveTx = async () => helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 11n);
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 
   it('fails when called by collection owner on non-owned item when OwnerCanTransfer == false', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', bob.address);
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: false});
+    await usingPlaygrounds(async (helper) => {
+      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: false});
 
-    await approveExpectFail(collectionId, itemId, alice, charlie);
+      const approveTx = async () => helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
+      await expect(approveTx()).to.be.rejected;
+    });
   });
 });
