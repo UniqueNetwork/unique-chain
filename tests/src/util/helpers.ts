@@ -108,7 +108,7 @@ export function bigIntToDecimals(number: bigint, decimals = 18): string {
   const dotPos = numberStr.length - decimals;
 
   if (dotPos <= 0) {
-    return '0.' + numberStr;
+    return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
   } else {
     const intPart = numberStr.substring(0, dotPos);
     const fractPart = numberStr.substring(dotPos);
@@ -1115,7 +1115,10 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
 
 export async function paraSiblingSovereignAccount(paraid: number): Promise<string> {
   return usingApi(async api => {
+    // We are getting a *sibling* parachain sovereign account,
+    // so we need a sibling prefix: encoded(b"sibl") == 0x7369626c
     const siblingPrefix = '0x7369626c';
+
     const encodedParaId = api.createType('u32', paraid).toHex(true).substring(2);
     const suffix = '000000000000000000000000000000000000000000000000';
 
@@ -1805,8 +1808,6 @@ export async function waitEvent(
       });
 
       if (neededEvent) {
-        console.log(`Event \`${eventIdStr}\` is found`);
-
         unsubscribe();
         resolve(neededEvent);
       } else if (maxBlocksToWait > 0) {
@@ -1852,16 +1853,7 @@ itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (ac
 
 let accountSeed = 10000;
 
-const keyringEth = new Keyring({type: 'ethereum'});
-const keyringEd25519 = new Keyring({type: 'ed25519'});
-const keyringSr25519 = new Keyring({type: 'sr25519'});
-
-export function generateKeyringPair(type: 'ethereum' | 'sr25519' | 'ed25519' = 'sr25519') {
+export function generateKeyringPair(keyring: Keyring) {
   const privateKey = `0xDEADBEEF${(accountSeed++).toString(16).padStart(56, '0')}`;
-  if (type == 'sr25519') {
-    return keyringSr25519.addFromUri(privateKey);
-  } else if (type == 'ed25519') {
-    return keyringEd25519.addFromUri(privateKey);
-  }
-  return keyringEth.addFromUri(privateKey);
+  return keyring.addFromUri(privateKey);
 }
