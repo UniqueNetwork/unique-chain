@@ -135,16 +135,15 @@ impl TryPass for DenyTransact {
 			.iter()
 			.find(|inst| matches![inst, Instruction::Transact { .. }]);
 
-		match transact_inst {
-			Some(_) => {
-				log::warn!(
-					target: "xcm::barrier",
-					"transact XCM rejected"
-				);
+		if transact_inst.is_some() {
+			log::warn!(
+				target: "xcm::barrier",
+				"transact XCM rejected"
+			);
 
-				Err(())
-			}
-			None => Ok(()),
+			Err(())
+		} else {
+			Ok(())
 		}
 	}
 }
