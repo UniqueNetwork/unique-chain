@@ -20,7 +20,7 @@ import chaiAsPromised from 'chai-as-promised';
 import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import usingApi, {submitTransactionAsync} from './../substrate/substrate-api';
+import usingApi, {executeTransaction} from './../substrate/substrate-api';
 import {bigIntToDecimals, describe_xcm, getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
 import waitNewBlocks from './../substrate/wait-new-blocks';
 import {normalizeAccountId} from './../util/helpers';
@@ -93,26 +93,26 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       const fundingAmount = 3_500_000_000_000; 
 
       const tx = api.tx.assets.create(ASSET_ID, alice.addressRaw, ASSET_METADATA_MINIMAL_BALANCE);
-      const events = await submitTransactionAsync(alice, tx);
+      const events = await executeTransaction(api, alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
       // set metadata
       const tx2 = api.tx.assets.setMetadata(ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
-      const events2 = await submitTransactionAsync(alice, tx2);
+      const events2 = await executeTransaction(api, alice, tx2);
       const result2 = getGenericResult(events2);
       expect(result2.success).to.be.true;
 
       // mint some amount of asset
       const tx3 = api.tx.assets.mint(ASSET_ID, alice.addressRaw, ASSET_AMOUNT);
-      const events3 = await submitTransactionAsync(alice, tx3);
+      const events3 = await executeTransaction(api, alice, tx3);
       const result3 = getGenericResult(events3);
       expect(result3.success).to.be.true;
 
       // funding parachain sovereing account (Parachain: 2095)
       const parachainSovereingAccount = await paraSiblingSovereignAccount(UNIQUE_CHAIN);
       const tx4 = api.tx.balances.transfer(parachainSovereingAccount, fundingAmount);
-      const events4 = await submitTransactionAsync(bob, tx4);
+      const events4 = await executeTransaction(api, bob, tx4);
       const result4 = getGenericResult(events4);
       expect(result4.success).to.be.true;
 
@@ -148,7 +148,7 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       //registerForeignAsset(owner, location, metadata)
       const tx = api.tx.foreignAssets.registerForeignAsset(alice.addressRaw, location, metadata);
       const sudoTx = api.tx.sudo.sudo(tx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
+      const events = await executeTransaction(api, alice, sudoTx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
@@ -203,7 +203,7 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await submitTransactionAsync(alice, tx);
+      const events = await executeTransaction(api, alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
     }, relayApiOptions);
@@ -276,7 +276,7 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       [balanceStmnBefore] = await getBalance(api, [alice.address]);
 
       const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(dest, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await submitTransactionAsync(alice, tx);
+      const events = await executeTransaction(api, alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 
@@ -365,7 +365,7 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       const destWeight = 500000000000;
 
       const tx = api.tx.xTokens.transferMulticurrencies(currencies, feeItem, destination, destWeight);
-      const events = await submitTransactionAsync(alice, tx);
+      const events = await executeTransaction(api, alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
       
@@ -452,7 +452,7 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await submitTransactionAsync(bob, tx);
+      const events = await executeTransaction(api, bob, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
     }, relayApiOptions);
@@ -514,7 +514,7 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       const destWeight = 500000000000;
 
       const tx = api.tx.xTokens.transferMulticurrencies(currencies, feeItem, destination, destWeight);
-      const events = await submitTransactionAsync(bob, tx);
+      const events = await executeTransaction(api, bob, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
 

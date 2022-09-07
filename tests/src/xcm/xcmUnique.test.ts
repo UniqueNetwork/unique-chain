@@ -77,8 +77,10 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
   
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
+      const keyringSr25519 = new Keyring({type: 'sr25519'});
+
       alice = privateKeyWrapper('//Alice');
-      randomAccount = generateKeyringPair();
+      randomAccount = generateKeyringPair(keyringSr25519);
     });
 
     // Acala side
@@ -477,9 +479,12 @@ describe_xcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
+      const keyringEth = new Keyring({type: 'ethereum'});
+      const keyringSr25519 = new Keyring({type: 'sr25519'});
+
       uniqueAlice = privateKeyWrapper('//Alice');
-      randomAccountUnique = generateKeyringPair();
-      randomAccountMoonbeam = generateKeyringPair('ethereum');
+      randomAccountUnique = generateKeyringPair(keyringSr25519);
+      randomAccountMoonbeam = generateKeyringPair(keyringEth);
 
       balanceForeignUnqTokenInit = 0n;
     });
