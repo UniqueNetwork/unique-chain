@@ -150,6 +150,9 @@ export function executeTransaction(api: ApiPromise, sender: IKeyringPair, transa
   });
 }
 
+/**
+ * @deprecated use `executeTransaction` instead
+ */
 export function
 submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
   /* eslint no-async-promise-executor: "off" */
