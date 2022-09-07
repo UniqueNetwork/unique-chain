@@ -70,11 +70,13 @@ jobs:
           node-version: 16
 
       - name: Run tests
+        working-directory: tests
         run: |
-          cd tests
           yarn install
           yarn add mochawesome
+          node scripts/readyness.js
           echo "Ready to start tests"
+          yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
