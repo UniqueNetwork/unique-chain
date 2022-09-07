@@ -280,7 +280,9 @@ pub mod pallet {
 				&staker_id,
 				amount,
 				WithdrawReasons::all(),
-				balance - amount,
+				balance
+					.checked_sub(&amount)
+					.ok_or(ArithmeticError::Underflow)?,
 			)?;
 
 			Self::add_lock_balance(&staker_id, amount)?;
