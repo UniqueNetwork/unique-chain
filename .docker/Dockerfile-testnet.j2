@@ -55,7 +55,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
-COPY --from=builder-unique /unique_parachain/unique-chain/.docker/testnet-config/launch-config.yml /polkadot-launch/launch-config.yml
+COPY --from=builder-unique /unique_parachain/unique-chain/.docker/testnet-config/launch-config.json /polkadot-launch/launch-config.json
 COPY --from=builder-unique /unique_parachain/unique-chain/target/release/unique-collator /unique-chain/target/release/
 
 COPY --from=uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
@@ -72,4 +72,4 @@ CMD export NVM_DIR="$HOME/.nvm" && \
     cd /polkadot-launch && \
     yarn start launch-config.json
 
-
+    
