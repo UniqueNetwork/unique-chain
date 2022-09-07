@@ -39,7 +39,7 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{fungible, fungibles, Currency, EnsureOrigin},
-	transactional, RuntimeDebug,
+	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
 use up_data_structs::{CollectionMode};
@@ -281,7 +281,6 @@ pub mod module {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
-		#[transactional]
 		pub fn register_foreign_asset(
 			origin: OriginFor<T>,
 			owner: T::AccountId,
@@ -324,7 +323,6 @@ pub mod module {
 		}
 
 		#[pallet::weight(<T as Config>::WeightInfo::update_foreign_asset())]
-		#[transactional]
 		pub fn update_foreign_asset(
 			origin: OriginFor<T>,
 			foreign_asset_id: ForeignAssetId,
