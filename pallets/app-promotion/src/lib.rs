@@ -110,10 +110,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type PendingInterval: Get<Self::BlockNumber>;
 
-		// /// In chain blocks.
-		// #[pallet::constant]
-		// type Day: Get<Self::BlockNumber>; // useless
-
 		#[pallet::constant]
 		type Nominal: Get<BalanceOf<Self>>;
 
@@ -160,7 +156,7 @@ pub mod pallet {
 		NotSufficientFunds,
 		PendingForBlockOverflow,
 		/// An error related to the fact that an invalid argument was passed to perform an action
-		InvalidArgument,
+		SponsorNotSet,
 	}
 
 	#[pallet::storage]
@@ -184,16 +180,6 @@ pub mod pallet {
 	pub type StakesPerAccount<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, u8, ValueQuery>;
 
-	/// Amount of tokens pending unstake per user per block.
-	// #[pallet::storage]
-	// pub type PendingUnstake<T: Config> = StorageNMap<
-	// 	Key = (
-	// 		Key<Blake2_128Concat, T::AccountId>,
-	// 		Key<Twox64Concat, T::BlockNumber>,
-	// 	),
-	// 	Value = BalanceOf<T>,
-	// 	QueryKind = ValueQuery,
-	// >;
 	#[pallet::storage]
 	pub type PendingUnstake<T: Config> = StorageMap<
 		_,
@@ -202,16 +188,6 @@ pub mod pallet {
 		BoundedVec<(T::AccountId, BalanceOf<T>), ConstU32<PENDING_LIMIT_PER_BLOCK>>,
 		ValueQuery,
 	>;
-
-	// /// A block when app-promotion has started .I think this is redundant, because we only need `NextInterestBlock`.
-	// #[pallet::storage]
-	// pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
-
-	// /// Next target block when interest is recalculated
-	// #[pallet::storage]
-	// #[pallet::getter(fn get_interest_block)]
-	// pub type NextInterestBlock<T: Config> =
-	// 	StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
 
 	/// Stores hash a record for which the last revenue recalculation was performed.
 	/// If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
@@ -228,7 +204,6 @@ pub mod pallet {
 		{
 			let block_pending = PendingUnstake::<T>::take(current_block_number);
 			let counter = block_pending.len() as u32;
-			// add_weight(0, 1, 0);
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
@@ -393,7 +368,7 @@ pub mod pallet {
 			);
 
 			ensure!(
-				T::CollectionHandler::sponsor(collection_id)?.ok_or(<Error<T>>::InvalidArgument)?
+				T::CollectionHandler::sponsor(collection_id)?.ok_or(<Error<T>>::SponsorNotSet)?
 					== Self::account_id(),
 				<Error<T>>::NoPermission
 			);
@@ -425,7 +400,7 @@ pub mod pallet {
 			);
 
 			ensure!(
-				T::ContractHandler::sponsor(contract_id)?.ok_or(<Error<T>>::InvalidArgument)?
+				T::ContractHandler::sponsor(contract_id)?.ok_or(<Error<T>>::SponsorNotSet)?
 					== T::CrossAccountId::from_sub(Self::account_id()),
 				<Error<T>>::NoPermission
 			);
@@ -712,14 +687,13 @@ impl<T: Config> Pallet<T> {
 		staker.map_or(Some(<TotalStaked<T>>::get()), |s| {
 			Self::total_staked_by_id(s.as_sub())
 		})
-		// Self::total_staked_by_id(staker.as_sub())
 	}
 
-	pub fn cross_id_locked_balance(staker: T::CrossAccountId) -> BalanceOf<T> {
-		Self::get_locked_balance(staker.as_sub())
-			.map(|l| l.amount)
-			.unwrap_or_default()
-	}
+	// pub fn cross_id_locked_balance(staker: T::CrossAccountId) -> BalanceOf<T> {
+	// 	Self::get_locked_balance(staker.as_sub())
+	// 		.map(|l| l.amount)
+	// 		.unwrap_or_default()
+	// }
 
 	pub fn cross_id_total_staked_per_block(
 		staker: T::CrossAccountId,

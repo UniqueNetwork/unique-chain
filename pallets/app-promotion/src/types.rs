@@ -5,9 +5,9 @@ use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBal
 use pallet_common::CollectionHandle;
 
 use sp_runtime::DispatchError;
-use up_data_structs::{CollectionId, SponsorshipState};
+use up_data_structs::{CollectionId};
 use sp_std::borrow::ToOwned;
-use pallet_evm_contract_helpers::{Pallet as EvmHelpersPallet, Config as EvmHelpersConfig, Sponsoring};
+use pallet_evm_contract_helpers::{Pallet as EvmHelpersPallet, Config as EvmHelpersConfig};
 
 pub trait ExtendedLockableCurrency<AccountId: Parameter>: LockableCurrency<AccountId> {
 	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>

@@ -81,7 +81,7 @@ pub mod pallet {
 	/// * **Key** - contract address.
 	/// * **Value** - sponsorship state.
 	#[pallet::storage]
-	pub type Sponsoring<T: Config> = StorageMap<
+	pub(super) type Sponsoring<T: Config> = StorageMap<
 		Hasher = Twox64Concat,
 		Key = H160,
 		Value = SponsorshipState<T::CrossAccountId>,
