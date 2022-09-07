@@ -4,37 +4,13 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
-import {DevUniqueHelper} from './unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 
-class SilentLogger {
-  log(msg: any, level: any): void { }
-  level = {
-    ERROR: 'ERROR' as const,
-    WARNING: 'WARNING' as const,
-    INFO: 'INFO' as const,
-  };
-}
 
 export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
-  // TODO: Remove, this is temporary: Filter unneeded API output
-  // (Jaco promised it will be removed in the next version)
-  const consoleErr = console.error;
-  const consoleLog = console.log;
-  const consoleWarn = console.warn;
+  const silentConsole = new SilentConsole();
+  silentConsole.enable();
 
-  const outFn = (printer: any) => (...args: any[]) => {
-    for (const arg of args) {
-      if (typeof arg !== 'string')
-        continue;
-      if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis:') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
-        return;
-    }
-    printer(...args);
-  };
-
-  console.error = outFn(consoleErr.bind(console));
-  console.log = outFn(consoleLog.bind(console));
-  console.warn = outFn(consoleWarn.bind(console));
   const helper = new DevUniqueHelper(new SilentLogger());
 
   try {
@@ -45,8 +21,6 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
   }
   finally {
     await helper.disconnect();
-    console.error = consoleErr;
-    console.log = consoleLog;
-    console.warn = consoleWarn;
+    silentConsole.disable();
   }
 };
