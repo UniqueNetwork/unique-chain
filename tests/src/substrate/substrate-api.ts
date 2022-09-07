@@ -126,6 +126,9 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
   if (status.isBroadcast) {
     return TransactionStatus.NotReady;
   }
+  if (status.isRetracted) {
+    return TransactionStatus.NotReady;
+  }
   if (status.isInBlock || status.isFinalized) {
     if(events.filter(e => e.event.data.method === 'ExtrinsicFailed').length > 0) {
       return TransactionStatus.Fail;
