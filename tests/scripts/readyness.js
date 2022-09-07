@@ -1,21 +1,23 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 
 const connect = async () => {
-  const wsEndpoint = 'ws://127.0.0.1:9944'
+  const wsEndpoint = 'ws://127.0.0.1:9944';
   const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
   await api.isReadyOrError;
 
-  const head = (await api.rpc.chain.getHeader()).number.toNumber();
-  await api.disconnect();
-  if(head < 1) throw Error('No block #1');
-
-}
+  try {
+    const head = (await api.rpc.chain.getHeader()).number.toNumber();
+    if(head < 1) throw Error('No block #1');
+  } finally {
+    await api.disconnect();
+  }
+};
 
 const sleep = time => {
-    return new Promise(resolve => {
-        setTimeout(() => resolve(), time);
-    });
-}
+  return new Promise(resolve => {
+    setTimeout(() => resolve(), time);
+  });
+};
 
 const main = async () => {
   while(true) {
