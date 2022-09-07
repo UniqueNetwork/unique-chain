@@ -17,7 +17,6 @@ export class SilentLogger {
   };
 }
 
-
 export class SilentConsole {
   // TODO: Remove, this is temporary: Filter unneeded API output
   // (Jaco promised it will be removed in the next version)
@@ -60,10 +59,12 @@ export class DevUniqueHelper extends UniqueHelper {
    * Arrange methods for tests
    */
   arrange: ArrangeGroup;
+  wait: WaitGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
     super(logger);
     this.arrange = new ArrangeGroup(this);
+    this.wait = new WaitGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -152,7 +153,7 @@ class ArrangeGroup {
     for (let index = 0; index < 5; index++) {
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
-      await this.waitNewBlocks(1);
+      
     }
 
     if (!accountsCreated) throw Error('Accounts generation failed');
@@ -162,11 +163,10 @@ class ArrangeGroup {
   };
 
   // TODO combine this method and createAccounts into one
-  createCrowd = async (accountsToCreate: number, withBalance: bigint, donor: IKeyringPair): Promise<IKeyringPair[]> => {
-    let transactions: any = [];
-    const accounts: IKeyringPair[] = [];
-
+  createCrowd = async (accountsToCreate: number, withBalance: bigint, donor: IKeyringPair): Promise<IKeyringPair[]> => {  
     const createAsManyAsCan = async () => {
+      let transactions: any = [];
+      const accounts: IKeyringPair[] = [];
       let nonce = await this.helper.chain.getNonce(donor.address);
       const tokenNominal = this.helper.balance.getOneTokenNominal();
       for (let i = 0; i < accountsToCreate; i++) {
@@ -226,13 +226,21 @@ class ArrangeGroup {
     const block2date = await findCreationDate(block2);
     if(block2date! - block1date! < 9000) return true;
   };
+}
+
+class WaitGroup {
+  helper: UniqueHelper;
+
+  constructor(helper: UniqueHelper) {
+    this.helper = helper;
+  }
 
   /**
    * Wait for specified bnumber of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
-  async waitNewBlocks(blocksCount = 1): Promise<void> {
+  async newBlocks(blocksCount = 1): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
@@ -245,5 +253,27 @@ class ArrangeGroup {
       });
     });
     return promise;
+  }
+
+  async forParachainBlockNumber(blockNumber: bigint) {
+    return new Promise<void>(async (resolve) => {
+      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(async (data: any) => {
+        if (data.number.toNumber() >= blockNumber) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+  
+  async forRelayBlockNumber(blockNumber: bigint) {
+    return new Promise<void>(async (resolve) => {
+      const unsubscribe = await this.helper.api!.query.parachainSystem.validationData(async (data: any) => {
+        if (data.value.relayParentNumber.toNumber() >= blockNumber) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
   }
 }

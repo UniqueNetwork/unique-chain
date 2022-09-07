@@ -1980,25 +1980,21 @@ class StakingGroup extends HelperGroup {
    * @param signer keyring of signer
    * @param amountToUnstake amount of tokens to unstake
    * @param label extra label for log
-   * @returns 
+   * @returns block number where balances will be unlocked
    */
-  async unstake(signer: TSigner, label?: string): Promise<boolean> {
+  async unstake(signer: TSigner, label?: string): Promise<number> {
     if(typeof label === 'undefined') label = `${signer.address}`;
     const unstakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.unstake', 
       [], true,
     );
-    // TODO extract info from unstakeResult
-    return true;
+    // TODO extract block number fron events
+    return 1;
   }
 
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
     if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
     return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
-  }
-
-  async getTotalStakingLocked(address: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.totalStakingLocked', [address])).toBigInt();
   }
 
   async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
