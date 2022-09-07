@@ -21,7 +21,7 @@ import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from './../substrate/substrate-api';
-import {bigIntToDecimals, getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
+import {bigIntToDecimals, describe_xcm, getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
 import waitNewBlocks from './../substrate/wait-new-blocks';
 import {normalizeAccountId} from './../util/helpers';
 import getBalance from './../substrate/get-balance';
@@ -50,7 +50,7 @@ const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 // 10,000.00 (ten thousands) USDT
 const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n; 
 
-describe('Integration test: Exchanging USDT with Westmint', () => {
+describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   
@@ -345,19 +345,21 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
         },
       };
 
-      const currencies = [[
-        {
-          ForeignAssetId: 0,
-        },
-        //10_000_000_000_000_000n,
-        TRANSFER_AMOUNT,
-      ], 
-      [
-        {
-          NativeAssetId: 'Parent',
-        },
-        400_000_000_000_000n,
-      ]];
+      const currencies: [any, bigint][] = [
+        [
+          {
+            ForeignAssetId: 0,
+          },
+          //10_000_000_000_000_000n,
+          TRANSFER_AMOUNT,
+        ], 
+        [
+          {
+            NativeAssetId: 'Parent',
+          },
+          400_000_000_000_000n,
+        ],
+      ];
 
       const feeItem = 1;
       const destWeight = 500000000000;
@@ -499,13 +501,14 @@ describe('Integration test: Exchanging USDT with Westmint', () => {
         },
       };
 
-      const currencies = [
+      const currencies: any = [
         [
           {
             NativeAssetId: 'Parent',
           },
           50_000_000_000_000_000n,
-        ]];
+        ],
+      ];
 
       const feeItem = 0;
       const destWeight = 500000000000;

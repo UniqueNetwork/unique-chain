@@ -61,7 +61,7 @@ function relayOptions(): ApiOptions {
   return parachainApiOptions(RELAY_PORT);
 }
 
-describe_xcm('Integration test: Exchanging tokens with Acala', () => {
+describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
   
@@ -246,7 +246,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
 
         const destWeight = 50000000;
   
-        const tx = api.tx.xTokens.transfer(id, TRANSFER_AMOUNT, destination, destWeight);
+        const tx = api.tx.xTokens.transfer(id as any, TRANSFER_AMOUNT, destination, destWeight);
         const events = await submitTransactionAsync(randomAccount, tx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
@@ -290,7 +290,7 @@ describe_xcm('Integration test: Exchanging tokens with Acala', () => {
 });
 
 // These tests are relevant only when the foreign asset pallet is disabled
-describe('Integration test: Unique rejects non-native tokens', () => {
+describe_xcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
@@ -405,7 +405,7 @@ describe('Integration test: Unique rejects non-native tokens', () => {
 
       const destWeight = 50000000;
 
-      const tx = api.tx.xTokens.transfer(id, 100_000_000_000, destination, destWeight);
+      const tx = api.tx.xTokens.transfer(id as any, 100_000_000_000, destination, destWeight);
       const events = await submitTransactionAsync(alice, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
@@ -431,7 +431,7 @@ describe('Integration test: Unique rejects non-native tokens', () => {
   });
 });
 
-describe_xcm('Integration test: Exchanging UNQ with Moonbeam', () => {
+describe_xcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
   // Unique constants
   let uniqueAlice: IKeyringPair;
