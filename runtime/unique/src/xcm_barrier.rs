@@ -19,9 +19,9 @@ use frame_support::{
 	traits::{Get, Everything},
 };
 use sp_std::{vec, vec::Vec};
-use xcm::v1::{BodyId, Junction::*, Junctions::*, MultiLocation};
+use xcm::v1::{Junction::*, Junctions::*, MultiLocation};
 use xcm_builder::{
-	AllowKnownQueryResponses, AllowSubscriptionsFrom, AllowUnpaidExecutionFrom, TakeWeightCredit,
+	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom,
 };
 
@@ -31,10 +31,6 @@ use crate::{
 };
 
 match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
-	};
 	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(_) }
@@ -79,8 +75,6 @@ pub type Barrier = DenyThenTry<
 	(
 		TakeWeightCredit,
 		AllowTopLevelPaidExecutionFrom<Everything>,
-		// Parent and its exec plurality get free execution
-		AllowUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
 		// Expected responses are OK.
 		AllowKnownQueryResponses<PolkadotXcm>,
 		// Subscriptions for version tracking are OK.

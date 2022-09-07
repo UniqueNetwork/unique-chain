@@ -14,25 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-	{match_types, weights::Weight},
-	traits::Everything,
-};
-use xcm::{
-	latest::Xcm,
-	v1::{BodyId, Junction::*, Junctions::*, MultiLocation},
-};
-use xcm_builder::{AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, TakeWeightCredit};
+use frame_support::{weights::Weight, traits::Everything};
+use xcm::{latest::Xcm, v1::MultiLocation};
+use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit};
 use xcm_executor::traits::ShouldExecute;
 
 use crate::runtime_common::config::xcm::{DenyThenTry, DenyTransact};
-
-match_types! {
-	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
-	};
-}
 
 /// Execution barrier that just takes `max_weight` from `weight_credit`.
 ///
@@ -56,8 +43,6 @@ pub type Barrier = DenyThenTry<
 	(
 		TakeWeightCredit,
 		AllowTopLevelPaidExecutionFrom<Everything>,
-		AllowUnpaidExecutionFrom<ParentOrParentsUnitPlurality>,
-		// ^^^ Parent & its unit plurality gets free execution
 		AllowAllDebug,
 	),
 >;
