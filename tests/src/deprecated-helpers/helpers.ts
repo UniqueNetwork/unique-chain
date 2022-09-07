@@ -1260,15 +1260,9 @@ scheduleTransferFundsExpectSuccess(
 ) {
   const transferTx = api.tx.balances.transfer(recipient.address, amount);
 
-<<<<<<< HEAD
-    const balanceBefore = await getFreeBalance(recipient);
-
-    await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId, period, repetitions);
-=======
   const balanceBefore = await getFreeBalance(recipient);
   
   await expect(scheduleAfter(api, transferTx, sender, blocksBeforeExecution, scheduledId, period, repetitions)).to.not.be.rejected;
->>>>>>> test(scheduler): enable and add more coverage, leave sponsorship disabled
 
   expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);
 }

@@ -33,6 +33,7 @@ import {
   enablePublicMintingExpectSuccess,
   addToAllowListExpectSuccess,
   waitNewBlocks,
+  makeScheduledId,
   normalizeAccountId,
   getTokenOwner,
   getGenericResult,
@@ -45,18 +46,11 @@ import {
   requirePallets,
   Pallets,
 } from '../deprecated-helpers/helpers';
-import {IKeyringPair} from '@polkadot/types/types';
+import {IKeyringPair, SignatureOptions} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
+import {objectSpread} from '@polkadot/util';
 
 chai.use(chaiAsPromised);
-
-const scheduledIdBase: string = '0x' + '0'.repeat(31);
-let scheduledIdSlider = 0;
-
-// Loop scheduledId around 10. Unless there are concurrent tasks with long periods/repetitions, tests' tasks' ids shouldn't ovelap.
-function makeScheduledId(): string {
-  return scheduledIdBase + ((scheduledIdSlider++) % 10);
-}
 
 // Check that there are no failing Dispatched events in the block
 function checkForFailedSchedulerEvents(api: ApiPromise, events: any[]) {
@@ -78,6 +72,13 @@ function checkForFailedSchedulerEvents(api: ApiPromise, events: any[]) {
   });
 }
 
+function makeSignOptions(api: ApiPromise): SignatureOptions {
+  return objectSpread(
+    {blockHash: api.genesisHash, genesisHash: api.genesisHash},
+    {runtimeVersion: api.runtimeVersion, signedExtensions: api.registry.signedExtensions},
+  );
+}
+
 describe('Scheduling token and balance transfers', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -96,20 +97,22 @@ describe('Scheduling token and balance transfers', () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+      const scheduledId = await makeScheduledId();
 
-      await scheduleTransferAndWaitExpectSuccess(api, collectionId, tokenId, alice, bob, 1, 4, makeScheduledId());
+      await scheduleTransferAndWaitExpectSuccess(api, collectionId, tokenId, alice, bob, 1, 4, scheduledId);
     });
   });
 
   it('Can transfer funds periodically', async () => {
     await usingApi(async api => {
+      const scheduledId = await makeScheduledId();
       const waitForBlocks = 1;
       const period = 2;
       const repetitions = 2;
 
       const amount = 1n * UNIQUE;
 
-      await scheduleTransferFundsExpectSuccess(api, amount, alice, bob, waitForBlocks, makeScheduledId(), period, repetitions);
+      await scheduleTransferFundsExpectSuccess(api, amount, alice, bob, waitForBlocks, scheduledId, period, repetitions);
       const bobsBalanceBefore = await getFreeBalance(bob);
 
       await waitNewBlocks(waitForBlocks + 1);
@@ -134,7 +137,7 @@ describe('Scheduling token and balance transfers', () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
       const waitForBlocks = 4;
 
       const amount = 1;
@@ -154,7 +157,7 @@ describe('Scheduling token and balance transfers', () => {
       const period = 3;
       const repetitions = 2;
 
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
       const amount = 1n * UNIQUE;
 
       const bobsBalanceBefore = await getFreeBalance(bob);
@@ -184,10 +187,8 @@ describe('Scheduling token and balance transfers', () => {
     await requirePallets(this, [Pallets.TestUtils]);
 
     await usingApi(async api => {
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
       const waitForBlocks = 4;
-      const period = null;
-      const priority = 0;
 
       const initTestVal = 42;
       const changedTestVal = 111;
@@ -197,17 +198,15 @@ describe('Scheduling token and balance transfers', () => {
 
       const changeErrTx = api.tx.testUtils.setTestValueAndRollback(changedTestVal);
 
-      const scheduleTx = api.tx.scheduler.scheduleNamedAfter(
+      await expect(scheduleAfter(
+        api,
+        changeErrTx,
+        alice,
+        waitForBlocks,
         scheduledId,
-        waitForBlocks, 
-        period,
-        priority, 
-        {Value: changeErrTx as any},
-      );
+      )).to.not.be.rejected;
 
-      await submitTransactionAsync(alice, scheduleTx);
-
-      await waitNewBlocks(waitForBlocks);
+      await waitNewBlocks(waitForBlocks + 1);
 
       const testVal = (await api.query.testUtils.testValue()).toNumber();
       expect(testVal, 'The test value should NOT be commited')
@@ -216,18 +215,30 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it('Scheduled tasks should take some fees', async function() {
+  it.only('Scheduled tasks should take some fees', async function() {
     await requirePallets(this, [Pallets.TestUtils]);
 
     await usingApi(async api => {
-      const scheduledId = makeScheduledId();
-      const waitForBlocks = 10;
+      const scheduledId = await makeScheduledId();
+      const waitForBlocks = 8;
       const period = 2;
-      const repetitions = 1;
-
-      const dummyTxFeeAmount = 100_000_000;
+      const repetitions = 2;
 
       const dummyTx = api.tx.testUtils.justTakeFee();
+      const expectedFee = (await dummyTx.paymentInfo(alice)).partialFee.toBigInt();
+      const expFee = (await api.rpc.payment.queryFeeDetails(dummyTx.toHex())).inclusionFee.unwrap().toHuman();
+
+      console.log('>>>>>> expFee = ' + JSON.stringify(expFee));
+
+      // const collectionCreate = api.tx.unique.createCollectionEx({
+      //   name: 0,
+      //   tokenPrefix: 0xfaf,
+      // });
+
+      // const options = makeSignOptions(api);
+      // const signed = collectionCreate.sign(alice, options);
+      // const expFee2 = (await api.rpc.payment.queryFeeDetails(signed.toHex())).inclusionFee.unwrap().toHuman();
+      // console.log('!!!!!!!!!!!! expFee2 = ' + JSON.stringify(expFee2));
 
       await expect(scheduleAfter(
         api,
@@ -239,10 +250,12 @@ describe('Scheduling token and balance transfers', () => {
         repetitions,
       )).to.not.be.rejected;
 
+      await waitNewBlocks(1);
+
       const aliceInitBalance = await getFreeBalance(alice);
       let diff;
 
-      await waitNewBlocks(waitForBlocks + 1);
+      await waitNewBlocks(waitForBlocks);
 
       const aliceBalanceAfterFirst = await getFreeBalance(alice);
       expect(
@@ -251,7 +264,7 @@ describe('Scheduling token and balance transfers', () => {
       ).to.be.true;
 
       diff = aliceInitBalance - aliceBalanceAfterFirst;
-      expect(diff).to.be.equal(dummyTxFeeAmount, 'Scheduled task should take the right amount of fees');
+      expect(diff).to.be.equal(expectedFee, 'Scheduled task should take the right amount of fees');
 
       await waitNewBlocks(period);
 
@@ -262,14 +275,14 @@ describe('Scheduling token and balance transfers', () => {
       ).to.be.true;
 
       diff = aliceBalanceAfterFirst - aliceBalanceAfterSecond;
-      expect(diff).to.be.equal(dummyTxFeeAmount, 'Scheduled task should take the right amount of fees');
+      expect(diff).to.be.equal(expectedFee, 'Scheduled task should take the right amount of fees');
     });
   });
 
   // FIXME What purpose of this test?
   it.skip('Can schedule a scheduled operation of canceling the scheduled operation', async () => {
     await usingApi(async api => {
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
 
       const waitForBlocks = 2;
       const period = 3;
@@ -323,7 +336,7 @@ describe('Negative Test: Scheduling', () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
       const waitForBlocks = 4;
       const amount = 1;
 
@@ -338,7 +351,7 @@ describe('Negative Test: Scheduling', () => {
 
       const bobsBalanceBefore = await getFreeBalance(bob);
 
-      await waitNewBlocks(waitForBlocks);
+      await waitNewBlocks(waitForBlocks + 1);
 
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
       expect(bobsBalanceBefore).to.be.equal(await getFreeBalance(bob));
@@ -347,7 +360,7 @@ describe('Negative Test: Scheduling', () => {
 
   it("Can't cancel an operation which is not scheduled", async () => {
     await usingApi(async api => {
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
       await expect(cancelScheduled(api, alice, scheduledId)).to.be.rejectedWith(/scheduler\.NotFound/);
     });
   });
@@ -356,7 +369,7 @@ describe('Negative Test: Scheduling', () => {
     await usingApi(async api => {
       const collectionId = await createCollectionExpectSuccess();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = makeScheduledId();
+      const scheduledId = await makeScheduledId();
       const waitForBlocks = 8;
 
       const amount = 1;
@@ -364,7 +377,7 @@ describe('Negative Test: Scheduling', () => {
       await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
       await expect(cancelScheduled(api, bob, scheduledId)).to.be.rejectedWith(/BadOrigin/);
 
-      await waitNewBlocks(waitForBlocks);
+      await waitNewBlocks(waitForBlocks + 1);
 
       expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
     });
@@ -389,12 +402,13 @@ describe.skip('Sponsoring scheduling', () => {
     await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
     await usingApi(async api => {
+      const scheduledId = await makeScheduledId();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
       const bobBalanceBefore = await getFreeBalance(bob);
       const waitForBlocks = 4;
       // no need to wait to check, fees must be deducted on scheduling, immediately
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 0, waitForBlocks, makeScheduledId());
+      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 0, waitForBlocks, scheduledId);
       const bobBalanceAfter = await getFreeBalance(bob);
       // expect(aliceBalanceAfter == aliceBalanceBefore).to.be.true;
       expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
@@ -420,10 +434,11 @@ describe.skip('Sponsoring scheduling', () => {
 
       // Mint a fresh NFT
       const tokenId = await createItemExpectSuccess(zeroBalance, collectionId, 'NFT');
+      const scheduledId = await makeScheduledId();
 
       // Schedule transfer of the NFT a few blocks ahead
       const waitForBlocks = 5;
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, zeroBalance, alice, 1, waitForBlocks, makeScheduledId());
+      await scheduleTransferExpectSuccess(api, collectionId, tokenId, zeroBalance, alice, 1, waitForBlocks, scheduledId);
 
       // Get rid of the account's funds before the scheduled transaction takes place
       const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 68n / 100n);
@@ -452,10 +467,11 @@ describe.skip('Sponsoring scheduling', () => {
       await setCollectionSponsorExpectSuccess(collectionId, zeroBalance.address);
       await confirmSponsorshipByKeyExpectSuccess(collectionId, zeroBalance);
 
+      const scheduledId = await makeScheduledId();
       const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
       const waitForBlocks = 5;
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, zeroBalance, 1, waitForBlocks, makeScheduledId());
+      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, zeroBalance, 1, waitForBlocks, scheduledId);
 
       const emptyBalanceSponsorTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0);
       const sudoTx = api.tx.sudo.sudo(emptyBalanceSponsorTx as any);
@@ -484,13 +500,14 @@ describe.skip('Sponsoring scheduling', () => {
 
       const createData = {nft: {const_data: [], variable_data: []}};
       const creationTx = api.tx.unique.createItem(collectionId, normalizeAccountId(zeroBalance), createData as any);
+      const scheduledId = await makeScheduledId();
 
       /*const badTransaction = async function () {
         await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
       };
       await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');*/
 
-      await expect(scheduleAfter(api, creationTx, zeroBalance, 3, makeScheduledId(), 1, 3)).to.be.rejectedWith(/Inability to pay some fees/);
+      await expect(scheduleAfter(api, creationTx, zeroBalance, 3, scheduledId, 1, 3)).to.be.rejectedWith(/Inability to pay some fees/);
 
       expect(await getFreeBalance(bob)).to.be.equal(bobBalanceBefore);
     });
