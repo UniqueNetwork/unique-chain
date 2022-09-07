@@ -270,6 +270,7 @@ class WaitGroup {
     return new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.api!.query.parachainSystem.validationData(async (data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
+          // @ts-ignore
           unsubscribe();
           resolve();
         }
