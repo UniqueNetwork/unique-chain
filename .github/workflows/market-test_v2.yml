@@ -43,7 +43,8 @@ jobs:
           repository: 'UniqueNetwork/market-e2e-tests'
           ssh-key: ${{ secrets.GH_PAT }}
           path: 'qa-tests'
-          ref: 'CI-37-core-ci-step-3'
+#          ref: 'CI-37-core-ci-step-3'
+          ref: 'master'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
