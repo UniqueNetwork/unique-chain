@@ -2483,7 +2483,7 @@ export default {
       stop_sponsoring_collection: {
         collectionId: 'u32',
       },
-      sponsor_conract: {
+      sponsor_contract: {
         contractId: 'H160',
       },
       stop_sponsoring_contract: {

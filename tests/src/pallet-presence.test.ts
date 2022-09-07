@@ -68,7 +68,7 @@ describe('Pallet presence', () => {
       const refungible = 'refungible';
       const scheduler = 'scheduler';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
-      const appPromotion = 'promotion';
+      const appPromotion = 'apppromotion';
 
       if (chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(refungible, scheduler, appPromotion, ...rmrkPallets);

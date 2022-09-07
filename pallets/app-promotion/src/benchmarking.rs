@@ -30,7 +30,7 @@ use pallet_evm_migration::Pallet as EvmMigrationPallet;
 
 const SEED: u32 = 0;
 
-fn set_admin<T>() -> DispatchResult
+fn set_admin<T>() -> Result<T::AccountId, sp_runtime::DispatchError>
 where
 	T: Config + pallet_unique::Config + pallet_evm_migration::Config,
 	T::BlockNumber: From<u32> + Into<u32>,
@@ -46,7 +46,9 @@ where
 	PromototionPallet::<T>::set_admin_address(
 		RawOrigin::Root.into(),
 		T::CrossAccountId::from_sub(pallet_admin.clone()),
-	)
+	)?;
+
+	Ok(pallet_admin)
 }
 
 benchmarks! {
@@ -73,12 +75,12 @@ benchmarks! {
 	set_admin_address {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-	} : {PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin))?}
+	} : _(RawOrigin::Root, T::CrossAccountId::from_sub(pallet_admin))
 
 	payout_stakers{
 		let b in 1..101;
 
-		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
+		let pallet_admin = account::<T::AccountId>("admin", 1, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 		<T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
@@ -92,22 +94,18 @@ benchmarks! {
 		(0..10).try_for_each(|_| {
 			stakers.iter()
 				.map(|staker| {
-
 					PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())
 				}).collect::<Result<Vec<_>, _>>()?;
 			<frame_system::Pallet<T>>::finalize();
 			Result::<(), sp_runtime::DispatchError>::Ok(())
 		})?;
-
-		// let _ = <T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		// let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), share * <T as Config>::Currency::total_balance(&staker))?;
-	} : {PromototionPallet::<T>::payout_stakers(RawOrigin::Signed(pallet_admin.clone()).into(), Some(b as u8))?}
+	} : _(RawOrigin::Signed(pallet_admin.clone()), Some(b as u8))
 
 	stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 10);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-	} : {PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?}
+	} : _(RawOrigin::Signed(caller.clone()), share * <T as Config>::Currency::total_balance(&caller))
 
 	unstake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
@@ -118,16 +116,7 @@ benchmarks! {
 			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))
 		}).collect::<Result<Vec<_>, _>>()?;
 
-	} : {PromototionPallet::<T>::unstake(RawOrigin::Signed(caller.clone()).into())?}
-
-	// recalculate_and_insert_stake{
-	// 	let caller = account::<T::AccountId>("caller", 0, SEED);
-	// 	let share = Perbill::from_rational(1u32, 10);
-	// 	let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-	// 	let _ = PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))?;
-	// 	let block = <T::RelayBlockNumberProvider as BlockNumberProvider>::current_block_number();
-	// 	let mut acc = <BalanceOf<T>>::default();
-	// } : {PromototionPallet::<T>::recalculate_and_insert_stake(&caller, block, share * <T as Config>::Currency::total_balance(&caller), &mut acc)}
+	} : _(RawOrigin::Signed(caller.clone()))
 
 	sponsor_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -136,7 +125,7 @@ benchmarks! {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let collection = create_nft_collection::<T>(caller.clone())?;
-	} : {PromototionPallet::<T>::sponsor_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?}
+	} : _(RawOrigin::Signed(pallet_admin.clone()), collection)
 
 	stop_sponsoring_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -146,7 +135,7 @@ benchmarks! {
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let collection = create_nft_collection::<T>(caller.clone())?;
 		PromototionPallet::<T>::sponsor_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?;
-	} : {PromototionPallet::<T>::stop_sponsoring_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?}
+	} : _(RawOrigin::Signed(pallet_admin.clone()), collection)
 
 	sponsor_contract {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -157,7 +146,7 @@ benchmarks! {
 		let data: Vec<u8> = (0..20 as u8).collect();
 		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
 		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
-	} : {PromototionPallet::<T>::sponsor_conract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?}
+	} : _(RawOrigin::Signed(pallet_admin.clone()), address)
 
 	stop_sponsoring_contract {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -168,6 +157,6 @@ benchmarks! {
 		let data: Vec<u8> = (0..20 as u8).collect();
 		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
 		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
-		PromototionPallet::<T>::sponsor_conract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?;
-	} : {PromototionPallet::<T>::stop_sponsoring_contract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?}
+		PromototionPallet::<T>::sponsor_contract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?;
+	} : _(RawOrigin::Signed(pallet_admin.clone()), address)
 }

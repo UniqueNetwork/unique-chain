@@ -234,7 +234,7 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	#[cfg(any(feature = "opal-runtime"))]
+	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(not(feature = "unique-runtime"))]

@@ -460,7 +460,7 @@ describe('app-promotion contract sponsoring', () => {
       const flipper = await deployFlipper(web3, contractOwner);
       const contractMethods = contractHelpers(web3, contractOwner);
 
-      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address));
       
       expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
       expect((await api.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
@@ -488,7 +488,7 @@ describe('app-promotion contract sponsoring', () => {
       });
 
       // set promotion sponsoring
-      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address));
 
       // new sponsor is pallet address
       expect(await contractMethods.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
@@ -508,7 +508,7 @@ describe('app-promotion contract sponsoring', () => {
       const contractMethods = contractHelpers(web3, contractOwner);
 
       // contract sponsored by pallet
-      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address));
 
       // owner sets self sponsoring
       await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
@@ -532,8 +532,8 @@ describe('app-promotion contract sponsoring', () => {
 
       await expect(contractMethods.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
 
-      // nonAdmin calls sponsorConract
-      await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address))).to.be.rejected;
+      // nonAdmin calls sponsorContract
+      await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address))).to.be.rejected;
 
       // contract still self-sponsored 
       expect((await api.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
@@ -560,7 +560,7 @@ describe('app-promotion contract sponsoring', () => {
       await contractHelper.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: contractOwner});
       await transferBalanceToEth(api, alice, flipper.options.address, 1000n);
 
-      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address));
       await flipper.methods.flip().send({from: caller});
       expect(await flipper.methods.getValue().call()).to.be.true;
 
@@ -582,7 +582,7 @@ describe('app-promotion stopSponsoringContract', () => {
       await transferBalanceToEth(api, alice, flipper.options.address);
       const contractHelper = contractHelpers(web3, contractOwner);
       await contractHelper.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: contractOwner});
-      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address));
       await helper.signTransaction(palletAdmin, api.tx.appPromotion.stopSponsoringContract(flipper.options.address));
 
       expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.false;  
@@ -609,7 +609,7 @@ describe('app-promotion stopSponsoringContract', () => {
       const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
       const flipper = await deployFlipper(web3, contractOwner);
 
-      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorConract(flipper.options.address));
+      await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorContract(flipper.options.address));
       await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.stopSponsoringContract(flipper.options.address))).to.be.rejected;
     });
   });

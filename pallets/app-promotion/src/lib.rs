@@ -226,12 +226,6 @@ pub mod pallet {
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
-			// let mut consumed_weight = 0;
-			// let mut add_weight = |reads, writes, weight| {
-			// 	consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-			// 	consumed_weight += weight;
-			// };
-
 			let block_pending = PendingUnstake::<T>::take(current_block_number);
 			let counter = block_pending.len() as u32;
 			// add_weight(0, 1, 0);
@@ -243,7 +237,6 @@ pub mod pallet {
 			}
 
 			T::WeightInfo::on_initialize(counter)
-			// consumed_weight
 		}
 	}
 
@@ -286,7 +279,7 @@ pub mod pallet {
 			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
 				&staker_id,
 				amount,
-				WithdrawReasons::RESERVE,
+				WithdrawReasons::all(),
 				balance - amount,
 			)?;
 
@@ -398,8 +391,7 @@ pub mod pallet {
 			);
 
 			ensure!(
-				T::CollectionHandler::get_sponsor(collection_id)?
-					.ok_or(<Error<T>>::InvalidArgument)?
+				T::CollectionHandler::sponsor(collection_id)?.ok_or(<Error<T>>::InvalidArgument)?
 					== Self::account_id(),
 				<Error<T>>::NoPermission
 			);
@@ -407,7 +399,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(T::WeightInfo::sponsor_contract())]
-		pub fn sponsor_conract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
+		pub fn sponsor_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 
 			ensure!(
@@ -431,7 +423,7 @@ pub mod pallet {
 			);
 
 			ensure!(
-				T::ContractHandler::get_sponsor(contract_id)?.ok_or(<Error<T>>::InvalidArgument)?
+				T::ContractHandler::sponsor(contract_id)?.ok_or(<Error<T>>::InvalidArgument)?
 					== T::CrossAccountId::from_sub(Self::account_id()),
 				<Error<T>>::NoPermission
 			);
@@ -673,7 +665,7 @@ impl<T: Config> Pallet<T> {
 				LOCK_IDENTIFIER,
 				staker,
 				amount,
-				WithdrawReasons::RESERVE,
+				WithdrawReasons::all(),
 			)
 		}
 	}

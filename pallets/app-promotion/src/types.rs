@@ -37,9 +37,8 @@ pub trait CollectionHandler {
 
 	fn remove_collection_sponsor(collection_id: Self::CollectionId) -> DispatchResult;
 
-	fn get_sponsor(
-		collection_id: Self::CollectionId,
-	) -> Result<Option<Self::AccountId>, DispatchError>;
+	fn sponsor(collection_id: Self::CollectionId)
+		-> Result<Option<Self::AccountId>, DispatchError>;
 }
 
 impl<T: pallet_unique::Config> CollectionHandler for pallet_unique::Pallet<T> {
@@ -58,12 +57,12 @@ impl<T: pallet_unique::Config> CollectionHandler for pallet_unique::Pallet<T> {
 		Self::force_remove_collection_sponsor(collection_id)
 	}
 
-	fn get_sponsor(
+	fn sponsor(
 		collection_id: Self::CollectionId,
 	) -> Result<Option<Self::AccountId>, DispatchError> {
 		Ok(<CollectionHandle<T>>::try_get(collection_id)?
 			.sponsorship
-			.pending_sponsor()
+			.sponsor()
 			.map(|acc| acc.to_owned()))
 	}
 }
@@ -79,7 +78,7 @@ pub trait ContractHandler {
 
 	fn remove_contract_sponsor(contract_address: Self::ContractId) -> DispatchResult;
 
-	fn get_sponsor(
+	fn sponsor(
 		contract_address: Self::ContractId,
 	) -> Result<Option<Self::AccountId>, DispatchError>;
 }
@@ -100,7 +99,7 @@ impl<T: EvmHelpersConfig> ContractHandler for EvmHelpersPallet<T> {
 		Self::force_remove_sponsor(contract_address)
 	}
 
-	fn get_sponsor(
+	fn sponsor(
 		contract_address: Self::ContractId,
 	) -> Result<Option<Self::AccountId>, DispatchError> {
 		Ok(Self::get_sponsor(contract_address))
