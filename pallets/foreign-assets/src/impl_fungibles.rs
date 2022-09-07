@@ -461,14 +461,10 @@ where
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return Err(DispatchError::Other(
-							"Bad amount to this parachain value conversion",
-						))
-					}
-				};
+				let this_amount: <T as pallet_balances::Config>::Balance =
+					value.try_into().map_err(|_| {
+						DispatchError::Other("Bad amount to this parachain value conversion")
+					})?;
 
 				match <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::burn_from(
 					who,
