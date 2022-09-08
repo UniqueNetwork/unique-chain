@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 export const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -1858,6 +1858,13 @@ class ChainGroup extends HelperGroup {
     return blockHash;
   }
 
+  // TODO add docs
+  async getBlock(blockHashOrNumber: string | number): Promise<IBlock | null> {
+    const blockHash = typeof blockHashOrNumber === 'string' ? blockHashOrNumber : await this.getBlockHashByNumber(blockHashOrNumber);
+    if (!blockHash) return null;
+    return (await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash])).toHuman().block;
+  }
+
   /**
    * Get account nonce
    * @param address substrate address
@@ -1889,6 +1896,16 @@ class BalanceGroup extends HelperGroup {
    */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
     return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
+  }
+
+  /**
+   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
+   * @param address substrate address
+   * @returns 
+   */
+  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
+    return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
   }
 
   /**
@@ -1977,6 +1994,58 @@ class AddressGroup extends HelperGroup {
   }
 }
 
+class StakingGroup extends HelperGroup {
+  /**
+   * Stake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToStake amount of tokens to stake
+   * @param label extra label for log
+   * @returns
+   */
+  async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
+    const stakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.stake',
+      [amountToStake], true,
+    );
+    // TODO extract info from stakeResult
+    return true;
+  }
+
+  /**
+   * Unstake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToUnstake amount of tokens to unstake
+   * @param label extra label for log
+   * @returns block number where balances will be unlocked
+   */
+  async unstake(signer: TSigner, label?: string): Promise<number> {
+    if(typeof label === 'undefined') label = `${signer.address}`;
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.unstake', 
+      [], true,
+    );
+    // TODO extract block number fron events
+    return 1;
+  }
+
+  async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
+    if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
+    return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
+  }
+
+  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
+    return (await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  }
+
+  async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
+  }
+  
+  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<bigint[][]> {
+    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  }
+}
 
 export class UniqueHelper extends ChainHelperBase {
   chain: ChainGroup;
@@ -1986,6 +2055,7 @@ export class UniqueHelper extends ChainHelperBase {
   nft: NFTGroup;
   rft: RFTGroup;
   ft: FTGroup;
+  staking: StakingGroup;
 
   constructor(logger?: ILogger) {
     super(logger);
@@ -1996,6 +2066,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.nft = new NFTGroup(this);
     this.rft = new RFTGroup(this);
     this.ft = new FTGroup(this);
+    this.staking = new StakingGroup(this);
   }  
 }
 

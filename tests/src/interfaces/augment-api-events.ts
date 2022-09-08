@@ -15,6 +15,44 @@ export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>
 
 declare module '@polkadot/api-base/types/events' {
   interface AugmentedEvents<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * The admin was set
+       * 
+       * # Arguments
+       * * AccountId: ID of the admin
+       **/
+      SetAdmin: AugmentedEvent<ApiType, [AccountId32]>;
+      /**
+       * Staking was performed
+       * 
+       * # Arguments
+       * * AccountId: ID of the staker
+       * * Balance : staking amount
+       **/
+      Stake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Staking recalculation was performed
+       * 
+       * # Arguments
+       * * AccountId: ID of the staker.
+       * * Balance : recalculation base
+       * * Balance : total income
+       **/
+      StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Unstaking was performed
+       * 
+       * # Arguments
+       * * AccountId: ID of the staker
+       * * Balance : unstaking amount
+       **/
+      Unstake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     balances: {
       /**
        * A balance was set by root.
@@ -203,6 +241,24 @@ declare module '@polkadot/api-base/types/events' {
        * Ethereum events from contracts.
        **/
       Log: AugmentedEvent<ApiType, [EthereumLog]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    evmContractHelpers: {
+      /**
+       * Collection sponsor was removed.
+       **/
+      ContractSponsorRemoved: AugmentedEvent<ApiType, [H160]>;
+      /**
+       * Contract sponsor was set.
+       **/
+      ContractSponsorSet: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * New sponsor was confirm.
+       **/
+      ContractSponsorshipConfirmed: AugmentedEvent<ApiType, [H160, AccountId32]>;
       /**
        * Generic event
        **/

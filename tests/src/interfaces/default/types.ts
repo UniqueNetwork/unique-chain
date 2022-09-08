@@ -806,6 +806,64 @@ export interface OrmlVestingVestingSchedule extends Struct {
   readonly perPeriod: Compact<u128>;
 }
 
+/** @name PalletAppPromotionCall */
+export interface PalletAppPromotionCall extends Enum {
+  readonly isSetAdminAddress: boolean;
+  readonly asSetAdminAddress: {
+    readonly admin: PalletEvmAccountBasicCrossAccountIdRepr;
+  } & Struct;
+  readonly isStake: boolean;
+  readonly asStake: {
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnstake: boolean;
+  readonly isSponsorCollection: boolean;
+  readonly asSponsorCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isStopSponsoringCollection: boolean;
+  readonly asStopSponsoringCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isSponsorContract: boolean;
+  readonly asSponsorContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isStopSponsoringContract: boolean;
+  readonly asStopSponsoringContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isPayoutStakers: boolean;
+  readonly asPayoutStakers: {
+    readonly stakersNumber: Option<u8>;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorContract' | 'StopSponsoringContract' | 'PayoutStakers';
+}
+
+/** @name PalletAppPromotionError */
+export interface PalletAppPromotionError extends Enum {
+  readonly isAdminNotSet: boolean;
+  readonly isNoPermission: boolean;
+  readonly isNotSufficientFunds: boolean;
+  readonly isPendingForBlockOverflow: boolean;
+  readonly isSponsorNotSet: boolean;
+  readonly isIncorrectLockedBalanceOperation: boolean;
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation';
+}
+
+/** @name PalletAppPromotionEvent */
+export interface PalletAppPromotionEvent extends Enum {
+  readonly isStakingRecalculation: boolean;
+  readonly asStakingRecalculation: ITuple<[AccountId32, u128, u128]>;
+  readonly isStake: boolean;
+  readonly asStake: ITuple<[AccountId32, u128]>;
+  readonly isUnstake: boolean;
+  readonly asUnstake: ITuple<[AccountId32, u128]>;
+  readonly isSetAdmin: boolean;
+  readonly asSetAdmin: AccountId32;
+  readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
+}
+
 /** @name PalletBalancesAccountData */
 export interface PalletBalancesAccountData extends Struct {
   readonly free: u128;
@@ -1127,7 +1185,19 @@ export interface PalletEvmCoderSubstrateError extends Enum {
 /** @name PalletEvmContractHelpersError */
 export interface PalletEvmContractHelpersError extends Enum {
   readonly isNoPermission: boolean;
-  readonly type: 'NoPermission';
+  readonly isNoPendingSponsor: boolean;
+  readonly type: 'NoPermission' | 'NoPendingSponsor';
+}
+
+/** @name PalletEvmContractHelpersEvent */
+export interface PalletEvmContractHelpersEvent extends Enum {
+  readonly isContractSponsorSet: boolean;
+  readonly asContractSponsorSet: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorshipConfirmed: boolean;
+  readonly asContractSponsorshipConfirmed: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorRemoved: boolean;
+  readonly asContractSponsorRemoved: H160;
+  readonly type: 'ContractSponsorSet' | 'ContractSponsorshipConfirmed' | 'ContractSponsorRemoved';
 }
 
 /** @name PalletEvmContractHelpersSponsoringModeT */
@@ -2419,7 +2489,7 @@ export interface UpDataStructsCollection extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
   readonly externalCollection: bool;
@@ -2580,8 +2650,7 @@ export interface UpDataStructsPropertyPermission extends Struct {
 export interface UpDataStructsPropertyScope extends Enum {
   readonly isNone: boolean;
   readonly isRmrk: boolean;
-  readonly isEth: boolean;
-  readonly type: 'None' | 'Rmrk' | 'Eth';
+  readonly type: 'None' | 'Rmrk';
 }
 
 /** @name UpDataStructsRpcCollection */
@@ -2591,7 +2660,7 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
@@ -2607,13 +2676,23 @@ export interface UpDataStructsSponsoringRateLimit extends Enum {
   readonly type: 'SponsoringDisabled' | 'Blocks';
 }
 
-/** @name UpDataStructsSponsorshipState */
-export interface UpDataStructsSponsorshipState extends Enum {
+/** @name UpDataStructsSponsorshipStateAccountId32 */
+export interface UpDataStructsSponsorshipStateAccountId32 extends Enum {
   readonly isDisabled: boolean;
   readonly isUnconfirmed: boolean;
   readonly asUnconfirmed: AccountId32;
   readonly isConfirmed: boolean;
   readonly asConfirmed: AccountId32;
+  readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
+}
+
+/** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr */
+export interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
+  readonly isDisabled: boolean;
+  readonly isUnconfirmed: boolean;
+  readonly asUnconfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
+  readonly isConfirmed: boolean;
+  readonly asConfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
   readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
 }
 
