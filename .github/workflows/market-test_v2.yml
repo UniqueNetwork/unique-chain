@@ -44,7 +44,7 @@ jobs:
           ssh-key: ${{ secrets.GH_PAT }}
           path: 'qa-tests'
 #          ref: 'CI-37-core-ci-step-3'
-          ref: 'QA-65_maxandreev'
+          ref: 'ci_test_v2'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
