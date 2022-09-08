@@ -1,0 +1,35 @@
+name: master
+
+on:
+  pull_request:
+    branches: [ 'master' ]
+    types: [ opened, reopened, synchronize, ready_for_review ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  unit-test:
+    uses: ./.github/workflows/unit-test_v2.yml
+
+  node-only-update:
+    uses: ./.github/workflows/node-only-update_v2.yml
+
+  forkless:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'forkless') }}
+    uses: ./.github/workflows/forkless.yml
+
+  canary:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'canary') }}
+    uses: ./.github/workflows/canary.yml
+    secrets: inherit # pass all secrets
+
+  xcm:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'xcm') }}
+    uses: ./.github/workflows/xcm.yml
+    secrets: inherit # pass all secrets
+
+  codestyle:
+    uses: ./.github/workflows/codestyle_v2.yml
