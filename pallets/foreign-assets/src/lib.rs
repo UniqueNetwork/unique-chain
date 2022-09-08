@@ -481,13 +481,13 @@ impl<
 		Ok(payment)
 	}
 }
-impl<
+impl<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced> Drop
+	for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+where
 	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
 	AssetId: Get<MultiLocation>,
-	AccountId,
 	Currency: CurrencyT<AccountId>,
 	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-> Drop for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn drop(&mut self) {
 		OnUnbalanced::on_unbalanced(Currency::issue(self.1));

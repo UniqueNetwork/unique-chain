@@ -519,12 +519,7 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		Self::create_multiple_items_common(
-			collection,
-			sender,
-			data,
-			nesting_budget,
-		)
+		Self::create_multiple_items_common(collection, sender, data, nesting_budget)
 	}
 
 	/// Minting tokens for multiple IDs.
@@ -535,12 +530,7 @@ impl<T: Config> Pallet<T> {
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::create_multiple_items_common(
-			collection,
-			sender,
-			data,
-			nesting_budget,
-		)
+		Self::create_multiple_items_common(collection, sender, data, nesting_budget)
 	}
 
 	fn set_allowance_unchecked(
