@@ -149,21 +149,21 @@ pub mod pallet {
 			/// Amount of accrued interest
 			BalanceOf<T>,
 		),
-		
+
 		/// Staking was performed
 		///
 		/// # Arguments
 		/// * AccountId: ID of the staker
 		/// * Balance : staking amount
 		Stake(T::AccountId, BalanceOf<T>),
-		
+
 		/// Unstaking was performed
 		///
 		/// # Arguments
 		/// * AccountId: ID of the staker
 		/// * Balance : unstaking amount
 		Unstake(T::AccountId, BalanceOf<T>),
-		
+
 		/// The admin was set
 		///
 		/// # Arguments
