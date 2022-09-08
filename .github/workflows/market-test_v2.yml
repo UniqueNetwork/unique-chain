@@ -123,7 +123,7 @@ jobs:
           node scripts/readyness.js
           echo "Ready to start tests"
 
-      - name: WShow content of .env file and Generate accounts
+      - name: Show content of .env file and Generate accounts
         working-directory: qa-tests
         run: |
           cat .env
@@ -158,9 +158,9 @@ jobs:
         working-directory: qa-tests
         run: ts-node ./src/scripts/create-test-collections.ts
 
-#      - name: Show content of qa-test .env
-#        working-directory: qa-tests
-#        run: cat .env
+      - name: Show content of qa-test .env
+        working-directory: qa-tests
+        run: cat .env
 
 #      - name: Copy qa-tests/.env.example to qa-tests/.env.docker
 #        working-directory: qa-tests
@@ -169,10 +169,11 @@ jobs:
 #          cp .env .env.docker
 #          sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' .env.docker
 
-#      - name: Read qa -test .env file Before market start
-#        uses: xom9ikk/dotenv@v1.0.2
-#        with:
-#          path: qa-tests/
+      - name: Read qa -test .env file Before market start
+        uses: xom9ikk/dotenv@v1.0.2
+        with:
+          path: qa-tests/
+
 
       - name: local-market:start
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
