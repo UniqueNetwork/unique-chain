@@ -20,6 +20,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - network: "opal"
+            features: "opal-runtime"
           - network: "quartz"
             features: "quartz-runtime"
           - network: "unique"
