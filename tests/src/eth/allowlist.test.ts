@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {isAllowlisted} from '../util/helpers';
+import {isAllowlisted, normalizeAccountId} from '../util/helpers';
 import {
   contractHelpers,
   createEthAccount,
@@ -26,6 +27,7 @@ import {
   getCollectionAddressFromResult,
   itWeb3,
 } from './util/helpers';
+import {itEth, usingEthPlaygrounds} from './util/playgrounds';
 
 describe('EVM contract allowlist', () => {
   itWeb3('Contract allowlist can be toggled', async ({api, web3, privateKeyWrapper}) => {
@@ -70,14 +72,20 @@ describe('EVM contract allowlist', () => {
 });
 
 describe('EVM collection allowlist', () => {
-  itWeb3('Collection allowlist can be added and removed by [eth] address', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const user = createEthAccount(web3);
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+  
+  itEth('Collection allowlist can be added and removed by [eth] address', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const user = helper.eth.createAccount();
     
-    const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
@@ -87,32 +95,28 @@ describe('EVM collection allowlist', () => {
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
   });
 
-  itWeb3('Collection allowlist can be added and removed by [sub] address', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const user = privateKeyWrapper('//Alice');
+  itEth('Collection allowlist can be added and removed by [sub] address', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const user = donor;
     
-    const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
-    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
-    expect(await isAllowlisted(api, collectionId, user)).to.be.true;
-
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
+    
     await collectionEvm.methods.removeFromCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
-    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
   });
 
-  itWeb3('Collection allowlist can not be add and remove [eth] address by not owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const notOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const user = createEthAccount(web3);
+  itEth('Collection allowlist can not be add and remove [eth] address by not owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
+    const user = helper.eth.createAccount();
     
-    const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
@@ -124,23 +128,21 @@ describe('EVM collection allowlist', () => {
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
   });
 
-  itWeb3('Collection allowlist can not be add and remove [sub] address by not owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const notOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const user = privateKeyWrapper('//Alice');
+  itEth('Collection allowlist can not be add and remove [sub] address by not owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
+    const user = donor;
     
-    const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
-    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
     await expect(collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
     
-    expect(await isAllowlisted(api, collectionId, user)).to.be.true;
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
     await expect(collectionEvm.methods.removeFromCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await isAllowlisted(api, collectionId, user)).to.be.true;
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
   });
 });
