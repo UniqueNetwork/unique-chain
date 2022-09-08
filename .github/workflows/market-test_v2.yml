@@ -127,9 +127,6 @@ jobs:
         working-directory: qa-tests
         run: |
           cat .env
-#          cat .env.example 
-#          cat .env.docker
-#          cat .env.example.ci
           ts-node ./src/scripts/create-market-accounts.ts
 
       - name: Get chain logs
