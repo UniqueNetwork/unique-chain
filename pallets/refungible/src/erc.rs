@@ -785,7 +785,7 @@ impl<T: Config> RefungibleHandle<T> {
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
-		Collection(common_mut, CollectionHandle<T>),
+		Collection(via(common_mut, CollectionHandle<T>)),
 		TokenProperties,
 	)
 )]

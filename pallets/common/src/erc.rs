@@ -374,9 +374,9 @@ where
 			true => {
 				let mut bv = OwnerRestrictedSet::new();
 				for i in collections {
-					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or(Error::Revert(
-						"Can't convert address into collection id".into(),
-					))?)
+					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
+						Error::Revert("Can't convert address into collection id".into())
+					})?)
 					.map_err(|_| "too many collections")?;
 				}
 				let mut nesting = permissions.nesting().clone();

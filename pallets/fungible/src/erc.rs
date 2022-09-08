@@ -199,7 +199,7 @@ impl<T: Config> FungibleHandle<T> {
 		ERC20,
 		ERC20Mintable,
 		ERC20UniqueExtensions,
-		Collection(common_mut, CollectionHandle<T>),
+		Collection(via(common_mut, CollectionHandle<T>)),
 	)
 )]
 impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}

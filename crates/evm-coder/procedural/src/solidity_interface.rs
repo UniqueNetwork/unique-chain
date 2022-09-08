@@ -42,6 +42,7 @@ struct Is {
 	pascal_call_name: Ident,
 	snake_call_name: Ident,
 	via: Option<(Type, Ident)>,
+	condition: Option<Expr>,
 }
 impl Is {
 	fn expand_call_def(&self, gen_ref: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
@@ -64,8 +65,13 @@ impl Is {
 		generics: &proc_macro2::TokenStream,
 	) -> proc_macro2::TokenStream {
 		let pascal_call_name = &self.pascal_call_name;
+		let condition = self.condition.as_ref().map(|condition| {
+			quote! {
+				(#condition) &&
+			}
+		});
 		quote! {
-			<#pascal_call_name #generics>::supports_interface(interface_id)
+			#condition <#pascal_call_name #generics>::supports_interface(this, interface_id)
 		}
 	}
 
@@ -93,8 +99,13 @@ impl Is {
 			.as_ref()
 			.map(|(_, i)| quote! {.#i()})
 			.unwrap_or_default();
+		let condition = self.condition.as_ref().map(|condition| {
+			quote! {
+				if ({let this = &self; (#condition)})
+			}
+		});
 		quote! {
-			#call_name::#name(call) => return <#via_typ as ::evm_coder::Callable<#pascal_call_name #generics>>::call(self #via_map, Msg {
+			#call_name::#name(call) #condition => return <#via_typ as ::evm_coder::Callable<#pascal_call_name #generics>>::call(self #via_map, Msg {
 				call,
 				caller: c.caller,
 				value: c.value,
@@ -138,17 +149,52 @@ impl Parse for IsList {
 			}
 			let name = input.parse::<Ident>()?;
 			let lookahead = input.lookahead1();
-			let via = if lookahead.peek(syn::token::Paren) {
+
+			let mut condition: Option<Expr> = None;
+			let mut via: Option<(Type, Ident)> = None;
+
+			if lookahead.peek(syn::token::Paren) {
 				let contents;
 				parenthesized!(contents in input);
-				let method = contents.parse::<Ident>()?;
-				contents.parse::<Token![,]>()?;
-				let ty = contents.parse::<Type>()?;
-				Some((ty, method))
-			} else if lookahead.peek(Token![,]) {
-				None
-			} else if input.is_empty() {
-				None
+				let input = contents;
+
+				loop {
+					let lookahead = input.lookahead1();
+					if lookahead.peek(Token![if]) {
+						input.parse::<Token![if]>()?;
+						let contents;
+						parenthesized!(contents in input);
+						let contents = contents.parse::<Expr>()?;
+
+						if condition.replace(contents).is_some() {
+							return Err(syn::Error::new(input.span(), "condition is already set"));
+						}
+					} else if lookahead.peek(kw::via) {
+						input.parse::<kw::via>()?;
+						let contents;
+						parenthesized!(contents in input);
+
+						let method = contents.parse::<Ident>()?;
+						contents.parse::<Token![,]>()?;
+						let ty = contents.parse::<Type>()?;
+
+						if via.replace((ty, method)).is_some() {
+							return Err(syn::Error::new(input.span(), "via is already set"));
+						}
+					} else if input.is_empty() {
+						break;
+					} else {
+						return Err(lookahead.error());
+					}
+
+					if input.peek(Token![,]) {
+						input.parse::<Token![,]>()?;
+					} else {
+						break;
+					}
+				}
+			} else if lookahead.peek(Token![,]) || input.is_empty() {
+				// Pass
 			} else {
 				return Err(lookahead.error());
 			};
@@ -157,6 +203,7 @@ impl Parse for IsList {
 				snake_call_name: pascal_ident_to_snake_call(&name),
 				name,
 				via,
+				condition,
 			});
 			if input.peek(Token![,]) {
 				input.parse::<Token![,]>()?;
@@ -996,16 +1043,6 @@ impl SolidityInterface {
 					#(#inline_interface_id)*
 					u32::to_be_bytes(interface_id)
 				}
-				/// Is this contract implements specified ERC165 selector
-				pub fn supports_interface(interface_id: ::evm_coder::types::bytes4) -> bool {
-					interface_id != u32::to_be_bytes(0xffffff) && (
-						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
-						interface_id == Self::interface_id()
-						#(
-							|| #supports_interface
-						)*
-					)
-				}
 				/// Generate solidity definitions for methods described in this interface
 				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
@@ -1024,7 +1061,7 @@ impl SolidityInterface {
 						)*),
 					};
 
-					let mut out = string::new();
+					let mut out = ::evm_coder::types::string::new();
 					if #solidity_name.starts_with("Inline") {
 						out.push_str("/// @dev inlined interface\n");
 					}
@@ -1062,6 +1099,20 @@ impl SolidityInterface {
 					return Ok(None);
 				}
 			}
+			impl #generics #call_name #gen_ref
+			#gen_where
+			{
+				/// Is this contract implements specified ERC165 selector
+				pub fn supports_interface(this: &#name, interface_id: ::evm_coder::types::bytes4) -> bool {
+					interface_id != u32::to_be_bytes(0xffffff) && (
+						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
+						interface_id == Self::interface_id()
+						#(
+							|| #supports_interface
+						)*
+					)
+				}
+			}
 			impl #generics ::evm_coder::Weighted for #call_name #gen_ref
 			#gen_where
 			{
@@ -1091,7 +1142,7 @@ impl SolidityInterface {
 						)*
 						#call_name::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {interface_id}, _) => {
 							let mut writer = ::evm_coder::abi::AbiWriter::default();
-							writer.bool(&<#call_name #gen_ref>::supports_interface(interface_id));
+							writer.bool(&<#call_name #gen_ref>::supports_interface(self, interface_id));
 							return Ok(writer.into());
 						}
 						_ => {},
@@ -1101,7 +1152,7 @@ impl SolidityInterface {
 						#(
 							#call_variants_this,
 						)*
-						_ => unreachable!()
+						_ => Err(::evm_coder::execution::Error::from("method is not available").into()),
 					}
 				}
 			}
