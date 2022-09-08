@@ -846,8 +846,9 @@ export interface PalletAppPromotionError extends Enum {
   readonly isNoPermission: boolean;
   readonly isNotSufficientFunds: boolean;
   readonly isPendingForBlockOverflow: boolean;
-  readonly isInvalidArgument: boolean;
-  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'InvalidArgument';
+  readonly isSponsorNotSet: boolean;
+  readonly isIncorrectLockedBalanceOperation: boolean;
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation';
 }
 
 /** @name PalletAppPromotionEvent */

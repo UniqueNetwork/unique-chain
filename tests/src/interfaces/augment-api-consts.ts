@@ -16,14 +16,20 @@ export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>
 declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
     appPromotion: {
+      /**
+       * Rate of return for interval in blocks defined in `RecalculationInterval`.
+       **/
       intervalIncome: Perbill & AugmentedConst<ApiType>;
+      /**
+       * Decimals for the `Currency`.
+       **/
       nominal: u128 & AugmentedConst<ApiType>;
       /**
        * The app's pallet id, used for deriving its sovereign account ID.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * In relay blocks.
+       * In parachain blocks.
        **/
       pendingInterval: u32 & AugmentedConst<ApiType>;
       /**

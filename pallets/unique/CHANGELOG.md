@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+-   Methods `force_set_sponsor` , `force_remove_collection_sponsor` to be able to administer sponsorships with other pallets. Added to implement `AppPromotion` pallet logic.
+
 ## [v0.1.3] 2022-08-16
 
 ### Other changes

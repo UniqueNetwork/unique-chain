@@ -20,13 +20,10 @@ declare module '@polkadot/api-base/types/storage' {
     appPromotion: {
       admin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
-       * Stores hash a record for which the last revenue recalculation was performed.
+       * Stores a key for record for which the next revenue recalculation would be performed.
        * If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
        **/
       nextCalculatedRecord: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[AccountId32, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Amount of tokens pending unstake per user per block.
-       **/
       pendingUnstake: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Vec<ITuple<[AccountId32, u128]>>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
        * Amount of tokens staked by account in the blocknumber.

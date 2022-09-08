@@ -22,9 +22,6 @@
 //!
 //! ### Dispatchable Functions
 //!
-//! * `start_inflation` - This method sets the inflation start date. Can be only called once.
-//! Inflation start block can be backdated and will catch up. The method will create Treasury
-//!	account if it does not exist and perform the first inflation deposit.
 
 // #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -48,7 +45,6 @@ use codec::EncodeLike;
 use pallet_balances::BalanceLock;
 pub use types::*;
 
-// use up_common::constants::{DAYS, UNIQUE};
 use up_data_structs::CollectionId;
 
 use frame_support::{
@@ -87,16 +83,20 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
+		/// Type to interact with the native token
 		type Currency: ExtendedLockableCurrency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>;
 
+		/// Type for interacting with collections
 		type CollectionHandler: CollectionHandler<
 			AccountId = Self::AccountId,
 			CollectionId = CollectionId,
 		>;
 
+		/// Type for interacting with conrtacts
 		type ContractHandler: ContractHandler<AccountId = Self::CrossAccountId, ContractId = H160>;
 
+		/// ID for treasury
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		/// The app's pallet id, used for deriving its sovereign account ID.
@@ -106,15 +106,18 @@ pub mod pallet {
 		/// In relay blocks.
 		#[pallet::constant]
 		type RecalculationInterval: Get<Self::BlockNumber>;
-		/// In relay blocks.
+
+		/// In parachain blocks.
 		#[pallet::constant]
 		type PendingInterval: Get<Self::BlockNumber>;
 
-		#[pallet::constant]
-		type Nominal: Get<BalanceOf<Self>>;
-
+		/// Rate of return for interval in blocks defined in `RecalculationInterval`.
 		#[pallet::constant]
 		type IntervalIncome: Get<Perbill>;
+
+		/// Decimals for the `Currency`.
+		#[pallet::constant]
+		type Nominal: Get<BalanceOf<Self>>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -133,6 +136,12 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// Staking recalculation was performed
+		///
+		/// # Arguments
+		/// * AccountId: ID of the staker.
+		/// * Balance : recalculation base
+		/// * Balance : total income
 		StakingRecalculation(
 			/// An recalculated staker
 			T::AccountId,
@@ -141,22 +150,42 @@ pub mod pallet {
 			/// Amount of accrued interest
 			BalanceOf<T>,
 		),
+		
+		/// Staking was performed
+		///
+		/// # Arguments
+		/// * AccountId: ID of the staker
+		/// * Balance : staking amount
 		Stake(T::AccountId, BalanceOf<T>),
+		
+		/// Unstaking was performed
+		///
+		/// # Arguments
+		/// * AccountId: ID of the staker
+		/// * Balance : unstaking amount
 		Unstake(T::AccountId, BalanceOf<T>),
+		
+		/// The admin was set
+		///
+		/// # Arguments
+		/// * AccountId: ID of the admin
 		SetAdmin(T::AccountId),
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error due to action requiring admin to be set
+		/// Error due to action requiring admin to be set.
 		AdminNotSet,
-		/// No permission to perform an action
+		/// No permission to perform an action.
 		NoPermission,
-		/// Insufficient funds to perform an action
+		/// Insufficient funds to perform an action.
 		NotSufficientFunds,
+		/// Occurs when a pending unstake cannot be added in this block. PENDING_LIMIT_PER_BLOCK` limits exceeded.
 		PendingForBlockOverflow,
-		/// An error related to the fact that an invalid argument was passed to perform an action
+		/// The error is due to the fact that the collection/contract must already be sponsored in order to perform the action.
 		SponsorNotSet,
+		/// Errors caused by incorrect actions with a locked balance.
+		IncorrectLockedBalanceOperation,
 	}
 
 	#[pallet::storage]
@@ -189,7 +218,7 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Stores hash a record for which the last revenue recalculation was performed.
+	/// Stores a key for record for which the next revenue recalculation would be performed.
 	/// If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
 	#[pallet::storage]
 	#[pallet::getter(fn get_next_calculated_record)]
@@ -198,6 +227,9 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
+		/// implies the execution of a strictly limited number of relatively lightweight operations.
+		/// A separate benchmark has been implemented to scale the weight depending on the number of pendings.
 		fn on_initialize(current_block_number: T::BlockNumber) -> Weight
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
@@ -242,14 +274,12 @@ pub mod pallet {
 			);
 
 			ensure!(
-				amount >= Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get(),
+				amount >= <BalanceOf<T>>::from(100u128) * T::Nominal::get(),
 				ArithmeticError::Underflow
 			);
 
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
-
-			// ensure!(balance >= amount, ArithmeticError::Underflow);
 
 			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
 				&staker_id,
@@ -325,7 +355,7 @@ pub mod pallet {
 
 			<PendingUnstake<T>>::insert(block, pendings);
 
-			Self::unlock_balance_unchecked(&staker_id, total_staked);
+			Self::unlock_balance(&staker_id, total_staked)?;
 
 			<T::Currency as ReservableCurrency<T::AccountId>>::reserve(&staker_id, total_staked)?;
 
@@ -400,8 +430,9 @@ pub mod pallet {
 			);
 
 			ensure!(
-				T::ContractHandler::sponsor(contract_id)?.ok_or(<Error<T>>::SponsorNotSet)?
-					== T::CrossAccountId::from_sub(Self::account_id()),
+				T::ContractHandler::sponsor(contract_id)?
+					.ok_or(<Error<T>>::SponsorNotSet)?
+					.as_sub() == &Self::account_id(),
 				<Error<T>>::NoPermission
 			);
 			T::ContractHandler::remove_contract_sponsor(contract_id)
@@ -472,74 +503,6 @@ pub mod pallet {
 			// 			);
 			// 		}
 			// 	}
-			// }
-
-			// {
-			// 	let mut stakers_number = stakers_number.unwrap_or(20);
-			// 	let last_id = RefCell::new(None);
-			// 	let income_acc = RefCell::new(BalanceOf::<T>::default());
-			// 	let amount_acc = RefCell::new(BalanceOf::<T>::default());
-
-			// 	let flush_stake = || -> DispatchResult {
-			// 		if let Some(last_id) = &*last_id.borrow() {
-			// 			if !income_acc.borrow().is_zero() {
-			// 				<T::Currency as Currency<T::AccountId>>::transfer(
-			// 					&T::TreasuryAccountId::get(),
-			// 					last_id,
-			// 					*income_acc.borrow(),
-			// 					ExistenceRequirement::KeepAlive,
-			// 				)
-			// 				.and_then(|_| {
-			// 					Self::add_lock_balance(last_id, *income_acc.borrow());
-			// 					<TotalStaked<T>>::try_mutate(|staked| {
-			// 						staked
-			// 							.checked_add(&*income_acc.borrow())
-			// 							.ok_or(ArithmeticError::Overflow.into())
-			// 					})
-			// 				})?;
-
-			// 				Self::deposit_event(Event::StakingRecalculation(
-			// 					last_id.clone(),
-			// 					*amount_acc.borrow(),
-			// 					*income_acc.borrow(),
-			// 				));
-			// 			}
-
-			// 			*income_acc.borrow_mut() = BalanceOf::<T>::default();
-			// 			*amount_acc.borrow_mut() = BalanceOf::<T>::default();
-			// 		}
-			// 		Ok(())
-			// 	};
-
-			// 	while let Some((
-			// 		(current_id, staked_block),
-			// 		(amount, next_recalc_block_for_stake),
-			// 	)) = storage_iterator.next()
-			// 	{
-			// 		if stakers_number == 0 {
-			// 			NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
-			// 			break;
-			// 		}
-			// 		stakers_number -= 1;
-			// 		if last_id.borrow().as_ref() != Some(&current_id) {
-			// 			flush_stake()?;
-			// 		};
-			// 		*last_id.borrow_mut() = Some(current_id.clone());
-			// 		if current_recalc_block >= next_recalc_block_for_stake {
-			// 			*amount_acc.borrow_mut() += amount;
-			// 			Self::recalculate_and_insert_stake(
-			// 				&current_id,
-			// 				staked_block,
-			// 				next_recalc_block,
-			// 				amount,
-			// 				((current_recalc_block - next_recalc_block_for_stake)
-			// 					/ T::RecalculationInterval::get())
-			// 				.into() + 1,
-			// 				&mut *income_acc.borrow_mut(),
-			// 			);
-			// 		}
-			// 	}
-			// 	flush_stake()?;
 			// }
 
 			{
@@ -620,10 +583,20 @@ impl<T: Config> Pallet<T> {
 		T::PalletId::get().into_account_truncating()
 	}
 
-	fn unlock_balance_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
-		let mut locked_balance = Self::get_locked_balance(staker).map(|l| l.amount).unwrap();
-		locked_balance -= amount;
-		Self::set_lock_unchecked(staker, locked_balance);
+	fn unlock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
+		let locked_balance = Self::get_locked_balance(staker)
+			.map(|l| l.amount)
+			.ok_or(<Error<T>>::IncorrectLockedBalanceOperation)?;
+
+		// It is understood that we cannot unlock more funds than were locked by staking.
+		// Therefore, if implemented correctly, this error should not occur.
+		Self::set_lock_unchecked(
+			staker,
+			locked_balance
+				.checked_sub(&amount)
+				.ok_or(ArithmeticError::Underflow)?,
+		);
+		Ok(())
 	}
 
 	fn add_lock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
@@ -745,6 +718,9 @@ impl<T: Config> Pallet<T>
 where
 	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
 {
+	/// Since user funds are not transferred anywhere by staking, overflow protection is provided
+	/// at the level of the associated type `Balance` of `Currency` trait. In order to overflow,
+	/// the staker must have more funds on his account than the maximum set for `Balance` type.
 	pub fn cross_id_pending_unstake(staker: Option<T::CrossAccountId>) -> BalanceOf<T> {
 		staker.map_or(
 			PendingUnstake::<T>::iter_values()
