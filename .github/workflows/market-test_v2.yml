@@ -129,6 +129,12 @@ jobs:
           cat .env
           ts-node ./src/scripts/create-market-accounts.ts
 
+      - name: Copy qa-tests/.env to qa-tests/.env.docker
+        working-directory: qa-tests
+        run: | 
+          rm -rf .env.docker
+          cp .env .env.docker
+
       - name: Get chain logs
         if: always()                   # run this step always
         run: |
@@ -148,9 +154,9 @@ jobs:
         if: failure()
         run: sleep 900s
 
-#      - name: Import test data
-#        working-directory: qa-tests
-#        run: ts-node ./src/scripts/create-test-collections.ts
+      - name: Import test data
+        working-directory: qa-tests
+        run: ts-node ./src/scripts/create-test-collections.ts
 
 #      - name: Show content of qa-test .env
 #        working-directory: qa-tests
@@ -168,26 +174,26 @@ jobs:
 #        with:
 #          path: qa-tests/
 
-#      - name: local-market:start
-#        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+      - name: local-market:start
+        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
-#      - name: Wait for market readyness
-#        working-directory: qa-tests
-#        run: src/scripts/wait-market-ready.sh
-#        shell: bash
+      - name: Wait for market readyness
+        working-directory: qa-tests
+        run: src/scripts/wait-market-ready.sh
+        shell: bash
 
-#      - name: Install dependecies
-#        working-directory: qa-tests
-#        run: |
-#          npm ci
-#          npm install -D @playwright/test
-#          npx playwright install-deps
-#          npx playwright install
+      - name: Install dependecies
+        working-directory: qa-tests
+        run: |
+          npm ci
+          npm install -D @playwright/test
+          npx playwright install-deps
+          npx playwright install
           
-#      - name: 
-#        working-directory: qa-tests
-#        run: |
-#          npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
+      - name: 
+        working-directory: qa-tests
+        run: |
+          npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
 
 #      - name: Show env variables
 #        if: success() || failure()
