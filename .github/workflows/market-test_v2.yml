@@ -114,8 +114,8 @@ jobs:
         with:
           path: qa-tests/
 
-      - name: Wait till block generation started
-        run: sleep 900s
+#      - name: Wait till block generation started
+#        run: sleep 900s
 
 
       - name: Generate accounts
