@@ -48,8 +48,8 @@ jobs:
 #          ref: 'CI-37-core-ci-step-3'
           ref: 'ci_test_v2'
 
-#      - name: Read .env file
-#        uses: xom9ikk/dotenv@v1.0.2
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v1.0.2
       
       - name: Copy qa-tests/.env.example to qa-tests/.env
         working-directory: qa-tests
@@ -60,7 +60,7 @@ jobs:
 #        run: cat .env
 #
 #      - name: Read qa -test .env file
-#        uses: xom9ikk/dotenv@v1.0.2
+#       uses: xom9ikk/dotenv@v1.0.2
 #        with:
 #          path: qa-tests/
         
