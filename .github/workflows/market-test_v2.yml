@@ -123,19 +123,24 @@ jobs:
           node scripts/readyness.js
           echo "Ready to start tests"
 
-      - name: Generate accounts
+      - name: WShow content of .env file and Generate accounts
         working-directory: qa-tests
-        run: ts-node ./src/scripts/create-market-accounts.ts
+        run: |
+          cat .env
+          cat .env.example 
+          cat .env.docker
+          cat .env.example.ci
+          ts-node ./src/scripts/create-market-accounts.ts
 
       - name: Get chain logs
         if: always()                   # run this step always
         run: |
-          docker run node-parachain cat /polkadot-launch/9944.log
-          docker run node-parachain cat /polkadot-launch/9945.log
-          docker run node-parachain cat /polkadot-launch/alice.log
-          docker run node-parachain cat /polkadot-launch/eve.log
-          docker run node-parachain cat /polkadot-launch/dave.log
-          docker run node-parachain cat /polkadot-launch/charlie.log
+          docker exec node-parachain cat /polkadot-launch/9944.log
+          docker exec node-parachain cat /polkadot-launch/9945.log
+          docker exec node-parachain cat /polkadot-launch/alice.log
+          docker exec node-parachain cat /polkadot-launch/eve.log
+          docker exec node-parachain cat /polkadot-launch/dave.log
+          docker exec node-parachain cat /polkadot-launch/charlie.log
    
       - name: Deploy contracts
         run: |
