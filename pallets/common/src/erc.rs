@@ -32,7 +32,10 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties,
-	eth::{convert_cross_account_to_uint256, convert_uint256_to_cross_account},
+	eth::{
+		convert_cross_account_to_uint256, convert_uint256_to_cross_account,
+		convert_cross_account_to_tuple,
+	},
 };
 
 /// Events for ethereum collection helper.
@@ -146,7 +149,7 @@ where
 		save(self)
 	}
 
-	// /// Whether there is a pending sponsor.
+	/// Whether there is a pending sponsor.
 	fn has_collection_pending_sponsor(&self) -> Result<bool> {
 		Ok(matches!(
 			self.collection.sponsorship,
@@ -275,7 +278,7 @@ where
 	}
 
 	/// Get contract address.
-	fn contract_address(&self, _caller: caller) -> Result<address> {
+	fn contract_address(&self) -> Result<address> {
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
 
@@ -420,6 +423,16 @@ where
 		save(self)
 	}
 
+	/// Checks that user allowed to operate with collection.
+	///
+	/// @param user User address to check.
+	fn allowed(&self, user: address) -> Result<bool> {
+		Ok(Pallet::<T>::allowed(
+			self.id,
+			T::CrossAccountId::from_eth(user),
+		))
+	}
+
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
@@ -430,6 +443,20 @@ where
 		Ok(())
 	}
 
+	/// Add substrate user to allowed list.
+	///
+	/// @param user User substrate address.
+	fn add_to_collection_allow_list_substrate(
+		&mut self,
+		caller: caller,
+		user: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let user = convert_uint256_to_cross_account::<T>(user);
+		Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
@@ -437,6 +464,20 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// Remove substrate user from allowed list.
+	///
+	/// @param user User substrate address.
+	fn remove_from_collection_allow_list_substrate(
+		&mut self,
+		caller: caller,
+		user: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let user = convert_uint256_to_cross_account::<T>(user);
+		Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -481,13 +522,23 @@ where
 	/// Returns collection type
 	///
 	/// @return `Fungible` or `NFT` or `ReFungible`
-	fn unique_collection_type(&mut self) -> Result<string> {
+	fn unique_collection_type(&self) -> Result<string> {
 		let mode = match self.collection.mode {
 			CollectionMode::Fungible(_) => "Fungible",
 			CollectionMode::NFT => "NFT",
 			CollectionMode::ReFungible => "ReFungible",
 		};
 		Ok(mode.into())
+	}
+
+	/// Get collection owner.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	fn collection_owner(&self) -> Result<(address, uint256)> {
+		Ok(convert_cross_account_to_tuple::<T>(
+			&T::CrossAccountId::from_sub(self.owner.clone()),
+		))
 	}
 
 	/// Changes collection owner to another account
@@ -511,6 +562,14 @@ where
 		self.set_owner_internal(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
+
+	// TODO: need implement AbiWriter for &Vec<T>
+	// fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
+	// 	let result = pallet_common::IsAdmin::<T>::iter_prefix((self.id,))
+	// 		.map(|(admin, _)| pallet_common::eth::convert_cross_account_to_tuple::<T>(&admin))
+	// 		.collect();
+	// 	Ok(result)
+	// }
 }
 
 fn check_is_owner_or_admin<T: Config>(

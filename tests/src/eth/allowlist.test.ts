@@ -15,9 +15,19 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {contractHelpers, createEthAccountWithBalance, deployFlipper, itWeb3} from './util/helpers';
+import {isAllowlisted} from '../util/helpers';
+import {
+  contractHelpers,
+  createEthAccount,
+  createEthAccountWithBalance,
+  deployFlipper,
+  evmCollection,
+  evmCollectionHelpers,
+  getCollectionAddressFromResult,
+  itWeb3,
+} from './util/helpers';
 
-describe('EVM allowlist', () => {
+describe('EVM contract allowlist', () => {
   itWeb3('Contract allowlist can be toggled', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
@@ -56,5 +66,81 @@ describe('EVM allowlist', () => {
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
     await flipper.methods.flip().send({from: caller});
     expect(await flipper.methods.getValue().call()).to.be.false;
+  });
+});
+
+describe('EVM collection allowlist', () => {
+  itWeb3('Collection allowlist can be added and removed by [eth] address', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const user = createEthAccount(web3);
+    
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
+    
+    await collectionEvm.methods.removeFromCollectionAllowList(user).send({from: owner});
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+  });
+
+  itWeb3('Collection allowlist can be added and removed by [sub] address', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const user = privateKeyWrapper('//Alice');
+    
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    
+    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
+    expect(await isAllowlisted(api, collectionId, user)).to.be.true;
+
+    await collectionEvm.methods.removeFromCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
+    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+  });
+
+  itWeb3('Collection allowlist can not be add and remove [eth] address by not owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const notOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const user = createEthAccount(web3);
+    
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
+    
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
+    await expect(collectionEvm.methods.removeFromCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
+  });
+
+  itWeb3('Collection allowlist can not be add and remove [sub] address by not owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const notOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const user = privateKeyWrapper('//Alice');
+    
+    const collectionHelpers = evmCollectionHelpers(web3, owner);
+    const result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    
+    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    await expect(collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+    expect(await isAllowlisted(api, collectionId, user)).to.be.false;
+    await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
+    
+    expect(await isAllowlisted(api, collectionId, user)).to.be.true;
+    await expect(collectionEvm.methods.removeFromCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+    expect(await isAllowlisted(api, collectionId, user)).to.be.true;
   });
 });
