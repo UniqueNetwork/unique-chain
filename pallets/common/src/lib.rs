@@ -112,7 +112,6 @@ use up_data_structs::{
 	RmrkBoundedTheme,
 	RmrkNftChild,
 	CollectionPermissions,
-	SchemaVersion,
 };
 
 pub use pallet::*;
@@ -199,6 +198,21 @@ impl<T: Config> CollectionHandle<T> {
 				<T as frame_system::Config>::DbWeight::get()
 					.write
 					.saturating_mul(writes),
+			))
+	}
+
+	/// Consume gas for reading and writing.
+	pub fn consume_store_reads_and_writes(
+		&self,
+		reads: u64,
+		writes: u64,
+	) -> evm_coder::execution::Result<()> {
+		let weight = <T as frame_system::Config>::DbWeight::get();
+		let reads = weight.read.saturating_mul(reads);
+		let writes = weight.read.saturating_mul(writes);
+		self.recorder
+			.consume_gas(T::GasWeightMapping::weight_to_gas(
+				reads.saturating_add(writes),
 			))
 	}
 
@@ -310,6 +324,8 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Changes collection owner to another account
+	/// #### Store read/writes
+	/// 1 writes
 	fn set_owner_internal(
 		&mut self,
 		caller: T::CrossAccountId,
@@ -1292,6 +1308,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Toggle `user` participation in the `collection`'s allow list.
+	/// #### Store read/writes
+	/// 1 writes
 	pub fn toggle_allowlist(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1312,6 +1330,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Toggle `user` participation in the `collection`'s admin list.
+	/// #### Store read/writes
+	/// 2 writes
 	pub fn toggle_admin(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
