@@ -1,7 +1,6 @@
 # Sponsoring
 
-<!-- This SVG file can be opened and edited using draw.io -->
-![Sponsoring flow](./sponsoring-flow.svg)
+![Sponsoring flow](./sponsoring-flow.drawio.svg)
 
 ## Implementation
 
