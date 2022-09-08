@@ -6,7 +6,7 @@
 
 If you need to add sponsoring for pallet call, you should implement `SponsorshipHandler<AccountId, Call, ()>`
 
-If you need to add sponsoring for EVM contract call, you should implement `SponsorshipHandler<H160, (H160, Vec<u8>), CallContext>`
+If you need to add sponsoring for EVM contract call, you should implement `SponsorshipHandler<CrossAccountId, (H160, Vec<u8>), CallContext>`
 
 For both examples, you can take a look at `UniqueSponsorshipHandler` struct inside of common runtime
 
