@@ -129,6 +129,10 @@ jobs:
           cd qa-tests
           ts-node ./src/scripts/deploy-contract.ts
 
+      - name: Timeout for debug
+        if: failure()
+        run: sleep 900s
+
       - name: Import test data
         working-directory: qa-tests
         run: ts-node ./src/scripts/create-test-collections.ts
