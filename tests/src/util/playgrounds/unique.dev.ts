@@ -118,14 +118,15 @@ class ArrangeGroup {
    */
   createAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
+    const ss58Format = this.helper.chain.getChainProperties().ss58Format;
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
     const accounts: IKeyringPair[] = [];
     for (const balance of balances) {
-      const recepient = this.helper.util.fromSeed(mnemonicGenerate());
-      accounts.push(recepient);
+      const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
+      accounts.push(recipient);
       if (balance !== 0n) {
-        const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recepient.address}, balance * tokenNominal]);
+        const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
         transactions.push(this.helper.signTransaction(donor, tx, 'account generation', {nonce}));
         nonce++;
       }
