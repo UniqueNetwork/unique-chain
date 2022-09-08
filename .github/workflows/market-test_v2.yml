@@ -116,14 +116,20 @@ jobs:
         with:
           path: qa-tests/
 
-      - name: Wait till block generation started
-        run: sleep 600s
-
-
       - name: Generate accounts
         working-directory: qa-tests
         run: ts-node ./src/scripts/create-market-accounts.ts
 
+      - name: Get chain logs
+        if: always()                   # run this step always
+        run: |
+          docker exec -it node-parachain cat /polkadot-launch/9944.log
+          docker exec -it node-parachain cat /polkadot-launch/9945.log
+          docker exec -it node-parachain cat /polkadot-launch/alice.log
+          docker exec -it node-parachain cat /polkadot-launch/eve.log
+          docker exec -it node-parachain cat /polkadot-launch/dave.log
+          docker exec -it node-parachain cat /polkadot-launch/charlie.log
+   
       - name: Deploy contracts
         run: |
           cd qa-tests
