@@ -123,12 +123,12 @@ jobs:
       - name: Get chain logs
         if: always()                   # run this step always
         run: |
-          docker exec -it node-parachain cat /polkadot-launch/9944.log
-          docker exec -it node-parachain cat /polkadot-launch/9945.log
-          docker exec -it node-parachain cat /polkadot-launch/alice.log
-          docker exec -it node-parachain cat /polkadot-launch/eve.log
-          docker exec -it node-parachain cat /polkadot-launch/dave.log
-          docker exec -it node-parachain cat /polkadot-launch/charlie.log
+          docker run node-parachain cat /polkadot-launch/9944.log
+          docker run node-parachain cat /polkadot-launch/9945.log
+          docker run node-parachain cat /polkadot-launch/alice.log
+          docker run node-parachain cat /polkadot-launch/eve.log
+          docker run node-parachain cat /polkadot-launch/dave.log
+          docker run node-parachain cat /polkadot-launch/charlie.log
    
       - name: Deploy contracts
         run: |
