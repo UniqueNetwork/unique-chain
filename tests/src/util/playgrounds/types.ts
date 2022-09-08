@@ -102,9 +102,9 @@ export interface IToken {
 }
 
 export interface ICollectionCreationOptions {
-  name: string | number[];
-  description: string | number[];
-  tokenPrefix: string | number[];
+  name?: string | number[];
+  description?: string | number[];
+  tokenPrefix?: string | number[];
   mode?: {
     nft?: null;
     refungible?: null;

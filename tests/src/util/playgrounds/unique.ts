@@ -11,13 +11,12 @@ import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} f
 import {IKeyringPair} from '@polkadot/types/types';
 import {IApiListeners, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
-const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
+export const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
   if(lowerAddress.substrate) address.Substrate = lowerAddress.substrate;
   if(lowerAddress.ethereum) address.Ethereum = lowerAddress.ethereum;
   return address;
 };
-
 
 const nesting = {
   toChecksumAddress(address: string): string {
@@ -440,6 +439,16 @@ class ChainHelperBase {
     if(typeof signer === 'string') return signer;
     return signer.address;
   }
+
+  fetchAllPalletNames(): string[] {
+    if(this.api === null) throw Error('API not initialized');
+    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+  }
+  
+  fetchMissingPalletNames(requiredPallets: string[]): string[] {
+    const palletNames = this.fetchAllPalletNames();
+    return requiredPallets.filter(p => !palletNames.includes(p));
+  }
 }
 
 
@@ -476,7 +485,9 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * Get information about the collection with additional data, including the number of tokens it contains, its administrators, the normalized address of the collection's owner, and decoded name and description.
+   * Get information about the collection with additional data, 
+   * including the number of tokens it contains, its administrators, 
+   * the normalized address of the collection's owner, and decoded name and description.
    * 
    * @param collectionId ID of collection
    * @example await getData(2)
@@ -504,42 +515,50 @@ class CollectionGroup extends HelperGroup {
       collectionData[key] = this.helper.util.vec2str(humanCollection[key]);
     }
 
-    collectionData.tokensCount = (['RFT', 'NFT'].includes(humanCollection.mode)) ? await this.helper[humanCollection.mode.toLocaleLowerCase() as 'nft' | 'rft'].getLastTokenId(collectionId) : 0;
+    collectionData.tokensCount = (['RFT', 'NFT'].includes(humanCollection.mode)) 
+      ? await this.helper[humanCollection.mode.toLocaleLowerCase() as 'nft' | 'rft'].getLastTokenId(collectionId) 
+      : 0;
     collectionData.admins = await this.getAdmins(collectionId);
 
     return collectionData;
   }
 
   /**
-   * Get the normalized addresses of the collection's administrators.
+   * Get the addresses of the collection's administrators, optionally normalized.
    * 
    * @param collectionId ID of collection
+   * @param normalize whether to normalize the addresses to the default ss58 format
    * @example await getAdmins(1)
    * @returns array of administrators
    */
-  async getAdmins(collectionId: number): Promise<ICrossAccountId[]> {
-    const normalized = [];
-    for(const admin of (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])).toHuman()) {
-      if(admin.Substrate) normalized.push({Substrate: this.helper.address.normalizeSubstrate(admin.Substrate)});
-      else normalized.push(admin);
-    }
-    return normalized;
+  async getAdmins(collectionId: number, normalize = false): Promise<ICrossAccountId[]> {
+    const admins = (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])).toHuman();
+
+    return normalize
+      ? admins.map((address: any) => {
+        return address.Substrate
+          ? {Substrate: this.helper.address.normalizeSubstrate(address.Substrate)}
+          : address;
+      }) 
+      : admins;
   }
 
   /**
-   * Get the normalized addresses added to the collection allow-list.
+   * Get the addresses added to the collection allow-list, optionally normalized.
    * @param collectionId ID of collection
+   * @param normalize whether to normalize the addresses to the default ss58 format
    * @example await getAllowList(1)
    * @returns array of allow-listed addresses
    */
-  async getAllowList(collectionId: number): Promise<ICrossAccountId[]> {
-    const normalized = [];
+  async getAllowList(collectionId: number, normalize = false): Promise<ICrossAccountId[]> {
     const allowListed = (await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId])).toHuman();
-    for (const address of allowListed) {
-      if (address.Substrate) normalized.push({Substrate: this.helper.address.normalizeSubstrate(address.Substrate)});
-      else normalized.push(address);
-    }
-    return normalized;
+    return normalize
+      ? allowListed.map((address: any) => {
+        return address.Substrate
+          ? {Substrate: this.helper.address.normalizeSubstrate(address.Substrate)}
+          : address;
+      }) 
+      : allowListed;
   }
 
   /**
@@ -572,7 +591,7 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * Sets the sponsor for the collection (Requires the Substrate address).
+   * Sets the sponsor for the collection (Requires the Substrate address). Needs confirmation by the sponsor.
    * 
    * @param signer keyring of signer
    * @param collectionId ID of collection
@@ -606,6 +625,24 @@ class CollectionGroup extends HelperGroup {
     );
 
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed');
+  }
+
+  /**
+   * Removes the sponsor of a collection, regardless if it consented or not.
+   * 
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @example removeSponsor(aliceKeyring, 10)
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async removeSponsor(signer: TSigner, collectionId: number): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.removeCollectionSponsor', [collectionId],
+      true,
+    );
+
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorRemoved');
   }
 
   /**
@@ -2004,6 +2041,10 @@ class UniqueCollectionBase {
     return await this.helper.collection.confirmSponsorship(signer, this.collectionId);
   }
 
+  async removeSponsor(signer: TSigner) {
+    return await this.helper.collection.removeSponsor(signer, this.collectionId);
+  }
+
   async setLimits(signer: TSigner, limits: ICollectionLimits) {
     return await this.helper.collection.setLimits(signer, this.collectionId, limits);
   }
@@ -2016,8 +2057,8 @@ class UniqueCollectionBase {
     return await this.helper.collection.addAdmin(signer, this.collectionId, adminAddressObj);
   }
 
-  async enableAllowList(signer: TSigner, value = true/*: 'Normal' | 'AllowList' = 'AllowList'*/) {
-    return await this.setPermissions(signer, value ? {access: 'AllowList', mintMode: true} : {access: 'Normal'});
+  async enableCertainPermissions(signer: TSigner, accessMode: 'AllowList' | 'Normal' | undefined = 'AllowList', mintMode: boolean | undefined = true) {
+    return await this.setPermissions(signer, {access: accessMode, mintMode: mintMode});
   }
 
   async addToAllowList(signer: TSigner, addressObj: ICrossAccountId) {
