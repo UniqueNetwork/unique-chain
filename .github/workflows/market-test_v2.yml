@@ -116,6 +116,13 @@ jobs:
         with:
           path: qa-tests/
 
+      - name: Wait for chain up and running
+        working-directory: tests
+        run: |
+          yarn install
+          node scripts/readyness.js
+          echo "Ready to start tests"
+
       - name: Generate accounts
         working-directory: qa-tests
         run: ts-node ./src/scripts/create-market-accounts.ts
