@@ -28,6 +28,7 @@ import {usingPlaygrounds} from './util/playgrounds';
 import {encodeAddress} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
 import {SponsoringMode, contractHelpers, createEthAccountWithBalance, deployFlipper, itWeb3, transferBalanceToEth} from './eth/util/helpers';
+import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
@@ -40,9 +41,9 @@ const LOCKING_PERIOD = 20n; // 20 blocks of relay
 const UNLOCKING_PERIOD = 10n; // 20 blocks of parachain
 const rewardAvailableInBlock = (stakedInBlock: bigint) => (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
 
-before(async function () {
+const beforeEach = async (context: Mocha.Context) => {
   await usingPlaygrounds(async (helper, privateKey) => {
-    if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
+    if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) context.skip();
     alice = privateKey('//Alice');
     palletAdmin = privateKey('//Charlie'); // TODO use custom address
     await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
@@ -51,9 +52,13 @@ before(async function () {
     await helper.balance.transferToSubstrate(alice, palletAddress, 1000n * nominal);
     accounts = await helper.arrange.createCrowd(100, 1000n, alice); // create accounts-pool to speed up tests
   });
-});
+};
 
 describe('app-promotions.stake extrinsic', () => {
+  before(async function () {
+    await beforeEach(this);
+  });
+
   it('should "lock" staking balance, add it to "staked" map, and increase "totalStaked" amount', async () => {
     await usingPlaygrounds(async (helper) => {
       const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
@@ -128,6 +133,10 @@ describe('app-promotions.stake extrinsic', () => {
 });
 
 describe('unstake balance extrinsic', () => {  
+  before(async function () {
+    await beforeEach(this);
+  });
+
   it('should change balance state from "frozen" to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async () => {
     await usingPlaygrounds(async helper => {
       const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
@@ -247,6 +256,10 @@ describe('unstake balance extrinsic', () => {
 });
 
 describe('Admin adress', () => {
+  before(async function () {
+    await beforeEach(this);
+  });
+
   it('can be set by sudo only', async () => {
     await usingPlaygrounds(async (helper) => {
       const nonAdmin = accounts.pop()!;
@@ -291,6 +304,7 @@ describe('Admin adress', () => {
 
 describe('App-promotion collection sponsoring', () => {
   before(async function () {
+    await beforeEach(this);
     await usingPlaygrounds(async (helper) => {
       const tx = helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address}));
       await helper.signTransaction(alice, tx);
@@ -394,6 +408,10 @@ describe('App-promotion collection sponsoring', () => {
 });
 
 describe('app-promotion stopSponsoringCollection', () => {
+  before(async function () {
+    await beforeEach(this);
+  });
+
   it('can not be called by non-admin', async () => {    
     await usingPlaygrounds(async (helper) => {
       const [collectionOwner, nonAdmin] = [accounts.pop()!, accounts.pop()!];
@@ -450,6 +468,10 @@ describe('app-promotion stopSponsoringCollection', () => {
 });
 
 describe('app-promotion contract sponsoring', () => {
+  before(async function () {
+    await beforeEach(this);
+  });
+
   itWeb3('should set palletes address as a sponsor', async ({api, web3, privateKeyWrapper}) => {
     await usingPlaygrounds(async (helper) => {
       const contractOwner = (await createEthAccountWithBalance(api, web3, privateKeyWrapper)).toLowerCase();
@@ -570,6 +592,10 @@ describe('app-promotion contract sponsoring', () => {
 });
 
 describe('app-promotion stopSponsoringContract', () => {  
+  before(async function () {
+    await beforeEach(this);
+  });
+
   itWeb3('should remove pallet address from contract sponsors', async ({api, web3, privateKeyWrapper}) => {
     await usingPlaygrounds(async (helper) => {      
       const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -624,6 +650,10 @@ describe('app-promotion stopSponsoringContract', () => {
 });
 
 describe('app-promotion rewards', () => {
+  before(async function () {
+    await beforeEach(this);
+  });
+
   it('can not be called by non admin', async () => {
     await usingPlaygrounds(async (helper) => {
       const nonAdmin = accounts.pop()!;
@@ -634,11 +664,13 @@ describe('app-promotion rewards', () => {
   it('should credit 0.05% for staking period', async () => {    
     await usingPlaygrounds(async helper => {
       const staker = accounts.pop()!;
+
+      await waitPromotionPeriodDoesntEnd(helper);
       
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
 
-      // wair rewards are available:
+      // wait rewards are available:
       const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[1][0];
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
 
@@ -688,7 +720,6 @@ describe('app-promotion rewards', () => {
   });
   
   it('should bring compound interest', async () => {
-    // TODO flaky test
     await usingPlaygrounds(async helper => {
       const staker = accounts.pop()!;
             
@@ -755,4 +786,15 @@ function calculateIncome(base: bigint, calcPeriod: bigint, iter = 0): bigint {
   if (iter > 1) {
     return calculateIncome(income, calcPeriod, iter - 1);
   } else return income;
+}
+
+// Wait while promotion period less than specified block, to avoid boundary cases
+// 0 if this should be the beginning of the period.
+async function waitPromotionPeriodDoesntEnd(helper: DevUniqueHelper, waitBlockLessThan = LOCKING_PERIOD / 3n) {
+  const relayBlockNumber = (await helper.api!.query.parachainSystem.validationData()).value.relayParentNumber.toNumber(); // await helper.chain.getLatestBlockNumber();
+  const currentPeriodBlock = BigInt(relayBlockNumber) % LOCKING_PERIOD;
+
+  if (currentPeriodBlock > waitBlockLessThan) {
+    await helper.wait.forRelayBlockNumber(BigInt(relayBlockNumber) + LOCKING_PERIOD - currentPeriodBlock);
+  }
 }
