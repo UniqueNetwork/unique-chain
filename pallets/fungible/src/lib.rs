@@ -428,31 +428,14 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Minting tokens for multiple IDs.
-	/// See [`create_item`][`Pallet::create_item`] for more details.
-	pub fn create_multiple_items(
+	/// It is a utility function used in [`create_multiple_items`][`Pallet::create_multiple_items`]
+	/// and [`create_multiple_items_foreign`][`Pallet::create_multiple_items_foreign`]
+	pub fn create_multiple_items_common(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		// Foreign collection check
-		ensure!(
-			!<ForeignCollection<T>>::get(collection.id),
-			<CommonError<T>>::NoPermission
-		);
-
-		if !collection.is_owner_or_admin(sender) {
-			ensure!(
-				collection.permissions.mint_mode(),
-				<CommonError<T>>::PublicMintingNotAllowed
-			);
-			collection.check_allowlist(sender)?;
-
-			for (owner, _) in data.iter() {
-				collection.check_allowlist(owner)?;
-			}
-		}
-
 		let total_supply = data
 			.iter()
 			.map(|(_, v)| *v)
@@ -511,6 +494,40 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Minting tokens for multiple IDs.
+	/// See [`create_item`][`Pallet::create_item`] for more details.
+	pub fn create_multiple_items(
+		collection: &FungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		data: BTreeMap<T::CrossAccountId, u128>,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		// Foreign collection check
+		ensure!(
+			!<ForeignCollection<T>>::get(collection.id),
+			<CommonError<T>>::NoPermission
+		);
+
+		if !collection.is_owner_or_admin(sender) {
+			ensure!(
+				collection.permissions.mint_mode(),
+				<CommonError<T>>::PublicMintingNotAllowed
+			);
+			collection.check_allowlist(sender)?;
+
+			for (owner, _) in data.iter() {
+				collection.check_allowlist(owner)?;
+			}
+		}
+
+		Self::create_multiple_items_common(
+			collection,
+			sender,
+			data,
+			nesting_budget,
+		)
+	}
+
+	/// Minting tokens for multiple IDs.
 	/// See [`create_item_foreign`][`Pallet::create_item_foreign`] for more details.
 	pub fn create_multiple_items_foreign(
 		collection: &FungibleHandle<T>,
@@ -518,58 +535,12 @@ impl<T: Config> Pallet<T> {
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let total_supply = data
-			.iter()
-			.map(|(_, v)| *v)
-			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
-				acc.checked_add(v)
-			})
-			.ok_or(ArithmeticError::Overflow)?;
-
-		let mut balances = data;
-		for (k, v) in balances.iter_mut() {
-			*v = <Balance<T>>::get((collection.id, &k))
-				.checked_add(*v)
-				.ok_or(ArithmeticError::Overflow)?;
-		}
-
-		for (to, _) in balances.iter() {
-			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
-				to,
-				collection.id,
-				TokenId::default(),
-				nesting_budget,
-			)?;
-		}
-
-		// =========
-
-		<TotalSupply<T>>::insert(collection.id, total_supply);
-		for (user, amount) in balances {
-			<Balance<T>>::insert((collection.id, &user), amount);
-			<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
-				&user,
-				collection.id,
-				TokenId::default(),
-			);
-			<PalletEvm<T>>::deposit_log(
-				ERC20Events::Transfer {
-					from: H160::default(),
-					to: *user.as_eth(),
-					value: amount.into(),
-				}
-				.to_log(collection_id_to_address(collection.id)),
-			);
-			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
-				collection.id,
-				TokenId::default(),
-				user.clone(),
-				amount,
-			));
-		}
-
-		Ok(())
+		Self::create_multiple_items_common(
+			collection,
+			sender,
+			data,
+			nesting_budget,
+		)
 	}
 
 	fn set_allowance_unchecked(
