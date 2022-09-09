@@ -73,7 +73,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
       await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       const amount = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
-      expect(amount).to.be.equal(BigInt(100));
+      expect(amount).to.be.equal(BigInt(1));
     });
   });
 
@@ -110,7 +110,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
       await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
-      expect(amountBefore).to.be.equal(BigInt(100));
+      expect(amountBefore).to.be.equal(BigInt(1));
 
       await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
@@ -163,9 +163,9 @@ describe('Normal user can approve other users to transfer:', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: bob.address, pieces: 100n});
-      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address}, 100n);
       const amount = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: charlie.address}, {Substrate: bob.address});
-      expect(amount).to.be.equal(BigInt(100));
+      expect(amount).to.be.equal(BigInt(100n));
     });
   });
 });
@@ -353,7 +353,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
       await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
-      expect(amountBefore).to.be.equal(BigInt(100));
+      expect(amountBefore).to.be.equal(BigInt(1));
 
       await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
