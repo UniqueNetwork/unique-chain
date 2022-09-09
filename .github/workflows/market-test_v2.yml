@@ -137,10 +137,10 @@ jobs:
         working-directory: qa-tests
         run: cat .env
 
-      - name: Read qa -test .env file Before market start
-        uses: xom9ikk/dotenv@v1.0.2
-        with:
-          path: qa-tests/
+#      - name: Read qa -test .env file Before market start
+#        uses: xom9ikk/dotenv@v1.0.2
+#        with:
+#          path: qa-tests/
 
 
       - name: local-market:start
@@ -158,12 +158,19 @@ jobs:
           npm install -D @playwright/test
           npx playwright install-deps
           npx playwright install
+
+      - name: Show content of qa-test .env
+        working-directory: qa-tests
+        run: cat .env
           
       - name: 
         working-directory: qa-tests
         run: |
           npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
 
+      - name: Timeout for debug
+        if: failure()
+        run: sleep 900s
 
       - name: Stop running containers
         if: always()                   # run this step always
