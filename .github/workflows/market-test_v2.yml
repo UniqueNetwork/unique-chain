@@ -163,7 +163,7 @@ jobs:
         working-directory: qa-tests
         run: cat .env
           
-      - name: 
+      - name: Test API interface
         working-directory: qa-tests
         run: |
           npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
