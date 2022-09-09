@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -25,8 +25,8 @@ const expect = chai.expect;
 let donor: IKeyringPair;
 
 before(async () => {
-  await usingPlaygrounds(async (_, privateKeyWrapper) => {
-    donor = privateKeyWrapper('//Alice');
+  await usingPlaygrounds(async (_, privateKey) => {
+    donor = privateKey('//Alice');
   });
 });
 
@@ -66,7 +66,7 @@ describe('Integration Test ext. Allow list tests', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const addToAllowListTx = async () => helper.nft.addToAllowList(bob, collectionId, {Substrate: charlie.address});
-      expect(addToAllowListTx()).to.be.rejected;
+      await expect(addToAllowListTx()).to.be.rejected;
     });
   });
 
@@ -74,7 +74,7 @@ describe('Integration Test ext. Allow list tests', () => {
     const collectionId = (1<<32) - 1;
     await usingPlaygrounds(async (helper) => {
       const addToAllowListTx = async () => helper.nft.addToAllowList(bob, collectionId, {Substrate: charlie.address});
-      expect(addToAllowListTx()).to.be.rejected;
+      await expect(addToAllowListTx()).to.be.rejected;
     });
   });
 
@@ -83,7 +83,7 @@ describe('Integration Test ext. Allow list tests', () => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.collection.burn(alice, collectionId);
       const addToAllowListTx = async () => helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
-      expect(addToAllowListTx()).to.be.rejected;
+      await expect(addToAllowListTx()).to.be.rejected;
     });
   });
 
@@ -102,8 +102,7 @@ describe('Integration Test ext. Allow list tests', () => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
 
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: bob.address}).signAndSend(alice);
+      await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address});
 
       const allowList = await helper.nft.getAllowList(collectionId);
 
@@ -116,8 +115,7 @@ describe('Integration Test ext. Allow list tests', () => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addAdmin(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: bob.address}).signAndSend(charlie);
+      await helper.collection.removeFromAllowList(charlie, collectionId, {Substrate: bob.address});
 
       const allowList = await helper.nft.getAllowList(collectionId);
 
@@ -129,9 +127,8 @@ describe('Integration Test ext. Allow list tests', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: charlie.address}).signAndSend(bob);
-
+      const removeTx = async () => helper.collection.removeFromAllowList(bob, collectionId, {Substrate: charlie.address});
+      await expect(removeTx()).to.be.rejected;
       const allowList = await helper.nft.getAllowList(collectionId);
 
       expect(allowList).to.be.deep.contains({Substrate: charlie.address});
@@ -141,12 +138,8 @@ describe('Integration Test ext. Allow list tests', () => {
   it('Nobody can remove address from allow list of non-existing collection', async () => {
     const collectionId = (1<<32) - 1;
     await usingPlaygrounds(async (helper) => {
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: charlie.address}).signAndSend(bob);
-
-      const allowList = await helper.nft.getAllowList(collectionId);
-
-      expect(allowList).to.be.not.deep.contains({Substrate: charlie.address});
+      const removeTx = async () => helper.collection.removeFromAllowList(bob, collectionId, {Substrate: charlie.address});
+      await expect(removeTx()).to.be.rejected;
     });
   });
 
@@ -155,11 +148,9 @@ describe('Integration Test ext. Allow list tests', () => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
       await helper.collection.burn(alice, collectionId);
+      const removeTx = async () => helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address});
 
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      const removeTx = async () => helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: bob.address}).signAndSend(alice);
-
-      expect(removeTx()).to.be.rejected;
+      await expect(removeTx()).to.be.rejected;
     });
   });
 
@@ -167,13 +158,11 @@ describe('Integration Test ext. Allow list tests', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
-
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: bob.address}).signAndSend(alice);
+      await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address});
       const allowListBefore = await helper.nft.getAllowList(collectionId);
       expect(allowListBefore).to.be.not.deep.contains({Substrate: bob.address});
 
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: bob.address}).signAndSend(alice);
+      await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address});
 
       const allowListAfter = await helper.nft.getAllowList(collectionId);
       expect(allowListAfter).to.be.not.deep.contains({Substrate: bob.address});
@@ -188,7 +177,7 @@ describe('Integration Test ext. Allow list tests', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
 
       const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-      expect(transferResult()).to.be.rejected;
+      await expect(transferResult()).to.be.rejected;
     });
   });
 
@@ -200,12 +189,10 @@ describe('Integration Test ext. Allow list tests', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: alice.address}).signAndSend(alice);
+      await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: alice.address});
 
       const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-      expect(transferResult()).to.be.rejected;
+      await expect(transferResult()).to.be.rejected;
     });
   });
 
@@ -217,7 +204,7 @@ describe('Integration Test ext. Allow list tests', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
 
       const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-      expect(transferResult()).to.be.rejected;
+      await expect(transferResult()).to.be.rejected;
     });
   });
 
@@ -230,12 +217,10 @@ describe('Integration Test ext. Allow list tests', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
 
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-
-      //FIXME: removeFromAllowList doesn't not implemented in unique helpers yet. Change to helper later.
-      await helper.api?.tx.unique.removeFromAllowList(collectionId, {Substrate: alice.address}).signAndSend(alice);
+      await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: alice.address});
 
       const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-      expect(transferResult()).to.be.rejected;
+      await expect(transferResult()).to.be.rejected;
     });
   });
 
@@ -245,7 +230,7 @@ describe('Integration Test ext. Allow list tests', () => {
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.setPermissions(alice, collectionId, {access: 'AllowList'});
       const burnTx = async () => helper.nft.burnToken(bob, collectionId, tokenId);
-      expect(burnTx()).to.be.rejected;
+      await expect(burnTx()).to.be.rejected;
     });
   });
 
