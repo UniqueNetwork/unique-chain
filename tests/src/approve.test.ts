@@ -84,7 +84,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
+      await helper.signTransaction(alice, helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0));
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
     });
   });
@@ -262,7 +262,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: bob.address, pieces: 100n});
-      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address});
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address}, 100n);
       const before = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
       await helper.rft.transferTokenFrom(charlie, collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address}, 100n);
       const after = await helper.rft.getTokenBalance(collectionId, tokenId, {Substrate: alice.address});
@@ -322,7 +322,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
+      await helper.signTransaction(alice, helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0));
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
       const transferTokenFromTx = async () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
       await expect(transferTokenFromTx()).to.be.rejected;
@@ -380,7 +380,8 @@ describe('User cannot approve for the amount greater than they own:', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-      await helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2).signAndSend(bob);
+      const approveTx = async () => helper.signTransaction(bob, helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2));
+      await expect(approveTx()).to.be.rejected;
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.false;
     });
   });
