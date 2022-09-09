@@ -135,7 +135,11 @@ jobs:
             ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
 
       - name: Check if the dockerhub repository contains the needed ACALA version
-        run: |                 
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
           # Get TAGS from DOCKERHUB repository
             ACALA_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-acala/tags/?page_size=100 | jq -r '."results"[]["name"]')
           # Show TAGS
@@ -164,7 +168,11 @@ jobs:
             MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
 
       - name: Check if the dockerhub repository contains the needed MOONBEAM version
-        run: |                 
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
           # Get TAGS from DOCKERHUB repository
             MOONBEAM_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-moonbeam/tags/?page_size=100 | jq -r '."results"[]["name"]')
           # Show TAGS
@@ -195,6 +203,10 @@ jobs:
 
       - name: Check if the dockerhub repository contains the needed CUMULUS version
         run: |                 
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
           # Get TAGS from DOCKERHUB repository
             CUMULUS_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-cumulus/tags/?page_size=100 | jq -r '."results"[]["name"]')
           # Show TAGS
