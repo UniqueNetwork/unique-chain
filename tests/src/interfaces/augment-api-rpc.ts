@@ -9,7 +9,7 @@ import type { PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsBaseBaseInfo, R
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u128, u32, u64 } from '@polkadot/types-codec';
-import type { AnyNumber, Codec } from '@polkadot/types-codec/types';
+import type { AnyNumber, Codec, ITuple } from '@polkadot/types-codec/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
 import type { BeefySignedCommitment } from '@polkadot/types/interfaces/beefy';
@@ -35,6 +35,24 @@ export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
 declare module '@polkadot/rpc-core/types/jsonrpc' {
   interface RpcInterface {
+    appPromotion: {
+      /**
+       * Returns the total amount of unstaked tokens
+       **/
+      pendingUnstake: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Returns the total amount of unstaked tokens per block
+       **/
+      pendingUnstakePerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
+      /**
+       * Returns the total amount of staked tokens
+       **/
+      totalStaked: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Returns the total amount of staked tokens per block when staked
+       **/
+      totalStakedPerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
+    };
     author: {
       /**
        * Returns true if the keystore has private keys for the given public key and key type.

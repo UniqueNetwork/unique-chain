@@ -79,11 +79,12 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
 
   it('[nft] Remove approval by using 0 amount', async () => {
     await usingPlaygrounds(async (helper) => {
-      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const collectionId = collection.collectionId;
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
     });
   });
@@ -97,7 +98,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const amountBefore = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountBefore).to.be.equal(BigInt(1));
 
-      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       const amountAfter = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountAfter).to.be.equal(BigInt(0));
     });
@@ -111,7 +112,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountBefore).to.be.equal(BigInt(100));
 
-      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountAfter).to.be.equal(BigInt(0));
     });
@@ -289,7 +290,7 @@ describe('Approved amount decreases by the transferred amount.:', () => {
       const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
       await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
       const tokenId = await helper.ft.getLastTokenId(collectionId);
-      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 10n);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 10n);
 
       const charlieBefore = await helper.ft.getBalance(collectionId, {Substrate: charlie.address});
       await helper.ft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address}, 2n);
@@ -321,7 +322,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
       const transferTokenFromTx = async () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
       await expect(transferTokenFromTx()).to.be.rejected;
@@ -337,7 +338,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
       const amountBefore = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountBefore).to.be.equal(BigInt(1));
 
-      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      await helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       const amountAfter = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountAfter).to.be.equal(BigInt(0));
 
@@ -354,7 +355,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
       const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountBefore).to.be.equal(BigInt(100));
 
-      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
+      await helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, {Substrate: alice.address});
       expect(amountAfter).to.be.equal(BigInt(0));
 
@@ -379,8 +380,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-      const approveTx = async () => helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address}, undefined, 2n);
-      await expect(approveTx()).to.be.rejected;
+      await helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2).signAndSend(bob);
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.false;
     });
   });
@@ -390,7 +390,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
       const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
       await helper.ft.mintTokens(alice, collectionId, alice.address, 10n);
       const tokenId = await helper.ft.getLastTokenId(collectionId);
-      const approveTx = async () => helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 11n);
+      const approveTx = async () => helper.ft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 11n);
       await expect(approveTx()).to.be.rejected;
     });
   });
@@ -399,7 +399,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
-      const approveTx = async () => helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 101n);
+      const approveTx = async () => helper.rft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, 101n);
       await expect(approveTx()).to.be.rejected;
     });
   });
@@ -658,9 +658,9 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: alice.address, pieces: 100n});
       await helper.rft.transferToken(alice, collectionId, tokenId, {Substrate: bob.address}, 100n);
-      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 100n);
+      await helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, 100n);
 
-      const approveTx = async () => helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 101n);
+      const approveTx = async () => helper.rft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, 101n);
       await expect(approveTx()).to.be.rejected;
     });
   });
@@ -672,8 +672,8 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
       const tokenId = await helper.ft.getLastTokenId(collectionId);
 
       await helper.ft.transferToken(alice, collectionId, tokenId, {Substrate: bob.address}, 10n);
-      await helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 10n);
-      const approveTx = async () => helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, undefined, 11n);
+      await helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, 10n);
+      const approveTx = async () => helper.ft.approveToken(bob, collectionId, tokenId, {Substrate: alice.address}, 11n);
       await expect(approveTx()).to.be.rejected;
     });
   });

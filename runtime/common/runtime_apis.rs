@@ -189,6 +189,40 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
+            impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
+                fn total_staked(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default());
+                }
+
+                fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
+                }
+
+                fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker));
+                }
+
+                fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
+                }
+            }
+
             impl rmrk_rpc::RmrkApi<
                 Block,
                 AccountId,
@@ -638,6 +672,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
+                    list_benchmark!(list, extra, pallet_app_promotion, AppPromotion);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 
@@ -693,6 +728,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
+                    add_benchmark!(params, batches, pallet_app_promotion, AppPromotion);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 

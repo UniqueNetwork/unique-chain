@@ -245,8 +245,8 @@ describe('integration test: Refungible functionality:', async () => {
         section: 'common',
         index: '0x4202',
         data: [ 
-          collection.collectionId.toString(), 
-          token.tokenId.toString(), 
+          helper.api!.createType('u32', collection.collectionId).toHuman(), 
+          helper.api!.createType('u32', token.tokenId).toHuman(),
           {Substrate: alice.address}, 
           '100',
         ],
@@ -265,8 +265,8 @@ describe('integration test: Refungible functionality:', async () => {
         section: 'common',
         index: '0x4203',
         data: [ 
-          collection.collectionId.toString(), 
-          token.tokenId.toString(), 
+          helper.api!.createType('u32', collection.collectionId).toHuman(), 
+          helper.api!.createType('u32', token.tokenId).toHuman(),
           {Substrate: alice.address}, 
           '50',
         ],

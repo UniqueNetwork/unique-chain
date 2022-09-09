@@ -181,7 +181,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
   });
   
   itWeb3('(!negative test!) Create collection (no funds)', async ({web3}) => {
-    const owner = await createEthAccount(web3);
+    const owner = createEthAccount(web3);
     const helper = evmCollectionHelpers(web3, owner);
     const collectionName = 'A';
     const description = 'A';
@@ -194,7 +194,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   itWeb3('(!negative test!) Check owner', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const notOwner = await createEthAccount(web3);
+    const notOwner = createEthAccount(web3);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
     const result = await collectionHelpers.methods.createNonfungibleCollection('A', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);

@@ -21,9 +21,19 @@ contract ERC165 is Dummy {
 	}
 }
 
+/// @dev inlined interface
+contract ContractHelpersEvents {
+	event ContractSponsorSet(address indexed contractAddress, address sponsor);
+	event ContractSponsorshipConfirmed(
+		address indexed contractAddress,
+		address sponsor
+	);
+	event ContractSponsorRemoved(address indexed contractAddress);
+}
+
 /// @title Magic contract, which allows users to reconfigure other contracts
 /// @dev the ERC-165 identifier for this interface is 0xd77fab70
-contract ContractHelpers is Dummy, ERC165 {
+contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
 	///  using uniquenetwork evm-migration pallet, or using other terms not

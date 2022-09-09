@@ -20,9 +20,13 @@ use up_data_structs::{
 	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
 	PropertyKeyPermission, TokenData, TokenChild,
 };
+
 use sp_std::vec::Vec;
 use codec::Decode;
-use sp_runtime::DispatchError;
+use sp_runtime::{
+	DispatchError,
+	traits::{AtLeast32BitUnsigned, Member},
+};
 
 type Result<T> = core::result::Result<T, DispatchError>;
 
@@ -120,6 +124,7 @@ sp_api::decl_runtime_apis! {
 
 		/// Get total pieces of token.
 		fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Result<Option<u128>>;
+
 		fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec<CrossAccountId>>;
 	}
 }

@@ -112,6 +112,7 @@ parameter_types! {
 }
 
 impl pallet_evm_contract_helpers::Config for Runtime {
+	type Event = Event;
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
