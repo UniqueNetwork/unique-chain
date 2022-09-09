@@ -54,7 +54,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   itSub('[nft] User can transfer owned token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Transfer-1-NFT', description: '', tokenPrefix: 'T'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await nft.transfer(alice, {Substrate: bob.address});
     expect(await nft.getOwner()).to.be.deep.equal({Substrate: bob.address});
@@ -62,7 +62,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   itSub('[fungible] User can transfer owned token', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'Transfer-1-FT', description: '', tokenPrefix: 'T'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await collection.transfer(alice, {Substrate: bob.address}, 9n);
     expect(await collection.getBalance({Substrate: bob.address})).to.be.equal(9n);
@@ -71,7 +71,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   itSub.ifWithPallets('[refungible] User can transfer owned token', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-1-RFT', description: '', tokenPrefix: 'T'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await rft.transfer(alice, {Substrate: bob.address}, 9n);
     expect(await rft.getBalance({Substrate: bob.address})).to.be.equal(9n);
@@ -92,7 +92,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
     const collection = await helper.ft.mintCollection(alice, {name: 'Transfer-2-FT', description: '', tokenPrefix: 'T'});
     await collection.addAdmin(alice, {Substrate: bob.address});
 
-    await collection.mint(bob, {Substrate: bob.address}, 10n);
+    await collection.mint(bob, 10n, {Substrate: bob.address});
     await collection.transfer(bob, {Substrate: alice.address}, 1n);
 
     expect(await collection.getBalance({Substrate: bob.address})).to.be.equal(9n);
@@ -103,7 +103,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-2-RFT', description: '', tokenPrefix: 'T'});
     await collection.addAdmin(alice, {Substrate: bob.address});
 
-    const rft = await collection.mintToken(bob, {Substrate: bob.address}, 10n);
+    const rft = await collection.mintToken(bob, 10n, {Substrate: bob.address});
     await rft.transfer(bob, {Substrate: alice.address}, 1n);
 
     expect(await rft.getBalance({Substrate: bob.address})).to.be.equal(9n);
@@ -142,7 +142,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub('[nft] Transfer with deleted collection_id', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Transfer-Neg-1-NFT', description: '', tokenPrefix: 'T'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await nft.burn(alice);
     await collection.burn(alice);
@@ -153,7 +153,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub('[fungible] Transfer with deleted collection_id', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'Transfer-Neg-1-FT', description: '', tokenPrefix: 'T'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await collection.burnTokens(alice, 10n);
     await collection.burn(alice);
@@ -164,7 +164,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
   
   itSub.ifWithPallets('[refungible] Transfer with deleted collection_id', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-Neg-1-RFT', description: '', tokenPrefix: 'T'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await rft.burn(alice, 10n);
     await collection.burn(alice);
@@ -193,7 +193,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub('[nft] Transfer with deleted item_id', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Transfer-Neg-3-NFT', description: '', tokenPrefix: 'T'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await nft.burn(alice);
 
@@ -203,7 +203,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub('[fungible] Transfer with deleted item_id', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'Transfer-Neg-3-FT', description: '', tokenPrefix: 'T'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await collection.burnTokens(alice, 10n);
 
@@ -213,7 +213,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub.ifWithPallets('[refungible] Transfer with deleted item_id', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-Neg-3-RFT', description: '', tokenPrefix: 'T'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await rft.burn(alice, 10n);
 
@@ -223,7 +223,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub('[nft] Transfer with recipient that is not owner', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Transfer-Neg-4-NFT', description: '', tokenPrefix: 'T'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await expect(nft.transfer(bob, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.NoPermission/);
@@ -232,7 +232,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub('[fungible] Transfer with recipient that is not owner', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'Transfer-Neg-4-FT', description: '', tokenPrefix: 'T'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await expect(collection.transfer(bob, {Substrate: bob.address}, 9n))
       .to.be.rejectedWith(/common\.TokenValueTooLow/);
@@ -242,7 +242,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   itSub.ifWithPallets('[refungible] Transfer with recipient that is not owner', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-1-RFT', description: '', tokenPrefix: 'T'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await expect(rft.transfer(bob, {Substrate: bob.address}, 9n))
       .to.be.rejectedWith(/common\.TokenValueTooLow/);
@@ -263,7 +263,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itEth('Transfers to self. In case of same frontend', async ({helper}) => {
     const [owner] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.ft.mintCollection(owner, {});
-    await collection.mint(owner, {Substrate: owner.address}, 100n);
+    await collection.mint(owner, 100n);
 
     const ownerProxy = helper.address.substrateToEth(owner.address);
 
@@ -281,7 +281,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itEth('Transfers to self. In case of substrate-evm boundary', async ({helper}) => {
     const [owner] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.ft.mintCollection(owner, {});
-    await collection.mint(owner, {Substrate: owner.address}, 100n);
+    await collection.mint(owner, 100n);
 
     const ownerProxy = helper.address.substrateToEth(owner.address);
 
@@ -299,7 +299,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itEth('Transfers to self. In case of inside substrate-evm', async ({helper}) => {
     const [owner] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.ft.mintCollection(owner, {});
-    await collection.mint(owner, {Substrate: owner.address}, 100n);
+    await collection.mint(owner, 100n);
 
     // transfer to self again
     await collection.transfer(owner, {Substrate: owner.address}, 10n);
@@ -313,7 +313,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
   itEth('Transfers to self. In case of inside substrate-evm when not enought "Fungibles"', async ({helper}) => {
     const [owner] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.ft.mintCollection(owner, {});
-    await collection.mint(owner, {Substrate: owner.address}, 10n);
+    await collection.mint(owner, 10n);
 
     // transfer to self again
     await expect(collection.transfer(owner, {Substrate: owner.address}, 11n))

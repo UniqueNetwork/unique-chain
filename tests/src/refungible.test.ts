@@ -35,7 +35,7 @@ describe('integration test: Refungible functionality:', async () => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
     const itemCountBefore = await collection.getLastTokenId();
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
     
     const itemCountAfter = await collection.getLastTokenId();
     
@@ -48,7 +48,7 @@ describe('integration test: Refungible functionality:', async () => {
   itSub('Checking RPC methods when interacting with maximum allowed values (MAX_REFUNGIBLE_PIECES)', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, MAX_REFUNGIBLE_PIECES);
+    const token = await collection.mintToken(alice, MAX_REFUNGIBLE_PIECES);
     
     expect(await collection.getTokenBalance(token.tokenId, {Substrate: alice.address})).to.be.equal(MAX_REFUNGIBLE_PIECES);
     
@@ -56,7 +56,7 @@ describe('integration test: Refungible functionality:', async () => {
     expect(await collection.getTokenBalance(token.tokenId, {Substrate: bob.address})).to.be.equal(MAX_REFUNGIBLE_PIECES);
     expect(await token.getTotalPieces()).to.be.equal(MAX_REFUNGIBLE_PIECES);
     
-    await expect(collection.mintToken(alice, {Substrate: alice.address}, MAX_REFUNGIBLE_PIECES + 1n))
+    await expect(collection.mintToken(alice, MAX_REFUNGIBLE_PIECES + 1n))
       .to.eventually.be.rejectedWith(/refungible\.WrongRefungiblePieces/);
   });
   
@@ -66,7 +66,7 @@ describe('integration test: Refungible functionality:', async () => {
 
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 10_000n);
+    const token = await collection.mintToken(alice, 10_000n);
 
     await token.transfer(alice, {Substrate: bob.address}, 1000n);
     await token.transfer(alice, ethAcc, 900n);
@@ -88,7 +88,7 @@ describe('integration test: Refungible functionality:', async () => {
   
   itSub('Transfer token pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
 
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     expect(await token.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
@@ -120,7 +120,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Burn some pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     expect((await token.burn(alice, 99n)).success).to.be.true;
@@ -130,7 +130,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Burn all pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
     
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
@@ -141,7 +141,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Burn some pieces for multiple users', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
 
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     
@@ -168,7 +168,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Set allowance for token', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
     
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
 
@@ -183,7 +183,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Repartition', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
 
     expect(await token.repartition(alice, 200n)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(200n);
@@ -207,7 +207,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Repartition with increased amount', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 200n);
     const chainEvents = helper.chainLog.slice(-1)[0].events.map((x: any) => x.event);
     expect(chainEvents).to.include.deep.members([{
@@ -225,7 +225,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   itSub('Repartition with decreased amount', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 50n);
     const chainEvents = helper.chainLog.slice(-1)[0].events.map((x: any) => x.event);
     expect(chainEvents).to.include.deep.members([{

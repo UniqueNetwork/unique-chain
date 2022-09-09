@@ -14,100 +14,84 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
-import {
-  createCollectionExpectSuccess,
-  setCollectionSponsorExpectSuccess,
-  confirmSponsorshipExpectSuccess,
-  createItemExpectSuccess,
-  transferExpectSuccess,
-  normalizeAccountId,
-  getNextSponsored,
-  requirePallets,
-  Pallets,
-} from './util/helpers';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-
-
+const SPONSORING_TIMEOUT = 5;
 
 describe('Integration Test getNextSponsored(collection_id, owner, item_id):', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([20n, 10n], donor);
     });
   });
 
-  it('NFT', async () => {
-    await usingApi(async (api: ApiPromise) => {
+  itSub('NFT', async ({helper}) => {
+    // Non-existing collection
+    expect(await helper.collection.getTokenNextSponsored(0, 0, {Substrate: alice.address})).to.be.null;
 
-      // Not existing collection 
-      expect(await getNextSponsored(api, 0, normalizeAccountId(alice), 0)).to.be.equal(-1);
+    const collection = await helper.nft.mintCollection(alice, {});
+    const token = await collection.mintToken(alice);
 
-      const collectionId = await createCollectionExpectSuccess();
-      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    // Check with Disabled sponsoring state
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.null;
+    
+    // Check with Unconfirmed sponsoring state
+    await collection.setSponsor(alice, bob.address);
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.null;
 
-      // Check with Disabled sponsoring state
-      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId)).to.be.equal(-1);
-      await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    // Check with Confirmed sponsoring state
+    await collection.confirmSponsorship(bob);
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.equal(0);
 
-      // Check with Unconfirmed sponsoring state
-      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId)).to.be.equal(-1);
-      await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+    // Check after transfer
+    await token.transfer(alice, {Substrate: bob.address});
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.lessThanOrEqual(SPONSORING_TIMEOUT);
 
-      // Check with Confirmed sponsoring state
-      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId)).to.be.equal(0);
-
-      // After transfer
-      await transferExpectSuccess(collectionId, itemId, alice, bob, 1);
-      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId)).to.be.lessThanOrEqual(5);
-
-      // Not existing token 
-      expect(await getNextSponsored(api, collectionId, normalizeAccountId(alice), itemId+1)).to.be.equal(-1);
-    });
+    // Non-existing token 
+    expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.null;
   });
 
-  it('Fungible', async () => {
-    await usingApi(async (api: ApiPromise) => {
+  itSub('Fungible', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {});
+    await collection.mint(alice, 10n);
 
-      const createMode = 'Fungible';
-      const funCollectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-      await createItemExpectSuccess(alice, funCollectionId, createMode);
-      await setCollectionSponsorExpectSuccess(funCollectionId, bob.address);
-      await confirmSponsorshipExpectSuccess(funCollectionId, '//Bob');
-      expect(await getNextSponsored(api, funCollectionId, normalizeAccountId(alice), 0)).to.be.equal(0);
+    // Check with Disabled sponsoring state
+    expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.null;
 
-      await transferExpectSuccess(funCollectionId, 0, alice, bob, 10, 'Fungible');
-      expect(await getNextSponsored(api, funCollectionId, normalizeAccountId(alice), 0)).to.be.lessThanOrEqual(5);
-    });
+    await collection.setSponsor(alice, bob.address);
+    await collection.confirmSponsorship(bob);
+    
+    // Check with Confirmed sponsoring state
+    expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.equal(0);
+
+    // Check after transfer
+    await collection.transfer(alice, {Substrate: bob.address});
+    expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.lessThanOrEqual(SPONSORING_TIMEOUT);
   });
 
-  it('ReFungible', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  itSub.ifWithPallets('ReFungible', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    const token = await collection.mintToken(alice, 10n);
 
-    await usingApi(async (api: ApiPromise) => {
+    // Check with Disabled sponsoring state
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.null;
 
-      const createMode = 'ReFungible';
-      const refunCollectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-      const refunItemId = await createItemExpectSuccess(alice, refunCollectionId, createMode);
-      await setCollectionSponsorExpectSuccess(refunCollectionId, bob.address);
-      await confirmSponsorshipExpectSuccess(refunCollectionId, '//Bob');
-      expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId)).to.be.equal(0);
+    await collection.setSponsor(alice, bob.address);
+    await collection.confirmSponsorship(bob);
 
-      await transferExpectSuccess(refunCollectionId, refunItemId, alice, bob, 10, 'ReFungible');
-      expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId)).to.be.lessThanOrEqual(5);
+    // Check with Confirmed sponsoring state
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.equal(0);
 
-      // Not existing token 
-      expect(await getNextSponsored(api, refunCollectionId, normalizeAccountId(alice), refunItemId+1)).to.be.equal(-1);
-    });
+    // Check after transfer
+    await token.transfer(alice, {Substrate: bob.address});
+    expect(await token.getNextSponsored({Substrate: alice.address})).to.be.lessThanOrEqual(SPONSORING_TIMEOUT);
+
+    // Non-existing token 
+    expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.null;
   });
 });

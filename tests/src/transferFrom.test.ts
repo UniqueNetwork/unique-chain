@@ -31,7 +31,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
 
   itSub('[nft] Execute the extrinsic and check nftItemList - owner of token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'TransferFrom-1', description: '', tokenPrefix: 'TF'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
     await nft.approve(alice, {Substrate: bob.address});
     expect(await nft.isApproved({Substrate: bob.address})).to.be.true;
 
@@ -41,7 +41,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
 
   itSub('[fungible] Execute the extrinsic and check nftItemList - owner of token', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-2', description: '', tokenPrefix: 'TF'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
     await collection.approveTokens(alice, {Substrate: bob.address}, 7n);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(7n);
     
@@ -53,7 +53,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
 
   itSub.ifWithPallets('[refungible] Execute the extrinsic and check nftItemList - owner of token', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'TransferFrom-3', description: '', tokenPrefix: 'TF'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
     await rft.approve(alice, {Substrate: bob.address}, 7n);
     expect(await rft.getApprovedPieces({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(7n);
     
@@ -66,7 +66,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
   itSub('Should reduce allowance if value is big', async ({helper}) => {
     // fungible
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-4', description: '', tokenPrefix: 'TF'});
-    await collection.mint(alice, {Substrate: alice.address}, 500000n);
+    await collection.mint(alice, 500000n);
 
     await collection.approveTokens(alice, {Substrate: bob.address}, 500000n);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(500000n);
@@ -118,7 +118,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('[nft] transferFrom for not approved address', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'TransferFrom-Neg-1', description: '', tokenPrefix: 'TF'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await expect(nft.transferFrom(bob, {Substrate: alice.address}, {Substrate: charlie.address}))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
@@ -127,7 +127,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('[fungible] transferFrom for not approved address', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-Neg-1', description: '', tokenPrefix: 'TF'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await expect(collection.transferFrom(bob, {Substrate: alice.address}, {Substrate: charlie.address}, 5n))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
@@ -138,7 +138,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub.ifWithPallets('[refungible] transferFrom for not approved address', [Pallets.ReFungible], async({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'TransferFrom-Neg-3', description: '', tokenPrefix: 'TF'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await expect(rft.transferFrom(bob, {Substrate: alice.address}, {Substrate: charlie.address}))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
@@ -149,7 +149,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('[nft] transferFrom incorrect token count', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'TransferFrom-Neg-4', description: '', tokenPrefix: 'TF'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await nft.approve(alice, {Substrate: bob.address});
     expect(await nft.isApproved({Substrate: bob.address})).to.be.true;
@@ -167,7 +167,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('[fungible] transferFrom incorrect token count', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-Neg-5', description: '', tokenPrefix: 'TF'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await collection.approveTokens(alice, {Substrate: bob.address}, 2n);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.eq(2n);
@@ -181,7 +181,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub.ifWithPallets('[refungible] transferFrom incorrect token count', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'TransferFrom-Neg-6', description: '', tokenPrefix: 'TF'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await rft.approve(alice, {Substrate: bob.address}, 5n);
     expect(await rft.getApprovedPieces({Substrate: alice.address}, {Substrate: bob.address})).to.be.eq(5n);
@@ -195,7 +195,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('[nft] execute transferFrom from account that is not owner of collection', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'TransferFrom-Neg-7', description: '', tokenPrefix: 'TF'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await expect(nft.approve(charlie, {Substrate: bob.address})).to.be.rejectedWith(/common\.CantApproveMoreThanOwned/);
     expect(await nft.isApproved({Substrate: bob.address})).to.be.false;
@@ -210,7 +210,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('[fungible] execute transferFrom from account that is not owner of collection', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-Neg-8', description: '', tokenPrefix: 'TF'});
-    await collection.mint(alice, {Substrate: alice.address}, 10000n);
+    await collection.mint(alice, 10000n);
 
     await expect(collection.approveTokens(charlie, {Substrate: bob.address}, 1n)).to.be.rejectedWith(/common\.CantApproveMoreThanOwned/);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.eq(0n);
@@ -228,7 +228,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub.ifWithPallets('[refungible] execute transferFrom from account that is not owner of collection', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'TransferFrom-Neg-9', description: '', tokenPrefix: 'TF'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10000n);
+    const rft = await collection.mintToken(alice, 10000n);
 
     await expect(rft.approve(charlie, {Substrate: bob.address}, 1n)).to.be.rejectedWith(/common\.CantApproveMoreThanOwned/);
     expect(await rft.getApprovedPieces({Substrate: alice.address}, {Substrate: bob.address})).to.be.eq(0n);
@@ -247,7 +247,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   itSub('transferFrom burnt token before approve NFT', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'TransferFrom-Neg-10', description: '', tokenPrefix: 'TF'});
     await collection.setLimits(alice, {ownerCanTransfer: true});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await nft.burn(alice);
     await expect(nft.approve(alice, {Substrate: bob.address})).to.be.rejectedWith(/common\.TokenNotFound/);
@@ -262,7 +262,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   itSub('transferFrom burnt token before approve Fungible', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-Neg-11', description: '', tokenPrefix: 'TF'});
     await collection.setLimits(alice, {ownerCanTransfer: true});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await collection.burnTokens(alice, 10n);
     await expect(collection.approveTokens(alice, {Substrate: bob.address})).to.be.not.rejected;
@@ -277,7 +277,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   itSub.ifWithPallets('transferFrom burnt token before approve ReFungible', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'TransferFrom-Neg-12', description: '', tokenPrefix: 'TF'});
     await collection.setLimits(alice, {ownerCanTransfer: true});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await rft.burn(alice, 10n);
     await expect(rft.approve(alice, {Substrate: bob.address})).to.be.rejectedWith(/common\.CantApproveMoreThanOwned/);
@@ -291,7 +291,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('transferFrom burnt token after approve NFT', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'TransferFrom-Neg-13', description: '', tokenPrefix: 'TF'});
-    const nft = await collection.mintToken(alice, {Substrate: alice.address});
+    const nft = await collection.mintToken(alice);
 
     await nft.approve(alice, {Substrate: bob.address});
     expect(await nft.isApproved({Substrate: bob.address})).to.be.true;
@@ -307,7 +307,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub('transferFrom burnt token after approve Fungible', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'TransferFrom-Neg-14', description: '', tokenPrefix: 'TF'});
-    await collection.mint(alice, {Substrate: alice.address}, 10n);
+    await collection.mint(alice, 10n);
 
     await collection.approveTokens(alice, {Substrate: bob.address});
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.eq(1n);
@@ -323,7 +323,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
   itSub.ifWithPallets('transferFrom burnt token after approve ReFungible', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'TransferFrom-Neg-15', description: '', tokenPrefix: 'TF'});
-    const rft = await collection.mintToken(alice, {Substrate: alice.address}, 10n);
+    const rft = await collection.mintToken(alice, 10n);
 
     await rft.approve(alice, {Substrate: bob.address}, 10n);
     expect(await rft.getApprovedPieces({Substrate: alice.address}, {Substrate: bob.address})).to.be.eq(10n);

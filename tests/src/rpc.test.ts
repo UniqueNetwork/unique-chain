@@ -44,7 +44,7 @@ describe('integration test: RPC methods', () => {
     
     const collection = await helper.ft.mintCollection(alice, {name: 'RPC-2', tokenPrefix: 'RPC'});
     // mint some maximum (u128) amounts of tokens possible
-    await collection.mint(alice, {Substrate: alice.address}, (1n << 128n) - 1n);
+    await collection.mint(alice, (1n << 128n) - 1n);
     
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);

@@ -35,7 +35,7 @@ describe('integration test: Fungible functionality:', () => {
     const defaultTokenId = await collection.getLastTokenId();
     expect(defaultTokenId).to.be.equal(0);
 
-    await collection.mint(alice, {Substrate: alice.address}, U128_MAX);
+    await collection.mint(alice, U128_MAX);
     const aliceBalance = await collection.getBalance({Substrate: alice.address});
     const itemCountAfter = await collection.getLastTokenId();
 
@@ -49,7 +49,7 @@ describe('integration test: Fungible functionality:', () => {
 
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    await collection.mint(alice, {Substrate: alice.address}, U128_MAX);
+    await collection.mint(alice, U128_MAX);
 
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);
@@ -72,7 +72,7 @@ describe('integration test: Fungible functionality:', () => {
   itSub('Transfer token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    await collection.mint(alice, {Substrate: alice.address}, 500n);
+    await collection.mint(alice, 500n);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(500n);
     expect(await collection.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
@@ -88,7 +88,7 @@ describe('integration test: Fungible functionality:', () => {
   itSub('Tokens multiple creation', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    await collection.mintWithOneOwner(alice, {Substrate: alice.address}, [
+    await collection.mintWithOneOwner(alice, [
       {value: 500n},
       {value: 400n},
       {value: 300n},
@@ -99,7 +99,7 @@ describe('integration test: Fungible functionality:', () => {
 
   itSub('Burn some tokens ', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    await collection.mint(alice, {Substrate: alice.address}, 500n);
+    await collection.mint(alice, 500n);
 
     expect(await collection.isTokenExists(0)).to.be.true;
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(500n);
@@ -110,7 +110,7 @@ describe('integration test: Fungible functionality:', () => {
   
   itSub('Burn all tokens ', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    await collection.mint(alice, {Substrate: alice.address}, 500n);
+    await collection.mint(alice, 500n);
 
     expect(await collection.isTokenExists(0)).to.be.true;
     expect(await collection.burnTokens(alice, 500n)).to.be.true;
@@ -123,7 +123,7 @@ describe('integration test: Fungible functionality:', () => {
   itSub('Set allowance for token', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-    await collection.mint(alice, {Substrate: alice.address}, 100n);
+    await collection.mint(alice, 100n);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(100n);
     
