@@ -26,12 +26,14 @@ use frame_support::{
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, AccountIdLookup},
-	Perbill, Permill, Percent,
+	Perquintill, Perbill, Permill, Percent,
 };
+use sp_arithmetic::traits::{Zero, One};
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use crate::{
 	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, PalletInfo,
 	System, Balances, Treasury, SS58Prefix, Version,
@@ -152,7 +154,16 @@ parameter_types! {
 	/// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
 	pub const OperationalFeeMultiplier: u8 = 5;
+
+	pub const TargetBlockFullness: Perquintill = Perquintill::zero();
+
+	pub AdjustmentVariable: Multiplier = Multiplier::zero();
+
+	pub MinimumMultiplier: Multiplier = Multiplier::one();
 }
+
+pub type IdentityFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -160,7 +171,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = pallet_configuration::WeightToFee<Self, Balance>;
-	type FeeMultiplierUpdate = ();
+	type FeeMultiplierUpdate = IdentityFeeUpdate<Self>;
 }
 
 parameter_types! {
