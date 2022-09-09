@@ -85,11 +85,11 @@ jobs:
       - name: Install jq
         run: sudo apt install jq -y
 
-      - name: Get autorization token from DOCKERHUB
-        run: |                 
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
+      # - name: Get autorization token from DOCKERHUB
+      #   run: |                 
+      #     # aquire token
+      #       TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+      #       export TOKEN=$TOKEN
 
       # Check POLKADOT version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for POLKADOT
@@ -102,8 +102,12 @@ jobs:
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
 
       - name: Check if the dockerhub repository contains the needed version POLKADOT
-        run: |                 
-          # Get TAGS from DOCKERHUB repository
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB POLKADOT repository
             POLKADOT_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadot/tags/?page_size=100 | jq -r '."results"[]["name"]')
           # Show TAGS
             echo "POLKADOT TAGS:"
