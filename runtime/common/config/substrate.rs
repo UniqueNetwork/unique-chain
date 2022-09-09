@@ -162,7 +162,7 @@ parameter_types! {
 	pub MinimumMultiplier: Multiplier = Multiplier::one();
 }
 
-pub type IdentityFeeUpdate<R> =
+pub type ConstFeeMultiplier<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -171,7 +171,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = pallet_configuration::WeightToFee<Self, Balance>;
-	type FeeMultiplierUpdate = IdentityFeeUpdate<Self>;
+	type FeeMultiplierUpdate = ConstFeeMultiplier<Self>;
 }
 
 parameter_types! {
