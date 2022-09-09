@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import { expectSubstrateEventsAtBlock } from '../util/helpers';
+import {expectSubstrateEventsAtBlock} from '../util/helpers';
 import {
   contractHelpers,
   createEthAccountWithBalance,

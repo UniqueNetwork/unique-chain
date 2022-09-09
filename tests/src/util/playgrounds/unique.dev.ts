@@ -257,6 +257,7 @@ class WaitGroup {
   }
 
   async forParachainBlockNumber(blockNumber: bigint) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(async (data: any) => {
         if (data.number.toNumber() >= blockNumber) {
@@ -268,6 +269,7 @@ class WaitGroup {
   }
   
   async forRelayBlockNumber(blockNumber: bigint) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.api!.query.parachainSystem.validationData(async (data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {

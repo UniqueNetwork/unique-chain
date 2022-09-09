@@ -97,7 +97,7 @@
   "dependencies": {
     "@polkadot/api": "9.2.2",
     "@polkadot/api-contract": "9.2.2",
-    "@polkadot/util-crypto": "10.1.1",
+    "@polkadot/util-crypto": "10.1.4",
     "bignumber.js": "^9.0.2",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
