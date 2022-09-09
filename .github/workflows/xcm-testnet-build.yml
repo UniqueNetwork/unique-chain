@@ -82,6 +82,9 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
+      - name: Install jq
+        run: sudo apt install jq -y
+
       - name: Get autorization token from DOCKERHUB
         run: |                 
           # aquire token
