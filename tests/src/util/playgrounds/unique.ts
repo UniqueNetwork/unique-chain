@@ -1419,8 +1419,8 @@ class NFTGroup extends NFTnRFT {
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string) {
-    return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, 1n);
+  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string, amount=1n) {
+    return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, amount);
   }
 }
 

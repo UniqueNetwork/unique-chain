@@ -15,33 +15,21 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {ApiPromise} from '@polkadot/api';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
 import {
   approveExpectFail,
   approveExpectSuccess,
   createCollectionExpectSuccess,
   createItemExpectSuccess,
-  destroyCollectionExpectSuccess,
-  setCollectionLimitsExpectSuccess,
-  transferExpectSuccess,
-  addCollectionAdminExpectSuccess,
-  adminApproveFromExpectFail,
-  getCreatedCollectionCount,
-  transferFromExpectSuccess,
-  transferFromExpectFail,
-  requirePallets,
-  Pallets,
 } from './util/helpers';
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 
 let donor: IKeyringPair;
 
 before(async () => {
-  await usingPlaygrounds(async (_, privateKeyWrapper) => {
-    donor = privateKeyWrapper('//Alice');
+  await usingPlaygrounds(async (_, privateKey) => {
+    donor = privateKey('//Alice');
   });
 });
 
@@ -95,7 +83,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
+      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
     });
   });
@@ -333,7 +321,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-      await helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0).signAndSend(alice);
+      await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address}, undefined, 0n);
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
       const transferTokenFromTx = async () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
       await expect(transferTokenFromTx()).to.be.rejected;
@@ -391,7 +379,8 @@ describe('User cannot approve for the amount greater than they own:', () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-      await helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2).signAndSend(bob);
+      const approveTx = async () => helper.nft.approveToken(bob, collectionId, tokenId, {Substrate: charlie.address}, undefined, 2n);
+      await expect(approveTx()).to.be.rejected;
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.false;
     });
   });
