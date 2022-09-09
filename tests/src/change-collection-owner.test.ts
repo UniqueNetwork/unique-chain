@@ -14,231 +14,182 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {createCollectionExpectSuccess,
-  addCollectionAdminExpectSuccess,
-  setCollectionSponsorExpectSuccess,
-  confirmSponsorshipExpectSuccess,
-  removeCollectionSponsorExpectSuccess,
-  enableAllowListExpectSuccess,
-  setMintPermissionExpectSuccess,
-  destroyCollectionExpectSuccess,
-  setCollectionSponsorExpectFailure,
-  confirmSponsorshipExpectFailure,
-  removeCollectionSponsorExpectFailure,
-  enableAllowListExpectFail,
-  setMintPermissionExpectFailure,
-  destroyCollectionExpectFailure,
-  setPublicAccessModeExpectSuccess,
-  queryCollectionExpectSuccess,
-} from './util/helpers';
+import {usingPlaygrounds} from './util/playgrounds';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+let donor: IKeyringPair;
+
+before(async () => {
+  await usingPlaygrounds(async (_, privateKey) => {
+    donor = privateKey('//Alice');
+  });
+});
+
 describe('Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
+    });
+  });
+
   it('Changing owner changes owner address', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const beforeChanging = await helper.collection.getData(collection.collectionId);
+      expect(beforeChanging?.normalizedOwner).to.be.equal(alice.address);
 
-      const collection =await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.deep.eq(alice.address);
-
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await submitTransactionAsync(alice, changeOwnerTx);
-
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
+      await collection.changeOwner(alice, bob.address);
+      const afterChanging = await helper.collection.getData(collection.collectionId);
+      expect(afterChanging?.normalizedOwner).to.be.equal(bob.address);
     });
   });
 });
 
 describe('Integration Test changeCollectionOwner(collection_id, new_owner) special checks for exOwner:', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+    });
+  });
+
   it('Changing the owner of the collection is not allowed for the former owner', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
 
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.deep.eq(alice.address);
+      await collection.changeOwner(alice, bob.address);
 
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await submitTransactionAsync(alice, changeOwnerTx);
+      const changeOwnerTx = async () => collection.changeOwner(alice, alice.address);
+      await expect(changeOwnerTx()).to.be.rejected;
 
-      const badChangeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, alice.address);
-      await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
-
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
+      const afterChanging = await helper.collection.getData(collection.collectionId);
+      expect(afterChanging?.normalizedOwner).to.be.equal(bob.address);
     });
   });
 
   it('New collectionOwner has access to sponsorship management operations in the collection', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.changeOwner(alice, bob.address);
 
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.deep.eq(alice.address);
+      const afterChanging = await helper.collection.getData(collection.collectionId);
+      expect(afterChanging?.normalizedOwner).to.be.equal(bob.address);
 
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await submitTransactionAsync(alice, changeOwnerTx);
-
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
-
-      // After changing the owner of the collection, all privileged methods are available to the new owner
-      // The new owner of the collection has access to sponsorship management operations in the collection
-      await setCollectionSponsorExpectSuccess(collectionId, charlie.address, '//Bob');
-      await confirmSponsorshipExpectSuccess(collectionId, '//Charlie');
-      await removeCollectionSponsorExpectSuccess(collectionId, '//Bob');
-
-      // The new owner of the collection has access to operations for managing the collection parameters
-      const collectionLimits = {
+      await collection.setSponsor(bob, charlie.address);
+      await collection.confirmSponsorship(charlie);
+      await collection.removeSponsor(bob);
+      const limits = {
         accountTokenOwnershipLimit: 1,
-        sponsoredMintSize: 1,
         tokenLimit: 1,
         sponsorTransferTimeout: 1,
-        ownerCanTransfer: true,
         ownerCanDestroy: true,
+        ownerCanTransfer: true,
       };
-      const tx1 = api.tx.unique.setCollectionLimits(
-        collectionId,
-        collectionLimits,
-      );
-      await submitTransactionAsync(bob, tx1);
 
-      await setPublicAccessModeExpectSuccess(bob, collectionId, 'AllowList');
-      await enableAllowListExpectSuccess(bob, collectionId);
-      await setMintPermissionExpectSuccess(bob, collectionId, true);
-      await destroyCollectionExpectSuccess(collectionId, '//Bob');
+      await collection.setLimits(bob, limits);
+      const gotLimits = await collection.getEffectiveLimits();
+      expect(gotLimits).to.be.deep.contains(limits);
+
+      await collection.setPermissions(bob, {access: 'AllowList', mintMode: true});
+
+      await collection.burn(bob);
+      const collectionData = await helper.collection.getData(collection.collectionId);
+      expect(collectionData).to.be.null;
     });
   });
 
   it('New collectionOwner has access to changeCollectionOwner', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//Charlie');
-
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.deep.eq(alice.address);
-
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await submitTransactionAsync(alice, changeOwnerTx);
-
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
-
-      const changeOwnerTx2 = api.tx.unique.changeCollectionOwner(collectionId, charlie.address);
-      await submitTransactionAsync(bob, changeOwnerTx2);
-
-      // ownership lost
-      const collectionAfterOwnerChange2 = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange2.owner.toString()).to.be.deep.eq(charlie.address);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.changeOwner(alice, bob.address);
+      await collection.changeOwner(bob, charlie.address);
+      const collectionData = await collection.getData();
+      expect(collectionData?.normalizedOwner).to.be.equal(charlie.address);
     });
   });
 });
 
 describe('Negative Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+    });
+  });
+
   it('Not owner can\'t change owner.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
-
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(alice.address);
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const changeOwnerTx = async () => collection.changeOwner(bob, bob.address);
+      await expect(changeOwnerTx()).to.be.rejected;
     });
   });
 
   it('Collection admin can\'t change owner.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await expect(submitTransactionExpectFailAsync(bob, changeOwnerTx)).to.be.rejected;
-
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(alice.address);
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.addAdmin(alice, {Substrate: bob.address});
+      const changeOwnerTx = async () => collection.changeOwner(bob, bob.address);
+      await expect(changeOwnerTx()).to.be.rejected;
     });
   });
 
   it('Can\'t change owner of a non-existing collection.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = (1<<32) - 1;
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
+    await usingPlaygrounds(async (helper) => {
+      const collectionId = (1 << 32) - 1;
+      const changeOwnerTx = async () => helper.collection.changeOwner(bob, collectionId, bob.address);
+      await expect(changeOwnerTx()).to.be.rejected;
     });
   });
 
   it('Former collectionOwner not allowed to sponsorship management operations in the collection', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.changeOwner(alice, bob.address);
 
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.deep.eq(alice.address);
+      const changeOwnerTx = async () => collection.changeOwner(alice, alice.address);
+      await expect(changeOwnerTx()).to.be.rejected;
 
-      const changeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, bob.address);
-      await submitTransactionAsync(alice, changeOwnerTx);
+      const afterChanging = await helper.collection.getData(collection.collectionId);
+      expect(afterChanging?.normalizedOwner).to.be.equal(bob.address);
 
-      const badChangeOwnerTx = api.tx.unique.changeCollectionOwner(collectionId, alice.address);
-      await expect(submitTransactionExpectFailAsync(alice, badChangeOwnerTx)).to.be.rejected;
+      const setSponsorTx = async () => collection.setSponsor(alice, charlie.address);
+      const confirmSponsorshipTx = async () => collection.confirmSponsorship(alice);
+      const removeSponsorTx = async () => collection.removeSponsor(alice);
+      await expect(setSponsorTx()).to.be.rejected;
+      await expect(confirmSponsorshipTx()).to.be.rejected;
+      await expect(removeSponsorTx()).to.be.rejected;
 
-      const collectionAfterOwnerChange = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collectionAfterOwnerChange.owner.toString()).to.be.deep.eq(bob.address);
-
-      await setCollectionSponsorExpectFailure(collectionId, charlie.address, '//Alice');
-      await confirmSponsorshipExpectFailure(collectionId, '//Alice');
-      await removeCollectionSponsorExpectFailure(collectionId, '//Alice');
-
-      const collectionLimits = {
+      const limits = {
         accountTokenOwnershipLimit: 1,
-        sponsoredMintSize: 1,
         tokenLimit: 1,
         sponsorTransferTimeout: 1,
-        ownerCanTransfer: true,
         ownerCanDestroy: true,
+        ownerCanTransfer: true,
       };
-      const tx1 = api.tx.unique.setCollectionLimits(
-        collectionId,
-        collectionLimits,
-      );
-      await expect(submitTransactionExpectFailAsync(alice, tx1)).to.be.rejected;
 
-      await enableAllowListExpectFail(alice, collectionId);
-      await setMintPermissionExpectFailure(alice, collectionId, true);
-      await destroyCollectionExpectFailure(collectionId, '//Alice');
+      const setLimitsTx = async () => collection.setLimits(alice, limits);
+      await expect(setLimitsTx()).to.be.rejected;
+
+      const setPermissionTx = async () => collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+      await expect(setPermissionTx()).to.be.rejected;
+
+      const burnTx = async () => collection.burn(alice);
+      await expect(burnTx()).to.be.rejected;
     });
   });
 });
