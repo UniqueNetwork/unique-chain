@@ -23,7 +23,7 @@ import {itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe.skip('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
+describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
@@ -116,7 +116,7 @@ describe.skip('Integration Test Transfer(recipient, collection_id, item_id, valu
   });
 });
 
-describe.skip('Negative Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
+describe('Negative Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
