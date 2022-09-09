@@ -17,17 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
-import {
-  createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  transferExpectFailure,
-  transferFromExpectSuccess,
-  burnItemExpectFailure,
-  burnFromExpectSuccess,
-  setCollectionLimitsExpectSuccess,
-} from './util/helpers';
-import { usingPlaygrounds } from './util/playgrounds';
+import {usingPlaygrounds} from './util/playgrounds';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -35,8 +25,8 @@ const expect = chai.expect;
 let donor: IKeyringPair;
 
 before(async () => {
-  await usingPlaygrounds(async (_, privateKeyWrapper) => {
-    donor = privateKeyWrapper('//Alice');
+  await usingPlaygrounds(async (_, privateKey) => {
+    donor = privateKey('//Alice');
   });
 });
 
@@ -54,7 +44,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
   it('admin transfers other user\'s token', async () => {
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
-      const setLimitsResult = await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
       const limits = await helper.collection.getEffectiveLimits(collectionId);
       expect(limits.ownerCanTransfer).to.be.true;
 
@@ -62,7 +52,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
       const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       await expect(transferResult()).to.be.rejected;
 
-      const res = await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
+      await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
       const newTokenOwner = await helper.nft.getTokenOwner(collectionId, tokenId);
       expect(newTokenOwner.Substrate).to.be.equal(charlie.address);
     });
@@ -72,7 +62,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
     await usingPlaygrounds(async (helper) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
 
-      const setLimitsResult = await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
       const limits = await helper.collection.getEffectiveLimits(collectionId);
       expect(limits.ownerCanTransfer).to.be.true;
 
@@ -81,7 +71,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
 
       await expect(burnTxFailed()).to.be.rejected;
 
-      const burnResult = await helper.nft.burnToken(bob, collectionId, tokenId);
+      await helper.nft.burnToken(bob, collectionId, tokenId);
       const token = await helper.nft.getToken(collectionId, tokenId);
       expect(token).to.be.null;
     });
