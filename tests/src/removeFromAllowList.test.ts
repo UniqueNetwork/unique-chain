@@ -16,21 +16,8 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
-import {
-  createCollectionExpectSuccess,
-  destroyCollectionExpectSuccess,
-  enableAllowListExpectSuccess,
-  addToAllowListExpectSuccess,
-  removeFromAllowListExpectSuccess,
-  isAllowlisted,
-  findNotExistingCollection,
-  removeFromAllowListExpectFailure,
-  disableAllowListExpectSuccess,
-  normalizeAccountId,
-  addCollectionAdminExpectSuccess,
-} from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds} from './util/playgrounds';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -40,32 +27,37 @@ describe('Integration Test removeFromAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });
 
-  it('ensure bob is not in allowlist after removal', async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
+  itSub('ensure bob is not in allowlist after removal', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveFromAllowList-1', tokenPrefix: 'RFAL'});
 
-      await removeFromAllowListExpectSuccess(alice, collectionId, normalizeAccountId(bob.address));
-      expect(await isAllowlisted(api, collectionId, bob.address)).to.be.false;
-    });
+    const collectionInfo = await collection.getData();
+    expect(collectionInfo!.raw.permissions.access).to.not.equal('AllowList');
+
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
+    expect(await collection.getAllowList()).to.deep.contains({Substrate: bob.address});
+    
+    await collection.removeFromAllowList(alice, {Substrate: bob.address});
+    expect(await collection.getAllowList()).to.be.empty;
   });
 
-  it('allows removal from collection with unset allowlist status', async () => {
-    await usingApi(async () => {
-      const collectionWithoutAllowlistId = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionWithoutAllowlistId);
-      await addToAllowListExpectSuccess(alice, collectionWithoutAllowlistId, bob.address);
-      await disableAllowListExpectSuccess(alice, collectionWithoutAllowlistId);
+  itSub('allows removal from collection with unset allowlist status', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveFromAllowList-2', tokenPrefix: 'RFAL'});
 
-      await removeFromAllowListExpectSuccess(alice, collectionWithoutAllowlistId, normalizeAccountId(bob.address));
-    });
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
+    expect(await collection.getAllowList()).to.deep.contains({Substrate: bob.address});
+
+    await collection.setPermissions(alice, {access: 'Normal'});
+    
+    await collection.removeFromAllowList(alice, {Substrate: bob.address});
+    expect(await collection.getAllowList()).to.be.empty;
   });
 });
 
@@ -74,29 +66,26 @@ describe('Negative Integration Test removeFromAllowList', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });
 
-  it('fails on removal from not existing collection', async () => {
-    await usingApi(async (api) => {
-      const collectionId = await findNotExistingCollection(api);
-
-      await removeFromAllowListExpectFailure(alice, collectionId, normalizeAccountId(bob.address));
-    });
+  itSub('fails on removal from not existing collection', async ({helper}) => {
+    const nonExistentCollectionId = (1 << 32) - 1;
+    await expect(helper.collection.removeFromAllowList(alice, nonExistentCollectionId, {Substrate: alice.address}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  it('fails on removal from removed collection', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
-      await destroyCollectionExpectSuccess(collectionId);
+  itSub('fails on removal from removed collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveFromAllowList-3', tokenPrefix: 'RFAL'});
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
 
-      await removeFromAllowListExpectFailure(alice, collectionId, normalizeAccountId(bob.address));
-    });
+    await collection.burn(alice);
+    await expect(collection.removeFromAllowList(alice, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 });
 
@@ -106,41 +95,45 @@ describe('Integration Test removeFromAllowList with collection admin permissions
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
 
-  it('ensure address is not in allowlist after removal', async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      await addToAllowListExpectSuccess(alice, collectionId, charlie.address);
-      await removeFromAllowListExpectSuccess(bob, collectionId, normalizeAccountId(charlie.address));
-      expect(await isAllowlisted(api, collectionId, charlie.address)).to.be.false;
-    });
+  itSub('ensure address is not in allowlist after removal', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveFromAllowList-4', tokenPrefix: 'RFAL'});
+    
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+
+    await collection.addToAllowList(bob, {Substrate: charlie.address});
+    await collection.removeFromAllowList(bob, {Substrate: charlie.address});
+
+    expect(await collection.getAllowList()).to.be.empty;
   });
 
-  it('Collection admin allowed to remove from allowlist with unset allowlist status', async () => {
-    await usingApi(async () => {
-      const collectionWithoutAllowlistId = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionWithoutAllowlistId);
-      await addCollectionAdminExpectSuccess(alice, collectionWithoutAllowlistId, bob.address);
-      await addToAllowListExpectSuccess(alice, collectionWithoutAllowlistId, charlie.address);
-      await disableAllowListExpectSuccess(alice, collectionWithoutAllowlistId);
-      await removeFromAllowListExpectSuccess(bob, collectionWithoutAllowlistId, normalizeAccountId(charlie.address));
-    });
+  itSub('Collection admin allowed to remove from allowlist with unset allowlist status', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveFromAllowList-5', tokenPrefix: 'RFAL'});
+
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await collection.addToAllowList(alice, {Substrate: charlie.address});
+
+    await collection.setPermissions(bob, {access: 'Normal'});
+    await collection.removeFromAllowList(bob, {Substrate: charlie.address});
+
+    expect(await collection.getAllowList()).to.be.empty;
   });
 
-  it('Regular user can`t remove from allowlist', async () => {
-    await usingApi(async () => {
-      const collectionWithoutAllowlistId = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionWithoutAllowlistId);
-      await addToAllowListExpectSuccess(alice, collectionWithoutAllowlistId, charlie.address);
-      await removeFromAllowListExpectFailure(bob, collectionWithoutAllowlistId, normalizeAccountId(charlie.address));
-    });
+  itSub('Regular user can`t remove from allowlist', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveFromAllowList-6', tokenPrefix: 'RFAL'});
+
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: charlie.address});
+
+    await expect(collection.removeFromAllowList(bob, {Substrate: charlie.address}))
+      .to.be.rejectedWith(/common\.NoPermission/);
+    expect(await collection.getAllowList()).to.deep.contain({Substrate: charlie.address});
   });
 });

@@ -2128,10 +2128,6 @@ class UniqueCollectionBase {
     return await this.helper.collection.addAdmin(signer, this.collectionId, adminAddressObj);
   }
 
-  async enableCertainPermissions(signer: TSigner, accessMode: 'AllowList' | 'Normal' | undefined = 'AllowList', mintMode: boolean | undefined = true) {
-    return await this.setPermissions(signer, {access: accessMode, mintMode: mintMode});
-  }
-
   async addToAllowList(signer: TSigner, addressObj: ICrossAccountId) {
     return await this.helper.collection.addToAllowList(signer, this.collectionId, addressObj);
   }

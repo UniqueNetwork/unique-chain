@@ -44,6 +44,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);
 
+// todo:playgrounds skipped ~ postponed
 describe.skip('Scheduling token and balance transfers', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
