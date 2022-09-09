@@ -16,12 +16,7 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setschemaversion
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {itSub, usingPlaygrounds} from './util/playgrounds';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('Integration Test setPublicAccessMode(): ', () => {
   let alice: IKeyringPair;

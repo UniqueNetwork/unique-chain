@@ -15,13 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import {itEth, usingEthPlaygrounds} from './eth/util/playgrounds';
-import {itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {itSub, Pallets, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   let alice: IKeyringPair;

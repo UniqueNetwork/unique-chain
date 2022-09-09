@@ -14,13 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds} from './util/playgrounds';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('integration test: ext. removeCollectionSponsor():', () => {
   let donor: IKeyringPair;

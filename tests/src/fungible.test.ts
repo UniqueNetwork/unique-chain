@@ -16,13 +16,9 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {U128_MAX} from './util/helpers';
-import {itSub, usingPlaygrounds} from './util/playgrounds';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-
+// todo:playgrounds get rid of globals
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 

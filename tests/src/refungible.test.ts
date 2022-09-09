@@ -15,12 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/playgrounds';
-
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './util/playgrounds';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
