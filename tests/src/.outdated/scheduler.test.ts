@@ -47,6 +47,7 @@ import {
   Pallets,
 } from '../deprecated-helpers/helpers';
 import {IKeyringPair, SignatureOptions} from '@polkadot/types/types';
+import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import {ApiPromise} from '@polkadot/api';
 import {objectSpread} from '@polkadot/util';
 
@@ -215,7 +216,7 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  it.only('Scheduled tasks should take some fees', async function() {
+  it('Scheduled tasks should take correct fees', async function() {
     await requirePallets(this, [Pallets.TestUtils]);
 
     await usingApi(async api => {
@@ -225,20 +226,27 @@ describe('Scheduling token and balance transfers', () => {
       const repetitions = 2;
 
       const dummyTx = api.tx.testUtils.justTakeFee();
-      const expectedFee = (await dummyTx.paymentInfo(alice)).partialFee.toBigInt();
-      const expFee = (await api.rpc.payment.queryFeeDetails(dummyTx.toHex())).inclusionFee.unwrap().toHuman();
+  
+      const signingInfo = await api.derive.tx.signingInfo(alice.address);
 
-      console.log('>>>>>> expFee = ' + JSON.stringify(expFee));
+      // We need to sign the tx because
+      // unsigned transactions does not have an inclusion fee
+      dummyTx.sign(alice, {
+        blockHash: api.genesisHash,
+        genesisHash: api.genesisHash,
+        runtimeVersion: api.runtimeVersion,
+        nonce: signingInfo.nonce,
+      });
 
-      // const collectionCreate = api.tx.unique.createCollectionEx({
-      //   name: 0,
-      //   tokenPrefix: 0xfaf,
-      // });
+      const scheduledLen = dummyTx.callIndex.length;
 
-      // const options = makeSignOptions(api);
-      // const signed = collectionCreate.sign(alice, options);
-      // const expFee2 = (await api.rpc.payment.queryFeeDetails(signed.toHex())).inclusionFee.unwrap().toHuman();
-      // console.log('!!!!!!!!!!!! expFee2 = ' + JSON.stringify(expFee2));
+      const queryInfo = await api.call.transactionPaymentApi.queryInfo(
+        dummyTx.toHex(),
+        scheduledLen,
+      );
+
+      const expectedScheduledFee = (await queryInfo as RuntimeDispatchInfo)
+        .partialFee.toBigInt();
 
       await expect(scheduleAfter(
         api,
@@ -264,7 +272,10 @@ describe('Scheduling token and balance transfers', () => {
       ).to.be.true;
 
       diff = aliceInitBalance - aliceBalanceAfterFirst;
-      expect(diff).to.be.equal(expectedFee, 'Scheduled task should take the right amount of fees');
+      expect(diff).to.be.equal(
+        expectedScheduledFee,
+        'Scheduled task should take the right amount of fees',
+      );
 
       await waitNewBlocks(period);
 
@@ -275,7 +286,10 @@ describe('Scheduling token and balance transfers', () => {
       ).to.be.true;
 
       diff = aliceBalanceAfterFirst - aliceBalanceAfterSecond;
-      expect(diff).to.be.equal(expectedFee, 'Scheduled task should take the right amount of fees');
+      expect(diff).to.be.equal(
+        expectedScheduledFee,
+        'Scheduled task should take the right amount of fees',
+      );
     });
   });
 
