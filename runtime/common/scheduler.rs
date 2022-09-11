@@ -24,6 +24,7 @@ use sp_runtime::{
 	transaction_validity::TransactionValidityError,
 	DispatchErrorWithPostInfo, DispatchError,
 };
+use codec::Encode;
 use crate::{Runtime, Call, Origin, Balances};
 use up_common::types::{AccountId, Balance};
 use fp_self_contained::SelfContainedCall;
@@ -79,6 +80,7 @@ where
 		TransactionValidityError,
 	> {
 		let dispatch_info = call.get_dispatch_info();
+		let len = call.encoded_size();
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,
 			Call,
@@ -93,7 +95,7 @@ where
 			function: call.into(),
 		};
 
-		extrinsic.apply::<Runtime>(&dispatch_info, 0)
+		extrinsic.apply::<Runtime>(&dispatch_info, len)
 	}
 
 	fn reserve_balance(
