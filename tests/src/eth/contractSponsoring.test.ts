@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
+import {expectSubstrateEventsAtBlock} from '../util/helpers';
 import {
   contractHelpers,
   createEthAccountWithBalance,
@@ -24,6 +25,7 @@ import {
   SponsoringMode,
   createEthAccount,
   ethBalanceViaSub,
+  normalizeEvents,
 } from './util/helpers';
 
 describe('Sponsoring EVM contracts', () => {
@@ -34,6 +36,41 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
     await expect(helpers.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
+  });
+
+  itWeb3('Set self sponsored events', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    
+    const result = await helpers.methods.selfSponsoredEnable(flipper.options.address).send();
+    // console.log(result);
+    const ethEvents = normalizeEvents(result.events);
+    expect(ethEvents).to.be.deep.equal([
+      {
+        address: flipper.options.address,
+        event: 'ContractSponsorSet',
+        args: {
+          contractAddress: flipper.options.address,
+          sponsor: flipper.options.address,
+        },
+      },
+      {
+        address: flipper.options.address,
+        event: 'ContractSponsorshipConfirmed',
+        args: {
+          contractAddress: flipper.options.address,
+          sponsor: flipper.options.address,
+        },
+      },
+    ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorSet','ContractSponsorshipConfirmed'],
+    );
   });
 
   itWeb3('Self sponsored can not be set by the address that did not deployed the contract', async ({api, web3, privateKeyWrapper}) => {
@@ -75,6 +112,33 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasPendingSponsor(flipper.options.address).call()).to.be.true;
   });
   
+  itWeb3('Set sponsor event', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    
+    const result = await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
+    const events = normalizeEvents(result.events);
+    expect(events).to.be.deep.equal([
+      {
+        address: flipper.options.address,
+        event: 'ContractSponsorSet',
+        args: {
+          contractAddress: flipper.options.address,
+          sponsor: sponsor,
+        },
+      },
+    ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorSet'],
+    );
+  });
+  
   itWeb3('Sponsor can not be set by the address that did not deployed the contract', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -95,6 +159,33 @@ describe('Sponsoring EVM contracts', () => {
     await expect(helpers.methods.setSponsor(flipper.options.address, sponsor).send()).to.be.not.rejected;
     await expect(helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor})).to.be.not.rejected;
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
+  });
+
+  itWeb3('Confirm sponsorship event', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    await expect(helpers.methods.setSponsor(flipper.options.address, sponsor).send()).to.be.not.rejected;
+    const result = await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
+    const events = normalizeEvents(result.events);
+    expect(events).to.be.deep.equal([
+      {
+        address: flipper.options.address,
+        event: 'ContractSponsorshipConfirmed',
+        args: {
+          contractAddress: flipper.options.address,
+          sponsor: sponsor,
+        },
+      },
+    ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorshipConfirmed'],
+    );
   });
 
   itWeb3('Sponsorship can not be confirmed by the address that not pending as sponsor', async ({api, web3, privateKeyWrapper}) => {
@@ -158,6 +249,35 @@ describe('Sponsoring EVM contracts', () => {
     
     await helpers.methods.removeSponsor(flipper.options.address).send();
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
+  });
+
+  itWeb3('Remove sponsor event', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+
+    await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
+    await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
+    
+    const result = await helpers.methods.removeSponsor(flipper.options.address).send();
+    const events = normalizeEvents(result.events);
+    expect(events).to.be.deep.equal([
+      {
+        address: flipper.options.address,
+        event: 'ContractSponsorRemoved',
+        args: {
+          contractAddress: flipper.options.address,
+        },
+      },
+    ]);
+
+    await expectSubstrateEventsAtBlock(
+      api, 
+      result.blockNumber,
+      'evmContractHelpers',
+      ['ContractSponsorRemoved'],
+    );
   });
 
   itWeb3('Sponsor can not be removed by the address that did not deployed the contract', async ({api, web3, privateKeyWrapper}) => {

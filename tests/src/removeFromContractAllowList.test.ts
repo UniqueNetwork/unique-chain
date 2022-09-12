@@ -20,6 +20,7 @@ import {addToContractAllowListExpectSuccess, isAllowlistedInContract, removeFrom
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 
+// todo:playgrounds skipped again
 describe.skip('Integration Test removeFromContractAllowList', () => {
   let bob: IKeyringPair;
 

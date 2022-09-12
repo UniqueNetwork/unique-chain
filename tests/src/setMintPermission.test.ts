@@ -15,65 +15,57 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import usingApi from './substrate/substrate-api';
-import {
-  addToAllowListExpectSuccess,
-  createCollectionExpectSuccess,
-  createItemExpectFailure,
-  createItemExpectSuccess,
-  destroyCollectionExpectSuccess,
-  enableAllowListExpectSuccess,
-  findNotExistingCollection,
-  setMintPermissionExpectFailure,
-  setMintPermissionExpectSuccess,
-  addCollectionAdminExpectSuccess,
-} from './util/helpers';
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('Integration Test setMintPermission', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });
 
-  it('ensure allow-listed non-privileged address can mint tokens', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
-      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
+  itSub('ensure allow-listed non-privileged address can mint tokens', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-1', description: '', tokenPrefix: 'SMP'});
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
 
-      await createItemExpectSuccess(bob, collectionId, 'NFT');
-    });
+    await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
   });
 
-  it('can be enabled twice', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
-    });
+  itSub('can be enabled twice', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-2', description: '', tokenPrefix: 'SMP'});
+    expect((await collection.getData())?.raw.permissions.access).to.not.equal('AllowList');
+
+    await collection.setPermissions(alice, {mintMode: true});
+    await collection.setPermissions(alice, {mintMode: true});
+    expect((await collection.getData())?.raw.permissions.mintMode).to.be.true;
   });
 
-  it('can be disabled twice', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
-      await setMintPermissionExpectSuccess(alice, collectionId, false);
-      await setMintPermissionExpectSuccess(alice, collectionId, false);
-    });
+  itSub('can be disabled twice', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-3', description: '', tokenPrefix: 'SMP'});
+    expect((await collection.getData())?.raw.permissions.access).to.equal('Normal');
+
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    expect((await collection.getData())?.raw.permissions.access).to.equal('AllowList');
+    expect((await collection.getData())?.raw.permissions.mintMode).to.equal(true);
+
+    await collection.setPermissions(alice, {access: 'Normal', mintMode: false});
+    await collection.setPermissions(alice, {access: 'Normal', mintMode: false});
+    expect((await collection.getData())?.raw.permissions.access).to.equal('Normal');
+    expect((await collection.getData())?.raw.permissions.mintMode).to.equal(false);
   });
 
-  it('Collection admin success on set', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      await setMintPermissionExpectSuccess(bob, collectionId, true);
-    });
+  itSub('Collection admin success on set', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-4', description: '', tokenPrefix: 'SMP'});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await collection.setPermissions(bob, {access: 'AllowList', mintMode: true});
+    
+    expect((await collection.getData())?.raw.permissions.access).to.equal('AllowList');
+    expect((await collection.getData())?.raw.permissions.mintMode).to.equal(true);
   });
 });
 
@@ -82,41 +74,38 @@ describe('Negative Integration Test setMintPermission', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });
 
-  it('fails on not existing collection', async () => {
-    await usingApi(async (api) => {
-      const nonExistingCollection = await findNotExistingCollection(api);
-      await setMintPermissionExpectFailure(alice, nonExistingCollection, true);
-    });
+  itSub('fails on not existing collection', async ({helper}) => {
+    const collectionId = (1 << 32) - 1;
+    await expect(helper.collection.setPermissions(alice, collectionId, {mintMode: true}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  it('fails on removed collection', async () => {
-    await usingApi(async () => {
-      const removedCollectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await destroyCollectionExpectSuccess(removedCollectionId);
+  itSub('fails on removed collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-Neg-1', tokenPrefix: 'SMP'});
+    await collection.burn(alice);
 
-      await setMintPermissionExpectFailure(alice, removedCollectionId, true);
-    });
+    await expect(collection.setPermissions(alice, {mintMode: true}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  it('fails when not collection owner tries to set mint status', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await enableAllowListExpectSuccess(alice, collectionId);
-    await setMintPermissionExpectFailure(bob, collectionId, true);
+  itSub('fails when non-owner tries to set mint status', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-Neg-2', tokenPrefix: 'SMP'});
+
+    await expect(collection.setPermissions(bob, {mintMode: true}))
+      .to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  it('ensure non-allow-listed non-privileged address can\'t mint tokens', async () => {
-    await usingApi(async () => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await setMintPermissionExpectSuccess(alice, collectionId, true);
+  itSub('ensure non-allow-listed non-privileged address can\'t mint tokens', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetMintPermission-Neg-3', tokenPrefix: 'SMP'});
+    await collection.setPermissions(alice, {mintMode: true});
 
-      await createItemExpectFailure(bob, collectionId, 'NFT');
-    });
+    await expect(collection.mintToken(bob, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
   });
 });

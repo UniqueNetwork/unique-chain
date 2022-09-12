@@ -2,39 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {IKeyringPair} from '@polkadot/types/types';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import {Context} from 'mocha';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
-import {DevUniqueHelper} from './unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 
-class SilentLogger {
-  log(msg: any, level: any): void { }
-  level = {
-    ERROR: 'ERROR' as const,
-    WARNING: 'WARNING' as const,
-    INFO: 'INFO' as const,
-  };
-}
+
+chai.use(chaiAsPromised);
+export const expect = chai.expect;
 
 export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
-  // TODO: Remove, this is temporary: Filter unneeded API output
-  // (Jaco promised it will be removed in the next version)
-  const consoleErr = console.error;
-  const consoleLog = console.log;
-  const consoleWarn = console.warn;
+  const silentConsole = new SilentConsole();
+  silentConsole.enable();
 
-  const outFn = (printer: any) => (...args: any[]) => {
-    for (const arg of args) {
-      if (typeof arg !== 'string')
-        continue;
-      if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis:') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
-        return;
-    }
-    printer(...args);
-  };
-
-  console.error = outFn(consoleErr.bind(console));
-  console.log = outFn(consoleLog.bind(console));
-  console.warn = outFn(consoleWarn.bind(console));
   const helper = new DevUniqueHelper(new SilentLogger());
 
   try {
@@ -45,8 +27,42 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
   }
   finally {
     await helper.disconnect();
-    console.error = consoleErr;
-    console.log = consoleLog;
-    console.warn = consoleWarn;
+    silentConsole.disable();
   }
 };
+
+export enum Pallets {
+  Inflation = 'inflation',
+  RmrkCore = 'rmrkcore',
+  RmrkEquip = 'rmrkequip',
+  ReFungible = 'refungible',
+  Fungible = 'fungible',
+  NFT = 'nonfungible',
+  Scheduler = 'scheduler',
+}
+
+export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {
+  const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
+    
+  if (missingPallets.length > 0) {
+    const skipMsg = `\tSkipping test '${test.test?.title}'.\n\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
+    console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+    test.skip();
+  }
+}
+
+export async function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+  (opts.only ? it.only : 
+    opts.skip ? it.skip : it)(name, async function () {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      if (opts.requiredPallets) {
+        requirePalletsOrSkip(this, helper, opts.requiredPallets);
+      }
+      
+      await cb({helper, privateKey});
+    });
+  });
+}
+itSub.only = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSub(name, cb, {only: true});
+itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSub(name, cb, {skip: true});
+itSub.ifWithPallets = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSub(name, cb, {requiredPallets: required});

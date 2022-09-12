@@ -37,6 +37,7 @@ runtime-benchmarks = [
     'pallet-proxy-rmrk-equip/runtime-benchmarks',
     'pallet-unique/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
+    'pallet-app-promotion/runtime-benchmarks',
     'pallet-unique-scheduler/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
@@ -82,12 +83,14 @@ std = [
     'pallet-base-fee/std',
     'fp-rpc/std',
     'up-rpc/std',
+    'app-promotion-rpc/std',
     'fp-evm-mapping/std',
     'fp-self-contained/std',
     'parachain-info/std',
     'serde',
     'pallet-inflation/std',
     'pallet-configuration/std',
+    'pallet-app-promotion/std',
     'pallet-common/std',
     'pallet-structure/std',
     'pallet-fungible/std',
@@ -122,11 +125,12 @@ std = [
     "orml-vesting/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'scheduler', 'rmrk']
+opal-runtime = ['refungible', 'scheduler', 'rmrk', 'app-promotion']
 
 refungible = []
 scheduler = []
 rmrk = []
+app-promotion = []
 
 ################################################################################
 # Substrate Dependencies
@@ -411,9 +415,11 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 derivative = "2.2.0"
 pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
+app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false}
 rmrk-rpc = { path = "../../primitives/rmrk-rpc", default-features = false }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
+pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
 pallet-configuration = { default-features = false, path = "../../pallets/configuration" }
 pallet-common = { default-features = false, path = "../../pallets/common" }
