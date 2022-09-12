@@ -124,6 +124,9 @@ pub type CurrencyId = AssetIds;
 mod impl_fungibles;
 mod weights;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub use module::*;
 pub use weights::WeightInfo;
 
@@ -303,7 +306,7 @@ pub mod module {
 			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: name.try_into().unwrap(),
 				description: description.try_into().unwrap(),
-				mode: CollectionMode::Fungible(18),
+				mode: CollectionMode::Fungible(md.decimals),
 				..Default::default()
 			};
 

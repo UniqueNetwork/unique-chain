@@ -22,8 +22,7 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "releas
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27", default-features = false }
 #orml-tokens = { git = 'https://github.com/UniqueNetwork/open-runtime-module-library', branch = 'unique-polkadot-v0.9.24', version = "0.4.1-dev", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.27", version = "0.4.1-dev", default-features = false }
-#git = "https://github.com/open-web3-stack/open-runtime-module-library"
-#branch = "polkadot-v0.9.27"
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [dev-dependencies]
 serde_json = "1.0.68"
@@ -51,3 +50,4 @@ std = [
 	"orml-tokens/std"
 ]
 try-runtime = ["frame-support/try-runtime"]
+runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']

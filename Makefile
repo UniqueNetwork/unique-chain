@@ -128,5 +128,9 @@ bench-rmrk-core:
 bench-rmrk-equip:
 	make _bench PALLET=proxy-rmrk-equip
 
+.PHONY: bench-foreign-assets
+bench-foreign-assets:
+	make _bench PALLET=foreign-assets	
+
 .PHONY: bench
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core bench-rmrk-equip
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core bench-rmrk-equip bench-foreign-assets
