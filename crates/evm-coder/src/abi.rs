@@ -222,11 +222,20 @@ pub struct AbiWriter {
 	static_part: Vec<u8>,
 	dynamic_part: Vec<(usize, AbiWriter)>,
 	had_call: bool,
+	is_dynamic: bool,
 }
 impl AbiWriter {
 	/// Initialize internal buffers for output data, assuming no padding required
 	pub fn new() -> Self {
 		Self::default()
+	}
+
+	/// Initialize internal buffers with data size
+	pub fn new_dynamic(is_dynamic: bool) -> Self {
+		Self {
+			is_dynamic,
+			..Default::default()
+		}
 	}
 	/// Initialize internal buffers, inserting method selector at beginning
 	pub fn new_call(method_id: u32) -> Self {
@@ -317,7 +326,9 @@ impl AbiWriter {
 	/// Finish writer, concatenating all internal buffers
 	pub fn finish(mut self) -> Vec<u8> {
 		for (static_offset, part) in self.dynamic_part {
-			let part_offset = self.static_part.len() - if self.had_call { 4 } else { 0 };
+			let part_offset = self.static_part.len()
+				- if self.had_call { 4 } else { 0 }
+				- if self.is_dynamic { ABI_ALIGNMENT } else { 0 };
 
 			let encoded_dynamic_offset = usize::to_be_bytes(part_offset);
 			let start = static_offset + ABI_ALIGNMENT - encoded_dynamic_offset.len();
@@ -436,7 +447,13 @@ macro_rules! impl_tuples {
 		{
 			fn abi_write(&self, writer: &mut AbiWriter) {
 				let ($($ident,)+) = self;
-				$($ident.abi_write(writer);)+
+				if writer.is_dynamic {
+					let mut sub = AbiWriter::new();
+					$($ident.abi_write(&mut sub);)+
+					writer.write_subresult(sub);
+				} else {
+					$($ident.abi_write(writer);)+
+				}
 			}
 		}
 	};
@@ -518,10 +535,18 @@ impl AbiWrite for string {
 // 	}
 // }
 
-impl<T: AbiWrite> AbiWrite for Vec<T> {
+impl<T: AbiWrite + TypeHelper> AbiWrite for Vec<T> {
 	fn abi_write(&self, writer: &mut AbiWriter) {
-		let mut sub = AbiWriter::new();
+		let is_dynamic = T::is_dynamic();
+		let mut sub = if is_dynamic {
+			AbiWriter::new_dynamic(is_dynamic)
+		} else {
+			AbiWriter::new()
+		};
+
+		// Write items count
 		(self.len() as u32).abi_write(&mut sub);
+
 		for item in self {
 			item.abi_write(&mut sub);
 		}
@@ -663,15 +688,16 @@ pub mod test {
 
 		let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 		assert_eq!(call, u32::to_be_bytes(decoded_data.0));
-		let _ = decoder.address().unwrap();
+		let address = decoder.address().unwrap();
 		let data =
 			<AbiReader<'_> as AbiRead<Vec<(uint256, string)>>>::abi_read(&mut decoder).unwrap();
 		assert_eq!(data, decoded_data.1);
 
 		let mut writer = AbiWriter::new_call(decoded_data.0);
+		address.abi_write(&mut writer);
 		decoded_data.1.abi_write(&mut writer);
 		let ed = writer.finish();
-		assert_eq!(encoded_data, ed.as_slice());
+		similar_asserts::assert_eq!(encoded_data, ed.as_slice());
 	}
 
 	#[test]
