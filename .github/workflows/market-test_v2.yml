@@ -22,10 +22,10 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-#          - network: "quartz"
-#            features: "quartz-runtime"
-#          - network: "unique"
-#            features: "unique-runtime"
+          - network: "quartz"
+            features: "quartz-runtime"
+          - network: "unique"
+            features: "unique-runtime"
 
     steps:
 
@@ -45,7 +45,7 @@ jobs:
           repository: 'UniqueNetwork/market-e2e-tests'
           ssh-key: ${{ secrets.GH_PAT }}
           path: 'qa-tests'
-          ref: 'ci_test_v2'
+          ref: 'master'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -175,7 +175,6 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
-#        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always
