@@ -85,12 +85,6 @@ jobs:
       - name: Install jq
         run: sudo apt install jq -y
 
-      # - name: Get autorization token from DOCKERHUB
-      #   run: |                 
-      #     # aquire token
-      #       TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-      #       export TOKEN=$TOKEN
-
       # Check POLKADOT version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for POLKADOT
         uses: cuchi/jinja2-action@v1.2.0
