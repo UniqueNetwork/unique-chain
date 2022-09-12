@@ -369,12 +369,7 @@ pub mod pallet {
 
 			let mut total_weight: Weight = T::WeightInfo::on_initialize(0);
 			for (order, (index, mut s)) in queued.into_iter().enumerate() {
-				let named = if let Some(ref id) = s.maybe_id {
-					Lookup::<T>::remove(id);
-					true
-				} else {
-					false
-				};
+				let named = s.maybe_id.is_some();
 
 				let (call, maybe_completed) = s.call.resolved::<T::PreimageProvider>();
 				s.call = call;
@@ -492,12 +487,25 @@ pub mod pallet {
 						s.maybe_periodic = None;
 					}
 					let wake = now + period;
+					let is_canceled;
+
 					// If scheduled is named, place its information in `Lookup`
 					if let Some(ref id) = s.maybe_id {
+						is_canceled = Lookup::<T>::get(id).is_none();
 						let wake_index = Agenda::<T>::decode_len(wake).unwrap_or(0);
-						Lookup::<T>::insert(id, (wake, wake_index as u32));
+
+						if !is_canceled {
+							Lookup::<T>::insert(id, (wake, wake_index as u32));
+						}
+					} else {
+						is_canceled = false;
 					}
-					Agenda::<T>::append(wake, Some(s));
+
+					if !is_canceled {
+						Agenda::<T>::append(wake, Some(s));
+					}
+				} else if let Some(ref id) = s.maybe_id {
+					Lookup::<T>::remove(id);
 				}
 			}
 			// Total weight should be 0, because the transaction is already paid for
