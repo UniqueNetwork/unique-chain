@@ -16,26 +16,6 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {
-  createCollectionExpectSuccess,
-  setCollectionSponsorExpectSuccess,
-  destroyCollectionExpectSuccess,
-  confirmSponsorshipExpectSuccess,
-  confirmSponsorshipExpectFailure,
-  createItemExpectSuccess,
-  findUnusedAddress,
-  getGenericResult,
-  enableAllowListExpectSuccess,
-  enablePublicMintingExpectSuccess,
-  addToAllowListExpectSuccess,
-  normalizeAccountId,
-  addCollectionAdminExpectSuccess,
-  getCreatedCollectionCount,
-  UNIQUE,
-  requirePallets,
-  Pallets,
-} from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds} from './util/playgrounds';
 
@@ -58,7 +38,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper) => {
-      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 0n], donor);
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
@@ -82,18 +62,20 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await usingPlaygrounds(async (helper) => {
       const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
-      await collection.confirmSponsorship(charlie);
+      await collection.confirmSponsorship(bob);
+      await collection.setSponsor(alice, charlie.address);
     });
   });
 
   it('NFT: Transfer fees are paid by the sponsor after confirmation', async () => {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-      const token = await collection.mintToken(alice, {Substrate: charlie.address});
-      await token.transfer(charlie, {Substrate: alice.address});
+      const token = await collection.mintToken(alice, {Substrate: zeroBalance.address});
+      await token.transfer(zeroBalance, {Substrate: alice.address});
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
       expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
     });
@@ -101,12 +83,13 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('Fungible: Transfer fees are paid by the sponsor after confirmation', async () => {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-      await collection.mint(alice, {Substrate: charlie.address}, 100n);
-      await collection.transfer(charlie, {Substrate: alice.address}, 1n);
+      await collection.mint(alice, {Substrate: zeroBalance.address}, 100n);
+      await collection.transfer(zeroBalance, {Substrate: alice.address}, 1n);
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
       expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
     });
@@ -114,12 +97,13 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('ReFungible: Transfer fees are paid by the sponsor after confirmation', async function() {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-      const token = await collection.mintToken(alice, {Substrate: charlie.address}, 100n);
-      await token.transfer(charlie, {Substrate: alice.address}, 1n);
+      const token = await collection.mintToken(alice, {Substrate: zeroBalance.address}, 100n);
+      await token.transfer(zeroBalance, {Substrate: alice.address}, 1n);
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
       expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
     });
@@ -127,14 +111,15 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('CreateItem fees are paid by the sponsor after confirmation', async () => {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
       await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
-      await collection.addToAllowList(alice, {Substrate: charlie.address});
+      await collection.addToAllowList(alice, {Substrate: zeroBalance.address});
 
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-      await collection.mintToken(charlie, {Substrate: charlie.address});
+      await collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
       expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
@@ -143,15 +128,16 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('NFT: Sponsoring of transfers is rate limited', async () => {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
 
       const token = await collection.mintToken(alice, {Substrate: alice.address});
-      await token.transfer(alice, {Substrate: charlie.address});
+      await token.transfer(alice, {Substrate: zeroBalance.address});
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-      const transferTx = async () => token.transfer(charlie, {Substrate: alice.address});
+      const transferTx = async () => token.transfer(zeroBalance, {Substrate: alice.address});
       await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -161,15 +147,16 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('Fungible: Sponsoring is rate limited', async () => {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
 
-      await collection.mint(alice, {Substrate: charlie.address}, 100n);
-      await collection.transfer(charlie, {Substrate: charlie.address}, 1n);
+      await collection.mint(alice, {Substrate: zeroBalance.address}, 100n);
+      await collection.transfer(zeroBalance, {Substrate: zeroBalance.address}, 1n);
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-      const transferTx = async () => collection.transfer(charlie, {Substrate: charlie.address});
+      const transferTx = async () => collection.transfer(zeroBalance, {Substrate: zeroBalance.address});
       await expect(transferTx()).to.be.rejected;
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -179,15 +166,16 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('ReFungible: Sponsoring is rate limited', async function() {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
 
-      const token = await collection.mintToken(alice, {Substrate: charlie.address}, 100n);
-      await token.transfer(charlie, {Substrate: alice.address});
+      const token = await collection.mintToken(alice, {Substrate: zeroBalance.address}, 100n);
+      await token.transfer(zeroBalance, {Substrate: alice.address});
 
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-      const transferTx = async () => token.transfer(charlie, {Substrate: alice.address});
+      const transferTx = async () => token.transfer(zeroBalance, {Substrate: alice.address});
       await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -197,16 +185,17 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   it('NFT: Sponsoring of createItem is rate limited', async () => {
     await usingPlaygrounds(async (helper) => {
+      const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
       const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await collection.setSponsor(alice, bob.address);
       await collection.confirmSponsorship(bob);
       await collection.setPermissions(alice, {mintMode: true, access: 'AllowList'});
-      await collection.addToAllowList(alice, {Substrate: charlie.address});
+      await collection.addToAllowList(alice, {Substrate: zeroBalance.address});
 
-      await collection.mintToken(charlie, {Substrate: charlie.address});
+      await collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
 
       const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-      const mintTx = async () => collection.mintToken(charlie, {Substrate: charlie.address});
+      const mintTx = async () => collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
       await expect(mintTx()).to.be.rejectedWith('Inability to pay some fees');
       const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -217,83 +206,76 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
 describe('(!negative test!) integration test: ext. confirmSponsorship():', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
   it('(!negative test!) Confirm sponsorship for a collection that never existed', async () => {
-    // Find the collection that never existed
-    let collectionId = 0;
-    await usingApi(async (api) => {
-      collectionId = await getCreatedCollectionCount(api) + 1;
+    await usingPlaygrounds(async (helper) => {
+      const collectionId = 1 << 32 - 1;
+      const confirmSponsorshipTx = async () => helper.collection.confirmSponsorship(bob, collectionId);
+      await expect(confirmSponsorshipTx()).to.be.rejected;
     });
-
-    await confirmSponsorshipExpectFailure(collectionId, '//Bob');
   });
 
   it('(!negative test!) Confirm sponsorship using a non-sponsor address', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-
-    await usingApi(async (api) => {
-      const transfer = api.tx.balances.transfer(charlie.address, 1e15);
-      await submitTransactionAsync(alice, transfer);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.setSponsor(alice, bob.address);
+      const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+      await expect(confirmSponsorshipTx()).to.be.rejected;
     });
-
-    await confirmSponsorshipExpectFailure(collectionId, '//Charlie');
   });
 
   it('(!negative test!) Confirm sponsorship using owner address', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await confirmSponsorshipExpectFailure(collectionId, '//Alice');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.setSponsor(alice, bob.address);
+      const confirmSponsorshipTx = async () => collection.confirmSponsorship(alice);
+      await expect(confirmSponsorshipTx()).to.be.rejected;
+    });
   });
 
   it('(!negative test!) Confirm sponsorship by collection admin', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await addCollectionAdminExpectSuccess(alice, collectionId, charlie.address);
-    await confirmSponsorshipExpectFailure(collectionId, '//Charlie');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.setSponsor(alice, bob.address);
+      await collection.addAdmin(alice, {Substrate: charlie.address});
+      const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+      await expect(confirmSponsorshipTx()).to.be.rejected;
+    });
   });
 
   it('(!negative test!) Confirm sponsorship without sponsor being set with setCollectionSponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await confirmSponsorshipExpectFailure(collectionId, '//Bob');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+      await expect(confirmSponsorshipTx()).to.be.rejected;
+    });
   });
 
   it('(!negative test!) Confirm sponsorship in a collection that was destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await destroyCollectionExpectSuccess(collectionId);
-    await confirmSponsorshipExpectFailure(collectionId, '//Bob');
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.burn(alice);
+      const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+      await expect(confirmSponsorshipTx()).to.be.rejected;
+    });
   });
 
   it('(!negative test!) Transfer fees are not paid by the sponsor if the transfer failed', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
-
-    await usingApi(async (api, privateKeyWrapper) => {
-      // Find unused address
-      const ownerZeroBalance = await findUnusedAddress(api, privateKeyWrapper);
-
-      // Find another unused address
-      const senderZeroBalance = await findUnusedAddress(api, privateKeyWrapper);
-
-      // Mint token for an unused address
-      const itemId = await createItemExpectSuccess(alice, collectionId, 'NFT', ownerZeroBalance.address);
-
-      const sponsorBalanceBeforeTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
-
-      // Try to transfer this token from an unsponsored unused adress to Alice
-      const zeroToAlice = api.tx.unique.transfer(normalizeAccountId(alice.address), collectionId, itemId, 0);
-      await expect(submitTransactionExpectFailAsync(senderZeroBalance, zeroToAlice)).to.be.rejected;
-
-      const sponsorBalanceAfterTx = (await api.query.system.account(bob.address)).data.free.toBigInt();
-
-      expect(sponsorBalanceAfterTx).to.equal(sponsorBalanceBeforeTx);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.setSponsor(alice, bob.address);
+      await collection.confirmSponsorship(bob);
+      const [ownerZeroBalance, senderZeroBalance] = await helper.arrange.createAccounts([0n, 0n], donor);
+      const token = await collection.mintToken(alice, {Substrate: ownerZeroBalance.address});
+      const sponsorBalanceBefore = await helper.balance.getSubstrate(bob.address);
+      const transferTx = async () =>  token.transfer(senderZeroBalance, {Substrate: alice.address});
+      await expect(transferTx()).to.be.rejected;
+      const sponsorBalanceAfter = await helper.balance.getSubstrate(bob.address);
+      expect(sponsorBalanceAfter).to.equal(sponsorBalanceBefore);
     });
   });
 });
