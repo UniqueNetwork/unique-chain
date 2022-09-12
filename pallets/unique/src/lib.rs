@@ -1138,7 +1138,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// Differs from `remove_sponsor` in that
 	/// it doesn't require consent from the `owner` of the collection.
-	/// 
+	///
 	/// # Arguments
 	///
 	/// * `collection_id`: ID of the modified collection.

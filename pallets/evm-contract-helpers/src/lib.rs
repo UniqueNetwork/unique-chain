@@ -272,7 +272,7 @@ pub mod pallet {
 
 		/// Force remove `sponsor` for `contract`.
 		///
-		/// Differs from `remove_sponsor` in that 
+		/// Differs from `remove_sponsor` in that
 		/// it doesn't require consent from the `owner` of the contract.
 		pub fn force_remove_sponsor(contract_address: H160) -> DispatchResult {
 			Sponsoring::<T>::remove(contract_address);

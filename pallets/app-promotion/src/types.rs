@@ -92,7 +92,7 @@ pub trait ContractHandler {
 		sponsor_id: Self::AccountId,
 		contract_address: Self::ContractId,
 	) -> DispatchResult;
-	
+
 	/// Removes sponsor for a contract.
 	///
 	/// - `contract_address`: ID of the modified contract.
