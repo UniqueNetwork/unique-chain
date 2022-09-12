@@ -18,6 +18,7 @@ import chai, {expect} from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {
   default as usingApi,
+  executeTransaction,
   submitTransactionAsync,
   submitTransactionExpectFailAsync,
 } from '../substrate/substrate-api';
@@ -45,6 +46,8 @@ import {
   cancelScheduled,
   requirePallets,
   Pallets,
+  getBlockNumber,
+  scheduleAt,
 } from '../deprecated-helpers/helpers';
 import {IKeyringPair, SignatureOptions} from '@polkadot/types/types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
@@ -71,13 +74,6 @@ function checkForFailedSchedulerEvents(api: ApiPromise, events: any[]) {
     }
     res(schedulerEventPresent);
   });
-}
-
-function makeSignOptions(api: ApiPromise): SignatureOptions {
-  return objectSpread(
-    {blockHash: api.genesisHash, genesisHash: api.genesisHash},
-    {runtimeVersion: api.runtimeVersion, signedExtensions: api.registry.signedExtensions},
-  );
 }
 
 describe('Scheduling token and balance transfers', () => {
@@ -293,43 +289,118 @@ describe('Scheduling token and balance transfers', () => {
     });
   });
 
-  // FIXME What purpose of this test?
-  it.skip('Can schedule a scheduled operation of canceling the scheduled operation', async () => {
+  // Check if we can cancel a scheduled periodic operation
+  // in the same block in which it is running
+  it('Can cancel the periodic sheduled tx when the tx is running', async () => {
     await usingApi(async api => {
+      const currentBlockNumber = await getBlockNumber(api);
+      const blocksBeforeExecution = 10;
+      const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
+      
       const scheduledId = await makeScheduledId();
+      const scheduledCancelId = await makeScheduledId();
 
-      const waitForBlocks = 2;
-      const period = 3;
-      const repetitions = 2;
+      const period = 5;
+      const repetitions = 5;
 
-      await expect(scheduleAfter(
+      const initTestVal = 0;
+      const incTestVal = initTestVal + 1;
+      const finalTestVal = initTestVal + 2;
+      await executeTransaction(
+        api,
+        alice,
+        api.tx.testUtils.setTestValue(initTestVal),
+      );
+
+      const incTx = api.tx.testUtils.incTestValue();
+      const cancelTx = api.tx.scheduler.cancelNamed(scheduledId);
+
+      await expect(scheduleAt(
         api, 
-        api.tx.scheduler.cancelNamed(scheduledId), 
+        incTx,
         alice, 
-        waitForBlocks, 
+        firstExecutionBlockNumber, 
         scheduledId, 
         period, 
         repetitions,
       )).to.not.be.rejected;
 
-      await waitNewBlocks(waitForBlocks);
+      // Cancel the inc tx after 2 executions
+      // *in the same block* in which the second execution is scheduled
+      await expect(scheduleAt(
+        api,
+        cancelTx,
+        alice,
+        firstExecutionBlockNumber + period,
+        scheduledCancelId,
+      )).to.not.be.rejected;
 
-      // todo:scheduler debug line; doesn't work (and doesn't appear in events) when executed in the same block as the scheduled transaction
-      await expect(submitTransactionAsync(alice, api.tx.scheduler.cancelNamed(scheduledId))).to.not.be.rejected;
+      await waitNewBlocks(blocksBeforeExecution);
 
-      let schedulerEvents = 0;
-      for (let i = 0; i < period * repetitions; i++) {
-        const events = await api.query.system.events();
-        schedulerEvents += await expect(checkForFailedSchedulerEvents(api, events)).to.not.be.rejected;
-        await waitNewBlocks(1);
+      // execution #0
+      expect((await api.query.testUtils.testValue()).toNumber())
+        .to.be.equal(incTestVal);
+
+      await waitNewBlocks(period);
+
+      // execution #1
+      expect((await api.query.testUtils.testValue()).toNumber())
+        .to.be.equal(finalTestVal);
+
+      for (let i = 1; i < repetitions; i++) {
+        await waitNewBlocks(period);
+        expect((await api.query.testUtils.testValue()).toNumber())
+          .to.be.equal(finalTestVal);
       }
-      expect(schedulerEvents).to.be.equal(repetitions);
     });
   });
 
-  after(async () => {
-    // todo:scheduler to avoid the failed results of the previous test interfering with the next, delete after the problem is fixed
-    await waitNewBlocks(6);
+  it('A scheduled operation can cancel itself', async () => {
+    await usingApi(async api => {
+      const scheduledId = await makeScheduledId();
+      const waitForBlocks = 8;
+      const period = 2;
+      const repetitions = 5;
+
+      const initTestVal = 0;
+      const maxTestVal = 2;
+
+      await executeTransaction(
+        api,
+        alice,
+        api.tx.testUtils.setTestValue(initTestVal),
+      );
+
+      const selfCancelingTx = api.tx.testUtils.selfCancelingInc(scheduledId, maxTestVal);
+
+      await expect(scheduleAfter(
+        api,
+        selfCancelingTx,
+        alice,
+        waitForBlocks,
+        scheduledId,
+        period,
+        repetitions,
+      )).to.not.be.rejected;
+
+      await waitNewBlocks(waitForBlocks + 1);
+
+      // execution #0
+      expect((await api.query.testUtils.testValue()).toNumber())
+        .to.be.equal(initTestVal + 1);
+
+      await waitNewBlocks(period);
+
+      // execution #1
+      expect((await api.query.testUtils.testValue()).toNumber())
+        .to.be.equal(initTestVal + 2);
+
+      await waitNewBlocks(period);
+
+      // <canceled>
+      expect((await api.query.testUtils.testValue()).toNumber())
+        .to.be.equal(initTestVal + 2);
+    });
   });
 });
 
