@@ -112,6 +112,7 @@ benchmarks! {
 		let share = Perbill::from_rational(1u32, 20);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		(0..10).map(|_| {
+			// used to change block number
 			<frame_system::Pallet<T>>::finalize();
 			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))
 		}).collect::<Result<Vec<_>, _>>()?;

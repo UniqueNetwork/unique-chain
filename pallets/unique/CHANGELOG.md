@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
-## [v0.1.4] 2022-09-5
+## [v0.1.4] 2022-09-05
 
 ### Added
 

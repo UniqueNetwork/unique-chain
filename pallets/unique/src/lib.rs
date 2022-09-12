@@ -1105,6 +1105,15 @@ decl_module! {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Force set `sponsor` for `collection`.
+	///
+	/// Differs from [`set_collection_sponsor`][`Pallet::set_collection_sponsor`] in that confirmation
+	/// from the `sponsor` is not required.
+	///
+	/// # Arguments
+	///
+	/// * `sponsor`: ID of the account of the sponsor-to-be.
+	/// * `collection_id`: ID of the modified collection.
 	pub fn force_set_sponsor(sponsor: T::AccountId, collection_id: CollectionId) -> DispatchResult {
 		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 		target_collection.check_is_internal()?;
@@ -1125,6 +1134,14 @@ impl<T: Config> Pallet<T> {
 		target_collection.save()
 	}
 
+	/// Force remove `sponsor` for `collection`.
+	///
+	/// Differs from `remove_sponsor` in that
+	/// it doesn't require consent from the `owner` of the collection.
+	/// 
+	/// # Arguments
+	///
+	/// * `collection_id`: ID of the modified collection.
 	pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
 		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 		target_collection.check_is_internal()?;

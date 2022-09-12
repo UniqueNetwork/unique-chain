@@ -1,6 +1,6 @@
 [package]
 name = "unique-rpc"
-version = "0.1.1"
+version = "0.1.2"
 authors = ['Unique Network <support@uniquenetwork.io>']
 license = 'GPLv3'
 edition = "2021"
