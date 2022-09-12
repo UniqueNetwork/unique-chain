@@ -10,6 +10,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 
 [features]
 default = ["std"]
@@ -18,4 +19,5 @@ std = [
 	"scale-info/std",
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-unique-scheduler/std",
 ]

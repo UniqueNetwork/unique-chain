@@ -16,15 +16,17 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use pallet_unique_scheduler::{ScheduledId, Pallet as SchedulerPallet};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_unique_scheduler::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
@@ -40,7 +42,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
+	#[pallet::getter(fn test_value)]
 	pub type TestValue<T> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::error]
@@ -68,6 +70,26 @@ pub mod pallet {
 			Self::deposit_event(Event::ShouldRollback);
 
 			Err(<Error<T>>::TriggerRollback.into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn inc_test_value(origin: OriginFor<T>) -> DispatchResult {
+			Self::set_test_value(origin, <TestValue<T>>::get() + 1)
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn self_canceling_inc(
+			origin: OriginFor<T>,
+			id: ScheduledId,
+			max_test_value: u32,
+		) -> DispatchResult {
+			if <TestValue<T>>::get() < max_test_value {
+				Self::inc_test_value(origin)?;
+			} else {
+				SchedulerPallet::<T>::cancel_named(origin, id)?;
+			}
+
+			Ok(())
 		}
 
 		#[pallet::weight(100_000_000)]
