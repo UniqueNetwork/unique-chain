@@ -14,52 +14,57 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi, executeTransaction} from './substrate/substrate-api';
 import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
-  createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  addCollectionAdminExpectSuccess,
-  createCollectionWithPropsExpectSuccess,
-  createItemWithPropsExpectSuccess,
-  createItemWithPropsExpectFailure,
   createCollection,
-  transferExpectSuccess,
   itApi,
   normalizeAccountId,
   getCreateItemResult,
-  requirePallets,
-  Pallets,
 } from './util/helpers';
+import {usingPlaygrounds} from './util/playgrounds';
+import {IProperty} from './util/playgrounds/types';
+import {executeTransaction} from './substrate/substrate-api';
 
+chai.use(chaiAsPromised);
 const expect = chai.expect;
+
+let donor: IKeyringPair;
+
+before(async () => {
+  await usingPlaygrounds(async (_, privateKey) => {
+    donor = privateKey('//Alice');
+  });
+});
+
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
 describe('integration test: ext. ():', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
   it('Create new item in NFT collection', async () => {
-    const createMode = 'NFT';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await createItemExpectSuccess(alice, newCollectionID, createMode);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.mintToken(alice, {Substrate: alice.address});
+    });
   });
   it('Create new item in Fungible collection', async () => {
-    const createMode = 'Fungible';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-    await createItemExpectSuccess(alice, newCollectionID, createMode);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await collection.mint(alice, {Substrate: alice.address}, 10n);
+    });
   });
-  itApi('Check events on create new item in Fungible collection', async ({api}) => {
+  itApi.skip('Check events on create new item in Fungible collection', async ({api}) => {
     const createMode = 'Fungible';
-    
+
     const newCollectionID = (await createCollection(api, alice, {mode: {type: createMode, decimalPoints: 0}})).collectionId;
-    
+
     const to = normalizeAccountId(alice);
     {
       const createData = {fungible: {value: 100}};
@@ -82,240 +87,226 @@ describe('integration test: ext. ():', () => {
 
   });
   it('Create new item in ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const createMode = 'ReFungible';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await createItemExpectSuccess(alice, newCollectionID, createMode);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.mintToken(alice, {Substrate: alice.address}, 100n);
+    });
   });
   it('Create new item in NFT collection with collection admin permissions', async () => {
-    const createMode = 'NFT';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
-    await createItemExpectSuccess(bob, newCollectionID, createMode);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.addAdmin(alice, {Substrate: bob.address});
+      await collection.mintToken(bob, {Substrate: alice.address});
+    });
   });
   it('Create new item in Fungible collection with collection admin permissions', async () => {
-    const createMode = 'Fungible';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-    await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
-    await createItemExpectSuccess(bob, newCollectionID, createMode);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      await collection.addAdmin(alice, {Substrate: bob.address});
+      await collection.mint(bob, {Substrate: alice.address}, 10n);
+    });
   });
   it('Create new item in ReFungible collection with collection admin permissions', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const createMode = 'ReFungible';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
-    await createItemExpectSuccess(bob, newCollectionID, createMode);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      await collection.addAdmin(alice, {Substrate: bob.address});
+      await collection.mintToken(bob, {Substrate: alice.address}, 100n);
+    });
   });
 
   it('Set property Admin', async () => {
-    const createMode = 'NFT';
-    const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-      propPerm:   [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
-    
-    await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'k', value: 't2'}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL',
+        properties: [{key: 'k', value: 'v'}],
+        tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: false, mutable: true, collectionAdmin: true}}],
+      });
+      await collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    });
   });
 
   it('Set property AdminConst', async () => {
-    const createMode = 'NFT';
-    const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-      propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
-    
-    await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'key1', value: 'val1'}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL',
+        properties: [{key: 'k', value: 'v'}],
+        tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: false, mutable: false, collectionAdmin: true}}],
+      });
+      await collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    });
   });
 
   it('Set property itemOwnerOrAdmin', async () => {
-    const createMode = 'NFT';
-    const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode},
-      propPerm:   [{key: 'key1', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
-    
-    await createItemWithPropsExpectSuccess(alice, newCollectionID, createMode, [{key: 'key1', value: 'val1'}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL',
+        properties: [{key: 'k', value: 'v'}],
+        tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}}],
+      });
+      await collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    });
   });
 
   it('Check total pieces of Fungible token', async () => {
-    await usingApi(async api => {
-      const createMode = 'Fungible';
-      const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-      const amountPieces = 10n;
-      const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      const amount = 10n;
+      await collection.mint(alice, {Substrate: bob.address}, amount);
       {
-        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
-        expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+        const totalPieces = await collection.getTotalPieces();
+        expect(totalPieces).to.be.equal(amount);
       }
-
-      await transferExpectSuccess(collectionId, tokenId, bob, alice, 1, createMode);
+      await collection.transfer(bob, {Substrate: alice.address}, 1n);
       {
-        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
-        expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+        const totalPieces = await collection.getTotalPieces();
+        expect(totalPieces).to.be.equal(amount);
       }
-
-      const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
-      expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
     });
   });
 
   it('Check total pieces of NFT token', async () => {
-    await usingApi(async api => {
-      const createMode = 'NFT';
-      const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-      const amountPieces = 1n;
-      const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const amount = 1n;
+      const token = await collection.mintToken(alice, {Substrate: bob.address});
       {
-        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
-        expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+        const totalPieces = await helper.api?.rpc.unique.totalPieces(collection.collectionId, token.tokenId);
+        expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
       }
-
-      await transferExpectSuccess(collectionId, tokenId, bob, alice, 1, createMode);
+      await token.transfer(bob, {Substrate: alice.address});
       {
-        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
-        expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+        const totalPieces = await helper.api?.rpc.unique.totalPieces(collection.collectionId, token.tokenId);
+        expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
       }
-
-      const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
-      expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
     });
   });
 
   it('Check total pieces of ReFungible token', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async api => {
-      const createMode = 'ReFungible';
-      const createCollectionResult = await createCollection(api, alice, {mode: {type: createMode}});
-      const collectionId  = createCollectionResult.collectionId;
-      const amountPieces = 100n;
-      const tokenId = await createItemExpectSuccess(alice, collectionId, createMode, bob.address);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const amount = 100n;
+      const token = await collection.mintToken(alice, {Substrate: bob.address}, amount);
       {
-        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
-        expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+        const totalPieces = await token.getTotalPieces();
+        expect(totalPieces).to.be.equal(amount);
       }
-
-      await transferExpectSuccess(collectionId, tokenId, bob, alice, 60n, createMode);
+      await token.transfer(bob, {Substrate: alice.address}, 60n);
       {
-        const totalPieces = await api.rpc.unique.totalPieces(collectionId, tokenId);
-        expect(totalPieces.isSome).to.be.true;
-        expect(totalPieces.unwrap().toBigInt()).to.be.eq(amountPieces);
+        const totalPieces = await token.getTotalPieces();
+        expect(totalPieces).to.be.equal(amount);
       }
-
-      const totalPieces = (await api.rpc.unique.tokenData(collectionId, tokenId, [])).pieces;
-      expect(totalPieces.toBigInt()).to.be.eq(amountPieces);
     });
   });
 });
 
 describe('Negative integration test: ext. createItem():', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper) => {
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
   it('Regular user cannot create new item in NFT collection', async () => {
-    const createMode = 'NFT';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await expect(createItemExpectSuccess(bob, newCollectionID, createMode)).to.be.rejected;
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const mintTx = async () => collection.mintToken(bob, {Substrate: bob.address});
+      await expect(mintTx()).to.be.rejected;
+    });
   });
   it('Regular user cannot create new item in Fungible collection', async () => {
-    const createMode = 'Fungible';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-    await expect(createItemExpectSuccess(bob, newCollectionID, createMode)).to.be.rejected;
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      const mintTx = async () => collection.mint(bob, {Substrate: bob.address}, 10n);
+      await expect(mintTx()).to.be.rejected;
+    });
   });
-  it('Regular user cannot create new item in ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    const createMode = 'ReFungible';
-    const newCollectionID = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await expect(createItemExpectSuccess(bob, newCollectionID, createMode)).to.be.rejected;
+  it('Regular user cannot create new item in ReFungible collection', async () => {
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const mintTx = async () => collection.mintToken(bob, {Substrate: bob.address});
+      await expect(mintTx()).to.be.rejected;
+    });
   });
 
   it('No editing rights', async () => {
-    await usingApi(async () => {
-      const createMode = 'NFT';
-      const newCollectionID = await createCollectionWithPropsExpectSuccess({mode: {type: createMode}, 
-        propPerm:   [{key: 'key1', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}]});
-      await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
-
-      await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'key1', value: 'v'}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
+        tokenPropertyPermissions: [{key: 'k', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}],
+      });
+      const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+      await expect(mintTx()).to.be.rejected;
     });
   });
 
   it('User doesnt have editing rights', async () => {
-    await usingApi(async () => {
-      const newCollectionID = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}]});
-      await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'key1', value: 'v'}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
+        tokenPropertyPermissions: [{key: 'k', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
+      });
+      const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+      await expect(mintTx()).to.be.rejected;
     });
   });
 
   it('Adding property without access rights', async () => {
-    await usingApi(async () => {
-      const newCollectionID = await createCollectionWithPropsExpectSuccess();
-      await addCollectionAdminExpectSuccess(alice, newCollectionID, bob.address);
-
-      await createItemWithPropsExpectFailure(bob, newCollectionID, 'NFT', [{key: 'k', value: 'v'}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+      await expect(mintTx()).to.be.rejected;
     });
   });
 
   it('Adding more than 64 prps', async () => {
-    await usingApi(async () => {
-      const prps = [];
+    const props: IProperty[] = [];
 
-      for (let i = 0; i < 65; i++) {
-        prps.push({key: `key${i}`, value: `value${i}`});
-      }
+    for (let i = 0; i < 65; i++) {
+      props.push({key: `key${i}`, value: `value${i}`});
+    }
 
-      const newCollectionID = await createCollectionWithPropsExpectSuccess();
-      
-      await createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', prps);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, props);
+      await expect(mintTx()).to.be.rejected;
     });
   });
 
   it('Trying to add bigger property than allowed', async () => {
-    await usingApi(async () => {
-      const newCollectionID = await createCollectionWithPropsExpectSuccess();
-      
-      await createItemWithPropsExpectFailure(alice, newCollectionID, 'NFT', [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
+        tokenPropertyPermissions: [
+          {key: 'k1', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
+          {key: 'k2', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
+        ],
+      });
+      const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [
+        {key: 'k1', value: 'vvvvvv'.repeat(5000)},
+        {key: 'k2', value: 'vvv'.repeat(5000)},
+      ]);
+      await expect(mintTx()).to.be.rejected;
     });
   });
 
   it('Check total pieces for invalid Fungible token', async () => {
-    await usingApi(async api => {
-      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'Fungible', decimalPoints: 0}});
-      const collectionId  = createCollectionResult.collectionId;
-      const invalidTokenId = 1000_000;
-      
-      expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
-      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.toBigInt()).to.be.eq(0n);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+      const invalidTokenId = 1_000_000;
+      expect((await helper.api?.rpc.unique.totalPieces(collection.collectionId, invalidTokenId))?.isNone).to.be.true;
+      expect((await helper.api?.rpc.unique.tokenData(collection.collectionId, invalidTokenId))?.pieces.toBigInt()).to.be.equal(0n);
     });
   });
 
   it('Check total pieces for invalid NFT token', async () => {
-    await usingApi(async api => {
-      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'NFT'}});
-      const collectionId  = createCollectionResult.collectionId;
-      const invalidTokenId = 1000_000;
-      
-      expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
-      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.toBigInt()).to.be.eq(0n);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const invalidTokenId = 1_000_000;
+      expect((await helper.api?.rpc.unique.totalPieces(collection.collectionId, invalidTokenId))?.isNone).to.be.true;
+      expect((await helper.api?.rpc.unique.tokenData(collection.collectionId, invalidTokenId))?.pieces.toBigInt()).to.be.equal(0n);
     });
   });
 
   it('Check total pieces for invalid Refungible token', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async api => {
-      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'ReFungible'}});
-      const collectionId  = createCollectionResult.collectionId;
-      const invalidTokenId = 1000_000;
-      
-      expect((await api.rpc.unique.totalPieces(collectionId, invalidTokenId)).isNone).to.be.true;
-      expect((await api.rpc.unique.tokenData(collectionId, invalidTokenId, [])).pieces.toBigInt()).to.be.eq(0n);
+    await usingPlaygrounds(async (helper) => {
+      const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+      const invalidTokenId = 1_000_000;
+      expect((await helper.api?.rpc.unique.totalPieces(collection.collectionId, invalidTokenId))?.isNone).to.be.true;
+      expect((await helper.api?.rpc.unique.tokenData(collection.collectionId, invalidTokenId))?.pieces.toBigInt()).to.be.equal(0n);
     });
   });
 });
