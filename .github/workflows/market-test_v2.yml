@@ -127,7 +127,7 @@ jobs:
 
       - name: Timeout for debug
         if: failure()
-        run: sleep 900s
+        run: sleep 300s
 
       - name: Import test data
         working-directory: qa-tests
@@ -170,7 +170,7 @@ jobs:
 
       - name: Timeout for debug
         if: failure()
-        run: sleep 900s
+        run: sleep 300s
 
       - name: Stop running containers
         if: always()                   # run this step always
