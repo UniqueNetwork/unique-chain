@@ -31,7 +31,8 @@ use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler::DispatchCall;
 use pallet_transaction_payment::ChargeTransactionPayment;
 
-type SponsorshipChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
+type SponsorshipChargeTransactionPayment =
+	pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtraScheduler = (
@@ -40,7 +41,7 @@ pub type SignedExtraScheduler = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	ChargeTransactionPayment::<Runtime>,
+	ChargeTransactionPayment<Runtime>,
 );
 
 fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
@@ -105,8 +106,9 @@ where
 		count: u32,
 	) -> Result<(), DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance = SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
-			.saturating_mul(count.into());
+		let weight: Balance =
+			SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
+				.saturating_mul(count.into());
 
 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
 			&id,
@@ -121,7 +123,8 @@ where
 		call: <T as pallet_unique_scheduler::Config>::Call,
 	) -> Result<u128, DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance = SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
+		let weight: Balance =
+			SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
 		Ok(
 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
 				&id,
