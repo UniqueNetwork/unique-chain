@@ -20,6 +20,7 @@ use evm_coder::{
 	solidity_interface, solidity, ToLog,
 	types::*,
 	execution::{Result, Error},
+	weight,
 };
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
@@ -31,11 +32,12 @@ use up_data_structs::{
 use alloc::format;
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties,
+	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
 		convert_cross_account_to_uint256, convert_uint256_to_cross_account,
 		convert_cross_account_to_tuple,
 	},
+	weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.
@@ -72,14 +74,13 @@ where
 	///
 	/// @param key Property key.
 	/// @param value Propery value.
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(1_u32))]
 	fn set_collection_property(
 		&mut self,
 		caller: caller,
 		key: string,
 		value: bytes,
 	) -> Result<void> {
-		self.consume_store_reads_and_writes(1, 1)?;
-
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -93,6 +94,7 @@ where
 	/// Delete collection property.
 	///
 	/// @param key Property key.
+	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1_u32))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
