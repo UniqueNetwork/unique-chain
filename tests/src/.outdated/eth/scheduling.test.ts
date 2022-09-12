@@ -59,7 +59,7 @@ describe.skip('Scheduing EVM smart contracts', () => {
       )).to.not.be.rejected;
       expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
       
-      await waitNewBlocks(waitForBlocks);
+      await waitNewBlocks(waitForBlocks + 1);
       expect(await flipper.methods.getValue().call()).to.be.not.equal(initialValue);
   
       await waitNewBlocks(periodBlocks);
