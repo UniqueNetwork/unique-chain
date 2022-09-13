@@ -14,11 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai, {expect} from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import {
   default as usingApi,
-  executeTransaction,
   submitTransactionAsync,
   submitTransactionExpectFailAsync,
 } from '../substrate/substrate-api';
@@ -26,7 +23,6 @@ import {
   createItemExpectSuccess,
   createCollectionExpectSuccess,
   scheduleTransferExpectSuccess,
-  scheduleTransferAndWaitExpectSuccess,
   setCollectionSponsorExpectSuccess,
   confirmSponsorshipExpectSuccess,
   findUnusedAddress,
@@ -38,369 +34,314 @@ import {
   normalizeAccountId,
   getTokenOwner,
   getGenericResult,
-  scheduleTransferFundsExpectSuccess,
   getFreeBalance,
   confirmSponsorshipByKeyExpectSuccess,
   scheduleExpectFailure,
   scheduleAfter,
-  cancelScheduled,
-  requirePallets,
-  Pallets,
-  getBlockNumber,
-  scheduleAt,
-} from '../deprecated-helpers/helpers';
-import {IKeyringPair, SignatureOptions} from '@polkadot/types/types';
-import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
-import {ApiPromise} from '@polkadot/api';
-import {objectSpread} from '@polkadot/util';
-
-chai.use(chaiAsPromised);
-
-// Check that there are no failing Dispatched events in the block
-function checkForFailedSchedulerEvents(api: ApiPromise, events: any[]) {
-  return new Promise((res, rej) => {
-    let schedulerEventPresent = false;
-    
-    for (const {event} of events) {
-      if (api.events.scheduler.Dispatched.is(event)) {
-        schedulerEventPresent = true;
-        const result = event.data.result;
-        if (result.isErr) {
-          const decoded = api.registry.findMetaError(result.asErr.asModule);
-          const {method, section} = decoded;
-          rej(new Error(`${section}.${method}`));
-        }
-      }
-    }
-    res(schedulerEventPresent);
-  });
-}
+} from './util/helpers';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
+import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Scheduling token and balance transfers', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  before(async function() {
-    await requirePallets(this, [Pallets.Scheduler]);
-
-    await usingApi(async (_, privateKeyWrapper) => {
+  before(async () => {
+    await usingPlaygrounds(async (_, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
     });
   });
 
+  itSub.ifWithPallets('Can delay a transfer of an owned token', [Pallets.Scheduler], async ({helper}) => {
+    const collection = await helper.nft.mintDefaultCollection(alice);
+    const token = await collection.mintToken(alice);
+    const schedulerId = await helper.scheduler.makeScheduledId();
+    const blocksBeforeExecution = 4;
 
-  it('Can delay a transfer of an owned token', async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = await makeScheduledId();
+    await token.scheduleAfter(schedulerId, blocksBeforeExecution)
+      .transfer(alice, {Substrate: bob.address});
 
-      await scheduleTransferAndWaitExpectSuccess(api, collectionId, tokenId, alice, bob, 1, 4, scheduledId);
-    });
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
+
+    await helper.wait.newBlocks(blocksBeforeExecution + 1);
+
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  it('Can transfer funds periodically', async () => {
-    await usingApi(async api => {
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 1;
-      const period = 2;
-      const repetitions = 2;
+  itSub.ifWithPallets('Can transfer funds periodically', [Pallets.Scheduler], async ({helper}) => {
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 1;
 
-      const amount = 1n * UNIQUE;
+    const amount = 1n * UNIQUE;
+    const periodic = {
+      period: 2,
+      repetitions: 2,
+    };
 
-      await scheduleTransferFundsExpectSuccess(api, amount, alice, bob, waitForBlocks, scheduledId, period, repetitions);
-      const bobsBalanceBefore = await getFreeBalance(bob);
+    const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-      await waitNewBlocks(waitForBlocks + 1);
-      const bobsBalanceAfterFirst = await getFreeBalance(bob);
-      expect(bobsBalanceAfterFirst)
-        .to.be.equal(
-          bobsBalanceBefore + 1n * amount,
-          '#1 Balance of the recipient should be increased by 1 * amount',
-        );
+    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
+      .balance.transferToSubstrate(alice, bob.address, amount);
 
-      await waitNewBlocks(period);
-      const bobsBalanceAfterSecond = await getFreeBalance(bob);
-      expect(bobsBalanceAfterSecond)
-        .to.be.equal(
-          bobsBalanceBefore + 2n * amount,
-          '#2 Balance of the recipient should be increased by 2 * amount',
-        );
-    });
+    await helper.wait.newBlocks(waitForBlocks + 1);
+
+    const bobsBalanceAfterFirst = await helper.balance.getSubstrate(bob.address);
+    expect(bobsBalanceAfterFirst)
+      .to.be.equal(
+        bobsBalanceBefore + 1n * amount,
+        '#1 Balance of the recipient should be increased by 1 * amount',
+      );
+
+    await helper.wait.newBlocks(periodic.period);
+
+    const bobsBalanceAfterSecond = await helper.balance.getSubstrate(bob.address);
+    expect(bobsBalanceAfterSecond)
+      .to.be.equal(
+        bobsBalanceBefore + 2n * amount,
+        '#2 Balance of the recipient should be increased by 2 * amount',
+      );
   });
 
-  it('Can cancel a scheduled operation which has not yet taken effect', async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 4;
+  itSub.ifWithPallets('Can cancel a scheduled operation which has not yet taken effect', [Pallets.Scheduler], async ({helper}) => {
+    const collection = await helper.nft.mintDefaultCollection(alice);
+    const token = await collection.mintToken(alice);
 
-      const amount = 1;
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 4;
 
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
-      await expect(cancelScheduled(api, alice, scheduledId)).to.not.be.rejected;
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
 
-      await waitNewBlocks(waitForBlocks);
+    await token.scheduleAfter(scheduledId, waitForBlocks)
+      .transfer(alice, {Substrate: bob.address});
 
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
-    });
+    await helper.scheduler.cancelScheduled(alice, scheduledId);
+
+    await waitNewBlocks(waitForBlocks + 1);
+
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 
-  it('Can cancel a periodic operation (transfer of funds)', async () => {
-    await usingApi(async api => {
-      const waitForBlocks = 1;
-      const period = 3;
-      const repetitions = 2;
+  itSub.ifWithPallets('Can cancel a periodic operation (transfer of funds)', [Pallets.Scheduler], async ({helper}) => {
+    const waitForBlocks = 1;
+    const periodic = {
+      period: 3,
+      repetitions: 2,
+    };
 
-      const scheduledId = await makeScheduledId();
-      const amount = 1n * UNIQUE;
+    const scheduledId = await helper.scheduler.makeScheduledId();
 
-      const bobsBalanceBefore = await getFreeBalance(bob);
-      await scheduleTransferFundsExpectSuccess(api, amount, alice, bob, waitForBlocks, scheduledId, period, repetitions);
+    const amount = 1n * UNIQUE;
 
-      await waitNewBlocks(waitForBlocks + 1);
-      const bobsBalanceAfterFirst = await getFreeBalance(bob);
-      expect(bobsBalanceAfterFirst)
-        .to.be.equal(
-          bobsBalanceBefore + 1n * amount,
-          '#1 Balance of the recipient should be increased by 1 * amount',
-        );
+    const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-      await expect(cancelScheduled(api, alice, scheduledId)).to.not.be.rejected;
+    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
+      .balance.transferToSubstrate(alice, bob.address, amount);
 
-      await waitNewBlocks(period);
-      const bobsBalanceAfterSecond = await getFreeBalance(bob);
-      expect(bobsBalanceAfterSecond)
-        .to.be.equal(
-          bobsBalanceAfterFirst,
-          '#2 Balance of the recipient should not be changed',
-        );
-    });
+    await helper.wait.newBlocks(waitForBlocks + 1);
+
+    const bobsBalanceAfterFirst = await helper.balance.getSubstrate(bob.address);
+
+    expect(bobsBalanceAfterFirst)
+      .to.be.equal(
+        bobsBalanceBefore + 1n * amount,
+        '#1 Balance of the recipient should be increased by 1 * amount',
+      );
+
+    await helper.scheduler.cancelScheduled(alice, scheduledId);
+    await helper.wait.newBlocks(periodic.period);
+
+    const bobsBalanceAfterSecond = await helper.balance.getSubstrate(bob.address);
+    expect(bobsBalanceAfterSecond)
+      .to.be.equal(
+        bobsBalanceAfterFirst,
+        '#2 Balance of the recipient should not be changed',
+      );
   });
 
-  it('Scheduled tasks are transactional', async function() {
-    await requirePallets(this, [Pallets.TestUtils]);
+  itSub.ifWithPallets('Scheduled tasks are transactional', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 4;
 
-    await usingApi(async api => {
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 4;
+    const initTestVal = 42;
+    const changedTestVal = 111;
 
-      const initTestVal = 42;
-      const changedTestVal = 111;
+    await helper.executeExtrinsic(
+      alice,
+      'api.tx.testUtils.setTestValue',
+      [initTestVal],
+      true,
+    );
 
-      const initTx = api.tx.testUtils.setTestValue(initTestVal);
-      await submitTransactionAsync(alice, initTx);
-
-      const changeErrTx = api.tx.testUtils.setTestValueAndRollback(changedTestVal);
-
-      await expect(scheduleAfter(
-        api,
-        changeErrTx,
+    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks)
+      .executeExtrinsic(
         alice,
-        waitForBlocks,
-        scheduledId,
-      )).to.not.be.rejected;
+        'api.tx.testUtils.setTestValueAndRollback',
+        [changedTestVal],
+        true,
+      );
 
-      await waitNewBlocks(waitForBlocks + 1);
+    await helper.wait.newBlocks(waitForBlocks + 1);
 
-      const testVal = (await api.query.testUtils.testValue()).toNumber();
-      expect(testVal, 'The test value should NOT be commited')
-        .not.to.be.equal(changedTestVal)
-        .and.to.be.equal(initTx);
-    });
+    const testVal = (await helper.api!.query.testUtils.testValue()).toNumber();
+    expect(testVal, 'The test value should NOT be commited')
+      .to.be.equal(initTestVal);
   });
 
-  it('Scheduled tasks should take correct fees', async function() {
-    await requirePallets(this, [Pallets.TestUtils]);
+  itSub.ifWithPallets('Scheduled tasks should take correct fees', [Pallets.Scheduler, Pallets.TestUtils], async function({helper}) {
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 8;
+    const periodic = {
+      period: 2,
+      repetitions: 2,
+    };
 
-    await usingApi(async api => {
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 8;
-      const period = 2;
-      const repetitions = 2;
+    const dummyTx = helper.constructApiCall('api.tx.testUtils.justTakeFee', []);
+    const scheduledLen = dummyTx.callIndex.length;
 
-      const dummyTx = api.tx.testUtils.justTakeFee();
-  
-      const signingInfo = await api.derive.tx.signingInfo(alice.address);
+    const expectedScheduledFee = (await helper.getPaymentInfo(alice, dummyTx, scheduledLen))
+      .partialFee.toBigInt();
 
-      // We need to sign the tx because
-      // unsigned transactions does not have an inclusion fee
-      dummyTx.sign(alice, {
-        blockHash: api.genesisHash,
-        genesisHash: api.genesisHash,
-        runtimeVersion: api.runtimeVersion,
-        nonce: signingInfo.nonce,
-      });
+    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
+      .executeExtrinsic(alice, 'api.tx.testUtils.justTakeFee', [], true);
 
-      const scheduledLen = dummyTx.callIndex.length;
+    await helper.wait.newBlocks(1);
 
-      const queryInfo = await api.call.transactionPaymentApi.queryInfo(
-        dummyTx.toHex(),
-        scheduledLen,
-      );
+    const aliceInitBalance = await helper.balance.getSubstrate(alice.address);
+    let diff;
 
-      const expectedScheduledFee = (await queryInfo as RuntimeDispatchInfo)
-        .partialFee.toBigInt();
+    await helper.wait.newBlocks(waitForBlocks);
 
-      await expect(scheduleAfter(
-        api,
-        dummyTx,
-        alice,
-        waitForBlocks,
-        scheduledId,
-        period,
-        repetitions,
-      )).to.not.be.rejected;
+    const aliceBalanceAfterFirst = await helper.balance.getSubstrate(alice.address);
+    expect(
+      aliceBalanceAfterFirst < aliceInitBalance,
+      '[after execution #1] Scheduled task should take a fee',
+    ).to.be.true;
 
-      await waitNewBlocks(1);
+    diff = aliceInitBalance - aliceBalanceAfterFirst;
+    expect(diff).to.be.equal(
+      expectedScheduledFee,
+      'Scheduled task should take the right amount of fees',
+    );
 
-      const aliceInitBalance = await getFreeBalance(alice);
-      let diff;
+    await helper.wait.newBlocks(periodic.period);
 
-      await waitNewBlocks(waitForBlocks);
+    const aliceBalanceAfterSecond = await helper.balance.getSubstrate(alice.address);
+    expect(
+      aliceBalanceAfterSecond < aliceBalanceAfterFirst,
+      '[after execution #2] Scheduled task should take a fee',
+    ).to.be.true;
 
-      const aliceBalanceAfterFirst = await getFreeBalance(alice);
-      expect(
-        aliceBalanceAfterFirst < aliceInitBalance,
-        '[after execution #1] Scheduled task should take a fee',
-      ).to.be.true;
-
-      diff = aliceInitBalance - aliceBalanceAfterFirst;
-      expect(diff).to.be.equal(
-        expectedScheduledFee,
-        'Scheduled task should take the right amount of fees',
-      );
-
-      await waitNewBlocks(period);
-
-      const aliceBalanceAfterSecond = await getFreeBalance(alice);
-      expect(
-        aliceBalanceAfterSecond < aliceBalanceAfterFirst,
-        '[after execution #2] Scheduled task should take a fee',
-      ).to.be.true;
-
-      diff = aliceBalanceAfterFirst - aliceBalanceAfterSecond;
-      expect(diff).to.be.equal(
-        expectedScheduledFee,
-        'Scheduled task should take the right amount of fees',
-      );
-    });
+    diff = aliceBalanceAfterFirst - aliceBalanceAfterSecond;
+    expect(diff).to.be.equal(
+      expectedScheduledFee,
+      'Scheduled task should take the right amount of fees',
+    );
   });
 
   // Check if we can cancel a scheduled periodic operation
   // in the same block in which it is running
-  it('Can cancel the periodic sheduled tx when the tx is running', async () => {
-    await usingApi(async api => {
-      const currentBlockNumber = await getBlockNumber(api);
-      const blocksBeforeExecution = 10;
-      const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
-      
-      const scheduledId = await makeScheduledId();
-      const scheduledCancelId = await makeScheduledId();
+  itSub.ifWithPallets('Can cancel the periodic sheduled tx when the tx is running', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+    const currentBlockNumber = await helper.chain.getLatestBlockNumber();
+    const blocksBeforeExecution = 10;
+    const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
 
-      const period = 5;
-      const repetitions = 5;
+    const [
+      scheduledId,
+      scheduledCancelId,
+    ] = await helper.scheduler.makeScheduledIds(2);
 
-      const initTestVal = 0;
-      const incTestVal = initTestVal + 1;
-      const finalTestVal = initTestVal + 2;
-      await executeTransaction(
-        api,
+    const periodic = {
+      period: 5,
+      repetitions: 5,
+    };
+
+    const initTestVal = 0;
+    const incTestVal = initTestVal + 1;
+    const finalTestVal = initTestVal + 2;
+
+    await helper.executeExtrinsic(
+      alice,
+      'api.tx.testUtils.setTestValue',
+      [initTestVal],
+      true,
+    );
+
+    await helper.scheduler.scheduleAt(scheduledId, firstExecutionBlockNumber, {periodic})
+      .executeExtrinsic(
         alice,
-        api.tx.testUtils.setTestValue(initTestVal),
+        'api.tx.testUtils.incTestValue',
+        [],
+        true,
       );
 
-      const incTx = api.tx.testUtils.incTestValue();
-      const cancelTx = api.tx.scheduler.cancelNamed(scheduledId);
+    // Cancel the inc tx after 2 executions
+    // *in the same block* in which the second execution is scheduled
+    await helper.scheduler.scheduleAt(scheduledCancelId, firstExecutionBlockNumber + periodic.period)
+      .scheduler.cancelScheduled(alice, scheduledId);
 
-      await expect(scheduleAt(
-        api, 
-        incTx,
-        alice, 
-        firstExecutionBlockNumber, 
-        scheduledId, 
-        period, 
-        repetitions,
-      )).to.not.be.rejected;
+    await helper.wait.newBlocks(blocksBeforeExecution);
 
-      // Cancel the inc tx after 2 executions
-      // *in the same block* in which the second execution is scheduled
-      await expect(scheduleAt(
-        api,
-        cancelTx,
-        alice,
-        firstExecutionBlockNumber + period,
-        scheduledCancelId,
-      )).to.not.be.rejected;
+    // execution #0
+    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+      .to.be.equal(incTestVal);
 
-      await waitNewBlocks(blocksBeforeExecution);
+    await helper.wait.newBlocks(periodic.period);
 
-      // execution #0
-      expect((await api.query.testUtils.testValue()).toNumber())
-        .to.be.equal(incTestVal);
+    // execution #1
+    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+      .to.be.equal(finalTestVal);
 
-      await waitNewBlocks(period);
-
-      // execution #1
-      expect((await api.query.testUtils.testValue()).toNumber())
+    for (let i = 1; i < periodic.repetitions; i++) {
+      await waitNewBlocks(periodic.period);
+      expect((await helper.api!.query.testUtils.testValue()).toNumber())
         .to.be.equal(finalTestVal);
-
-      for (let i = 1; i < repetitions; i++) {
-        await waitNewBlocks(period);
-        expect((await api.query.testUtils.testValue()).toNumber())
-          .to.be.equal(finalTestVal);
-      }
-    });
+    }
   });
 
-  it('A scheduled operation can cancel itself', async () => {
-    await usingApi(async api => {
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 8;
-      const period = 2;
-      const repetitions = 5;
+  itSub.ifWithPallets('A scheduled operation can cancel itself', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 8;
+    const periodic = {
+      period: 2,
+      repetitions: 5,
+    };
 
-      const initTestVal = 0;
-      const maxTestVal = 2;
+    const initTestVal = 0;
+    const maxTestVal = 2;
 
-      await executeTransaction(
-        api,
+    await helper.executeExtrinsic(
+      alice,
+      'api.tx.testUtils.setTestValue',
+      [initTestVal],
+      true,
+    );
+
+    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
+      .executeExtrinsic(
         alice,
-        api.tx.testUtils.setTestValue(initTestVal),
+        'api.tx.testUtils.selfCancelingInc',
+        [scheduledId, maxTestVal],
+        true,
       );
 
-      const selfCancelingTx = api.tx.testUtils.selfCancelingInc(scheduledId, maxTestVal);
+    await helper.wait.newBlocks(waitForBlocks + 1);
 
-      await expect(scheduleAfter(
-        api,
-        selfCancelingTx,
-        alice,
-        waitForBlocks,
-        scheduledId,
-        period,
-        repetitions,
-      )).to.not.be.rejected;
+    // execution #0
+    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+      .to.be.equal(initTestVal + 1);
 
-      await waitNewBlocks(waitForBlocks + 1);
+    await helper.wait.newBlocks(periodic.period);
 
-      // execution #0
-      expect((await api.query.testUtils.testValue()).toNumber())
-        .to.be.equal(initTestVal + 1);
+    // execution #1
+    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+      .to.be.equal(initTestVal + 2);
 
-      await waitNewBlocks(period);
+    await helper.wait.newBlocks(periodic.period);
 
-      // execution #1
-      expect((await api.query.testUtils.testValue()).toNumber())
-        .to.be.equal(initTestVal + 2);
-
-      await waitNewBlocks(period);
-
-      // <canceled>
-      expect((await api.query.testUtils.testValue()).toNumber())
-        .to.be.equal(initTestVal + 2);
-    });
+    // <canceled>
+    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+      .to.be.equal(initTestVal + 2);
   });
 });
 
@@ -408,64 +349,59 @@ describe('Negative Test: Scheduling', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  before(async function() {
-    await requirePallets(this, [Pallets.Scheduler]);
-
-    await usingApi(async (_, privateKeyWrapper) => {
+  before(async () => {
+    await usingPlaygrounds(async (_, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
     });
   });
 
-  it("Can't overwrite a scheduled ID", async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 4;
-      const amount = 1;
+  itSub.ifWithPallets("Can't overwrite a scheduled ID", [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+    const collection = await helper.nft.mintDefaultCollection(alice);
+    const token = await collection.mintToken(alice);
 
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
-      await expect(scheduleAfter(
-        api, 
-        api.tx.balances.transfer(alice.address, 1n * UNIQUE), 
-        bob, 
-        /* period = */ 2, 
-        scheduledId,
-      )).to.be.rejectedWith(/scheduler\.FailedToSchedule/);
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 4;
 
-      const bobsBalanceBefore = await getFreeBalance(bob);
+    await token.scheduleAfter(scheduledId, waitForBlocks)
+      .transfer(alice, {Substrate: bob.address});
 
-      await waitNewBlocks(waitForBlocks + 1);
+    await expect(helper.scheduler.scheduleAfter(scheduledId, waitForBlocks)
+      .balance.transferToSubstrate(alice, bob.address, 1n * UNIQUE))
+      .to.be.rejectedWith(/scheduler\.FailedToSchedule/);
 
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
-      expect(bobsBalanceBefore).to.be.equal(await getFreeBalance(bob));
-    });
+    const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
+
+    await helper.wait.newBlocks(waitForBlocks + 1);
+
+    const bobsBalanceAfter = await helper.balance.getSubstrate(bob.address);
+
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect(bobsBalanceBefore).to.be.equal(bobsBalanceAfter);
   });
 
-  it("Can't cancel an operation which is not scheduled", async () => {
-    await usingApi(async api => {
-      const scheduledId = await makeScheduledId();
-      await expect(cancelScheduled(api, alice, scheduledId)).to.be.rejectedWith(/scheduler\.NotFound/);
-    });
+  itSub.ifWithPallets("Can't cancel an operation which is not scheduled", [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    await expect(helper.scheduler.cancelScheduled(alice, scheduledId))
+      .to.be.rejectedWith(/scheduler\.NotFound/);
   });
 
-  it("Can't cancel a non-owned scheduled operation", async () => {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-      const scheduledId = await makeScheduledId();
-      const waitForBlocks = 8;
+  itSub.ifWithPallets("Can't cancel a non-owned scheduled operation", [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+    const collection = await helper.nft.mintDefaultCollection(alice);
+    const token = await collection.mintToken(alice);
 
-      const amount = 1;
+    const scheduledId = await helper.scheduler.makeScheduledId();
+    const waitForBlocks = 8;
 
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, amount, waitForBlocks, scheduledId);
-      await expect(cancelScheduled(api, bob, scheduledId)).to.be.rejectedWith(/BadOrigin/);
+    await token.scheduleAfter(scheduledId, waitForBlocks)
+      .transfer(alice, {Substrate: bob.address});
 
-      await waitNewBlocks(waitForBlocks + 1);
+    await expect(helper.scheduler.cancelScheduled(bob, scheduledId))
+      .to.be.rejectedWith(/badOrigin/);
 
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(bob.address));
-    });
+    await helper.wait.newBlocks(waitForBlocks + 1);
+
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 });
 
