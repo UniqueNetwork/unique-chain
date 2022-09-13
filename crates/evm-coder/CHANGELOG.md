@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.3] - 2022-08-29
 
-### Fixed 
+### Fixed
 
  - Parsing simple values.
 
