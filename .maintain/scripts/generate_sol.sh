@@ -9,8 +9,6 @@ raw=$(mktemp --suffix .sol)
 sed -n '/=== SNIP START ===/, /=== SNIP END ===/{ /=== SNIP START ===/! { /=== SNIP END ===/! p } }' $tmp > $raw
 
 formatted=$(mktemp)
-echo $raw
-echo $formatted
 prettier --config $PRETTIER_CONFIG $raw > $formatted
 
 mv $formatted $OUTPUT
