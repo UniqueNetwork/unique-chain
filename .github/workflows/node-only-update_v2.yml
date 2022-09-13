@@ -156,8 +156,15 @@ jobs:
           exit 0
         shell: bash
 
+      - name: Checkout at '${{ matrix.mainnet_branch }}' branch
+        uses: actions/checkout@master
+        with:
+          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
+          path: ${{ matrix.mainnet_branch }}
+
+
       - name: Run tests before Node Parachain upgrade
-        working-directory: tests
+        working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
           yarn add mochawesome
