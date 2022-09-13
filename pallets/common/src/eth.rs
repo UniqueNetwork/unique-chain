@@ -71,9 +71,11 @@ where
 }
 
 /// Convert `CrossAccountId` to `(address, uint256)`.
-pub fn convert_cross_account_to_tuple<T: Config>(cross_account_id: &T::CrossAccountId) -> (address, uint256)
+pub fn convert_cross_account_to_tuple<T: Config>(
+	cross_account_id: &T::CrossAccountId,
+) -> (address, uint256)
 where
-	T::AccountId: AsRef<[u8; 32]>
+	T::AccountId: AsRef<[u8; 32]>,
 {
 	if cross_account_id.is_canonical_substrate() {
 		let sub = convert_cross_account_to_uint256::<T>(cross_account_id);

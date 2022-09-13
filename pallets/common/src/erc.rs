@@ -74,7 +74,7 @@ where
 	///
 	/// @param key Property key.
 	/// @param value Propery value.
-	#[weight(<SelfWeightOf<T>>::set_collection_properties(1_u32))]
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
 	fn set_collection_property(
 		&mut self,
 		caller: caller,
@@ -94,7 +94,7 @@ where
 	/// Delete collection property.
 	///
 	/// @param key Property key.
-	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1_u32))]
+	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 

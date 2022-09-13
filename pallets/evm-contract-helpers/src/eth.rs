@@ -171,7 +171,9 @@ where
 	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
-		Ok(pallet_common::eth::convert_cross_account_to_tuple::<T>(&sponsor))
+		Ok(pallet_common::eth::convert_cross_account_to_tuple::<T>(
+			&sponsor,
+		))
 	}
 
 	/// Check tat contract has confirmed sponsor.
