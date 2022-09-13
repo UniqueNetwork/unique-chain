@@ -503,19 +503,12 @@ describe('Sponsoring Fee Limit', () => {
             
             contract TestContract {
               event Result(bool);
-              function test1() public {
-                uint256 counter = 0;
-                while(true) {
-                  counter ++;
-                }
-                emit Result(true);
-              }
 
-              function test2() public {
+              function test(uint32 cycles) public {
                 uint256 counter = 0;
                 while(true) {
                   counter ++;
-                  if (counter > 1){
+                  if (counter > cycles){
                     break;
                   }
                 }
@@ -593,13 +586,13 @@ describe('Sponsoring Fee Limit', () => {
 
     const gasPrice = BigInt(await web3.eth.getGasPrice());
 
-    await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 30000n * gasPrice).send();
+    await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 2_000_000n * gasPrice).send();
 
     const originalUserBalance = await web3.eth.getBalance(user);
-    await testContract.methods.test2().send({from: user, gas: 30000});
+    await testContract.methods.test(100).send({from: user, gas: 2_000_000});
     expect(await web3.eth.getBalance(user)).to.be.equal(originalUserBalance);
 
-    await testContract.methods.test2().send({from: user, gas: 40000});
+    await testContract.methods.test(100).send({from: user, gas: 2_100_000});
     expect(await web3.eth.getBalance(user)).to.not.be.equal(originalUserBalance);
   });
 
@@ -618,7 +611,7 @@ describe('Sponsoring Fee Limit', () => {
 
     const gasPrice = BigInt(await web3.eth.getGasPrice());
 
-    await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 30000n * gasPrice).send();
+    await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 2_000_000n * gasPrice).send();
 
     const alice = privateKeyWrapper('//Alice');
     const originalAliceBalance = (await api.query.system.account(alice.address)).data.free.toBigInt();
@@ -628,9 +621,9 @@ describe('Sponsoring Fee Limit', () => {
       api.tx.evm.call(
         subToEth(alice.address),
         testContract.options.address,
-        testContract.methods.test2().encodeABI(),
+        testContract.methods.test(100).encodeABI(),
         Uint8Array.from([]),
-        30000n,
+        2_000_000n,
         gasPrice,
         null,
         null,
@@ -644,9 +637,9 @@ describe('Sponsoring Fee Limit', () => {
       api.tx.evm.call(
         subToEth(alice.address),
         testContract.options.address,
-        testContract.methods.test2().encodeABI(),
+        testContract.methods.test(100).encodeABI(),
         Uint8Array.from([]),
-        40000n,
+        2_100_000n,
         gasPrice,
         null,
         null,
