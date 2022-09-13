@@ -122,7 +122,7 @@ pub type ForeignAssetId = u32;
 pub type CurrencyId = AssetIds;
 
 mod impl_fungibles;
-mod weights;
+pub mod weights;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;

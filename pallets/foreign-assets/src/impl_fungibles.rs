@@ -26,9 +26,20 @@ use pallet_common::CommonCollectionOperations;
 use up_data_structs::budget::Unlimited;
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
+// type BalanceSelf<T> =
+// 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+type BalanceRelay<T> =
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 where
 	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	BalanceRelay<T>: From<BalanceOf<T>>,
+	BalanceOf<T>: From<BalanceRelay<T>>,
+	BalanceRelay<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
+	<T as pallet_balances::Config>::Balance: From<BalanceRelay<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceRelay<T>>,
 {
 	type AssetId = AssetIds;
 	type Balance = BalanceOf<T>;
@@ -38,39 +49,14 @@ where
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<
-					T::AccountId,
-				>>::total_issuance();
-
-				let value: u128 = match parent_amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::total_issuance()
+					.into()
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let amount =
-					<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::total_issuance(
-						AssetIds::NativeAssetId(NativeCurrency::Parent),
-					);
-
-				let value: u128 = match amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::total_issuance(
+					AssetIds::NativeAssetId(NativeCurrency::Parent),
+				)
+				.into()
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
@@ -91,39 +77,14 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible minimum_balance");
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<
-					T::AccountId,
-				>>::minimum_balance();
-
-				let value: u128 = match parent_amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::minimum_balance()
+					.into()
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let amount =
-					<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::minimum_balance(
-						AssetIds::NativeAssetId(NativeCurrency::Parent),
-					);
-
-				let value: u128 = match amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::minimum_balance(
+					AssetIds::NativeAssetId(NativeCurrency::Parent),
+				)
+				.into()
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(fid))
@@ -137,38 +98,14 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible balance");
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let parent_amount =
-					<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::balance(who);
-
-				let value: u128 = match parent_amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::balance(who).into()
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let amount = <orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::balance(
+				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::balance(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
-				);
-
-				let value: u128 = match amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				)
+				.into()
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
@@ -197,41 +134,18 @@ where
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let parent_amount = <pallet_balances::Pallet<T> as fungible::Inspect<
-					T::AccountId,
-				>>::reducible_balance(who, keep_alive);
-
-				let value: u128 = match parent_amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::reducible_balance(
+					who, keep_alive,
+				)
+				.into()
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let amount =
-					<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::reducible_balance(
-						AssetIds::NativeAssetId(NativeCurrency::Parent),
-						who,
-						keep_alive,
-					);
-
-				let value: u128 = match amount.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				let ti: Self::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => return Zero::zero(),
-				};
-
-				ti
+				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::reducible_balance(
+					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					who,
+					keep_alive,
+				)
+				.into()
 			}
 			_ => Self::balance(asset, who),
 		}
@@ -245,36 +159,19 @@ where
 	) -> DepositConsequence {
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible can_deposit");
 
-		let value: u128 = match amount.try_into() {
-			Ok(val) => val,
-			Err(_) => return DepositConsequence::CannotCreate,
-		};
-
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return DepositConsequence::CannotCreate;
-					}
-				};
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::can_deposit(
 					who,
-					this_amount,
+					amount.into(),
 					mint,
 				)
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return DepositConsequence::CannotCreate;
-					}
-				};
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::can_deposit(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
-					parent_amount,
+					amount.into(),
 					mint,
 				)
 			}
@@ -373,6 +270,13 @@ where
 impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T>
 where
 	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	BalanceRelay<T>: From<BalanceOf<T>>,
+	BalanceOf<T>: From<BalanceRelay<T>>,
+	BalanceRelay<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
+	<T as pallet_balances::Config>::Balance: From<BalanceRelay<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceRelay<T>>,
+	u128: From<BalanceRelay<T>>,
 {
 	fn mint_into(
 		asset: Self::AssetId,
@@ -382,42 +286,21 @@ where
 		//Self::do_mint(asset, who, amount, None)
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible mint_into {:?}", asset);
 
-		let value: u128 = match amount.try_into() {
-			Ok(val) => val,
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")),
-		};
-
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return Err(DispatchError::Other(
-							"Bad amount to this parachain value conversion",
-						))
-					}
-				};
-
 				<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
 					who,
-					this_amount,
+					amount.into(),
 				)
+				.into()
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return Err(DispatchError::Other(
-							"Bad amount to relay chain value conversion",
-						))
-					}
-				};
-
 				<orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::mint_into(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
-					parent_amount,
+					amount.into(),
 				)
+				.into()
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
@@ -432,7 +315,8 @@ where
 					FungibleHandle::cast(<CollectionHandle<T>>::try_get(target_collection_id)?);
 				let account = T::CrossAccountId::from_sub(who.clone());
 
-				let amount_data: pallet_fungible::CreateItemData<T> = (account.clone(), value);
+				let amount_data: pallet_fungible::CreateItemData<T> =
+					(account.clone(), amount.into());
 
 				pallet_fungible::Pallet::<T>::create_item_foreign(
 					&collection,
@@ -454,42 +338,23 @@ where
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible burn_from");
 
-		let value: u128 = match amount.try_into() {
-			Ok(val) => val,
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")),
-		};
-
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let this_amount: <T as pallet_balances::Config>::Balance =
-					value.try_into().map_err(|_| {
-						DispatchError::Other("Bad amount to this parachain value conversion")
-					})?;
-
 				match <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::burn_from(
 					who,
-					this_amount,
+					amount.into(),
 				) {
-					Ok(_) => Ok(amount),
+					Ok(v) => Ok(v.into()),
 					Err(e) => Err(e),
 				}
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return Err(DispatchError::Other(
-							"Bad amount to relay chain value conversion",
-						))
-					}
-				};
-
 				match <orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::burn_from(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
-					parent_amount,
+					amount.into(),
 				) {
-					Ok(_) => Ok(amount),
+					Ok(v) => Ok(v.into()),
 					Err(e) => Err(e),
 				}
 			}
@@ -507,7 +372,7 @@ where
 				pallet_fungible::Pallet::<T>::burn_foreign(
 					&collection,
 					&T::CrossAccountId::from_sub(who.clone()),
-					value,
+					amount.into(),
 				)?;
 
 				Ok(amount)
@@ -522,14 +387,20 @@ where
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: true };
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible slash");
-		Self::burn_from(asset, who, amount)?;
-		Ok(amount)
+		Ok(Self::burn_from(asset, who, amount)?)
 	}
 }
 
 impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T>
 where
 	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	BalanceRelay<T>: From<BalanceOf<T>>,
+	BalanceOf<T>: From<BalanceRelay<T>>,
+	BalanceRelay<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
+	<T as pallet_balances::Config>::Balance: From<BalanceRelay<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceRelay<T>>,
+	u128: From<BalanceRelay<T>>,
 {
 	fn transfer(
 		asset: Self::AssetId,
@@ -541,26 +412,12 @@ where
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible transfer");
 
-		let value: u128 = match amount.try_into() {
-			Ok(val) => val,
-			Err(_) => return Err(DispatchError::Other("Bad amount to value conversion")),
-		};
-
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return Err(DispatchError::Other(
-							"Bad amount to this parachain value conversion",
-						))
-					}
-				};
-
 				match <pallet_balances::Pallet<T> as fungible::Transfer<T::AccountId>>::transfer(
 					source,
 					dest,
-					this_amount,
+					amount.into(),
 					keep_alive,
 				) {
 					Ok(_) => Ok(amount),
@@ -570,20 +427,11 @@ where
 				}
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
-					Ok(val) => val,
-					Err(_) => {
-						return Err(DispatchError::Other(
-							"Bad amount to relay chain value conversion",
-						))
-					}
-				};
-
 				match <orml_tokens::Pallet<T> as fungibles::Transfer<T::AccountId>>::transfer(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					source,
 					dest,
-					parent_amount,
+					amount.into(),
 					keep_alive,
 				) {
 					Ok(_) => Ok(amount),
@@ -606,7 +454,7 @@ where
 					&collection,
 					&T::CrossAccountId::from_sub(source.clone()),
 					&T::CrossAccountId::from_sub(dest.clone()),
-					value,
+					amount.into(),
 					&Unlimited,
 				)?;
 
