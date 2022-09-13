@@ -19,4 +19,4 @@ sp-blockchain = { default-features = false, git = "https://github.com/paritytech
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }

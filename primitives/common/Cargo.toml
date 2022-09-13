@@ -48,9 +48,9 @@ branch = "polkadot-v0.9.27"
 [dependencies.fp-rpc]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-rev = "89a37c5a489f426cc7a42d7b94019974093a052d"
+branch = "unique-polkadot-v0.9.27-fee-limit"
 
 [dependencies.pallet-evm]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-rev = "89a37c5a489f426cc7a42d7b94019974093a052d"
+branch = "unique-polkadot-v0.9.27-fee-limit"
