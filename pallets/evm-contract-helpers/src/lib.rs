@@ -121,9 +121,11 @@ pub mod pallet {
 	/// * **Key2** - sponsored user address.
 	/// * **Value** - last sponsored block number.
 	#[pallet::storage]
-	pub(super) type SponsoringFeeLimit<T: Config> = StorageMap<
-		Hasher = Twox128,
-		Key = H160,
+	pub(super) type SponsoringFeeLimit<T: Config> = StorageDoubleMap<
+		Hasher1 = Twox128,
+		Key1 = H160,
+		Hasher2 = Blake2_128Concat,
+		Key2 = u32,
 		Value = U256,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultSponsoringFeeLimit,
@@ -367,7 +369,7 @@ pub mod pallet {
 
 		/// Set maximum for gas limit of transaction
 		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: U256) {
-			<SponsoringFeeLimit<T>>::insert(contract, fee_limit);
+			<SponsoringFeeLimit<T>>::insert(contract, 0xffffffff, fee_limit);
 		}
 
 		/// Is user added to allowlist, or he is owner of specified contract

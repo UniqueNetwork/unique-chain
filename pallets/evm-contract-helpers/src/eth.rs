@@ -263,7 +263,7 @@ where
 	}
 
 	fn get_sponsoring_fee_limit(&self, contract_address: address) -> Result<uint256> {
-		Ok(<SponsoringFeeLimit<T>>::get(contract_address))
+		Ok(<SponsoringFeeLimit<T>>::get(contract_address, 0xffffffff))
 	}
 
 	/// Is specified user present in contract allow list
@@ -413,7 +413,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 			}
 		}
 
-		let sponsored_fee_limit = <SponsoringFeeLimit<T>>::get(contract_address);
+		let sponsored_fee_limit = <SponsoringFeeLimit<T>>::get(contract_address, 0xffffffff);
 
 		if call_context.max_fee > sponsored_fee_limit {
 			return None;
