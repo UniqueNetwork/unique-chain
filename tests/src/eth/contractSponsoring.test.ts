@@ -33,7 +33,7 @@ import {
   GAS_ARGS,
   subToEth,
 } from './util/helpers';
-import { submitTransactionAsync } from '../substrate/substrate-api';
+import {submitTransactionAsync} from '../substrate/substrate-api';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Self sponsored can be set by the address that deployed the contract', async ({api, web3, privateKeyWrapper}) => {
