@@ -10,7 +10,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  execution-matrix:
+  nodes-execution-matrix:
 
     name: execution matrix
 
@@ -43,7 +43,7 @@ jobs:
 
 
   nodes-only-update:
-    needs: execution-matrix
+    needs: nodes-execution-matrix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
