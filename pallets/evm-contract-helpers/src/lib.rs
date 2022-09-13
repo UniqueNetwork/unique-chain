@@ -216,9 +216,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// TO-DO
+		/// Force set `sponsor` for `contract`.
 		///
-		///
+		/// Differs from `set_sponsor` in that confirmation
+		/// from the sponsor is not required.
 		pub fn force_set_sponsor(
 			contract_address: H160,
 			sponsor: &T::CrossAccountId,
@@ -269,9 +270,10 @@ pub mod pallet {
 			Self::force_remove_sponsor(contract_address)
 		}
 
-		/// TO-DO
+		/// Force remove `sponsor` for `contract`.
 		///
-		///
+		/// Differs from `remove_sponsor` in that
+		/// it doesn't require consent from the `owner` of the contract.
 		pub fn force_remove_sponsor(contract_address: H160) -> DispatchResult {
 			Sponsoring::<T>::remove(contract_address);
 

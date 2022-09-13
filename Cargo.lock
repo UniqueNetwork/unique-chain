@@ -5733,7 +5733,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-contract-helpers"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -12316,7 +12316,7 @@ dependencies = [
 
 [[package]]
 name = "unique-rpc"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "app-promotion-rpc",
  "fc-db",
