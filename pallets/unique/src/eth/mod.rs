@@ -245,6 +245,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createRFTCollection")]
 	fn create_refungible_collection(
 		&mut self,
 		caller: caller,

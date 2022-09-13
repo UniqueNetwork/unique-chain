@@ -41,7 +41,7 @@ describe('Create RFT collection from EVM', () => {
   
     const collectionCountBefore = await getCreatedCollectionCount(api);
     const result = await collectionHelper.methods
-      .createRefungibleCollection(collectionName, description, tokenPrefix)
+      .createRFTCollection(collectionName, description, tokenPrefix)
       .send();
     const collectionCountAfter = await getCreatedCollectionCount(api);
   
@@ -65,7 +65,7 @@ describe('Create RFT collection from EVM', () => {
       .call()).to.be.false;
 
     await collectionHelpers.methods
-      .createRefungibleCollection('A', 'A', 'A')
+      .createRFTCollection('A', 'A', 'A')
       .send();
     
     expect(await collectionHelpers.methods
@@ -76,7 +76,7 @@ describe('Create RFT collection from EVM', () => {
   itWeb3('Set sponsorship', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    let result = await collectionHelpers.methods.createRefungibleCollection('Sponsor collection', '1', '1').send();
+    let result = await collectionHelpers.methods.createRFTCollection('Sponsor collection', '1', '1').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
@@ -96,7 +96,7 @@ describe('Create RFT collection from EVM', () => {
   itWeb3('Set limits', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createRefungibleCollection('Const collection', '5', '5').send();
+    const result = await collectionHelpers.methods.createRFTCollection('Const collection', '5', '5').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const limits = {
       accountTokenOwnershipLimit: 1000,
@@ -141,7 +141,7 @@ describe('Create RFT collection from EVM', () => {
       .isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
-    const result = await collectionHelpers.methods.createRefungibleCollection('Collection address exist', '7', '7').send();
+    const result = await collectionHelpers.methods.createRFTCollection('Collection address exist', '7', '7').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     expect(await collectionHelpers.methods
       .isCollectionExist(collectionIdAddress).call())
@@ -164,7 +164,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const tokenPrefix = 'A';
     
       await expect(helper.methods
-        .createRefungibleCollection(collectionName, description, tokenPrefix)
+        .createRFTCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGHT);
       
     }
@@ -174,7 +174,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGHT + 1);
       const tokenPrefix = 'A';
       await expect(helper.methods
-        .createRefungibleCollection(collectionName, description, tokenPrefix)
+        .createRFTCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGHT);
     }
     {  
@@ -183,7 +183,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGHT + 1);
       await expect(helper.methods
-        .createRefungibleCollection(collectionName, description, tokenPrefix)
+        .createRFTCollection(collectionName, description, tokenPrefix)
         .call()).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGHT);
     }
   });
@@ -196,7 +196,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const tokenPrefix = 'A';
     
     await expect(helper.methods
-      .createRefungibleCollection(collectionName, description, tokenPrefix)
+      .createRFTCollection(collectionName, description, tokenPrefix)
       .call()).to.be.rejectedWith('NotSufficientFounds');
   });
 
@@ -204,7 +204,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const notOwner = createEthAccount(web3);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createRefungibleCollection('A', 'A', 'A').send();
+    const result = await collectionHelpers.methods.createRFTCollection('A', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contractEvmFromNotOwner = evmCollection(web3, notOwner, collectionIdAddress, {type: 'ReFungible'});
     const EXPECTED_ERROR = 'NoPermission';
@@ -229,7 +229,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   itWeb3('(!negative test!) Set limits', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelpers.methods.createRefungibleCollection('Schema collection', 'A', 'A').send();
+    const result = await collectionHelpers.methods.createRFTCollection('Schema collection', 'A', 'A').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
     await expect(collectionEvm.methods

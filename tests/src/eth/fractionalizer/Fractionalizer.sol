@@ -25,7 +25,9 @@ contract Fractionalizer {
     /// @dev Method modifier to only allow contract owner to call it.
     modifier onlyOwner() {
         address contracthelpersAddress = 0x842899ECF380553E8a4de75bF534cdf6fBF64049;
-        ContractHelpers contractHelpers = ContractHelpers(contracthelpersAddress);
+        ContractHelpers contractHelpers = ContractHelpers(
+            contracthelpersAddress
+        );
         address contractOwner = contractHelpers.contractOwner(address(this));
         require(msg.sender == contractOwner, "Only owner can");
         _;
@@ -38,10 +40,19 @@ contract Fractionalizer {
     event AllowListSet(address _collection, bool _status);
 
     /// @dev This emits when NFT token is fractionalized by contract.
-    event Fractionalized(address _collection, uint256 _tokenId, address _rftToken, uint128 _amount);
+    event Fractionalized(
+        address _collection,
+        uint256 _tokenId,
+        address _rftToken,
+        uint128 _amount
+    );
 
     /// @dev This emits when NFT token is defractionalized by contract.
-    event Defractionalized(address _rftToken, address _nftCollection, uint256 _nftTokenId);
+    event Defractionalized(
+        address _rftToken,
+        address _nftCollection,
+        uint256 _nftTokenId
+    );
 
     /// Set RFT collection that contract will work with. RFT tokens for fractionalized NFT tokens
     /// would be created in this collection.
@@ -52,13 +63,11 @@ contract Fractionalizer {
     ///  Can only be called by contract owner.
     /// @param _collection address of RFT collection.
     function setRFTCollection(address _collection) public onlyOwner {
-        require(
-            rftCollection == address(0),
-            "RFT collection is already set"
-        );
+        require(rftCollection == address(0), "RFT collection is already set");
         UniqueRefungible refungibleContract = UniqueRefungible(_collection);
-        string memory collectionType = refungibleContract.uniqueCollectionType();
-        
+        string memory collectionType = refungibleContract
+            .uniqueCollectionType();
+
         require(
             keccak256(bytes(collectionType)) == refungibleCollectionType,
             "Wrong collection type. Collection is not refungible."
@@ -78,13 +87,15 @@ contract Fractionalizer {
     /// @param _name name for created RFT collection.
     /// @param _description description for created RFT collection.
     /// @param _tokenPrefix token prefix for created RFT collection.
-    function createAndSetRFTCollection(string calldata _name, string calldata _description, string calldata _tokenPrefix) public onlyOwner {
-        require(
-            rftCollection == address(0),
-            "RFT collection is already set"
-        );
+    function createAndSetRFTCollection(
+        string calldata _name,
+        string calldata _description,
+        string calldata _tokenPrefix
+    ) public onlyOwner {
+        require(rftCollection == address(0), "RFT collection is already set");
         address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-        rftCollection = CollectionHelpers(collectionHelpers).createRefungibleCollection(_name, _description, _tokenPrefix);
+        rftCollection = CollectionHelpers(collectionHelpers)
+            .createRFTCollection(_name, _description, _tokenPrefix);
         emit RFTCollectionSet(rftCollection);
     }
 
@@ -92,7 +103,10 @@ contract Fractionalizer {
     /// @dev Can only be called by contract owner.
     /// @param collection NFT token address.
     /// @param status `true` to allow and `false` to disallow NFT token.
-    function setNftCollectionIsAllowed(address collection, bool status) public onlyOwner {
+    function setNftCollectionIsAllowed(address collection, bool status)
+        public
+        onlyOwner
+    {
         nftCollectionAllowList[collection] = status;
         emit AllowListSet(collection, status);
     }
@@ -107,12 +121,15 @@ contract Fractionalizer {
     /// @param  _collection NFT collection address
     /// @param  _token id of NFT token to be fractionalized
     /// @param  _pieces number of pieces new RFT token would have
-    function nft2rft(address _collection, uint256 _token, uint128 _pieces) public {
-        require(
-            rftCollection != address(0),
-            "RFT collection is not set"
+    function nft2rft(
+        address _collection,
+        uint256 _token,
+        uint128 _pieces
+    ) public {
+        require(rftCollection != address(0), "RFT collection is not set");
+        UniqueRefungible rftCollectionContract = UniqueRefungible(
+            rftCollection
         );
-        UniqueRefungible rftCollectionContract = UniqueRefungible(rftCollection);
         require(
             nftCollectionAllowList[_collection] == true,
             "Fractionalization of this collection is not allowed by admin"
@@ -121,25 +138,25 @@ contract Fractionalizer {
             UniqueNFT(_collection).ownerOf(_token) == msg.sender,
             "Only token owner could fractionalize it"
         );
-        UniqueNFT(_collection).transferFrom(
-            msg.sender,
-            address(this),
-            _token
-        );
+        UniqueNFT(_collection).transferFrom(msg.sender, address(this), _token);
         uint256 rftTokenId;
         address rftTokenAddress;
         UniqueRefungibleToken rftTokenContract;
         if (nft2rftMapping[_collection][_token] == 0) {
             rftTokenId = rftCollectionContract.nextTokenId();
             rftCollectionContract.mint(address(this), rftTokenId);
-            rftTokenAddress = rftCollectionContract.tokenContractAddress(rftTokenId);
+            rftTokenAddress = rftCollectionContract.tokenContractAddress(
+                rftTokenId
+            );
             nft2rftMapping[_collection][_token] = rftTokenId;
             rft2nftMapping[rftTokenAddress] = Token(_collection, _token);
 
             rftTokenContract = UniqueRefungibleToken(rftTokenAddress);
         } else {
             rftTokenId = nft2rftMapping[_collection][_token];
-            rftTokenAddress = rftCollectionContract.tokenContractAddress(rftTokenId);
+            rftTokenAddress = rftCollectionContract.tokenContractAddress(
+                rftTokenId
+            );
             rftTokenContract = UniqueRefungibleToken(rftTokenAddress);
         }
         rftTokenContract.repartition(_pieces);
@@ -157,24 +174,25 @@ contract Fractionalizer {
     /// @param _collection RFT collection address
     /// @param _token id of RFT token
     function rft2nft(address _collection, uint256 _token) public {
-        require(
-            rftCollection != address(0),
-            "RFT collection is not set"
+        require(rftCollection != address(0), "RFT collection is not set");
+        require(rftCollection == _collection, "Wrong RFT collection");
+        UniqueRefungible rftCollectionContract = UniqueRefungible(
+            rftCollection
         );
-        require(
-            rftCollection == _collection,
-            "Wrong RFT collection"
+        address rftTokenAddress = rftCollectionContract.tokenContractAddress(
+            _token
         );
-        UniqueRefungible rftCollectionContract = UniqueRefungible(rftCollection);
-        address rftTokenAddress = rftCollectionContract.tokenContractAddress(_token);
         Token memory nftToken = rft2nftMapping[rftTokenAddress];
         require(
             nftToken._collection != address(0),
             "No corresponding NFT token found"
         );
-        UniqueRefungibleToken rftTokenContract = UniqueRefungibleToken(rftTokenAddress);
+        UniqueRefungibleToken rftTokenContract = UniqueRefungibleToken(
+            rftTokenAddress
+        );
         require(
-            rftTokenContract.balanceOf(msg.sender) == rftTokenContract.totalSupply(),
+            rftTokenContract.balanceOf(msg.sender) ==
+                rftTokenContract.totalSupply(),
             "Not all pieces are owned by the caller"
         );
         rftCollectionContract.transferFrom(msg.sender, address(this), _token);
@@ -183,6 +201,10 @@ contract Fractionalizer {
             msg.sender,
             nftToken._tokenId
         );
-        emit Defractionalized(rftTokenAddress, nftToken._collection, nftToken._tokenId);
+        emit Defractionalized(
+            rftTokenAddress,
+            nftToken._collection,
+            nftToken._tokenId
+        );
     }
 }
