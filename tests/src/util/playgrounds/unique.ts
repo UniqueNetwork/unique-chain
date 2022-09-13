@@ -10,6 +10,7 @@ import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, IForeignAssetMetadata, TNetworks, MoonbeamAssetInfo, DemocracyStandardAccountVote, AcalaAssetMetadata} from './types';
+import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -530,6 +531,25 @@ export class ChainHelperBase {
         reject(e);
       }
     });
+  }
+
+  async getPaymentInfo(signer: TSigner, tx: any, len: number | null) {
+    const signingInfo = await this.api!.derive.tx.signingInfo(signer.address);
+
+    // We need to sign the tx because
+    // unsigned transactions does not have an inclusion fee
+    tx.sign(signer, {
+      blockHash: this.api!.genesisHash,
+      genesisHash: this.api!.genesisHash,
+      runtimeVersion: this.api!.runtimeVersion,
+      nonce: signingInfo.nonce,
+    });
+
+    if (len === null) {
+      return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()])) as RuntimeDispatchInfo;
+    } else {
+      return (await this.api!.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
+    }
   }
 
   constructApiCall(apiCall: string, params: any[]) {
@@ -1353,6 +1373,16 @@ class NFTnRFT extends CollectionGroup {
     return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
   }
 
+  async mintDefaultCollection(signer: TSigner, mode: 'NFT' | 'RFT'): Promise<UniqueCollectionBase> {
+    const defaultCreateCollectionParams: ICollectionCreationOptions = {
+      description: 'description',
+      name: 'name',
+      tokenPrefix: 'prfx',
+    };
+
+    return this.mintCollection(signer, defaultCreateCollectionParams, mode);
+  }
+
   getCollectionObject(_collectionId: number): any {
     return null;
   }
@@ -1535,6 +1565,10 @@ class NFTGroup extends NFTnRFT {
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}): Promise<UniqueNFTCollection> {
     return await super.mintCollection(signer, collectionOptions, 'NFT') as UniqueNFTCollection;
+  }
+
+  async mintDefaultCollection(signer: IKeyringPair): Promise<UniqueNFTCollection> {
+    return await super.mintDefaultCollection(signer, 'NFT') as UniqueNFTCollection;
   }
 
   /**
@@ -1721,6 +1755,10 @@ class RFTGroup extends NFTnRFT {
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}): Promise<UniqueRFTCollection> {
     return await super.mintCollection(signer, collectionOptions, 'RFT') as UniqueRFTCollection;
+  }
+
+  async mintDefaultCollection(signer: IKeyringPair): Promise<UniqueRFTCollection> {
+    return await super.mintDefaultCollection(signer, 'RFT') as UniqueRFTCollection;
   }
 
   /**
@@ -2398,8 +2436,50 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
 }
 
 class SchedulerGroup extends HelperGroup<UniqueHelper> {
-  constructor(helper: UniqueHelper) {
-    super(helper);
+  scheduledIdSlider = 0;
+
+  async waitNoScheduledTasks() {
+    const api = this.helper.api!;
+    
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<void>(async resolve => {
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
+        const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
+
+        if(areThereScheduledTasks.length == 0) {
+          unsubscribe();
+          resolve();
+        }
+      }); 
+    });
+
+    return promise;
+  }
+
+  async makeScheduledIds(num: number): Promise<string[]> {
+    await this.waitNoScheduledTasks();
+
+    function makeId(slider: number) {
+      const scheduledIdSize = 32;
+      const hexId = slider.toString(16);
+      const prefixSize = scheduledIdSize - hexId.length;
+
+      const scheduledId = '0x' + '0'.repeat(prefixSize) + hexId;
+
+      return scheduledId;  
+    }
+
+    const ids = [];
+    for (let i = 0; i < num; i++) {
+      ids.push(makeId(this.scheduledIdSlider));
+      this.scheduledIdSlider += 1;
+    }
+
+    return ids;
+  }
+
+  async makeScheduledId(): Promise<string> {
+    return (await this.makeScheduledIds(1))[0];
   }
 
   async cancelScheduled(signer: TSigner, scheduledId: string) {
