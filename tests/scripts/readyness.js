@@ -5,13 +5,11 @@ const connect = async () => {
   const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
   await api.isReadyOrError;
 
-  try {
-    const head = (await api.rpc.chain.getHeader()).number.toNumber();
-    if(head < 1) throw Error('No block #1');
-  } finally {
-    await api.disconnect();
-  }
-};
+  const head = (await api.rpc.chain.getHeader()).number.toNumber();
+  await api.disconnect();
+  if(head < 1) throw Error('No block #1');
+
+}
 
 const sleep = time => {
   return new Promise(resolve => {

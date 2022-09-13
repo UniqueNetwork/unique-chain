@@ -31,6 +31,7 @@ const expect = chai.expect;
 const value = 0;
 const gasLimit = 3000n * 1000000n;
 
+// todo:playgrounds skipped ~ postpone
 describe.skip('Integration Test toggleContractAllowList', () => {
 
   it('Enable allow list contract mode', async () => {

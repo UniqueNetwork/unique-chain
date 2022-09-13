@@ -83,6 +83,7 @@ std = [
     'pallet-base-fee/std',
     'fp-rpc/std',
     'up-rpc/std',
+    'app-promotion-rpc/std',
     'fp-evm-mapping/std',
     'fp-self-contained/std',
     'parachain-info/std',
@@ -444,8 +445,10 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 derivative = "2.2.0"
 pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
+app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false}
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
+pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
 pallet-configuration = { default-features = false, path = "../../pallets/configuration" }
 pallet-common = { default-features = false, path = "../../pallets/common" }

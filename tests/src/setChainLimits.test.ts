@@ -23,6 +23,7 @@ import {
   IChainLimits,
 } from './util/helpers';
 
+// todo:playgrounds skipped ~ postponed
 describe.skip('Negative Integration Test setChainLimits', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;

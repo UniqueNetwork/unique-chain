@@ -1,4 +1,9 @@
 <!-- bureaucrate goes here -->
+## [v0.9.27] 2022-09-08
+
+### Added
+-  Relay block constants. In particular, it is necessary to add the `AppPromotion` pallet at runtime.
+
 ## [v0.9.25] 2022-08-16
 
 ### Other changes

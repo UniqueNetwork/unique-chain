@@ -23,6 +23,7 @@ import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemE
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+// todo:playgrounds skipped ~ postponed
 describe.skip('Integration Test fungible overflows', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;

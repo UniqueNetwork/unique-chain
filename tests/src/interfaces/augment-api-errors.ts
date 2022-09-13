@@ -11,6 +11,36 @@ export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>
 
 declare module '@polkadot/api-base/types/errors' {
   interface AugmentedErrors<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * Error due to action requiring admin to be set.
+       **/
+      AdminNotSet: AugmentedError<ApiType>;
+      /**
+       * Errors caused by incorrect actions with a locked balance.
+       **/
+      IncorrectLockedBalanceOperation: AugmentedError<ApiType>;
+      /**
+       * No permission to perform an action.
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Insufficient funds to perform an action.
+       **/
+      NotSufficientFunds: AugmentedError<ApiType>;
+      /**
+       * Occurs when a pending unstake cannot be added in this block. PENDING_LIMIT_PER_BLOCK` limits exceeded.
+       **/
+      PendingForBlockOverflow: AugmentedError<ApiType>;
+      /**
+       * The error is due to the fact that the collection/contract must already be sponsored in order to perform the action.
+       **/
+      SponsorNotSet: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     balances: {
       /**
        * Beneficiary account must pre-exist

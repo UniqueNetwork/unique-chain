@@ -16,7 +16,7 @@
 
 #![doc = include_str!("../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
@@ -27,18 +27,24 @@ pub mod eth;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use super::*;
+	use crate::eth::ContractHelpersEvents;
 	use frame_support::pallet_prelude::*;
 	use pallet_evm_coder_substrate::DispatchResult;
 	use sp_core::H160;
-	use pallet_evm::account::CrossAccountId;
+	use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 	use up_data_structs::SponsorshipState;
+	use evm_coder::ToLog;
 
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
 	{
+		/// Overarching event type.
+		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
+
 		/// Address, under which magic contract will be available
 		type ContractAddress: Get<H160>;
+
 		/// In case of enabled sponsoring, but no sponsoring rate limit set,
 		/// this value will be used implicitly
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
@@ -150,6 +156,32 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	#[pallet::event]
+	#[pallet::generate_deposit(pub fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// Contract sponsor was set.
+		ContractSponsorSet(
+			/// Contract address of the affected collection.
+			H160,
+			/// New sponsor address.
+			T::AccountId,
+		),
+
+		/// New sponsor was confirm.
+		ContractSponsorshipConfirmed(
+			/// Contract address of the affected collection.
+			H160,
+			/// New sponsor address.
+			T::AccountId,
+		),
+
+		/// Collection sponsor was removed.
+		ContractSponsorRemoved(
+			/// Contract address of the affected collection.
+			H160,
+		),
+	}
+
 	impl<T: Config> Pallet<T> {
 		/// Get contract owner.
 		pub fn contract_owner(contract: H160) -> H160 {
@@ -169,43 +201,120 @@ pub mod pallet {
 				contract,
 				SponsorshipState::<T::CrossAccountId>::Unconfirmed(sponsor.clone()),
 			);
+
+			<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorSet(
+				contract,
+				sponsor.as_sub().clone(),
+			));
+			<PalletEvm<T>>::deposit_log(
+				ContractHelpersEvents::ContractSponsorSet {
+					contract_address: contract,
+					sponsor: *sponsor.as_eth(),
+				}
+				.to_log(contract),
+			);
 			Ok(())
 		}
 
-		/// Set `contract` as self sponsored.
+		/// Force set `sponsor` for `contract`.
 		///
-		/// `sender` must be owner of contract.
-		pub fn self_sponsored_enable(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
-			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
+		/// Differs from `set_sponsor` in that confirmation
+		/// from the sponsor is not required.
+		pub fn force_set_sponsor(
+			contract_address: H160,
+			sponsor: &T::CrossAccountId,
+		) -> DispatchResult {
 			Sponsoring::<T>::insert(
-				contract,
-				SponsorshipState::<T::CrossAccountId>::Confirmed(T::CrossAccountId::from_eth(
-					contract,
-				)),
+				contract_address,
+				SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor.clone()),
 			);
+
+			let eth_sponsor = *sponsor.as_eth();
+			let sub_sponsor = sponsor.as_sub().clone();
+
+			<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorSet(
+				contract_address,
+				sub_sponsor.clone(),
+			));
+			<PalletEvm<T>>::deposit_log(
+				ContractHelpersEvents::ContractSponsorSet {
+					contract_address,
+					sponsor: eth_sponsor,
+				}
+				.to_log(contract_address),
+			);
+
+			<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorshipConfirmed(
+				contract_address,
+				sub_sponsor,
+			));
+			<PalletEvm<T>>::deposit_log(
+				ContractHelpersEvents::ContractSponsorshipConfirmed {
+					contract_address,
+					sponsor: eth_sponsor,
+				}
+				.to_log(contract_address),
+			);
+
 			Ok(())
 		}
 
 		/// Remove sponsor for `contract`.
 		///
 		/// `sender` must be owner of contract.
-		pub fn remove_sponsor(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
-			Pallet::<T>::ensure_owner(contract, *sender.as_eth())?;
-			Sponsoring::<T>::remove(contract);
+		pub fn remove_sponsor(
+			sender: &T::CrossAccountId,
+			contract_address: H160,
+		) -> DispatchResult {
+			Self::ensure_owner(contract_address, *sender.as_eth())?;
+			Self::force_remove_sponsor(contract_address)
+		}
+
+		/// Force remove `sponsor` for `contract`.
+		///
+		/// Differs from `remove_sponsor` in that
+		/// it doesn't require consent from the `owner` of the contract.
+		pub fn force_remove_sponsor(contract_address: H160) -> DispatchResult {
+			Sponsoring::<T>::remove(contract_address);
+
+			Self::deposit_event(Event::<T>::ContractSponsorRemoved(contract_address));
+			<PalletEvm<T>>::deposit_log(
+				ContractHelpersEvents::ContractSponsorRemoved { contract_address }
+					.to_log(contract_address),
+			);
+
 			Ok(())
 		}
 
 		/// Confirm sponsorship.
 		///
 		/// `sender` must be same that set via [`set_sponsor`].
-		pub fn confirm_sponsorship(sender: &T::CrossAccountId, contract: H160) -> DispatchResult {
-			match Sponsoring::<T>::get(contract) {
+		pub fn confirm_sponsorship(
+			sender: &T::CrossAccountId,
+			contract_address: H160,
+		) -> DispatchResult {
+			match Sponsoring::<T>::get(contract_address) {
 				SponsorshipState::Unconfirmed(sponsor) => {
 					ensure!(sponsor == *sender, Error::<T>::NoPermission);
+					let eth_sponsor = *sponsor.as_eth();
+					let sub_sponsor = sponsor.as_sub().clone();
 					Sponsoring::<T>::insert(
-						contract,
+						contract_address,
 						SponsorshipState::<T::CrossAccountId>::Confirmed(sponsor),
 					);
+
+					<Pallet<T>>::deposit_event(Event::<T>::ContractSponsorshipConfirmed(
+						contract_address,
+						sub_sponsor,
+					));
+					<PalletEvm<T>>::deposit_log(
+						ContractHelpersEvents::ContractSponsorshipConfirmed {
+							contract_address,
+							sponsor: eth_sponsor,
+						}
+						.to_log(contract_address),
+					);
+
 					Ok(())
 				}
 				SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => {

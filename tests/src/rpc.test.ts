@@ -1,57 +1,68 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect} from 'chai';
-import usingApi from './substrate/substrate-api';
-import {createCollection, createCollectionExpectSuccess, createFungibleItemExpectSuccess, CrossAccountId, getTokenOwner, normalizeAccountId, transfer, U128_MAX} from './util/helpers';
-
-let alice: IKeyringPair;
-let bob: IKeyringPair;
-
+import {usingPlaygrounds, itSub, expect} from './util/playgrounds';
+import {crossAccountIdFromLower} from './util/playgrounds/unique';
 
 describe('integration test: RPC methods', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([20n, 10n], donor);
     });
   });
 
-  
-  it('returns None for fungible collection', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      await expect(getTokenOwner(api, collection, 0)).to.be.rejectedWith(/^owner == null$/);
-    });
+  itSub('returns None for fungible collection', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'RPC-1', tokenPrefix: 'RPC'});
+    const owner = (await helper.callRpc('api.rpc.unique.tokenOwner', [collection.collectionId, 0])).toJSON() as any;
+    expect(owner).to.be.null;
   });
   
-  it('RPC method tokenOwners for fungible collection and token', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-      const facelessCrowd = Array.from(Array(7).keys()).map(i => normalizeAccountId(privateKeyWrapper(i.toString())));
-      
-      const createCollectionResult = await createCollection(api, alice, {mode: {type: 'Fungible', decimalPoints: 0}});
-      const collectionId = createCollectionResult.collectionId;
-      const aliceTokenId = await createFungibleItemExpectSuccess(alice, collectionId, {Value: U128_MAX}, alice.address);
-     
-      await transfer(api, collectionId, aliceTokenId, alice, bob, 1000n);
-      await transfer(api, collectionId, aliceTokenId, alice, ethAcc, 900n);
-            
-      for (let i = 0; i < 7; i++) {
-        await transfer(api, collectionId, aliceTokenId, alice, facelessCrowd[i], 1);
-      } 
-      
-      const owners = await api.rpc.unique.tokenOwners(collectionId, aliceTokenId);
-      const ids = (owners.toJSON() as CrossAccountId[]).map(s => normalizeAccountId(s));
-      const aliceID = normalizeAccountId(alice);
-      const bobId = normalizeAccountId(bob);
+  itSub('RPC method tokenOwners for fungible collection and token', async ({helper}) => {
+    // Set-up a few token owners of all stripes
+    const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
+    const facelessCrowd = (await helper.arrange.createAccounts([0n, 0n, 0n, 0n, 0n, 0n, 0n], donor))
+      .map(i => {return {Substrate: i.address};});
+    
+    const collection = await helper.ft.mintCollection(alice, {name: 'RPC-2', tokenPrefix: 'RPC'});
+    // mint some maximum (u128) amounts of tokens possible
+    await collection.mint(alice, (1n << 128n) - 1n);
+    
+    await collection.transfer(alice, {Substrate: bob.address}, 1000n);
+    await collection.transfer(alice, ethAcc, 900n);
+          
+    for (let i = 0; i < facelessCrowd.length; i++) {
+      await collection.transfer(alice, facelessCrowd[i], 1n);
+    }
+    // Set-up over
 
-      // What to expect
-      // tslint:disable-next-line:no-unused-expression
-      expect(ids).to.deep.include.members([aliceID, ethAcc, bobId, ...facelessCrowd]);
-      expect(owners.length == 10).to.be.true;
-      
-      const eleven = privateKeyWrapper('11');
-      expect(await transfer(api, collectionId, aliceTokenId, alice, eleven, 10n)).to.be.true;
-      expect((await api.rpc.unique.tokenOwners(collectionId, aliceTokenId)).length).to.be.equal(10);
-    });
+    const owners = await helper.callRpc('api.rpc.unique.tokenOwners', [collection.collectionId, 0]);
+    const ids = (owners.toJSON() as any[]).map(crossAccountIdFromLower);
+
+    expect(ids).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
+    expect(owners.length == 10).to.be.true;
+    
+    // Make sure only 10 results are returned with this RPC
+    const [eleven] = await helper.arrange.createAccounts([0n], donor);
+    expect(await collection.transfer(alice, {Substrate: eleven.address}, 10n)).to.be.true;
+    expect((await helper.callRpc('api.rpc.unique.tokenOwners', [collection.collectionId, 0])).length).to.be.equal(10);
   });
 });

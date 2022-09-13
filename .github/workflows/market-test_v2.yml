@@ -22,10 +22,10 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-          - network: "quartz"
-            features: "quartz-runtime"
-          - network: "unique"
-            features: "unique-runtime"
+#          - network: "quartz"
+#            features: "quartz-runtime"
+#          - network: "unique"
+#            features: "unique-runtime"
 
     steps:
 
@@ -45,7 +45,7 @@ jobs:
           repository: 'UniqueNetwork/market-e2e-tests'
           ssh-key: ${{ secrets.GH_PAT }}
           path: 'qa-tests'
-          ref: 'QA-65_maxandreev'
+          ref: 'ci_test_v2'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
@@ -53,15 +53,6 @@ jobs:
       - name: Copy qa-tests/.env.example to qa-tests/.env
         working-directory: qa-tests
         run: cp .env.docker .env
-
-      - name: Show content of qa-test/.env
-        working-directory: qa-tests
-        run: cat .env
-
-      - name: Read qa -test .env file
-        uses: xom9ikk/dotenv@v1.0.2
-        with:
-          path: qa-tests/
         
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
@@ -83,46 +74,60 @@ jobs:
       - name: Start node-parachain
         working-directory: qa-tests
         run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
-
-      - name: Start nonce-app
-        working-directory: qa-tests
-        run: docker-compose -f ".docker/docker-compose.market.yml" up -d --build --remove-orphans --force-recreate nonce-app 
      
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 16.17
 
       - name: Setup TypeScript
         working-directory: qa-tests
         run: |
-          npm install
           npm install -g ts-node
+          npm install
 
-      - name: Copy qa-tests/.env.example to qa-tests/.env
+      - name: Copy qa-tests/.env.docker to qa-tests/.env
         working-directory: qa-tests
         run: | 
           rm -rf .env
-          cp .env.example .env
-      
-     
-      - name: Show content of qa-test/.env
+          cp .env.docker .env
+
+      - name: Wait for chain up and running
+        working-directory: tests
+        run: |
+          yarn install
+          node scripts/readyness.js
+          echo "Ready to start tests"
+
+      - name: Show content of .env file and Generate accounts
         working-directory: qa-tests
-        run: cat .env
+        run: |
+          cat .env
+          ts-node ./src/scripts/create-market-accounts.ts
 
-
-      - name: Read qa -test .env file
-        uses: xom9ikk/dotenv@v1.0.2
-        with:
-          path: qa-tests/
-
-      - name: Generate accounts
+      - name: Copy qa-tests/.env to qa-tests/.env.docker
         working-directory: qa-tests
-        run: ts-node ./src/scripts/create-market-accounts.ts
+        run: | 
+          rm -rf .env.docker
+          cp .env .env.docker
 
+      - name: Get chain logs
+        if: always()                   # run this step always
+        run: |
+          docker exec node-parachain cat /polkadot-launch/9944.log
+          docker exec node-parachain cat /polkadot-launch/9945.log
+          docker exec node-parachain cat /polkadot-launch/alice.log
+          docker exec node-parachain cat /polkadot-launch/eve.log
+          docker exec node-parachain cat /polkadot-launch/dave.log
+          docker exec node-parachain cat /polkadot-launch/charlie.log
+   
       - name: Deploy contracts
         run: |
           cd qa-tests
           ts-node ./src/scripts/deploy-contract.ts
+
+      - name: Timeout for debug
+        if: failure()
+        run: sleep 300s
 
       - name: Import test data
         working-directory: qa-tests
@@ -132,14 +137,7 @@ jobs:
         working-directory: qa-tests
         run: cat .env
 
-      - name: Copy qa-tests/.env.example to qa-tests/.env
-        working-directory: qa-tests
-        run: |
-          rm -rf .env.docker
-          cp .env .env.docker
-          sed -i '/UNIQUE_WS_ENDPOINT/c UNIQUE_WS_ENDPOINT=ws://node-parachain:9944' .env.docker
-
-      - name: Read qa -test .env file
+      - name: Read qa -test .env file Before market start
         uses: xom9ikk/dotenv@v1.0.2
         with:
           path: qa-tests/
@@ -159,26 +157,24 @@ jobs:
           npm install -D @playwright/test
           npx playwright install-deps
           npx playwright install
+
+      - name: Show content of qa-test .env
+        working-directory: qa-tests
+        run: cat .env
           
-      - name: 
+      - name: Test API interface
         working-directory: qa-tests
         run: |
           npx playwright test --workers=8 --quiet .*.api.test.ts --reporter=github --config playwright.config.ts
 
-      - name: Show env variables
-        if: success() || failure()
-        run: printenv
-
-      - name: look up for report
-        if: success() || failure()
-        run: |
-          ls -la 
-          ls -la qa-tests/
-
+      - name: Timeout for debug
+        if: failure()
+        run: sleep 300s
 
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
+#        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always

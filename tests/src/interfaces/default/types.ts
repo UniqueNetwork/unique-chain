@@ -1046,6 +1046,64 @@ export interface OrmlXtokensModuleEvent extends Enum {
   readonly type: 'TransferredMultiAssets';
 }
 
+/** @name PalletAppPromotionCall */
+export interface PalletAppPromotionCall extends Enum {
+  readonly isSetAdminAddress: boolean;
+  readonly asSetAdminAddress: {
+    readonly admin: PalletEvmAccountBasicCrossAccountIdRepr;
+  } & Struct;
+  readonly isStake: boolean;
+  readonly asStake: {
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnstake: boolean;
+  readonly isSponsorCollection: boolean;
+  readonly asSponsorCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isStopSponsoringCollection: boolean;
+  readonly asStopSponsoringCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isSponsorContract: boolean;
+  readonly asSponsorContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isStopSponsoringContract: boolean;
+  readonly asStopSponsoringContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isPayoutStakers: boolean;
+  readonly asPayoutStakers: {
+    readonly stakersNumber: Option<u8>;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorContract' | 'StopSponsoringContract' | 'PayoutStakers';
+}
+
+/** @name PalletAppPromotionError */
+export interface PalletAppPromotionError extends Enum {
+  readonly isAdminNotSet: boolean;
+  readonly isNoPermission: boolean;
+  readonly isNotSufficientFunds: boolean;
+  readonly isPendingForBlockOverflow: boolean;
+  readonly isSponsorNotSet: boolean;
+  readonly isIncorrectLockedBalanceOperation: boolean;
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation';
+}
+
+/** @name PalletAppPromotionEvent */
+export interface PalletAppPromotionEvent extends Enum {
+  readonly isStakingRecalculation: boolean;
+  readonly asStakingRecalculation: ITuple<[AccountId32, u128, u128]>;
+  readonly isStake: boolean;
+  readonly asStake: ITuple<[AccountId32, u128]>;
+  readonly isUnstake: boolean;
+  readonly asUnstake: ITuple<[AccountId32, u128]>;
+  readonly isSetAdmin: boolean;
+  readonly asSetAdmin: AccountId32;
+  readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
+}
+
 /** @name PalletBalancesAccountData */
 export interface PalletBalancesAccountData extends Struct {
   readonly free: u128;
@@ -1369,6 +1427,17 @@ export interface PalletEvmContractHelpersError extends Enum {
   readonly isNoPermission: boolean;
   readonly isNoPendingSponsor: boolean;
   readonly type: 'NoPermission' | 'NoPendingSponsor';
+}
+
+/** @name PalletEvmContractHelpersEvent */
+export interface PalletEvmContractHelpersEvent extends Enum {
+  readonly isContractSponsorSet: boolean;
+  readonly asContractSponsorSet: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorshipConfirmed: boolean;
+  readonly asContractSponsorshipConfirmed: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorRemoved: boolean;
+  readonly asContractSponsorRemoved: H160;
+  readonly type: 'ContractSponsorSet' | 'ContractSponsorshipConfirmed' | 'ContractSponsorRemoved';
 }
 
 /** @name PalletEvmContractHelpersSponsoringModeT */

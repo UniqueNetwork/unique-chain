@@ -113,6 +113,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "508b352bb5c066aac251f6daf6b36eccd03e8a88e8081cd44959ea277a3af9a8"
 
 [[package]]
+name = "app-promotion-rpc"
+version = "0.1.0"
+dependencies = [
+ "pallet-common",
+ "pallet-evm",
+ "parity-scale-codec 3.1.5",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "up-data-structs",
+]
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5137,6 +5151,7 @@ checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 name = "opal-runtime"
 version = "0.9.27"
 dependencies = [
+ "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -5165,6 +5180,7 @@ dependencies = [
  "orml-traits",
  "orml-vesting",
  "orml-xtokens",
+ "pallet-app-promotion",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -5391,6 +5407,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
 dependencies = [
  "stable_deref_trait",
+]
+
+[[package]]
+name = "pallet-app-promotion"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-common",
+ "pallet-evm",
+ "pallet-evm-contract-helpers",
+ "pallet-evm-migration",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
+ "pallet-unique",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-data-structs",
 ]
 
 [[package]]
@@ -5790,8 +5831,9 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-contract-helpers"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
+ "ethereum",
  "evm-coder",
  "fp-evm-mapping",
  "frame-support",
@@ -6557,7 +6599,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-unique"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -8457,6 +8499,7 @@ dependencies = [
 name = "quartz-runtime"
 version = "0.9.27"
 dependencies = [
+ "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -8485,6 +8528,7 @@ dependencies = [
  "orml-traits",
  "orml-vesting",
  "orml-xtokens",
+ "pallet-app-promotion",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",
@@ -12234,9 +12278,10 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "uc-rpc"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "anyhow",
+ "app-promotion-rpc",
  "jsonrpsee",
  "pallet-common",
  "pallet-evm",
@@ -12315,6 +12360,7 @@ checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 name = "unique-node"
 version = "0.9.27"
 dependencies = [
+ "app-promotion-rpc",
  "clap",
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -12401,8 +12447,9 @@ dependencies = [
 
 [[package]]
 name = "unique-rpc"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
+ "app-promotion-rpc",
  "fc-db",
  "fc-mapping-sync",
  "fc-rpc",
@@ -12452,6 +12499,7 @@ dependencies = [
 name = "unique-runtime"
 version = "0.9.27"
 dependencies = [
+ "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -12480,6 +12528,7 @@ dependencies = [
  "orml-traits",
  "orml-vesting",
  "orml-xtokens",
+ "pallet-app-promotion",
  "pallet-aura",
  "pallet-balances",
  "pallet-base-fee",

@@ -14,93 +14,106 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
-import {createCollectionExpectSuccess,
-  setCollectionSponsorExpectSuccess,
-  destroyCollectionExpectSuccess,
-  setCollectionSponsorExpectFailure,
-  addCollectionAdminExpectSuccess,
-  getCreatedCollectionCount,
-  requirePallets,
-  Pallets,
-} from './util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
-
-chai.use(chaiAsPromised);
-
-let alice: IKeyringPair;
-let bob: IKeyringPair;
-let charlie: IKeyringPair;
+import {itSub, usingPlaygrounds, expect, Pallets} from './util/playgrounds';
 
 describe('integration test: ext. setCollectionSponsor():', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([20n, 10n, 10n], donor);
     });
   });
 
-  it('Set NFT collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-  });
-  it('Set Fungible collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-  });
-  it('Set ReFungible collection sponsor', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  itSub('Set NFT collection sponsor', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-1-NFT', tokenPrefix: 'SCS'});
+    await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    expect((await collection.getData())?.raw.sponsorship).to.deep.equal({
+      Unconfirmed: bob.address,
+    });
+  });
+  
+  itSub('Set Fungible collection sponsor', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'SetCollectionSponsor-1-FT', tokenPrefix: 'SCS'});
+    await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
+
+    expect((await collection.getData())?.raw.sponsorship).to.deep.equal({
+      Unconfirmed: bob.address,
+    });
   });
 
-  it('Set the same sponsor repeatedly', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+  itSub.ifWithPallets('Set ReFungible collection sponsor', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {name: 'SetCollectionSponsor-1-RFT', tokenPrefix: 'SCS'});
+    await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
+
+    expect((await collection.getData())?.raw.sponsorship).to.deep.equal({
+      Unconfirmed: bob.address,
+    });
   });
-  it('Replace collection sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await setCollectionSponsorExpectSuccess(collectionId, charlie.address);
+
+  itSub('Set the same sponsor repeatedly', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-2', tokenPrefix: 'SCS'});
+    await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
+    await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
+
+    expect((await collection.getData())?.raw.sponsorship).to.deep.equal({
+      Unconfirmed: bob.address,
+    });
   });
-  it('Collection admin add sponsor', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await setCollectionSponsorExpectSuccess(collectionId, charlie.address, '//Bob');
+
+  itSub('Replace collection sponsor', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-3', tokenPrefix: 'SCS'});
+    await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
+    await expect(collection.setSponsor(alice, charlie.address)).to.be.not.rejected;
+
+    expect((await collection.getData())?.raw.sponsorship).to.deep.equal({
+      Unconfirmed: charlie.address,
+    });
+  });
+  
+  itSub('Collection admin add sponsor', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-4', tokenPrefix: 'SCS'});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await expect(collection.setSponsor(bob, charlie.address)).to.be.not.rejected;
+
+    expect((await collection.getData())?.raw.sponsorship).to.deep.equal({
+      Unconfirmed: charlie.address,
+    });
   });
 });
 
 describe('(!negative test!) integration test: ext. setCollectionSponsor():', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 5n], donor);
     });
   });
 
-  it('(!negative test!) Add sponsor with a non-owner', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectFailure(collectionId, bob.address, '//Bob');
+  itSub('(!negative test!) Add sponsor with a non-owner', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-Neg-1', tokenPrefix: 'SCS'});
+    await expect(collection.setSponsor(bob, bob.address))
+      .to.be.rejectedWith(/common\.NoPermission/);
   });
-  it('(!negative test!) Add sponsor to a collection that never existed', async () => {
-    // Find the collection that never existed
-    let collectionId = 0;
-    await usingApi(async (api) => {
-      collectionId = await getCreatedCollectionCount(api) + 1;
-    });
 
-    await setCollectionSponsorExpectFailure(collectionId, bob.address);
+  itSub('(!negative test!) Add sponsor to a collection that never existed', async ({helper}) => {
+    const collectionId = (1 << 32) - 1;
+    await expect(helper.collection.setSponsor(alice, collectionId, bob.address))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
-  it('(!negative test!) Add sponsor to a collection that was destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await destroyCollectionExpectSuccess(collectionId);
-    await setCollectionSponsorExpectFailure(collectionId, bob.address);
+
+  itSub('(!negative test!) Add sponsor to a collection that was destroyed', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-Neg-2', tokenPrefix: 'SCS'});
+    await collection.burn(alice);
+    await expect(collection.setSponsor(alice, bob.address))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 });

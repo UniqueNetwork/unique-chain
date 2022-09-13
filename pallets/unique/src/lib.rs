@@ -98,7 +98,7 @@ use pallet_common::{
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+pub mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
@@ -277,7 +277,7 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
-		fn deposit_event() = default;
+		pub fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			0
@@ -1101,5 +1101,54 @@ decl_module! {
 				}
 			})
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	/// Force set `sponsor` for `collection`.
+	///
+	/// Differs from [`set_collection_sponsor`][`Pallet::set_collection_sponsor`] in that confirmation
+	/// from the `sponsor` is not required.
+	///
+	/// # Arguments
+	///
+	/// * `sponsor`: ID of the account of the sponsor-to-be.
+	/// * `collection_id`: ID of the modified collection.
+	pub fn force_set_sponsor(sponsor: T::AccountId, collection_id: CollectionId) -> DispatchResult {
+		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		target_collection.check_is_internal()?;
+		target_collection.set_sponsor(sponsor.clone())?;
+
+		Self::deposit_event(Event::<T>::CollectionSponsorSet(
+			collection_id,
+			sponsor.clone(),
+		));
+
+		ensure!(
+			target_collection.confirm_sponsorship(&sponsor)?,
+			Error::<T>::ConfirmUnsetSponsorFail
+		);
+
+		Self::deposit_event(Event::<T>::SponsorshipConfirmed(collection_id, sponsor));
+
+		target_collection.save()
+	}
+
+	/// Force remove `sponsor` for `collection`.
+	///
+	/// Differs from `remove_sponsor` in that
+	/// it doesn't require consent from the `owner` of the collection.
+	///
+	/// # Arguments
+	///
+	/// * `collection_id`: ID of the modified collection.
+	pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
+		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		target_collection.check_is_internal()?;
+		target_collection.sponsorship = SponsorshipState::Disabled;
+
+		Self::deposit_event(Event::<T>::CollectionSponsorRemoved(collection_id));
+
+		target_collection.save()
 	}
 }

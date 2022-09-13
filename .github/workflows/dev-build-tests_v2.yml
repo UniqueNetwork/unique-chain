@@ -10,9 +10,6 @@ on:
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
-#concurrency: 
-#  group: ${{ github.workflow }}-${{ github.head_ref }}
-#  cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -75,7 +72,10 @@ jobs:
           yarn install
           yarn add mochawesome
           node scripts/readyness.js
+<<<<<<< HEAD:.github/workflows/dev-build-tests_v2.yml
           echo "Ready to start tests"
+=======
+>>>>>>> develop:.github/workflows/dev-build-tests_v2.yml
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:

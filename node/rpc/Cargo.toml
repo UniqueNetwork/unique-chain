@@ -1,6 +1,6 @@
 [package]
 name = "unique-rpc"
-version = "0.1.1"
+version = "0.1.2"
 authors = ['Unique Network <support@uniquenetwork.io>']
 license = 'GPLv3'
 edition = "2021"
@@ -53,6 +53,7 @@ up-common = { path = "../../primitives/common" }
 pallet-unique = { path = "../../pallets/unique" }
 uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }
+app-promotion-rpc = { path = "../../primitives/app_promotion_rpc"}
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
 

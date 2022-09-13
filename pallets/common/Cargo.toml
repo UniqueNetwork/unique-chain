@@ -40,4 +40,7 @@ std = [
     "up-data-structs/std",
     "pallet-evm/std",
 ]
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+    "frame-benchmarking/runtime-benchmarks",
+    "up-data-structs/runtime-benchmarks",
+]

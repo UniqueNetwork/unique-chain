@@ -145,6 +145,12 @@ where
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	C::Api: app_promotion_rpc::AppPromotionApi<
+		Block,
+		BlockNumber,
+		<R as RuntimeInstance>::CrossAccountId,
+		AccountId,
+	>,
 	C::Api: rmrk_rpc::RmrkApi<
 		Block,
 		AccountId,
@@ -169,6 +175,7 @@ where
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
+	use uc_rpc::{AppPromotionApiServer, AppPromotion};
 
 	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{RmrkApiServer, Rmrk};
@@ -226,6 +233,9 @@ where
 	)?;
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
+
+	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
