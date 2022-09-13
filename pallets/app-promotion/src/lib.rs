@@ -760,7 +760,6 @@ impl<T: Config> Pallet<T> {
 	/// Returns the total staked balance for the staker.
 	/// If `staker` is `None`, returns the total amount staked.
 	/// - `staker`: staker account.
-	///
 	pub fn cross_id_total_staked(staker: Option<T::CrossAccountId>) -> Option<BalanceOf<T>> {
 		staker.map_or(Some(<TotalStaked<T>>::get()), |s| {
 			Self::total_staked_by_id(s.as_sub())
@@ -777,7 +776,6 @@ impl<T: Config> Pallet<T> {
 	/// the amount of the stake.
 	///
 	/// - `staker`: staker account.
-	///
 	pub fn cross_id_total_staked_per_block(
 		staker: T::CrossAccountId,
 	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
@@ -832,8 +830,6 @@ where
 	/// Since user funds are not transferred anywhere by staking, overflow protection is provided
 	/// at the level of the associated type `Balance` of `Currency` trait. In order to overflow,
 	/// the staker must have more funds on his account than the maximum set for `Balance` type.
-	///
-	/// **Note**: This `fn` has been added to implement RPC
 	pub fn cross_id_pending_unstake(staker: Option<T::CrossAccountId>) -> BalanceOf<T> {
 		staker.map_or(
 			PendingUnstake::<T>::iter_values()
@@ -858,8 +854,6 @@ where
 	/// the amount of the unreserved funds.
 	///
 	/// - `staker`: staker account.
-	///
-	/// **Note**: This `fn` has been added to implement RPC
 	pub fn cross_id_pending_unstake_per_block(
 		staker: T::CrossAccountId,
 	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
