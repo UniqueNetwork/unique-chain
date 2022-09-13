@@ -21,25 +21,23 @@ use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
 use frame_support::traits::Get;
 use pallet_common::{
-	CollectionById, CollectionHandle,
+	CollectionById,
 	dispatch::CollectionDispatch,
 	erc::{
 		CollectionHelpersEvents,
 		static_property::{key, value as property_value},
 	},
-	Pallet as PalletCommon,
 };
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
-use pallet_evm_coder_substrate::dispatch_to_evm;
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	CollectionMode, PropertyValue,
 };
 
 use crate::{Config, SelfWeightOf, weights::WeightInfo};
 
-use sp_std::{vec, vec::Vec};
+use sp_std::vec::Vec;
 use alloc::format;
 
 /// See [`CollectionHelpersCall`]

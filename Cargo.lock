@@ -2324,7 +2324,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2343,7 +2343,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -2359,7 +2359,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -2376,7 +2376,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2416,7 +2416,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2557,7 +2557,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "ethereum",
  "parity-scale-codec 3.1.5",
@@ -2569,7 +2569,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "evm",
  "frame-support",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "fp-evm-mapping"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "frame-support",
  "sp-core",
@@ -2592,7 +2592,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -2609,7 +2609,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "ethereum",
  "frame-support",
@@ -2625,7 +2625,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "parity-scale-codec 3.1.5",
 ]
@@ -5445,7 +5445,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -5660,7 +5660,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -5689,7 +5689,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27#69945f20e8dc06ab9e0dd636848a8db6a408c71c"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit#0ae36821312f4a26e7f96225f1b2cb16216cddf5"
 dependencies = [
  "evm",
  "fp-evm",
@@ -5744,6 +5744,7 @@ dependencies = [
  "pallet-common",
  "pallet-evm",
  "pallet-evm-coder-substrate",
+ "pallet-evm-transaction-payment",
  "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",

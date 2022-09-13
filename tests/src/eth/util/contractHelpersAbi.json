@@ -134,6 +134,19 @@
         "type": "address"
       }
     ],
+    "name": "getSponsoringFeeLimit",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
     "name": "getSponsoringRateLimit",
     "outputs": [{ "internalType": "uint32", "name": "", "type": "uint32" }],
     "stateMutability": "view",
@@ -201,6 +214,20 @@
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      { "internalType": "uint256", "name": "feeLimit", "type": "uint256" }
+    ],
+    "name": "setSponsoringFeeLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
