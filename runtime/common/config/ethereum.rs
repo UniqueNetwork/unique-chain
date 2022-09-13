@@ -7,10 +7,8 @@ use frame_support::{
 use sp_runtime::{RuntimeAppPublic, Perbill};
 use crate::{
 	runtime_common::{
-		dispatch::CollectionDispatchT,
-		ethereum::sponsoring::EvmSponsorshipHandler,
-		config::sponsoring::{DefaultSponsoringFeeLimit, DefaultSponsoringRateLimit},
-		DealWithFees,
+		dispatch::CollectionDispatchT, ethereum::sponsoring::EvmSponsorshipHandler,
+		config::sponsoring::DefaultSponsoringRateLimit, DealWithFees,
 	},
 	Runtime, Aura, Balances, Event, ChainId,
 };
@@ -117,7 +115,6 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 	type Event = Event;
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
-	type DefaultSponsoringFeeLimit = DefaultSponsoringFeeLimit;
 }
 
 impl pallet_evm_coder_substrate::Config for Runtime {}

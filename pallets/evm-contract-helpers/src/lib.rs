@@ -22,7 +22,11 @@ use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
 pub use eth::*;
 use scale_info::TypeInfo;
+use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
 pub mod eth;
+
+/// Maximum number of methods per contract that could have fee limit
+pub const MAX_FEE_LIMITED_METHODS: u32 = 5;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -48,9 +52,6 @@ pub mod pallet {
 		/// In case of enabled sponsoring, but no sponsoring rate limit set,
 		/// this value will be used implicitly
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
-		/// In case of enabled sponsoring, but no sponsoring fee limit set,
-		/// this value will be used implicitly
-		type DefaultSponsoringFeeLimit: Get<U256>;
 	}
 
 	#[pallet::error]
@@ -60,6 +61,9 @@ pub mod pallet {
 
 		/// No pending sponsor for contract.
 		NoPendingSponsor,
+
+		/// Number of methods that sponsored limit is defined for exceeds maximum.
+		TooManyMethodsHaveSponsoredLimit,
 	}
 
 	#[pallet::pallet]
@@ -121,14 +125,11 @@ pub mod pallet {
 	/// * **Key2** - sponsored user address.
 	/// * **Value** - last sponsored block number.
 	#[pallet::storage]
-	pub(super) type SponsoringFeeLimit<T: Config> = StorageDoubleMap<
-		Hasher1 = Twox128,
-		Key1 = H160,
-		Hasher2 = Blake2_128Concat,
-		Key2 = u32,
-		Value = U256,
+	pub(super) type SponsoringFeeLimit<T: Config> = StorageMap<
+		Hasher = Twox128,
+		Key = H160,
+		Value = BoundedBTreeMap<u32, U256, ConstU32<MAX_FEE_LIMITED_METHODS>>,
 		QueryKind = ValueQuery,
-		OnEmpty = T::DefaultSponsoringFeeLimit,
 	>;
 
 	#[pallet::storage]
@@ -368,8 +369,13 @@ pub mod pallet {
 		}
 
 		/// Set maximum for gas limit of transaction
-		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: U256) {
-			<SponsoringFeeLimit<T>>::insert(contract, 0xffffffff, fee_limit);
+		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: U256) -> DispatchResult {
+			<SponsoringFeeLimit<T>>::try_mutate(contract, |limits_map| {
+				limits_map
+					.try_insert(0xffffffff, fee_limit)
+					.map_err(|_| <Error<T>>::TooManyMethodsHaveSponsoredLimit)
+			})?;
+			Ok(())
 		}
 
 		/// Is user added to allowlist, or he is owner of specified contract

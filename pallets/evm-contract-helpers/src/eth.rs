@@ -26,7 +26,7 @@ use pallet_evm::{
 };
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
 use pallet_evm_transaction_payment::CallContext;
-use sp_core::H160;
+use sp_core::{H160, U256};
 use up_data_structs::SponsorshipState;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringFeeLimit,
@@ -258,12 +258,13 @@ where
 		fee_limit: uint256,
 	) -> Result<void> {
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::set_sponsoring_fee_limit(contract_address, fee_limit.into());
+		<Pallet<T>>::set_sponsoring_fee_limit(contract_address, fee_limit.into())
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
 	fn get_sponsoring_fee_limit(&self, contract_address: address) -> Result<uint256> {
-		Ok(<SponsoringFeeLimit<T>>::get(contract_address, 0xffffffff))
+		Ok(get_sponsoring_fee_limit::<T>(contract_address))
 	}
 
 	/// Is specified user present in contract allow list
@@ -413,7 +414,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 			}
 		}
 
-		let sponsored_fee_limit = <SponsoringFeeLimit<T>>::get(contract_address, 0xffffffff);
+		let sponsored_fee_limit = get_sponsoring_fee_limit::<T>(contract_address);
 
 		if call_context.max_fee > sponsored_fee_limit {
 			return None;
@@ -423,6 +424,13 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 
 		Some(sponsor)
 	}
+}
+
+fn get_sponsoring_fee_limit<T: Config>(contract_address: address) -> uint256 {
+	<SponsoringFeeLimit<T>>::get(contract_address)
+		.get(&0xffffffff)
+		.cloned()
+		.unwrap_or(U256::MAX)
 }
 
 generate_stubgen!(contract_helpers_impl, ContractHelpersCall<()>, true);
