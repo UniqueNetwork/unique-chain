@@ -10,7 +10,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  execution-marix:
+  execution-matrix:
 
     name: execution matrix
 
@@ -42,8 +42,8 @@ jobs:
 
 
 
-  forkless-update-nodata:
-    needs: execution-marix
+  nodes-only-update:
+    needs: execution-matrix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
@@ -263,8 +263,9 @@ jobs:
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |
-          docker builder prune -f
+          docker builder prune -f -a
           docker system prune -f
+          docker image prune -f -a
 
       - name: Clean Workspace
         if: always()
