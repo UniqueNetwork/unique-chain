@@ -116,10 +116,10 @@ pub mod pallet {
 		/// Type for interacting with conrtacts
 		type ContractHandler: ContractHandler<AccountId = Self::CrossAccountId, ContractId = H160>;
 
-		/// ID for treasury
+		/// `AccountId` for treasury
 		type TreasuryAccountId: Get<Self::AccountId>;
 
-		/// The app's pallet id, used for deriving its sovereign account ID.
+		/// The app's pallet id, used for deriving its sovereign account address.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
@@ -159,7 +159,7 @@ pub mod pallet {
 		/// Staking recalculation was performed
 		///
 		/// # Arguments
-		/// * AccountId: ID of the staker.
+		/// * AccountId: account of the staker.
 		/// * Balance : recalculation base
 		/// * Balance : total income
 		StakingRecalculation(
@@ -174,21 +174,21 @@ pub mod pallet {
 		/// Staking was performed
 		///
 		/// # Arguments
-		/// * AccountId: ID of the staker
+		/// * AccountId: account of the staker
 		/// * Balance : staking amount
 		Stake(T::AccountId, BalanceOf<T>),
 
 		/// Unstaking was performed
 		///
 		/// # Arguments
-		/// * AccountId: ID of the staker
+		/// * AccountId: account of the staker
 		/// * Balance : unstaking amount
 		Unstake(T::AccountId, BalanceOf<T>),
 
 		/// The admin was set
 		///
 		/// # Arguments
-		/// * AccountId: ID of the admin
+		/// * AccountId: account address of the admin
 		SetAdmin(T::AccountId),
 	}
 
@@ -212,13 +212,13 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TotalStaked<T: Config> = StorageValue<Value = BalanceOf<T>, QueryKind = ValueQuery>;
 
-	/// Stores the `admin` ID. Some extrinsics can only be executed if they were signed by `admin`.
+	/// Stores the `admin` account. Some extrinsics can only be executed if they were signed by `admin`.
 	#[pallet::storage]
 	pub type Admin<T: Config> = StorageValue<Value = T::AccountId, QueryKind = OptionQuery>;
 
 	/// Stores the amount of tokens staked by account in the blocknumber.
 	///
-	/// * **Key1** - Staker ID.
+	/// * **Key1** - Staker account.
 	/// * **Key2** - Relay block number when the stake was made.
 	/// * **(Balance, BlockNumber)** - Balance of the stake.
 	/// The number of the relay block in which we must perform the interest recalculation
@@ -234,7 +234,7 @@ pub mod pallet {
 
 	/// Stores amount of stakes for an `Account`.
 	///
-	/// * **Key** - Staker ID.
+	/// * **Key** - Staker account.
 	/// * **Value** - Amount of stakes.
 	#[pallet::storage]
 	pub type StakesPerAccount<T: Config> =
@@ -242,7 +242,7 @@ pub mod pallet {
 
 	/// Stores amount of stakes for an `Account`.
 	///
-	/// * **Key** - Staker ID.
+	/// * **Key** - Staker account.
 	/// * **Value** - Amount of stakes.
 	#[pallet::storage]
 	pub type PendingUnstake<T: Config> = StorageMap<
@@ -296,7 +296,7 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * `admin`: ID of the new admin.
+		/// * `admin`: account of the new admin.
 		#[pallet::weight(T::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
@@ -332,7 +332,7 @@ pub mod pallet {
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
 
-			// cheks that we can lock `amount` on the `staker` account.
+			// checks that we can lock `amount` on the `staker` account.
 			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
 				&staker_id,
 				amount,
@@ -498,7 +498,7 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * `contract_id`: ID of the contract that will be sponsored by `pallet_id`
+		/// * `contract_id`: the contract address that will be sponsored by `pallet_id`
 		#[pallet::weight(T::WeightInfo::sponsor_contract())]
 		pub fn sponsor_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -524,7 +524,7 @@ pub mod pallet {
 		///
 		/// # Arguments
 		///
-		/// * `contract_id`: ID of the contract that is sponsored by `pallet_id`
+		/// * `contract_id`: the contract address that is sponsored by `pallet_id`
 		#[pallet::weight(T::WeightInfo::stop_sponsoring_contract())]
 		pub fn stop_sponsoring_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -584,7 +584,7 @@ pub mod pallet {
 				let income_acc = RefCell::new(BalanceOf::<T>::default());
 				let amount_acc = RefCell::new(BalanceOf::<T>::default());
 
-				// this closure is uded to perform some of the actions if we break the loop because we reached the number of stakers for recalculation,
+				// this closure is used to perform some of the actions if we break the loop because we reached the number of stakers for recalculation,
 				// but there were unrecalculated records in the storage.
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
@@ -654,7 +654,7 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	/// The account ID of the app promotion pot.
+	/// The account address of the app promotion pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
@@ -664,7 +664,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Unlocks the balance that was locked by the pallet.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	/// - `amount`: amount of unlocked funds.
 	fn unlock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
 		let locked_balance = Self::get_locked_balance(staker)
@@ -684,7 +684,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Adds the balance to locked by the pallet.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	/// - `amount`: amount of added locked funds.
 	fn add_lock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
 		Self::get_locked_balance(staker)
@@ -696,7 +696,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Sets the new state of a balance locked by the pallet.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	/// - `amount`: amount of locked funds.
 	fn set_lock_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
 		if amount.is_zero() {
@@ -713,7 +713,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Returns the balance locked by the pallet for the staker.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	pub fn get_locked_balance(
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<BalanceLock<BalanceOf<T>>> {
@@ -724,7 +724,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Returns the total staked balance for the staker.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	pub fn total_staked_by_id(staker: impl EncodeLike<T::AccountId>) -> Option<BalanceOf<T>> {
 		let staked = Staked::<T>::iter_prefix((staker,))
 			.into_iter()
@@ -741,7 +741,7 @@ impl<T: Config> Pallet<T> {
 	/// Returns all relay block numbers when stake was made,
 	/// the amount of the stake.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	pub fn total_staked_by_id_per_block(
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<Vec<(T::BlockNumber, BalanceOf<T>)>> {
@@ -759,9 +759,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Returns the total staked balance for the staker.
 	/// If `staker` is `None`, returns the total amount staked.
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	///
-	/// **Note**: This `fn` has been added to implement RPC
 	pub fn cross_id_total_staked(staker: Option<T::CrossAccountId>) -> Option<BalanceOf<T>> {
 		staker.map_or(Some(<TotalStaked<T>>::get()), |s| {
 			Self::total_staked_by_id(s.as_sub())
@@ -777,9 +776,8 @@ impl<T: Config> Pallet<T> {
 	/// Returns all relay block numbers when stake was made,
 	/// the amount of the stake.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	///
-	/// **Note**: This `fn` has been added to implement RPC
 	pub fn cross_id_total_staked_per_block(
 		staker: T::CrossAccountId,
 	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
@@ -829,7 +827,7 @@ where
 	/// Returns the amount reserved by the pending.
 	/// If `staker` is `None`, returns the total pending.
 	///
-	/// -`staker`: staker ID.
+	/// -`staker`: staker account.
 	///
 	/// Since user funds are not transferred anywhere by staking, overflow protection is provided
 	/// at the level of the associated type `Balance` of `Currency` trait. In order to overflow,
@@ -859,7 +857,7 @@ where
 	/// Returns all parachain block numbers when unreserve is expected,
 	/// the amount of the unreserved funds.
 	///
-	/// - `staker`: staker ID.
+	/// - `staker`: staker account.
 	///
 	/// **Note**: This `fn` has been added to implement RPC
 	pub fn cross_id_pending_unstake_per_block(

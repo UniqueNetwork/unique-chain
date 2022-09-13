@@ -12,7 +12,7 @@ use pallet_evm_contract_helpers::{Pallet as EvmHelpersPallet, Config as EvmHelpe
 /// This trait was defined because `LockableCurrency`
 /// has no way to know the state of the lock for an account.
 pub trait ExtendedLockableCurrency<AccountId: Parameter>: LockableCurrency<AccountId> {
-	/// Returns lock balance for ID. Allows to determine the cause of the lock.
+	/// Returns lock balance for an account. Allows to determine the cause of the lock.
 	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
 	where
 		KArg: EncodeLike<AccountId>;
@@ -35,7 +35,7 @@ pub trait CollectionHandler {
 
 	/// Sets sponsor for a collection.
 	///
-	/// - `sponsor_id`: ID of the account of the sponsor-to-be.
+	/// - `sponsor_id`: the account of the sponsor-to-be.
 	/// - `collection_id`: ID of the modified collection.
 	fn set_sponsor(
 		sponsor_id: Self::AccountId,
@@ -86,8 +86,8 @@ pub trait ContractHandler {
 
 	/// Sets sponsor for a contract.
 	///
-	/// - `sponsor_id`: ID of the account of the sponsor-to-be.
-	/// - `contract_address`: ID of the modified contract.
+	/// - `sponsor_id`: the account of the sponsor-to-be.
+	/// - `contract_address`: the address of the modified contract.
 	fn set_sponsor(
 		sponsor_id: Self::AccountId,
 		contract_address: Self::ContractId,
@@ -95,12 +95,12 @@ pub trait ContractHandler {
 
 	/// Removes sponsor for a contract.
 	///
-	/// - `contract_address`: ID of the modified contract.
+	/// - `contract_address`: the address of the modified contract.
 	fn remove_contract_sponsor(contract_address: Self::ContractId) -> DispatchResult;
 
 	/// Retuns the current sponsor for a contract if one is set.
 	///
-	/// - `contract_address`: ID of the contract.
+	/// - `contract_address`: the contract address.
 	fn sponsor(
 		contract_address: Self::ContractId,
 	) -> Result<Option<Self::AccountId>, DispatchError>;
