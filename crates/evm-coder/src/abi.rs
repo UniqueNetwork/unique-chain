@@ -25,7 +25,7 @@ use primitive_types::{H160, U256};
 
 use crate::{
 	execution::{Error, ResultWithPostInfo, WithPostDispatchInfo},
-	types::{string, self},
+	types::*,
 };
 use crate::execution::Result;
 
@@ -56,7 +56,7 @@ impl<'i> AbiReader<'i> {
 		}
 	}
 	/// Start reading RLP buffer, parsing first 4 bytes as selector
-	pub fn new_call(buf: &'i [u8]) -> Result<(types::bytes4, Self)> {
+	pub fn new_call(buf: &'i [u8]) -> Result<(bytes4, Self)> {
 		if buf.len() < 4 {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
@@ -252,11 +252,11 @@ impl AbiWriter {
 		self.static_part.extend(block);
 	}
 
-	fn write_padright(&mut self, bytes: &[u8]) {
-		assert!(bytes.len() <= ABI_ALIGNMENT);
-		self.static_part.extend(bytes);
+	fn write_padright(&mut self, block: &[u8]) {
+		assert!(block.len() <= ABI_ALIGNMENT);
+		self.static_part.extend(block);
 		self.static_part
-			.extend(&[0; ABI_ALIGNMENT][0..ABI_ALIGNMENT - bytes.len()]);
+			.extend(&[0; ABI_ALIGNMENT][0..ABI_ALIGNMENT - block.len()]);
 	}
 
 	/// Write [`H160`] to end of buffer
@@ -369,16 +369,30 @@ macro_rules! impl_abi_readable {
 	};
 }
 
-impl_abi_readable!(u8, uint8, false);
-impl_abi_readable!(u32, uint32, false);
-impl_abi_readable!(u64, uint64, false);
-impl_abi_readable!(u128, uint128, false);
-impl_abi_readable!(U256, uint256, false);
-impl_abi_readable!([u8; 4], bytes4, false);
-impl_abi_readable!(H160, address, false);
-impl_abi_readable!(Vec<u8>, bytes, true);
-impl_abi_readable!(bool, bool, true);
+impl_abi_readable!(bool, bool, false);
+impl_abi_readable!(uint8, uint8, false);
+impl_abi_readable!(uint32, uint32, false);
+impl_abi_readable!(uint64, uint64, false);
+impl_abi_readable!(uint128, uint128, false);
+impl_abi_readable!(uint256, uint256, false);
+impl_abi_readable!(bytes4, bytes4, false);
+impl_abi_readable!(address, address, false);
 impl_abi_readable!(string, string, true);
+// impl_abi_readable!(bytes, bytes, true);
+
+impl TypeHelper for bytes {
+	fn is_dynamic() -> bool {
+		true
+	}
+	fn size() -> usize {
+		ABI_ALIGNMENT
+	}
+}
+impl AbiRead<bytes> for AbiReader<'_> {
+	fn abi_read(&mut self) -> Result<bytes> {
+		Ok(bytes(self.bytes()?))
+	}
+}
 
 mod sealed {
 	/// Not all types can be placed in vec, i.e `Vec<u8>` is restricted, `bytes` should be used instead
@@ -524,16 +538,18 @@ impl_abi_writeable!(U256, uint256);
 impl_abi_writeable!(H160, address);
 impl_abi_writeable!(bool, bool);
 impl_abi_writeable!(&str, string);
+
 impl AbiWrite for string {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		writer.string(self)
 	}
 }
-// impl AbiWrite for Vec<u8> {
-// 	fn abi_write(&self, writer: &mut AbiWriter) {
-// 		writer.bytes(self)
-// 	}
-// }
+
+impl AbiWrite for bytes {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		writer.bytes(self.0.as_slice())
+	}
+}
 
 impl<T: AbiWrite + TypeHelper> AbiWrite for Vec<T> {
 	fn abi_write(&self, writer: &mut AbiWriter) {
