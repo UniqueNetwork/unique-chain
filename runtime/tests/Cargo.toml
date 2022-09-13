@@ -43,4 +43,4 @@ parity-scale-codec = { version = "3.1.2", default-features = false, features = [
 scale-info = "*"
 
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3" }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="9ee7d6e57e03a2575cbab79431774b56f170018e" }

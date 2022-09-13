@@ -22,7 +22,7 @@ use core::marker::PhantomData;
 use fp_evm::WithdrawReason;
 use frame_support::traits::IsSubType;
 pub use pallet::*;
-use pallet_evm::{account::CrossAccountId, EnsureAddressOrigin, FeeCalculator};
+use pallet_evm::{account::CrossAccountId, EnsureAddressOrigin};
 use sp_core::{H160, U256};
 use sp_runtime::{TransactionOutcome, DispatchError};
 use up_sponsorship::SponsorshipHandler;
@@ -33,10 +33,20 @@ pub mod pallet {
 
 	use sp_std::vec::Vec;
 
+	/// Contains call data
+	pub struct CallContext {
+		/// Max fee for transaction - gasLimit * gasPrice
+		pub max_fee: U256,
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::account::Config {
 		/// Loosly-coupled handlers for evm call sponsoring
-		type EvmSponsorshipHandler: SponsorshipHandler<Self::CrossAccountId, (H160, Vec<u8>), u128>;
+		type EvmSponsorshipHandler: SponsorshipHandler<
+			Self::CrossAccountId,
+			(H160, Vec<u8>),
+			CallContext,
+		>;
 	}
 
 	#[pallet::pallet]
@@ -55,10 +65,11 @@ impl<T: Config> fp_evm::TransactionValidityHack<T::CrossAccountId> for Transacti
 		match reason {
 			WithdrawReason::Call { target, input } => {
 				let origin_sub = T::CrossAccountId::from_eth(origin);
+				let call_context = CallContext { max_fee };
 				T::EvmSponsorshipHandler::get_sponsor(
 					&origin_sub,
 					&(*target, input.clone()),
-					&max_fee.as_u128(),
+					&call_context,
 				)
 			}
 			_ => None,
@@ -68,12 +79,12 @@ impl<T: Config> fp_evm::TransactionValidityHack<T::CrossAccountId> for Transacti
 
 /// Implements sponsoring for evm calls performed from pallet-evm (via api.tx.ethereum.transact/api.tx.evm.call)
 pub struct BridgeSponsorshipHandler<T>(PhantomData<T>);
-impl<T, C> SponsorshipHandler<T::AccountId, C, u128> for BridgeSponsorshipHandler<T>
+impl<T, C> SponsorshipHandler<T::AccountId, C, ()> for BridgeSponsorshipHandler<T>
 where
 	T: Config + pallet_evm::Config,
 	C: IsSubType<pallet_evm::Call<T>>,
 {
-	fn get_sponsor(who: &T::AccountId, call: &C, _fee_limit: &u128) -> Option<T::AccountId> {
+	fn get_sponsor(who: &T::AccountId, call: &C, _call_context: &()) -> Option<T::AccountId> {
 		match call.is_sub_type()? {
 			pallet_evm::Call::call {
 				source,
@@ -90,6 +101,7 @@ where
 				.ok()?;
 				let who = T::CrossAccountId::from_sub(who.clone());
 				let max_fee = max_fee_per_gas.saturating_mul((*gas_limit).into());
+				let call_context = CallContext { max_fee };
 				// Effects from EvmSponsorshipHandler are applied by pallet_evm::runner
 				// TODO: Should we implement simulation mode (test, but do not apply effects) in `up-sponsorship`?
 				let sponsor = frame_support::storage::with_transaction(|| {
@@ -97,7 +109,7 @@ where
 						T::EvmSponsorshipHandler::get_sponsor(
 							&who,
 							&(*target, input.clone()),
-							&max_fee.try_into().unwrap(),
+							&call_context,
 						),
 					))
 				})

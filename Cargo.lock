@@ -5794,6 +5794,7 @@ dependencies = [
  "pallet-common",
  "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier?rev=89a37c5a489f426cc7a42d7b94019974093a052d)",
  "pallet-evm-coder-substrate",
+ "pallet-evm-transaction-payment",
  "parity-scale-codec 3.1.5",
  "scale-info",
  "sp-core",
@@ -6409,7 +6410,7 @@ dependencies = [
 [[package]]
 name = "pallet-template-transaction-payment"
 version = "3.0.0"
-source = "git+https://github.com/uniquenetwork/pallet-sponsoring?rev=a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3#a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3"
+source = "git+https://github.com/uniquenetwork/pallet-sponsoring?rev=9ee7d6e57e03a2575cbab79431774b56f170018e#9ee7d6e57e03a2575cbab79431774b56f170018e"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -12577,7 +12578,7 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/pallet-sponsoring?rev=a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3#a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3"
+source = "git+https://github.com/uniquenetwork/pallet-sponsoring?rev=9ee7d6e57e03a2575cbab79431774b56f170018e#9ee7d6e57e03a2575cbab79431774b56f170018e"
 dependencies = [
  "impl-trait-for-tuples",
 ]

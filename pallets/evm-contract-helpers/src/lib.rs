@@ -30,7 +30,7 @@ pub mod pallet {
 	use crate::eth::ContractHelpersEvents;
 	use frame_support::pallet_prelude::*;
 	use pallet_evm_coder_substrate::DispatchResult;
-	use sp_core::H160;
+	use sp_core::{H160, U256};
 	use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 	use up_data_structs::SponsorshipState;
 	use evm_coder::ToLog;
@@ -50,7 +50,7 @@ pub mod pallet {
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
 		/// In case of enabled sponsoring, but no sponsoring fee limit set,
 		/// this value will be used implicitly
-		type DefaultSponsoringFeeLimit: Get<u128>;
+		type DefaultSponsoringFeeLimit: Get<U256>;
 	}
 
 	#[pallet::error]
@@ -124,7 +124,7 @@ pub mod pallet {
 	pub(super) type SponsoringFeeLimit<T: Config> = StorageMap<
 		Hasher = Twox128,
 		Key = H160,
-		Value = u128,
+		Value = U256,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultSponsoringFeeLimit,
 	>;
@@ -366,7 +366,7 @@ pub mod pallet {
 		}
 
 		/// Set maximum for gas limit of transaction
-		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: u128) {
+		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: U256) {
 			<SponsoringFeeLimit<T>>::insert(contract, fee_limit);
 		}
 

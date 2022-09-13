@@ -135,7 +135,7 @@
       }
     ],
     "name": "getSponsoringFeeLimit",
-    "outputs": [{ "internalType": "uint128", "name": "", "type": "uint128" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -225,7 +225,7 @@
         "name": "contractAddress",
         "type": "address"
       },
-      { "internalType": "uint128", "name": "feeLimit", "type": "uint128" }
+      { "internalType": "uint256", "name": "feeLimit", "type": "uint256" }
     ],
     "name": "setSponsoringFeeLimit",
     "outputs": [],

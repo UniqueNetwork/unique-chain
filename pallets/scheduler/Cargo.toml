@@ -24,7 +24,7 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.27' }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3" }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="9ee7d6e57e03a2575cbab79431774b56f170018e" }
 log = { version = "0.4.14", default-features = false }
 
 [dev-dependencies]

@@ -32,7 +32,7 @@ contract ContractHelpersEvents {
 }
 
 /// @title Magic contract, which allows users to reconfigure other contracts
-/// @dev the ERC-165 identifier for this interface is 0xd77fab70
+/// @dev the ERC-165 identifier for this interface is 0x172cb4fb
 contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
@@ -203,9 +203,9 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy = 0;
 	}
 
-	/// @dev EVM selector for this function is: 0x1c362eb4,
-	///  or in textual repr: setSponsoringFeeLimit(address,uint128)
-	function setSponsoringFeeLimit(address contractAddress, uint128 feeLimit)
+	/// @dev EVM selector for this function is: 0x03aed665,
+	///  or in textual repr: setSponsoringFeeLimit(address,uint256)
+	function setSponsoringFeeLimit(address contractAddress, uint256 feeLimit)
 		public
 	{
 		require(false, stub_error);
@@ -219,7 +219,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	function getSponsoringFeeLimit(address contractAddress)
 		public
 		view
-		returns (uint128)
+		returns (uint256)
 	{
 		require(false, stub_error);
 		contractAddress;

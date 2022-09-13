@@ -14,16 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::parameter_types;
 use crate::{
 	runtime_common::{sponsoring::UniqueSponsorshipHandler},
 	Runtime,
 };
-use up_common::{types::BlockNumber, constants::*};
+use frame_support::parameter_types;
+use sp_core::U256;
+use up_common::{constants::*, types::BlockNumber};
 
 parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
-	pub const DefaultSponsoringFeeLimit: u128 = u128::MAX;
+	pub const DefaultSponsoringFeeLimit: U256 = U256::MAX;
 }
 
 type SponsorshipHandler = (

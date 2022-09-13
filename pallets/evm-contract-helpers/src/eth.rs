@@ -20,12 +20,13 @@ use core::marker::PhantomData;
 use evm_coder::{
 	abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*, ToLog,
 };
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
 };
-use sp_core::{H160, U256};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
+use pallet_evm_transaction_payment::CallContext;
+use sp_core::H160;
 use up_data_structs::SponsorshipState;
 use crate::{
 	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringFeeLimit,
@@ -254,17 +255,15 @@ where
 		&mut self,
 		caller: caller,
 		contract_address: address,
-		fee_limit: uint128,
+		fee_limit: uint256,
 	) -> Result<void> {
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
 		<Pallet<T>>::set_sponsoring_fee_limit(contract_address, fee_limit.into());
 		Ok(())
 	}
 
-	fn get_sponsoring_fee_limit(&self, contract_address: address) -> Result<uint128> {
-		Ok(<SponsoringFeeLimit<T>>::get(contract_address)
-			.try_into()
-			.map_err(|_| "fee limit > u128::MAX")?)
+	fn get_sponsoring_fee_limit(&self, contract_address: address) -> Result<uint256> {
+		Ok(<SponsoringFeeLimit<T>>::get(contract_address))
 	}
 
 	/// Is specified user present in contract allow list
@@ -380,13 +379,13 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 
 /// Bridge to pallet-sponsoring
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), u128>
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), CallContext>
 	for HelpersContractSponsoring<T>
 {
 	fn get_sponsor(
 		who: &T::CrossAccountId,
 		call: &(H160, Vec<u8>),
-		fee_limit: &u128,
+		call_context: &CallContext,
 	) -> Option<T::CrossAccountId> {
 		let (contract_address, _) = call;
 		let mode = <Pallet<T>>::sponsoring_mode(*contract_address);
@@ -417,7 +416,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), u128>
 
 		let sponsored_fee_limit = <SponsoringFeeLimit<T>>::get(contract_address);
 
-		if *fee_limit > sponsored_fee_limit {
+		if call_context.max_fee > sponsored_fee_limit {
 			return None;
 		}
 

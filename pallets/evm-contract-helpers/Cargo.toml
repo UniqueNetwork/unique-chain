@@ -21,12 +21,13 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 # Unique
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3" }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="9ee7d6e57e03a2575cbab79431774b56f170018e" }
 
 # Locals
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-common = { default-features = false, path = '../../pallets/common' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }
+pallet-evm-transaction-payment = {  default-features = false, path = '../../pallets/evm-transaction-payment' }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs', features = [
     'serde1',
 ] }

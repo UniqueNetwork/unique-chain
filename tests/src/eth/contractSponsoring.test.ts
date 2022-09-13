@@ -558,7 +558,7 @@ describe('Sponsoring Fee Limit', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
-    expect(await helpers.methods.getSponsoringFeeLimit(flipper.options.address).call()).to.be.equals('340282366920938463463374607431768211455');
+    expect(await helpers.methods.getSponsoringFeeLimit(flipper.options.address).call()).to.be.equals('115792089237316195423570985008687907853269984665640564039457584007913129639935');
   });
 
   itWeb3('Set fee limit', async ({api, web3, privateKeyWrapper}) => {
