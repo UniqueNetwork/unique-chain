@@ -10,11 +10,7 @@ contract Dummy {
 }
 
 contract ERC165 is Dummy {
-	function supportsInterface(bytes4 interfaceID)
-		external
-		view
-		returns (bool)
-	{
+	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
 		interfaceID;
 		return true;
@@ -23,10 +19,7 @@ contract ERC165 is Dummy {
 
 /// @dev inlined interface
 contract CollectionHelpersEvents {
-	event CollectionCreated(
-		address indexed owner,
-		address indexed collectionId
-	);
+	event CollectionCreated(address indexed owner, address indexed collectionId);
 }
 
 /// @title Contract, which allows users to operate with collections
@@ -106,11 +99,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// @return bool Does the collection exist?
 	/// @dev EVM selector for this function is: 0xc3de1494,
 	///  or in textual repr: isCollectionExist(address)
-	function isCollectionExist(address collectionAddress)
-		public
-		view
-		returns (bool)
-	{
+	function isCollectionExist(address collectionAddress) public view returns (bool) {
 		require(false, stub_error);
 		collectionAddress;
 		dummy;

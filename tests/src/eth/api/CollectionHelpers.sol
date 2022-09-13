@@ -14,10 +14,7 @@ interface ERC165 is Dummy {
 
 /// @dev inlined interface
 interface CollectionHelpersEvents {
-	event CollectionCreated(
-		address indexed owner,
-		address indexed collectionId
-	);
+	event CollectionCreated(address indexed owner, address indexed collectionId);
 }
 
 /// @title Contract, which allows users to operate with collections
@@ -67,8 +64,5 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// @return bool Does the collection exist?
 	/// @dev EVM selector for this function is: 0xc3de1494,
 	///  or in textual repr: isCollectionExist(address)
-	function isCollectionExist(address collectionAddress)
-		external
-		view
-		returns (bool);
+	function isCollectionExist(address collectionAddress) external view returns (bool);
 }
