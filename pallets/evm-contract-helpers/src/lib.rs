@@ -48,6 +48,9 @@ pub mod pallet {
 		/// In case of enabled sponsoring, but no sponsoring rate limit set,
 		/// this value will be used implicitly
 		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
+		/// In case of enabled sponsoring, but no sponsoring fee limit set,
+		/// this value will be used implicitly
+		type DefaultSponsoringFeeLimit: Get<u128>;
 	}
 
 	#[pallet::error]
@@ -117,6 +120,15 @@ pub mod pallet {
 	/// * **Key1** - contract address.
 	/// * **Key2** - sponsored user address.
 	/// * **Value** - last sponsored block number.
+	#[pallet::storage]
+	pub(super) type SponsoringFeeLimit<T: Config> = StorageMap<
+		Hasher = Twox128,
+		Key = H160,
+		Value = u128,
+		QueryKind = ValueQuery,
+		OnEmpty = T::DefaultSponsoringFeeLimit,
+	>;
+
 	#[pallet::storage]
 	pub(super) type SponsorBasket<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
@@ -351,6 +363,11 @@ pub mod pallet {
 		/// Set duration between two sponsored contract calls
 		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
+		}
+
+		/// Set maximum for gas limit of transaction
+		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: u128) {
+			<SponsoringFeeLimit<T>>::insert(contract, fee_limit);
 		}
 
 		/// Is user added to allowlist, or he is owner of specified contract

@@ -40,13 +40,13 @@ sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch 
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
 
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fc-db = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
 
 pallet-common = { default-features = false, path = "../../pallets/common" }
 up-common = { path = "../../primitives/common" }

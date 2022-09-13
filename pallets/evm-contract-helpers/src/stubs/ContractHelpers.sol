@@ -203,6 +203,30 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy = 0;
 	}
 
+	/// @dev EVM selector for this function is: 0x1c362eb4,
+	///  or in textual repr: setSponsoringFeeLimit(address,uint128)
+	function setSponsoringFeeLimit(address contractAddress, uint128 feeLimit)
+		public
+	{
+		require(false, stub_error);
+		contractAddress;
+		feeLimit;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0xc3fdc9ee,
+	///  or in textual repr: getSponsoringFeeLimit(address)
+	function getSponsoringFeeLimit(address contractAddress)
+		public
+		view
+		returns (uint128)
+	{
+		require(false, stub_error);
+		contractAddress;
+		dummy;
+		return 0;
+	}
+
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included
 	/// @param contractAddress Contract to check allowlist of

@@ -25,11 +25,11 @@ use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
 };
-use sp_core::H160;
+use sp_core::{H160, U256};
 use up_data_structs::SponsorshipState;
 use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringRateLimit, SponsoringModeT,
-	Sponsoring,
+	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringFeeLimit,
+	SponsoringRateLimit, SponsoringModeT, Sponsoring,
 };
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
@@ -250,6 +250,23 @@ where
 		Ok(())
 	}
 
+	fn set_sponsoring_fee_limit(
+		&mut self,
+		caller: caller,
+		contract_address: address,
+		fee_limit: uint128,
+	) -> Result<void> {
+		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::set_sponsoring_fee_limit(contract_address, fee_limit.into());
+		Ok(())
+	}
+
+	fn get_sponsoring_fee_limit(&self, contract_address: address) -> Result<uint128> {
+		Ok(<SponsoringFeeLimit<T>>::get(contract_address)
+			.try_into()
+			.map_err(|_| "fee limit > u128::MAX")?)
+	}
+
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included
 	/// @param contractAddress Contract to check allowlist of
@@ -363,10 +380,14 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 
 /// Bridge to pallet-sponsoring
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), u128>
 	for HelpersContractSponsoring<T>
 {
-	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
+	fn get_sponsor(
+		who: &T::CrossAccountId,
+		call: &(H160, Vec<u8>),
+		fee_limit: &u128,
+	) -> Option<T::CrossAccountId> {
 		let (contract_address, _) = call;
 		let mode = <Pallet<T>>::sponsoring_mode(*contract_address);
 		if mode == SponsoringModeT::Disabled {
@@ -392,6 +413,12 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)>
 			if block_number < timeout {
 				return None;
 			}
+		}
+
+		let sponsored_fee_limit = <SponsoringFeeLimit<T>>::get(contract_address);
+
+		if *fee_limit > sponsored_fee_limit {
+			return None;
 		}
 
 		<SponsorBasket<T>>::insert(contract_address, who.as_eth(), block_number);

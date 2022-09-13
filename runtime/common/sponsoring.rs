@@ -224,12 +224,12 @@ fn load<T: UniqueConfig>(id: CollectionId) -> Option<(T::AccountId, CollectionHa
 }
 
 pub struct UniqueSponsorshipHandler<T>(PhantomData<T>);
-impl<T, C> SponsorshipHandler<T::AccountId, C> for UniqueSponsorshipHandler<T>
+impl<T, C> SponsorshipHandler<T::AccountId, C, u128> for UniqueSponsorshipHandler<T>
 where
 	T: Config,
 	C: IsSubType<UniqueCall<T>>,
 {
-	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
+	fn get_sponsor(who: &T::AccountId, call: &C, _fee_limit: &u128) -> Option<T::AccountId> {
 		match IsSubType::<UniqueCall<T>>::is_sub_type(call)? {
 			UniqueCall::set_token_properties {
 				collection_id,

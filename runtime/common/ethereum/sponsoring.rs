@@ -44,9 +44,13 @@ pub type EvmSponsorshipHandler = (
 
 pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
 impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
-	SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T>
+	SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), u128> for UniqueEthSponsorshipHandler<T>
 {
-	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
+	fn get_sponsor(
+		who: &T::CrossAccountId,
+		call: &(H160, Vec<u8>),
+		_fee_limit: &u128,
+	) -> Option<T::CrossAccountId> {
 		let collection_id = map_eth_to_id(&call.0)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
 		let sponsor = collection.sponsorship.sponsor()?.clone();

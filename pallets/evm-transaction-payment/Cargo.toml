@@ -14,11 +14,11 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.27" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
+up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev = "a8ec4bf8d5ded662d96da6d8fb211b0bbf6617b3" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
 
 [dependencies.codec]
 default-features = false

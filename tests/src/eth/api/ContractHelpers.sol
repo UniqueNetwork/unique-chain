@@ -131,6 +131,18 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
 		external;
 
+	/// @dev EVM selector for this function is: 0x1c362eb4,
+	///  or in textual repr: setSponsoringFeeLimit(address,uint128)
+	function setSponsoringFeeLimit(address contractAddress, uint128 feeLimit)
+		external;
+
+	/// @dev EVM selector for this function is: 0xc3fdc9ee,
+	///  or in textual repr: getSponsoringFeeLimit(address)
+	function getSponsoringFeeLimit(address contractAddress)
+		external
+		view
+		returns (uint128);
+
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included
 	/// @param contractAddress Contract to check allowlist of

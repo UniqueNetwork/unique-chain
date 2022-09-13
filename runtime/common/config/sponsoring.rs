@@ -23,6 +23,7 @@ use up_common::{types::BlockNumber, constants::*};
 
 parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
+	pub const DefaultSponsoringFeeLimit: u128 = u128::MAX;
 }
 
 type SponsorshipHandler = (

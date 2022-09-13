@@ -48,7 +48,8 @@ macro_rules! impl_common_runtime_apis {
         };
         use pallet_evm::{
             Runner, account::CrossAccountId as _,
-            Account as EVMAccount, FeeCalculator,
+            Account as EVMAccount,
+            FeeCalculator
         };
         use runtime_common::{
             sponsoring::{SponsorshipPredict, UniqueSponsorshipPredict},
