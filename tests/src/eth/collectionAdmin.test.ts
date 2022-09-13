@@ -38,7 +38,7 @@ describe('Add collection admins', () => {
 
   itEth('Add admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const newAdmin = helper.eth.createAccount();
@@ -51,7 +51,7 @@ describe('Add collection admins', () => {
 
   itEth.skip('Add substrate admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
@@ -64,7 +64,7 @@ describe('Add collection admins', () => {
 
   itEth('Verify owner or admin', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const newAdmin = helper.eth.createAccount();
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -75,7 +75,7 @@ describe('Add collection admins', () => {
 
   itEth('(!negative tests!) Add admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const admin = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -93,7 +93,7 @@ describe('Add collection admins', () => {
 
   itEth('(!negative tests!) Add admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const notAdmin = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -108,7 +108,7 @@ describe('Add collection admins', () => {
 
   itEth.skip('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const admin = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -126,7 +126,7 @@ describe('Add collection admins', () => {
 
   itEth.skip('(!negative tests!) Add substrate admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const notAdmin0 = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -150,7 +150,7 @@ describe('Remove collection admins', () => {
 
   itEth('Remove admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const newAdmin = helper.eth.createAccount();
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -170,7 +170,7 @@ describe('Remove collection admins', () => {
 
   itEth.skip('Remove substrate admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -188,7 +188,7 @@ describe('Remove collection admins', () => {
 
   itEth('(!negative tests!) Remove admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
@@ -210,7 +210,7 @@ describe('Remove collection admins', () => {
 
   itEth('(!negative tests!) Remove admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
@@ -230,7 +230,7 @@ describe('Remove collection admins', () => {
 
   itEth.skip('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [adminSub] = await helper.arrange.createAccounts([10n], donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -250,7 +250,7 @@ describe('Remove collection admins', () => {
 
   itEth.skip('(!negative tests!) Remove substrate admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [adminSub] = await helper.arrange.createAccounts([10n], donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -279,7 +279,7 @@ describe('Change owner tests', () => {
   itEth('Change owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await collectionEvm.methods.setOwner(newOwner).send();
@@ -291,7 +291,7 @@ describe('Change owner tests', () => {
   itEth('change owner call fee', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.setOwner(newOwner).send());
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
@@ -301,7 +301,7 @@ describe('Change owner tests', () => {
   itEth('(!negative tests!) call setOwner by non owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await expect(collectionEvm.methods.setOwner(newOwner).send({from: newOwner})).to.be.rejected;
@@ -321,7 +321,7 @@ describe('Change substrate owner tests', () => {
   itEth.skip('Change owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.true;
@@ -336,7 +336,7 @@ describe('Change substrate owner tests', () => {
   itEth.skip('change owner call fee', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send());
@@ -348,7 +348,7 @@ describe('Change substrate owner tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const otherReceiver = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await expect(collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;

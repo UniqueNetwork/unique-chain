@@ -37,7 +37,7 @@ describe('Create NFT collection from EVM', () => {
 
     // todo:playgrounds this might fail when in async environment.
     const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-    const {collectionId} = await helper.eth.createNonfungibleCollection(owner, name, description, prefix);
+    const {collectionId} = await helper.eth.createNFTCollection(owner, name, description, prefix);
     const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
     const collection = helper.nft.getCollectionObject(collectionId);
@@ -64,7 +64,7 @@ describe('Create NFT collection from EVM', () => {
       .call()).to.be.false;
 
     await collectionHelpers.methods
-      .createNonfungibleCollection('A', 'A', 'A')
+      .createNFTCollection('A', 'A', 'A')
       .send({value: Number(2n * helper.balance.getOneTokenNominal())});
     
     expect(await collectionHelpers.methods
@@ -76,7 +76,7 @@ describe('Create NFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const {collectionId, collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
+    const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collection.methods.setCollectionSponsor(sponsor).send();
@@ -95,7 +95,7 @@ describe('Create NFT collection from EVM', () => {
 
   itEth('Set limits', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionId, collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Limits', 'absolutely anything', 'FLO');
+    const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'FLO');
     const limits = {
       accountTokenOwnershipLimit: 1000,
       sponsoredDataSize: 1024,
@@ -138,7 +138,7 @@ describe('Create NFT collection from EVM', () => {
       .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Exister', 'absolutely anything', 'EVC');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Exister', 'absolutely anything', 'EVC');
     expect(await helper.ethNativeContract.collectionHelpers(collectionAddress)
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
@@ -166,7 +166,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const tokenPrefix = 'A';
 
       await expect(collectionHelper.methods
-        .createNonfungibleCollection(collectionName, description, tokenPrefix)
+        .createNFTCollection(collectionName, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
       
     }
@@ -176,7 +176,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
       await expect(collectionHelper.methods
-        .createNonfungibleCollection(collectionName, description, tokenPrefix)
+        .createNFTCollection(collectionName, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
     {
@@ -185,7 +185,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
       await expect(collectionHelper.methods
-        .createNonfungibleCollection(collectionName, description, tokenPrefix)
+        .createNFTCollection(collectionName, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
@@ -194,14 +194,14 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     await expect(collectionHelper.methods
-      .createNonfungibleCollection('Peasantry', 'absolutely anything', 'CVE')
+      .createNFTCollection('Peasantry', 'absolutely anything', 'CVE')
       .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   itEth('(!negative test!) Check owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const malfeasant = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Transgressed', 'absolutely anything', 'COR');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Transgressed', 'absolutely anything', 'COR');
     const malfeasantCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant);
     const EXPECTED_ERROR = 'NoPermission';
     {
@@ -224,7 +224,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   itEth('(!negative test!) Set limits', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Limits', 'absolutely anything', 'OLF');
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await expect(collectionEvm.methods
       .setCollectionLimit('badLimit', 'true')

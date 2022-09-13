@@ -65,7 +65,7 @@ describe('Evm Coder tests', () => {
   
   itEth('Call non-existing function', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.eth.createNonfungibleCollection(owner, 'EVMCODER', '', 'TEST');
+    const collection = await helper.eth.createNFTCollection(owner, 'EVMCODER', '', 'TEST');
     const contract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, '0x1bfed5D614b886b9Ab2eA4CBAc22A96B7EC29c9c'));
     const testContract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, contract.options.address));
     {

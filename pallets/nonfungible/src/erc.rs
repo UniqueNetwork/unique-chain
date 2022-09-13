@@ -232,7 +232,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			if !url.is_empty() {
 				return Ok(url);
 			}
-		} else if !is_erc721_metadata_compatible::<T>(self.id) {
+		} else if !self.supports_metadata() {
 			return Err("tokenURI not set".into());
 		}
 
@@ -550,17 +550,6 @@ fn get_token_property<T: Config>(
 	Err("Property tokenURI not found".into())
 }
 
-fn is_erc721_metadata_compatible<T: Config>(collection_id: CollectionId) -> bool {
-	if let Some(shema_name) =
-		pallet_common::Pallet::<T>::get_collection_property(collection_id, &key::schema_name())
-	{
-		let shema_name = shema_name.into_inner();
-		shema_name == property_value::ERC721_METADATA
-	} else {
-		false
-	}
-}
-
 fn get_token_permission<T: Config>(
 	collection_id: CollectionId,
 	key: &PropertyKey,
@@ -575,16 +564,6 @@ fn get_token_permission<T: Config>(
 			Error::Revert(alloc::format!("No permission for key {}", key))
 		})?;
 	Ok(a)
-}
-
-fn has_token_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> bool {
-	if let Ok(token_property_permissions) =
-		CollectionPropertyPermissions::<T>::try_get(collection_id)
-	{
-		return token_property_permissions.contains_key(key);
-	}
-
-	false
 }
 
 /// @title Unique extensions for ERC721.
@@ -731,7 +710,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	name = UniqueNFT,
 	is(
 		ERC721,
-		ERC721Metadata,
+		ERC721Metadata(if(this.supports_metadata())),
 		ERC721Enumerable,
 		ERC721UniqueExtensions,
 		ERC721Mintable,

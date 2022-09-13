@@ -81,7 +81,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
     const receiver = helper.eth.createAccount();
 
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
+    let result = await collectionHelper.methods.createERC721MetadataNFTCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
     const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     
@@ -294,7 +294,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Receiving Transfer event on burning into full ownership', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Devastation', '6', '6');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Devastation', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -479,7 +479,7 @@ describe('ERC 1633 implementation', () => {
   itEth('Default parent token address and id', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(owner, 'Sands', '', 'GRAIN');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sands', '', 'GRAIN');
     const collectionContract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     
     const tokenId = await collectionContract.methods.nextTokenId().call();

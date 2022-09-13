@@ -23,8 +23,28 @@ contract CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x5ad4f440
+/// @dev the ERC-165 identifier for this interface is 0xf62c7aa9
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
+	/// Create an NFT collection
+	/// @param name Name of the collection
+	/// @param description Informative description of the collection
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	/// @return address Address of the newly created collection
+	/// @dev EVM selector for this function is: 0x844af658,
+	///  or in textual repr: createNFTCollection(string,string,string)
+	function createNFTCollection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix
+	) public payable returns (address) {
+		require(false, stub_error);
+		name;
+		description;
+		tokenPrefix;
+		dummy = 0;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
@@ -45,9 +65,9 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	/// @dev EVM selector for this function is: 0xa634a5f9,
-	///  or in textual repr: createERC721MetadataCompatibleCollection(string,string,string,string)
-	function createERC721MetadataCompatibleCollection(
+	/// @dev EVM selector for this function is: 0xd1df968c,
+	///  or in textual repr: createERC721MetadataNFTCollection(string,string,string,string)
+	function createERC721MetadataNFTCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix,
@@ -77,9 +97,24 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	/// @dev EVM selector for this function is: 0xa5596388,
-	///  or in textual repr: createERC721MetadataCompatibleRFTCollection(string,string,string,string)
-	function createERC721MetadataCompatibleRFTCollection(
+	/// @dev EVM selector for this function is: 0x44a68ad5,
+	///  or in textual repr: createRefungibleCollection(string,string,string)
+	function createRefungibleCollection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix
+	) public payable returns (address) {
+		require(false, stub_error);
+		name;
+		description;
+		tokenPrefix;
+		dummy = 0;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// @dev EVM selector for this function is: 0xbea6a299,
+	///  or in textual repr: createERC721MetadataRFTCollection(string,string,string,string)
+	function createERC721MetadataRFTCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix,

@@ -31,7 +31,7 @@ describe('Refungible: Information getting', () => {
 
   itEth('totalSupply', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'TotalSupply', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'TotalSupply', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
     const nextTokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(caller, nextTokenId).send();
@@ -41,7 +41,7 @@ describe('Refungible: Information getting', () => {
 
   itEth('balanceOf', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'BalanceOf', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'BalanceOf', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     {
@@ -63,7 +63,7 @@ describe('Refungible: Information getting', () => {
 
   itEth('ownerOf', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'OwnerOf', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -76,7 +76,7 @@ describe('Refungible: Information getting', () => {
   itEth('ownerOf after burn', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'OwnerOf-AfterBurn', '6', '6');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf-AfterBurn', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -95,7 +95,7 @@ describe('Refungible: Information getting', () => {
   itEth('ownerOf for partial ownership', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Partial-OwnerOf', '6', '6');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -124,7 +124,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform mint()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(owner, 'Minty', '6', '6');
+    const {collectionAddress} = await helper.eth.createERC721MetadataRFTCollection(owner, 'Minty', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     
     const nextTokenId = await contract.methods.nextTokenId().call();
@@ -147,7 +147,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform mintBulk()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(owner, 'MintBulky', '6', '6');
+    const {collectionAddress} = await helper.eth.createERC721MetadataRFTCollection(owner, 'MintBulky', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     {
@@ -179,7 +179,7 @@ describe('Refungible: Plain calls', () => {
 
   itEth('Can perform burn()', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Burny', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Burny', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -197,7 +197,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform transferFrom()', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'TransferFromy', '6', '6');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'TransferFromy', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -241,7 +241,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform transfer()', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Transferry', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -271,7 +271,7 @@ describe('Refungible: Plain calls', () => {
   itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Transferry-Partial-to-Full', '6', '6');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry-Partial-to-Full', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -298,7 +298,7 @@ describe('Refungible: Plain calls', () => {
   itEth('transfer event on transfer from full ownership to partial ownership', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Transferry-Full-to-Partial', '6', '6');
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry-Full-to-Partial', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -336,7 +336,7 @@ describe('RFT: Fees', () => {
   itEth('transferFrom() call fee is less than 0.2UNQ', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Feeful-Transfer-From', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Feeful-Transfer-From', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -350,7 +350,7 @@ describe('RFT: Fees', () => {
   itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Feeful-Transfer', '6', '6');
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Feeful-Transfer', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
@@ -386,8 +386,8 @@ describe('Common metadata', () => {
 
   itEth('Returns symbol name', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Leviathan', '', '12');
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const {collectionId} = await helper.rft.mintCollection(alice, {name: 'Leviathan', tokenPrefix: '12'});
+    const contract = helper.ethNativeContract.collectionById(collectionId, 'rft', caller);
     const symbol = await contract.methods.symbol().call();
     expect(symbol).to.equal('12');
   });

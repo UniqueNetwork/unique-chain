@@ -433,6 +433,7 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
+  properties: [{key: 'ERC721Metadata', value: '1'}],
 };
 
 export async function
@@ -441,7 +442,7 @@ createCollection(
   sender: IKeyringPair,
   params: Partial<CreateCollectionParams> = {},
 ): Promise<CreateCollectionResult> {
-  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, mode, tokenPrefix, properties} = {...defaultCreateCollectionParams, ...params};
 
   let modeprm = {};
   if (mode.type === 'NFT') {
@@ -457,6 +458,7 @@ createCollection(
     description: strToUTF16(description),
     tokenPrefix: strToUTF16(tokenPrefix),
     mode: modeprm as any,
+    properties,
   });
   const events = await executeTransaction(api, sender, tx);
   return getCreateCollectionResult(events);

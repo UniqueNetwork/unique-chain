@@ -24,7 +24,7 @@ describe('EVM collection properties', () => {
 
     const raw = (await collection.getData())?.raw;
 
-    expect(raw.properties[0].value).to.equal('testValue');
+    expect(raw.properties[1].value).to.equal('testValue');
   });
 
   itEth('Can be deleted', async({helper}) => {
@@ -52,5 +52,48 @@ describe('EVM collection properties', () => {
 
     const value = await contract.methods.collectionProperty('testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
+  });
+});
+
+describe('Supports ERC721Metadata', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+
+  itEth('ERC721Metadata property can be set for NFT collection', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+
+    await collection.addAdmin(donor, {Ethereum: caller});
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+
+    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('1')).send({from: caller});
+
+    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.true;
+
+    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('0')).send({from: caller});
+
+    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
+  });
+
+  itEth('ERC721Metadata property can be set for RFT collection', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+
+    await collection.addAdmin(donor, {Ethereum: caller});
+
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+
+    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('1')).send({from: caller});
+
+    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.true;
+
+    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('0')).send({from: caller});
+
+    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
   });
 });

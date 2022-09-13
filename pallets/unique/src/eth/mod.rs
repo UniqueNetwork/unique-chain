@@ -130,6 +130,13 @@ fn make_data<T: Config>(
 			})
 			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 
+		properties
+			.try_push(up_data_structs::Property {
+				key: key::erc721_metadata(),
+				value: property_value::erc721_metadata_supported(),
+			})
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+
 		if !base_uri_value.is_empty() {
 			properties
 				.try_push(up_data_structs::Property {
@@ -212,7 +219,8 @@ where
 	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	fn create_nonfungible_collection(
+	#[solidity(rename_selector = "createNFTCollection")]
+	fn create_nft_collection(
 		&mut self,
 		caller: caller,
 		value: value,
@@ -239,9 +247,26 @@ where
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
 	}
+	/// Create an NFT collection
+	/// @param name Name of the collection
+	/// @param description Informative description of the collection
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	/// @return address Address of the newly created collection
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[deprecated(note = "mathod was renamed to `create_nft_collection`, prefer it instead")]
+	fn create_nonfungible_collection(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		self.create_nft_collection(caller, value, name, description, token_prefix)
+	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleCollection")]
+	#[solidity(rename_selector = "createERC721MetadataNFTCollection")]
 	fn create_nonfungible_collection_with_properties(
 		&mut self,
 		caller: caller,
@@ -273,6 +298,27 @@ where
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	#[solidity(rename_selector = "createRFTCollection")]
+	fn create_rft_collection(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		create_refungible_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			description,
+			token_prefix,
+			Default::default(),
+			false,
+		)
+	}
+
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[deprecated(note = "mathod was renamed to `create_rft_collection`, prefer it instead")]
 	fn create_refungible_collection(
 		&mut self,
 		caller: caller,
@@ -293,7 +339,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
+	#[solidity(rename_selector = "createERC721MetadataRFTCollection")]
 	fn create_refungible_collection_with_properties(
 		&mut self,
 		caller: caller,

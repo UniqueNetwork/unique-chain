@@ -981,6 +981,10 @@ class CollectionGroup extends HelperGroup {
     return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
   }
 
+  async getCollectionOptions(collectionId: number) {
+    return (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
+  }
+
   /**
    * Deletes onchain properties from the collection.
    *
@@ -1293,6 +1297,7 @@ class NFTnRFT extends CollectionGroup {
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT'): Promise<UniqueBaseCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
     collectionOptions.mode = (mode === 'NFT') ? {nft: null} : {refungible: null};
+    collectionOptions.properties = collectionOptions.properties || [{key: 'ERC721Metadata', value: '1'}];
     for (const key of ['name', 'description', 'tokenPrefix']) {
       if (typeof collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
     }
@@ -2474,6 +2479,10 @@ export class UniqueBaseCollection {
 
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.collection.getTokenNextSponsored(this.collectionId, tokenId, addressObj);
+  }
+
+  async getOptions() {
+    return await this.helper.collection.getCollectionOptions(this.collectionId);
   }
 
   async setSponsor(signer: TSigner, sponsorAddress: TSubstrateAccount) {

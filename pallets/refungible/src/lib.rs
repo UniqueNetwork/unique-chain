@@ -92,14 +92,19 @@ use crate::erc::ERC721Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
+use derivative::Derivative;
 use evm_coder::ToLog;
 use frame_support::{
-	BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32,
+	BoundedBTreeMap, BoundedVec, ensure, fail, storage::with_transaction, transactional,
+	pallet_prelude::ConstU32,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
+	CommonCollectionOperations,
+	erc::static_property::{key, value},
+	Error as CommonError,
+	eth::collection_id_to_address,
 	Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
@@ -113,8 +118,6 @@ use up_data_structs::{
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
 	PropertyScope, PropertyValue, TokenId, TrySetProperty,
 };
-use frame_support::BoundedBTreeMap;
-use derivative::Derivative;
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
@@ -298,6 +301,18 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 	pub fn common_mut(&mut self) -> &mut pallet_common::CollectionHandle<T> {
 		&mut self.0
+	}
+}
+
+impl<T: Config> RefungibleHandle<T> {
+	pub fn supports_metadata(&self) -> bool {
+		if let Some(erc721_metadata) =
+			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::erc721_metadata())
+		{
+			*erc721_metadata.into_inner() == *value::ERC721_METADATA_SUPPORTED
+		} else {
+			false
+		}
 	}
 }
 

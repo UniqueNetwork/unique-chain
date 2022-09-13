@@ -108,6 +108,7 @@ use up_data_structs::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
+	erc::static_property::{key, value},
 	eth::collection_id_to_address,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
@@ -295,6 +296,19 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self.0
 	}
 }
+
+impl<T: Config> NonfungibleHandle<T> {
+	pub fn supports_metadata(&self) -> bool {
+		if let Some(erc721_metadata) =
+			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::erc721_metadata())
+		{
+			*erc721_metadata.into_inner() == *value::ERC721_METADATA_SUPPORTED
+		} else {
+			false
+		}
+	}
+}
+
 impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		self.0.recorder()

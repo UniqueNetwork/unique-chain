@@ -84,7 +84,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const receiver = helper.eth.createAccount();
 
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
+    let result = await collectionHelper.methods.createERC721MetadataNFTCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
     const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
@@ -146,7 +146,7 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Minty', '6', '6');
+    const {collectionAddress} = await helper.eth.createERC721MetadataNFTCollection(owner, 'Mint collection', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const nextTokenId = await contract.methods.nextTokenId().call();
 

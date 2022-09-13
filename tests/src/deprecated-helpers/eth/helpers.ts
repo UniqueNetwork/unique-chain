@@ -150,10 +150,10 @@ export async function createRFTCollection(api: ApiPromise, web3: Web3, owner: st
 }
 
 
-export async function createNonfungibleCollection(api: ApiPromise, web3: Web3, owner: string) {
+export async function createNFTCollection(api: ApiPromise, web3: Web3, owner: string) {
   const collectionHelper = evmCollectionHelpers(web3, owner);
   const result = await collectionHelper.methods
-    .createNonfungibleCollection('A', 'B', 'C')
+    .createNFTCollection('A', 'B', 'C')
     .send({value: Number(2n * UNIQUE)});
   return await getCollectionAddressFromResult(api, result);
 }

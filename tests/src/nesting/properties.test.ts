@@ -18,6 +18,52 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../util/playgrounds';
 import {UniqueHelper, UniqueBaseCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '../util/playgrounds/unique';
 
+
+describe('Composite Properties Test', () => {
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([50n], donor);
+    });
+  });
+
+  async function testMakeSureSuppliesRequired(baseCollection: UniqueNFTCollection | UniqueRFTCollection) {
+
+    const collectionOption = await baseCollection.getOptions();
+    expect(collectionOption).is.not.null;
+    let collection = collectionOption;
+    expect(collection.tokenPropertyPermissions).to.be.empty;
+    expect(collection.properties).to.be.deep.equal([{key: 'ERC721Metadata', value: '1'}]);
+
+    const propertyPermissions = [
+      {key: 'mindgame', permission: {collectionAdmin: true, mutable: false, tokenOwner: true}},
+      {key: 'skullduggery', permission: {collectionAdmin: false, mutable: true, tokenOwner: false}},
+    ];
+    await expect(await baseCollection.setTokenPropertyPermissions(alice, propertyPermissions)).to.be.true;
+
+    const collectionProperties = [
+      {key: 'ERC721Metadata', value: '1'}, 
+      {key: 'black_hole', value: 'LIGO'},
+      {key: 'electron', value: 'come bond'}, 
+    ];
+    
+    await expect(await baseCollection.setProperties(alice, collectionProperties)).to.be.true;
+
+    collection = await baseCollection.getOptions();
+    expect(collection.tokenPropertyPermissions).to.be.deep.equal(propertyPermissions);
+    expect(collection.properties).to.be.deep.equal(collectionProperties);
+  }
+
+  itSub('Makes sure collectionById supplies required fields for NFT',  async ({helper}) => {
+    await testMakeSureSuppliesRequired(await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'}));
+  });
+
+  itSub.ifWithPallets('Makes sure collectionById supplies required fields for ReFungible', [Pallets.ReFungible],  async ({helper}) => {
+    await testMakeSureSuppliesRequired(await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'}));
+  });
+});
 // ---------- COLLECTION PROPERTIES
 
 describe('Integration Test: Collection Properties', () => {
@@ -33,7 +79,11 @@ describe('Integration Test: Collection Properties', () => {
 
   itSub('Properties are initially empty', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice);
-    expect(await collection.getProperties()).to.be.empty;
+    const properties = await collection.getProperties();
+    expect(properties).to.be.deep.equal([{
+      'key': 'ERC721Metadata',
+      'value': '1',
+    }]);
   });
 
   async function testSetsPropertiesForCollection(collection: UniqueBaseCollection) {
@@ -150,7 +200,11 @@ describe('Negative Integration Test: Collection Properties', () => {
     await expect(collection.setProperties(bob, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]))
       .to.be.rejectedWith(/common\.NoPermission/);
 
-    expect(await collection.getProperties()).to.be.empty;
+    const properties = await collection.getProperties();
+    expect(properties).to.be.deep.equal([{
+      'key': 'ERC721Metadata',
+      'value': '1',
+    }]);
   }
 
   itSub('Fails to set properties in a NFT collection if not its onwer/administrator', async ({helper}) =>  {
@@ -202,7 +256,11 @@ describe('Negative Integration Test: Collection Properties', () => {
     await expect(collection.setProperties(alice, propertiesToBeSet)).
       to.be.rejectedWith(/common\.PropertyLimitReached/);
 
-    expect(await collection.getProperties()).to.be.empty;
+    const properties = await collection.getProperties();
+    expect(properties).to.be.deep.equal([{
+      'key': 'ERC721Metadata',
+      'value': '1',
+    }]);
   }
 
   itSub('Fails to set more properties than it is allowed (NFT)', async ({helper}) =>  {

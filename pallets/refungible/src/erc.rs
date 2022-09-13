@@ -228,7 +228,7 @@ impl<T: Config> RefungibleHandle<T> {
 			if !url.is_empty() {
 				return Ok(url);
 			}
-		} else if !is_erc721_metadata_compatible::<T>(self.id) {
+		} else if !self.supports_metadata() {
 			return Err("tokenURI not set".into());
 		}
 
@@ -578,17 +578,6 @@ fn get_token_property<T: Config>(
 	Err("Property tokenURI not found".into())
 }
 
-fn is_erc721_metadata_compatible<T: Config>(collection_id: CollectionId) -> bool {
-	if let Some(shema_name) =
-		pallet_common::Pallet::<T>::get_collection_property(collection_id, &key::schema_name())
-	{
-		let shema_name = shema_name.into_inner();
-		shema_name == property_value::ERC721_METADATA
-	} else {
-		false
-	}
-}
-
 fn get_token_permission<T: Config>(
 	collection_id: CollectionId,
 	key: &PropertyKey,
@@ -780,7 +769,7 @@ impl<T: Config> RefungibleHandle<T> {
 	name = UniqueRefungible,
 	is(
 		ERC721,
-		ERC721Metadata,
+		ERC721Metadata(if(this.supports_metadata())),
 		ERC721Enumerable,
 		ERC721UniqueExtensions,
 		ERC721Mintable,

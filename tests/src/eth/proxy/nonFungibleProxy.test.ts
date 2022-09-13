@@ -101,7 +101,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
   itEth('Can perform mint()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'A', 'A');
+    const {collectionAddress} = await helper.eth.createERC721MetadataNFTCollection(owner, 'A', 'A', 'A', '');
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 

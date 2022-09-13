@@ -146,7 +146,7 @@ describe('EVM transaction fees', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await deployProxyContract(helper, deployer);
 
-    const collectionAddress = (await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)})).events.CollectionCreated.returnValues.collection;
+    const collectionAddress = (await contract.methods.createNFTCollection().send({from: caller, value: Number(CONTRACT_BALANCE)})).events.CollectionCreated.returnValues.collection;
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
     await contract.methods.mintNftToken(collectionAddress).send({from: caller});
@@ -164,7 +164,7 @@ describe('EVM transaction fees', () => {
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
-    await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)});
+    await contract.methods.createNFTCollection().send({from: caller, value: Number(CONTRACT_BALANCE)});
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
@@ -177,8 +177,8 @@ describe('EVM transaction fees', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
         
-    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
-    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createNFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createNFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   itEth('Negative test: call createRFTCollection with wrong fee', async({helper}) => {
@@ -227,9 +227,9 @@ describe('EVM transaction fees', () => {
           InnerContract(innerContract).flip();
         }
 
-        function createNonfungibleCollection() external payable {
+        function createNFTCollection() external payable {
           address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-		      address nftCollection = CollectionHelpers(collectionHelpers).createNonfungibleCollection{value: msg.value}("A", "B", "C");
+		      address nftCollection = CollectionHelpers(collectionHelpers).createNFTCollection{value: msg.value}("A", "B", "C");
           emit CollectionCreated(nftCollection);
         }
 
