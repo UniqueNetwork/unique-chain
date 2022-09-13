@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [v0.2.0] 2022-09-13
+
+### Changes
+-   Change **collectionHelper** method `createRefungibleCollection` to `createRFTCollection`,
+
 ## [v0.1.4] 2022-09-05
 
 ### Added
