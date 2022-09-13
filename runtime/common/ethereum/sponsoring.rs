@@ -34,7 +34,6 @@ use pallet_fungible::{
 };
 use pallet_refungible::Config as RefungibleConfig;
 use pallet_unique::Config as UniqueConfig;
-use sp_core::H160;
 use sp_std::prelude::*;
 use up_data_structs::{CollectionMode, CreateItemData, CreateNftData, TokenId};
 use up_sponsorship::SponsorshipHandler;
@@ -48,18 +47,16 @@ pub type EvmSponsorshipHandler = (
 
 pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
 impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
-	SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), CallContext>
-	for UniqueEthSponsorshipHandler<T>
+	SponsorshipHandler<T::CrossAccountId, CallContext> for UniqueEthSponsorshipHandler<T>
 {
 	fn get_sponsor(
 		who: &T::CrossAccountId,
-		call: &(H160, Vec<u8>),
-		_fee_limit: &CallContext,
+		call_context: &CallContext,
 	) -> Option<T::CrossAccountId> {
-		let collection_id = map_eth_to_id(&call.0)?;
+		let collection_id = map_eth_to_id(&call_context.contract_address)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
 		let sponsor = collection.sponsorship.sponsor()?.clone();
-		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
+		let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
 		Some(T::CrossAccountId::from_sub(match &collection.mode {
 			CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;

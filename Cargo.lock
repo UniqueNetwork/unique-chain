@@ -6360,7 +6360,7 @@ dependencies = [
 [[package]]
 name = "pallet-template-transaction-payment"
 version = "3.0.0"
-source = "git+https://github.com/uniquenetwork/pallet-sponsoring?rev=9ee7d6e57e03a2575cbab79431774b56f170018e#9ee7d6e57e03a2575cbab79431774b56f170018e"
+source = "git+https://github.com/uniquenetwork/pallet-sponsoring?branch=polkadot-v0.9.27#853766d6033ceb68a2bef196790b962dd0663a04"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -12528,7 +12528,7 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/pallet-sponsoring?rev=9ee7d6e57e03a2575cbab79431774b56f170018e#9ee7d6e57e03a2575cbab79431774b56f170018e"
+source = "git+https://github.com/uniquenetwork/pallet-sponsoring?branch=polkadot-v0.9.27#853766d6033ceb68a2bef196790b962dd0663a04"
 dependencies = [
  "impl-trait-for-tuples",
 ]

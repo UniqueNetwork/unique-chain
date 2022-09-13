@@ -432,7 +432,7 @@ pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy
 pallet-proxy-rmrk-equip = { default-features = false, path = "../../pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
 pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
-pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="9ee7d6e57e03a2575cbab79431774b56f170018e", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
+pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.27", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
 pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
@@ -443,7 +443,7 @@ pallet-base-fee = { default-features = false, git = "https://github.com/uniquene
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", rev = "89a37c5a489f426cc7a42d7b94019974093a052d" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", rev="9ee7d6e57e03a2575cbab79431774b56f170018e" }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.27" }
 
 ################################################################################
 # Build Dependencies

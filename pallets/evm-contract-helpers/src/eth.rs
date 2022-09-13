@@ -379,27 +379,26 @@ impl<T: Config> OnCreate<T> for HelpersOnCreate<T> {
 
 /// Bridge to pallet-sponsoring
 pub struct HelpersContractSponsoring<T: Config>(PhantomData<*const T>);
-impl<T: Config> SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>), CallContext>
+impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 	for HelpersContractSponsoring<T>
 {
 	fn get_sponsor(
 		who: &T::CrossAccountId,
-		call: &(H160, Vec<u8>),
 		call_context: &CallContext,
 	) -> Option<T::CrossAccountId> {
-		let (contract_address, _) = call;
-		let mode = <Pallet<T>>::sponsoring_mode(*contract_address);
+		let contract_address = call_context.contract_address;
+		let mode = <Pallet<T>>::sponsoring_mode(contract_address);
 		if mode == SponsoringModeT::Disabled {
 			return None;
 		}
 
-		let sponsor = match <Pallet<T>>::get_sponsor(*contract_address) {
+		let sponsor = match <Pallet<T>>::get_sponsor(contract_address) {
 			Some(sponsor) => sponsor,
 			None => return None,
 		};
 
 		if mode == SponsoringModeT::Allowlisted
-			&& !<Pallet<T>>::allowed(*contract_address, *who.as_eth())
+			&& !<Pallet<T>>::allowed(contract_address, *who.as_eth())
 		{
 			return None;
 		}
