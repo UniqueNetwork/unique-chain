@@ -101,7 +101,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too long")?;
-		let value = value.try_into().map_err(|_| "value too long")?;
+		let value = value.0.try_into().map_err(|_| "value too long")?;
 
 		let nesting_budget = self
 			.recorder
@@ -150,7 +150,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let props = <TokenProperties<T>>::get((self.id, token_id));
 		let prop = props.get(&key).ok_or("key not found")?;
 
-		Ok(prop.to_vec())
+		Ok(prop.to_vec().into())
 	}
 }
 
