@@ -141,10 +141,10 @@ export async function transferBalanceToEth(api: ApiPromise, source: IKeyringPair
   expect(result.success).to.be.true;
 }
 
-export async function createRefungibleCollection(api: ApiPromise, web3: Web3, owner: string) {
+export async function createRFTCollection(api: ApiPromise, web3: Web3, owner: string) {
   const collectionHelper = evmCollectionHelpers(web3, owner);
   const result = await collectionHelper.methods
-    .createRefungibleCollection('A', 'B', 'C')
+    .createRFTCollection('A', 'B', 'C')
     .send();
   return await getCollectionAddressFromResult(api, result);
 }

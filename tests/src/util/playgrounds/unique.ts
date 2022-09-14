@@ -730,6 +730,18 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
+   * Check if user is in allow list.
+   * 
+   * @param collectionId ID of collection
+   * @param user Account to check
+   * @example await getAdmins(1)
+   * @returns is user in allow list
+   */
+  async allowed(collectionId: number, user: ICrossAccountId): Promise<boolean> {
+    return (await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user])).toJSON();
+  }
+
+  /**
    * Adds an address to allow list
    * @param signer keyring of signer
    * @param collectionId ID of collection

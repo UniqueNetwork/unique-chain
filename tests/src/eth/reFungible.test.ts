@@ -26,7 +26,7 @@ describe('Refungible: Information getting', () => {
   itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
     const nextTokenId = await contract.methods.nextTokenId().call();
@@ -38,7 +38,7 @@ describe('Refungible: Information getting', () => {
   itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -63,7 +63,7 @@ describe('Refungible: Information getting', () => {
   itWeb3('ownerOf', async ({api, web3, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -79,7 +79,7 @@ describe('Refungible: Information getting', () => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -103,7 +103,7 @@ describe('Refungible: Information getting', () => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -130,7 +130,7 @@ describe('Refungible: Plain calls', () => {
   itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, owner);
-    let result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    let result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const receiver = createEthAccount(web3);
     const contract = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
@@ -163,7 +163,7 @@ describe('Refungible: Plain calls', () => {
   itWeb3('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -221,7 +221,7 @@ describe('Refungible: Plain calls', () => {
   itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -247,7 +247,7 @@ describe('Refungible: Plain calls', () => {
   itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -304,7 +304,7 @@ describe('Refungible: Plain calls', () => {
   itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -344,7 +344,7 @@ describe('Refungible: Plain calls', () => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -376,7 +376,7 @@ describe('Refungible: Plain calls', () => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -413,7 +413,7 @@ describe('RFT: Fees', () => {
   itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -430,7 +430,7 @@ describe('RFT: Fees', () => {
   itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
