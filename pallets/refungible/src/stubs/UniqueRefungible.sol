@@ -99,7 +99,7 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xe54be640
+/// @dev the ERC-165 identifier for this interface is 0x9f70d4e0
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -332,6 +332,18 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Checks that user allowed to operate with collection.
+	///
+	/// @param user User address to check.
+	/// @dev EVM selector for this function is: 0xd63a8e11,
+	///  or in textual repr: allowed(address)
+	function allowed(address user) public view returns (bool) {
+		require(false, stub_error);
+		user;
+		dummy;
+		return false;
+	}
+
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
@@ -343,12 +355,34 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Add substrate user to allowed list.
+	///
+	/// @param user User substrate address.
+	/// @dev EVM selector for this function is: 0xd06ad267,
+	///  or in textual repr: addToCollectionAllowListSubstrate(uint256)
+	function addToCollectionAllowListSubstrate(uint256 user) public {
+		require(false, stub_error);
+		user;
+		dummy = 0;
+	}
+
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
 	/// @dev EVM selector for this function is: 0x85c51acb,
 	///  or in textual repr: removeFromCollectionAllowList(address)
 	function removeFromCollectionAllowList(address user) public {
+		require(false, stub_error);
+		user;
+		dummy = 0;
+	}
+
+	/// Remove substrate user from allowed list.
+	///
+	/// @param user User substrate address.
+	/// @dev EVM selector for this function is: 0xa31913ed,
+	///  or in textual repr: removeFromCollectionAllowListSubstrate(uint256)
+	function removeFromCollectionAllowListSubstrate(uint256 user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -400,6 +434,18 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy = 0;
 		return "";
+	}
+
+	/// Get collection owner.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	/// @dev EVM selector for this function is: 0xdf727d3b,
+	///  or in textual repr: collectionOwner()
+	function collectionOwner() public view returns (Tuple17 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple17(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Changes collection owner to another account

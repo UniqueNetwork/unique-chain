@@ -59,7 +59,7 @@
       { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
-    "name": "createRefungibleCollection",
+    "name": "createRFTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "nonpayable",
     "type": "function"

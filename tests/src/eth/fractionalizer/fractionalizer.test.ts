@@ -21,7 +21,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {readFile} from 'fs/promises';
 import {executeTransaction, submitTransactionAsync} from '../../substrate/substrate-api';
 import {getCreateCollectionResult, getCreateItemResult, UNIQUE, requirePallets, Pallets} from '../../util/helpers';
-import {collectionIdToAddress, CompiledContract, createEthAccountWithBalance, createNonfungibleCollection, createRefungibleCollection, GAS_ARGS, itWeb3, tokenIdFromAddress, uniqueNFT, uniqueRefungible, uniqueRefungibleToken} from '../util/helpers';
+import {collectionIdToAddress, CompiledContract, createEthAccountWithBalance, createNonfungibleCollection, createRFTCollection, GAS_ARGS, itWeb3, tokenIdFromAddress, uniqueNFT, uniqueRefungible, uniqueRefungibleToken} from '../util/helpers';
 import {Contract} from 'web3-eth-contract';
 import * as solc from 'solc';
 
@@ -123,7 +123,7 @@ describe('Fractionalizer contract usage', () => {
   itWeb3('Set RFT collection', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const fractionalizer = await deployFractionalizer(web3, owner);
-    const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress} = await createRFTCollection(api, web3, owner);
     const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
     await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
     const result = await fractionalizer.methods.setRFTCollection(collectionIdAddress).send();
@@ -256,7 +256,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
   itWeb3('call setRFTCollection twice', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress} = await createRFTCollection(api, web3, owner);
     const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
 
     const fractionalizer = await deployFractionalizer(web3, owner);
@@ -282,7 +282,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   itWeb3('call setRFTCollection while not collection admin', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const fractionalizer = await deployFractionalizer(web3, owner);
-    const {collectionIdAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress} = await createRFTCollection(api, web3, owner);
 
     await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
       .to.be.rejectedWith(/Fractionalizer contract should be an admin of the collection$/g);
@@ -368,7 +368,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     const fractionalizer = await deployFractionalizer(web3, owner);
-    const {collectionIdAddress: rftCollectionAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress: rftCollectionAddress} = await createRFTCollection(api, web3, owner);
     const refungibleContract = uniqueRefungible(web3, rftCollectionAddress, owner);
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
     await refungibleContract.methods.mint(owner, rftTokenId).send();
@@ -381,7 +381,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
     const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    const {collectionIdAddress: rftCollectionAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress: rftCollectionAddress} = await createRFTCollection(api, web3, owner);
     const refungibleContract = uniqueRefungible(web3, rftCollectionAddress, owner);
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
     await refungibleContract.methods.mint(owner, rftTokenId).send();
@@ -392,7 +392,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
   itWeb3('call rft2nft for RFT token that was not minted by fractionalizer contract', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress: rftCollectionAddress} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress: rftCollectionAddress} = await createRFTCollection(api, web3, owner);
 
     const fractionalizer = await deployFractionalizer(web3, owner);
     const refungibleContract = uniqueRefungible(web3, rftCollectionAddress, owner);

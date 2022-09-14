@@ -9,7 +9,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-unique'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = "0.1.4"
+version = "0.2.0"
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -98,7 +98,7 @@ up-data-structs = { default-features = false, path = "../../primitives/data-stru
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
 pallet-common = { default-features = false, path = "../common" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/evm-coder-substrate' }

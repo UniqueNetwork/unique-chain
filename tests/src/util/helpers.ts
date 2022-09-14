@@ -1677,7 +1677,7 @@ export async function setChainLimitsExpectFailure(sender: IKeyringPair, limits: 
   });
 }
 
-export async function isAllowlisted(api: ApiPromise, collectionId: number, address: string | CrossAccountId) {
+export async function isAllowlisted(api: ApiPromise, collectionId: number, address: string | CrossAccountId | IKeyringPair) {
   return (await api.rpc.unique.allowed(collectionId, normalizeAccountId(address))).toJSON();
 }
 

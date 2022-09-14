@@ -456,12 +456,12 @@ pallet-evm-migration = { path = '../../pallets/evm-migration', default-features 
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.27' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
