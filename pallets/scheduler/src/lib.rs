@@ -508,8 +508,7 @@ pub mod pallet {
 					Lookup::<T>::remove(id);
 				}
 			}
-			// Total weight should be 0, because the transaction is already paid for
-			Weight::zero()
+			total_weight
 		}
 	}
 
