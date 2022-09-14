@@ -73,6 +73,7 @@
     "testRemoveFromContractAllowList": "mocha --timeout 9999999 -r ts-node/register ./**/removeFromContractAllowList.test.ts",
     "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts",
     "testSetOffchainSchema": "mocha --timeout 9999999 -r ts-node/register ./**/setOffchainSchema.test.ts",
+    "testNextSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/nextSponsoring.test.ts",
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.test.ts",
     "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.test.ts",
@@ -99,7 +100,7 @@
   "dependencies": {
     "@polkadot/api": "9.2.2",
     "@polkadot/api-contract": "9.2.2",
-    "@polkadot/util-crypto": "10.1.1",
+    "@polkadot/util-crypto": "10.1.7",
     "bignumber.js": "^9.0.2",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",

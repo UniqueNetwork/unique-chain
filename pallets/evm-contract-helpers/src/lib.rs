@@ -22,7 +22,11 @@ use codec::{Decode, Encode, MaxEncodedLen};
 pub use pallet::*;
 pub use eth::*;
 use scale_info::TypeInfo;
+use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
 pub mod eth;
+
+/// Maximum number of methods per contract that could have fee limit
+pub const MAX_FEE_LIMITED_METHODS: u32 = 5;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -30,7 +34,7 @@ pub mod pallet {
 	use crate::eth::ContractHelpersEvents;
 	use frame_support::pallet_prelude::*;
 	use pallet_evm_coder_substrate::DispatchResult;
-	use sp_core::H160;
+	use sp_core::{H160, U256};
 	use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 	use up_data_structs::SponsorshipState;
 	use evm_coder::ToLog;
@@ -57,6 +61,9 @@ pub mod pallet {
 
 		/// No pending sponsor for contract.
 		NoPendingSponsor,
+
+		/// Number of methods that sponsored limit is defined for exceeds maximum.
+		TooManyMethodsHaveSponsoredLimit,
 	}
 
 	#[pallet::pallet]
@@ -117,6 +124,14 @@ pub mod pallet {
 	/// * **Key1** - contract address.
 	/// * **Key2** - sponsored user address.
 	/// * **Value** - last sponsored block number.
+	#[pallet::storage]
+	pub(super) type SponsoringFeeLimit<T: Config> = StorageMap<
+		Hasher = Twox128,
+		Key = H160,
+		Value = BoundedBTreeMap<u32, U256, ConstU32<MAX_FEE_LIMITED_METHODS>>,
+		QueryKind = ValueQuery,
+	>;
+
 	#[pallet::storage]
 	pub(super) type SponsorBasket<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox128,
@@ -216,9 +231,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// TO-DO
+		/// Force set `sponsor` for `contract`.
 		///
-		///
+		/// Differs from `set_sponsor` in that confirmation
+		/// from the sponsor is not required.
 		pub fn force_set_sponsor(
 			contract_address: H160,
 			sponsor: &T::CrossAccountId,
@@ -269,9 +285,10 @@ pub mod pallet {
 			Self::force_remove_sponsor(contract_address)
 		}
 
-		/// TO-DO
+		/// Force remove `sponsor` for `contract`.
 		///
-		///
+		/// Differs from `remove_sponsor` in that
+		/// it doesn't require consent from the `owner` of the contract.
 		pub fn force_remove_sponsor(contract_address: H160) -> DispatchResult {
 			Sponsoring::<T>::remove(contract_address);
 
@@ -351,6 +368,16 @@ pub mod pallet {
 		/// Set duration between two sponsored contract calls
 		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
+		}
+
+		/// Set maximum for gas limit of transaction
+		pub fn set_sponsoring_fee_limit(contract: H160, fee_limit: U256) -> DispatchResult {
+			<SponsoringFeeLimit<T>>::try_mutate(contract, |limits_map| {
+				limits_map
+					.try_insert(0xffffffff, fee_limit)
+					.map_err(|_| <Error<T>>::TooManyMethodsHaveSponsoredLimit)
+			})?;
+			Ok(())
 		}
 
 		/// Is user added to allowlist, or he is owner of specified contract

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {approve, createCollection, createRefungibleToken, transfer, transferFrom, UNIQUE, requirePallets, Pallets} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, createRefungibleCollection, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth, uniqueRefungible, uniqueRefungibleToken} from './util/helpers';
+import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, createRFTCollection, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth, uniqueRefungible, uniqueRefungibleToken} from './util/helpers';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -458,7 +458,7 @@ describe('Refungible: Plain calls', () => {
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
+    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
 
@@ -658,7 +658,7 @@ describe('ERC 1633 implementation', () => {
   itWeb3('Default parent token address and id', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
-    const {collectionIdAddress, collectionId} = await createRefungibleCollection(api, web3, owner);
+    const {collectionIdAddress, collectionId} = await createRFTCollection(api, web3, owner);
     const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
     const refungibleTokenId = await refungibleContract.methods.nextTokenId().call();
     await refungibleContract.methods.mint(owner, refungibleTokenId).send();

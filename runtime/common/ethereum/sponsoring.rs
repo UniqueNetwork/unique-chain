@@ -16,26 +16,29 @@
 
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
+use core::{convert::TryInto, marker::PhantomData};
 use evm_coder::{Call, abi::AbiReader};
 use pallet_common::{CollectionHandle, eth::map_eth_to_id};
-use sp_core::H160;
-use sp_std::prelude::*;
-use up_sponsorship::SponsorshipHandler;
-use core::marker::PhantomData;
-use core::convert::TryInto;
 use pallet_evm::account::CrossAccountId;
-use up_data_structs::{TokenId, CreateItemData, CreateNftData, CollectionMode};
+use pallet_evm_transaction_payment::CallContext;
+use pallet_nonfungible::{
+	Config as NonfungibleConfig,
+	erc::{
+		UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
+		TokenPropertiesCall,
+	},
+};
+use pallet_fungible::{
+	Config as FungibleConfig,
+	erc::{UniqueFungibleCall, ERC20Call},
+};
+use pallet_refungible::Config as RefungibleConfig;
 use pallet_unique::Config as UniqueConfig;
+use sp_std::prelude::*;
+use up_data_structs::{CollectionMode, CreateItemData, CreateNftData, TokenId};
+use up_sponsorship::SponsorshipHandler;
 
 use crate::{Runtime, runtime_common::sponsoring::*};
-
-use pallet_nonfungible::erc::{
-	UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call, TokenPropertiesCall,
-};
-use pallet_fungible::erc::{UniqueFungibleCall, ERC20Call};
-use pallet_fungible::Config as FungibleConfig;
-use pallet_nonfungible::Config as NonfungibleConfig;
-use pallet_refungible::Config as RefungibleConfig;
 
 pub type EvmSponsorshipHandler = (
 	UniqueEthSponsorshipHandler<Runtime>,
@@ -44,13 +47,16 @@ pub type EvmSponsorshipHandler = (
 
 pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
 impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
-	SponsorshipHandler<T::CrossAccountId, (H160, Vec<u8>)> for UniqueEthSponsorshipHandler<T>
+	SponsorshipHandler<T::CrossAccountId, CallContext> for UniqueEthSponsorshipHandler<T>
 {
-	fn get_sponsor(who: &T::CrossAccountId, call: &(H160, Vec<u8>)) -> Option<T::CrossAccountId> {
-		let collection_id = map_eth_to_id(&call.0)?;
+	fn get_sponsor(
+		who: &T::CrossAccountId,
+		call_context: &CallContext,
+	) -> Option<T::CrossAccountId> {
+		let collection_id = map_eth_to_id(&call_context.contract_address)?;
 		let collection = <CollectionHandle<T>>::new(collection_id)?;
 		let sponsor = collection.sponsorship.sponsor()?.clone();
-		let (method_id, mut reader) = AbiReader::new_call(&call.1).ok()?;
+		let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
 		Some(T::CrossAccountId::from_sub(match &collection.mode {
 			CollectionMode::NFT => {
 				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;

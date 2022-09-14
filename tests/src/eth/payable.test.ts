@@ -22,7 +22,7 @@ describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_, privateKey) => {
       donor = privateKey('//Alice');
     });
   });

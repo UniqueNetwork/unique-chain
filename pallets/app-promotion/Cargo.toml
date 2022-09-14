@@ -52,7 +52,7 @@ frame-system ={ default-features = false, git = "https://github.com/paritytech/s
 pallet-balances ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-timestamp ={ default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-randomness-collective-flip ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-evm ={ default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27" }
+pallet-evm ={ default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
 sp-std ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

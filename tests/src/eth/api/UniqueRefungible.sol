@@ -65,7 +65,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xe54be640
+/// @dev the ERC-165 identifier for this interface is 0x9f70d4e0
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -216,6 +216,13 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionAccess(uint8)
 	function setCollectionAccess(uint8 mode) external;
 
+	/// Checks that user allowed to operate with collection.
+	///
+	/// @param user User address to check.
+	/// @dev EVM selector for this function is: 0xd63a8e11,
+	///  or in textual repr: allowed(address)
+	function allowed(address user) external view returns (bool);
+
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
@@ -223,12 +230,26 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: addToCollectionAllowList(address)
 	function addToCollectionAllowList(address user) external;
 
+	/// Add substrate user to allowed list.
+	///
+	/// @param user User substrate address.
+	/// @dev EVM selector for this function is: 0xd06ad267,
+	///  or in textual repr: addToCollectionAllowListSubstrate(uint256)
+	function addToCollectionAllowListSubstrate(uint256 user) external;
+
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
 	/// @dev EVM selector for this function is: 0x85c51acb,
 	///  or in textual repr: removeFromCollectionAllowList(address)
 	function removeFromCollectionAllowList(address user) external;
+
+	/// Remove substrate user from allowed list.
+	///
+	/// @param user User substrate address.
+	/// @dev EVM selector for this function is: 0xa31913ed,
+	///  or in textual repr: removeFromCollectionAllowListSubstrate(uint256)
+	function removeFromCollectionAllowListSubstrate(uint256 user) external;
 
 	/// Switch permission for minting.
 	///
@@ -259,6 +280,14 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
 	function uniqueCollectionType() external returns (string memory);
+
+	/// Get collection owner.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	/// @dev EVM selector for this function is: 0xdf727d3b,
+	///  or in textual repr: collectionOwner()
+	function collectionOwner() external view returns (Tuple17 memory);
 
 	/// Changes collection owner to another account
 	///

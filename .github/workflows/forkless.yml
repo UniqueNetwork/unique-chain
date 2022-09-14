@@ -1,0 +1,18 @@
+name: Nesting Forkless
+
+on:
+  workflow_call:
+
+jobs:
+    
+  forkless-update-data:
+    name: with data
+    uses: ./.github/workflows/forkless-update-data_v2.yml
+
+  forkless-update-no-data:
+    name: no data
+    uses: ./.github/workflows/forkless-update-nodata_v2.yml
+
+  try-runtime:
+    name: try-runtime
+    uses: ./.github/workflows/try-runtime_v2.yml

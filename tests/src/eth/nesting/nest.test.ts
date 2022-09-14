@@ -20,7 +20,7 @@ describe('EVM nesting tests group', () => {
   let donor: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_, privateKey) => {
       donor = privateKey('//Alice');
     });
   });

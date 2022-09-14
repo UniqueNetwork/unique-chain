@@ -23,7 +23,7 @@ interface ContractHelpersEvents {
 }
 
 /// @title Magic contract, which allows users to reconfigure other contracts
-/// @dev the ERC-165 identifier for this interface is 0xd77fab70
+/// @dev the ERC-165 identifier for this interface is 0x172cb4fb
 interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
@@ -111,7 +111,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	function setSponsoringMode(address contractAddress, uint8 mode) external;
 
 	/// Get current contract sponsoring rate limit
-	/// @param contractAddress Contract to get sponsoring mode of
+	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
 	/// @dev EVM selector for this function is: 0x610cfabd,
 	///  or in textual repr: getSponsoringRateLimit(address)
@@ -130,6 +130,28 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	///  or in textual repr: setSponsoringRateLimit(address,uint32)
 	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
 		external;
+
+	/// Set contract sponsoring fee limit
+	/// @dev Sponsoring fee limit - is maximum fee that could be spent by
+	///  single transaction
+	/// @param contractAddress Contract to change sponsoring fee limit of
+	/// @param feeLimit Fee limit
+	/// @dev Only contract owner can change this setting
+	/// @dev EVM selector for this function is: 0x03aed665,
+	///  or in textual repr: setSponsoringFeeLimit(address,uint256)
+	function setSponsoringFeeLimit(address contractAddress, uint256 feeLimit)
+		external;
+
+	/// Get current contract sponsoring fee limit
+	/// @param contractAddress Contract to get sponsoring fee limit of
+	/// @return uint256 Maximum amount of fee that could be spent by single
+	///  transaction
+	/// @dev EVM selector for this function is: 0xc3fdc9ee,
+	///  or in textual repr: getSponsoringFeeLimit(address)
+	function getSponsoringFeeLimit(address contractAddress)
+		external
+		view
+		returns (uint256);
 
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included

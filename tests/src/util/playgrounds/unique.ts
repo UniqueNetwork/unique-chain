@@ -730,6 +730,18 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
+   * Check if user is in allow list.
+   * 
+   * @param collectionId ID of collection
+   * @param user Account to check
+   * @example await getAdmins(1)
+   * @returns is user in allow list
+   */
+  async allowed(collectionId: number, user: ICrossAccountId): Promise<boolean> {
+    return (await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user])).toJSON();
+  }
+
+  /**
    * Adds an address to allow list
    * @param signer keyring of signer
    * @param collectionId ID of collection
@@ -1666,7 +1678,7 @@ class FTGroup extends CollectionGroup {
    * @example mintTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq"}, 1000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintTokens(signer: TSigner, collectionId: number, owner: ICrossAccountId | string, amount: bigint): Promise<boolean> {
+  async mintTokens(signer: TSigner, collectionId: number, amount: bigint, owner: ICrossAccountId | string): Promise<boolean> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createItem', [collectionId, (typeof owner === 'string') ? {Substrate: owner} : owner, {
@@ -1687,7 +1699,7 @@ class FTGroup extends CollectionGroup {
    * @param tokens array of tokens with properties and pieces
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {value: bigint}[]): Promise<boolean> {
+  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: {value: bigint}[], owner: ICrossAccountId): Promise<boolean> {
     const rawTokens = [];
     for (const token of tokens) {
       const raw = {Fungible: {Value: token.value}};
@@ -2116,10 +2128,6 @@ class UniqueCollectionBase {
     return await this.helper.collection.addAdmin(signer, this.collectionId, adminAddressObj);
   }
 
-  async enableCertainPermissions(signer: TSigner, accessMode: 'AllowList' | 'Normal' | undefined = 'AllowList', mintMode: boolean | undefined = true) {
-    return await this.setPermissions(signer, {access: accessMode, mintMode: mintMode});
-  }
-
   async addToAllowList(signer: TSigner, addressObj: ICrossAccountId) {
     return await this.helper.collection.addToAllowList(signer, this.collectionId, addressObj);
   }
@@ -2203,7 +2211,7 @@ class UniqueNFTCollection extends UniqueCollectionBase {
     return await this.helper.nft.isTokenApproved(this.collectionId, tokenId, toAddressObj);
   }
 
-  async mintToken(signer: TSigner, owner: ICrossAccountId, properties?: IProperty[]) {
+  async mintToken(signer: TSigner, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
     return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties});
   }
 
@@ -2278,11 +2286,11 @@ class UniqueRFTCollection extends UniqueCollectionBase {
     return await this.helper.rft.repartitionToken(signer, this.collectionId, tokenId, amount);
   }
 
-  async mintToken(signer: TSigner, owner: ICrossAccountId, pieces=100n, properties?: IProperty[]) {
+  async mintToken(signer: TSigner, pieces=1n, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
     return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties});
   }
 
-  async mintMultipleTokens(signer: TSigner, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[]) {
+  async mintMultipleTokens(signer: TSigner, tokens: {pieces: bigint, owner: ICrossAccountId, properties?: IProperty[]}[]) {
     return await this.helper.rft.mintMultipleTokens(signer, this.collectionId, tokens);
   }
 
@@ -2305,12 +2313,12 @@ class UniqueRFTCollection extends UniqueCollectionBase {
 
 
 class UniqueFTCollection extends UniqueCollectionBase {
-  async mint(signer: TSigner, owner: ICrossAccountId, amount: bigint) {
-    return await this.helper.ft.mintTokens(signer, this.collectionId, owner, amount);
+  async mint(signer: TSigner, amount=1n, owner: ICrossAccountId = {Substrate: signer.address}) {
+    return await this.helper.ft.mintTokens(signer, this.collectionId, amount, owner);
   }
 
-  async mintWithOneOwner(signer: TSigner, owner: ICrossAccountId, tokens: {value: bigint}[]) {
-    return await this.helper.ft.mintMultipleTokensWithOneOwner(signer, this.collectionId, owner, tokens);
+  async mintWithOneOwner(signer: TSigner, tokens: {value: bigint}[], owner: ICrossAccountId = {Substrate: signer.address}) {
+    return await this.helper.ft.mintMultipleTokensWithOneOwner(signer, this.collectionId, tokens, owner);
   }
 
   async getBalance(addressObj: ICrossAccountId) {

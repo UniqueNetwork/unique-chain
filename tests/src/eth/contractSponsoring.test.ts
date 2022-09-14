@@ -14,8 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import * as solc from 'solc';
 import {expect} from 'chai';
-import { expectSubstrateEventsAtBlock } from '../util/helpers';
+import {expectSubstrateEventsAtBlock} from '../util/helpers';
+import Web3 from 'web3';
+
 import {
   contractHelpers,
   createEthAccountWithBalance,
@@ -26,7 +29,11 @@ import {
   createEthAccount,
   ethBalanceViaSub,
   normalizeEvents,
+  CompiledContract,
+  GAS_ARGS,
+  subToEth,
 } from './util/helpers';
+import {submitTransactionAsync} from '../substrate/substrate-api';
 
 describe('Sponsoring EVM contracts', () => {
   itWeb3('Self sponsored can be set by the address that deployed the contract', async ({api, web3, privateKeyWrapper}) => {
@@ -476,5 +483,169 @@ describe('Sponsoring EVM contracts', () => {
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
     expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
+  });
+});
+
+describe('Sponsoring Fee Limit', () => {
+
+  let testContract: CompiledContract;
+  
+  function compileTestContract() {
+    if (!testContract) {
+      const input = {
+        language: 'Solidity',
+        sources: {
+          ['TestContract.sol']: {
+            content:
+            `
+            // SPDX-License-Identifier: MIT
+            pragma solidity ^0.8.0;
+            
+            contract TestContract {
+              event Result(bool);
+
+              function test(uint32 cycles) public {
+                uint256 counter = 0;
+                while(true) {
+                  counter ++;
+                  if (counter > cycles){
+                    break;
+                  }
+                }
+                emit Result(true);
+              }
+            }
+            `,
+          },
+        },
+        settings: {
+          outputSelection: {
+            '*': {
+              '*': ['*'],
+            },
+          },
+        },
+      };
+      const json = JSON.parse(solc.compile(JSON.stringify(input)));
+      const out = json.contracts['TestContract.sol']['TestContract'];
+  
+      testContract = {
+        abi: out.abi,
+        object: '0x' + out.evm.bytecode.object,
+      };
+    }
+    return testContract;
+  }
+  
+  async function deployTestContract(web3: Web3, owner: string) {
+    const compiled = compileTestContract();
+    const testContract = new web3.eth.Contract(compiled.abi, undefined, {
+      data: compiled.object,
+      from: owner,
+      ...GAS_ARGS,
+    });
+    return await testContract.deploy({data: compiled.object}).send({from: owner});
+  }
+
+  itWeb3('Default fee limit', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    expect(await helpers.methods.getSponsoringFeeLimit(flipper.options.address).call()).to.be.equals('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+  });
+
+  itWeb3('Set fee limit', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    await helpers.methods.setSponsoringFeeLimit(flipper.options.address, 100).send();
+    expect(await helpers.methods.getSponsoringFeeLimit(flipper.options.address).call()).to.be.equals('100');
+  });
+
+  itWeb3('Negative test - set fee limit by non-owner', async ({api, web3, privateKeyWrapper}) => {
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const stranger = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const flipper = await deployFlipper(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    await expect(helpers.methods.setSponsoringFeeLimit(flipper.options.address, 100).send({from: stranger})).to.be.rejected;
+  });
+
+  itWeb3('Negative test - check that eth transactions exceeding fee limit are not executed', async ({api, web3, privateKeyWrapper}) => {
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const user = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const testContract = await deployTestContract(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    
+    await helpers.methods.setSponsoringMode(testContract.options.address, SponsoringMode.Generous).send({from: owner});
+    await helpers.methods.setSponsoringRateLimit(testContract.options.address, 0).send({from: owner});
+    
+    await helpers.methods.setSponsor(testContract.options.address, sponsor).send();
+    await helpers.methods.confirmSponsorship(testContract.options.address).send({from: sponsor});
+
+    const gasPrice = BigInt(await web3.eth.getGasPrice());
+
+    await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 2_000_000n * gasPrice).send();
+
+    const originalUserBalance = await web3.eth.getBalance(user);
+    await testContract.methods.test(100).send({from: user, gas: 2_000_000});
+    expect(await web3.eth.getBalance(user)).to.be.equal(originalUserBalance);
+
+    await testContract.methods.test(100).send({from: user, gas: 2_100_000});
+    expect(await web3.eth.getBalance(user)).to.not.be.equal(originalUserBalance);
+  });
+
+  itWeb3('Negative test - check that evm.call transactions exceeding fee limit are not executed', async ({api, web3, privateKeyWrapper}) => {
+    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+
+    const testContract = await deployTestContract(web3, owner);
+    const helpers = contractHelpers(web3, owner);
+    
+    await helpers.methods.setSponsoringMode(testContract.options.address, SponsoringMode.Generous).send({from: owner});
+    await helpers.methods.setSponsoringRateLimit(testContract.options.address, 0).send({from: owner});
+    
+    await helpers.methods.setSponsor(testContract.options.address, sponsor).send();
+    await helpers.methods.confirmSponsorship(testContract.options.address).send({from: sponsor});
+
+    const gasPrice = BigInt(await web3.eth.getGasPrice());
+
+    await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 2_000_000n * gasPrice).send();
+
+    const alice = privateKeyWrapper('//Alice');
+    const originalAliceBalance = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    
+    await submitTransactionAsync(
+      alice,
+      api.tx.evm.call(
+        subToEth(alice.address),
+        testContract.options.address,
+        testContract.methods.test(100).encodeABI(),
+        Uint8Array.from([]),
+        2_000_000n,
+        gasPrice,
+        null,
+        null,
+        [],
+      ),
+    );
+    expect((await api.query.system.account(alice.address)).data.free.toBigInt()).to.be.equal(originalAliceBalance);
+    
+    await submitTransactionAsync(
+      alice,
+      api.tx.evm.call(
+        subToEth(alice.address),
+        testContract.options.address,
+        testContract.methods.test(100).encodeABI(),
+        Uint8Array.from([]),
+        2_100_000n,
+        gasPrice,
+        null,
+        null,
+        [],
+      ),
+    );
+    expect((await api.query.system.account(alice.address)).data.free.toBigInt()).to.not.be.equal(originalAliceBalance);
   });
 });

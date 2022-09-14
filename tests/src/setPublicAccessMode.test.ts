@@ -15,111 +15,79 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setschemaversion
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import usingApi, {submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {
-  addToAllowListExpectSuccess,
-  createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  destroyCollectionExpectSuccess,
-  enablePublicMintingExpectSuccess,
-  enableAllowListExpectSuccess,
-  normalizeAccountId,
-  addCollectionAdminExpectSuccess,
-  getCreatedCollectionCount,
-} from './util/helpers';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-
-let alice: IKeyringPair;
-let bob: IKeyringPair;
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('Integration Test setPublicAccessMode(): ', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });
 
-  it('Run extrinsic with collection id parameters, set the allowlist mode for the collection', async () => {
-    await usingApi(async () => {
-      const collectionId: number = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await enablePublicMintingExpectSuccess(alice, collectionId);
-      await addToAllowListExpectSuccess(alice, collectionId, bob.address);
-      await createItemExpectSuccess(bob, collectionId, 'NFT', bob.address);
-    });
+  itSub('Runs extrinsic with collection id parameters, sets the allowlist mode for the collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'PublicAccess-1', tokenPrefix: 'TF'});
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
+    
+    await expect(collection.mintToken(bob, {Substrate: bob.address})).to.be.not.rejected;
   });
 
-  it('Allowlisted collection limits', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await enablePublicMintingExpectSuccess(alice, collectionId);
-      const tx = api.tx.unique.createItem(collectionId, normalizeAccountId(bob.address), 'NFT');
-      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
-    });
+  itSub('Allowlisted collection limits', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'PublicAccess-2', tokenPrefix: 'TF'});
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    
+    await expect(collection.mintToken(bob, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
+  });
+
+  itSub('setPublicAccessMode by collection admin', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'PublicAccess-Neg-4', tokenPrefix: 'TF'});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+
+    await expect(collection.setPermissions(bob, {access: 'AllowList'})).to.be.not.rejected;
   });
 });
 
 describe('Negative Integration Test ext. setPublicAccessMode(): ', () => {
-  it('Set a non-existent collection', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      // tslint:disable-next-line: radix
-      const collectionId = await getCreatedCollectionCount(api) + 1;
-      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
-      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
-    });
-  });
-
-  it('Set the collection that has been deleted', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await createCollectionExpectSuccess();
-      await destroyCollectionExpectSuccess(collectionId);
-      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
-      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
-    });
-  });
-
-  it('Re-set the list mode already set in quantity', async () => {
-    await usingApi(async () => {
-      const collectionId: number = await createCollectionExpectSuccess();
-      await enableAllowListExpectSuccess(alice, collectionId);
-      await enableAllowListExpectSuccess(alice, collectionId);
-    });
-  });
-
-  it('Execute method not on behalf of the collection owner', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await createCollectionExpectSuccess();
-      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
-      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
-    });
-  });
-
-  it('setPublicAccessMode by collection admin', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await createCollectionExpectSuccess();
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const tx = api.tx.unique.setCollectionPermissions(collectionId, {access: 'AllowList'});
-      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.not.rejected;
-    });
-  });
-});
-
-describe('Negative Integration Test ext. collection admin setPublicAccessMode(): ', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
+  });
+
+  itSub('Sets a non-existent collection', async ({helper}) => {
+    const collectionId = (1 << 32) - 1;
+    await expect(helper.collection.setPermissions(alice, collectionId, {access: 'AllowList'}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
+  });
+
+  itSub('Sets the collection that has been deleted', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'PublicAccess-Neg-1', tokenPrefix: 'TF'});
+    await collection.burn(alice);
+
+    await expect(collection.setPermissions(alice, {access: 'AllowList'}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
+  });
+
+  itSub('Re-sets the list mode already set in quantity', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'PublicAccess-Neg-2', tokenPrefix: 'TF'});
+    await collection.setPermissions(alice, {access: 'AllowList'});
+    await collection.setPermissions(alice, {access: 'AllowList'});
+  });
+
+  itSub('Executes method as a malefactor', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'PublicAccess-Neg-3', tokenPrefix: 'TF'});
+
+    await expect(collection.setPermissions(bob, {access: 'AllowList'}))
+      .to.be.rejectedWith(/common\.NoPermission/);
   });
 });

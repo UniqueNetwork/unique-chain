@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {IKeyringPair} from '@polkadot/types/types';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import {Context} from 'mocha';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
 import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 
+
+chai.use(chaiAsPromised);
+export const expect = chai.expect;
 
 export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
   const silentConsole = new SilentConsole();

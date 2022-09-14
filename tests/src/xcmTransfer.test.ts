@@ -33,6 +33,7 @@ const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
+// todo:playgrounds refit when XCM drops
 describe.skip('Integration test: Exchanging QTZ with Karura', () => {
   let alice: IKeyringPair;
 

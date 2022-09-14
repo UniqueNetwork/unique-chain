@@ -14,14 +14,11 @@ interface ERC165 is Dummy {
 
 /// @dev inlined interface
 interface CollectionHelpersEvents {
-	event CollectionCreated(
-		address indexed owner,
-		address indexed collectionId
-	);
+	event CollectionCreated(address indexed owner, address indexed collectionId);
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x675f3074
+/// @dev the ERC-165 identifier for this interface is 0x88ee8ef1
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -45,9 +42,9 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory baseUri
 	) external returns (address);
 
-	/// @dev EVM selector for this function is: 0x44a68ad5,
-	///  or in textual repr: createRefungibleCollection(string,string,string)
-	function createRefungibleCollection(
+	/// @dev EVM selector for this function is: 0xab173450,
+	///  or in textual repr: createRFTCollection(string,string,string)
+	function createRFTCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
@@ -67,8 +64,5 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// @return bool Does the collection exist?
 	/// @dev EVM selector for this function is: 0xc3de1494,
 	///  or in textual repr: isCollectionExist(address)
-	function isCollectionExist(address collectionAddress)
-		external
-		view
-		returns (bool);
+	function isCollectionExist(address collectionAddress) external view returns (bool);
 }

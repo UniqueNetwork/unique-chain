@@ -15,54 +15,41 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import usingApi from './substrate/substrate-api';
-import {
-  createCollectionExpectSuccess,
-  destroyCollectionExpectSuccess,
-  setCollectionLimitsExpectSuccess,
-  setCollectionSponsorExpectSuccess,
-  confirmSponsorshipExpectSuccess,
-  createItemExpectSuccess,
-  createItemExpectFailure,
-  transferExpectSuccess,
-  getFreeBalance,
-  waitNewBlocks, burnItemExpectSuccess,
-  requirePallets,
-  Pallets,
-} from './util/helpers';
-import {expect} from 'chai';
+import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/playgrounds';
 
 describe('Number of tokens per address (NFT)', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
 
-  it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {
-
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 20});
+  itSub.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 20});
+    
     for(let i = 0; i < 10; i++){
-      await createItemExpectSuccess(alice, collectionId, 'NFT');
+      await expect(collection.mintToken(alice)).to.be.not.rejected;
     }
-    await createItemExpectFailure(alice, collectionId, 'NFT');
+    await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
     for(let i = 1; i < 11; i++) {
-      await burnItemExpectSuccess(alice, collectionId, i);
+      await expect(collection.burnToken(alice, i)).to.be.not.rejected;
     }
-    await destroyCollectionExpectSuccess(collectionId);
+    await collection.burn(alice);
   });
+  
+  itSub('Collection limits allow lower number than chain limits, collection limits are enforced', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
 
-  it('Collection limits allow lower number than chain limits, collection limits are enforced', async () => {
-
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 1});
-    await createItemExpectSuccess(alice, collectionId, 'NFT');
-    await createItemExpectFailure(alice, collectionId, 'NFT');
-    await burnItemExpectSuccess(alice, collectionId, 1);
-    await destroyCollectionExpectSuccess(collectionId);
+    await collection.mintToken(alice);
+    await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
+    
+    await collection.burnToken(alice, 1);
+    await expect(collection.burn(alice)).to.be.not.rejected;
   });
 });
 
@@ -70,38 +57,43 @@ describe('Number of tokens per address (ReFungible)', () => {
   let alice: IKeyringPair;
 
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
 
-  it.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 20});
+  itSub.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 20});
+    
     for(let i = 0; i < 10; i++){
-      await createItemExpectSuccess(alice, collectionId, 'ReFungible');
+      await expect(collection.mintToken(alice, 10n)).to.be.not.rejected;
     }
-    await createItemExpectFailure(alice, collectionId, 'ReFungible');
+    await expect(collection.mintToken(alice, 10n)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
     for(let i = 1; i < 11; i++) {
-      await burnItemExpectSuccess(alice, collectionId, i, 100);
+      await expect(collection.burnToken(alice, i, 10n)).to.be.not.rejected;
     }
-    await destroyCollectionExpectSuccess(collectionId);
+    await collection.burn(alice);
   });
 
-  it('Collection limits allow lower number than chain limits, collection limits are enforced', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 1});
-    await createItemExpectSuccess(alice, collectionId, 'ReFungible');
-    await createItemExpectFailure(alice, collectionId, 'ReFungible');
-    await burnItemExpectSuccess(alice, collectionId, 1, 100);
-    await destroyCollectionExpectSuccess(collectionId);
+  itSub('Collection limits allow lower number than chain limits, collection limits are enforced', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
+
+    await collection.mintToken(alice);
+    await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
+    
+    await collection.burnToken(alice, 1);
+    await expect(collection.burn(alice)).to.be.not.rejected;
   });
 });
 
+// todo:playgrounds skipped ~ postponed
 describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () => {
-  let alice: IKeyringPair;
+  /*let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
@@ -113,7 +105,7 @@ describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () =
     });
   });
 
-  it.skip('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
+  itSub.skip('Collection limits have greater timeout value than chain limits, collection limits are enforced', async ({helper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 7});
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
@@ -137,7 +129,7 @@ describe.skip('Sponsor timeout (NFT) (only for special chain limits test)', () =
     await destroyCollectionExpectSuccess(collectionId);
   });
 
-  it('Collection limits have lower timeout value than chain limits, chain limits are enforced', async () => {
+  itSub('Collection limits have lower timeout value than chain limits, chain limits are enforced', async ({helper}) => {
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 1});
@@ -176,7 +168,7 @@ describe.skip('Sponsor timeout (Fungible) (only for special chain limits test)',
     });
   });
 
-  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
+  itSub('Collection limits have greater timeout value than chain limits, collection limits are enforced', async ({helper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 7});
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible');
@@ -202,7 +194,7 @@ describe.skip('Sponsor timeout (Fungible) (only for special chain limits test)',
     await destroyCollectionExpectSuccess(collectionId);
   });
 
-  it('Collection limits have lower timeout value than chain limits, chain limits are enforced', async () => {
+  itSub('Collection limits have lower timeout value than chain limits, chain limits are enforced', async ({helper}) => {
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 1});
@@ -243,7 +235,7 @@ describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)
     });
   });
 
-  it('Collection limits have greater timeout value than chain limits, collection limits are enforced', async () => {
+  itSub('Collection limits have greater timeout value than chain limits, collection limits are enforced', async ({helper}) => {
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 7});
     const tokenId = await createItemExpectSuccess(alice, collectionId, 'ReFungible');
@@ -267,7 +259,7 @@ describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)
     await destroyCollectionExpectSuccess(collectionId);
   });
 
-  it('Collection limits have lower timeout value than chain limits, chain limits are enforced', async () => {
+  itSub('Collection limits have lower timeout value than chain limits, chain limits are enforced', async ({helper}) => {
 
     const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
     await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 1});
@@ -290,7 +282,7 @@ describe.skip('Sponsor timeout (ReFungible) (only for special chain limits test)
     expect(aliceBalanceAfterSponsoredTransaction < aliceBalanceBefore).to.be.true;
     //expect(aliceBalanceAfterSponsoredTransaction).to.be.lessThan(aliceBalanceBefore);
     await destroyCollectionExpectSuccess(collectionId);
-  });
+  });*/
 });
 
 describe('Collection zero limits (NFT)', () => {
@@ -299,38 +291,38 @@ describe('Collection zero limits (NFT)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
 
-  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 0});
+  itSub.skip('Limits have 0 in tokens per address field, the chain limits are applied', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 0});
+
     for(let i = 0; i < 10; i++){
-      await createItemExpectSuccess(alice, collectionId, 'NFT');
+      await collection.mintToken(alice);
     }
-    await createItemExpectFailure(alice, collectionId, 'NFT');
+    await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
   });
 
-  it('Limits have 0 in sponsor timeout, no limits are applied', async () => {
+  itSub('Limits have 0 in sponsor timeout, no limits are applied', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    await collection.setLimits(alice, {sponsorTransferTimeout: 0});
+    const token = await collection.mintToken(alice);
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 0});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
-    await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
-    await transferExpectSuccess(collectionId, tokenId, alice, bob);
-    const aliceBalanceBefore = await getFreeBalance(alice);
+    await collection.setSponsor(alice, alice.address);
+    await collection.confirmSponsorship(alice);
+    
+    await token.transfer(alice, {Substrate: bob.address});
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
     // check setting SponsorTimeout = 0, success with next block
-    await waitNewBlocks(1);
-    await transferExpectSuccess(collectionId, tokenId, bob, charlie);
-    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(alice);
+    await helper.wait.newBlocks(1);
+    await token.transfer(bob, {Substrate: charlie.address});
+    const aliceBalanceAfterSponsoredTransaction1 = await helper.balance.getSubstrate(alice.address);
     expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
-    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
 
@@ -340,29 +332,28 @@ describe('Collection zero limits (Fungible)', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
 
-  it('Limits have 0 in sponsor timeout, no limits are applied', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 0});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'Fungible');
-    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
-    await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, 10, 'Fungible');
-    const aliceBalanceBefore = await getFreeBalance(alice);
-    await transferExpectSuccess(collectionId, tokenId, bob, charlie, 2, 'Fungible');
+  itSub('Limits have 0 in sponsor timeout, no limits are applied', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {});
+    await collection.setLimits(alice, {sponsorTransferTimeout: 0});
+    await collection.mint(alice, 3n);
+
+    await collection.setSponsor(alice, alice.address);
+    await collection.confirmSponsorship(alice);
+    
+    await collection.transfer(alice, {Substrate: bob.address}, 2n);
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
     // check setting SponsorTimeout = 0, success with next block
-    await waitNewBlocks(1);
-    await transferExpectSuccess(collectionId, tokenId, bob, charlie, 2, 'Fungible');
-    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(alice);
+    await helper.wait.newBlocks(1);
+    await collection.transfer(bob, {Substrate: charlie.address});
+    const aliceBalanceAfterSponsoredTransaction1 = await helper.balance.getSubstrate(alice.address);
     expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
-    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
   });
 });
 
@@ -372,110 +363,112 @@ describe('Collection zero limits (ReFungible)', () => {
   let charlie: IKeyringPair;
 
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
 
-  it.skip('Limits have 0 in tokens per address field, the chain limits are applied', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {accountTokenOwnershipLimit: 0});
+  itSub.skip('Limits have 0 in tokens per address field, the chain limits are applied', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 0});
     for(let i = 0; i < 10; i++){
-      await createItemExpectSuccess(alice, collectionId, 'ReFungible');
+      await collection.mintToken(alice);
     }
-    await createItemExpectFailure(alice, collectionId, 'ReFungible');
+    await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
   });
 
-  it('Limits have 0 in sponsor timeout, no limits are applied', async () => {
+  itSub('Limits have 0 in sponsor timeout, no limits are applied', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    await collection.setLimits(alice, {sponsorTransferTimeout: 0});
+    const token = await collection.mintToken(alice, 3n);
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorTransferTimeout: 0});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'ReFungible');
-    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
-    await confirmSponsorshipExpectSuccess(collectionId, '//Alice');
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, 100, 'ReFungible');
-    await transferExpectSuccess(collectionId, tokenId, bob, charlie, 20, 'ReFungible');
-    const aliceBalanceBefore = await getFreeBalance(alice);
+    await collection.setSponsor(alice, alice.address);
+    await collection.confirmSponsorship(alice);
+    
+    await token.transfer(alice, {Substrate: bob.address}, 2n);
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
     // check setting SponsorTimeout = 0, success with next block
-    await waitNewBlocks(1);
-    await transferExpectSuccess(collectionId, tokenId, bob, charlie, 20, 'ReFungible');
-    const aliceBalanceAfterSponsoredTransaction1 = await getFreeBalance(alice);
+    await helper.wait.newBlocks(1);
+    await token.transfer(bob, {Substrate: charlie.address});
+    const aliceBalanceAfterSponsoredTransaction1 = await helper.balance.getSubstrate(alice.address);
     expect(aliceBalanceAfterSponsoredTransaction1 < aliceBalanceBefore).to.be.true;
-    //expect(aliceBalanceAfterSponsoredTransaction1).to.be.lessThan(aliceBalanceBefore);
-  });
-  
-  it('Effective collection limits', async () => {
-    await usingApi(async (api) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-      
-      { // Check that limits is undefined
-        const collection = await api.rpc.unique.collectionById(collectionId);
-        expect(collection.isSome).to.be.true;
-        const limits = collection.unwrap().limits;
-        expect(limits).to.be.any;
-        
-        expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.null;
-        expect(limits.sponsoredDataSize.toHuman()).to.be.null;
-        expect(limits.sponsoredDataRateLimit.toHuman()).to.be.null;
-        expect(limits.tokenLimit.toHuman()).to.be.null;
-        expect(limits.sponsorTransferTimeout.toHuman()).to.be.null;
-        expect(limits.sponsorApproveTimeout.toHuman()).to.be.null;
-        expect(limits.ownerCanTransfer.toHuman()).to.be.true;
-        expect(limits.ownerCanDestroy.toHuman()).to.be.null;
-        expect(limits.transfersEnabled.toHuman()).to.be.null;
-      }
-  
-      { // Check that limits is undefined for non-existent collection
-        const limits = await api.rpc.unique.effectiveCollectionLimits(11111);
-        expect(limits.toHuman()).to.be.null;
-      }
-  
-      { // Check that default values defined for collection limits
-        const limitsOpt = await api.rpc.unique.effectiveCollectionLimits(collectionId);
-        expect(limitsOpt.isNone).to.be.false;
-        const limits = limitsOpt.unwrap();
-  
-        expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.eq('100,000');
-        expect(limits.sponsoredDataSize.toHuman()).to.be.eq('2,048');
-        expect(limits.sponsoredDataRateLimit.toHuman()).to.be.eq('SponsoringDisabled');
-        expect(limits.tokenLimit.toHuman()).to.be.eq('4,294,967,295');
-        expect(limits.sponsorTransferTimeout.toHuman()).to.be.eq('5');
-        expect(limits.sponsorApproveTimeout.toHuman()).to.be.eq('5');
-        expect(limits.ownerCanTransfer.toHuman()).to.be.true;
-        expect(limits.ownerCanDestroy.toHuman()).to.be.true;
-        expect(limits.transfersEnabled.toHuman()).to.be.true;
-      }
-
-      { //Check the values for collection limits
-        await setCollectionLimitsExpectSuccess(alice, collectionId, {
-          accountTokenOwnershipLimit: 99_999,
-          sponsoredDataSize: 1024,
-          tokenLimit: 123,
-          transfersEnabled: false,
-        });
-
-        const limitsOpt = await api.rpc.unique.effectiveCollectionLimits(collectionId);
-        expect(limitsOpt.isNone).to.be.false;
-        const limits = limitsOpt.unwrap();
-  
-        expect(limits.accountTokenOwnershipLimit.toHuman()).to.be.eq('99,999');
-        expect(limits.sponsoredDataSize.toHuman()).to.be.eq('1,024');
-        expect(limits.sponsoredDataRateLimit.toHuman()).to.be.eq('SponsoringDisabled');
-        expect(limits.tokenLimit.toHuman()).to.be.eq('123');
-        expect(limits.sponsorTransferTimeout.toHuman()).to.be.eq('5');
-        expect(limits.sponsorApproveTimeout.toHuman()).to.be.eq('5');
-        expect(limits.ownerCanTransfer.toHuman()).to.be.true;
-        expect(limits.ownerCanDestroy.toHuman()).to.be.true;
-        expect(limits.transfersEnabled.toHuman()).to.be.false;
-      }
-    });
   });
 });
 
+describe('Effective collection limits (NFT)', () => {
+  let alice: IKeyringPair;
 
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
+    });
+  });
+  
+  itSub('Effective collection limits', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    await collection.setLimits(alice, {ownerCanTransfer: true});    
+    
+    { 
+      // Check that limits are undefined
+      const collectionInfo = await collection.getData();
+      const limits = collectionInfo?.raw.limits;
+      expect(limits).to.be.any;
+      
+      expect(limits.accountTokenOwnershipLimit).to.be.null;
+      expect(limits.sponsoredDataSize).to.be.null;
+      expect(limits.sponsoredDataRateLimit).to.be.null;
+      expect(limits.tokenLimit).to.be.null;
+      expect(limits.sponsorTransferTimeout).to.be.null;
+      expect(limits.sponsorApproveTimeout).to.be.null;
+      expect(limits.ownerCanTransfer).to.be.true;
+      expect(limits.ownerCanDestroy).to.be.null;
+      expect(limits.transfersEnabled).to.be.null;
+    }
+
+    { // Check that limits is undefined for non-existent collection
+      const limits = await helper.collection.getEffectiveLimits(999999);
+      expect(limits).to.be.null;
+    }
+
+    { // Check that default values defined for collection limits
+      const limits = await collection.getEffectiveLimits();
+
+      expect(limits.accountTokenOwnershipLimit).to.be.eq(100000);
+      expect(limits.sponsoredDataSize).to.be.eq(2048);
+      expect(limits.sponsoredDataRateLimit).to.be.deep.eq({sponsoringDisabled: null});
+      expect(limits.tokenLimit).to.be.eq(4294967295);
+      expect(limits.sponsorTransferTimeout).to.be.eq(5);
+      expect(limits.sponsorApproveTimeout).to.be.eq(5);
+      expect(limits.ownerCanTransfer).to.be.true;
+      expect(limits.ownerCanDestroy).to.be.true;
+      expect(limits.transfersEnabled).to.be.true;
+    }
+
+    { 
+      // Check the values for collection limits
+      await collection.setLimits(alice, {
+        accountTokenOwnershipLimit: 99_999,
+        sponsoredDataSize: 1024,
+        tokenLimit: 123,
+        transfersEnabled: false,
+      });
+
+      const limits = await collection.getEffectiveLimits();
+
+      expect(limits.accountTokenOwnershipLimit).to.be.eq(99999);
+      expect(limits.sponsoredDataSize).to.be.eq(1024);
+      expect(limits.sponsoredDataRateLimit).to.be.deep.eq({sponsoringDisabled: null});
+      expect(limits.tokenLimit).to.be.eq(123);
+      expect(limits.sponsorTransferTimeout).to.be.eq(5);
+      expect(limits.sponsorApproveTimeout).to.be.eq(5);
+      expect(limits.ownerCanTransfer).to.be.true;
+      expect(limits.ownerCanDestroy).to.be.true;
+      expect(limits.transfersEnabled).to.be.false;
+    }
+  });
+});
