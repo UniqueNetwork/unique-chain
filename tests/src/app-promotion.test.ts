@@ -81,7 +81,9 @@ describe('app-promotions.stake extrinsic', () => {
       
       await helper.staking.stake(staker, 200n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(300n * nominal);
-      expect((await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map((x) => x[1])).to.be.deep.equal([100n * nominal, 200n * nominal]);
+      const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(totalStakedPerBlock[0].amount).to.equal(100n * nominal);
+      expect(totalStakedPerBlock[1].amount).to.equal(200n * nominal);
     });
   });
 
@@ -159,10 +161,10 @@ describe('unstake balance extrinsic', () => {
       const staker = accounts.pop()!;
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstake(staker);
-      const unstakedInBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address}))[0][0];
+      const [pendingUnstake] = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
 
       // Wait for unstaking period. Balance now free ~1000; reserved, frozen, miscFrozeb: 0n
-      await helper.wait.forParachainBlockNumber(unstakedInBlock);
+      await helper.wait.forParachainBlockNumber(pendingUnstake.block);
       expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 0n, feeFrozen: 0n});
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
 
@@ -180,25 +182,26 @@ describe('unstake balance extrinsic', () => {
       await helper.staking.stake(staker, 300n * nominal);
 
       // staked: [100, 200, 300]; unstaked: 0
-      let pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
-      let unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
-      let stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
-      expect(pendingUnstake).to.be.deep.equal(0n);
-      expect(unstakedPerBlock).to.be.deep.equal([]);
-      expect(stakedPerBlock).to.be.deep.equal([100n * nominal, 200n * nominal, 300n * nominal]);
+      let totalPendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      let pendingUnstake = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+      let stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(totalPendingUnstake).to.be.deep.equal(0n);
+      expect(pendingUnstake).to.be.deep.equal([]);
+      expect(stakes[0].amount).to.equal(100n * nominal);
+      expect(stakes[1].amount).to.equal(200n * nominal);
+      expect(stakes[2].amount).to.equal(300n * nominal);
      
       // Can unstake multiple stakes
       await helper.staking.unstake(staker);
-      const unstakingBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address}))[0][0];
-      pendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
-      unstakedPerBlock = (await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).map(stake => stake[1]);
-      stakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(stake => stake[1]);
-      expect(pendingUnstake).to.be.equal(600n * nominal);
-      expect(stakedPerBlock).to.be.deep.equal([]);
-      expect(unstakedPerBlock).to.be.deep.equal([600n * nominal]);
+      pendingUnstake = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+      totalPendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+      stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(totalPendingUnstake).to.be.equal(600n * nominal);
+      expect(stakes).to.be.deep.equal([]);
+      expect(pendingUnstake[0].amount).to.equal(600n * nominal);
 
       expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 600n * nominal, feeFrozen: 0n, miscFrozen: 0n});
-      await helper.wait.forParachainBlockNumber(unstakingBlock);
+      await helper.wait.forParachainBlockNumber(pendingUnstake[0].block);
       expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
       expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
     });
@@ -235,8 +238,8 @@ describe('unstake balance extrinsic', () => {
 
       const unstakingPerBlock = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
       expect(unstakingPerBlock).has.length(2);
-      expect(unstakingPerBlock[0][1]).to.equal(100n * nominal);
-      expect(unstakingPerBlock[1][1]).to.equal(120n * nominal);
+      expect(unstakingPerBlock[0].amount).to.equal(100n * nominal);
+      expect(unstakingPerBlock[1].amount).to.equal(120n * nominal);
     });
   });
 
@@ -661,15 +664,15 @@ describe('app-promotion rewards', () => {
     });
   });
 
-  it('should increase total staked', async() => {
+  it('should increase total staked', async () => {
     await usingPlaygrounds(async (helper) => {
       const staker = accounts.pop()!;
       const totalStakedBefore = await helper.staking.getTotalStaked();
       await helper.staking.stake(staker, 100n * nominal);
 
       // Wait for rewards and pay
-      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
+      const [stakedInBlock] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock.block));
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
 
       const totalStakedAfter = await helper.staking.getTotalStaked();
@@ -691,13 +694,14 @@ describe('app-promotion rewards', () => {
       await helper.staking.stake(staker, 200n * nominal);
 
       // wait rewards are available:
-      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[1][0];
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
+      const [_, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
 
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
 
-      const totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
-      expect(totalStakedPerBlock).to.be.deep.equal([calculateIncome(100n * nominal, 10n), calculateIncome(200n * nominal, 10n)]);
+      const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal, 10n));
+      expect(totalStakedPerBlock[1].amount).to.equal(calculateIncome(200n * nominal, 10n));
     });
   });
 
@@ -707,13 +711,13 @@ describe('app-promotion rewards', () => {
 
       await helper.staking.stake(staker, 100n * nominal);
       // wait for two rewards are available:
-      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock) + LOCKING_PERIOD);
+      let [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
 
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
-      const stakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       const frozenBalanceShouldBe = calculateIncome(100n * nominal, 10n, 2);
-      expect(stakedPerBlock[0][1]).to.be.equal(frozenBalanceShouldBe);
+      expect(stake.amount).to.be.equal(frozenBalanceShouldBe);
 
       const stakerFullBalance = await helper.balance.getSubstrateFull(staker.address);
 
@@ -726,8 +730,8 @@ describe('app-promotion rewards', () => {
       // staker unstakes before rewards has been payed
       const staker = accounts.pop()!;
       await helper.staking.stake(staker, 100n * nominal);
-      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock) + LOCKING_PERIOD);
+      const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
       await helper.staking.unstake(staker);
       
       // so he did not receive any rewards
@@ -745,17 +749,17 @@ describe('app-promotion rewards', () => {
             
       await helper.staking.stake(staker, 100n * nominal);
 
-      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
+      let [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
       
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
-      let totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
-      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n)]);
+      [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n));
       
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock) + LOCKING_PERIOD);
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
-      totalStakedPerBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address})).map(s => s[1]);
-      expect(totalStakedPerBlock).to.deep.equal([calculateIncome(100n * nominal, 10n, 2)]);      
+      [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n, 2));
     });
   });
 
