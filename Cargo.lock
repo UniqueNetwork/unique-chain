@@ -737,7 +737,9 @@ version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba3569f383e8f1598449f1a423e72e99569137b47740b1da11ef19af3d5c3223"
 dependencies = [
+ "lazy_static",
  "memchr",
+ "regex-automata",
 ]
 
 [[package]]
@@ -1023,6 +1025,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af4780a44ab5696ea9e28294517f1fffb421a83a25af521333c838635509db9c"
 dependencies = [
  "cache-padded",
+]
+
+[[package]]
+name = "console"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89eab4d20ce20cea182308bca13088fecea9c05f6776cf287205d41a0ed3c847"
+dependencies = [
+ "encode_unicode",
+ "libc",
+ "once_cell",
+ "terminal_size",
+ "winapi",
 ]
 
 [[package]]
@@ -2043,6 +2058,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "encode_unicode"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
+
+[[package]]
 name = "enum-as-inner"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2212,6 +2233,7 @@ dependencies = [
  "hex-literal",
  "impl-trait-for-tuples",
  "primitive-types",
+ "similar-asserts",
  "sp-std",
 ]
 
@@ -10649,6 +10671,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "similar"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62ac7f900db32bf3fd12e0117dd3dc4da74bc52ebaac97f39668446d89694803"
+dependencies = [
+ "bstr",
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "similar-asserts"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbf644ad016b75129f01a34a355dcb8d66a5bc803e417c7a77cc5d5ee9fa0f18"
+dependencies = [
+ "console",
+ "similar",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11787,6 +11829,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "terminal_size"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "633c1a546cee861a1a6d0dc69ebeca693bf4296661ba7852b9d21d159e0506df"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "test-runtime-constants"
 version = "0.9.27"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.27#b017bad50d360a1c6e3cdf9652bdb85e5f479fea"
@@ -12365,6 +12417,12 @@ checksum = "854cbdc4f7bc6ae19c820d44abdc3277ac3e1b2b93db20a636825d9322fb60e6"
 dependencies = [
  "tinyvec",
 ]
+
+[[package]]
+name = "unicode-segmentation"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fdbf052a0783de01e944a6ce7a8cb939e295b1e7be835a1112c3b9a7f047a5a"
 
 [[package]]
 name = "unicode-width"
