@@ -661,6 +661,24 @@ describe('app-promotion rewards', () => {
     });
   });
 
+  it.only('should increase total staked', async() => {
+    await usingPlaygrounds(async (helper) => {
+      const staker = accounts.pop()!;
+      const totalStakedBefore = await helper.staking.getTotalStaked();
+
+      await helper.staking.stake(staker, 100n * nominal);
+      
+      const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
+
+      await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+      const totalStakedAfter = await helper.staking.getTotalStaked();
+
+      console.log(totalStakedBefore + calculateIncome(100n * nominal, 10n));
+      expect(totalStakedBefore + calculateIncome(100n * nominal, 10n)).to.be.equal(totalStakedAfter);
+    });
+  });
+
   it('should credit 0.05% for staking period', async () => {    
     await usingPlaygrounds(async helper => {
       const staker = accounts.pop()!;
