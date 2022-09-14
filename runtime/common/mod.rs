@@ -79,7 +79,7 @@ pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransaction
 
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
-	// system::CheckTxVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
