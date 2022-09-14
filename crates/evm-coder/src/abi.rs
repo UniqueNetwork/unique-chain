@@ -611,12 +611,143 @@ macro_rules! abi_encode {
 pub mod test {
 	use crate::{
 		abi::{AbiRead, AbiWrite},
-		types::{string, uint256, address},
+		types::*,
 	};
 
 	use super::{AbiReader, AbiWriter};
 	use hex_literal::hex;
 	use primitive_types::{H160, U256};
+	use concat_idents::concat_idents;
+
+	macro_rules! test_impl {
+		($name:ident, $type:ty, $function_identifier:expr, $decoded_data:expr, $encoded_data:expr) => {
+			concat_idents!(test_name = encode_decode_, $name {
+				#[test]
+				fn test_name() {
+					let function_identifier: u32 = $function_identifier;
+					let decoded_data = $decoded_data;
+					let encoded_data = $encoded_data;
+
+					let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
+					assert_eq!(call, u32::to_be_bytes(function_identifier));
+					let data = <AbiReader<'_> as AbiRead<$type>>::abi_read(&mut decoder).unwrap();
+					assert_eq!(data, decoded_data);
+
+					let mut writer = AbiWriter::new_call(function_identifier);
+					decoded_data.abi_write(&mut writer);
+					let ed = writer.finish();
+					similar_asserts::assert_eq!(encoded_data, ed.as_slice());
+				}
+			});
+		};
+	}
+
+	macro_rules! test_impl_uint {
+		($type:ident) => {
+			test_impl!(
+				$type,
+				$type,
+				0xdeadbeef,
+				255 as $type,
+				&hex!(
+					"
+						deadbeef
+						00000000000000000000000000000000000000000000000000000000000000ff
+					"
+				)
+			);
+		};
+	}
+
+	test_impl_uint!(uint8);
+	test_impl_uint!(uint32);
+	test_impl_uint!(uint128);
+
+	test_impl!(
+		uint256,
+		uint256,
+		0xdeadbeef,
+		U256([255, 0, 0, 0]),
+		&hex!(
+			"
+				deadbeef
+				00000000000000000000000000000000000000000000000000000000000000ff
+			"
+		)
+	);
+
+	test_impl!(
+		vec_tuple_address_uint256,
+		Vec<(address, uint256)>,
+		0x1ACF2D55,
+		vec![
+			(
+				H160(hex!("2D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC")),
+				U256([10, 0, 0, 0]),
+			),
+			(
+				H160(hex!("AB8E3D9134955566483B11E6825C9223B6737B10")),
+				U256([20, 0, 0, 0]),
+			),
+			(
+				H160(hex!("8C582BDF2953046705FC56F189385255EFC1BE18")),
+				U256([30, 0, 0, 0]),
+			),
+		],
+		&hex!(
+			"
+				1ACF2D55
+				0000000000000000000000000000000000000000000000000000000000000020 // offset of (address, uint256)[]
+				0000000000000000000000000000000000000000000000000000000000000003 // length of (address, uint256)[]
+	
+				0000000000000000000000002D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC // address
+				000000000000000000000000000000000000000000000000000000000000000A // uint256
+	
+				000000000000000000000000AB8E3D9134955566483B11E6825C9223B6737B10 // address
+				0000000000000000000000000000000000000000000000000000000000000014 // uint256
+	
+				0000000000000000000000008C582BDF2953046705FC56F189385255EFC1BE18 // address
+				000000000000000000000000000000000000000000000000000000000000001E // uint256
+			"
+		)
+	);
+
+	test_impl!(
+		vec_tuple_uint256_string,
+		Vec<(uint256, string)>,
+		0xdeadbeef,
+		vec![
+			(1.into(), "Test URI 0".to_string()),
+			(11.into(), "Test URI 1".to_string()),
+			(12.into(), "Test URI 2".to_string()),
+		],
+		&hex!(
+			"
+				deadbeef
+				0000000000000000000000000000000000000000000000000000000000000020 // offset of (uint256, string)[]
+				0000000000000000000000000000000000000000000000000000000000000003 // length of (uint256, string)[]
+
+				0000000000000000000000000000000000000000000000000000000000000060 // offset of first elem
+				00000000000000000000000000000000000000000000000000000000000000e0 // offset of second elem
+				0000000000000000000000000000000000000000000000000000000000000160 // offset of third elem
+
+				0000000000000000000000000000000000000000000000000000000000000001 // first token id?   					#60
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of string
+				000000000000000000000000000000000000000000000000000000000000000a // size of string
+				5465737420555249203000000000000000000000000000000000000000000000 // string
+
+				000000000000000000000000000000000000000000000000000000000000000b // second token id? Why ==11?			#e0
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of string
+				000000000000000000000000000000000000000000000000000000000000000a // size of string
+				5465737420555249203100000000000000000000000000000000000000000000 // string
+
+				000000000000000000000000000000000000000000000000000000000000000c // third token id?  Why ==12?			#160
+				0000000000000000000000000000000000000000000000000000000000000040 // offset of string
+				000000000000000000000000000000000000000000000000000000000000000a // size of string
+				5465737420555249203200000000000000000000000000000000000000000000 // string
+			"
+		)
+	);
 
 	#[test]
 	fn dynamic_after_static() {
@@ -714,55 +845,5 @@ pub mod test {
 		decoded_data.1.abi_write(&mut writer);
 		let ed = writer.finish();
 		similar_asserts::assert_eq!(encoded_data, ed.as_slice());
-	}
-
-	#[test]
-	fn parse_vec_with_simple_type() {
-		let decoded_data = (
-			0x1ACF2D55,
-			vec![
-				(
-					H160(hex!("2D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC")),
-					U256([10, 0, 0, 0]),
-				),
-				(
-					H160(hex!("AB8E3D9134955566483B11E6825C9223B6737B10")),
-					U256([20, 0, 0, 0]),
-				),
-				(
-					H160(hex!("8C582BDF2953046705FC56F189385255EFC1BE18")),
-					U256([30, 0, 0, 0]),
-				),
-			],
-		);
-
-		let encoded_data = &hex!(
-			"
-				1ACF2D55
-				0000000000000000000000000000000000000000000000000000000000000020 // offset of (address, uint256)[]
-				0000000000000000000000000000000000000000000000000000000000000003 // length of (address, uint256)[]
-
-				0000000000000000000000002D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC // address
-				000000000000000000000000000000000000000000000000000000000000000A // uint256
-
-				000000000000000000000000AB8E3D9134955566483B11E6825C9223B6737B10 // address
-				0000000000000000000000000000000000000000000000000000000000000014 // uint256
-
-				0000000000000000000000008C582BDF2953046705FC56F189385255EFC1BE18 // address
-				000000000000000000000000000000000000000000000000000000000000001E // uint256
-			"
-		);
-
-		let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
-		assert_eq!(call, u32::to_be_bytes(decoded_data.0));
-		let data =
-			<AbiReader<'_> as AbiRead<Vec<(address, uint256)>>>::abi_read(&mut decoder).unwrap();
-		assert_eq!(data.len(), 3);
-		assert_eq!(data, decoded_data.1);
-
-		let mut writer = AbiWriter::new_call(decoded_data.0);
-		decoded_data.1.abi_write(&mut writer);
-		let ed = writer.finish();
-		assert_eq!(encoded_data, ed.as_slice());
 	}
 }
