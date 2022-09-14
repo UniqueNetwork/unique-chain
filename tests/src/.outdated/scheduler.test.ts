@@ -54,7 +54,7 @@ describe('Scheduling token and balance transfers', () => {
   });
 
   itSub.ifWithPallets('Can delay a transfer of an owned token', [Pallets.Scheduler], async ({helper}) => {
-    const collection = await helper.nft.mintDefaultCollection(alice);
+    const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
     const schedulerId = await helper.scheduler.makeScheduledId();
     const blocksBeforeExecution = 4;
@@ -104,7 +104,7 @@ describe('Scheduling token and balance transfers', () => {
   });
 
   itSub.ifWithPallets('Can cancel a scheduled operation which has not yet taken effect', [Pallets.Scheduler], async ({helper}) => {
-    const collection = await helper.nft.mintDefaultCollection(alice);
+    const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
     const scheduledId = await helper.scheduler.makeScheduledId();
@@ -357,7 +357,7 @@ describe('Negative Test: Scheduling', () => {
   });
 
   itSub.ifWithPallets("Can't overwrite a scheduled ID", [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
-    const collection = await helper.nft.mintDefaultCollection(alice);
+    const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
     const scheduledId = await helper.scheduler.makeScheduledId();
@@ -387,7 +387,7 @@ describe('Negative Test: Scheduling', () => {
   });
 
   itSub.ifWithPallets("Can't cancel a non-owned scheduled operation", [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
-    const collection = await helper.nft.mintDefaultCollection(alice);
+    const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
     const scheduledId = await helper.scheduler.makeScheduledId();

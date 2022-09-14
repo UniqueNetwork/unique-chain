@@ -1373,16 +1373,6 @@ class NFTnRFT extends CollectionGroup {
     return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
   }
 
-  async mintDefaultCollection(signer: TSigner, mode: 'NFT' | 'RFT'): Promise<UniqueCollectionBase> {
-    const defaultCreateCollectionParams: ICollectionCreationOptions = {
-      description: 'description',
-      name: 'name',
-      tokenPrefix: 'prfx',
-    };
-
-    return this.mintCollection(signer, defaultCreateCollectionParams, mode);
-  }
-
   getCollectionObject(_collectionId: number): any {
     return null;
   }
@@ -1565,10 +1555,6 @@ class NFTGroup extends NFTnRFT {
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}): Promise<UniqueNFTCollection> {
     return await super.mintCollection(signer, collectionOptions, 'NFT') as UniqueNFTCollection;
-  }
-
-  async mintDefaultCollection(signer: IKeyringPair): Promise<UniqueNFTCollection> {
-    return await super.mintDefaultCollection(signer, 'NFT') as UniqueNFTCollection;
   }
 
   /**
@@ -1755,10 +1741,6 @@ class RFTGroup extends NFTnRFT {
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}): Promise<UniqueRFTCollection> {
     return await super.mintCollection(signer, collectionOptions, 'RFT') as UniqueRFTCollection;
-  }
-
-  async mintDefaultCollection(signer: IKeyringPair): Promise<UniqueRFTCollection> {
-    return await super.mintDefaultCollection(signer, 'RFT') as UniqueRFTCollection;
   }
 
   /**
