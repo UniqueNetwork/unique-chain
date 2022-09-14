@@ -174,7 +174,6 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
-#        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always

@@ -72,10 +72,7 @@ jobs:
           yarn install
           yarn add mochawesome
           node scripts/readyness.js
-<<<<<<< HEAD:.github/workflows/dev-build-tests_v2.yml
           echo "Ready to start tests"
-=======
->>>>>>> develop:.github/workflows/dev-build-tests_v2.yml
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:

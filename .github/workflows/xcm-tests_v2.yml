@@ -60,10 +60,6 @@ jobs:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
     steps:
       - name: Skip if pull request is in Draft
         if: github.event.pull_request.draft == true
