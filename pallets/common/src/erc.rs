@@ -20,6 +20,7 @@ use evm_coder::{
 	solidity_interface, solidity, ToLog,
 	types::*,
 	execution::{Result, Error},
+	weight,
 };
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
@@ -31,8 +32,12 @@ use up_data_structs::{
 use alloc::format;
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties,
-	eth::{convert_cross_account_to_uint256, convert_uint256_to_cross_account},
+	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
+	eth::{
+		convert_cross_account_to_uint256, convert_uint256_to_cross_account,
+		convert_cross_account_to_tuple,
+	},
+	weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.
@@ -69,6 +74,7 @@ where
 	///
 	/// @param key Property key.
 	/// @param value Propery value.
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
 	fn set_collection_property(
 		&mut self,
 		caller: caller,
@@ -88,7 +94,10 @@ where
 	/// Delete collection property.
 	///
 	/// @param key Property key.
+	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -120,6 +129,8 @@ where
 	///
 	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
@@ -138,6 +149,8 @@ where
 		caller: caller,
 		sponsor: uint256,
 	) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 
 		let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
@@ -146,7 +159,7 @@ where
 		save(self)
 	}
 
-	// /// Whether there is a pending sponsor.
+	/// Whether there is a pending sponsor.
 	fn has_collection_pending_sponsor(&self) -> Result<bool> {
 		Ok(matches!(
 			self.collection.sponsorship,
@@ -158,6 +171,8 @@ where
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
 	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
+		self.consume_store_writes(1)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		if !self
 			.confirm_sponsorship(caller.as_sub())
@@ -170,6 +185,7 @@ where
 
 	/// Remove collection sponsor.
 	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
 		check_is_owner_or_admin(caller, self)?;
 		self.remove_sponsor().map_err(dispatch_to_evm::<T>)?;
 		save(self)
@@ -206,6 +222,8 @@ where
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
 
@@ -249,6 +267,8 @@ where
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
 
@@ -275,7 +295,7 @@ where
 	}
 
 	/// Get contract address.
-	fn contract_address(&self, _caller: caller) -> Result<address> {
+	fn contract_address(&self) -> Result<address> {
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
 
@@ -286,6 +306,8 @@ where
 		caller: caller,
 		new_admin: uint256,
 	) -> Result<void> {
+		self.consume_store_writes(2)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = convert_uint256_to_cross_account::<T>(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
@@ -299,6 +321,8 @@ where
 		caller: caller,
 		admin: uint256,
 	) -> Result<void> {
+		self.consume_store_writes(2)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = convert_uint256_to_cross_account::<T>(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
@@ -308,6 +332,8 @@ where
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
+		self.consume_store_writes(2)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
@@ -318,6 +344,8 @@ where
 	///
 	/// @param admin Address of the removed administrator.
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
+		self.consume_store_writes(2)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
@@ -329,6 +357,8 @@ where
 	/// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
 	#[solidity(rename_selector = "setCollectionNesting")]
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 
 		let mut permissions = self.collection.permissions.clone();
@@ -358,6 +388,8 @@ where
 		enable: bool,
 		collections: Vec<address>,
 	) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		if collections.is_empty() {
 			return Err("no addresses provided".into());
 		}
@@ -401,6 +433,8 @@ where
 	/// 	0 for Normal
 	/// 	1 for AllowList
 	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 		let permissions = CollectionPermissions {
 			access: Some(match mode {
@@ -420,13 +454,41 @@ where
 		save(self)
 	}
 
+	/// Checks that user allowed to operate with collection.
+	///
+	/// @param user User address to check.
+	fn allowed(&self, user: address) -> Result<bool> {
+		Ok(Pallet::<T>::allowed(
+			self.id,
+			T::CrossAccountId::from_eth(user),
+		))
+	}
+
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
 	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
+		self.consume_store_writes(1)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// Add substrate user to allowed list.
+	///
+	/// @param user User substrate address.
+	fn add_to_collection_allow_list_substrate(
+		&mut self,
+		caller: caller,
+		user: uint256,
+	) -> Result<void> {
+		self.consume_store_writes(1)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let user = convert_uint256_to_cross_account::<T>(user);
+		Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -434,9 +496,27 @@ where
 	///
 	/// @param user Address of a removed user.
 	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
+		self.consume_store_writes(1)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let user = T::CrossAccountId::from_eth(user);
 		<Pallet<T>>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// Remove substrate user from allowed list.
+	///
+	/// @param user User substrate address.
+	fn remove_from_collection_allow_list_substrate(
+		&mut self,
+		caller: caller,
+		user: uint256,
+	) -> Result<void> {
+		self.consume_store_writes(1)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let user = convert_uint256_to_cross_account::<T>(user);
+		Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -444,6 +524,8 @@ where
 	///
 	/// @param mode Enable if "true".
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
 		check_is_owner_or_admin(caller, self)?;
 		let permissions = CollectionPermissions {
 			mint_mode: Some(mode),
@@ -481,7 +563,7 @@ where
 	/// Returns collection type
 	///
 	/// @return `Fungible` or `NFT` or `ReFungible`
-	fn unique_collection_type(&mut self) -> Result<string> {
+	fn unique_collection_type(&self) -> Result<string> {
 		let mode = match self.collection.mode {
 			CollectionMode::Fungible(_) => "Fungible",
 			CollectionMode::NFT => "NFT",
@@ -490,11 +572,23 @@ where
 		Ok(mode.into())
 	}
 
+	/// Get collection owner.
+	///
+	/// @return Tuble with sponsor address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	fn collection_owner(&self) -> Result<(address, uint256)> {
+		Ok(convert_cross_account_to_tuple::<T>(
+			&T::CrossAccountId::from_sub(self.owner.clone()),
+		))
+	}
+
 	/// Changes collection owner to another account
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
 	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
+		self.consume_store_writes(1)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = T::CrossAccountId::from_eth(new_owner);
 		self.set_owner_internal(caller, new_owner)
@@ -506,13 +600,25 @@ where
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner substrate account
 	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
+		self.consume_store_writes(1)?;
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = convert_uint256_to_cross_account::<T>(new_owner);
 		self.set_owner_internal(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
+
+	// TODO: need implement AbiWriter for &Vec<T>
+	// fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
+	// 	let result = pallet_common::IsAdmin::<T>::iter_prefix((self.id,))
+	// 		.map(|(admin, _)| pallet_common::eth::convert_cross_account_to_tuple::<T>(&admin))
+	// 		.collect();
+	// 	Ok(result)
+	// }
 }
 
+/// ### Note
+/// Do not forget to add: `self.consume_store_reads(1)?;`
 fn check_is_owner_or_admin<T: Config>(
 	caller: caller,
 	collection: &CollectionHandle<T>,
@@ -524,9 +630,9 @@ fn check_is_owner_or_admin<T: Config>(
 	Ok(caller)
 }
 
+/// ### Note
+/// Do not forget to add: `self.consume_store_writes(1)?;`
 fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
-	// TODO possibly delete for the lack of transaction
-	collection.consume_store_writes(1)?;
 	collection
 		.check_is_internal()
 		.map_err(dispatch_to_evm::<T>)?;
