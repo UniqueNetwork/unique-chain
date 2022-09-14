@@ -13,6 +13,11 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  xcm-build-results:
+    steps:
+      - name: print previous job results
+        run: echo ${{needs.xcm-testnet-build.result}}
+
   prepare-execution-marix:
 
     name: Prepare execution matrix
