@@ -14,6 +14,7 @@ env:
 jobs:
 
   xcm-build-results:
+    runs-on: medium
     steps:
       - name: print previous job results
         run: echo ${{needs.xcm-testnet-build.result}}
