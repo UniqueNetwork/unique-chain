@@ -18,16 +18,13 @@ jobs:
     uses: ./.github/workflows/node-only-update_v2.yml
 
   forkless:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'forkless') }}
     uses: ./.github/workflows/forkless.yml
 
   canary:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'canary') }}
     uses: ./.github/workflows/canary.yml
     secrets: inherit # pass all secrets
 
   xcm:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'xcm') }}
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets
 
