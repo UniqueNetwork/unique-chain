@@ -594,14 +594,14 @@ pub mod pallet {
 								last_id,
 								*income_acc.borrow(),
 								ExistenceRequirement::KeepAlive,
-							)
-							.and_then(|_| {
-								Self::add_lock_balance(last_id, *income_acc.borrow())?;
-								<TotalStaked<T>>::try_mutate(|staked| {
-									staked
-										.checked_add(&*income_acc.borrow())
-										.ok_or(ArithmeticError::Overflow.into())
-								})
+							)?;
+
+							Self::add_lock_balance(last_id, *income_acc.borrow())?;
+							<TotalStaked<T>>::try_mutate(|staked| -> DispatchResult {
+								*staked = staked
+									.checked_add(&*income_acc.borrow())
+									.ok_or(ArithmeticError::Overflow)?;
+								Ok(())
 							})?;
 
 							Self::deposit_event(Event::StakingRecalculation(
