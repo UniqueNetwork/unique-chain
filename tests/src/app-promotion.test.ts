@@ -661,7 +661,7 @@ describe('app-promotion rewards', () => {
     });
   });
 
-  it.only('should increase total staked', async() => {
+  it('should increase total staked', async() => {
     await usingPlaygrounds(async (helper) => {
       const staker = accounts.pop()!;
       const totalStakedBefore = await helper.staking.getTotalStaked();
@@ -673,12 +673,11 @@ describe('app-promotion rewards', () => {
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
 
       const totalStakedAfter = await helper.staking.getTotalStaked();
-      const stakersStakedBalance = totalStakedBefore + calculateIncome(100n * nominal, 10n);
-      expect(totalStakedAfter >= stakersStakedBalance).to.be.true;
+      expect(totalStakedAfter >= totalStakedBefore + calculateIncome(100n * nominal, 10n)).to.be.true;
 
       // staker can unstake
       await helper.staking.unstake(staker);
-      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedAfter - stakersStakedBalance);
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedAfter - calculateIncome(100n * nominal, 10n));
     });
   });
 
