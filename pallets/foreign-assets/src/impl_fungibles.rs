@@ -26,20 +26,13 @@ use pallet_common::CommonCollectionOperations;
 use up_data_structs::budget::Unlimited;
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
-// type BalanceSelf<T> =
-// 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-type BalanceRelay<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 where
 	T: orml_tokens::Config<CurrencyId = AssetIds>,
-	BalanceRelay<T>: From<BalanceOf<T>>,
-	BalanceOf<T>: From<BalanceRelay<T>>,
-	BalanceRelay<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
 	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
-	<T as pallet_balances::Config>::Balance: From<BalanceRelay<T>>,
-	<T as orml_tokens::Config>::Balance: From<BalanceRelay<T>>,
+	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceOf<T>>,
 {
 	type AssetId = AssetIds;
 	type Balance = BalanceOf<T>;
@@ -270,13 +263,11 @@ where
 impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T>
 where
 	T: orml_tokens::Config<CurrencyId = AssetIds>,
-	BalanceRelay<T>: From<BalanceOf<T>>,
-	BalanceOf<T>: From<BalanceRelay<T>>,
-	BalanceRelay<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
 	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
-	<T as pallet_balances::Config>::Balance: From<BalanceRelay<T>>,
-	<T as orml_tokens::Config>::Balance: From<BalanceRelay<T>>,
-	u128: From<BalanceRelay<T>>,
+	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceOf<T>>,
+	u128: From<BalanceOf<T>>,
 {
 	fn mint_into(
 		asset: Self::AssetId,
@@ -394,13 +385,11 @@ where
 impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T>
 where
 	T: orml_tokens::Config<CurrencyId = AssetIds>,
-	BalanceRelay<T>: From<BalanceOf<T>>,
-	BalanceOf<T>: From<BalanceRelay<T>>,
-	BalanceRelay<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
 	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
-	<T as pallet_balances::Config>::Balance: From<BalanceRelay<T>>,
-	<T as orml_tokens::Config>::Balance: From<BalanceRelay<T>>,
-	u128: From<BalanceRelay<T>>,
+	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceOf<T>>,
+	u128: From<BalanceOf<T>>,
 {
 	fn transfer(
 		asset: Self::AssetId,
