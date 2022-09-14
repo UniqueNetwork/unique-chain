@@ -665,17 +665,20 @@ describe('app-promotion rewards', () => {
     await usingPlaygrounds(async (helper) => {
       const staker = accounts.pop()!;
       const totalStakedBefore = await helper.staking.getTotalStaked();
-
       await helper.staking.stake(staker, 100n * nominal);
-      
+
+      // Wait for rewards and pay
       const stakedInBlock = (await helper.staking.getTotalStakedPerBlock({Substrate: staker.address}))[0][0];
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock));
-
       await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
-      const totalStakedAfter = await helper.staking.getTotalStaked();
 
-      console.log(totalStakedBefore + calculateIncome(100n * nominal, 10n));
-      expect(totalStakedBefore + calculateIncome(100n * nominal, 10n)).to.be.equal(totalStakedAfter);
+      const totalStakedAfter = await helper.staking.getTotalStaked();
+      const stakersStakedBalance = totalStakedBefore + calculateIncome(100n * nominal, 10n);
+      expect(totalStakedAfter >= stakersStakedBalance).to.be.true;
+
+      // staker can unstake
+      await helper.staking.unstake(staker);
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedAfter - stakersStakedBalance);
     });
   });
 
