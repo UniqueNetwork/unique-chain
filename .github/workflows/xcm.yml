@@ -11,6 +11,9 @@ jobs:
     uses: ./.github/workflows/xcm-testnet-build.yml
     secrets: inherit
 
+  xcm-build-results:
+    run: echo ${{needs.xcm-testnet-build.result}}
+
   xcm-tests:
     name: tests
     needs: [ xcm-testnet-build ]
