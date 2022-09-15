@@ -198,8 +198,21 @@ class EthGroup extends EthGroupBase {
     }
   `);
   }
-}
-  
+
+  async deployFlipper(signer: string): Promise<Contract> {
+    return await this.helper.ethContract.deployByCode(signer, 'Flipper', `
+    contract Flipper {
+      bool value = false;
+      function flip() public {
+        value = !value;
+      }
+      function getValue() public view returns (bool) {
+        return value;
+      }
+    }
+  `);
+  }
+}  
   
 class EthAddressGroup extends EthGroupBase {
   extractCollectionId(address: string): number {
