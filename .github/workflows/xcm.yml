@@ -369,6 +369,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
+          yarn polkadot-types
           node scripts/readyness.js
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
