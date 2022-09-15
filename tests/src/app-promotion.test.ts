@@ -20,18 +20,12 @@ import {
   getModuleNames,
   Pallets,
 } from './util/helpers';
-
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
 import {itSub, usingPlaygrounds} from './util/playgrounds';
-
 import {encodeAddress} from '@polkadot/util-crypto';
 import {stringToU8a} from '@polkadot/util';
 import {SponsoringMode} from './eth/util/helpers';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
-import {itEth} from './eth/util/playgrounds';
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {itEth, expect} from './eth/util/playgrounds';
 
 let alice: IKeyringPair;
 let palletAdmin: IKeyringPair;
@@ -619,7 +613,6 @@ describe('app-promotion rewards', () => {
     // Wait for rewards and pay
     const [stakedInBlock] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock.block));
-    // await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
     const totalPayout = (await helper.sudo.payoutStakers(palletAdmin, 100)).reduce((prev, payout) => prev + payout.payout, 0n);
 
     const totalStakedAfter = await helper.staking.getTotalStaked();
@@ -641,7 +634,8 @@ describe('app-promotion rewards', () => {
     const [_, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
 
-    await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    const payoutToStaker = (await helper.sudo.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;
+    expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal, 10n));
 
     const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal, 10n));
