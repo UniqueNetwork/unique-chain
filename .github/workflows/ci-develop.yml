@@ -12,10 +12,13 @@ concurrency:
 jobs:
   
   dump-all-contexts:
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJSON(github) }}
-      run: echo "$GITHUB_CONTEXT"
+    runs-on: [self-hosted-ci]
+
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
 
   yarn-test-dev:
     uses: ./.github/workflows/dev-build-tests_v2.yml
