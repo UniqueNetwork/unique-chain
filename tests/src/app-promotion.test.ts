@@ -414,8 +414,8 @@ describe('app-promotion stopSponsoringCollection', () => {
     const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       
     await collection.burn(collectionOwner);
-    await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(collection.collectionId))).to.be.rejected;
-    await expect(helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.stopSponsoringCollection(999999999))).to.be.rejected;
+    await expect(helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.stopSponsoringCollection', [collection.collectionId], true)).to.be.rejectedWith('common.CollectionNotFound');
+    await expect(helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.stopSponsoringCollection', [999_999_999], true)).to.be.rejectedWith('common.CollectionNotFound');
   });
 });
 
@@ -459,8 +459,8 @@ describe('app-promotion contract sponsoring', () => {
 
     // new sponsor is pallet address
     expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;  
-    expect((await helper.api!.query.evmContractHelpers.owner(flipper.options.address)).toJSON()).to.be.equal(contractOwner);  
-    expect((await helper.api!.query.evmContractHelpers.sponsoring(flipper.options.address)).toJSON()).to.deep.equal({
+    expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);  
+    expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
       confirmed: {
         substrate: palletAddress,
       },
@@ -602,7 +602,7 @@ describe('app-promotion rewards', () => {
 
   itSub('can not be called by non admin', async ({helper}) => {
     const nonAdmin = accounts.pop()!;
-    await expect(helper.signTransaction(nonAdmin, helper.api!.tx.appPromotion.payoutStakers(100))).to.be.rejected;
+    await expect(helper.admin.payoutStakers(nonAdmin, 100)).to.be.rejectedWith('appPromotion.NoPermission');
   });
 
   itSub('should increase total staked', async ({helper}) => {
@@ -613,7 +613,7 @@ describe('app-promotion rewards', () => {
     // Wait for rewards and pay
     const [stakedInBlock] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock.block));
-    const totalPayout = (await helper.sudo.payoutStakers(palletAdmin, 100)).reduce((prev, payout) => prev + payout.payout, 0n);
+    const totalPayout = (await helper.admin.payoutStakers(palletAdmin, 100)).reduce((prev, payout) => prev + payout.payout, 0n);
 
     const totalStakedAfter = await helper.staking.getTotalStaked();
     expect(totalStakedAfter).to.equal(totalStakedBefore + (100n * nominal) + totalPayout);
@@ -634,7 +634,7 @@ describe('app-promotion rewards', () => {
     const [_, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
 
-    const payoutToStaker = (await helper.sudo.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;
+    const payoutToStaker = (await helper.admin.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;
     expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal, 10n));
 
     const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
@@ -650,7 +650,7 @@ describe('app-promotion rewards', () => {
     let [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
 
-    await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    await helper.admin.payoutStakers(palletAdmin, 100);
     [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     const frozenBalanceShouldBe = calculateIncome(100n * nominal, 10n, 2);
     expect(stake.amount).to.be.equal(frozenBalanceShouldBe);
@@ -670,7 +670,7 @@ describe('app-promotion rewards', () => {
       
     // so he did not receive any rewards
     const totalBalanceBefore = await helper.balance.getSubstrate(staker.address);
-    await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    await helper.admin.payoutStakers(palletAdmin, 100);
     const totalBalanceAfter = await helper.balance.getSubstrate(staker.address);
 
     expect(totalBalanceBefore).to.be.equal(totalBalanceAfter);
@@ -684,12 +684,12 @@ describe('app-promotion rewards', () => {
     let [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
       
-    await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    await helper.admin.payoutStakers(palletAdmin, 100);
     [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n));
       
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
-    await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    await helper.admin.payoutStakers(palletAdmin, 100);
     [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n, 2));
   });
@@ -703,7 +703,7 @@ describe('app-promotion rewards', () => {
       await Promise.all(oneHundredStakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
     }
     await helper.wait.newBlocks(40);
-    const result = await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    await helper.admin.payoutStakers(palletAdmin, 100);
   });
 
   itSub.skip('can handle 40.000 rewards', async ({helper}) => {

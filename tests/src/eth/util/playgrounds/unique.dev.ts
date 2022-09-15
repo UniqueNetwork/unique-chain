@@ -201,6 +201,9 @@ class EthGroup extends EthGroupBase {
 
   async deployFlipper(signer: string): Promise<Contract> {
     return await this.helper.ethContract.deployByCode(signer, 'Flipper', `
+    // SPDX-License-Identifier: UNLICENSED
+    pragma solidity ^0.8.6;
+
     contract Flipper {
       bool value = false;
       function flip() public {

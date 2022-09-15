@@ -60,13 +60,13 @@ export class DevUniqueHelper extends UniqueHelper {
    */
   arrange: ArrangeGroup;
   wait: WaitGroup;
-  sudo: SudoGroup;
+  admin: AdminGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
     super(logger);
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
-    this.sudo = new SudoGroup(this);
+    this.admin = new AdminGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -284,7 +284,7 @@ class WaitGroup {
   }
 }
 
-class SudoGroup {
+class AdminGroup {
   helper: UniqueHelper;
 
   constructor(helper: UniqueHelper) {
