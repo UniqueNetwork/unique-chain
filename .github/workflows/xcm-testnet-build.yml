@@ -76,6 +76,156 @@ jobs:
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.0.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Install jq
+        run: sudo apt install jq -y
+
+      # - name: Get autorization token from DOCKERHUB
+      #   run: |                 
+      #     # aquire token
+      #       TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+      #       export TOKEN=$TOKEN
+
+      # Check POLKADOT version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for POLKADOT
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-polkadot.j2
+          output_file: .docker/Dockerfile-polkadot.${{ env.POLKADOT_BUILD_BRANCH }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+
+      - name: Check if the dockerhub repository contains the needed version POLKADOT
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB POLKADOT repository
+            POLKADOT_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadot/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "POLKADOT TAGS:"
+            echo $POLKADOT_TAGS
+          # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
+            if [[ ${POLKADOT_TAGS[*]} =~ (^|[[:space:]])"${{ env.POLKADOT_BUILD_BRANCH }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed POLKADOT version";
+                docker pull uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}
+            else
+                echo "Repository has not needed POLKADOT version, so build it";
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-polkadot.${{ env.POLKADOT_BUILD_BRANCH }}.yml --tag uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }} .
+                echo "Push needed POLKADOT version to the repository";
+                docker push uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}
+            fi
+        shell: bash
+
+      # Check ACALA version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for ACALA
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-acala.j2
+          output_file: .docker/Dockerfile-acala.${{ matrix.acala_version }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
+
+      - name: Check if the dockerhub repository contains the needed ACALA version
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            ACALA_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-acala/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "ACALA TAGS:"
+            echo $ACALA_TAGS
+          # Check correct version ACALA and build it if it doesn't exist in ACALA TAGS
+            if [[ ${ACALA_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.acala_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed ACALA version";
+                docker pull uniquenetwork/builder-acala:${{ matrix.acala_version }}
+            else
+                echo "Repository has not needed ACALA version, so build it";
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-acala.${{ matrix.acala_version }}.yml --tag uniquenetwork/builder-acala:${{ matrix.acala_version }} .
+                echo "Push needed ACALA version to the repository";
+                docker push uniquenetwork/builder-acala:${{ matrix.acala_version }}
+            fi
+        shell: bash
+
+      # Check MOONBEAM version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for MOONBEAM
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-moonbeam.j2
+          output_file: .docker/Dockerfile-moonbeam.${{ matrix.moonbeam_version }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
+
+      - name: Check if the dockerhub repository contains the needed MOONBEAM version
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            MOONBEAM_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-moonbeam/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "MOONBEAM TAGS:"
+            echo $MOONBEAM_TAGS
+          # Check correct version MOONBEAM and build it if it doesn't exist in MOONBEAM TAGS
+            if [[ ${MOONBEAM_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.moonbeam_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed MOONBEAM version";
+                docker pull uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
+            else
+                echo "Repository has not needed MOONBEAM version, so build it";
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-moonbeam.${{ matrix.moonbeam_version }}.yml --tag uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }} .
+                echo "Push needed MOONBEAM version to the repository";
+                docker push uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
+            fi
+        shell: bash
+
+
+      # Check CUMULUS version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for CUMULUS
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-cumulus.j2
+          output_file: .docker/Dockerfile-cumulus.${{ matrix.cumulus_version }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
+
+      - name: Check if the dockerhub repository contains the needed CUMULUS version
+        run: |                 
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            CUMULUS_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-cumulus/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "CUMULUS TAGS:"
+            echo $CUMULUS_TAGS
+          # Check correct version CUMULUS and build it if it doesn't exist in CUMULUS TAGS
+            if [[ ${CUMULUS_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.cumulus_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed CUMULUS version";
+                docker pull uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
+            else
+                echo "Repository has not needed CUMULUS version, so build it";
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-cumulus.${{ matrix.cumulus_version }}.yml --tag uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }} .
+                echo "Push needed CUMULUS version to the repository";
+                docker push uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
+            fi
+        shell: bash
+
+
+      # Build main image for XCM   
       - name: Generate ENV related extend Dockerfile file
         uses: cuchi/jinja2-action@v1.2.0
         with:
@@ -107,24 +257,6 @@ jobs:
           find: '/'
           replace: '-'
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2.0.0
-        with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      - name: Pull acala docker image
-        run: docker pull uniquenetwork/builder-acala:${{ matrix.acala_version }}
-
-      - name: Pull moonbeam docker image
-        run: docker pull uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
-
-      - name: Pull cumulus docker image
-        run: docker pull uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
-
-      - name: Pull polkadot docker image
-        run: docker pull uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}
-
       - name: Pull chainql docker image
         run: docker pull uniquenetwork/builder-chainql:latest
 
@@ -146,6 +278,4 @@ jobs:
         run: |
           docker builder prune -f
           docker system prune -f
-
-
 
