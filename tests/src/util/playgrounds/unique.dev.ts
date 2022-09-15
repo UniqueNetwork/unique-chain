@@ -122,6 +122,7 @@ class ArrangeGroup {
    */
   createAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
+    const wait = new WaitGroup(this.helper);
     const ss58Format = this.helper.chain.getChainProperties().ss58Format;
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
@@ -156,7 +157,7 @@ class ArrangeGroup {
     for (let index = 0; index < 5; index++) {
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
-      
+      await wait.newBlocks(1);
     }
 
     if (!accountsCreated) throw Error('Accounts generation failed');
