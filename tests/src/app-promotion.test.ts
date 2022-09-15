@@ -619,11 +619,11 @@ describe('app-promotion rewards', () => {
     // Wait for rewards and pay
     const [stakedInBlock] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
     await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock.block));
-    await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    // await helper.signTransaction(palletAdmin, helper.api!.tx.appPromotion.payoutStakers(100));
+    const totalPayout = (await helper.sudo.payoutStakers(palletAdmin, 100)).reduce((prev, payout) => prev + payout.payout, 0n);
 
     const totalStakedAfter = await helper.staking.getTotalStaked();
-    expect(totalStakedAfter >= totalStakedBefore + calculateIncome(100n * nominal, 10n)).to.be.true;
-
+    expect(totalStakedAfter).to.equal(totalStakedBefore + (100n * nominal) + totalPayout);
     // staker can unstake
     await helper.staking.unstake(staker);
     expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedAfter - calculateIncome(100n * nominal, 10n));

@@ -60,11 +60,13 @@ export class DevUniqueHelper extends UniqueHelper {
    */
   arrange: ArrangeGroup;
   wait: WaitGroup;
+  sudo: SudoGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
     super(logger);
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
+    this.sudo = new SudoGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -278,6 +280,25 @@ class WaitGroup {
           resolve();
         }
       });
+    });
+  }
+}
+
+class SudoGroup {
+  helper: UniqueHelper;
+
+  constructor(helper: UniqueHelper) {
+    this.helper = helper;
+  }
+
+  async payoutStakers(signer: IKeyringPair, stakersToPayout: number) {
+    const payoutResult = await this.helper.executeExtrinsic(signer, 'api.tx.appPromotion.payoutStakers', [stakersToPayout], true);
+    return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => {
+      return {
+        staker: e.event.data[0].toString(),
+        stake: e.event.data[1].toBigInt(),
+        payout: e.event.data[2].toBigInt(),
+      };
     });
   }
 }
