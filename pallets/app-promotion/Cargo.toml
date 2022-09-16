@@ -66,8 +66,6 @@ up-data-structs ={ default-features = false, path = "../../primitives/data-struc
 pallet-common ={ default-features = false, path = "../common" }
 pallet-unique ={ default-features = false, path = "../unique" }
 pallet-evm-contract-helpers ={ default-features = false, path = "../evm-contract-helpers" }
-
-[dev-dependencies]
 pallet-evm-migration ={ default-features = false, path = "../evm-migration" }
 
 ################################################################################

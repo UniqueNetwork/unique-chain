@@ -346,7 +346,7 @@ pub mod pallet {
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
 	use frame_system::pallet_prelude::*;
 	use frame_support::traits::Currency;
-	use up_data_structs::{TokenId, mapping::TokenAddressMapping, CollectionFlags};
+	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
 	use weights::WeightInfo;
 

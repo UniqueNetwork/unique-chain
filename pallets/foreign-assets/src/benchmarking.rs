@@ -16,11 +16,10 @@
 
 #![allow(missing_docs)]
 
-use super::{Config, Pallet};
+use super::{Config, Pallet, Call};
 use frame_benchmarking::{benchmarks, account};
 use frame_system::RawOrigin;
 use crate::AssetMetadata;
-use crate::Pallet as ForeignAssets;
 use xcm::opaque::latest::Junction::Parachain;
 use xcm::VersionedMultiLocation;
 use frame_support::{
@@ -30,7 +29,6 @@ use sp_std::boxed::Box;
 
 benchmarks! {
 	register_foreign_asset {
-		let origin: RawOrigin<T::AccountId> = frame_system::RawOrigin::Root;
 		let owner: T::AccountId = account("user", 0, 1);
 		let location: VersionedMultiLocation = VersionedMultiLocation::from(Parachain(1000).into());
 		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
@@ -44,12 +42,9 @@ benchmarks! {
 		balance = balance * balance;
 		<T as Config>::Currency::make_free_balance_be(&owner,
 			balance);
-	}: {
-		ForeignAssets::<T>::register_foreign_asset(origin.into(), owner, Box::new(location), Box::new(metadata))?
-	}
+	}: _(RawOrigin::Root, owner, Box::new(location), Box::new(metadata))
 
 	update_foreign_asset {
-		let origin: RawOrigin<T::AccountId> = frame_system::RawOrigin::Root;
 		let owner: T::AccountId = account("user", 0, 1);
 		let location: VersionedMultiLocation = VersionedMultiLocation::from(Parachain(2000).into());
 		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
@@ -68,9 +63,6 @@ benchmarks! {
 		   4_000_000_000u32.into();
 		balance = balance * balance;
 		<T as Config>::Currency::make_free_balance_be(&owner, balance);
-		ForeignAssets::<T>::register_foreign_asset(origin.clone().into(), owner, Box::new(location.clone()), Box::new(metadata))?;
-
-	}: {
-		ForeignAssets::<T>::update_foreign_asset(origin.into(), 0, Box::new(location), Box::new(metadata2))?
-	}
+		Pallet::<T>::register_foreign_asset(RawOrigin::Root.into(), owner, Box::new(location.clone()), Box::new(metadata))?;
+	}: _(RawOrigin::Root, 0, Box::new(location), Box::new(metadata2))
 }
