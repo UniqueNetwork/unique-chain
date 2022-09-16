@@ -1,17 +1,19 @@
 FROM ubuntu:20.04
 
+ARG RUST_TOOLCHAIN=
+ARG FEATURE=
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-
-RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake
-
+ENV FEATURE=$FEATURE
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+RUN echo "$FEATURE\n" && echo "$RUST_TOOLCHAIN\n"
 
-ARG RUST_TOOLCHAIN=
-ARG FEATURE=
+RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
@@ -24,5 +26,6 @@ COPY . /dev_chain
 WORKDIR /dev_chain
 
 RUN cargo build --release
+RUN echo "$FEATURE"
 
 CMD cargo run --release --features=$FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

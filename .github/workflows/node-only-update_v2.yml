@@ -10,7 +10,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  execution-marix:
+  nodes-execution-matrix:
 
     name: execution matrix
 
@@ -42,8 +42,8 @@ jobs:
 
 
 
-  forkless-update-nodata:
-    needs: execution-marix
+  nodes-only-update:
+    needs: nodes-execution-matrix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
@@ -57,7 +57,7 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.nodes-execution-matrix.outputs.matrix)}}
 
     steps:
 
@@ -156,12 +156,18 @@ jobs:
           exit 0
         shell: bash
 
+      - name: Checkout at '${{ matrix.mainnet_branch }}' branch
+        uses: actions/checkout@master
+        with:
+          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
+          path: ${{ matrix.mainnet_branch }}
+
+
       - name: Run tests before Node Parachain upgrade
-        working-directory: tests
+        working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
@@ -174,7 +180,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
@@ -263,8 +269,9 @@ jobs:
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |
-          docker builder prune -f
+          docker builder prune -f -a
           docker system prune -f
+          docker image prune -f -a
 
       - name: Clean Workspace
         if: always()

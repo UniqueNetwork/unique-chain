@@ -68,4 +68,6 @@ pallet-unique ={ default-features = false, path = "../unique" }
 pallet-evm-contract-helpers ={ default-features = false, path = "../evm-contract-helpers" }
 pallet-evm-migration ={ default-features = false, path = "../evm-migration" }
 
+# [dev-dependencies]
+
 ################################################################################
