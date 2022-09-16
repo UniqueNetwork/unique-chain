@@ -8,6 +8,8 @@ services:
         - "FEATURE={{ FEATURE }}"
       context: ../
       dockerfile: .docker/Dockerfile-chain-dev
+    environment:
+      - FEATURE={{ FEATURE }}
     expose:
       - 9944
       - 9933
