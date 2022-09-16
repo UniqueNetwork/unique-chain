@@ -13,6 +13,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 ARG RUST_TOOLCHAIN=
 ARG FEATURE=
 
+ENV FEATURE $FEATURE
+
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
     rustup default $RUST_TOOLCHAIN && \
