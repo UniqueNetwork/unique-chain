@@ -23,7 +23,7 @@ use frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
 use pallet_common::CollectionHandle;
 use pallet_fungible::FungibleHandle;
 use pallet_common::CommonCollectionOperations;
-use up_data_structs::budget::Unlimited;
+use up_data_structs::budget::Value;
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
@@ -313,7 +313,7 @@ where
 					&collection,
 					&account,
 					amount_data,
-					&Unlimited,
+					&Value::new(0),
 				)?;
 
 				Ok(())
@@ -444,7 +444,7 @@ where
 					&T::CrossAccountId::from_sub(source.clone()),
 					&T::CrossAccountId::from_sub(dest.clone()),
 					amount.into(),
-					&Unlimited,
+					&Value::new(0),
 				)?;
 
 				Ok(amount)
