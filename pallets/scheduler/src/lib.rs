@@ -86,7 +86,7 @@ use sp_runtime::{
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter, GetDispatchInfo},
+	dispatch::{DispatchError, DispatchResult, Dispatchable, UnfilteredDispatchable, Parameter},
 	traits::{
 		schedule::{self, DispatchTime, MaybeHashed},
 		NamedReservableCurrency, EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp,
@@ -134,6 +134,12 @@ pub type ScheduledOf<T> = ScheduledV3Of<T>;
 /// The current version of Scheduled struct.
 pub type Scheduled<Call, BlockNumber, PalletsOrigin, AccountId> =
 	ScheduledV3<Call, BlockNumber, PalletsOrigin, AccountId>;
+
+pub enum ScheduledEnsureOriginSuccess<AccountId> {
+	Root,
+	Signed(AccountId),
+	Unsigned,
+}
 
 #[cfg(feature = "runtime-benchmarks")]
 mod preimage_provider {
@@ -191,7 +197,7 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
-		traits::{schedule::LookupError, PreimageProvider},
+		traits::{schedule::{LookupError, LOWEST_PRIORITY}, PreimageProvider},
 	};
 	use frame_system::pallet_prelude::*;
 
@@ -222,11 +228,10 @@ pub mod pallet {
 
 		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<
-				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
-				PostInfo = PostDispatchInfo,
-			> + GetDispatchInfo
-			+ From<system::Call<Self>>;
+			+ Dispatchable<Origin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ UnfilteredDispatchable<Origin = <Self as system::Config>::RuntimeOrigin>
+			+ GetDispatchInfo
+			+ From<system::RuntimeCall<Self>>;
 
 		/// The maximum weight that may be scheduled per block for any dispatchables of less
 		/// priority than `schedule::HARD_DEADLINE`.
@@ -234,7 +239,10 @@ pub mod pallet {
 		type MaximumWeight: Get<Weight>;
 
 		/// Required origin to schedule or cancel calls.
-		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
+		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin, Success = ScheduledEnsureOriginSuccess<Self::AccountId>>;
+
+		/// Required origin to set/change calls' priority.
+		type PrioritySetOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
 
 		/// Compare the privileges of origins.
 		///
@@ -285,7 +293,7 @@ pub mod pallet {
 
 		/// Resolve the call dispatch, including any post-dispatch operations.
 		fn dispatch_call(
-			signer: T::AccountId,
+			signer: Option<T::AccountId>,
 			function: <T as Config>::RuntimeCall,
 		) -> Result<
 			Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
@@ -317,6 +325,12 @@ pub mod pallet {
 		Scheduled { when: T::BlockNumber, index: u32 },
 		/// Canceled some task.
 		Canceled { when: T::BlockNumber, index: u32 },
+		/// Scheduled task's priority has changed
+		PriorityChanged { 
+			when: T::BlockNumber,
+			index: u32,
+			priority: schedule::Priority,
+		},
 		/// Dispatched some task.
 		Dispatched {
 			task: TaskAddress<T::BlockNumber>,
@@ -432,26 +446,24 @@ pub mod pallet {
 					continue;
 				}
 
-				let sender = ensure_signed(
-					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(
-						s.origin.clone(),
-					)
-					.into(),
-				)
-				.unwrap();
+				let scheduled_origin = <<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(s.origin.clone());
+				let ensured_origin = T::ScheduleOrigin::ensure_origin(scheduled_origin.into()).unwrap();
 
-				// // if call have id it was be reserved
-				// if s.maybe_id.is_some() {
-				// 	let _ = T::CallExecutor::pay_for_call(
-				// 		s.maybe_id.unwrap(),
-				// 		sender.clone(),
-				// 		call.clone(),
-				// 	);
-				// }
-
-				// Execute transaction via chain default pipeline
-				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
-				let r = T::CallExecutor::dispatch_call(sender, call.clone());
+				let r;
+				match ensured_origin {
+					ScheduledEnsureOriginSuccess::Root => {
+						r = Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()));
+					},
+					ScheduledEnsureOriginSuccess::Signed(sender) => {
+						// Execute transaction via chain default pipeline
+						// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
+						r = T::CallExecutor::dispatch_call(Some(sender), call.clone());
+					},
+					ScheduledEnsureOriginSuccess::Unsigned => {
+						// Unsigned version of the above
+						r = T::CallExecutor::dispatch_call(None, call.clone());
+					}
+				}
 
 				let mut actual_call_weight: Weight = item_weight;
 				let result: Result<_, DispatchError> = match r {
@@ -521,16 +533,21 @@ pub mod pallet {
 			id: ScheduledId,
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
+			priority: Option<schedule::Priority>,
 			call: Box<CallOrHashOf<T>>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
+
+			if priority.is_some() {
+				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			}
+
 			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::At(when),
 				maybe_periodic,
-				priority,
+				priority.unwrap_or(LOWEST_PRIORITY),
 				origin.caller().clone(),
 				*call,
 			)?;
@@ -557,20 +574,36 @@ pub mod pallet {
 			id: ScheduledId,
 			after: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
+			priority: Option<schedule::Priority>,
 			call: Box<CallOrHashOf<T>>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
+
+			if priority.is_some() {
+				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			}
+
 			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::After(after),
 				maybe_periodic,
-				priority,
+				priority.unwrap_or(LOWEST_PRIORITY),
 				origin.caller().clone(),
 				*call,
 			)?;
 			Ok(())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::change_named_priority(T::MaxScheduledPerBlock::get()))]
+		pub fn change_named_priority(
+			origin: OriginFor<T>,
+			id: ScheduledId,
+			priority: schedule::Priority,
+		) -> DispatchResult {
+			T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			let origin = <T as Config>::Origin::from(origin);
+			Self::do_change_named_priority(origin.caller().clone(), id, priority)
 		}
 	}
 }
@@ -723,5 +756,32 @@ impl<T: Config> Pallet<T> {
 				Err(Error::<T>::NotFound)?
 			}
 		})
+	}
+
+	fn do_change_named_priority(
+		origin: T::PalletsOrigin,
+		id: ScheduledId,
+		priority: schedule::Priority,
+	) -> DispatchResult {
+		match Lookup::<T>::get(id) {
+			Some((when, index)) => {
+				let i = index as usize;
+				Agenda::<T>::try_mutate(when, |agenda| {
+					if let Some(Some(s)) = agenda.get_mut(i) {
+						if matches!(
+							T::OriginPrivilegeCmp::cmp_privilege(&origin, &s.origin),
+							Some(Ordering::Less) | None
+						) {
+							return Err(BadOrigin.into());
+						}
+
+						s.priority = priority;
+						Self::deposit_event(Event::PriorityChanged { when, index, priority });
+					}
+					Ok(())
+				})
+			},
+			None => Err(Error::<T>::NotFound.into())
+		}
 	}
 }
