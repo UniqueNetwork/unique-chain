@@ -95,3 +95,14 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a
+
+      - name: Clean Workspace
+        if: always()
+        uses: AutoModality/action-clean@v1.1.0
