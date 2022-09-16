@@ -15,31 +15,19 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import './interfaces/augment-api-consts';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
-  createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  getGenericResult,
-  transferExpectSuccess,
   UNIQUE,
 } from './util/helpers';
 
 import {default as waitNewBlocks} from './substrate/wait-new-blocks';
 import {ApiPromise} from '@polkadot/api';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;
 const saneMaximumFee = 0.5;
 const createCollectionDeposit = 100;
-
-let alice: IKeyringPair;
-let bob: IKeyringPair;
 
 // Skip the inflation block pauses if the block is close to inflation block
 // until the inflation happens
@@ -62,129 +50,124 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
 }
 
 describe('integration test: Fees must be credited to Treasury:', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('Total issuance does not change', async () => {
-    await usingApi(async (api) => {
-      await skipInflationBlock(api);
-      await waitNewBlocks(api, 1);
+  itSub('Total issuance does not change', async ({helper}) => {
+    const api = helper.api!;
+    await skipInflationBlock(api);
+    await waitNewBlocks(api, 1);
 
-      const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
+    const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
 
-      const amount = 1n;
-      const transfer = api.tx.balances.transfer(bob.address, amount);
+    await helper.balance.transferToSubstrate(alice, bob.address, 1n);
 
-      const result = getGenericResult(await submitTransactionAsync(alice, transfer));
+    const totalAfter = (await api.query.balances.totalIssuance()).toBigInt();
 
-      const totalAfter = (await api.query.balances.totalIssuance()).toBigInt();
-
-      expect(result.success).to.be.true;
-      expect(totalAfter).to.be.equal(totalBefore);
-    });
+    expect(totalAfter).to.be.equal(totalBefore);
   });
 
-  it('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async () => {
-    await usingApi(async (api) => {
-      await skipInflationBlock(api);
-      await waitNewBlocks(api, 1);
+  itSub('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async ({helper}) => {
+    const api = helper.api!;
+    await skipInflationBlock(api);
+    await waitNewBlocks(api, 1);
 
-      const treasuryBalanceBefore: bigint = (await api.query.system.account(TREASURY)).data.free.toBigInt();
-      const aliceBalanceBefore: bigint = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
-      const amount = 1n;
-      const transfer = api.tx.balances.transfer(bob.address, amount);
-      const result = getGenericResult(await submitTransactionAsync(alice, transfer));
+    const amount = 1n;
+    await helper.balance.transferToSubstrate(alice, bob.address, amount);
 
-      const treasuryBalanceAfter: bigint = (await api.query.system.account(TREASURY)).data.free.toBigInt();
-      const aliceBalanceAfter: bigint = (await api.query.system.account(alice.address)).data.free.toBigInt();
-      const fee = aliceBalanceBefore - aliceBalanceAfter - amount;
-      const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
+    const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-      expect(result.success).to.be.true;
-      expect(treasuryIncrease).to.be.equal(fee);
-    });
+    const fee = aliceBalanceBefore - aliceBalanceAfter - amount;
+    const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
+
+    expect(treasuryIncrease).to.be.equal(fee);
   });
 
-  it('Treasury balance increased by failed tx fee', async () => {
-    await usingApi(async (api) => {
-      //await skipInflationBlock(api);
-      await waitNewBlocks(api, 1);
+  itSub('Treasury balance increased by failed tx fee', async ({helper}) => {
+    const api = helper.api!;
+    await waitNewBlocks(api, 1);
 
-      const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
-      const bobBalanceBefore = (await api.query.system.account(bob.address)).data.free.toBigInt();
+    const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
+    const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-      const badTx = api.tx.balances.setBalance(alice.address, 0, 0);
-      await expect(submitTransactionExpectFailAsync(bob, badTx)).to.be.rejected;
+    await expect(helper.signTransaction(bob, api.tx.balances.setBalance(alice.address, 0, 0))).to.be.rejected;
 
-      const treasuryBalanceAfter = (await api.query.system.account(TREASURY)).data.free.toBigInt();
-      const bobBalanceAfter = (await api.query.system.account(bob.address)).data.free.toBigInt();
-      const fee = bobBalanceBefore - bobBalanceAfter;
-      const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
+    const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
+    const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
-      expect(treasuryIncrease).to.be.equal(fee);
-    });
+    const fee = bobBalanceBefore - bobBalanceAfter;
+    const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
+
+    expect(treasuryIncrease).to.be.equal(fee);
   });
 
-  it('NFT Transactions also send fees to Treasury', async () => {
-    await usingApi(async (api) => {
-      await skipInflationBlock(api);
-      await waitNewBlocks(api, 1);
+  itSub('NFT Transactions also send fees to Treasury', async ({helper}) => {
+    const api = helper.api!;
+    await skipInflationBlock(api);
+    await waitNewBlocks(api, 1);
 
-      const treasuryBalanceBefore = (await api.query.system.account(TREASURY)).data.free.toBigInt();
-      const aliceBalanceBefore = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
-      await createCollectionExpectSuccess();
+    await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-      const treasuryBalanceAfter = (await api.query.system.account(TREASURY)).data.free.toBigInt();
-      const aliceBalanceAfter = (await api.query.system.account(alice.address)).data.free.toBigInt();
-      const fee = aliceBalanceBefore - aliceBalanceAfter;
-      const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
+    const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+    const fee = aliceBalanceBefore - aliceBalanceAfter;
+    const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;
 
-      expect(treasuryIncrease).to.be.equal(fee);
-    });
+    expect(treasuryIncrease).to.be.equal(fee);
   });
 
-  it('Fees are sane', async () => {
-    await usingApi(async (api) => {
-      await skipInflationBlock(api);
-      await waitNewBlocks(api, 1);
+  itSub('Fees are sane', async ({helper}) => {
+    const api = helper.api!;
+    await skipInflationBlock(api);
+    await waitNewBlocks(api, 1);
 
-      const aliceBalanceBefore: bigint = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
-      await createCollectionExpectSuccess();
+    await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-      const aliceBalanceAfter: bigint = (await api.query.system.account(alice.address)).data.free.toBigInt();
-      const fee = aliceBalanceBefore - aliceBalanceAfter;
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+    const fee = aliceBalanceBefore - aliceBalanceAfter;
 
-      expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
-      expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
-    });
+    expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
+    expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
   });
 
-  it('NFT Transfer fee is close to 0.1 Unique', async () => {
-    await usingApi(async (api) => {
-      await skipInflationBlock(api);
-      await waitNewBlocks(api, 1);
+  itSub('NFT Transfer fee is close to 0.1 Unique', async ({helper}) => {
+    const api = helper.api!;
+    await skipInflationBlock(api);
+    await waitNewBlocks(api, 1);
 
-      const collectionId = await createCollectionExpectSuccess();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-
-      const aliceBalanceBefore: bigint = (await api.query.system.account(alice.address)).data.free.toBigInt();
-      await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
-      const aliceBalanceAfter: bigint = (await api.query.system.account(alice.address)).data.free.toBigInt();
-
-      const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
-      const expectedTransferFee = 0.1;
-      // fee drifts because of NextFeeMultiplier
-      const tolerance = 0.001;
-
-      expect(Math.abs(fee - expectedTransferFee)).to.be.lessThan(tolerance);
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
     });
-  });
+    // const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
 
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    await token.transfer(alice, {Substrate: bob.address});
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+
+    const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
+    const expectedTransferFee = 0.1;
+    // fee drifts because of NextFeeMultiplier
+    const tolerance = 0.001;
+
+    expect(Math.abs(fee - expectedTransferFee)).to.be.lessThan(tolerance);
+  });
 });
