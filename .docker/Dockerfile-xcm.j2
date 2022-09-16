@@ -72,6 +72,7 @@ COPY --from=uniquenetwork/builder-acala:{{ ACALA_BUILD_BRANCH }} /unique_paracha
 COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
 
 EXPOSE 9844
+EXPOSE 9933
 EXPOSE 9944
 EXPOSE 9946
 EXPOSE 9947
