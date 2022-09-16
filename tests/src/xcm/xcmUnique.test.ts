@@ -64,7 +64,7 @@ function relayOptions(): ApiOptions {
 describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
-  
+
   let balanceUniqueTokenInit: bigint;
   let balanceUniqueTokenMiddle: bigint;
   let balanceUniqueTokenFinal: bigint;
@@ -74,7 +74,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let balanceUniqueForeignTokenInit: bigint;
   let balanceUniqueForeignTokenMiddle: bigint;
   let balanceUniqueForeignTokenFinal: bigint;
-  
+
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const keyringSr25519 = new Keyring({type: 'sr25519'});
@@ -96,50 +96,50 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
             ],
           },
         };
-  
+
         const metadata = {
           name: 'UNQ',
           symbol: 'UNQ',
           decimals: 18,
           minimalBalance: 1,
         };
-  
+
         const tx = api.tx.assetRegistry.registerForeignAsset(destination, metadata);
         const sudoTx = api.tx.sudo.sudo(tx as any);
         const events = await submitTransactionAsync(alice, sudoTx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
-  
+
         const tx1 = api.tx.balances.transfer(randomAccount.address, 10000000000000n);
         const events1 = await submitTransactionAsync(alice, tx1);
         const result1 = getGenericResult(events1);
         expect(result1.success).to.be.true;
-  
+
         [balanceAcalaTokenInit] = await getBalance(api, [randomAccount.address]);
         {
-          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
           balanceUniqueForeignTokenInit = BigInt(free);
         }
       },
       acalaOptions(),
     );
-  
+
     // Unique side
     await usingApi(async (api) => {
       const tx0 = api.tx.balances.transfer(randomAccount.address, 10n * TRANSFER_AMOUNT);
       const events0 = await submitTransactionAsync(alice, tx0);
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
-  
+
       [balanceUniqueTokenInit] = await getBalance(api, [randomAccount.address]);
     });
   });
-  
+
   it('Should connect and send UNQ to Acala', async () => {
-  
+
     // Unique side
     await usingApi(async (api) => {
-  
+
       const destination = {
         V0: {
           X2: [
@@ -150,7 +150,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
           ],
         },
       };
-  
+
       const beneficiary = {
         V0: {
           X1: {
@@ -161,7 +161,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
           },
         },
       };
-  
+
       const assets = {
         V1: [
           {
@@ -177,32 +177,32 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
           },
         ],
       };
-  
+
       const feeAssetItem = 0;
-  
+
       const weightLimit = {
         Limited: 5000000000,
       };
-  
+
       const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
       const events = await submitTransactionAsync(randomAccount, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
-  
+
       [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccount.address]);
-  
+
       const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
       console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', bigIntToDecimals(unqFees));
       expect(unqFees > 0n).to.be.true;
     });
-  
+
     // Acala side
     await usingApi(
       async (api) => {
         await waitNewBlocks(api, 3);
-        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
         balanceUniqueForeignTokenMiddle = BigInt(free);
-  
+
         [balanceAcalaTokenMiddle] = await getBalance(api, [randomAccount.address]);
 
         const acaFees = balanceAcalaTokenInit - balanceAcalaTokenMiddle;
@@ -219,9 +219,9 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
       acalaOptions(),
     );
   });
-  
+
   it('Should connect to Acala and send UNQ back', async () => {
-  
+
     // Acala side
     await usingApi(
       async (api) => {
@@ -241,24 +241,24 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
             },
           },
         };
-  
+
         const id = {
-          ForeignAsset: 0,
+          ForeignAssetId: 0,
         };
 
         const destWeight = 50000000;
-  
+
         const tx = api.tx.xTokens.transfer(id as any, TRANSFER_AMOUNT, destination, destWeight);
         const events = await submitTransactionAsync(randomAccount, tx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
-  
+
         [balanceAcalaTokenFinal] = await getBalance(api, [randomAccount.address]);
         {
-          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
           balanceUniqueForeignTokenFinal = BigInt(free);
         }
-  
+
         const acaFees = balanceAcalaTokenMiddle - balanceAcalaTokenFinal;
         const unqOutcomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenFinal;
 
@@ -277,13 +277,13 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
     // Unique side
     await usingApi(async (api) => {
       await waitNewBlocks(api, 3);
-  
+
       [balanceUniqueTokenFinal] = await getBalance(api, [randomAccount.address]);
       const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
       expect(actuallyDelivered > 0).to.be.true;
 
       console.log('[Acala -> Unique] actually delivered %s UNQ', bigIntToDecimals(actuallyDelivered));
-  
+
       const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
       console.log('[Acala -> Unique] transaction fees on Unique: %s UNQ', bigIntToDecimals(unqFees));
       expect(unqFees == 0n).to.be.true;
@@ -300,7 +300,7 @@ describe_xcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
       alice = privateKeyWrapper('//Alice');
     });
   });
-  
+
   it('Unique rejects tokens from the Relay', async () => {
     await usingApi(async (api) => {
       const destination = {

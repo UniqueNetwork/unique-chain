@@ -63,14 +63,14 @@ export async function isUnique(): Promise<boolean> {
 export async function isQuartz(): Promise<boolean> {
   return usingApi(async api => {
     const chain = await api.rpc.system.chain();
-    
+
     return chain.eq('QUARTZ');
   });
 }
 
 let modulesNames: any;
 export function getModuleNames(api: ApiPromise): string[] {
-  if (typeof modulesNames === 'undefined') 
+  if (typeof modulesNames === 'undefined')
     modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
   return modulesNames;
 }
@@ -304,7 +304,7 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
 
 export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
   const results: CreateItemResult[] = [];
-  
+
   const genericResult = getGenericResult<CreateItemResult[]>(events, 'common', 'ItemCreated', (data) => {
     const collectionId = parseInt(data[0].toString(), 10);
     const itemId = parseInt(data[1].toString(), 10);
@@ -329,15 +329,15 @@ export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] 
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   const genericResult = getGenericResult(events, 'common', 'ItemCreated', (data) => data.map(function(value) { return value.toJSON(); }));
-  
-  if (genericResult.data == null) 
+
+  if (genericResult.data == null)
     return {
       success: genericResult.success,
       collectionId: 0,
       itemId: 0,
       amount: 0,
     };
-  else 
+  else
     return {
       success: genericResult.success,
       collectionId: genericResult.data[0] as number,
@@ -349,7 +349,7 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
 
 export function getDestroyItemsResult(events: EventRecord[]): DestroyItemResult[] {
   const results: DestroyItemResult[] = [];
-  
+
   const genericResult = getGenericResult<DestroyItemResult[]>(events, 'common', 'ItemDestroyed', (data) => {
     const collectionId = parseInt(data[0].toString(), 10);
     const itemId = parseInt(data[1].toString(), 10);
@@ -1151,9 +1151,9 @@ scheduleExpectSuccess(
     expect(blockNumber).to.be.greaterThan(0);
     const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
       scheduledId,
-      expectedBlockNumber, 
-      repetitions > 1 ? [period, repetitions] : null, 
-      0, 
+      expectedBlockNumber,
+      repetitions > 1 ? [period, repetitions] : null,
+      0,
       {Value: operationTx as any},
     );
 
@@ -1178,13 +1178,13 @@ scheduleExpectFailure(
     expect(blockNumber).to.be.greaterThan(0);
     const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
       scheduledId,
-      expectedBlockNumber, 
-      repetitions <= 1 ? null : [period, repetitions], 
-      0, 
+      expectedBlockNumber,
+      repetitions <= 1 ? null : [period, repetitions],
+      0,
       {Value: operationTx as any},
     );
 
-    //const events = 
+    //const events =
     await expect(submitTransactionExpectFailAsync(sender, scheduleTx)).to.be.rejected;
     //expect(getGenericResult(events).success).to.be.false;
   });
@@ -1248,7 +1248,7 @@ scheduleTransferFundsPeriodicExpectSuccess(
     const transferTx = api.tx.balances.transfer(recipient.address, amount);
 
     const balanceBefore = await getFreeBalance(recipient);
-    
+
     await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId, period, repetitions);
 
     expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);

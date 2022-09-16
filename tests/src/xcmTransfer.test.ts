@@ -78,7 +78,7 @@ describe.skip('Integration test: Exchanging QTZ with Karura', () => {
     let balanceOnKaruraBefore: bigint;
 
     await usingApi(async (api) => {
-      const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+      const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
       balanceOnKaruraBefore = free;
     }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
 
@@ -136,7 +136,7 @@ describe.skip('Integration test: Exchanging QTZ with Karura', () => {
     await usingApi(async (api) => {
       // todo do something about instant sealing, where there might not be any new blocks
       await waitNewBlocks(api, 3);
-      const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+      const {free} = (await api.query.tokens.accounts(alice.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
       expect(free > balanceOnKaruraBefore).to.be.true;
     }, {provider: new WsProvider('ws://127.0.0.1:' + KARURA_PORT)});
   });
@@ -165,7 +165,7 @@ describe.skip('Integration test: Exchanging QTZ with Karura', () => {
       };
 
       const id = {
-        ForeignAsset: 0,
+        ForeignAssetId: 0,
       };
 
       const amount = TRANSFER_AMOUNT;

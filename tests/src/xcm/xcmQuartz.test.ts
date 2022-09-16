@@ -64,7 +64,7 @@ function relayOptions(): ApiOptions {
 describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
-  
+
   let balanceQuartzTokenInit: bigint;
   let balanceQuartzTokenMiddle: bigint;
   let balanceQuartzTokenFinal: bigint;
@@ -74,7 +74,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let balanceQuartzForeignTokenInit: bigint;
   let balanceQuartzForeignTokenMiddle: bigint;
   let balanceQuartzForeignTokenFinal: bigint;
-  
+
   before(async () => {
     await usingApi(async (api, privateKeyWrapper) => {
       const keyringSr25519 = new Keyring({type: 'sr25519'});
@@ -96,50 +96,50 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
             ],
           },
         };
-  
+
         const metadata = {
           name: 'QTZ',
           symbol: 'QTZ',
           decimals: 18,
           minimalBalance: 1,
         };
-  
+
         const tx = api.tx.assetRegistry.registerForeignAsset(destination, metadata);
         const sudoTx = api.tx.sudo.sudo(tx as any);
         const events = await submitTransactionAsync(alice, sudoTx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
-  
+
         const tx1 = api.tx.balances.transfer(randomAccount.address, 10000000000000n);
         const events1 = await submitTransactionAsync(alice, tx1);
         const result1 = getGenericResult(events1);
         expect(result1.success).to.be.true;
-  
+
         [balanceKaruraTokenInit] = await getBalance(api, [randomAccount.address]);
         {
-          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
           balanceQuartzForeignTokenInit = BigInt(free);
         }
       },
       karuraOptions(),
     );
-  
+
     // Quartz side
     await usingApi(async (api) => {
       const tx0 = api.tx.balances.transfer(randomAccount.address, 10n * TRANSFER_AMOUNT);
       const events0 = await submitTransactionAsync(alice, tx0);
       const result0 = getGenericResult(events0);
       expect(result0.success).to.be.true;
-  
+
       [balanceQuartzTokenInit] = await getBalance(api, [randomAccount.address]);
     });
   });
-  
+
   it('Should connect and send QTZ to Karura', async () => {
-  
+
     // Quartz side
     await usingApi(async (api) => {
-  
+
       const destination = {
         V0: {
           X2: [
@@ -150,7 +150,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
           ],
         },
       };
-  
+
       const beneficiary = {
         V0: {
           X1: {
@@ -161,7 +161,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
           },
         },
       };
-  
+
       const assets = {
         V1: [
           {
@@ -177,32 +177,32 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
           },
         ],
       };
-  
+
       const feeAssetItem = 0;
-  
+
       const weightLimit = {
         Limited: 5000000000,
       };
-  
+
       const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
       const events = await submitTransactionAsync(randomAccount, tx);
       const result = getGenericResult(events);
       expect(result.success).to.be.true;
-  
+
       [balanceQuartzTokenMiddle] = await getBalance(api, [randomAccount.address]);
-  
+
       const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
       console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', bigIntToDecimals(qtzFees));
       expect(qtzFees > 0n).to.be.true;
     });
-  
+
     // Karura side
     await usingApi(
       async (api) => {
         await waitNewBlocks(api, 3);
-        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
         balanceQuartzForeignTokenMiddle = BigInt(free);
-  
+
         [balanceKaruraTokenMiddle] = await getBalance(api, [randomAccount.address]);
 
         const karFees = balanceKaruraTokenInit - balanceKaruraTokenMiddle;
@@ -219,9 +219,9 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
       karuraOptions(),
     );
   });
-  
+
   it('Should connect to Karura and send QTZ back', async () => {
-  
+
     // Karura side
     await usingApi(
       async (api) => {
@@ -241,24 +241,24 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
             },
           },
         };
-  
+
         const id = {
-          ForeignAsset: 0,
+          ForeignAssetId: 0,
         };
 
         const destWeight = 50000000;
-  
+
         const tx = api.tx.xTokens.transfer(id as any, TRANSFER_AMOUNT, destination, destWeight);
         const events = await submitTransactionAsync(randomAccount, tx);
         const result = getGenericResult(events);
         expect(result.success).to.be.true;
-  
+
         [balanceKaruraTokenFinal] = await getBalance(api, [randomAccount.address]);
         {
-          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
+          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
           balanceQuartzForeignTokenFinal = BigInt(free);
         }
-  
+
         const karFees = balanceKaruraTokenMiddle - balanceKaruraTokenFinal;
         const qtzOutcomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenFinal;
 
@@ -277,13 +277,13 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
     // Quartz side
     await usingApi(async (api) => {
       await waitNewBlocks(api, 3);
-  
+
       [balanceQuartzTokenFinal] = await getBalance(api, [randomAccount.address]);
       const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
       expect(actuallyDelivered > 0).to.be.true;
 
       console.log('[Karura -> Quartz] actually delivered %s QTZ', bigIntToDecimals(actuallyDelivered));
-  
+
       const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
       console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', bigIntToDecimals(qtzFees));
       expect(qtzFees == 0n).to.be.true;
@@ -300,7 +300,7 @@ describe_xcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       alice = privateKeyWrapper('//Alice');
     });
   });
-  
+
   it('Quartz rejects tokens from the Relay', async () => {
     await usingApi(async (api) => {
       const destination = {
