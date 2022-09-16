@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 export const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -2029,21 +2029,54 @@ class StakingGroup extends HelperGroup {
     return 1;
   }
 
+  /**
+   * Get total staked amount for address
+   * @param address substrate or ethereum address
+   * @returns total staked amount
+   */
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
     if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
     return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
   }
 
-  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  /**
+   * Get total staked per block
+   * @param address substrate or ethereum address
+   * @returns array of stakes. `block` – the number of the block in which the stake was made. `amount` - the number of tokens staked in the block
+   */
+  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+    const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
+    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => {
+      return { 
+        block: block.toBigInt(),
+        amount: amount.toBigInt(),
+      };
+    });
   }
 
+  /**
+   * Get total pending unstake amount for address
+   * @param address substrate or ethereum address
+   * @returns total pending unstake amount
+   */
   async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
   }
 
-  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<bigint[][]> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  /**
+   * Get pending unstake amount per block for address
+   * @param address substrate or ethereum address
+   * @returns array of pending stakes. `block` – the number of the block in which the unstake was made. `amount` - the number of tokens unstaked in the block
+   */
+  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+    const rawUnstakedPerBlock = await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address]);
+    const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => {
+      return {
+        block: block.toBigInt(),
+        amount: amount.toBigInt(),
+      };
+    });
+    return result;
   }
 }
 
