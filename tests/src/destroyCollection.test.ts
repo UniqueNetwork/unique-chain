@@ -15,36 +15,47 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi} from './substrate/substrate-api';
-import {createCollectionExpectSuccess,
-  destroyCollectionExpectSuccess,
-  destroyCollectionExpectFailure,
-  setCollectionLimitsExpectSuccess,
-  addCollectionAdminExpectSuccess,
-  getCreatedCollectionCount,
-  createItemExpectSuccess,
-  requirePallets,
+import {
   Pallets,
 } from './util/helpers';
-
-chai.use(chaiAsPromised);
+import {itSub, expect, usingPlaygrounds} from './util/playgrounds';
 
 describe('integration test: ext. destroyCollection():', () => {
-  it('NFT collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await destroyCollectionExpectSuccess(collectionId);
-  });
-  it('Fungible collection can be destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-    await destroyCollectionExpectSuccess(collectionId);
-  });
-  it('ReFungible collection can be destroyed', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  let alice: IKeyringPair;
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-    await destroyCollectionExpectSuccess(collectionId);
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([100n], donor);
+    });
+  });
+
+  itSub('NFT collection can be destroyed', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+    });
+    await collection.burn(alice);
+    expect(await collection.getData()).to.be.null;
+  });
+  itSub('Fungible collection can be destroyed', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+    }, 0);
+    await collection.burn(alice);
+    expect(await collection.getData()).to.be.null;
+  });
+  itSub.ifWithPallets('ReFungible collection can be destroyed', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+    });
+    await collection.burn(alice);
+    expect(await collection.getData()).to.be.null;
   });
 });
 
@@ -53,44 +64,60 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('(!negative test!) Destroy a collection that never existed', async () => {
-    await usingApi(async (api) => {
-      // Find the collection that never existed
-      const collectionId = await getCreatedCollectionCount(api) + 1;
-      await destroyCollectionExpectFailure(collectionId);
+  itSub('(!negative test!) Destroy a collection that never existed', async ({helper}) => {
+    const collectionId = 1_000_000;
+    await expect(helper.collection.burn(alice, collectionId)).to.be.rejectedWith(/common\.CollectionNotFound/);
+  });
+  itSub('(!negative test!) Destroy a collection that has already been destroyed', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
     });
+    await collection.burn(alice);
+    await expect(collection.burn(alice)).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
-  it('(!negative test!) Destroy a collection that has already been destroyed', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await destroyCollectionExpectSuccess(collectionId);
-    await destroyCollectionExpectFailure(collectionId);
+  itSub('(!negative test!) Destroy a collection using non-owner account', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+    });
+    await expect(collection.burn(bob)).to.be.rejectedWith(/common\.NoPermission/);
   });
-  it('(!negative test!) Destroy a collection using non-owner account', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await destroyCollectionExpectFailure(collectionId, '//Bob');
-    await destroyCollectionExpectSuccess(collectionId, '//Alice');
+  itSub('(!negative test!) Destroy a collection using collection admin account', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+    });
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await expect(collection.burn(bob)).to.be.rejectedWith(/common\.NoPermission/);
   });
-  it('(!negative test!) Destroy a collection using collection admin account', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-    await destroyCollectionExpectFailure(collectionId, '//Bob');
+  itSub('fails when OwnerCanDestroy == false', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+      limits: {
+        ownerCanDestroy: false,
+      },
+    });
+    await expect(collection.burn(alice)).to.be.rejectedWith(/common\.NoPermission/);
   });
-  it('fails when OwnerCanDestroy == false', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanDestroy: false});
-
-    await destroyCollectionExpectFailure(collectionId, '//Alice');
-  });
-  it('fails when a collection still has a token', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await createItemExpectSuccess(alice, collectionId, 'NFT');
-
-    await destroyCollectionExpectFailure(collectionId, '//Alice');
+  itSub('fails when a collection still has a token', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+    });
+    await collection.mintToken(alice, {Substrate: alice.address});
+    await expect(collection.burn(alice)).to.be.rejectedWith(/common\.CantDestroyNotEmptyCollection/);
   });
 });
