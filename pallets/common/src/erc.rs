@@ -606,6 +606,17 @@ where
 		Ok(result)
 	}
 
+	/// Get collection administrators
+	///
+	/// @return Vector of tuples with admins address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
+		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
+			.map(|(admin, _)| crate::eth::convert_cross_account_to_tuple::<T>(&admin))
+			.collect();
+		Ok(result)
+	}
+
 	/// Changes collection owner to another account
 	///
 	/// @dev Owner can be changed only by current owner

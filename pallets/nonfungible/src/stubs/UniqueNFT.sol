@@ -91,7 +91,11 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
+=======
+/// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
+>>>>>>> feat: Add `collection_admins` method to eth collection.
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///

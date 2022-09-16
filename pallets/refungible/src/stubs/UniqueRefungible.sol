@@ -91,7 +91,15 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
+=======
+<<<<<<< HEAD
+/// @dev the ERC-165 identifier for this interface is 0x660da1e8
+=======
+/// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
+>>>>>>> 52d7afd4... feat: Add `collection_admins` method to eth collection.
+>>>>>>> feat: Add `collection_admins` method to eth collection.
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -456,6 +464,22 @@ contract Collection is Dummy, ERC165 {
 		dummy;
 		return new Tuple8[](0);
 	}
+<<<<<<< HEAD
+=======
+
+	/// Get collection administrators
+	///
+	/// @return Vector of tuples with admins address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	/// @dev EVM selector for this function is: 0x5813216b,
+	///  or in textual repr: collectionAdmins()
+	function collectionAdmins() public view returns (Tuple17[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new Tuple17[](0);
+	}
+}
+>>>>>>> feat: Add `collection_admins` method to eth collection.
 
 	/// Changes collection owner to another account
 	///

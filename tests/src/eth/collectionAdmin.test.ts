@@ -64,6 +64,25 @@ describe('Add collection admins', () => {
     expect(adminList).to.be.like([{Substrate: newAdmin.address}]);
   });
 
+  itEth('Check adminlist', async ({helper, privateKey}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+        
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const admin1 = helper.eth.createAccount();
+    const admin2 = privateKey('admin');
+    await collectionEvm.methods.addCollectionAdmin(admin1).send();
+    await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
+
+    const adminListRpc = await helper.collection.getAdmins(collectionId);
+    let adminListEth = await collectionEvm.methods.collectionAdmins().call();
+    adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
+      return helper.address.convertCrossAccountFromEthCrossAcoount(element);
+    });
+    expect(adminListRpc).to.be.like(adminListEth);
+  });
+
   itEth('Verify owner or admin', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
