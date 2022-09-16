@@ -14,61 +14,69 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import usingApi from './substrate/substrate-api';
-import {
-  createItemExpectSuccess,
-  createCollectionExpectSuccess,
-  transferExpectSuccess,
-  transferExpectFailure,
-  setTransferFlagExpectSuccess,
-  setTransferFlagExpectFailure,
-} from './util/helpers';
-
-chai.use(chaiAsPromised);
+import {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('Enable/Disable Transfers', () => {
-  it('User can transfer token with enabled transfer flag', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
-      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
-      // explicitely set transfer flag
-      await setTransferFlagExpectSuccess(alice, nftCollectionId, true);
-
-      await transferExpectSuccess(nftCollectionId, newNftTokenId, alice, bob, 1);
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('User can\'n transfer token with disabled transfer flag', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
-      const newNftTokenId = await createItemExpectSuccess(alice, nftCollectionId, 'NFT');
-
-      // explicitely set transfer flag
-      await setTransferFlagExpectSuccess(alice, nftCollectionId, false);
-
-      await transferExpectFailure(nftCollectionId, newNftTokenId, alice, bob, 1);
+  itSub('User can transfer token with enabled transfer flag', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+      limits: {
+        transfersEnabled: true,
+      },
     });
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    await token.transfer(alice, {Substrate: bob.address});
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
+  });
+
+  itSub('User can\'n transfer token with disabled transfer flag', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+      limits: {
+        transfersEnabled: false,
+      },
+    });
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    await expect(token.transfer(alice, {Substrate: bob.address})).to.be.rejectedWith(/common\.TransferNotAllowed/);
   });
 });
 
 describe('Negative Enable/Disable Transfers', () => {
-  it('Non-owner cannot change transfer flag', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const bob = privateKeyWrapper('//Bob');
-      // nft
-      const nftCollectionId = await createCollectionExpectSuccess();
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
-      // Change transfer flag
-      await setTransferFlagExpectFailure(bob, nftCollectionId, false);
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
+  });
+
+  itSub('Non-owner cannot change transfer flag', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'test',
+      description: 'test',
+      tokenPrefix: 'test',
+      limits: {
+        transfersEnabled: true,
+      },
+    });
+
+    await expect(collection.setLimits(bob, {transfersEnabled: false})).to.be.rejectedWith(/common\.NoPermission/);
   });
 });
