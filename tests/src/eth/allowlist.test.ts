@@ -16,15 +16,10 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {isAllowlisted, normalizeAccountId} from '../util/helpers';
 import {
   contractHelpers,
-  createEthAccount,
   createEthAccountWithBalance,
   deployFlipper,
-  evmCollection,
-  evmCollectionHelpers,
-  getCollectionAddressFromResult,
   itWeb3,
 } from './util/helpers';
 import {itEth, usingEthPlaygrounds} from './util/playgrounds';

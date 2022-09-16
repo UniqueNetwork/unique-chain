@@ -574,7 +574,7 @@ where
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	fn collection_owner(&self) -> Result<(address, uint256)> {
 		Ok(convert_cross_account_to_tuple::<T>(
@@ -608,13 +608,16 @@ where
 			.map_err(dispatch_to_evm::<T>)
 	}
 
-	// TODO: need implement AbiWriter for &Vec<T>
-	// fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
-	// 	let result = pallet_common::IsAdmin::<T>::iter_prefix((self.id,))
-	// 		.map(|(admin, _)| pallet_common::eth::convert_cross_account_to_tuple::<T>(&admin))
-	// 		.collect();
-	// 	Ok(result)
-	// }
+	/// Get collection administrators
+	///
+	/// @return Vector of tuples with admins address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
+		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
+			.map(|(admin, _)| crate::eth::convert_cross_account_to_tuple::<T>(&admin))
+			.collect();
+		Ok(result)
+	}
 }
 
 /// ### Note

@@ -7,9 +7,11 @@
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
-import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
+import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
+import {hexToU8a} from '@polkadot/util/hex';
+import {u8aConcat} from '@polkadot/util/u8a';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, IEthCrossAccountId, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 export const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -1991,6 +1993,73 @@ class AddressGroup extends HelperGroup {
    */
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
     return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(subAddress), i => i.toString(16).padStart(2, '0')).join(''));
+  }
+
+  /**
+   * Encode key to substrate address
+   * @param key key for encoding address
+   * @param ss58Format prefix for encoding to the address of the corresponding network
+   * @returns encoded substrate address
+   */
+  encodeSubstrateAddress (key: Uint8Array | string | bigint, ss58Format = 42): string {
+    const u8a :Uint8Array = typeof key === 'string'
+      ? hexToU8a(key)
+      : typeof key === 'bigint'
+        ? hexToU8a(key.toString(16))
+        : key;
+  
+    if (ss58Format < 0 || ss58Format > 16383 || [46, 47].includes(ss58Format)) {
+      throw new Error(`ss58Format is not valid, received ${typeof ss58Format} "${ss58Format}"`);
+    }
+  
+    const allowedDecodedLengths = [1, 2, 4, 8, 32, 33];
+    if (!allowedDecodedLengths.includes(u8a.length)) {
+      throw new Error(`key length is not valid, received ${u8a.length}, valid values are ${allowedDecodedLengths.join(', ')}`);
+    }
+  
+    const u8aPrefix = ss58Format < 64
+      ? new Uint8Array([ss58Format])
+      : new Uint8Array([
+        ((ss58Format & 0xfc) >> 2) | 0x40,
+        (ss58Format >> 8) | ((ss58Format & 0x03) << 6),
+      ]);
+
+    const input = u8aConcat(u8aPrefix, u8a);
+  
+    return base58Encode(u8aConcat(
+      input,
+      blake2AsU8a(input).subarray(0, [32, 33].includes(u8a.length) ? 2 : 1),
+    ));
+  }
+
+  /**
+   * Restore substrate address from bigint representation
+   * @param number decimal representation of substrate address
+   * @returns substrate address
+   */
+  restoreCrossAccountFromBigInt(number: bigint): TSubstrateAccount {
+    if (this.helper.api === null) {
+      throw 'Not connected';
+    }
+    const res = this.helper.api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
+    if (res === undefined || res === null) {
+      throw 'Restore address error';
+    }
+    return res.toString();
+  }
+
+  /**
+   * Convert etherium cross account id to substrate cross account id
+   * @param ethCrossAccount etherium cross account
+   * @returns substrate cross account id
+   */
+  convertCrossAccountFromEthCrossAcoount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
+    if (ethCrossAccount.field_1 === '0') {
+      return {Ethereum: ethCrossAccount.field_0.toLocaleLowerCase()};
+    }
+    
+    const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.field_1));
+    return {Substrate: ss58};
   }
 }
 

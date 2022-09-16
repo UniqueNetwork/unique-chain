@@ -14,6 +14,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
+import {IKeyringPair} from '@polkadot/types/types';
 import privateKey from '../substrate/privateKey';
 import {UNIQUE} from '../util/helpers';
 import {
@@ -25,8 +26,18 @@ import {
   itWeb3,
   recordEthFee,
 } from './util/helpers';
+import {itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {IEthCrossAccountId} from '../util/playgrounds/types';
 
 describe('Add collection admins', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+  
   itWeb3('Add admin by owner', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
@@ -61,7 +72,26 @@ describe('Add collection admins', () => {
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(newAdmin.address.toLocaleLowerCase());
   });
-  
+
+  itEth('Check adminlist', async ({helper, privateKey}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+        
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const admin1 = helper.eth.createAccount();
+    const admin2 = privateKey('admin');
+    await collectionEvm.methods.addCollectionAdmin(admin1).send();
+    await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
+
+    const adminListRpc = await helper.collection.getAdmins(collectionId);
+    let adminListEth = await collectionEvm.methods.collectionAdmins().call();
+    adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
+      return helper.address.convertCrossAccountFromEthCrossAcoount(element);
+    });
+    expect(adminListRpc).to.be.like(adminListEth);
+  });
+
   itWeb3('Verify owner or admin', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);

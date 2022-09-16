@@ -62,7 +62,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x47dbc105
+/// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -276,7 +276,7 @@ interface Collection is Dummy, ERC165 {
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
@@ -297,6 +297,14 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xb212138f,
 	///  or in textual repr: setOwnerSubstrate(uint256)
 	function setOwnerSubstrate(uint256 newOwner) external;
+
+	/// Get collection administrators
+	///
+	/// @return Vector of tuples with admins address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	/// @dev EVM selector for this function is: 0x5813216b,
+	///  or in textual repr: collectionAdmins()
+	function collectionAdmins() external view returns (Tuple17[] memory);
 }
 
 /// @dev anonymous struct
