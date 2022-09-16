@@ -9,6 +9,8 @@ ENV FEATURE=$FEATURE
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
+RUN echo "$FEATURE\n" && echo "$RUST_TOOLCHAIN\n"
+
 RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
