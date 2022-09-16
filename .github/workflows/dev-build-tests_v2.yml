@@ -102,7 +102,3 @@ jobs:
           docker builder prune -f -a
           docker system prune -f
           docker image prune -f -a
-
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
