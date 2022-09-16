@@ -154,8 +154,10 @@ impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T>
 	fn is_simple() -> bool {
 		false
 	}
-	fn solidity_default(writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "[]")
+	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		write!(writer, "new ")?;
+		T::solidity_name(writer, tc)?;
+		write!(writer, "[](0)")
 	}
 }
 
