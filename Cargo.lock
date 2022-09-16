@@ -697,6 +697,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "bondrewd"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d1660fac8d3acced44dac64453fafedf5aab2de196b932c727e63e4ae42d1cc"
+dependencies = [
+ "bondrewd-derive",
+]
+
+[[package]]
+name = "bondrewd-derive"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "723da0dee1eef38edc021b0793f892bdc024500c6a5b0727a2efe16f0e0a6977"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bounded-vec"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5892,6 +5912,7 @@ dependencies = [
 name = "pallet-foreign-assets"
 version = "0.1.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex",
@@ -6600,7 +6621,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-unique"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "ethereum",
  "evm-coder",
@@ -12634,6 +12655,7 @@ dependencies = [
 name = "up-data-structs"
 version = "0.2.2"
 dependencies = [
+ "bondrewd",
  "derivative",
  "frame-support",
  "frame-system",

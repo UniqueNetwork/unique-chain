@@ -83,8 +83,8 @@ use evm_coder::ToLog;
 use frame_support::{ensure};
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{
-	AccessMode, CollectionId, TokenId, CreateCollectionData, mapping::TokenAddressMapping,
-	budget::Budget,
+	AccessMode, CollectionId, CollectionFlags, TokenId, CreateCollectionData,
+	mapping::TokenAddressMapping, budget::Budget,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
@@ -167,11 +167,6 @@ pub mod pallet {
 		Value = u128,
 		QueryKind = ValueQuery,
 	>;
-
-	/// Foreign collection flag
-	#[pallet::storage]
-	pub type ForeignCollection<T: Config> =
-		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = bool, QueryKind = ValueQuery>;
 }
 
 /// Wrapper around untyped collection handle, asserting inner collection is of fungible type.
@@ -217,7 +212,7 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, false)
+		<PalletCommon<T>>::init_collection(owner, data, CollectionFlags::default())
 	}
 
 	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
@@ -225,8 +220,14 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		let id = <PalletCommon<T>>::init_collection(owner, data, false)?;
-		<ForeignCollection<T>>::insert(id, true);
+		let id = <PalletCommon<T>>::init_collection(
+			owner,
+			data,
+			CollectionFlags {
+				foreign: true,
+				..Default::default()
+			},
+		)?;
 		Ok(id)
 	}
 
@@ -245,7 +246,6 @@ impl<T: Config> Pallet<T> {
 
 		PalletCommon::destroy_collection(collection.0, sender)?;
 
-		<ForeignCollection<T>>::remove(id);
 		<TotalSupply<T>>::remove(id);
 		let _ = <Balance<T>>::clear_prefix((id,), u32::MAX, None);
 		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
@@ -274,10 +274,7 @@ impl<T: Config> Pallet<T> {
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
 		// Foreign collection check
-		ensure!(
-			!<ForeignCollection<T>>::get(collection.id),
-			<CommonError<T>>::NoPermission
-		);
+		ensure!(!collection.flags.foreign, <CommonError<T>>::NoPermission);
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
@@ -502,10 +499,7 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		// Foreign collection check
-		ensure!(
-			!<ForeignCollection<T>>::get(collection.id),
-			<CommonError<T>>::NoPermission
-		);
+		ensure!(!collection.flags.foreign, <CommonError<T>>::NoPermission);
 
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
