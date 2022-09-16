@@ -1853,6 +1853,11 @@ export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateK
 itApi.only = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {only: true});
 itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {skip: true});
 
+let accountSeed = 10000;
+export function generateKeyringPair(keyring: Keyring) {
+  const privateKey = `0xDEADBEEF${(Date.now() + (accountSeed++)).toString(16)}`.padStart(64, '0');
+  return keyring.addFromUri(privateKey);
+}
 
 export async function expectSubstrateEventsAtBlock(api: ApiPromise, blockNumber: AnyNumber | BlockNumber, section: string, methods: string[], dryRun = false) {
   const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
