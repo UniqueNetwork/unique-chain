@@ -21,11 +21,11 @@ jobs:
         run: echo "$GITHUB_CONTEXT"
 
   yarn-test-dev:
-    if: ${{ (github.event.pull_request.draft == 'false') }}
+    if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/dev-build-tests_v2.yml
 
   unit-test:
-    if: ${{ (github.event.pull_request.draft == 'false') }}
+    if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/unit-test_v2.yml
 
   canary:
