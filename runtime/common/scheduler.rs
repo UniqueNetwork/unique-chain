@@ -74,7 +74,7 @@ where
 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn dispatch_call(
-		signer: <T as frame_system::Config>::AccountId,
+		signer: Option<<T as frame_system::Config>::AccountId>,
 		call: <T as pallet_unique_scheduler::Config>::Call,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
@@ -82,17 +82,19 @@ where
 	> {
 		let dispatch_info = call.get_dispatch_info();
 		let len = call.encoded_size();
+
+		let signed = match signer {
+			Some(signer) => fp_self_contained::CheckedSignature::Signed(signer.clone().into(), get_signed_extras(signer.into())),
+			None => fp_self_contained::CheckedSignature::Unsigned,
+		};
+		
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,
 			Call,
 			SignedExtraScheduler,
 			SelfContainedSignedInfo,
 		> {
-			signed: fp_self_contained::CheckedSignature::<
-				AccountId,
-				SignedExtraScheduler,
-				SelfContainedSignedInfo,
-			>::Signed(signer.clone().into(), get_signed_extras(signer.into())),
+			signed,
 			function: call.into(),
 		};
 
