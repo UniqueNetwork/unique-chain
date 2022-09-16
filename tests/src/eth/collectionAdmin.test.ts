@@ -14,7 +14,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util';
+import {IEthCrossAccountId} from '../util/playgrounds/types';
+import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util/playgrounds';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
@@ -93,25 +94,25 @@ describe('Add collection admins', () => {
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
     expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.true;
   });
-
-  // itEth.skip('Check adminlist', async ({helper, privateKey}) => {
-  //   const owner = await helper.eth.createAccountWithBalance(donor);
+  
+  itEth('Check adminlist', async ({helper, privateKey}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
         
-  //   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-  //   const admin1 = helper.eth.createAccount();
-  //   const admin2 = await privateKey('admin');
-  //   await collectionEvm.methods.addCollectionAdmin(admin1).send();
-  //   await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
+    const admin1 = helper.eth.createAccount();
+    const admin2 = privateKey('admin');
+    await collectionEvm.methods.addCollectionAdmin(admin1).send();
+    await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
 
-  //   const adminListRpc = await helper.collection.getAdmins(collectionId);
-  //   let adminListEth = await collectionEvm.methods.collectionAdmins().call();
-  //   adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
-  //     return helper.address.convertCrossAccountFromEthCrossAcoount(element);
-  //   });
-  //   expect(adminListRpc).to.be.like(adminListEth);
-  // });
+    const adminListRpc = await helper.collection.getAdmins(collectionId);
+    let adminListEth = await collectionEvm.methods.collectionAdmins().call();
+    adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
+      return helper.address.convertCrossAccountFromEthCrossAcoount(element);
+    });
+    expect(adminListRpc).to.be.like(adminListEth);
+  });  
     
   itEth('(!negative tests!) Add admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
