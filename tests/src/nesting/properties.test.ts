@@ -330,26 +330,38 @@ describe('Negative Integration Test: Collection Properties', () => {
   async function testFailsSetMorePropertiesThanAllowed(mode: CollectionMode) {
     await usingApi(async api => {
       const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      const propertiesToBeSet = [];
-      for (let i = 0; i < 65; i++) {
-        propertiesToBeSet.push({
-          key: 'electron_' + i,
-          value: Math.random() > 0.5 ? 'high' : 'low',
-        });
+
+      //1024 properties couldn't be added in one go because of block weight limit
+      for (let c = 0; c < 16; c++) {
+        const propertiesToBeSet = [];
+        for (let i = 0; i < 64; i++) {
+          propertiesToBeSet.push({
+            key: 'electron_' + (i + c * 64),
+            value: Math.random() > 0.5 ? 'high' : 'low',
+          });
+        }
+    
+        await executeTransaction(
+          api, 
+          alice, 
+          api.tx.unique.setCollectionProperties(collection, propertiesToBeSet), 
+        );
       }
-  
+      
       await expect(executeTransaction(
         api, 
         alice, 
-        api.tx.unique.setCollectionProperties(collection, propertiesToBeSet), 
+        api.tx.unique.setCollectionProperties(collection, [{
+          key: 'electron_' + 1024,
+          value: Math.random() > 0.5 ? 'high' : 'low',
+        }]), 
       )).to.be.rejectedWith(/common\.PropertyLimitReached/);
-  
+
       const properties = (await api.query.common.collectionProperties(collection)).toJSON();
-      expect(properties.map).to.be.empty;
-      expect(properties.consumedSpace).to.equal(0);
+      expect(Object.keys(properties.map as object)).to.have.lengthOf(1024);
     });  
   }
+
   it('Fails to set more properties than it is allowed (NFT)', async () => {
     await testFailsSetMorePropertiesThanAllowed({type: 'NFT'});
   });
@@ -537,7 +549,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
       const collection = await createCollectionExpectSuccess({mode: mode});
   
       const constitution = [];
-      for (let i = 0; i < 65; i++) {
+      for (let i = 0; i < 1025; i++) {
         constitution.push({
           key: 'property_' + i,
           permission: Math.random() > 0.5 ? {mutable: true, collectionAdmin: true, tokenOwner: true} : {},

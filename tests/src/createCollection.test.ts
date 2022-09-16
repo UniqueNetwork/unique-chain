@@ -124,7 +124,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
   it('(!negative test!) create collection with incorrect property limit (64 elements)', async () => {
     const props = [];
 
-    for (let i = 0; i < 65; i++) {
+    for (let i = 0; i < 1025; i++) {
       props.push({key: `key${i}`, value: `value${i}`});
     }
 

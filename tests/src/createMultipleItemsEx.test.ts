@@ -308,7 +308,7 @@ describe('Negative test: createMultipleItemsEx', () => {
   it('Adding more than 64 properties', async () => {
     const propPerms = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
 
-    for (let i = 0; i < 65; i++) {
+    for (let i = 0; i < 1025; i++) {
       propPerms.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
     }
 

@@ -496,7 +496,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   it('Adding more than 64 prps', async () => {
     await usingApi(async (api: ApiPromise) => {
       const propPerms = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
-      for (let i = 0; i < 65; i++) {
+      for (let i = 0; i < 1025; i++) {
         propPerms.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
       }
 
@@ -511,7 +511,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
       const prps = [];
 
-      for (let i = 0; i < 65; i++) {
+      for (let i = 0; i < 1025; i++) {
         prps.push({key: `key${i}`, value: `value${i}`});
       }
 

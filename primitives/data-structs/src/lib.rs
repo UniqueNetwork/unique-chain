@@ -134,7 +134,7 @@ pub const MAX_PROPERTY_KEY_LENGTH: u32 = 256;
 pub const MAX_PROPERTY_VALUE_LENGTH: u32 = 32768;
 
 /// Maximum properties that can be assigned to token.
-pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
+pub const MAX_PROPERTIES_PER_ITEM: u32 = 1024;
 
 /// Maximal lenght of extended property value.
 pub const MAX_AUX_PROPERTY_VALUE_LENGTH: u32 = 2048;
