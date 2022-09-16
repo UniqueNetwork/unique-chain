@@ -8,7 +8,7 @@ import '@polkadot/api-base/types/consts';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Permill, Perbill } from '@polkadot/types/interfaces/runtime';
+import type { Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
@@ -25,7 +25,7 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       nominal: u128 & AugmentedConst<ApiType>;
       /**
-       * The app's pallet id, used for deriving its sovereign account ID.
+       * The app's pallet id, used for deriving its sovereign account address.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**

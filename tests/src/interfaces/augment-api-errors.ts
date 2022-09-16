@@ -303,6 +303,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoPermission: AugmentedError<ApiType>;
       /**
+       * Number of methods that sponsored limit is defined for exceeds maximum.
+       **/
+      TooManyMethodsHaveSponsoredLimit: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;

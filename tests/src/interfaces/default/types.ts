@@ -1426,7 +1426,8 @@ export interface PalletEvmCoderSubstrateError extends Enum {
 export interface PalletEvmContractHelpersError extends Enum {
   readonly isNoPermission: boolean;
   readonly isNoPendingSponsor: boolean;
-  readonly type: 'NoPermission' | 'NoPendingSponsor';
+  readonly isTooManyMethodsHaveSponsoredLimit: boolean;
+  readonly type: 'NoPermission' | 'NoPendingSponsor' | 'TooManyMethodsHaveSponsoredLimit';
 }
 
 /** @name PalletEvmContractHelpersEvent */
@@ -2809,7 +2810,7 @@ export interface UpDataStructsCollection extends Struct {
   readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
-  readonly externalCollection: bool;
+  readonly flags: U8aFixed;
 }
 
 /** @name UpDataStructsCollectionLimits */
@@ -2983,6 +2984,7 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
   readonly readOnly: bool;
+  readonly foreign: bool;
 }
 
 /** @name UpDataStructsSponsoringRateLimit */
