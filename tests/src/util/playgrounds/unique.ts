@@ -40,6 +40,7 @@ import {
   AcalaAssetMetadata,
   MoonbeamAssetInfo,
   DemocracyStandardAccountVote,
+  IEthCrossAccountId,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 
