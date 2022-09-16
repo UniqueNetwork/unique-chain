@@ -10,6 +10,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {VoidFn} from '@polkadot/api/types';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -154,6 +155,8 @@ export class DevKaruraHelper extends DevAcalaHelper {}
 class ArrangeGroup {
   helper: DevUniqueHelper;
 
+  scheduledIdSlider = 0;
+
   constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
@@ -297,6 +300,39 @@ class ArrangeGroup {
     const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
     return encodeAddress(address);
   }
+
+  async makeScheduledIds(num: number): Promise<string[]> {
+    await this.helper.wait.noScheduledTasks();
+
+    function makeId(slider: number) {
+      const scheduledIdSize = 32;
+      const hexId = slider.toString(16);
+      const prefixSize = scheduledIdSize - hexId.length;
+
+      const scheduledId = '0x' + '0'.repeat(prefixSize) + hexId;
+
+      return scheduledId;  
+    }
+
+    const ids = [];
+    for (let i = 0; i < num; i++) {
+      ids.push(makeId(this.scheduledIdSlider));
+      this.scheduledIdSlider += 1;
+    }
+
+    return ids;
+  }
+
+  async makeScheduledId(): Promise<string> {
+    return (await this.makeScheduledIds(1))[0];
+  }
+
+  async captureEvents(eventSection: string, eventMethod: string): Promise<EventCapture> {
+    const capture = new EventCapture(this.helper, eventSection, eventMethod);
+    await capture.startCapture();
+
+    return capture;
+  }
 }
 
 class MoonbeamAccountGroup {
@@ -389,6 +425,24 @@ class WaitGroup {
     });
   }
 
+  async noScheduledTasks() {
+    const api = this.helper.getApi();
+    
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<void>(async resolve => {
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
+        const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
+
+        if(areThereScheduledTasks.length == 0) {
+          unsubscribe();
+          resolve();
+        }
+      }); 
+    });
+
+    return promise;
+  }
+
   async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<EventRecord | null>(async (resolve) => {
@@ -414,13 +468,51 @@ class WaitGroup {
           maxBlocksToWait--;
         } else {
           this.helper.logger.log(`Event \`${eventIdStr}\` is NOT found`);
-  
           unsubscribe();
           resolve(null);
         }
       });
     });
     return promise;
+  }
+}
+
+class EventCapture {
+  helper: DevUniqueHelper;
+  eventSection: string;
+  eventMethod: string;
+  events: EventRecord[] = [];
+  unsubscribe: VoidFn | null = null;
+
+  constructor(
+    helper: DevUniqueHelper,
+    eventSection: string,
+    eventMethod: string,
+  ) {
+    this.helper = helper;
+    this.eventSection = eventSection;
+    this.eventMethod = eventMethod;
+  }
+
+  async startCapture() {
+    this.stopCapture();
+    this.unsubscribe = await this.helper.getApi().query.system.events(eventRecords => {
+      const newEvents = eventRecords.filter(r => {
+        return r.event.section == this.eventSection && r.event.method == this.eventMethod;
+      });
+
+      this.events.push(...newEvents);
+    });
+  }
+
+  stopCapture() {
+    if (this.unsubscribe !== null) {
+      this.unsubscribe();
+    }
+  }
+
+  extractCapturedEvents() {
+    return this.events;
   }
 }
 

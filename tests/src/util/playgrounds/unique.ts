@@ -534,25 +534,27 @@ export class ChainHelperBase {
   }
 
   async getPaymentInfo(signer: TSigner, tx: any, len: number | null) {
-    const signingInfo = await this.api!.derive.tx.signingInfo(signer.address);
+    const api = this.getApi();
+    const signingInfo = await api.derive.tx.signingInfo(signer.address);
 
     // We need to sign the tx because
     // unsigned transactions does not have an inclusion fee
     tx.sign(signer, {
-      blockHash: this.api!.genesisHash,
-      genesisHash: this.api!.genesisHash,
-      runtimeVersion: this.api!.runtimeVersion,
+      blockHash: api.genesisHash,
+      genesisHash: api.genesisHash,
+      runtimeVersion: api.runtimeVersion,
       nonce: signingInfo.nonce,
     });
 
     if (len === null) {
       return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()])) as RuntimeDispatchInfo;
     } else {
-      return (await this.api!.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
+      return (await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
     }
   }
 
   constructApiCall(apiCall: string, params: any[]) {
+    if(this.api === null) throw Error('API not initialized');
     if(!apiCall.startsWith('api.')) throw Error(`Invalid api call: ${apiCall}`);
     let call = this.getApi() as any;
     for(const part of apiCall.slice(4).split('.')) {
@@ -2274,6 +2276,25 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     return this.subBalanceGroup.transferToSubstrate(signer, address, amount);
   }
+
+  async forceTransferToSubstrate(signer: TSigner, from: TSubstrateAccount, to: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.forceTransfer', [from, to, amount], true);
+
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'balances') && (method === 'Transfer')) {
+        transfer = {
+          from: this.helper.address.normalizeSubstrate(data[0]),
+          to: this.helper.address.normalizeSubstrate(data[1]),
+          amount: BigInt(data[2]),
+        };
+      }
+    });
+    let isSuccess = this.helper.address.normalizeSubstrate(from) === transfer.from;
+    isSuccess = isSuccess && this.helper.address.normalizeSubstrate(to) === transfer.to;
+    isSuccess = isSuccess && BigInt(amount) === transfer.amount;
+    return isSuccess;
+  }
 }
 
 class AddressGroup extends HelperGroup<ChainHelperBase> {
@@ -2418,52 +2439,6 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
 }
 
 class SchedulerGroup extends HelperGroup<UniqueHelper> {
-  scheduledIdSlider = 0;
-
-  async waitNoScheduledTasks() {
-    const api = this.helper.api!;
-    
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async resolve => {
-      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
-        const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
-
-        if(areThereScheduledTasks.length == 0) {
-          unsubscribe();
-          resolve();
-        }
-      }); 
-    });
-
-    return promise;
-  }
-
-  async makeScheduledIds(num: number): Promise<string[]> {
-    await this.waitNoScheduledTasks();
-
-    function makeId(slider: number) {
-      const scheduledIdSize = 32;
-      const hexId = slider.toString(16);
-      const prefixSize = scheduledIdSize - hexId.length;
-
-      const scheduledId = '0x' + '0'.repeat(prefixSize) + hexId;
-
-      return scheduledId;  
-    }
-
-    const ids = [];
-    for (let i = 0; i < num; i++) {
-      ids.push(makeId(this.scheduledIdSlider));
-      this.scheduledIdSlider += 1;
-    }
-
-    return ids;
-  }
-
-  async makeScheduledId(): Promise<string> {
-    return (await this.makeScheduledIds(1))[0];
-  }
-
   async cancelScheduled(signer: TSigner, scheduledId: string) {
     return this.helper.executeExtrinsic(
       signer,
@@ -2989,6 +2964,10 @@ export class UniqueBaseCollection {
 
   getSudo<T extends UniqueHelper>() {
     return new UniqueBaseCollection(this.collectionId, this.helper.getSudo<T>());
+  }
+
+  getSudo() {
+    return new UniqueCollectionBase(this.collectionId, this.helper.getSudo());
   }
 }
 
