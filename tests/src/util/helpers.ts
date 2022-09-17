@@ -1855,7 +1855,7 @@ itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (ac
 
 let accountSeed = 10000;
 export function generateKeyringPair(keyring: Keyring) {
-  const privateKey = `0xDEADBEEF${(Date.now() + (accountSeed++)).toString(16)}`.padStart(64, '0');
+  const privateKey = `0xDEADBEEF${(Date.now() + (accountSeed++)).toString(16).padStart(64 - 8, '0')}`;
   return keyring.addFromUri(privateKey);
 }
 
