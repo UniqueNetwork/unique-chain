@@ -20,7 +20,10 @@ pub mod dispatch;
 pub mod ethereum;
 pub mod instance;
 pub mod runtime_apis;
+
+#[cfg(feature = "scheduler")]
 pub mod scheduler;
+
 pub mod sponsoring;
 pub mod weights;
 
