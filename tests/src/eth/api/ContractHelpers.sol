@@ -20,7 +20,7 @@ interface ContractHelpersEvents {
 }
 
 /// @title Magic contract, which allows users to reconfigure other contracts
-/// @dev the ERC-165 identifier for this interface is 0x172cb4fb
+/// @dev the ERC-165 identifier for this interface is 0x30afad04
 interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
@@ -67,9 +67,9 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	/// @dev EVM selector for this function is: 0x743fc745,
-	///  or in textual repr: getSponsor(address)
-	function getSponsor(address contractAddress) external view returns (Tuple0 memory);
+	/// @dev EVM selector for this function is: 0x766c4f37,
+	///  or in textual repr: sponsor(address)
+	function sponsor(address contractAddress) external view returns (Tuple0 memory);
 
 	/// Check tat contract has confirmed sponsor.
 	///
@@ -98,9 +98,9 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
-	/// @dev EVM selector for this function is: 0x610cfabd,
-	///  or in textual repr: getSponsoringRateLimit(address)
-	function getSponsoringRateLimit(address contractAddress) external view returns (uint32);
+	/// @dev EVM selector for this function is: 0xf29694d8,
+	///  or in textual repr: sponsoringRateLimit(address)
+	function sponsoringRateLimit(address contractAddress) external view returns (uint32);
 
 	/// Set contract sponsoring rate limit
 	/// @dev Sponsoring rate limit - is a minimum amount of blocks that should
@@ -126,9 +126,9 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @param contractAddress Contract to get sponsoring fee limit of
 	/// @return uint256 Maximum amount of fee that could be spent by single
 	///  transaction
-	/// @dev EVM selector for this function is: 0xc3fdc9ee,
-	///  or in textual repr: getSponsoringFeeLimit(address)
-	function getSponsoringFeeLimit(address contractAddress) external view returns (uint256);
+	/// @dev EVM selector for this function is: 0x75b73606,
+	///  or in textual repr: sponsoringFeeLimit(address)
+	function sponsoringFeeLimit(address contractAddress) external view returns (uint256);
 
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included
