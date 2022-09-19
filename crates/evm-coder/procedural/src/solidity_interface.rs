@@ -181,10 +181,12 @@ impl Parse for IsList {
 						if via.replace((ty, method)).is_some() {
 							return Err(syn::Error::new(input.span(), "via is already set"));
 						}
-					} else if input.peek(Token![,]) {
-						input.parse::<Token![,]>()?;
 					} else {
 						return Err(lookahead.error());
+					}
+
+					if input.peek(Token![,]) {
+						input.parse::<Token![,]>()?;
 					}
 				}
 			} else if lookahead.peek(Token![,]) || input.is_empty() {
