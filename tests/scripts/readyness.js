@@ -1,7 +1,7 @@
 const { ApiPromise, WsProvider } = require('@polkadot/api');
 
 const connect = async () => {
-  const wsEndpoint = 'ws://127.0.0.1:9944'
+  const wsEndpoint = 'ws://127.0.0.1:9944';
   const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
   await api.isReadyOrError;
 
@@ -12,10 +12,10 @@ const connect = async () => {
 }
 
 const sleep = time => {
-    return new Promise(resolve => {
-        setTimeout(() => resolve(), time);
-    });
-}
+  return new Promise(resolve => {
+    setTimeout(() => resolve(), time);
+  });
+};
 
 const main = async () => {
   while(true) {

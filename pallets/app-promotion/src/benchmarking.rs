@@ -20,11 +20,10 @@ use super::*;
 use crate::Pallet as PromototionPallet;
 
 use sp_runtime::traits::Bounded;
-use sp_std::vec;
 
 use frame_benchmarking::{benchmarks, account};
 use frame_support::traits::OnInitialize;
-use frame_system::{Origin, RawOrigin};
+use frame_system::RawOrigin;
 use pallet_unique::benchmarking::create_nft_collection;
 use pallet_evm_migration::Pallet as EvmMigrationPallet;
 

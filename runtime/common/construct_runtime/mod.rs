@@ -42,7 +42,9 @@ macro_rules! construct_runtime {
                 Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
                 Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
                 Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
-                // Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+
+                XTokens: orml_xtokens = 38,
+                Tokens: orml_tokens = 39,
                 // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
                 // XCM helpers.
@@ -79,6 +81,9 @@ macro_rules! construct_runtime {
 
                 #[runtimes(opal)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
+
+                #[runtimes(opal)]
+                ForeignAssets: pallet_foreign_assets::{Pallet, Call, Storage, Event<T>} = 80,
 
                 // Frontier
                 EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,

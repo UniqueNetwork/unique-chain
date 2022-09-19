@@ -40,6 +40,9 @@ pub mod rmrk;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 
+#[cfg(feature = "foreign-assets")]
+pub mod foreign_asset;
+
 #[cfg(feature = "app-promotion")]
 pub mod app_promotion;
 
