@@ -67,7 +67,7 @@ describe('Pallet presence', () => {
       if (chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(refungible, scheduler, appPromotion, ...rmrkPallets);
       } else if (chain.eq('QUARTZ by UNIQUE')) {
-        // Insert Quartz additional pallets here
+        requiredPallets.push(refungible);
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
       }

@@ -65,7 +65,7 @@ macro_rules! construct_runtime {
                 Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
                 Fungible: pallet_fungible::{Pallet, Storage} = 67,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 Refungible: pallet_refungible::{Pallet, Storage} = 68,
 
                 Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,

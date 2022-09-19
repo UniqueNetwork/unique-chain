@@ -120,7 +120,7 @@ std = [
     "orml-vesting/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-quartz-runtime = []
+quartz-runtime = ['refungible']
 
 refungible = []
 scheduler = []
