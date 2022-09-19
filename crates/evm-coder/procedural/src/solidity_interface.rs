@@ -175,7 +175,7 @@ impl Parse for IsList {
 						parenthesized!(contents in input);
 
 						let method = contents.parse::<Ident>()?;
-						contents.parse::<Token![,]>()?;
+						contents.parse::<kw::returns>()?;
 						let ty = contents.parse::<Type>()?;
 
 						if via.replace((ty, method)).is_some() {
@@ -536,6 +536,7 @@ mod kw {
 	syn::custom_keyword!(weight);
 
 	syn::custom_keyword!(via);
+	syn::custom_keyword!(returns);
 	syn::custom_keyword!(name);
 	syn::custom_keyword!(is);
 	syn::custom_keyword!(inline_is);
