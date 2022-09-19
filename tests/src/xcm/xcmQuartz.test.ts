@@ -117,7 +117,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
         [balanceKaruraTokenInit] = await getBalance(api, [randomAccount.address]);
         {
-          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
+          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
           balanceQuartzForeignTokenInit = BigInt(free);
         }
       },
@@ -200,7 +200,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
     await usingApi(
       async (api) => {
         await waitNewBlocks(api, 3);
-        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
+        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
         balanceQuartzForeignTokenMiddle = BigInt(free);
 
         [balanceKaruraTokenMiddle] = await getBalance(api, [randomAccount.address]);
@@ -243,7 +243,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
         };
 
         const id = {
-          ForeignAssetId: 0,
+          ForeignAsset: 0,
         };
 
         const destWeight = 50000000;
@@ -255,7 +255,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
         [balanceKaruraTokenFinal] = await getBalance(api, [randomAccount.address]);
         {
-          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAssetId: 0})).toJSON() as any;
+          const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, id)).toJSON() as any;
           balanceQuartzForeignTokenFinal = BigInt(free);
         }
 
