@@ -17,7 +17,7 @@
 use std::marker::PhantomData;
 use evm_coder::{execution::Result, generate_stubgen, solidity_interface, types::*};
 
-struct Generic<T>(PhantomData<T>);
+pub struct Generic<T>(PhantomData<T>);
 
 #[solidity_interface(name = GenericIs)]
 impl<T> Generic<T> {
