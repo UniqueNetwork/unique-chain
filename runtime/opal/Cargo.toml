@@ -130,7 +130,7 @@ std = [
     "pallet-foreign-assets/std"
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'scheduler', 'rmrk', 'app-promotion', 'foreign-assets']
+opal-runtime = ['refungible', 'rmrk', 'app-promotion', 'foreign-assets']
 
 refungible = []
 scheduler = []
