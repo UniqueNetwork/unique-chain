@@ -187,6 +187,8 @@ impl Parse for IsList {
 
 					if input.peek(Token![,]) {
 						input.parse::<Token![,]>()?;
+					} else if !input.is_empty() {
+						return Err(syn::Error::new(input.span(), "expected end"));
 					}
 				}
 			} else if lookahead.peek(Token![,]) || input.is_empty() {
