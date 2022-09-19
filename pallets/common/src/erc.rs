@@ -194,7 +194,7 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn get_collection_sponsor(&self) -> Result<(address, uint256)> {
+	fn collection_sponsor(&self) -> Result<(address, uint256)> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),

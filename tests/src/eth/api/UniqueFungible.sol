@@ -13,7 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x9f70d4e0
+/// @dev the ERC-165 identifier for this interface is 0x47dbc105
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -21,8 +21,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param value Propery value.
 	/// @dev EVM selector for this function is: 0x2f073f66,
 	///  or in textual repr: setCollectionProperty(string,bytes)
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
+	function setCollectionProperty(string memory key, bytes memory value) external;
 
 	/// Delete collection property.
 	///
@@ -39,10 +38,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return bytes The property corresponding to the key.
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
+	function collectionProperty(string memory key) external view returns (bytes memory);
 
 	/// Set the sponsor of the collection.
 	///
@@ -62,6 +58,7 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
 	function setCollectionSponsorSubstrate(uint256 sponsor) external;
 
+	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
 	///  or in textual repr: hasCollectionPendingSponsor()
 	function hasCollectionPendingSponsor() external view returns (bool);
@@ -81,9 +78,9 @@ interface Collection is Dummy, ERC165 {
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	/// @dev EVM selector for this function is: 0xb66bbc14,
-	///  or in textual repr: getCollectionSponsor()
-	function getCollectionSponsor() external view returns (Tuple6 memory);
+	/// @dev EVM selector for this function is: 0x6ec0a9f1,
+	///  or in textual repr: collectionSponsor()
+	function collectionSponsor() external view returns (Tuple6 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -153,8 +150,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param collections Addresses of collections that will be available for nesting.
 	/// @dev EVM selector for this function is: 0x64872396,
 	///  or in textual repr: setCollectionNesting(bool,address[])
-	function setCollectionNesting(bool enable, address[] memory collections)
-		external;
+	function setCollectionNesting(bool enable, address[] memory collections) external;
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -227,7 +223,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return `Fungible` or `NFT` or `ReFungible`
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
-	function uniqueCollectionType() external returns (string memory);
+	function uniqueCollectionType() external view returns (string memory);
 
 	/// Get collection owner.
 	///
@@ -291,11 +287,7 @@ interface ERC20Mintable is Dummy, ERC165 {
 /// @dev inlined interface
 interface ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
+	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x942e8b22
@@ -338,17 +330,7 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 
 	/// @dev EVM selector for this function is: 0xdd62ed3e,
 	///  or in textual repr: allowance(address,address)
-	function allowance(address owner, address spender)
-		external
-		view
-		returns (uint256);
+	function allowance(address owner, address spender) external view returns (uint256);
 }
 
-interface UniqueFungible is
-	Dummy,
-	ERC165,
-	ERC20,
-	ERC20Mintable,
-	ERC20UniqueExtensions,
-	Collection
-{}
+interface UniqueFungible is Dummy, ERC165, ERC20, ERC20Mintable, ERC20UniqueExtensions, Collection {}

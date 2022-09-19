@@ -10,11 +10,7 @@ contract Dummy {
 }
 
 contract ERC165 is Dummy {
-	function supportsInterface(bytes4 interfaceID)
-		external
-		view
-		returns (bool)
-	{
+	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
 		interfaceID;
 		return true;
@@ -24,15 +20,12 @@ contract ERC165 is Dummy {
 /// @dev inlined interface
 contract ContractHelpersEvents {
 	event ContractSponsorSet(address indexed contractAddress, address sponsor);
-	event ContractSponsorshipConfirmed(
-		address indexed contractAddress,
-		address sponsor
-	);
+	event ContractSponsorshipConfirmed(address indexed contractAddress, address sponsor);
 	event ContractSponsorRemoved(address indexed contractAddress);
 }
 
 /// @title Magic contract, which allows users to reconfigure other contracts
-/// @dev the ERC-165 identifier for this interface is 0x172cb4fb
+/// @dev the ERC-165 identifier for this interface is 0x30afad04
 contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
@@ -43,11 +36,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return address Owner of contract
 	/// @dev EVM selector for this function is: 0x5152b14c,
 	///  or in textual repr: contractOwner(address)
-	function contractOwner(address contractAddress)
-		public
-		view
-		returns (address)
-	{
+	function contractOwner(address contractAddress) public view returns (address) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
@@ -105,13 +94,9 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	/// @dev EVM selector for this function is: 0x743fc745,
-	///  or in textual repr: getSponsor(address)
-	function getSponsor(address contractAddress)
-		public
-		view
-		returns (Tuple0 memory)
-	{
+	/// @dev EVM selector for this function is: 0x766c4f37,
+	///  or in textual repr: sponsor(address)
+	function sponsor(address contractAddress) public view returns (Tuple0 memory) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
@@ -137,11 +122,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return **true** if contract has pending sponsor.
 	/// @dev EVM selector for this function is: 0x39b9b242,
 	///  or in textual repr: hasPendingSponsor(address)
-	function hasPendingSponsor(address contractAddress)
-		public
-		view
-		returns (bool)
-	{
+	function hasPendingSponsor(address contractAddress) public view returns (bool) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
@@ -150,11 +131,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 
 	/// @dev EVM selector for this function is: 0x6027dc61,
 	///  or in textual repr: sponsoringEnabled(address)
-	function sponsoringEnabled(address contractAddress)
-		public
-		view
-		returns (bool)
-	{
+	function sponsoringEnabled(address contractAddress) public view returns (bool) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
@@ -173,13 +150,9 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
-	/// @dev EVM selector for this function is: 0x610cfabd,
-	///  or in textual repr: getSponsoringRateLimit(address)
-	function getSponsoringRateLimit(address contractAddress)
-		public
-		view
-		returns (uint32)
-	{
+	/// @dev EVM selector for this function is: 0xf29694d8,
+	///  or in textual repr: sponsoringRateLimit(address)
+	function sponsoringRateLimit(address contractAddress) public view returns (uint32) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
@@ -194,9 +167,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @dev Only contract owner can change this setting
 	/// @dev EVM selector for this function is: 0x77b6c908,
 	///  or in textual repr: setSponsoringRateLimit(address,uint32)
-	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
-		public
-	{
+	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit) public {
 		require(false, stub_error);
 		contractAddress;
 		rateLimit;
@@ -211,9 +182,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @dev Only contract owner can change this setting
 	/// @dev EVM selector for this function is: 0x03aed665,
 	///  or in textual repr: setSponsoringFeeLimit(address,uint256)
-	function setSponsoringFeeLimit(address contractAddress, uint256 feeLimit)
-		public
-	{
+	function setSponsoringFeeLimit(address contractAddress, uint256 feeLimit) public {
 		require(false, stub_error);
 		contractAddress;
 		feeLimit;
@@ -224,13 +193,9 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @param contractAddress Contract to get sponsoring fee limit of
 	/// @return uint256 Maximum amount of fee that could be spent by single
 	///  transaction
-	/// @dev EVM selector for this function is: 0xc3fdc9ee,
-	///  or in textual repr: getSponsoringFeeLimit(address)
-	function getSponsoringFeeLimit(address contractAddress)
-		public
-		view
-		returns (uint256)
-	{
+	/// @dev EVM selector for this function is: 0x75b73606,
+	///  or in textual repr: sponsoringFeeLimit(address)
+	function sponsoringFeeLimit(address contractAddress) public view returns (uint256) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
@@ -244,11 +209,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return bool Is specified users exists in contract allowlist
 	/// @dev EVM selector for this function is: 0x5c658165,
 	///  or in textual repr: allowed(address,address)
-	function allowed(address contractAddress, address user)
-		public
-		view
-		returns (bool)
-	{
+	function allowed(address contractAddress, address user) public view returns (bool) {
 		require(false, stub_error);
 		contractAddress;
 		user;
@@ -284,11 +245,7 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return bool Is specified contract has allowlist access enabled
 	/// @dev EVM selector for this function is: 0xc772ef6c,
 	///  or in textual repr: allowlistEnabled(address)
-	function allowlistEnabled(address contractAddress)
-		public
-		view
-		returns (bool)
-	{
+	function allowlistEnabled(address contractAddress) public view returns (bool) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;

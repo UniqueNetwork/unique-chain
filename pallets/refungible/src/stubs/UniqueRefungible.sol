@@ -10,11 +10,7 @@ contract Dummy {
 }
 
 contract ERC165 is Dummy {
-	function supportsInterface(bytes4 interfaceID)
-		external
-		view
-		returns (bool)
-	{
+	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
 		interfaceID;
 		return true;
@@ -85,11 +81,7 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @return Property value bytes
 	/// @dev EVM selector for this function is: 0x7228c327,
 	///  or in textual repr: property(uint256,string)
-	function property(uint256 tokenId, string memory key)
-		public
-		view
-		returns (bytes memory)
-	{
+	function property(uint256 tokenId, string memory key) public view returns (bytes memory) {
 		require(false, stub_error);
 		tokenId;
 		key;
@@ -99,7 +91,7 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x9f70d4e0
+/// @dev the ERC-165 identifier for this interface is 0x47dbc105
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -107,9 +99,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param value Propery value.
 	/// @dev EVM selector for this function is: 0x2f073f66,
 	///  or in textual repr: setCollectionProperty(string,bytes)
-	function setCollectionProperty(string memory key, bytes memory value)
-		public
-	{
+	function setCollectionProperty(string memory key, bytes memory value) public {
 		require(false, stub_error);
 		key;
 		value;
@@ -135,11 +125,7 @@ contract Collection is Dummy, ERC165 {
 	/// @return bytes The property corresponding to the key.
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
-	function collectionProperty(string memory key)
-		public
-		view
-		returns (bytes memory)
-	{
+	function collectionProperty(string memory key) public view returns (bytes memory) {
 		require(false, stub_error);
 		key;
 		dummy;
@@ -172,6 +158,7 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
 	///  or in textual repr: hasCollectionPendingSponsor()
 	function hasCollectionPendingSponsor() public view returns (bool) {
@@ -201,9 +188,9 @@ contract Collection is Dummy, ERC165 {
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	/// @dev EVM selector for this function is: 0xb66bbc14,
-	///  or in textual repr: getCollectionSponsor()
-	function getCollectionSponsor() public view returns (Tuple17 memory) {
+	/// @dev EVM selector for this function is: 0x6ec0a9f1,
+	///  or in textual repr: collectionSponsor()
+	function collectionSponsor() public view returns (Tuple17 memory) {
 		require(false, stub_error);
 		dummy;
 		return Tuple17(0x0000000000000000000000000000000000000000, 0);
@@ -311,9 +298,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param collections Addresses of collections that will be available for nesting.
 	/// @dev EVM selector for this function is: 0x64872396,
 	///  or in textual repr: setCollectionNesting(bool,address[])
-	function setCollectionNesting(bool enable, address[] memory collections)
-		public
-	{
+	function setCollectionNesting(bool enable, address[] memory collections) public {
 		require(false, stub_error);
 		enable;
 		collections;
@@ -430,9 +415,9 @@ contract Collection is Dummy, ERC165 {
 	/// @return `Fungible` or `NFT` or `ReFungible`
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
-	function uniqueCollectionType() public returns (string memory) {
+	function uniqueCollectionType() public view returns (string memory) {
 		require(false, stub_error);
-		dummy = 0;
+		dummy;
 		return "";
 	}
 
@@ -607,10 +592,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenIds IDs of the minted RFTs
 	/// @dev EVM selector for this function is: 0x44a9945e,
 	///  or in textual repr: mintBulk(address,uint256[])
-	function mintBulk(address to, uint256[] memory tokenIds)
-		public
-		returns (bool)
-	{
+	function mintBulk(address to, uint256[] memory tokenIds) public returns (bool) {
 		require(false, stub_error);
 		to;
 		tokenIds;
@@ -625,10 +607,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	/// @dev EVM selector for this function is: 0x36543006,
 	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	function mintBulkWithTokenURI(address to, Tuple8[] memory tokens)
-		public
-		returns (bool)
-	{
+	function mintBulkWithTokenURI(address to, Tuple8[] memory tokens) public returns (bool) {
 		require(false, stub_error);
 		to;
 		tokens;
@@ -675,11 +654,7 @@ contract ERC721Enumerable is Dummy, ERC165 {
 	/// Not implemented
 	/// @dev EVM selector for this function is: 0x2f745c59,
 	///  or in textual repr: tokenOfOwnerByIndex(address,uint256)
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		public
-		view
-		returns (uint256)
-	{
+	function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
 		index;
@@ -740,21 +715,9 @@ contract ERC721Metadata is Dummy, ERC165 {
 
 /// @dev inlined interface
 contract ERC721Events {
-	event Transfer(
-		address indexed from,
-		address indexed to,
-		uint256 indexed tokenId
-	);
-	event Approval(
-		address indexed owner,
-		address indexed approved,
-		uint256 indexed tokenId
-	);
-	event ApprovalForAll(
-		address indexed owner,
-		address indexed operator,
-		bool approved
-	);
+	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+	event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+	event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
 
 /// @title ERC-721 Non-Fungible Token Standard
@@ -880,11 +843,7 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 	/// @dev Not implemented
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
-	function isApprovedForAll(address owner, address operator)
-		public
-		view
-		returns (address)
-	{
+	function isApprovedForAll(address owner, address operator) public view returns (address) {
 		require(false, stub_error);
 		owner;
 		operator;
