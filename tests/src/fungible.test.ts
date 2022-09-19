@@ -15,18 +15,18 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {U128_MAX} from './util/helpers';
 import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
-// todo:playgrounds get rid of globals
-let alice: IKeyringPair;
-let bob: IKeyringPair;
+const U128_MAX = (1n << 128n) - 1n;
 
 describe('integration test: Fungible functionality:', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
 
@@ -82,7 +82,7 @@ describe('integration test: Fungible functionality:', () => {
     expect(await collection.getBalance({Substrate: bob.address})).to.be.equal(60n);
     expect(await collection.getBalance(ethAcc)).to.be.equal(140n);
 
-    await expect(collection.transfer(alice, {Substrate: bob.address}, 350n)).to.eventually.be.rejected;
+    await expect(collection.transfer(alice, {Substrate: bob.address}, 350n)).to.eventually.be.rejectedWith(/common\.TokenValueTooLow/);
   });
 
   itSub('Tokens multiple creation', async ({helper}) => {
