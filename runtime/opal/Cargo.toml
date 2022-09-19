@@ -125,7 +125,7 @@ std = [
     "orml-vesting/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'scheduler', 'rmrk', 'app-promotion']
+opal-runtime = ['refungible', 'rmrk', 'app-promotion']
 
 refungible = []
 scheduler = []
