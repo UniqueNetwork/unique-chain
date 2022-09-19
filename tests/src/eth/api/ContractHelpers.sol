@@ -15,10 +15,7 @@ interface ERC165 is Dummy {
 /// @dev inlined interface
 interface ContractHelpersEvents {
 	event ContractSponsorSet(address indexed contractAddress, address sponsor);
-	event ContractSponsorshipConfirmed(
-		address indexed contractAddress,
-		address sponsor
-	);
+	event ContractSponsorshipConfirmed(address indexed contractAddress, address sponsor);
 	event ContractSponsorRemoved(address indexed contractAddress);
 }
 
@@ -34,10 +31,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return address Owner of contract
 	/// @dev EVM selector for this function is: 0x5152b14c,
 	///  or in textual repr: contractOwner(address)
-	function contractOwner(address contractAddress)
-		external
-		view
-		returns (address);
+	function contractOwner(address contractAddress) external view returns (address);
 
 	/// Set sponsor.
 	/// @param contractAddress Contract for which a sponsor is being established.
@@ -75,10 +69,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x743fc745,
 	///  or in textual repr: getSponsor(address)
-	function getSponsor(address contractAddress)
-		external
-		view
-		returns (Tuple0 memory);
+	function getSponsor(address contractAddress) external view returns (Tuple0 memory);
 
 	/// Check tat contract has confirmed sponsor.
 	///
@@ -94,17 +85,11 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return **true** if contract has pending sponsor.
 	/// @dev EVM selector for this function is: 0x39b9b242,
 	///  or in textual repr: hasPendingSponsor(address)
-	function hasPendingSponsor(address contractAddress)
-		external
-		view
-		returns (bool);
+	function hasPendingSponsor(address contractAddress) external view returns (bool);
 
 	/// @dev EVM selector for this function is: 0x6027dc61,
 	///  or in textual repr: sponsoringEnabled(address)
-	function sponsoringEnabled(address contractAddress)
-		external
-		view
-		returns (bool);
+	function sponsoringEnabled(address contractAddress) external view returns (bool);
 
 	/// @dev EVM selector for this function is: 0xfde8a560,
 	///  or in textual repr: setSponsoringMode(address,uint8)
@@ -115,10 +100,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return uint32 Amount of blocks between two sponsored transactions
 	/// @dev EVM selector for this function is: 0x610cfabd,
 	///  or in textual repr: getSponsoringRateLimit(address)
-	function getSponsoringRateLimit(address contractAddress)
-		external
-		view
-		returns (uint32);
+	function getSponsoringRateLimit(address contractAddress) external view returns (uint32);
 
 	/// Set contract sponsoring rate limit
 	/// @dev Sponsoring rate limit - is a minimum amount of blocks that should
@@ -128,8 +110,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @dev Only contract owner can change this setting
 	/// @dev EVM selector for this function is: 0x77b6c908,
 	///  or in textual repr: setSponsoringRateLimit(address,uint32)
-	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit)
-		external;
+	function setSponsoringRateLimit(address contractAddress, uint32 rateLimit) external;
 
 	/// Set contract sponsoring fee limit
 	/// @dev Sponsoring fee limit - is maximum fee that could be spent by
@@ -139,8 +120,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @dev Only contract owner can change this setting
 	/// @dev EVM selector for this function is: 0x03aed665,
 	///  or in textual repr: setSponsoringFeeLimit(address,uint256)
-	function setSponsoringFeeLimit(address contractAddress, uint256 feeLimit)
-		external;
+	function setSponsoringFeeLimit(address contractAddress, uint256 feeLimit) external;
 
 	/// Get current contract sponsoring fee limit
 	/// @param contractAddress Contract to get sponsoring fee limit of
@@ -148,10 +128,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	///  transaction
 	/// @dev EVM selector for this function is: 0xc3fdc9ee,
 	///  or in textual repr: getSponsoringFeeLimit(address)
-	function getSponsoringFeeLimit(address contractAddress)
-		external
-		view
-		returns (uint256);
+	function getSponsoringFeeLimit(address contractAddress) external view returns (uint256);
 
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included
@@ -160,10 +137,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return bool Is specified users exists in contract allowlist
 	/// @dev EVM selector for this function is: 0x5c658165,
 	///  or in textual repr: allowed(address,address)
-	function allowed(address contractAddress, address user)
-		external
-		view
-		returns (bool);
+	function allowed(address contractAddress, address user) external view returns (bool);
 
 	/// Toggle user presence in contract allowlist
 	/// @param contractAddress Contract to change allowlist of
@@ -187,10 +161,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return bool Is specified contract has allowlist access enabled
 	/// @dev EVM selector for this function is: 0xc772ef6c,
 	///  or in textual repr: allowlistEnabled(address)
-	function allowlistEnabled(address contractAddress)
-		external
-		view
-		returns (bool);
+	function allowlistEnabled(address contractAddress) external view returns (bool);
 
 	/// Toggle contract allowlist access
 	/// @param contractAddress Contract to change allowlist access of
