@@ -158,7 +158,7 @@ impl Parse for IsList {
 				parenthesized!(contents in input);
 				let input = contents;
 
-				loop {
+				while !input.is_empty() {
 					let lookahead = input.lookahead1();
 					if lookahead.peek(Token![if]) {
 						input.parse::<Token![if]>()?;
@@ -181,16 +181,10 @@ impl Parse for IsList {
 						if via.replace((ty, method)).is_some() {
 							return Err(syn::Error::new(input.span(), "via is already set"));
 						}
-					} else if input.is_empty() {
-						break;
-					} else {
-						return Err(lookahead.error());
-					}
-
-					if input.peek(Token![,]) {
+					} else if input.peek(Token![,]) {
 						input.parse::<Token![,]>()?;
 					} else {
-						break;
+						return Err(lookahead.error());
 					}
 				}
 			} else if lookahead.peek(Token![,]) || input.is_empty() {
