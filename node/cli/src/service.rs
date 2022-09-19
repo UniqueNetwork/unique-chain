@@ -787,7 +787,7 @@ where
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	Ok(sc_consensus_manual_seal::import_queue(
-		Box::new(client.clone()),
+		Box::new(client),
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 	))
@@ -883,7 +883,7 @@ where
 
 	let collator = config.role.is_authority();
 
-	let select_chain = maybe_select_chain.clone();
+	let select_chain = maybe_select_chain;
 
 	if collator {
 		let block_import =
@@ -994,7 +994,7 @@ where
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
 	let rpc_network = network.clone();
-	let rpc_frontier_backend = frontier_backend.clone();
+	let rpc_frontier_backend = frontier_backend;
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
 			backend: rpc_frontier_backend.clone(),

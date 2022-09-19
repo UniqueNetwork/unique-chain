@@ -441,6 +441,7 @@ macro_rules! pass_method {
 		$runtime_api_macro:ident
 		$(; changed_in $ver:expr, $changed_method_name:ident ($($changed_name:expr), * $(,)?) => $fixer:expr)*
 	) => {
+		#[allow(clippy::redundant_closure_call)]
 		fn $method_name(
 			&self,
 			$(

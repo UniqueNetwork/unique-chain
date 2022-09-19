@@ -667,7 +667,7 @@ decl_module! {
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `owner`: Address of the initial owner of the tokens.
 		/// * `items_data`: Vector of data describing each item to be created.
-		#[weight = T::CommonWeightInfo::create_multiple_items(&items_data)]
+		#[weight = T::CommonWeightInfo::create_multiple_items(items_data)]
 		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -832,7 +832,7 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `data`: Explicit item creation data.
-		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
+		#[weight = T::CommonWeightInfo::create_multiple_items_ex(data)]
 		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
@@ -1032,7 +1032,7 @@ decl_module! {
 			target_collection.check_is_owner_or_admin(&sender)?;
 			let old_limit = &target_collection.limits;
 
-			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
+			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), old_limit, new_limit)?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionLimitSet(
 				collection_id
@@ -1065,7 +1065,7 @@ decl_module! {
 			target_collection.check_is_owner_or_admin(&sender)?;
 			let old_limit = &target_collection.permissions;
 
-			target_collection.permissions = <PalletCommon<T>>::clamp_permissions(target_collection.mode.clone(), &old_limit, new_permission)?;
+			target_collection.permissions = <PalletCommon<T>>::clamp_permissions(target_collection.mode.clone(), old_limit, new_permission)?;
 
 			<Pallet<T>>::deposit_event(Event::<T>::CollectionPermissionSet(
 				collection_id

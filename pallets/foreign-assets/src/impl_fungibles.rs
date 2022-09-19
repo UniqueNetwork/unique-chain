@@ -61,7 +61,7 @@ where
 					Err(_) => return Zero::zero(),
 				};
 				let collection = FungibleHandle::cast(collection_handle);
-				Self::Balance::try_from(collection.total_supply()).unwrap_or(Zero::zero())
+				Self::Balance::try_from(collection.total_supply()).unwrap_or_else(|_| Zero::zero())
 			}
 		}
 	}
@@ -113,7 +113,7 @@ where
 				Self::Balance::try_from(
 					collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId(0)),
 				)
-				.unwrap_or(Zero::zero())
+				.unwrap_or_else(|_| Zero::zero())
 			}
 		}
 	}
@@ -283,7 +283,6 @@ where
 					who,
 					amount.into(),
 				)
-				.into()
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::mint_into(
@@ -291,7 +290,6 @@ where
 					who,
 					amount.into(),
 				)
-				.into()
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
@@ -378,7 +376,7 @@ where
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: true };
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible slash");
-		Ok(Self::burn_from(asset, who, amount)?)
+		Self::burn_from(asset, who, amount)
 	}
 }
 

@@ -26,7 +26,7 @@
 //!
 //! * `start_inflation` - This method sets the inflation start date. Can be only called once.
 //! Inflation start block can be backdated and will catch up. The method will create Treasury
-//!	account if it does not exist and perform the first inflation deposit.
+//! account if it does not exist and perform the first inflation deposit.
 
 // #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]

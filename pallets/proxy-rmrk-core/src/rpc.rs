@@ -80,7 +80,7 @@ pub fn nft_by_id<T: Config>(
 	};
 
 	Ok(Some(RmrkInstanceInfo {
-		owner: owner,
+		owner,
 		royalty: <Pallet<T>>::get_nft_property_decoded(
 			collection_id,
 			nft_id,

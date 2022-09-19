@@ -264,7 +264,7 @@ where
 		self.recorder().consume_sstore()?;
 
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::set_sponsoring_fee_limit(contract_address, fee_limit.into())
+		<Pallet<T>>::set_sponsoring_fee_limit(contract_address, fee_limit)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}

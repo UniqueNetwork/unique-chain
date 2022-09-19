@@ -65,7 +65,7 @@ mod pallet {
 			origin: OriginFor<T>,
 			coeff: Option<u32>,
 		) -> DispatchResult {
-			let _sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 			if let Some(coeff) = coeff {
 				<WeightToFeeCoefficientOverride<T>>::set(coeff);
 			} else {
@@ -79,7 +79,7 @@ mod pallet {
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
 		) -> DispatchResult {
-			let _sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 			if let Some(coeff) = coeff {
 				<MinGasPriceOverride<T>>::set(coeff);
 			} else {

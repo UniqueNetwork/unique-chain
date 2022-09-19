@@ -629,6 +629,8 @@ impl<T: Config> Pallet<T> {
 					..
 				} => {
 					//TODO: investigate threats during public minting.
+
+					#[allow(clippy::if_same_then_else)]
 					if is_token_create && (collection_admin || token_owner) && value.is_some() {
 						// Pass
 					} else if collection_admin && is_collection_admin() {
@@ -886,7 +888,6 @@ impl<T: Config> Pallet<T> {
 			(collection.id, token),
 			ItemData {
 				owner: to.clone(),
-				..token_data
 			},
 		);
 
@@ -1251,6 +1252,7 @@ impl<T: Config> Pallet<T> {
 		#[cfg(feature = "runtime-benchmarks")]
 		let permissive = nesting.permissive;
 
+		#[allow(clippy::if_same_then_else)]
 		if permissive {
 			// Pass
 		} else if nesting.token_owner

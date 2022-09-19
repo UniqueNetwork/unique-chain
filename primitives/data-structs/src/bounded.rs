@@ -63,7 +63,7 @@ where
 	V: fmt::Debug,
 {
 	use core::fmt::Debug;
-	(&v as &Vec<V>).fmt(f)
+	(v as &Vec<V>).fmt(f)
 }
 
 #[cfg(feature = "serde1")]
@@ -114,7 +114,7 @@ where
 	V: fmt::Debug,
 {
 	use core::fmt::Debug;
-	(&v as &BTreeMap<K, V>).fmt(f)
+	(v as &BTreeMap<K, V>).fmt(f)
 }
 
 #[cfg(feature = "serde1")]
@@ -157,5 +157,5 @@ where
 	K: fmt::Debug + Ord,
 {
 	use core::fmt::Debug;
-	(&v as &BTreeSet<K>).fmt(f)
+	(v as &BTreeSet<K>).fmt(f)
 }

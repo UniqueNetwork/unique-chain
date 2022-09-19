@@ -73,7 +73,7 @@
 //!
 //! - [`WithRecorder`](pallet_evm_coder_substrate::WithRecorder): Trait for EVM support
 //! - [`CommonCollectionOperations`](pallet_common::CommonCollectionOperations): Functions for dealing with collections
-//!	- [`CommonWeightInfo`](pallet_common::CommonWeightInfo): Functions for retrieval of transaction weight
+//! - [`CommonWeightInfo`](pallet_common::CommonWeightInfo): Functions for retrieval of transaction weight
 //! - [`CommonEvmHandler`](pallet_common::erc::CommonEvmHandler): Function for handling EVM runtime calls
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -638,7 +638,7 @@ impl<T: Config> Pallet<T> {
 	/// Transfer fungible tokens from one account to another.
 	/// Same as the [`transfer`][`Pallet::transfer`] but spender doesn't needs to be an owner of the token pieces.
 	/// The owner should set allowance for the spender to transfer pieces.
-	///	See [`set_allowance`][`Pallet::set_allowance`] for more details.
+	/// See [`set_allowance`][`Pallet::set_allowance`] for more details.
 
 	pub fn transfer_from(
 		collection: &FungibleHandle<T>,
@@ -682,7 +682,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	///	Creates fungible token.
+	/// Creates fungible token.
 	///
 	/// The sender should be the owner/admin of the collection or collection should be configured
 	/// to allow public minting.
@@ -703,7 +703,7 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	///	Creates fungible token.
+	/// Creates fungible token.
 	///
 	/// - `data`: Contains user who will become the owners of the tokens and amount
 	///   of tokens he will receive.

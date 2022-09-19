@@ -81,7 +81,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "local" => Box::new(chain_spec::local_testnet_config()),
 		path => {
 			let path = std::path::PathBuf::from(path);
-			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(path.clone())?)
+			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(path)?)
 				as Box<dyn sc_service::ChainSpec>;
 
 			match chain_spec.runtime_id() {

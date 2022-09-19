@@ -261,7 +261,7 @@ impl<T: Config> Pallet<T> {
 		let handle = <CollectionHandle<T>>::try_get(collection)?;
 		let dispatch = T::CollectionDispatch::dispatch(handle);
 		let dispatch = dispatch.as_dyn();
-		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
+		dispatch.burn_item_recursively(from, token, self_budget, breadth_budget)
 	}
 
 	/// Check if `token` indirectly owned by `user`

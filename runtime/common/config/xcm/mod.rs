@@ -111,6 +111,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
+#[allow(clippy::result_unit_err)]
 pub trait TryPass {
 	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()>;
 }

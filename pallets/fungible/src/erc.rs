@@ -142,7 +142,7 @@ impl<T: Config> FungibleHandle<T> {
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+		<Pallet<T>>::create_item(self, &caller, (to, amount), &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -187,7 +187,7 @@ impl<T: Config> FungibleHandle<T> {
 			})
 			.collect::<Result<_>>()?;
 
-		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
+		<Pallet<T>>::create_multiple_items(self, &caller, amounts, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}

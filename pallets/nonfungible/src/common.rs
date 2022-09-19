@@ -428,7 +428,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	/// Returns token owners.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
-		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
+		self.token_owner(token).map_or_else(Vec::new, |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {

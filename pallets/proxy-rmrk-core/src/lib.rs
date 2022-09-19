@@ -544,6 +544,7 @@ pub mod pallet {
 		/// - `transferable`: Can this NFT be transferred? Cannot be changed.
 		/// - `resources`: Resource data to be added to the NFT immediately after minting.
 		#[pallet::weight(<SelfWeightOf<T>>::mint_nft(resources.as_ref().map(|r| r.len() as u32).unwrap_or(0)))]
+		#[allow(clippy::too_many_arguments)]
 		pub fn mint_nft(
 			origin: OriginFor<T>,
 			owner: Option<T::AccountId>,
@@ -557,7 +558,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
-			let owner = owner.unwrap_or(sender.clone());
+			let owner = owner.unwrap_or_else(|| sender.clone());
 			let cross_owner = T::CrossAccountId::from_sub(owner.clone());
 
 			let collection = Self::get_typed_nft_collection(
@@ -680,7 +681,7 @@ pub mod pallet {
 			rmrk_nft_id: RmrkNftId,
 			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
@@ -805,7 +806,7 @@ pub mod pallet {
 			rmrk_nft_id: RmrkNftId,
 			new_owner: RmrkAccountIdOrCollectionNftTuple<T::AccountId>,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 			let cross_sender = T::CrossAccountId::from_sub(sender.clone());
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
@@ -1221,7 +1222,7 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource: RmrkBasicResource,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let collection =
@@ -1263,7 +1264,7 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource: RmrkComposableResource,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let collection =
@@ -1325,7 +1326,7 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource: RmrkSlotResource,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let collection =
@@ -1366,7 +1367,7 @@ pub mod pallet {
 			nft_id: RmrkNftId,
 			resource_id: RmrkResourceId,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = ensure_signed(origin)?;
 
 			let collection_id = Self::unique_collection_id(rmrk_collection_id)?;
 			let collection =
@@ -1510,7 +1511,7 @@ impl<T: Config> Pallet<T> {
 
 		ensure!(
 			<PalletStructure<T>>::check_indirectly_owned(
-				sender.clone(),
+				sender,
 				collection_id,
 				token_id,
 				None,
@@ -1685,7 +1686,7 @@ impl<T: Config> Pallet<T> {
 			collection_id,
 			nft_id,
 			RMRK_SCOPE,
-			resource_id_key.clone(),
+			resource_id_key,
 		))
 		.ok_or(<Error<T>>::ResourceDoesntExist)?;
 

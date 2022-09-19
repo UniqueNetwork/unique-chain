@@ -70,7 +70,7 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 						let token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_set_token_property::<T>(
 							&collection,
-							&who,
+							who,
 							&token_id,
 							key.len() + value.len(),
 						)
@@ -80,7 +80,7 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 						ERC721UniqueExtensionsCall::Transfer { token_id, .. },
 					) => {
 						let token_id: TokenId = token_id.try_into().ok()?;
-						withdraw_transfer::<T>(&collection, &who, &token_id).map(|()| sponsor)
+						withdraw_transfer::<T>(&collection, who, &token_id).map(|()| sponsor)
 					}
 					UniqueNFTCall::ERC721Mintable(
 						ERC721MintableCall::Mint { token_id, .. }
@@ -89,7 +89,7 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 						let _token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_create_item::<T>(
 							&collection,
-							&who,
+							who,
 							&CreateItemData::NFT(CreateNftData::default()),
 						)
 						.map(|()| sponsor)

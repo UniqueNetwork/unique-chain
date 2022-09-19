@@ -407,7 +407,7 @@ where
 				permissions.nesting = Some(nesting);
 			}
 			true => {
-				let mut bv = OwnerRestrictedSet::new();
+				let mut bv = OwnerRestrictedSet::default();
 				for i in collections {
 					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
 						Error::Revert("Can't convert address into collection id".into())

@@ -241,7 +241,7 @@ where
 				withdraw_set_token_property(
 					&collection,
 					&T::CrossAccountId::from_sub(who.clone()),
-					&token_id,
+					token_id,
 					// No overflow may happen, as data larger than usize can't reach here
 					properties.iter().map(|p| p.key.len() + p.value.len()).sum(),
 				)

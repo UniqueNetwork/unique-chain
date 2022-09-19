@@ -718,7 +718,7 @@ impl CollectionPermissions {
 type OwnerRestrictedSetInner = BoundedBTreeSet<CollectionId, ConstU32<16>>;
 
 /// Wraper for collections set allowing nest.
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
+#[derive(Encode, Decode, Clone, PartialEq, Default, TypeInfo, MaxEncodedLen, Derivative)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derivative(Debug)]
 pub struct OwnerRestrictedSet(
@@ -727,12 +727,6 @@ pub struct OwnerRestrictedSet(
 	pub OwnerRestrictedSetInner,
 );
 
-impl OwnerRestrictedSet {
-	/// Create new set.
-	pub fn new() -> Self {
-		Self(Default::default())
-	}
-}
 impl core::ops::Deref for OwnerRestrictedSet {
 	type Target = OwnerRestrictedSetInner;
 	fn deref(&self) -> &Self::Target {
@@ -1012,9 +1006,9 @@ pub struct Property {
 	pub value: PropertyValue,
 }
 
-impl Into<(PropertyKey, PropertyValue)> for Property {
-	fn into(self) -> (PropertyKey, PropertyValue) {
-		(self.key, self.value)
+impl From<Property> for (PropertyKey, PropertyValue) {
+	fn from(property: Property) -> Self {
+		(property.key, property.value)
 	}
 }
 
@@ -1030,9 +1024,9 @@ pub struct PropertyKeyPermission {
 	pub permission: PropertyPermission,
 }
 
-impl Into<(PropertyKey, PropertyPermission)> for PropertyKeyPermission {
-	fn into(self) -> (PropertyKey, PropertyPermission) {
-		(self.key, self.permission)
+impl From<PropertyKeyPermission> for (PropertyKey, PropertyPermission) {
+	fn from(prop_key_perm: PropertyKeyPermission) -> Self {
+		(prop_key_perm.key, prop_key_perm.permission)
 	}
 }
 

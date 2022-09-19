@@ -82,8 +82,8 @@ use serde::{Deserialize, Serialize};
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum NativeCurrency {
-	Here = 0,
-	Parent = 1,
+	Here = 0_isize,
+	Parent = 1_isize,
 }
 
 #[derive(
@@ -290,7 +290,7 @@ pub mod module {
 			location: Box<VersionedMultiLocation>,
 			metadata: Box<AssetMetadata<BalanceOf<T>>>,
 		) -> DispatchResult {
-			T::RegisterOrigin::ensure_origin(origin.clone())?;
+			T::RegisterOrigin::ensure_origin(origin)?;
 
 			let location: MultiLocation = (*location)
 				.try_into()

@@ -364,8 +364,8 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &from)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &from)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -439,8 +439,8 @@ impl<T: Config> RefungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token = token_id.try_into()?;
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::burn(self, &caller, token, balance).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
@@ -476,7 +476,7 @@ impl<T: Config> RefungibleHandle<T> {
 			return Err("item id should be next".into());
 		}
 
-		let users = [(to.clone(), 1)]
+		let users = [(to, 1)]
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
@@ -542,7 +542,7 @@ impl<T: Config> RefungibleHandle<T> {
 			})
 			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
 
-		let users = [(to.clone(), 1)]
+		let users = [(to, 1)]
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
@@ -623,8 +623,8 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -647,8 +647,8 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::burn_from(self, &caller, &from, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -688,7 +688,7 @@ impl<T: Config> RefungibleHandle<T> {
 			}
 			expected_index = expected_index.checked_add(1).ok_or("item id overflow")?;
 		}
-		let users = [(to.clone(), 1)]
+		let users = [(to, 1)]
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
@@ -730,7 +730,7 @@ impl<T: Config> RefungibleHandle<T> {
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut data = Vec::with_capacity(tokens.len());
-		let users: BoundedBTreeMap<_, _, _> = [(to.clone(), 1)]
+		let users: BoundedBTreeMap<_, _, _> = [(to, 1)]
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
 			.try_into()

@@ -30,11 +30,11 @@
 //!  
 //!
 //! ## Interface
-//!	The pallet provides interfaces for funds, collection/contract operations (see [types] module).
+//! The pallet provides interfaces for funds, collection/contract operations (see [types] module).
 
 //!
 //! ### Dispatchable Functions
-//!	- [`set_admin_address`][`Pallet::set_admin_address`] - sets an address as the the admin.
+//! - [`set_admin_address`][`Pallet::set_admin_address`] - sets an address as the the admin.
 //! - [`stake`][`Pallet::stake`] - stakes the amount of native tokens.
 //! - [`unstake`][`Pallet::unstake`] - unstakes all stakes.
 //! - [`sponsor_collection`][`Pallet::sponsor_collection`] - sets the pallet to be the sponsor for the collection.
@@ -573,8 +573,8 @@ pub mod pallet {
 			// this value is set for the stakers to whom the recalculation will be performed
 			let next_recalc_block = current_recalc_block + T::RecalculationInterval::get();
 
-			let mut storage_iterator = Self::get_next_calculated_key()
-				.map_or(Staked::<T>::iter(), |key| Staked::<T>::iter_from(key));
+			let storage_iterator = Self::get_next_calculated_key()
+				.map_or(Staked::<T>::iter(), Staked::<T>::iter_from);
 
 			NextCalculatedRecord::<T>::set(None);
 
@@ -617,10 +617,10 @@ pub mod pallet {
 					Ok(())
 				};
 
-				while let Some((
+				for (
 					(current_id, staked_block),
 					(amount, next_recalc_block_for_stake),
-				)) = storage_iterator.next()
+				) in storage_iterator
 				{
 					if stakers_number == 0 {
 						NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
@@ -691,7 +691,7 @@ impl<T: Config> Pallet<T> {
 			.map_or(<BalanceOf<T>>::default(), |l| l.amount)
 			.checked_add(&amount)
 			.map(|new_lock| Self::set_lock_unchecked(staker, new_lock))
-			.ok_or(ArithmeticError::Overflow.into())
+			.ok_or_else(|| ArithmeticError::Overflow.into())
 	}
 
 	/// Sets the new state of a balance locked by the pallet.
@@ -700,7 +700,7 @@ impl<T: Config> Pallet<T> {
 	/// - `amount`: amount of locked funds.
 	fn set_lock_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
 		if amount.is_zero() {
-			<T::Currency as LockableCurrency<T::AccountId>>::remove_lock(LOCK_IDENTIFIER, &staker);
+			<T::Currency as LockableCurrency<T::AccountId>>::remove_lock(LOCK_IDENTIFIER, staker);
 		} else {
 			<T::Currency as LockableCurrency<T::AccountId>>::set_lock(
 				LOCK_IDENTIFIER,
@@ -792,10 +792,10 @@ impl<T: Config> Pallet<T> {
 	) {
 		let income = Self::calculate_income(base, iters);
 
-		base.checked_add(&income).map(|res| {
+		if let Some(res) = base.checked_add(&income) {
 			<Staked<T>>::insert((staker, staked_block), (res, next_recalc_block));
 			*income_acc += income;
-		});
+		}
 	}
 
 	fn calculate_income<I>(base: I, iters: u32) -> I
@@ -814,7 +814,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_next_calculated_key() -> Option<Vec<u8>> {
-		Self::get_next_calculated_record().map(|key| Staked::<T>::hashed_key_for(key))
+		Self::get_next_calculated_record().map(Staked::<T>::hashed_key_for)
 	}
 }
 

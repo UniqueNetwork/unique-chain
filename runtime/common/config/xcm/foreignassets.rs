@@ -188,7 +188,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 		}
 
 		if let Some(currency_id) =
-			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone())
+			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location)
 		{
 			return Some(currency_id);
 		}
