@@ -17,7 +17,6 @@ export interface ITransactionResult {
       events: {
         phase: any, // {ApplyExtrinsic: number} | 'Initialization',
         event: IEvent;
-        // topics: any[];
       }[];
   },
   moduleError?: string;

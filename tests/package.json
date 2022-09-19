@@ -64,7 +64,6 @@
     "testTransfer": "mocha --timeout 9999999 -r ts-node/register ./**/transfer.test.ts",
     "testBurnItem": "mocha --timeout 9999999 -r ts-node/register ./**/burnItem.test.ts",
     "testAdminTransferAndBurn": "mocha --timeout 9999999 -r ts-node/register ./**/adminTransferAndBurn.test.ts",
-    "testMintModes": "mocha --timeout 9999999 -r ts-node/register ./**/mintModes.test.ts",
     "testSetMintPermission": "mocha --timeout 9999999 -r ts-node/register ./**/setMintPermission.test.ts",
     "testSetPublicAccessMode": "mocha --timeout 9999999 -r ts-node/register ./**/setPublicAccessMode.test.ts",
     "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
