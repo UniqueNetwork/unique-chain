@@ -44,11 +44,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 /// @dev inlined interface
 interface ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
+	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /// @title Standard ERC20 token
@@ -120,16 +116,7 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 	/// @return A uint256 specifying the amount of tokens still available for the spender.
 	/// @dev EVM selector for this function is: 0xdd62ed3e,
 	///  or in textual repr: allowance(address,address)
-	function allowance(address owner, address spender)
-		external
-		view
-		returns (uint256);
+	function allowance(address owner, address spender) external view returns (uint256);
 }
 
-interface UniqueRefungibleToken is
-	Dummy,
-	ERC165,
-	ERC20,
-	ERC20UniqueExtensions,
-	ERC1633
-{}
+interface UniqueRefungibleToken is Dummy, ERC165, ERC20, ERC20UniqueExtensions, ERC1633 {}

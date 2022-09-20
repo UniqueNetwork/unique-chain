@@ -747,6 +747,163 @@ export interface OpalRuntimeOriginCaller extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
+/** @name OrmlTokensAccountData */
+export interface OrmlTokensAccountData extends Struct {
+  readonly free: u128;
+  readonly reserved: u128;
+  readonly frozen: u128;
+}
+
+/** @name OrmlTokensBalanceLock */
+export interface OrmlTokensBalanceLock extends Struct {
+  readonly id: U8aFixed;
+  readonly amount: u128;
+}
+
+/** @name OrmlTokensModuleCall */
+export interface OrmlTokensModuleCall extends Enum {
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: Compact<u128>;
+  } & Struct;
+  readonly isTransferAll: boolean;
+  readonly asTransferAll: {
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly keepAlive: bool;
+  } & Struct;
+  readonly isTransferKeepAlive: boolean;
+  readonly asTransferKeepAlive: {
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: Compact<u128>;
+  } & Struct;
+  readonly isForceTransfer: boolean;
+  readonly asForceTransfer: {
+    readonly source: MultiAddress;
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: Compact<u128>;
+  } & Struct;
+  readonly isSetBalance: boolean;
+  readonly asSetBalance: {
+    readonly who: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly newFree: Compact<u128>;
+    readonly newReserved: Compact<u128>;
+  } & Struct;
+  readonly type: 'Transfer' | 'TransferAll' | 'TransferKeepAlive' | 'ForceTransfer' | 'SetBalance';
+}
+
+/** @name OrmlTokensModuleError */
+export interface OrmlTokensModuleError extends Enum {
+  readonly isBalanceTooLow: boolean;
+  readonly isAmountIntoBalanceFailed: boolean;
+  readonly isLiquidityRestrictions: boolean;
+  readonly isMaxLocksExceeded: boolean;
+  readonly isKeepAlive: boolean;
+  readonly isExistentialDeposit: boolean;
+  readonly isDeadAccount: boolean;
+  readonly isTooManyReserves: boolean;
+  readonly type: 'BalanceTooLow' | 'AmountIntoBalanceFailed' | 'LiquidityRestrictions' | 'MaxLocksExceeded' | 'KeepAlive' | 'ExistentialDeposit' | 'DeadAccount' | 'TooManyReserves';
+}
+
+/** @name OrmlTokensModuleEvent */
+export interface OrmlTokensModuleEvent extends Enum {
+  readonly isEndowed: boolean;
+  readonly asEndowed: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isDustLost: boolean;
+  readonly asDustLost: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly from: AccountId32;
+    readonly to: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isReserved: boolean;
+  readonly asReserved: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnreserved: boolean;
+  readonly asUnreserved: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isReserveRepatriated: boolean;
+  readonly asReserveRepatriated: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly from: AccountId32;
+    readonly to: AccountId32;
+    readonly amount: u128;
+    readonly status: FrameSupportTokensMiscBalanceStatus;
+  } & Struct;
+  readonly isBalanceSet: boolean;
+  readonly asBalanceSet: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly free: u128;
+    readonly reserved: u128;
+  } & Struct;
+  readonly isTotalIssuanceSet: boolean;
+  readonly asTotalIssuanceSet: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: u128;
+  } & Struct;
+  readonly isWithdrawn: boolean;
+  readonly asWithdrawn: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isSlashed: boolean;
+  readonly asSlashed: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly freeAmount: u128;
+    readonly reservedAmount: u128;
+  } & Struct;
+  readonly isDeposited: boolean;
+  readonly asDeposited: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isLockSet: boolean;
+  readonly asLockSet: {
+    readonly lockId: U8aFixed;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isLockRemoved: boolean;
+  readonly asLockRemoved: {
+    readonly lockId: U8aFixed;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+  } & Struct;
+  readonly type: 'Endowed' | 'DustLost' | 'Transfer' | 'Reserved' | 'Unreserved' | 'ReserveRepatriated' | 'BalanceSet' | 'TotalIssuanceSet' | 'Withdrawn' | 'Slashed' | 'Deposited' | 'LockSet' | 'LockRemoved';
+}
+
+/** @name OrmlTokensReserveData */
+export interface OrmlTokensReserveData extends Struct {
+  readonly id: Null;
+  readonly amount: u128;
+}
+
 /** @name OrmlVestingModuleCall */
 export interface OrmlVestingModuleCall extends Enum {
   readonly isClaim: boolean;
@@ -804,6 +961,89 @@ export interface OrmlVestingVestingSchedule extends Struct {
   readonly period: u32;
   readonly periodCount: u32;
   readonly perPeriod: Compact<u128>;
+}
+
+/** @name OrmlXtokensModuleCall */
+export interface OrmlXtokensModuleCall extends Enum {
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: u128;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMultiasset: boolean;
+  readonly asTransferMultiasset: {
+    readonly asset: XcmVersionedMultiAsset;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferWithFee: boolean;
+  readonly asTransferWithFee: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: u128;
+    readonly fee: u128;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMultiassetWithFee: boolean;
+  readonly asTransferMultiassetWithFee: {
+    readonly asset: XcmVersionedMultiAsset;
+    readonly fee: XcmVersionedMultiAsset;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMulticurrencies: boolean;
+  readonly asTransferMulticurrencies: {
+    readonly currencies: Vec<ITuple<[PalletForeignAssetsAssetIds, u128]>>;
+    readonly feeItem: u32;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMultiassets: boolean;
+  readonly asTransferMultiassets: {
+    readonly assets: XcmVersionedMultiAssets;
+    readonly feeItem: u32;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly type: 'Transfer' | 'TransferMultiasset' | 'TransferWithFee' | 'TransferMultiassetWithFee' | 'TransferMulticurrencies' | 'TransferMultiassets';
+}
+
+/** @name OrmlXtokensModuleError */
+export interface OrmlXtokensModuleError extends Enum {
+  readonly isAssetHasNoReserve: boolean;
+  readonly isNotCrossChainTransfer: boolean;
+  readonly isInvalidDest: boolean;
+  readonly isNotCrossChainTransferableCurrency: boolean;
+  readonly isUnweighableMessage: boolean;
+  readonly isXcmExecutionFailed: boolean;
+  readonly isCannotReanchor: boolean;
+  readonly isInvalidAncestry: boolean;
+  readonly isInvalidAsset: boolean;
+  readonly isDestinationNotInvertible: boolean;
+  readonly isBadVersion: boolean;
+  readonly isDistinctReserveForAssetAndFee: boolean;
+  readonly isZeroFee: boolean;
+  readonly isZeroAmount: boolean;
+  readonly isTooManyAssetsBeingSent: boolean;
+  readonly isAssetIndexNonExistent: boolean;
+  readonly isFeeNotEnough: boolean;
+  readonly isNotSupportedMultiLocation: boolean;
+  readonly isMinXcmFeeNotDefined: boolean;
+  readonly type: 'AssetHasNoReserve' | 'NotCrossChainTransfer' | 'InvalidDest' | 'NotCrossChainTransferableCurrency' | 'UnweighableMessage' | 'XcmExecutionFailed' | 'CannotReanchor' | 'InvalidAncestry' | 'InvalidAsset' | 'DestinationNotInvertible' | 'BadVersion' | 'DistinctReserveForAssetAndFee' | 'ZeroFee' | 'ZeroAmount' | 'TooManyAssetsBeingSent' | 'AssetIndexNonExistent' | 'FeeNotEnough' | 'NotSupportedMultiLocation' | 'MinXcmFeeNotDefined';
+}
+
+/** @name OrmlXtokensModuleEvent */
+export interface OrmlXtokensModuleEvent extends Enum {
+  readonly isTransferredMultiAssets: boolean;
+  readonly asTransferredMultiAssets: {
+    readonly sender: AccountId32;
+    readonly assets: XcmV1MultiassetMultiAssets;
+    readonly fee: XcmV1MultiAsset;
+    readonly dest: XcmV1MultiLocation;
+  } & Struct;
+  readonly type: 'TransferredMultiAssets';
 }
 
 /** @name PalletAppPromotionCall */
@@ -1186,7 +1426,8 @@ export interface PalletEvmCoderSubstrateError extends Enum {
 export interface PalletEvmContractHelpersError extends Enum {
   readonly isNoPermission: boolean;
   readonly isNoPendingSponsor: boolean;
-  readonly type: 'NoPermission' | 'NoPendingSponsor';
+  readonly isTooManyMethodsHaveSponsoredLimit: boolean;
+  readonly type: 'NoPermission' | 'NoPendingSponsor' | 'TooManyMethodsHaveSponsoredLimit';
 }
 
 /** @name PalletEvmContractHelpersEvent */
@@ -1262,6 +1503,83 @@ export interface PalletEvmMigrationError extends Enum {
   readonly isAccountNotEmpty: boolean;
   readonly isAccountIsNotMigrating: boolean;
   readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
+}
+
+/** @name PalletForeignAssetsAssetIds */
+export interface PalletForeignAssetsAssetIds extends Enum {
+  readonly isForeignAssetId: boolean;
+  readonly asForeignAssetId: u32;
+  readonly isNativeAssetId: boolean;
+  readonly asNativeAssetId: PalletForeignAssetsNativeCurrency;
+  readonly type: 'ForeignAssetId' | 'NativeAssetId';
+}
+
+/** @name PalletForeignAssetsModuleAssetMetadata */
+export interface PalletForeignAssetsModuleAssetMetadata extends Struct {
+  readonly name: Bytes;
+  readonly symbol: Bytes;
+  readonly decimals: u8;
+  readonly minimalBalance: u128;
+}
+
+/** @name PalletForeignAssetsModuleCall */
+export interface PalletForeignAssetsModuleCall extends Enum {
+  readonly isRegisterForeignAsset: boolean;
+  readonly asRegisterForeignAsset: {
+    readonly owner: AccountId32;
+    readonly location: XcmVersionedMultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isUpdateForeignAsset: boolean;
+  readonly asUpdateForeignAsset: {
+    readonly foreignAssetId: u32;
+    readonly location: XcmVersionedMultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly type: 'RegisterForeignAsset' | 'UpdateForeignAsset';
+}
+
+/** @name PalletForeignAssetsModuleError */
+export interface PalletForeignAssetsModuleError extends Enum {
+  readonly isBadLocation: boolean;
+  readonly isMultiLocationExisted: boolean;
+  readonly isAssetIdNotExists: boolean;
+  readonly isAssetIdExisted: boolean;
+  readonly type: 'BadLocation' | 'MultiLocationExisted' | 'AssetIdNotExists' | 'AssetIdExisted';
+}
+
+/** @name PalletForeignAssetsModuleEvent */
+export interface PalletForeignAssetsModuleEvent extends Enum {
+  readonly isForeignAssetRegistered: boolean;
+  readonly asForeignAssetRegistered: {
+    readonly assetId: u32;
+    readonly assetAddress: XcmV1MultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isForeignAssetUpdated: boolean;
+  readonly asForeignAssetUpdated: {
+    readonly assetId: u32;
+    readonly assetAddress: XcmV1MultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isAssetRegistered: boolean;
+  readonly asAssetRegistered: {
+    readonly assetId: PalletForeignAssetsAssetIds;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isAssetUpdated: boolean;
+  readonly asAssetUpdated: {
+    readonly assetId: PalletForeignAssetsAssetIds;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly type: 'ForeignAssetRegistered' | 'ForeignAssetUpdated' | 'AssetRegistered' | 'AssetUpdated';
+}
+
+/** @name PalletForeignAssetsNativeCurrency */
+export interface PalletForeignAssetsNativeCurrency extends Enum {
+  readonly isHere: boolean;
+  readonly isParent: boolean;
+  readonly type: 'Here' | 'Parent';
 }
 
 /** @name PalletFungibleError */
@@ -2492,7 +2810,7 @@ export interface UpDataStructsCollection extends Struct {
   readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
-  readonly externalCollection: bool;
+  readonly flags: U8aFixed;
 }
 
 /** @name UpDataStructsCollectionLimits */
@@ -2666,6 +2984,7 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
   readonly readOnly: bool;
+  readonly foreign: bool;
 }
 
 /** @name UpDataStructsSponsoringRateLimit */
@@ -3440,6 +3759,15 @@ export interface XcmV2WeightLimit extends Enum {
 
 /** @name XcmV2Xcm */
 export interface XcmV2Xcm extends Vec<XcmV2Instruction> {}
+
+/** @name XcmVersionedMultiAsset */
+export interface XcmVersionedMultiAsset extends Enum {
+  readonly isV0: boolean;
+  readonly asV0: XcmV0MultiAsset;
+  readonly isV1: boolean;
+  readonly asV1: XcmV1MultiAsset;
+  readonly type: 'V0' | 'V1';
+}
 
 /** @name XcmVersionedMultiAssets */
 export interface XcmVersionedMultiAssets extends Enum {

@@ -19,8 +19,8 @@ use crate::{Config, CollectionHandle, Pallet};
 use pallet_evm::account::CrossAccountId;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
-	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
-	CollectionPermissions, NestingPermissions, MAX_COLLECTION_NAME_LENGTH,
+	CollectionMode, CollectionFlags, CreateCollectionData, CollectionId, Property, PropertyKey,
+	PropertyValue, CollectionPermissions, NestingPermissions, MAX_COLLECTION_NAME_LENGTH,
 	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
@@ -116,7 +116,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
+		|owner, data| <Pallet<T>>::init_collection(owner, data, CollectionFlags::default()),
 		|h| h,
 	)
 }

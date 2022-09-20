@@ -35,6 +35,11 @@ use up_common::types::*;
 #[path = "../../common/mod.rs"]
 mod runtime_common;
 
+pub mod xcm_barrier;
+
+#[cfg(test)]
+mod tests;
+
 pub use runtime_common::*;
 
 pub const RUNTIME_NAME: &str = "quartz";

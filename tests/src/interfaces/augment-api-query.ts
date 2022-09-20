@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from '@polkadot/
 import type { BTreeMap, Bytes, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumLog, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletNonfungibleItemData, PalletRefungibleItemData, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletUniqueSchedulerScheduledV3, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpRuntimeDigest, SpTrieStorageProof, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsProperties, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsPropertyPermission, UpDataStructsPropertyScope, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, UpDataStructsTokenChild } from '@polkadot/types/lookup';
+import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumLog, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportWeightsPerDispatchClassU64, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, PalletNonfungibleItemData, PalletRefungibleItemData, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletUniqueSchedulerScheduledV3, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpRuntimeDigest, SpTrieStorageProof, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsProperties, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsPropertyPermission, UpDataStructsPropertyScope, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, UpDataStructsTokenChild, XcmV1MultiLocation } from '@polkadot/types/lookup';
 import type { Observable } from '@polkadot/types/types';
 
 export type __AugmentedQuery<ApiType extends ApiTypes> = AugmentedQuery<ApiType, () => unknown>;
@@ -18,21 +18,41 @@ export type __QueryableStorageEntry<ApiType extends ApiTypes> = QueryableStorage
 declare module '@polkadot/api-base/types/storage' {
   interface AugmentedQueries<ApiType extends ApiTypes> {
     appPromotion: {
+      /**
+       * Stores the `admin` account. Some extrinsics can only be executed if they were signed by `admin`.
+       **/
       admin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Stores a key for record for which the next revenue recalculation would be performed.
        * If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
        **/
       nextCalculatedRecord: AugmentedQuery<ApiType, () => Observable<Option<ITuple<[AccountId32, u32]>>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Stores amount of stakes for an `Account`.
+       * 
+       * * **Key** - Staker account.
+       * * **Value** - Amount of stakes.
+       **/
       pendingUnstake: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Vec<ITuple<[AccountId32, u128]>>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
-       * Amount of tokens staked by account in the blocknumber.
+       * Stores the amount of tokens staked by account in the blocknumber.
+       * 
+       * * **Key1** - Staker account.
+       * * **Key2** - Relay block number when the stake was made.
+       * * **(Balance, BlockNumber)** - Balance of the stake.
+       * The number of the relay block in which we must perform the interest recalculation
        **/
       staked: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<ITuple<[u128, u32]>>, [AccountId32, u32]> & QueryableStorageEntry<ApiType, [AccountId32, u32]>;
       /**
-       * Amount of stakes for an Account
+       * Stores amount of stakes for an `Account`.
+       * 
+       * * **Key** - Staker account.
+       * * **Value** - Amount of stakes.
        **/
       stakesPerAccount: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<u8>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
+      /**
+       * Stores the total staked amount.
+       **/
       totalStaked: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
@@ -245,13 +265,6 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       owner: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<H160>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
       selfSponsoring: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<bool>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
-      /**
-       * Storage for last sponsored block.
-       * 
-       * * **Key1** - contract address.
-       * * **Key2** - sponsored user address.
-       * * **Value** - last sponsored block number.
-       **/
       sponsorBasket: AugmentedQuery<ApiType, (arg1: H160 | string | Uint8Array, arg2: H160 | string | Uint8Array) => Observable<Option<u32>>, [H160, H160]> & QueryableStorageEntry<ApiType, [H160, H160]>;
       /**
        * Store for contract sponsorship state.
@@ -260,6 +273,14 @@ declare module '@polkadot/api-base/types/storage' {
        * * **Value** - sponsorship state.
        **/
       sponsoring: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<UpDataStructsSponsorshipStateBasicCrossAccountIdRepr>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
+      /**
+       * Storage for last sponsored block.
+       * 
+       * * **Key1** - contract address.
+       * * **Key2** - sponsored user address.
+       * * **Value** - last sponsored block number.
+       **/
+      sponsoringFeeLimit: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<BTreeMap<u32, U256>>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
       /**
        * Store for sponsoring mode.
        * 
@@ -284,6 +305,41 @@ declare module '@polkadot/api-base/types/storage' {
     };
     evmMigration: {
       migrationPending: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<bool>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    foreignAssets: {
+      /**
+       * The storages for assets to fungible collection binding
+       * 
+       **/
+      assetBinding: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<u32>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * The storages for AssetMetadatas.
+       * 
+       * AssetMetadatas: map AssetIds => Option<AssetMetadata>
+       **/
+      assetMetadatas: AugmentedQuery<ApiType, (arg: PalletForeignAssetsAssetIds | { ForeignAssetId: any } | { NativeAssetId: any } | string | Uint8Array) => Observable<Option<PalletForeignAssetsModuleAssetMetadata>>, [PalletForeignAssetsAssetIds]> & QueryableStorageEntry<ApiType, [PalletForeignAssetsAssetIds]>;
+      /**
+       * The storages for MultiLocations.
+       * 
+       * ForeignAssetLocations: map ForeignAssetId => Option<MultiLocation>
+       **/
+      foreignAssetLocations: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<XcmV1MultiLocation>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      /**
+       * The storages for CurrencyIds.
+       * 
+       * LocationToCurrencyIds: map MultiLocation => Option<ForeignAssetId>
+       **/
+      locationToCurrencyIds: AugmentedQuery<ApiType, (arg: XcmV1MultiLocation | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u32>>, [XcmV1MultiLocation]> & QueryableStorageEntry<ApiType, [XcmV1MultiLocation]>;
+      /**
+       * Next available Foreign AssetId ID.
+       * 
+       * NextForeignAssetId: ForeignAssetId
+       **/
+      nextForeignAssetId: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/
@@ -739,6 +795,34 @@ declare module '@polkadot/api-base/types/storage' {
        * Current time for the current block.
        **/
       now: AugmentedQuery<ApiType, () => Observable<u64>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    tokens: {
+      /**
+       * The balance of a token type under an account.
+       * 
+       * NOTE: If the total is ever zero, decrease account ref account.
+       * 
+       * NOTE: This is only used in the case that this module is used to store
+       * balances.
+       **/
+      accounts: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: PalletForeignAssetsAssetIds | { ForeignAssetId: any } | { NativeAssetId: any } | string | Uint8Array) => Observable<OrmlTokensAccountData>, [AccountId32, PalletForeignAssetsAssetIds]> & QueryableStorageEntry<ApiType, [AccountId32, PalletForeignAssetsAssetIds]>;
+      /**
+       * Any liquidity locks of a token type under an account.
+       * NOTE: Should only be accessed when setting, changing and freeing a lock.
+       **/
+      locks: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: PalletForeignAssetsAssetIds | { ForeignAssetId: any } | { NativeAssetId: any } | string | Uint8Array) => Observable<Vec<OrmlTokensBalanceLock>>, [AccountId32, PalletForeignAssetsAssetIds]> & QueryableStorageEntry<ApiType, [AccountId32, PalletForeignAssetsAssetIds]>;
+      /**
+       * Named reserves on some account balances.
+       **/
+      reserves: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: PalletForeignAssetsAssetIds | { ForeignAssetId: any } | { NativeAssetId: any } | string | Uint8Array) => Observable<Vec<OrmlTokensReserveData>>, [AccountId32, PalletForeignAssetsAssetIds]> & QueryableStorageEntry<ApiType, [AccountId32, PalletForeignAssetsAssetIds]>;
+      /**
+       * The total issuance of a token type.
+       **/
+      totalIssuance: AugmentedQuery<ApiType, (arg: PalletForeignAssetsAssetIds | { ForeignAssetId: any } | { NativeAssetId: any } | string | Uint8Array) => Observable<u128>, [PalletForeignAssetsAssetIds]> & QueryableStorageEntry<ApiType, [PalletForeignAssetsAssetIds]>;
       /**
        * Generic query
        **/

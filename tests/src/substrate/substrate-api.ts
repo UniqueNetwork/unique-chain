@@ -110,6 +110,9 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
   if (status.isBroadcast) {
     return TransactionStatus.NotReady;
   }
+  if (status.isRetracted) {
+    return TransactionStatus.NotReady;
+  }
   if (status.isInBlock || status.isFinalized) {
     if(events.filter(e => e.event.data.method === 'ExtrinsicFailed').length > 0) {
       return TransactionStatus.Fail;
@@ -148,18 +151,32 @@ export function executeTransaction(api: ApiPromise, sender: IKeyringPair, transa
   });
 }
 
+/**
+ * @deprecated use `executeTransaction` instead
+ */
 export function
 submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
   /* eslint no-async-promise-executor: "off" */
   return new Promise(async (resolve, reject) => {
     try {
-      await transaction.signAndSend(sender, ({events = [], status}) => {
+      await transaction.signAndSend(sender, ({events = [], status, dispatchError}) => {
         const transactionStatus = getTransactionStatus(events, status);
 
         if (transactionStatus === TransactionStatus.Success) {
           resolve(events);
         } else if (transactionStatus === TransactionStatus.Fail) {
-          console.log(`Something went wrong with transaction. Status: ${status}`);
+          let moduleError = null;
+
+          if (dispatchError) {
+            if (dispatchError.isModule) {
+              const modErr = dispatchError.asModule;
+              const errorMeta = dispatchError.registry.findMetaError(modErr);
+
+              moduleError = JSON.stringify(errorMeta, null, 4);
+            }
+          }
+
+          console.log(`Something went wrong with transaction. Status: ${status}\nModule error: ${moduleError}`);
           reject(events);
         }
       });

@@ -56,7 +56,7 @@ describe('evm collection sponsoring', () => {
     await submitTransactionAsync(sponsor, confirmTx);
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
     
-    const sponsorTuple = await collectionEvm.methods.getCollectionSponsor().call({from: owner});
+    const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
     expect(bigIntToSub(api, BigInt(sponsorTuple[1]))).to.be.eq(sponsor.address);
   });
 
@@ -77,7 +77,7 @@ describe('evm collection sponsoring', () => {
     
     await collectionEvm.methods.removeCollectionSponsor().send({from: owner});
     
-    const sponsorTuple = await collectionEvm.methods.getCollectionSponsor().call({from: owner});
+    const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
     expect(sponsorTuple.field_0).to.be.eq('0x0000000000000000000000000000000000000000');
   });
 

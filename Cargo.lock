@@ -697,6 +697,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "bondrewd"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d1660fac8d3acced44dac64453fafedf5aab2de196b932c727e63e4ae42d1cc"
+dependencies = [
+ "bondrewd-derive",
+]
+
+[[package]]
+name = "bondrewd-derive"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "723da0dee1eef38edc021b0793f892bdc024500c6a5b0727a2efe16f0e0a6977"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bounded-vec"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4586,6 +4606,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "logtest"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb3e43a8657c1d64516dcc9db8ca03826a4aceaf89d5ce1b37b59f6ff0e43026"
+dependencies = [
+ "lazy_static",
+ "log",
+]
+
+[[package]]
 name = "lru"
 version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5163,8 +5193,13 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "impl-trait-for-tuples",
  "log",
+ "logtest",
+ "orml-tokens",
+ "orml-traits",
  "orml-vesting",
+ "orml-xtokens",
  "pallet-app-promotion",
  "pallet-aura",
  "pallet-balances",
@@ -5177,6 +5212,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
+ "pallet-foreign-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -5282,6 +5318,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-utilities"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "orml-vesting"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
@@ -5294,6 +5377,41 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "frame-support",
+ "orml-traits",
+ "parity-scale-codec 3.1.5",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
+]
+
+[[package]]
+name = "orml-xtokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.27#377213f750755cc48e80a3131eaae63b5eda8362"
+dependencies = [
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "orml-xcm-support",
+ "pallet-xcm",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -5788,6 +5906,34 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-sponsorship",
+]
+
+[[package]]
+name = "pallet-foreign-assets"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "orml-tokens",
+ "pallet-balances",
+ "pallet-common",
+ "pallet-fungible",
+ "pallet-timestamp",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-data-structs",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -8397,8 +8543,13 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "impl-trait-for-tuples",
  "log",
+ "logtest",
+ "orml-tokens",
+ "orml-traits",
  "orml-vesting",
+ "orml-xtokens",
  "pallet-app-promotion",
  "pallet-aura",
  "pallet-balances",
@@ -8411,6 +8562,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
+ "pallet-foreign-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -12134,7 +12286,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
@@ -12391,8 +12543,13 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
+ "impl-trait-for-tuples",
  "log",
+ "logtest",
+ "orml-tokens",
+ "orml-traits",
  "orml-vesting",
+ "orml-xtokens",
  "pallet-app-promotion",
  "pallet-aura",
  "pallet-balances",
@@ -12405,6 +12562,7 @@ dependencies = [
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
  "pallet-evm-transaction-payment",
+ "pallet-foreign-assets",
  "pallet-fungible",
  "pallet-inflation",
  "pallet-nonfungible",
@@ -12497,6 +12655,7 @@ dependencies = [
 name = "up-data-structs"
 version = "0.2.2"
 dependencies = [
+ "bondrewd",
  "derivative",
  "frame-support",
  "frame-system",

@@ -195,7 +195,7 @@ tokens -> accounts
 xtokens -> transfer
 
 currencyId:
-	ForeingAsset
+	ForeignAsset
 		<TOKEN_ID>
 
 amount:

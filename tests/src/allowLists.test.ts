@@ -24,12 +24,6 @@ const expect = chai.expect;
 
 let donor: IKeyringPair;
 
-before(async () => {
-  await usingPlaygrounds(async (_, privateKey) => {
-    donor = privateKey('//Alice');
-  });
-});
-
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 let charlie: IKeyringPair;
@@ -37,7 +31,8 @@ let charlie: IKeyringPair;
 describe('Integration Test ext. Allow list tests', () => {
 
   before(async () => {
-    await usingPlaygrounds(async (helper) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

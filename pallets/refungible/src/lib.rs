@@ -112,10 +112,10 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionMode, CollectionPropertiesVec,
-	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
-	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	AccessMode, budget::Budget, CollectionId, CollectionMode, CollectionFlags,
+	CollectionPropertiesVec, CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping,
+	MAX_ITEMS_PER_BATCH, MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission,
+	PropertyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
 };
 use frame_support::BoundedBTreeMap;
 use derivative::Derivative;
@@ -375,7 +375,7 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, false)
+		<PalletCommon<T>>::init_collection(owner, data, CollectionFlags::default())
 	}
 
 	/// Destroy RFT collection

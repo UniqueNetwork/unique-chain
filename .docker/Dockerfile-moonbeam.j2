@@ -1,0 +1,41 @@
+# ===== Rust builder =====
+FROM ubuntu:20.04 as rust-builder
+LABEL maintainer="Unique.Network"
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup default {{ RUST_TOOLCHAIN }} && \
+    rustup target list --installed && \
+    rustup show
+RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
+
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
+
+
+# ===== BUILD MOONBEAM =====
+FROM rust-builder as builder-moonbeam-bin
+
+WORKDIR /unique_parachain
+
+RUN git clone -b {{ MOONBEAM_BUILD_BRANCH }} --depth 1 https://github.com/PureStake/moonbeam.git && \
+    cd moonbeam && \
+    cargo build --release
+
+# ===== BIN ======
+
+FROM ubuntu:20.04 as builder-moonbeam
+
+COPY --from=builder-moonbeam-bin /unique_parachain/moonbeam/target/release/moonbeam /unique_parachain/moonbeam/target/release/moonbeam

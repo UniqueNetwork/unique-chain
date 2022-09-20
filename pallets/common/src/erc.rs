@@ -194,7 +194,7 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn get_collection_sponsor(&self) -> Result<(address, uint256)> {
+	fn collection_sponsor(&self) -> Result<(address, uint256)> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
@@ -406,9 +406,9 @@ where
 			true => {
 				let mut bv = OwnerRestrictedSet::new();
 				for i in collections {
-					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or(Error::Revert(
-						"Can't convert address into collection id".into(),
-					))?)
+					bv.try_insert(crate::eth::map_eth_to_id(&i).ok_or_else(|| {
+						Error::Revert("Can't convert address into collection id".into())
+					})?)
 					.map_err(|_| "too many collections")?;
 				}
 				let mut nesting = permissions.nesting().clone();
