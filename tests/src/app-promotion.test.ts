@@ -555,9 +555,8 @@ describe('App promotion', () => {
       const flipper = await helper.eth.deployFlipper(contractOwner);
   
       await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address]);
-      const stopSponsoringResult = await helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address]);
-      expect(stopSponsoringResult.status).to.equal('Fail');
-      expect(stopSponsoringResult.moduleError).to.equal('appPromotion.NoPermission');
+      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address]))
+        .to.be.rejectedWith(/appPromotion\.NoPermission/);
     });
   
     itEth('should not affect a contract which is not sponsored by pallete', async ({helper}) => {
