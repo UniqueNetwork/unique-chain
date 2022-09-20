@@ -30,7 +30,6 @@ import {
   enablePublicMintingExpectSuccess,
   addToAllowListExpectSuccess,
   waitNewBlocks,
-  makeScheduledId,
   normalizeAccountId,
   getTokenOwner,
   getGenericResult,
@@ -410,7 +409,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(priorityChanged!.event.data[2].toString()).to.be.equal(priority.toString());
   });
 
-  itSub.ifWithPallets.only('Prioritized operations executes in valid order', [Pallets.Scheduler], async ({helper}) => {
+  itSub.ifWithPallets('Prioritized operations executes in valid order', [Pallets.Scheduler], async ({helper}) => {
     const [
       scheduledFirstId,
       scheduledSecondId,
@@ -579,119 +578,119 @@ describe.skip('Sponsoring scheduling', () => {
   });
 
   it('Can sponsor scheduling a transaction', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+    // const collectionId = await createCollectionExpectSuccess();
+    // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async api => {
-      const scheduledId = await makeScheduledId();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    // await usingApi(async api => {
+    //   const scheduledId = await makeScheduledId();
+    //   const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
-      const bobBalanceBefore = await getFreeBalance(bob);
-      const waitForBlocks = 4;
-      // no need to wait to check, fees must be deducted on scheduling, immediately
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 0, waitForBlocks, scheduledId);
-      const bobBalanceAfter = await getFreeBalance(bob);
-      // expect(aliceBalanceAfter == aliceBalanceBefore).to.be.true;
-      expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
-      // wait for sequentiality matters
-      await waitNewBlocks(waitForBlocks - 1);
-    });
+    //   const bobBalanceBefore = await getFreeBalance(bob);
+    //   const waitForBlocks = 4;
+    //   // no need to wait to check, fees must be deducted on scheduling, immediately
+    //   await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, bob, 0, waitForBlocks, scheduledId);
+    //   const bobBalanceAfter = await getFreeBalance(bob);
+    //   // expect(aliceBalanceAfter == aliceBalanceBefore).to.be.true;
+    //   expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
+    //   // wait for sequentiality matters
+    //   await waitNewBlocks(waitForBlocks - 1);
+    // });
   });
 
   it('Schedules and dispatches a transaction even if the caller has no funds at the time of the dispatch', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // Find an empty, unused account
-      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    // await usingApi(async (api, privateKeyWrapper) => {
+    //   // Find an empty, unused account
+    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
-      const collectionId = await createCollectionExpectSuccess();
+    //   const collectionId = await createCollectionExpectSuccess();
 
-      // Add zeroBalance address to allow list
-      await enablePublicMintingExpectSuccess(alice, collectionId);
-      await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
+    //   // Add zeroBalance address to allow list
+    //   await enablePublicMintingExpectSuccess(alice, collectionId);
+    //   await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
 
-      // Grace zeroBalance with money, enough to cover future transactions
-      const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
-      await submitTransactionAsync(alice, balanceTx);
+    //   // Grace zeroBalance with money, enough to cover future transactions
+    //   const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
+    //   await submitTransactionAsync(alice, balanceTx);
 
-      // Mint a fresh NFT
-      const tokenId = await createItemExpectSuccess(zeroBalance, collectionId, 'NFT');
-      const scheduledId = await makeScheduledId();
+    //   // Mint a fresh NFT
+    //   const tokenId = await createItemExpectSuccess(zeroBalance, collectionId, 'NFT');
+    //   const scheduledId = await makeScheduledId();
 
-      // Schedule transfer of the NFT a few blocks ahead
-      const waitForBlocks = 5;
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, zeroBalance, alice, 1, waitForBlocks, scheduledId);
+    //   // Schedule transfer of the NFT a few blocks ahead
+    //   const waitForBlocks = 5;
+    //   await scheduleTransferExpectSuccess(api, collectionId, tokenId, zeroBalance, alice, 1, waitForBlocks, scheduledId);
 
-      // Get rid of the account's funds before the scheduled transaction takes place
-      const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 68n / 100n);
-      const events = await submitTransactionAsync(zeroBalance, balanceTx2);
-      expect(getGenericResult(events).success).to.be.true;
-      /*const emptyBalanceTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0); // do not null reserved?
-      const sudoTx = api.tx.sudo.sudo(emptyBalanceTx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      expect(getGenericResult(events).success).to.be.true;*/
+    //   // Get rid of the account's funds before the scheduled transaction takes place
+    //   const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 68n / 100n);
+    //   const events = await submitTransactionAsync(zeroBalance, balanceTx2);
+    //   expect(getGenericResult(events).success).to.be.true;
+    //   /*const emptyBalanceTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0); // do not null reserved?
+    //   const sudoTx = api.tx.sudo.sudo(emptyBalanceTx as any);
+    //   const events = await submitTransactionAsync(alice, sudoTx);
+    //   expect(getGenericResult(events).success).to.be.true;*/
 
-      // Wait for a certain number of blocks, discarding the ones that already happened while accepting the late transactions
-      await waitNewBlocks(waitForBlocks - 3);
+    //   // Wait for a certain number of blocks, discarding the ones that already happened while accepting the late transactions
+    //   await waitNewBlocks(waitForBlocks - 3);
 
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
-    });
+    //   expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(alice.address));
+    // });
   });
 
   it('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
-    const collectionId = await createCollectionExpectSuccess();
+    // const collectionId = await createCollectionExpectSuccess();
 
-    await usingApi(async (api, privateKeyWrapper) => {
-      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
-      const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
-      await submitTransactionAsync(alice, balanceTx);
+    // await usingApi(async (api, privateKeyWrapper) => {
+    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    //   const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
+    //   await submitTransactionAsync(alice, balanceTx);
 
-      await setCollectionSponsorExpectSuccess(collectionId, zeroBalance.address);
-      await confirmSponsorshipByKeyExpectSuccess(collectionId, zeroBalance);
+    //   await setCollectionSponsorExpectSuccess(collectionId, zeroBalance.address);
+    //   await confirmSponsorshipByKeyExpectSuccess(collectionId, zeroBalance);
 
-      const scheduledId = await makeScheduledId();
-      const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
+    //   const scheduledId = await makeScheduledId();
+    //   const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', alice.address);
 
-      const waitForBlocks = 5;
-      await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, zeroBalance, 1, waitForBlocks, scheduledId);
+    //   const waitForBlocks = 5;
+    //   await scheduleTransferExpectSuccess(api, collectionId, tokenId, alice, zeroBalance, 1, waitForBlocks, scheduledId);
 
-      const emptyBalanceSponsorTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0);
-      const sudoTx = api.tx.sudo.sudo(emptyBalanceSponsorTx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      expect(getGenericResult(events).success).to.be.true;
+    //   const emptyBalanceSponsorTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0);
+    //   const sudoTx = api.tx.sudo.sudo(emptyBalanceSponsorTx as any);
+    //   const events = await submitTransactionAsync(alice, sudoTx);
+    //   expect(getGenericResult(events).success).to.be.true;
 
-      // Wait for a certain number of blocks, save for the ones that already happened while accepting the late transactions
-      await waitNewBlocks(waitForBlocks - 3);
+    //   // Wait for a certain number of blocks, save for the ones that already happened while accepting the late transactions
+    //   await waitNewBlocks(waitForBlocks - 3);
 
-      expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(zeroBalance.address));
-    });
+    //   expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal(normalizeAccountId(zeroBalance.address));
+    // });
   });
 
   it('Exceeding sponsor rate limit without having enough funds prevents scheduling a periodic transaction', async () => {
-    const collectionId = await createCollectionExpectSuccess();
-    await setCollectionSponsorExpectSuccess(collectionId, bob.address);
-    await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
+    // const collectionId = await createCollectionExpectSuccess();
+    // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
+    // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    await usingApi(async (api, privateKeyWrapper) => {
-      const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    // await usingApi(async (api, privateKeyWrapper) => {
+    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
 
-      await enablePublicMintingExpectSuccess(alice, collectionId);
-      await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
+    //   await enablePublicMintingExpectSuccess(alice, collectionId);
+    //   await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
 
-      const bobBalanceBefore = await getFreeBalance(bob);
+    //   const bobBalanceBefore = await getFreeBalance(bob);
 
-      const createData = {nft: {const_data: [], variable_data: []}};
-      const creationTx = api.tx.unique.createItem(collectionId, normalizeAccountId(zeroBalance), createData as any);
-      const scheduledId = await makeScheduledId();
+    //   const createData = {nft: {const_data: [], variable_data: []}};
+    //   const creationTx = api.tx.unique.createItem(collectionId, normalizeAccountId(zeroBalance), createData as any);
+    //   const scheduledId = await makeScheduledId();
 
-      /*const badTransaction = async function () {
-        await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
-      };
-      await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');*/
+    //   /*const badTransaction = async function () {
+    //     await submitTransactionExpectFailAsync(zeroBalance, zeroToAlice);
+    //   };
+    //   await expect(badTransaction()).to.be.rejectedWith('Inability to pay some fees');*/
 
-      await expect(scheduleAfter(api, creationTx, zeroBalance, 3, scheduledId, 1, 3)).to.be.rejectedWith(/Inability to pay some fees/);
+    //   await expect(scheduleAfter(api, creationTx, zeroBalance, 3, scheduledId, 1, 3)).to.be.rejectedWith(/Inability to pay some fees/);
 
-      expect(await getFreeBalance(bob)).to.be.equal(bobBalanceBefore);
-    });
+    //   expect(await getFreeBalance(bob)).to.be.equal(bobBalanceBefore);
+    // });
   });
 });
