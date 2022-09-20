@@ -24,19 +24,14 @@ const expect = chai.expect;
 
 let donor: IKeyringPair;
 
-before(async () => {
-  await usingPlaygrounds(async (_, privateKey) => {
-    donor = privateKey('//Alice');
-  });
-});
-
 describe('Integration Test: ownerCanTransfer allows admins to use only transferFrom/burnFrom:', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (helper) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });

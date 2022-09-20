@@ -35,6 +35,11 @@ use up_common::types::*;
 #[path = "../../common/mod.rs"]
 mod runtime_common;
 
+pub mod xcm_barrier;
+
+#[cfg(test)]
+mod tests;
+
 pub use runtime_common::*;
 
 pub const RUNTIME_NAME: &str = "opal";
@@ -45,7 +50,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 927020,
+	spec_version: 927030,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 2,

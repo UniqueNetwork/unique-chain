@@ -58,14 +58,11 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @return Property value bytes
 	/// @dev EVM selector for this function is: 0x7228c327,
 	///  or in textual repr: property(uint256,string)
-	function property(uint256 tokenId, string memory key)
-		external
-		view
-		returns (bytes memory);
+	function property(uint256 tokenId, string memory key) external view returns (bytes memory);
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x9f70d4e0
+/// @dev the ERC-165 identifier for this interface is 0x47dbc105
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -73,8 +70,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param value Propery value.
 	/// @dev EVM selector for this function is: 0x2f073f66,
 	///  or in textual repr: setCollectionProperty(string,bytes)
-	function setCollectionProperty(string memory key, bytes memory value)
-		external;
+	function setCollectionProperty(string memory key, bytes memory value) external;
 
 	/// Delete collection property.
 	///
@@ -91,10 +87,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return bytes The property corresponding to the key.
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
-	function collectionProperty(string memory key)
-		external
-		view
-		returns (bytes memory);
+	function collectionProperty(string memory key) external view returns (bytes memory);
 
 	/// Set the sponsor of the collection.
 	///
@@ -114,6 +107,7 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
 	function setCollectionSponsorSubstrate(uint256 sponsor) external;
 
+	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
 	///  or in textual repr: hasCollectionPendingSponsor()
 	function hasCollectionPendingSponsor() external view returns (bool);
@@ -133,9 +127,9 @@ interface Collection is Dummy, ERC165 {
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	/// @dev EVM selector for this function is: 0xb66bbc14,
-	///  or in textual repr: getCollectionSponsor()
-	function getCollectionSponsor() external view returns (Tuple17 memory);
+	/// @dev EVM selector for this function is: 0x6ec0a9f1,
+	///  or in textual repr: collectionSponsor()
+	function collectionSponsor() external view returns (Tuple17 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -205,8 +199,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param collections Addresses of collections that will be available for nesting.
 	/// @dev EVM selector for this function is: 0x64872396,
 	///  or in textual repr: setCollectionNesting(bool,address[])
-	function setCollectionNesting(bool enable, address[] memory collections)
-		external;
+	function setCollectionNesting(bool enable, address[] memory collections) external;
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -279,7 +272,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return `Fungible` or `NFT` or `ReFungible`
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
-	function uniqueCollectionType() external returns (string memory);
+	function uniqueCollectionType() external view returns (string memory);
 
 	/// Get collection owner.
 	///
@@ -401,9 +394,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenIds IDs of the minted RFTs
 	/// @dev EVM selector for this function is: 0x44a9945e,
 	///  or in textual repr: mintBulk(address,uint256[])
-	function mintBulk(address to, uint256[] memory tokenIds)
-		external
-		returns (bool);
+	function mintBulk(address to, uint256[] memory tokenIds) external returns (bool);
 
 	/// @notice Function to mint multiple tokens with the given tokenUris.
 	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
@@ -412,19 +403,14 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	/// @dev EVM selector for this function is: 0x36543006,
 	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	function mintBulkWithTokenURI(address to, Tuple8[] memory tokens)
-		external
-		returns (bool);
+	function mintBulkWithTokenURI(address to, Tuple8[] memory tokens) external returns (bool);
 
 	/// Returns EVM address for refungible token
 	///
 	/// @param token ID of the token
 	/// @dev EVM selector for this function is: 0xab76fac6,
 	///  or in textual repr: tokenContractAddress(uint256)
-	function tokenContractAddress(uint256 token)
-		external
-		view
-		returns (address);
+	function tokenContractAddress(uint256 token) external view returns (address);
 }
 
 /// @dev anonymous struct
@@ -448,10 +434,7 @@ interface ERC721Enumerable is Dummy, ERC165 {
 	/// Not implemented
 	/// @dev EVM selector for this function is: 0x2f745c59,
 	///  or in textual repr: tokenOfOwnerByIndex(address,uint256)
-	function tokenOfOwnerByIndex(address owner, uint256 index)
-		external
-		view
-		returns (uint256);
+	function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
 
 	/// @notice Count RFTs tracked by this contract
 	/// @return A count of valid RFTs tracked by this contract, where each one of
@@ -489,21 +472,9 @@ interface ERC721Metadata is Dummy, ERC165 {
 
 /// @dev inlined interface
 interface ERC721Events {
-	event Transfer(
-		address indexed from,
-		address indexed to,
-		uint256 indexed tokenId
-	);
-	event Approval(
-		address indexed owner,
-		address indexed approved,
-		uint256 indexed tokenId
-	);
-	event ApprovalForAll(
-		address indexed owner,
-		address indexed operator,
-		bool approved
-	);
+	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+	event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+	event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 }
 
 /// @title ERC-721 Non-Fungible Token Standard
@@ -585,10 +556,7 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	/// @dev Not implemented
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
-	function isApprovedForAll(address owner, address operator)
-		external
-		view
-		returns (address);
+	function isApprovedForAll(address owner, address operator) external view returns (address);
 }
 
 interface UniqueRefungible is

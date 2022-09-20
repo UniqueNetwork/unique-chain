@@ -10,11 +10,7 @@ contract Dummy {
 }
 
 contract ERC165 is Dummy {
-	function supportsInterface(bytes4 interfaceID)
-		external
-		view
-		returns (bool)
-	{
+	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
 		interfaceID;
 		return true;
@@ -22,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x9f70d4e0
+/// @dev the ERC-165 identifier for this interface is 0x47dbc105
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -30,9 +26,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param value Propery value.
 	/// @dev EVM selector for this function is: 0x2f073f66,
 	///  or in textual repr: setCollectionProperty(string,bytes)
-	function setCollectionProperty(string memory key, bytes memory value)
-		public
-	{
+	function setCollectionProperty(string memory key, bytes memory value) public {
 		require(false, stub_error);
 		key;
 		value;
@@ -58,11 +52,7 @@ contract Collection is Dummy, ERC165 {
 	/// @return bytes The property corresponding to the key.
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
-	function collectionProperty(string memory key)
-		public
-		view
-		returns (bytes memory)
-	{
+	function collectionProperty(string memory key) public view returns (bytes memory) {
 		require(false, stub_error);
 		key;
 		dummy;
@@ -95,6 +85,7 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
 	///  or in textual repr: hasCollectionPendingSponsor()
 	function hasCollectionPendingSponsor() public view returns (bool) {
@@ -124,9 +115,9 @@ contract Collection is Dummy, ERC165 {
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	/// @dev EVM selector for this function is: 0xb66bbc14,
-	///  or in textual repr: getCollectionSponsor()
-	function getCollectionSponsor() public view returns (Tuple6 memory) {
+	/// @dev EVM selector for this function is: 0x6ec0a9f1,
+	///  or in textual repr: collectionSponsor()
+	function collectionSponsor() public view returns (Tuple6 memory) {
 		require(false, stub_error);
 		dummy;
 		return Tuple6(0x0000000000000000000000000000000000000000, 0);
@@ -234,9 +225,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param collections Addresses of collections that will be available for nesting.
 	/// @dev EVM selector for this function is: 0x64872396,
 	///  or in textual repr: setCollectionNesting(bool,address[])
-	function setCollectionNesting(bool enable, address[] memory collections)
-		public
-	{
+	function setCollectionNesting(bool enable, address[] memory collections) public {
 		require(false, stub_error);
 		enable;
 		collections;
@@ -353,9 +342,9 @@ contract Collection is Dummy, ERC165 {
 	/// @return `Fungible` or `NFT` or `ReFungible`
 	/// @dev EVM selector for this function is: 0xd34b55b8,
 	///  or in textual repr: uniqueCollectionType()
-	function uniqueCollectionType() public returns (string memory) {
+	function uniqueCollectionType() public view returns (string memory) {
 		require(false, stub_error);
-		dummy = 0;
+		dummy;
 		return "";
 	}
 
@@ -450,11 +439,7 @@ contract ERC20Mintable is Dummy, ERC165 {
 /// @dev inlined interface
 contract ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(
-		address indexed owner,
-		address indexed spender,
-		uint256 value
-	);
+	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x942e8b22
@@ -537,11 +522,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 
 	/// @dev EVM selector for this function is: 0xdd62ed3e,
 	///  or in textual repr: allowance(address,address)
-	function allowance(address owner, address spender)
-		public
-		view
-		returns (uint256)
-	{
+	function allowance(address owner, address spender) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
 		spender;
@@ -550,11 +531,4 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
-contract UniqueFungible is
-	Dummy,
-	ERC165,
-	ERC20,
-	ERC20Mintable,
-	ERC20UniqueExtensions,
-	Collection
-{}
+contract UniqueFungible is Dummy, ERC165, ERC20, ERC20Mintable, ERC20UniqueExtensions, Collection {}

@@ -736,7 +736,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
-		Collection(common_mut, CollectionHandle<T>),
+		Collection(via(common_mut returns CollectionHandle<T>)),
 		TokenProperties,
 	)
 )]

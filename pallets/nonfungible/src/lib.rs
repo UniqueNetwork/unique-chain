@@ -100,10 +100,10 @@ use frame_support::{
 	weights::{PostDispatchInfo, Pays},
 };
 use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
-	PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
-	AuxPropertyValue,
+	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,
+	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission,
+	PropertyKey, PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
+	TokenChild, AuxPropertyValue,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -408,7 +408,14 @@ impl<T: Config> Pallet<T> {
 		data: CreateCollectionData<T::AccountId>,
 		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, is_external)
+		<PalletCommon<T>>::init_collection(
+			owner,
+			data,
+			CollectionFlags {
+				external: is_external,
+				..Default::default()
+			},
+		)
 	}
 
 	/// Destroy NFT collection

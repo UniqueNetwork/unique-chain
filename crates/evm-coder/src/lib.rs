@@ -74,10 +74,10 @@ pub mod execution;
 /// #[solidity_interface(name = MyContract, is(SuperContract), inline_is(InlineContract))]
 /// impl Contract {
 ///     /// Multiply two numbers
-/// 	/// @param a First number
-/// 	/// @param b Second number
-/// 	/// @return uint32 Product of two passed numbers
-/// 	/// @dev This function returns error in case of overflow
+///     /// @param a First number
+///     /// @param b Second number
+///     /// @return uint32 Product of two passed numbers
+///     /// @dev This function returns error in case of overflow
 ///     #[weight(200 + a + b)]
 ///     #[solidity_interface(rename_selector = "mul")]
 ///     fn mul(&mut self, a: uint32, b: uint32) -> Result<uint32> {

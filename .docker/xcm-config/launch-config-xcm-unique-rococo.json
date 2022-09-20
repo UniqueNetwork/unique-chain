@@ -1,0 +1,207 @@
+{
+    "relaychain": {
+        "bin": "/polkadot/target/release/polkadot",
+        "chain": "rococo-local",
+        "chainInitializer": [
+                "chainql",
+                "--tla-code=spec=import '${spec}'",
+                "5validators.jsonnet"
+            ],	
+        "nodes": [
+            {
+                "name": "alice",
+                "wsPort": 9844,
+                "rpcPort": 9843,
+                "port": 30444,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "bob",
+                "wsPort": 9855,
+                "rpcPort": 9854,
+                "port": 30555,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "charlie",
+                "wsPort": 9866,
+                "rpcPort": 9865,
+                "port": 30666,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "dave",
+                "wsPort": 9877,
+                "rpcPort": 9876,
+                "port": 30777,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "eve",
+                "wsPort": 9888,
+                "rpcPort": 9887,
+                "port": 30888,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            }
+
+        ],
+        "genesis": {
+            "runtime": {
+                "runtime_genesis_config": {
+                    "parachainsConfiguration": {
+                        "config": {
+                            "validation_upgrade_frequency": 1,
+                            "validation_upgrade_delay": 1
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "parachains": [
+        {
+            "bin": "/unique-chain/target/release/unique-collator",
+            "id": "2037",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 31200,
+                    "wsPort": 9944,
+                    "rpcPort": 9933,
+                    "name": "alice",
+                    "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+		    ]
+                }
+            ]
+        },
+        {
+            "bin": "/acala/target/release/acala",
+            "id": "2000",
+            "chain":  "acala-dev",
+            "balance": "1000000000000000000000",
+            "chainInitializer": [
+                    "chainql",
+                    "-e",
+                    "(import '${spec}') {id+: '-local'}"
+            ],
+            "nodes": [
+                {
+                    "wsPort": 9946,
+                    "port": 31202,
+                    "name": "alice",
+                    "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+		    ]
+                }
+              ]
+        },
+        {
+            "bin": "/moonbeam/target/release/moonbeam",
+            "id": "2004",
+            "balance": "1000000000000000000000",
+            "chain": "moonbeam-local",
+            "nodes": [
+                {
+                    "wsPort": 9947,
+                    "port": 31203,
+                    "name": "alice",
+                    "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+  			"--",
+                        "--execution=wasm"
+                    ]
+                }
+            ]
+        },
+        {
+            "bin": "/cumulus/target/release/cumulus",
+            "id": "1000",
+            "chain": "statemint-local",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "wsPort": 9948,
+                    "port": 31204,
+                    "name": "alice",
+                    "flags": [
+			"-lruntime=trace",
+			"-lxcm=trace",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external"
+		    ]
+                }
+            ]
+        }
+    ],
+    "simpleParachains": [],
+    "hrmpChannels": [
+        {
+            "sender": 2037,
+            "recipient": 2000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 2000,
+            "recipient": 2037,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 2037,
+            "recipient": 2004,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 2004,
+            "recipient": 2037,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 2037,
+            "recipient": 1000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 1000,
+            "recipient": 2037,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }
+    ],
+    "finalization": false
+}
+

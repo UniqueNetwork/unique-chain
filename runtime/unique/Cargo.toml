@@ -36,6 +36,7 @@ runtime-benchmarks = [
     'pallet-proxy-rmrk-core/runtime-benchmarks',
     'pallet-proxy-rmrk-equip/runtime-benchmarks',
     'pallet-unique/runtime-benchmarks',
+    'pallet-foreign-assets/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
     'pallet-unique-scheduler/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
@@ -117,8 +118,15 @@ std = [
     'xcm-builder/std',
     'xcm-executor/std',
     'up-common/std',
+    'rmrk-rpc/std',
+    'evm-coder/std',
+    'up-sponsorship/std',
 
     "orml-vesting/std",
+    "orml-tokens/std",
+    "orml-xtokens/std",
+    "orml-traits/std",
+    "pallet-foreign-assets/std"
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 unique-runtime = []
@@ -126,6 +134,7 @@ unique-runtime = []
 refungible = []
 scheduler = []
 rmrk = []
+foreign-assets = []
 
 ################################################################################
 # Substrate Dependencies
@@ -398,6 +407,23 @@ branch = "polkadot-v0.9.27"
 version = "0.4.1-dev"
 default-features = false
 
+[dependencies.orml-xtokens]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+branch = "polkadot-v0.9.27"
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-tokens]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+branch = "polkadot-v0.9.27"
+version = "0.4.1-dev"
+default-features = false
+
+[dependencies.orml-traits]
+git = "https://github.com/open-web3-stack/open-runtime-module-library"
+branch = "polkadot-v0.9.27"
+version = "0.4.1-dev"
+default-features = false
 ################################################################################
 # local dependencies
 
@@ -437,7 +463,19 @@ fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/fro
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.27" }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.27' }
+pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
+
+################################################################################
+# Other Dependencies
+
+impl-trait-for-tuples = "0.2.2"
+
+################################################################################
+# Dev Dependencies
+
+[dev-dependencies.logtest]
+version = "2.0.0"
 
 ################################################################################
 # Build Dependencies

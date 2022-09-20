@@ -147,6 +147,11 @@ export interface ISubstrateBalance {
   feeFrozen: bigint
 }
 
+export interface IStakingInfo {
+  block: bigint,
+  amount: bigint,
+}
+
 export type TSubstrateAccount = string;
 export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';

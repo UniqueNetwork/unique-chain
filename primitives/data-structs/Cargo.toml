@@ -27,6 +27,7 @@ derivative = { version = "2.2.0", features = ["use_core"] }
 struct-versioning = { path = "../../crates/struct-versioning" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
 rmrk-traits = { default-features = false, path = "../rmrk-traits" }
+bondrewd = { version = "0.1.14", features = ["derive"], default-features = false }
 
 [features]
 default = ["std"]

@@ -18,7 +18,7 @@
 
 use evm_coder::{ToLog, execution::Result, solidity_interface, types::*, solidity, weight};
 
-struct Impls;
+pub struct Impls;
 
 #[solidity_interface(name = OurInterface)]
 impl Impls {

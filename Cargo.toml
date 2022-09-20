@@ -6,9 +6,12 @@ members = [
     'client/*',
     'primitives/*',
     'crates/*',
+    'runtime/opal',
+    'runtime/quartz',
+    'runtime/unique',
     'runtime/tests',
 ]
-exclude = ["runtime/unique", "runtime/quartz"]
+default-members = ['node/*', 'runtime/opal']
 [profile.release]
 panic = 'unwind'
 

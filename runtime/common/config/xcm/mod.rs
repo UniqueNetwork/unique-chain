@@ -15,47 +15,53 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{
-		tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get, Everything,
-	},
-	weights::{Weight, WeightToFeePolynomial, WeightToFee},
-	parameter_types, match_types,
+	traits::{Everything, Get},
+	weights::Weight,
+	parameter_types,
 };
 use frame_system::EnsureRoot;
-use sp_runtime::{
-	traits::{Saturating, CheckedConversion, Zero},
-	SaturatedConversion,
-};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm::v1::{BodyId, Junction::*, MultiLocation, NetworkId, Junctions::*};
-use xcm::latest::{
-	AssetId::{Concrete},
-	Fungibility::Fungible as XcmFungible,
-	MultiAsset, Error as XcmError,
-};
-use xcm_executor::traits::{MatchesFungible, WeightTrader};
+use xcm::v1::{Junction::*, MultiLocation, NetworkId};
+use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, CurrencyAdapter, EnsureXcmOrigin,
-	FixedWeightBounds, LocationInverter, NativeAsset, ParentAsSuperuser, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, ParentIsPreset,
+	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentAsSuperuser,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
-use xcm_executor::{Config, XcmExecutor, Assets};
-use sp_std::marker::PhantomData;
+use xcm_executor::{Config, XcmExecutor, traits::ShouldExecute};
+use sp_std::{marker::PhantomData, vec::Vec};
 use crate::{
-	Runtime, Call, Event, Origin, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
+	Runtime, Call, Event, Origin, ParachainInfo, ParachainSystem, PolkadotXcm, XcmpQueue,
+	xcm_barrier::Barrier,
 };
-use up_common::{
-	types::{AccountId, Balance},
-	constants::*,
-};
+
+use up_common::types::AccountId;
+
+#[cfg(feature = "foreign-assets")]
+pub mod foreignassets;
+
+#[cfg(not(feature = "foreign-assets"))]
+pub mod nativeassets;
+
+#[cfg(feature = "foreign-assets")]
+pub use foreignassets as xcm_assets;
+
+#[cfg(not(feature = "foreign-assets"))]
+pub use nativeassets as xcm_assets;
+
+use xcm_assets::{AssetTransactors, IsReserve, Trader};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+
+	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
+	pub UnitWeightCost: Weight = 1_000_000;
+	pub const MaxInstructions: u32 = 100;
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -69,30 +75,6 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
-
-pub struct OnlySelfCurrency;
-impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
-	fn matches_fungible(a: &MultiAsset) -> Option<B> {
-		match (&a.id, &a.fun) {
-			(Concrete(_), XcmFungible(ref amount)) => CheckedConversion::checked_from(*amount),
-			_ => None,
-		}
-	}
-}
-
-/// Means for transacting assets on this chain.
-pub type LocalAssetTransactor = CurrencyAdapter<
-	// Use this currency:
-	Balances,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	OnlySelfCurrency,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-	LocationToAccountId,
-	// Our chain's account ID type (we can't get away without mentioning it explicitly):
-	AccountId,
-	// We don't track any teleports.
-	(),
->;
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = (SignedToAccountId32<Origin, AccountId, RelayNetwork>,);
@@ -130,108 +112,98 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	XcmPassthrough<Origin>,
 );
 
-parameter_types! {
-	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
-	// 1200 UNIQUEs buy 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (MultiLocation::parent(), 1_200 * UNIQUE);
-	pub const MaxInstructions: u32 = 100;
+pub trait TryPass {
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()>;
 }
 
-match_types! {
-	pub type ParentOrParentsUnitPlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Unit, .. }) }
-	};
+#[impl_trait_for_tuples::impl_for_tuples(30)]
+impl TryPass for Tuple {
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+		for_tuples!( #(
+			Tuple::try_pass(origin, message)?;
+		)* );
+
+		Ok(())
+	}
 }
 
-pub type Barrier = (
-	TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom<Everything>,
-	// ^^^ Parent & its unit plurality gets free execution
-);
+pub struct DenyTransact;
+impl TryPass for DenyTransact {
+	fn try_pass<Call>(_origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+		let transact_inst = message
+			.0
+			.iter()
+			.find(|inst| matches![inst, Instruction::Transact { .. }]);
 
-pub struct UsingOnlySelfCurrencyComponents<
-	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
-	AccountId,
-	Currency: CurrencyT<AccountId>,
-	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
->(
-	Weight,
-	Currency::Balance,
-	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
-);
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> WeightTrader
-	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-{
-	fn new() -> Self {
-		Self(0, Zero::zero(), PhantomData)
-	}
+		if transact_inst.is_some() {
+			log::warn!(
+				target: "xcm::barrier",
+				"transact XCM rejected"
+			);
 
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
-		let amount = WeightToFee::weight_to_fee(&weight);
-		let u128_amount: u128 = amount.try_into().map_err(|_| XcmError::Overflow)?;
-
-		// location to this parachain through relay chain
-		let option1: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(ParachainInfo::parachain_id().into())),
-		});
-		// direct location
-		let option2: xcm::v1::AssetId = Concrete(MultiLocation {
-			parents: 0,
-			interior: Here,
-		});
-
-		let required = if payment.fungible.contains_key(&option1) {
-			(option1, u128_amount).into()
-		} else if payment.fungible.contains_key(&option2) {
-			(option2, u128_amount).into()
+			Err(())
 		} else {
-			(Concrete(MultiLocation::default()), u128_amount).into()
-		};
-
-		let unused = payment
-			.checked_sub(required)
-			.map_err(|_| XcmError::TooExpensive)?;
-		self.0 = self.0.saturating_add(weight);
-		self.1 = self.1.saturating_add(amount);
-		Ok(unused)
-	}
-
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		let weight = weight.min(self.0);
-		let amount = WeightToFee::weight_to_fee(&weight);
-		self.0 -= weight;
-		self.1 = self.1.saturating_sub(amount);
-		let amount: u128 = amount.saturated_into();
-		if amount > 0 {
-			Some((AssetId::get(), amount).into())
-		} else {
-			None
+			Ok(())
 		}
 	}
 }
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> Drop
-	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+
+/// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
+/// If it passes the Deny, and matches one of the Allow cases then it is let through.
+pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
+where
+	Deny: TryPass,
+	Allow: ShouldExecute;
+
+impl<Deny, Allow> ShouldExecute for DenyThenTry<Deny, Allow>
+where
+	Deny: TryPass,
+	Allow: ShouldExecute,
 {
-	fn drop(&mut self) {
-		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
+	fn should_execute<Call>(
+		origin: &MultiLocation,
+		message: &mut Xcm<Call>,
+		max_weight: Weight,
+		weight_credit: &mut Weight,
+	) -> Result<(), ()> {
+		Deny::try_pass(origin, message)?;
+		Allow::should_execute(origin, message, max_weight, weight_credit)
 	}
 }
+
+// Allow xcm exchange only with locations in list
+pub struct DenyExchangeWithUnknownLocation<T>(PhantomData<T>);
+impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> {
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+		let allowed_locations = T::get();
+
+		// Check if deposit or transfer belongs to allowed parachains
+		let mut allowed = allowed_locations.contains(origin);
+
+		message.0.iter().for_each(|inst| match inst {
+			DepositReserveAsset { dest: dst, .. } => {
+				allowed |= allowed_locations.contains(dst);
+			}
+			TransferReserveAsset { dest: dst, .. } => {
+				allowed |= allowed_locations.contains(dst);
+			}
+			_ => {}
+		});
+
+		if allowed {
+			return Ok(());
+		}
+
+		log::warn!(
+			target: "xcm::barrier",
+			"Unexpected deposit or transfer location"
+		);
+		// Deny
+		Err(())
+	}
+}
+
+pub type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 
 pub struct XcmConfig<T>(PhantomData<T>);
 impl<T> Config for XcmConfig<T>
@@ -241,20 +213,14 @@ where
 	type Call = Call;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = NativeAsset;
+	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
-	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-	type Trader = UsingOnlySelfCurrencyComponents<
-		pallet_configuration::WeightToFee<T, Balance>,
-		RelayLocation,
-		AccountId,
-		Balances,
-		(),
-	>;
+	type Weigher = Weigher;
+	type Trader = Trader<T>;
 	type ResponseHandler = (); // Don't handle responses for now.
 	type SubscriptionService = PolkadotXcm;
 
