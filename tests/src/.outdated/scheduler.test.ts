@@ -20,23 +20,8 @@ import {
   submitTransactionExpectFailAsync,
 } from '../substrate/substrate-api';
 import {
-  createItemExpectSuccess,
-  createCollectionExpectSuccess,
-  scheduleTransferExpectSuccess,
-  setCollectionSponsorExpectSuccess,
-  confirmSponsorshipExpectSuccess,
-  findUnusedAddress,
   UNIQUE,
-  enablePublicMintingExpectSuccess,
-  addToAllowListExpectSuccess,
   waitNewBlocks,
-  normalizeAccountId,
-  getTokenOwner,
-  getGenericResult,
-  getFreeBalance,
-  confirmSponsorshipByKeyExpectSuccess,
-  scheduleExpectFailure,
-  scheduleAfter,
 } from './util/helpers';
 import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -191,7 +176,7 @@ describe('Scheduling token and balance transfers', () => {
 
   itSub.ifWithPallets('Scheduled tasks should take correct fees', [Pallets.Scheduler, Pallets.TestUtils], async function({helper}) {
     const scheduledId = await helper.arrange.makeScheduledId();
-    const waitForBlocks = 8;
+    const waitForBlocks = 4;
     const periodic = {
       period: 2,
       repetitions: 2,
@@ -304,7 +289,7 @@ describe('Scheduling token and balance transfers', () => {
 
   itSub.ifWithPallets('A scheduled operation can cancel itself', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
-    const waitForBlocks = 8;
+    const waitForBlocks = 4;
     const periodic = {
       period: 2,
       repetitions: 5,
@@ -391,7 +376,7 @@ describe('Scheduling token and balance transfers', () => {
     const token = await collection.mintToken(bob);
 
     const scheduledId = await helper.arrange.makeScheduledId();
-    const waitForBlocks = 4;
+    const waitForBlocks = 6;
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(bob, {Substrate: alice.address});
@@ -423,7 +408,7 @@ describe('Scheduling token and balance transfers', () => {
     const prioLow = 255;
 
     const periodic = {
-      period: 8,
+      period: 6,
       repetitions: 2,
     };
 
@@ -508,7 +493,7 @@ describe('Negative Test: Scheduling', () => {
     const token = await collection.mintToken(alice);
 
     const scheduledId = await helper.arrange.makeScheduledId();
-    const waitForBlocks = 8;
+    const waitForBlocks = 4;
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(alice, {Substrate: bob.address});
@@ -567,15 +552,15 @@ describe('Negative Test: Scheduling', () => {
 
 // Implementation of the functionality tested here was postponed/shelved
 describe.skip('Sponsoring scheduling', () => {
-  let alice: IKeyringPair;
-  let bob: IKeyringPair;
+  // let alice: IKeyringPair;
+  // let bob: IKeyringPair;
 
-  before(async() => {
-    await usingApi(async (_, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-    });
-  });
+  // before(async() => {
+  //   await usingApi(async (_, privateKeyWrapper) => {
+  //     alice = privateKeyWrapper('//Alice');
+  //     bob = privateKeyWrapper('//Bob');
+  //   });
+  // });
 
   it('Can sponsor scheduling a transaction', async () => {
     // const collectionId = await createCollectionExpectSuccess();
