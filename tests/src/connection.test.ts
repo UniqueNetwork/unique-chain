@@ -14,29 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import usingApi from './substrate/substrate-api';
-import {WsProvider} from '@polkadot/api';
-import * as chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-
-chai.use(chaiAsPromised);
-
-const expect = chai.expect;
+import {itSub, expect, usingPlaygrounds} from './util/playgrounds';
 
 describe('Connection smoke test', () => {
-  it('Connection can be established', async () => {
-    await usingApi(async api => {
-      const health = await api.rpc.system.health();
-      expect(health).to.be.not.empty;
-    });
+  itSub('Connection can be established', async ({helper}) => {
+    const health = (await helper.callRpc('api.rpc.system.health')).toJSON();
+    expect(health).to.be.not.empty;
   });
 
   it('Cannot connect to 255.255.255.255', async () => {
-    const neverConnectProvider = new WsProvider('ws://255.255.255.255:9944');
     await expect((async () => {
-      await usingApi(async api => {
-        await api.rpc.system.health();
-      }, {provider: neverConnectProvider});
+      await usingPlaygrounds(async helper => {
+        await helper.callRpc('api.rpc.system.health');
+      }, 'ws://255.255.255.255:9944');
     })()).to.be.eventually.rejected;
   });
 });

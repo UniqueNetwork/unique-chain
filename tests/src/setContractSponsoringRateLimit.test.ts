@@ -25,7 +25,7 @@ import {
   setContractSponsoringRateLimitExpectSuccess,
 } from './util/helpers';
 
-// todo:playgrounds postponed skipped test
+// todo:playgrounds skipped~postponed test
 describe.skip('Integration Test setContractSponsoringRateLimit', () => {
   it('ensure sponsored contract can\'t be called twice without pause for free', async () => {
     await usingApi(async (api, privateKeyWrapper) => {
