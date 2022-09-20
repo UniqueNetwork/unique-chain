@@ -6,7 +6,7 @@
 /* eslint-disable no-prototype-builtins */
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
-import {ApiInterfaceEvents} from '@polkadot/api/types';
+import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
@@ -205,12 +205,12 @@ class UniqueEventHelper {
     let obj: any = {};
     let index = 0;
 
-    if (data.entries)
+    if (data.entries) {
       for(const [key, value] of data.entries()) {
         obj[key] = this.extractData(value, subTypes[index]);
         index++;
       }
-    else obj = data.toJSON();
+    } else obj = data.toJSON();
 
     return obj;
   }
@@ -365,7 +365,7 @@ class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender: TSigner, transaction: any, label = 'transaction', options: any = null) {
+  signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
@@ -421,7 +421,7 @@ class ChainHelperBase {
     return call(...params);
   }
 
-  async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=true/*, failureMessage='expected success'*/) {
+  async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=true, options: Partial<SignerOptions>|null = null/*, failureMessage='expected success'*/) {
     if(this.api === null) throw Error('API not initialized');
     if(!extrinsic.startsWith('api.tx.')) throw Error(`${extrinsic} is not transaction`);
 
@@ -429,7 +429,7 @@ class ChainHelperBase {
     let result: ITransactionResult;
     let events: IEvent[] = [];
     try {
-      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), extrinsic) as ITransactionResult;
+      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
       events = this.eventHelper.extractEvents(result);
     }
     catch(e) {
