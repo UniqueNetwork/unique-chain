@@ -29,12 +29,12 @@ jobs:
     uses: ./.github/workflows/unit-test_v2.yml
 
   canary:
-    if: github.event.pull_request.draft == 'false' && ${{ contains( github.event.pull_request.labels.*.name, 'canary') }}
+    if: ${{ github.event.pull_request.draft == 'false' && contains( github.event.pull_request.labels.*.name, 'canary') }}
     uses: ./.github/workflows/canary.yml
     secrets: inherit # pass all secrets
 
   xcm:
-    if: github.event.pull_request.draft == 'false' && ${{ contains( github.event.pull_request.labels.*.name, 'xcm') }}
+    if: ${{ github.event.pull_request.draft == 'false' && contains( github.event.pull_request.labels.*.name, 'xcm') }}
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets
 
