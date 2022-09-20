@@ -11,21 +11,12 @@ concurrency:
 
 jobs:
 
-  dump-all-contexts:
-    runs-on: [self-hosted-ci]
-
-    steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-
   yarn-test-dev:
     if: ${{ github.event.pull_request.draft == 'false' }}
     uses: ./.github/workflows/dev-build-tests_v2.yml
 
   unit-test:
-    if: ${{ github.event.pull_request.draft == 'false' }}
+    if: github.event.pull_request.draft == 'false'
     uses: ./.github/workflows/unit-test_v2.yml
 
 #  canary:
@@ -39,9 +30,9 @@ jobs:
 #    secrets: inherit # pass all secrets
 
   codestyle:
-    if: ${{ github.event.pull_request.draft == 'false' }}
+    if: ${{ github.event.pull_request.draft == 'true' }}
     uses: ./.github/workflows/codestyle_v2.yml
   
   yarn_eslint:
-    if: ${{ github.event.pull_request.draft == 'false' }}
+    if: github.event.pull_request.draft == 'true'
     uses: ./.github/workflows/test_codestyle_v2.yml
