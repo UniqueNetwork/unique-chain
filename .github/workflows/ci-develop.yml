@@ -12,5 +12,5 @@ concurrency:
 jobs:
 
   yarn-test-dev:
-    if: github.event.pull_request.draft == 'false'
+    if: github.event.pull_request.draft == false
     uses: ./.github/workflows/dev-build-tests_v2.yml
