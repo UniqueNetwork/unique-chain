@@ -1,12 +1,12 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 
-// Unique Network is free software: you can redistribute itSub and/or modify
-// itSub under the terms of the GNU General Public License as published by
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Unique Network is distributed in the hope that itSub will be useful,
+// Unique Network is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -16,6 +16,18 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
+
+async function setSponsorHelper(collection: any, signer: IKeyringPair, sponsorAddress: string) {
+  await collection.setSponsor(signer, sponsorAddress);
+  const raw = (await collection.getData())?.raw;
+  expect(raw.sponsorship.Unconfirmed).to.be.equal(sponsorAddress);
+}
+
+async function confirmSponsorHelper(collection: any, signer: IKeyringPair) {
+  await collection.confirmSponsorship(signer);
+  const raw = (await collection.getData())?.raw;
+  expect(raw.sponsorship.Confirmed).to.be.equal(signer.address);
+}
 
 describe('integration test: ext. confirmSponsorship():', () => {
   let alice: IKeyringPair;
@@ -32,21 +44,21 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   itSub('Confirm collection sponsorship', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    await collection.setSponsor(alice, bob.address);
-    await collection.confirmSponsorship(bob);
+    await setSponsorHelper(collection, alice, bob.address);
+    await confirmSponsorHelper(collection, bob);
   });
 
   itSub('Add sponsor to a collection after the same sponsor was already added and confirmed', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    await collection.setSponsor(alice, bob.address);
-    await collection.confirmSponsorship(bob);
-    await collection.setSponsor(alice, bob.address);
+    await setSponsorHelper(collection, alice, bob.address);
+    await confirmSponsorHelper(collection, bob);
+    await setSponsorHelper(collection, alice, bob.address);
   });
   itSub('Add new sponsor to a collection after another sponsor was already added and confirmed', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    await collection.setSponsor(alice, bob.address);
-    await collection.confirmSponsorship(bob);
-    await collection.setSponsor(alice, charlie.address);
+    await setSponsorHelper(collection, alice, bob.address);
+    await confirmSponsorHelper(collection, bob);
+    await setSponsorHelper(collection, alice, charlie.address);
   });
 
   itSub('NFT: Transfer fees are paid by the sponsor after confirmation', async ({helper}) => {

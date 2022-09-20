@@ -1,12 +1,12 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 
-// Unique Network is free software: you can redistribute itSub and/or modify
-// itSub under the terms of the GNU General Public License as published by
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Unique Network is distributed in the hope that itSub will be useful,
+// Unique Network is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -21,11 +21,37 @@ import {
   itApi,
   normalizeAccountId,
   getCreateItemResult,
+  CrossAccountId,
 } from './util/helpers';
 
 import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
 import {IProperty} from './util/playgrounds/types';
 import {executeTransaction} from './substrate/substrate-api';
+import {DevUniqueHelper} from './util/playgrounds/unique.dev';
+
+async function mintTokenHelper(helper: DevUniqueHelper, collection: any, signer: IKeyringPair, owner: CrossAccountId, type: 'nft' | 'fungible' | 'refungible'='nft', properties?: IProperty[]) {
+  let token;
+  const itemCountBefore = await helper.collection.getLastTokenId(collection.collectionId);
+  const itemBalanceBefore = (await helper.api!.rpc.unique.balance(collection.collectionId, owner, 0)).toBigInt();
+  if (type === 'nft') {
+    token = await collection.mintToken(signer, owner, properties);
+  } else if (type === 'fungible') {
+    await collection.mint(signer, 10n, owner);
+  } else {
+    token = await collection.mintToken(signer, 100n, owner, properties);
+  }
+
+  const itemCountAfter = await helper.collection.getLastTokenId(collection.collectionId);
+  const itemBalanceAfter = (await helper.api!.rpc.unique.balance(collection.collectionId, owner, 0)).toBigInt();
+
+  if (type === 'fungible') {
+    expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
+  } else {
+    expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
+  }
+
+  return token;
+}
 
 
 describe('integration test: ext. ():', () => {
@@ -41,55 +67,55 @@ describe('integration test: ext. ():', () => {
 
   itSub('Create new item in NFT collection', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    await collection.mintToken(alice, {Substrate: alice.address});
+    await mintTokenHelper(helper, collection, alice, {Substrate: alice.address});
   });
   itSub('Create new item in Fungible collection', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
-    await collection.mint(alice, 10n, {Substrate: alice.address});
+    await mintTokenHelper(helper, collection, alice, {Substrate: alice.address}, 'fungible');
   });
-  itApi.skip('Check events on create new item in Fungible collection', async ({api}) => {
-    const createMode = 'Fungible';
+  itSub('Check events on create new item in Fungible collection', async ({helper}) => {
+    const {collectionId} = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    const api = helper.api!;
 
-    const newCollectionID = (await createCollection(api, alice, {mode: {type: createMode, decimalPoints: 0}})).collectionId;
 
     const to = normalizeAccountId(alice);
     {
       const createData = {fungible: {value: 100}};
-      const tx = api.tx.unique.createItem(newCollectionID, to, createData as any);
+      const tx = api.tx.unique.createItem(collectionId, to, createData as any);
       const events = await executeTransaction(api, alice, tx);
       const result = getCreateItemResult(events);
       expect(result.amount).to.be.equal(100);
-      expect(result.collectionId).to.be.equal(newCollectionID);
+      expect(result.collectionId).to.be.equal(collectionId);
       expect(result.recipient).to.be.deep.equal(to);
     }
     {
       const createData = {fungible: {value: 50}};
-      const tx = api.tx.unique.createItem(newCollectionID, to, createData as any);
+      const tx = api.tx.unique.createItem(collectionId, to, createData as any);
       const events = await executeTransaction(api, alice, tx);
       const result = getCreateItemResult(events);
       expect(result.amount).to.be.equal(50);
-      expect(result.collectionId).to.be.equal(newCollectionID);
+      expect(result.collectionId).to.be.equal(collectionId);
       expect(result.recipient).to.be.deep.equal(to);
     }
   });
   itSub.ifWithPallets('Create new item in ReFungible collection', [Pallets.ReFungible], async ({helper}) =>  {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    await collection.mintToken(alice, 100n, {Substrate: alice.address});
+    await mintTokenHelper(helper, collection, alice, {Substrate: alice.address}, 'refungible');
   });
   itSub('Create new item in NFT collection with collection admin permissions', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.addAdmin(alice, {Substrate: bob.address});
-    await collection.mintToken(bob, {Substrate: alice.address});
+    await mintTokenHelper(helper, collection, bob, {Substrate: alice.address});
   });
   itSub('Create new item in Fungible collection with collection admin permissions', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
     await collection.addAdmin(alice, {Substrate: bob.address});
-    await collection.mint(bob, 10n, {Substrate: alice.address});
+    await mintTokenHelper(helper, collection, bob, {Substrate: alice.address}, 'fungible');
   });
   itSub.ifWithPallets('Create new item in ReFungible collection with collection admin permissions', [Pallets.ReFungible], async ({helper}) =>  {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.addAdmin(alice, {Substrate: bob.address});
-    await collection.mintToken(bob, 100n, {Substrate: alice.address});
+    await mintTokenHelper(helper, collection, bob, {Substrate: alice.address}, 'refungible');
   });
 
   itSub('Set property Admin', async ({helper}) => {
@@ -97,7 +123,7 @@ describe('integration test: ext. ():', () => {
       properties: [{key: 'k', value: 'v'}],
       tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: false, mutable: true, collectionAdmin: true}}],
     });
-    await collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    await mintTokenHelper(helper, collection, alice, {Substrate: bob.address}, 'nft', [{key: 'k', value: 'v'}]);
   });
 
   itSub('Set property AdminConst', async ({helper}) => {
@@ -105,7 +131,7 @@ describe('integration test: ext. ():', () => {
       properties: [{key: 'k', value: 'v'}],
       tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: false, mutable: false, collectionAdmin: true}}],
     });
-    await collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    await mintTokenHelper(helper, collection, alice, {Substrate: bob.address}, 'nft', [{key: 'k', value: 'v'}]);
   });
 
   itSub('Set property itemOwnerOrAdmin', async ({helper}) => {
@@ -113,13 +139,13 @@ describe('integration test: ext. ():', () => {
       properties: [{key: 'k', value: 'v'}],
       tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}}],
     });
-    await collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    await mintTokenHelper(helper, collection, alice, {Substrate: bob.address}, 'nft', [{key: 'k', value: 'v'}]);
   });
 
   itSub('Check total pieces of Fungible token', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
     const amount = 10n;
-    await collection.mint(alice, amount, {Substrate: bob.address});
+    await mintTokenHelper(helper, collection, alice, {Substrate: bob.address}, 'fungible');
     {
       const totalPieces = await collection.getTotalPieces();
       expect(totalPieces).to.be.equal(amount);
@@ -134,7 +160,7 @@ describe('integration test: ext. ():', () => {
   itSub('Check total pieces of NFT token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const amount = 1n;
-    const token = await collection.mintToken(alice, {Substrate: bob.address});
+    const token = await mintTokenHelper(helper, collection, alice, {Substrate: bob.address});
     {
       const totalPieces = await helper.api?.rpc.unique.totalPieces(collection.collectionId, token.tokenId);
       expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
@@ -149,7 +175,7 @@ describe('integration test: ext. ():', () => {
   itSub.ifWithPallets('Check total pieces of ReFungible token', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const amount = 100n;
-    const token = await collection.mintToken(alice, amount, {Substrate: bob.address});
+    const token = await mintTokenHelper(helper, collection, alice, {Substrate: bob.address}, 'refungible');
     {
       const totalPieces = await token.getTotalPieces();
       expect(totalPieces).to.be.equal(amount);

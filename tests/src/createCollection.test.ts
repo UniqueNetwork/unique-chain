@@ -1,12 +1,12 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 
-// Unique Network is free software: you can redistribute itSub and/or modify
-// itSub under the terms of the GNU General Public License as published by
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Unique Network is distributed in the hope that itSub will be useful,
+// Unique Network is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -16,7 +16,33 @@
 
 import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IProperty} from './util/playgrounds/types';
+import {ICollectionCreationOptions, IProperty} from './util/playgrounds/types';
+import {DevUniqueHelper} from './util/playgrounds/unique.dev';
+
+async function mintCollectionHelper(helper: DevUniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
+  let collection;
+  if (type === 'nft') {
+    collection = await helper.nft.mintCollection(signer, options);
+  } else if (type === 'fungible') {
+    collection = await helper.ft.mintCollection(signer, options, 0);
+  } else {
+    collection = await helper.rft.mintCollection(signer, options);
+  }
+  const data = await collection.getData();
+  expect(data?.normalizedOwner).to.be.equal(signer.address);
+  expect(data?.name).to.be.equal(options.name);
+  expect(data?.description).to.be.equal(options.description);
+  expect(data?.raw.tokenPrefix).to.be.equal(options.tokenPrefix);
+  if (options.properties) {
+    expect(data?.raw.properties).to.be.deep.equal(options.properties);
+  }
+
+  if (options.tokenPropertyPermissions) {
+    expect(data?.raw.tokenPropertyPermissions).to.be.deep.equal(options.tokenPropertyPermissions);
+  }
+
+  return collection;
+}
 
 describe('integration test: ext. createCollection():', () => {
   let alice: IKeyringPair;
@@ -29,41 +55,41 @@ describe('integration test: ext. createCollection():', () => {
   });
   itSub('Create new NFT collection', async ({helper}) => {
 
-    await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    await mintCollectionHelper(helper, alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 'nft');
   });
   itSub('Create new NFT collection whith collection_name of maximum length (64 bytes)', async ({helper}) => {
 
-    await helper.nft.mintCollection(alice, {name: 'A'.repeat(64), description: 'descr', tokenPrefix: 'COL'});
+    await mintCollectionHelper(helper, alice, {name: 'A'.repeat(64), description: 'descr', tokenPrefix: 'COL'}, 'nft');
   });
   itSub('Create new NFT collection whith collection_description of maximum length (256 bytes)', async ({helper}) => {
 
-    await helper.nft.mintCollection(alice, {name: 'name', description: 'A'.repeat(256), tokenPrefix: 'COL'});
+    await mintCollectionHelper(helper, alice, {name: 'name', description: 'A'.repeat(256), tokenPrefix: 'COL'}, 'nft');
   });
   itSub('Create new NFT collection whith token_prefix of maximum length (16 bytes)', async ({helper}) => {
 
-    await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(16)});
+    await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(16)}, 'nft');
   });
   itSub('Create new Fungible collection', async ({helper}) => {
 
-    await helper.ft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 0);
+    await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 'fungible');
   });
   itSub.ifWithPallets('Create new ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
 
-    await helper.rft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
+    await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 'refungible');
   });
 
   itSub('create new collection with properties', async ({helper}) => {
 
-    await helper.nft.mintCollection(alice, {
+    await mintCollectionHelper(helper, alice, {
       name: 'name', description: 'descr', tokenPrefix: 'COL',
       properties: [{key: 'key1', value: 'val1'}],
       tokenPropertyPermissions: [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}],
-    });
+    }, 'nft');
   });
 
   itSub('Create new collection with extra fields', async ({helper}) => {
 
-    const collection = await helper.ft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 8);
+    const collection = await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 'fungible');
     await collection.setPermissions(alice, {access: 'AllowList'});
     await collection.setLimits(alice, {accountTokenOwnershipLimit: 3});
     const data = await collection.getData();
@@ -74,7 +100,7 @@ describe('integration test: ext. createCollection():', () => {
     expect(data?.name).to.be.equal('name');
     expect(data?.description).to.be.equal('descr');
     expect(raw.permissions.access).to.be.equal('AllowList');
-    expect(raw.mode).to.be.deep.equal({Fungible: '8'});
+    expect(raw.mode).to.be.deep.equal({Fungible: '0'});
     expect(limits.accountTokenOwnershipLimit).to.be.equal(3);
   });
 
