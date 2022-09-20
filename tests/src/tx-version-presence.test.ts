@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import { Metadata } from '@polkadot/types';
+import {Metadata} from '@polkadot/types';
 import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
 
 let metadata: Metadata;

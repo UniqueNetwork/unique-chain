@@ -14,42 +14,45 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from './util/playgrounds';
 
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-
+// todo:playgrounds requires sudo, look into on the later stage
 describe('integration test: Inflation', () => {
-  it('First year inflation is 10%', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
+  let superuser: IKeyringPair;
 
-      // Make sure non-sudo can't start inflation
-      const tx = api.tx.inflation.startInflation(1);
-      const bob = privateKeyWrapper('//Bob');
-      await expect(submitTransactionExpectFailAsync(bob, tx)).to.be.rejected;
-
-      // Start inflation on relay block 1 (Alice is sudo)
-      const alice = privateKeyWrapper('//Alice');
-      const sudoTx = api.tx.sudo.sudo(tx as any);
-      await submitTransactionAsync(alice, sudoTx);
-
-      const blockInterval = (api.consts.inflation.inflationBlockInterval).toBigInt();
-      const totalIssuanceStart = (await api.query.inflation.startingYearTotalIssuance()).toBigInt();
-      const blockInflation = (await api.query.inflation.blockInflation()).toBigInt();
-
-      const YEAR = 5259600n;  // 6-second block. Blocks in one year
-      // const YEAR = 2629800n; // 12-second block. Blocks in one year
-
-      const totalExpectedInflation = totalIssuanceStart / 10n;
-      const totalActualInflation = blockInflation * YEAR / blockInterval;
-
-      const tolerance = 0.00001; // Relative difference per year between theoretical and actual inflation
-      const expectedInflation = totalExpectedInflation / totalActualInflation - 1n;
-
-      expect(Math.abs(Number(expectedInflation))).to.be.lessThanOrEqual(tolerance);
+  before(async () => {
+    await usingPlaygrounds(async (_, privateKey) => {
+      superuser = privateKey('//Alice');
     });
   });
+  
+  itSub('First year inflation is 10%', async ({helper}) => {
+    // Make sure non-sudo can't start inflation
+    const [bob] = await helper.arrange.createAccounts([10n], superuser);
 
+    await expect(helper.executeExtrinsic(bob, 'api.tx.inflation.startInflation', [1])).to.be.rejectedWith(/BadOrigin/);
+
+    // Make sure superuser can't start inflation without explicit sudo
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.inflation.startInflation', [1])).to.be.rejectedWith(/BadOrigin/);
+
+    // Start inflation on relay block 1 (Alice is sudo)
+    const tx = helper.constructApiCall('api.tx.inflation.startInflation', [1]);
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [tx])).to.not.be.rejected;
+
+    const blockInterval = (helper.api!.consts.inflation.inflationBlockInterval as any).toBigInt();
+    const totalIssuanceStart = ((await helper.api!.query.inflation.startingYearTotalIssuance()) as any).toBigInt();
+    const blockInflation = (await helper.api!.query.inflation.blockInflation() as any).toBigInt();
+
+    const YEAR = 5259600n;  // 6-second block. Blocks in one year
+    // const YEAR = 2629800n; // 12-second block. Blocks in one year
+
+    const totalExpectedInflation = totalIssuanceStart / 10n;
+    const totalActualInflation = blockInflation * YEAR / blockInterval;
+
+    const tolerance = 0.00001; // Relative difference per year between theoretical and actual inflation
+    const expectedInflation = totalExpectedInflation / totalActualInflation - 1n;
+
+    expect(Math.abs(Number(expectedInflation))).to.be.lessThanOrEqual(tolerance);
+  });
 });
