@@ -573,8 +573,8 @@ pub mod pallet {
 			// this value is set for the stakers to whom the recalculation will be performed
 			let next_recalc_block = current_recalc_block + T::RecalculationInterval::get();
 
-			let storage_iterator = Self::get_next_calculated_key()
-				.map_or(Staked::<T>::iter(), Staked::<T>::iter_from);
+			let storage_iterator =
+				Self::get_next_calculated_key().map_or(Staked::<T>::iter(), Staked::<T>::iter_from);
 
 			NextCalculatedRecord::<T>::set(None);
 
@@ -617,10 +617,8 @@ pub mod pallet {
 					Ok(())
 				};
 
-				for (
-					(current_id, staked_block),
-					(amount, next_recalc_block_for_stake),
-				) in storage_iterator
+				for ((current_id, staked_block), (amount, next_recalc_block_for_stake)) in
+					storage_iterator
 				{
 					if stakers_number == 0 {
 						NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));

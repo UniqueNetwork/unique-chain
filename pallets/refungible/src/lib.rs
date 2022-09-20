@@ -92,15 +92,11 @@ use crate::erc::ERC721Events;
 
 use core::{ops::Deref, cmp::Ordering};
 use evm_coder::ToLog;
-use frame_support::{
-	ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32,
-};
+use frame_support::{ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CommonCollectionOperations,
-	Error as CommonError,
-	eth::collection_id_to_address,
+	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
 	Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
@@ -108,10 +104,10 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionFlags,
-	CollectionPropertiesVec, CreateCollectionData, mapping::TokenAddressMapping,
-	MAX_ITEMS_PER_BATCH, MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission,
-	PropertyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
+	CreateCollectionData, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH, MAX_REFUNGIBLE_PIECES,
+	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	TokenId, TrySetProperty,
 };
 use frame_support::BoundedBTreeMap;
 use derivative::Derivative;
@@ -1254,7 +1250,7 @@ impl<T: Config> Pallet<T> {
 					owner.clone(),
 					mint_amount,
 				));
-			},
+			}
 			Ordering::Less => {
 				let burn_amount = total_pieces - amount;
 				<PalletEvm<T>>::deposit_log(
@@ -1274,8 +1270,8 @@ impl<T: Config> Pallet<T> {
 					owner.clone(),
 					burn_amount,
 				));
-			},
-			_ => {},
+			}
+			_ => {}
 		}
 
 		Ok(())

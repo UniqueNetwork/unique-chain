@@ -884,12 +884,7 @@ impl<T: Config> Pallet<T> {
 
 		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				owner: to.clone(),
-			},
-		);
+		<TokenData<T>>::insert((collection.id, token), ItemData { owner: to.clone() });
 
 		if let Some(balance_to) = balance_to {
 			// from != to

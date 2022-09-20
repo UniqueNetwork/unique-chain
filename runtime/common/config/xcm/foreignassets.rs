@@ -187,9 +187,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent));
 		}
 
-		if let Some(currency_id) =
-			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location)
-		{
+		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location) {
 			return Some(currency_id);
 		}
 
