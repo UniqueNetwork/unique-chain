@@ -84,10 +84,13 @@ where
 		let len = call.encoded_size();
 
 		let signed = match signer {
-			Some(signer) => fp_self_contained::CheckedSignature::Signed(signer.clone().into(), get_signed_extras(signer.into())),
+			Some(signer) => fp_self_contained::CheckedSignature::Signed(
+				signer.clone().into(),
+				get_signed_extras(signer.into()),
+			),
 			None => fp_self_contained::CheckedSignature::Unsigned,
 		};
-		
+
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,
 			Call,

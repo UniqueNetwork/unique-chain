@@ -197,7 +197,10 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
-		traits::{schedule::{LookupError, LOWEST_PRIORITY}, PreimageProvider},
+		traits::{
+			schedule::{LookupError, LOWEST_PRIORITY},
+			PreimageProvider,
+		},
 	};
 	use frame_system::pallet_prelude::*;
 
@@ -239,7 +242,10 @@ pub mod pallet {
 		type MaximumWeight: Get<Weight>;
 
 		/// Required origin to schedule or cancel calls.
-		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin, Success = ScheduledEnsureOriginSuccess<Self::AccountId>>;
+		type ScheduleOrigin: EnsureOrigin<
+			<Self as system::Config>::RuntimeOrigin,
+			Success = ScheduledEnsureOriginSuccess<Self::AccountId>,
+		>;
 
 		/// Required origin to set/change calls' priority.
 		type PrioritySetOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
@@ -326,7 +332,7 @@ pub mod pallet {
 		/// Canceled some task.
 		Canceled { when: T::BlockNumber, index: u32 },
 		/// Scheduled task's priority has changed
-		PriorityChanged { 
+		PriorityChanged {
 			when: T::BlockNumber,
 			index: u32,
 			priority: schedule::Priority,
@@ -446,19 +452,21 @@ pub mod pallet {
 					continue;
 				}
 
-				let scheduled_origin = <<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(s.origin.clone());
-				let ensured_origin = T::ScheduleOrigin::ensure_origin(scheduled_origin.into()).unwrap();
+				let scheduled_origin =
+					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(s.origin.clone());
+				let ensured_origin =
+					T::ScheduleOrigin::ensure_origin(scheduled_origin.into()).unwrap();
 
 				let r;
 				match ensured_origin {
 					ScheduledEnsureOriginSuccess::Root => {
 						r = Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()));
-					},
+					}
 					ScheduledEnsureOriginSuccess::Signed(sender) => {
 						// Execute transaction via chain default pipeline
 						// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 						r = T::CallExecutor::dispatch_call(Some(sender), call.clone());
-					},
+					}
 					ScheduledEnsureOriginSuccess::Unsigned => {
 						// Unsigned version of the above
 						r = T::CallExecutor::dispatch_call(None, call.clone());
@@ -776,12 +784,16 @@ impl<T: Config> Pallet<T> {
 						}
 
 						s.priority = priority;
-						Self::deposit_event(Event::PriorityChanged { when, index, priority });
+						Self::deposit_event(Event::PriorityChanged {
+							when,
+							index,
+							priority,
+						});
 					}
 					Ok(())
 				})
-			},
-			None => Err(Error::<T>::NotFound.into())
+			}
+			None => Err(Error::<T>::NotFound.into()),
 		}
 	}
 }

@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{traits::{PrivilegeCmp, EnsureOrigin}, weights::Weight, parameter_types};
+use frame_support::{
+	traits::{PrivilegeCmp, EnsureOrigin},
+	weights::Weight,
+	parameter_types,
+};
 use frame_system::{EnsureRoot, RawOrigin};
 use sp_runtime::Perbill;
 use core::cmp::Ordering;
@@ -37,7 +41,8 @@ parameter_types! {
 
 pub struct EnsureSignedOrRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
 impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, AccountId: Decode>
-	EnsureOrigin<O> for EnsureSignedOrRoot<AccountId> {
+	EnsureOrigin<O> for EnsureSignedOrRoot<AccountId>
+{
 	type Success = ScheduledEnsureOriginSuccess<AccountId>;
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
@@ -60,7 +65,7 @@ impl PrivilegeCmp<OriginCaller> for EqualOrRootOnly {
 			(Root, Root) => Some(Ordering::Equal),
 			(Root, _) => Some(Ordering::Greater),
 			(_, Root) => Some(Ordering::Less),
-			lr @ _ => (lr.0 == lr.1).then(|| Ordering::Equal)
+			lr @ _ => (lr.0 == lr.1).then(|| Ordering::Equal),
 		}
 	}
 }
