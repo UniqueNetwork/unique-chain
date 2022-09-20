@@ -499,7 +499,7 @@ describe('Negative Test: Scheduling', () => {
       .transfer(alice, {Substrate: bob.address});
 
     await expect(helper.scheduler.cancelScheduled(bob, scheduledId))
-      .to.be.rejectedWith(/badOrigin/);
+      .to.be.rejectedWith(/BadOrigin/);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
@@ -517,7 +517,7 @@ describe('Negative Test: Scheduling', () => {
     const scheduled = helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {priority: 42});
     
     await expect(scheduled.balance.transferToSubstrate(alice, bob.address, amount))
-      .to.be.rejectedWith(/badOrigin/);
+      .to.be.rejectedWith(/BadOrigin/);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
@@ -538,7 +538,7 @@ describe('Negative Test: Scheduling', () => {
 
     const priority = 112;
     await expect(helper.scheduler.changePriority(alice, scheduledId, priority))
-      .to.be.rejectedWith(/badOrigin/);
+      .to.be.rejectedWith(/BadOrigin/);
 
     const priorityChanged = await helper.wait.event(
       waitForBlocks,
