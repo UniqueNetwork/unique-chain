@@ -492,6 +492,11 @@ up-sponsorship = { default-features = false, git = "https://github.com/uniquenet
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
 
 ################################################################################
+# Test dependencies
+
+pallet-test-utils = { optional = true, default-features = false, path = "../../test-pallets/utils" }
+
+################################################################################
 # Other Dependencies
 
 impl-trait-for-tuples = "0.2.2"
@@ -501,10 +506,6 @@ impl-trait-for-tuples = "0.2.2"
 
 [dev-dependencies.logtest]
 version = "2.0.0"
-
-################################################################################
-# Test dependencies
-pallet-test-utils = { optional = true, default-features = false, path = "../../test-pallets/utils" }
 
 ################################################################################
 # Build Dependencies
