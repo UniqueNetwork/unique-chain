@@ -70,6 +70,7 @@ use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT,
 	Collection,
 	RpcCollection,
+	CollectionFlags,
 	CollectionId,
 	CreateItemData,
 	MAX_TOKEN_PREFIX_LENGTH,
@@ -252,9 +253,9 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
-	/// Now check only the `external_collection` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
+	/// Now check only the `external` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
 	pub fn check_is_internal(&self) -> DispatchResult {
-		if self.external_collection {
+		if self.flags.external {
 			return Err(<Error<T>>::CollectionIsExternal)?;
 		}
 
@@ -262,9 +263,9 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
-	/// Now check only the `external_collection` flag and if it's **false**, then return [`Error::CollectionIsInternal`] error.
+	/// Now check only the `external` flag and if it's **false**, then return [`Error::CollectionIsInternal`] error.
 	pub fn check_is_external(&self) -> DispatchResult {
-		if !self.external_collection {
+		if !self.flags.external {
 			return Err(<Error<T>>::CollectionIsInternal)?;
 		}
 
@@ -792,7 +793,7 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			permissions,
-			external_collection,
+			flags,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -822,7 +823,8 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
-			read_only: external_collection,
+			read_only: flags.external,
+			foreign: flags.foreign,
 		})
 	}
 }
@@ -861,11 +863,11 @@ impl<T: Config> Pallet<T> {
 	///
 	/// * `owner` - The owner of the collection.
 	/// * `data` - Description of the created collection.
-	/// * `is_external` - Marks that collection managet by not "Unique network".
+	/// * `flags` - Extra flags to store.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
-		is_external: bool,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -909,7 +911,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
-			external_collection: is_external,
+			flags,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();

@@ -159,6 +159,23 @@
   },
   {
     "inputs": [],
+    "name": "collectionSponsor",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple6",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "confirmCollectionSponsorship",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -183,23 +200,6 @@
     "name": "deleteCollectionProperty",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getCollectionSponsor",
-    "outputs": [
-      {
-        "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-        ],
-        "internalType": "struct Tuple6",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -453,7 +453,7 @@
     "inputs": [],
     "name": "uniqueCollectionType",
     "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   }
 ]

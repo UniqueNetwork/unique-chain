@@ -3,20 +3,30 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-export interface IChainEvent {
-  data: any;
-  method: string;
+export interface IEvent {
   section: string;
+  method: string;
+  index: [number, number] | string;
+  data: any[];
+  phase: {applyExtrinsic: number} | 'Initialization',
 }
 
 export interface ITransactionResult {
-    status: 'Fail' | 'Success';
-    result: {
-        events: {
-          event: IChainEvent
-        }[];
-    },
-    moduleError?: string;
+  status: 'Fail' | 'Success';
+  result: {
+      events: {
+        phase: any, // {ApplyExtrinsic: number} | 'Initialization',
+        event: IEvent;
+      }[];
+  },
+  moduleError?: string;
+}
+
+export interface ISubscribeBlockEventsData {
+  number: number;
+  hash: string;
+  timestamp: number; 
+  events: IEvent[];
 }
 
 export interface ILogger {
@@ -145,6 +155,11 @@ export interface ISubstrateBalance {
   reserved: bigint,
   miscFrozen: bigint,
   feeFrozen: bigint
+}
+
+export interface IStakingInfo {
+  block: bigint,
+  amount: bigint,
 }
 
 export type TSubstrateAccount = string;

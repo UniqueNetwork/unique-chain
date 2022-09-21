@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import usingApi from './substrate/substrate-api';
-import {expect} from 'chai';
 import {ApiPromise} from '@polkadot/api';
+import {expect, itSub} from './util/playgrounds';
 
 const BLOCK_TIME_MS = 12000;
 const TOLERANCE_MS = 3000;
@@ -37,10 +36,8 @@ function getBlocks(api: ApiPromise): Promise<number[]> {
 }
 
 describe('Block Production smoke test', () => {
-  it('Node produces new blocks', async () => {
-    await usingApi(async (api) => {
-      const blocks: number[] | undefined = await getBlocks(api);
-      expect(blocks[0]).to.be.lessThan(blocks[1]);
-    });
+  itSub('Node produces new blocks', async ({helper}) => {
+    const blocks: number[] | undefined = await getBlocks(helper.api!);
+    expect(blocks[0]).to.be.lessThan(blocks[1]);
   });
 });

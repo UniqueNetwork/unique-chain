@@ -16,7 +16,7 @@
 
 import '../interfaces/augment-api-rpc';
 import '../interfaces/augment-api-query';
-import {ApiPromise} from '@polkadot/api';
+import {ApiPromise, Keyring} from '@polkadot/api';
 import type {AccountId, EventRecord, Event, BlockNumber} from '@polkadot/types/interfaces';
 import type {GenericEventData} from '@polkadot/types';
 import {AnyTuple, IEvent, IKeyringPair} from '@polkadot/types/types';
@@ -63,14 +63,14 @@ export async function isUnique(): Promise<boolean> {
 export async function isQuartz(): Promise<boolean> {
   return usingApi(async api => {
     const chain = await api.rpc.system.chain();
-    
+
     return chain.eq('QUARTZ');
   });
 }
 
 let modulesNames: any;
 export function getModuleNames(api: ApiPromise): string[] {
-  if (typeof modulesNames === 'undefined') 
+  if (typeof modulesNames === 'undefined')
     modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
   return modulesNames;
 }
@@ -103,6 +103,19 @@ export async function requirePallets(mocha: Context, requiredPallets: string[]) 
 
 export function bigIntToSub(api: ApiPromise, number: bigint) {
   return api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
+}
+
+export function bigIntToDecimals(number: bigint, decimals = 18): string {
+  const numberStr = number.toString();
+  const dotPos = numberStr.length - decimals;
+
+  if (dotPos <= 0) {
+    return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
+  } else {
+    const intPart = numberStr.substring(0, dotPos);
+    const fractPart = numberStr.substring(dotPos);
+    return intPart + '.' + fractPart;
+  }
 }
 
 export function normalizeAccountId(input: string | AccountId | CrossAccountId | IKeyringPair): CrossAccountId {
@@ -291,7 +304,7 @@ export function getCreateCollectionResult(events: EventRecord[]): CreateCollecti
 
 export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] {
   const results: CreateItemResult[] = [];
-  
+
   const genericResult = getGenericResult<CreateItemResult[]>(events, 'common', 'ItemCreated', (data) => {
     const collectionId = parseInt(data[0].toString(), 10);
     const itemId = parseInt(data[1].toString(), 10);
@@ -316,15 +329,15 @@ export function getCreateItemsResult(events: EventRecord[]): CreateItemResult[] 
 
 export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
   const genericResult = getGenericResult(events, 'common', 'ItemCreated', (data) => data.map(function(value) { return value.toJSON(); }));
-  
-  if (genericResult.data == null) 
+
+  if (genericResult.data == null)
     return {
       success: genericResult.success,
       collectionId: 0,
       itemId: 0,
       amount: 0,
     };
-  else 
+  else
     return {
       success: genericResult.success,
       collectionId: genericResult.data[0] as number,
@@ -336,7 +349,7 @@ export function getCreateItemResult(events: EventRecord[]): CreateItemResult {
 
 export function getDestroyItemsResult(events: EventRecord[]): DestroyItemResult[] {
   const results: DestroyItemResult[] = [];
-  
+
   const genericResult = getGenericResult<DestroyItemResult[]>(events, 'common', 'ItemDestroyed', (data) => {
     const collectionId = parseInt(data[0].toString(), 10);
     const itemId = parseInt(data[1].toString(), 10);
@@ -1102,6 +1115,19 @@ getFreeBalance(account: IKeyringPair): Promise<bigint> {
   return balance;
 }
 
+export async function paraSiblingSovereignAccount(paraid: number): Promise<string> {
+  return usingApi(async api => {
+    // We are getting a *sibling* parachain sovereign account,
+    // so we need a sibling prefix: encoded(b"sibl") == 0x7369626c
+    const siblingPrefix = '0x7369626c';
+
+    const encodedParaId = api.createType('u32', paraid).toHex(true).substring(2);
+    const suffix = '000000000000000000000000000000000000000000000000';
+
+    return siblingPrefix + encodedParaId + suffix;
+  });
+}
+
 export async function transferBalanceTo(api: ApiPromise, source: IKeyringPair, target: string, amount = 1000n * UNIQUE) {
   const tx = api.tx.balances.transfer(target, amount);
   const events = await submitTransactionAsync(source, tx);
@@ -1125,9 +1151,9 @@ scheduleExpectSuccess(
     expect(blockNumber).to.be.greaterThan(0);
     const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
       scheduledId,
-      expectedBlockNumber, 
-      repetitions > 1 ? [period, repetitions] : null, 
-      0, 
+      expectedBlockNumber,
+      repetitions > 1 ? [period, repetitions] : null,
+      0,
       {Value: operationTx as any},
     );
 
@@ -1152,13 +1178,13 @@ scheduleExpectFailure(
     expect(blockNumber).to.be.greaterThan(0);
     const scheduleTx = api.tx.scheduler.scheduleNamed( // schedule
       scheduledId,
-      expectedBlockNumber, 
-      repetitions <= 1 ? null : [period, repetitions], 
-      0, 
+      expectedBlockNumber,
+      repetitions <= 1 ? null : [period, repetitions],
+      0,
       {Value: operationTx as any},
     );
 
-    //const events = 
+    //const events =
     await expect(submitTransactionExpectFailAsync(sender, scheduleTx)).to.be.rejected;
     //expect(getGenericResult(events).success).to.be.false;
   });
@@ -1222,7 +1248,7 @@ scheduleTransferFundsPeriodicExpectSuccess(
     const transferTx = api.tx.balances.transfer(recipient.address, amount);
 
     const balanceBefore = await getFreeBalance(recipient);
-    
+
     await scheduleExpectSuccess(transferTx, sender, blockSchedule, scheduledId, period, repetitions);
 
     expect(await getFreeBalance(recipient)).to.be.equal(balanceBefore);
@@ -1738,6 +1764,12 @@ export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
+export const describe_xcm = (
+  process.env.RUN_XCM_TESTS
+    ? describe
+    : describe.skip
+);
+
 export async function waitNewBlocks(blocksCount = 1): Promise<void> {
   await usingApi(async (api) => {
     const promise = new Promise<void>(async (resolve) => {
@@ -1752,6 +1784,45 @@ export async function waitNewBlocks(blocksCount = 1): Promise<void> {
     });
     return promise;
   });
+}
+
+export async function waitEvent(
+  api: ApiPromise,
+  maxBlocksToWait: number,
+  eventSection: string,
+  eventMethod: string,
+): Promise<EventRecord | null> {
+
+  const promise = new Promise<EventRecord | null>(async (resolve) => {
+    const unsubscribe = await api.rpc.chain.subscribeNewHeads(async header => {
+      const blockNumber = header.number.toHuman();
+      const blockHash = header.hash;
+      const eventIdStr = `${eventSection}.${eventMethod}`;
+      const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
+
+      console.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
+
+      const apiAt = await api.at(blockHash);
+      const eventRecords = await apiAt.query.system.events();
+
+      const neededEvent = eventRecords.find(r => {
+        return r.event.section == eventSection && r.event.method == eventMethod;
+      });
+
+      if (neededEvent) {
+        unsubscribe();
+        resolve(neededEvent);
+      } else if (maxBlocksToWait > 0) {
+        maxBlocksToWait--;
+      } else {
+        console.log(`Event \`${eventIdStr}\` is NOT found`);
+
+        unsubscribe();
+        resolve(null);
+      }
+    });
+  });
+  return promise;
 }
 
 export async function repartitionRFT(
@@ -1782,6 +1853,11 @@ export async function itApi(name: string, cb: (apis: { api: ApiPromise, privateK
 itApi.only = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {only: true});
 itApi.skip = (name: string, cb: (apis: { api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair }) => any) => itApi(name, cb, {skip: true});
 
+let accountSeed = 10000;
+export function generateKeyringPair(keyring: Keyring) {
+  const privateKey = `0xDEADBEEF${(Date.now() + (accountSeed++)).toString(16).padStart(64 - 8, '0')}`;
+  return keyring.addFromUri(privateKey);
+}
 
 export async function expectSubstrateEventsAtBlock(api: ApiPromise, blockNumber: AnyNumber | BlockNumber, section: string, methods: string[], dryRun = false) {
   const blockHash = await api.rpc.chain.getBlockHash(blockNumber);

@@ -313,7 +313,7 @@ impl AbiWriter {
 	/// Finish writer, concatenating all internal buffers
 	pub fn finish(mut self) -> Vec<u8> {
 		for (static_offset, part) in self.dynamic_part {
-			let part_offset = self.static_part.len() - self.had_call.then(|| 4).unwrap_or(0);
+			let part_offset = self.static_part.len() - if self.had_call { 4 } else { 0 };
 
 			let encoded_dynamic_offset = usize::to_be_bytes(part_offset);
 			self.static_part[static_offset + ABI_ALIGNMENT - encoded_dynamic_offset.len()

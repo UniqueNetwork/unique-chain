@@ -36,6 +36,7 @@ use serde::{Serialize, Deserialize};
 use sp_core::U256;
 use sp_runtime::{ArithmeticError, sp_std::prelude::Vec, Permill};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
+use bondrewd::Bitfields;
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
@@ -54,6 +55,7 @@ pub use rmrk_traits::{
 	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart,
 };
 
+mod bondrewd_codec;
 mod bounded;
 pub mod budget;
 pub mod mapping;
@@ -357,6 +359,21 @@ pub type CollectionName = BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>;
 pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>;
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
+#[derive(Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[bondrewd(enforce_bytes = 1)]
+pub struct CollectionFlags {
+	/// Tokens in foreign collections can be transferred, but not burnt
+	#[bondrewd(bits = "0..1")]
+	pub foreign: bool,
+	/// External collections can't be managed using `unique` api
+	#[bondrewd(bits = "7..8")]
+	pub external: bool,
+
+	#[bondrewd(reserve, bits = "1..7")]
+	pub reserved: u8,
+}
+bondrewd_codec!(CollectionFlags);
+
 /// Base structure for represent collection.
 ///
 /// Used to provide basic functionality for all types of collections.
@@ -404,9 +421,8 @@ pub struct Collection<AccountId> {
 	#[version(2.., upper(Default::default()))]
 	pub permissions: CollectionPermissions,
 
-	/// Marks that this collection is not "unique", and managed from external.
-	#[version(2.., upper(false))]
-	pub external_collection: bool,
+	#[version(2.., upper(Default::default()))]
+	pub flags: CollectionFlags,
 
 	#[version(..2)]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
@@ -454,6 +470,9 @@ pub struct RpcCollection<AccountId> {
 
 	/// Is collection read only.
 	pub read_only: bool,
+
+	/// Is collection is foreign.
+	pub foreign: bool,
 }
 
 /// Data used for create collection.

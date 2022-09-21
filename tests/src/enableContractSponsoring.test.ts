@@ -29,6 +29,7 @@ import {
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
+// todo:playgrounds skipped ~ postponed
 describe.skip('Integration Test enableContractSponsoring', () => {
   it('ensure tx fee is paid from endowment', async () => {
     await usingApi(async (api, privateKeyWrapper) => {

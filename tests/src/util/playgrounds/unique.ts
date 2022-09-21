@@ -6,10 +6,10 @@
 /* eslint-disable no-prototype-builtins */
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
-import {ApiInterfaceEvents} from '@polkadot/api/types';
+import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IChainEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 export const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -149,7 +149,7 @@ class UniqueUtil {
     return {success, tokens};
   }
 
-  static findCollectionInEvents(events: {event: IChainEvent}[], collectionId: number, expectedSection: string, expectedMethod: string) {
+  static findCollectionInEvents(events: {event: IEvent}[], collectionId: number, expectedSection: string, expectedMethod: string) {
     let eventId = null;
     events.forEach(({event: {data, method, section}}) => {
       if ((section === expectedSection) && (method === expectedMethod)) {
@@ -163,7 +163,7 @@ class UniqueUtil {
     return eventId === collectionId;
   }
 
-  static isTokenTransferSuccess(events: {event: IChainEvent}[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
+  static isTokenTransferSuccess(events: {event: IEvent}[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
     const normalizeAddress = (address: string | ICrossAccountId) => {
       if(typeof address === 'string') return address;
       const obj = {} as any;
@@ -195,11 +195,64 @@ class UniqueUtil {
   }
 }
 
+class UniqueEventHelper {
+  private static extractIndex(index: any): [number, number] | string {
+    if(index.toRawType() === '[u8;2]') return [index[0], index[1]];
+    return index.toJSON();
+  }
+
+  private static extractSub(data: any, subTypes: any): {[key: string]: any} {
+    let obj: any = {};
+    let index = 0;
+
+    if (data.entries) {
+      for(const [key, value] of data.entries()) {
+        obj[key] = this.extractData(value, subTypes[index]);
+        index++;
+      }
+    } else obj = data.toJSON();
+
+    return obj;
+  }
+  
+  private static extractData(data: any, type: any): any {
+    if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
+    if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
+    if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
+    return data.toHuman();
+  }
+
+  public static extractEvents(records: ITransactionResult): IEvent[] {
+    const parsedEvents: IEvent[] = [];
+
+    records.result.events.forEach((record) => {
+      const {event, phase} = record;
+      const types = (event as any).typeDef;
+
+      const eventData: IEvent = {
+        section: event.section.toString(),
+        method: event.method.toString(),
+        index: this.extractIndex(event.index),
+        data: [],
+        phase: phase.toJSON(),
+      };
+
+      event.data.forEach((val: any, index: number) => {
+        eventData.data.push(this.extractData(val, types[index]));
+      });
+
+      parsedEvents.push(eventData);
+    });
+
+    return parsedEvents;
+  }
+}
 
 class ChainHelperBase {
   transactionStatus = UniqueUtil.transactionStatus;
   chainLogType = UniqueUtil.chainLogType;
   util: typeof UniqueUtil;
+  eventHelper: typeof UniqueEventHelper;
   logger: ILogger;
   api: ApiPromise | null;
   forcedNetwork: TUniqueNetworks | null;
@@ -208,6 +261,7 @@ class ChainHelperBase {
 
   constructor(logger?: ILogger) {
     this.util = UniqueUtil;
+    this.eventHelper = UniqueEventHelper;
     if (typeof logger == 'undefined') logger = this.util.getDefaultLogger();
     this.logger = logger;
     this.api = null;
@@ -290,7 +344,7 @@ class ChainHelperBase {
     return {api, network};
   }
 
-  getTransactionStatus(data: {events: {event: IChainEvent}[], status: any}) {
+  getTransactionStatus(data: {events: {event: IEvent}[], status: any}) {
     const {events, status} = data;
     if (status.isReady) {
       return this.transactionStatus.NOT_READY;
@@ -299,11 +353,11 @@ class ChainHelperBase {
       return this.transactionStatus.NOT_READY;
     }
     if (status.isInBlock || status.isFinalized) {
-      const errors = events.filter(e => e.event.data.method === 'ExtrinsicFailed');
+      const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
       if (errors.length > 0) {
         return this.transactionStatus.FAIL;
       }
-      if (events.filter(e => e.event.data.method === 'ExtrinsicSuccess').length > 0) {
+      if (events.filter(e => e.event.method === 'ExtrinsicSuccess').length > 0) {
         return this.transactionStatus.SUCCESS;
       }
     }
@@ -311,7 +365,7 @@ class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender: TSigner, transaction: any, label = 'transaction', options: any = null) {
+  signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
@@ -332,13 +386,16 @@ class ChainHelperBase {
             if (result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
 
-              if (dispatchError && dispatchError.isModule) {
-                const modErr = dispatchError.asModule;
-                const errorMeta = dispatchError.registry.findMetaError(modErr);
+              if (dispatchError) {
+                if (dispatchError.isModule) {
+                  const modErr = dispatchError.asModule;
+                  const errorMeta = dispatchError.registry.findMetaError(modErr);
 
-                moduleError = `${errorMeta.section}.${errorMeta.name}`;
-              }
-              else {
+                  moduleError = `${errorMeta.section}.${errorMeta.name}`;
+                } else {
+                  moduleError = dispatchError.toHuman();
+                }
+              } else {
                 this.logger.log(result, this.logger.level.ERROR);
               }
             }
@@ -364,16 +421,16 @@ class ChainHelperBase {
     return call(...params);
   }
 
-  async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=false/*, failureMessage='expected success'*/) {
+  async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=true, options: Partial<SignerOptions>|null = null/*, failureMessage='expected success'*/) {
     if(this.api === null) throw Error('API not initialized');
     if(!extrinsic.startsWith('api.tx.')) throw Error(`${extrinsic} is not transaction`);
 
     const startTime = (new Date()).getTime();
     let result: ITransactionResult;
-    let events = [];
+    let events: IEvent[] = [];
     try {
-      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), extrinsic) as ITransactionResult;
-      events = result.result.events.map((x: any) => x.toHuman());
+      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
+      events = this.eventHelper.extractEvents(result);
     }
     catch(e) {
       if(!(e as object).hasOwnProperty('status')) throw e;
@@ -2029,21 +2086,54 @@ class StakingGroup extends HelperGroup {
     return 1;
   }
 
+  /**
+   * Get total staked amount for address
+   * @param address substrate or ethereum address
+   * @returns total staked amount
+   */
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
     if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
     return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
   }
 
-  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<bigint[][]> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  /**
+   * Get total staked per block
+   * @param address substrate or ethereum address
+   * @returns array of stakes. `block` – the number of the block in which the stake was made. `amount` - the number of tokens staked in the block
+   */
+  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+    const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
+    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => {
+      return { 
+        block: block.toBigInt(),
+        amount: amount.toBigInt(),
+      };
+    });
   }
 
+  /**
+   * Get total pending unstake amount for address
+   * @param address substrate or ethereum address
+   * @returns total pending unstake amount
+   */
   async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
   }
 
-  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<bigint[][]> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address])).map(([block, amount]: any[]) => [block.toBigInt(), amount.toBigInt()]);
+  /**
+   * Get pending unstake amount per block for address
+   * @param address substrate or ethereum address
+   * @returns array of pending stakes. `block` – the number of the block in which the unstake was made. `amount` - the number of tokens unstaked in the block
+   */
+  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+    const rawUnstakedPerBlock = await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address]);
+    const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => {
+      return {
+        block: block.toBigInt(),
+        amount: amount.toBigInt(),
+      };
+    });
+    return result;
   }
 }
 

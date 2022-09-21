@@ -13,14 +13,14 @@ import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
-export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>, url: string = config.substrateUrl) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
   const helper = new DevUniqueHelper(new SilentLogger());
 
   try {
-    await helper.connect(config.substrateUrl);
+    await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const privateKey = (seed: string) => helper.util.fromSeed(seed, ss58Format);
     await code(helper, privateKey);

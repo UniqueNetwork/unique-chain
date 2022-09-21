@@ -223,7 +223,7 @@ describe('Sponsoring EVM contracts', () => {
     const helpers = contractHelpers(web3, owner);
     await helpers.methods.selfSponsoredEnable(flipper.options.address).send();
     
-    const result = await helpers.methods.getSponsor(flipper.options.address).call();
+    const result = await helpers.methods.sponsor(flipper.options.address).call();
 
     expect(result[0]).to.be.eq(flipper.options.address);
     expect(result[1]).to.be.eq('0');
@@ -237,7 +237,7 @@ describe('Sponsoring EVM contracts', () => {
     await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
     await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
     
-    const result = await helpers.methods.getSponsor(flipper.options.address).call();
+    const result = await helpers.methods.sponsor(flipper.options.address).call();
 
     expect(result[0]).to.be.eq(sponsor);
     expect(result[1]).to.be.eq('0');
@@ -482,7 +482,7 @@ describe('Sponsoring EVM contracts', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
-    expect(await helpers.methods.getSponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
+    expect(await helpers.methods.sponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
   });
 });
 
@@ -551,7 +551,7 @@ describe('Sponsoring Fee Limit', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
-    expect(await helpers.methods.getSponsoringFeeLimit(flipper.options.address).call()).to.be.equals('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+    expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equals('115792089237316195423570985008687907853269984665640564039457584007913129639935');
   });
 
   itWeb3('Set fee limit', async ({api, web3, privateKeyWrapper}) => {
@@ -559,7 +559,7 @@ describe('Sponsoring Fee Limit', () => {
     const flipper = await deployFlipper(web3, owner);
     const helpers = contractHelpers(web3, owner);
     await helpers.methods.setSponsoringFeeLimit(flipper.options.address, 100).send();
-    expect(await helpers.methods.getSponsoringFeeLimit(flipper.options.address).call()).to.be.equals('100');
+    expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equals('100');
   });
 
   itWeb3('Negative test - set fee limit by non-owner', async ({api, web3, privateKeyWrapper}) => {

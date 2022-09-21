@@ -24,6 +24,9 @@ pub mod scheduler;
 pub mod sponsoring;
 pub mod weights;
 
+#[cfg(test)]
+pub mod tests;
+
 use sp_core::H160;
 use frame_support::traits::{Currency, OnUnbalanced, Imbalance};
 use sp_runtime::{
@@ -79,7 +82,7 @@ pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransaction
 
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
-	// system::CheckTxVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,

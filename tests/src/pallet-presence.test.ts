@@ -45,6 +45,8 @@ const requiredPallets = [
   'nonfungible',
   'charging',
   'configuration',
+  'tokens',
+  'xtokens',
 ];
 
 // Pallets that depend on consensus and governance configuration
@@ -61,13 +63,20 @@ describe('Pallet presence', () => {
 
       const refungible = 'refungible';
       const scheduler = 'scheduler';
+      const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
 
       if (chain.eq('OPAL by UNIQUE')) {
-        requiredPallets.push(refungible, scheduler, appPromotion, ...rmrkPallets);
+        requiredPallets.push(
+          refungible,
+          scheduler,
+          foreignAssets,
+          appPromotion,
+          ...rmrkPallets,
+        );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
-        // Insert Quartz additional pallets here
+        requiredPallets.push(refungible);
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
       }

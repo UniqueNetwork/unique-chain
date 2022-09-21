@@ -169,7 +169,7 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn get_sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
+	fn sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
 		let sponsor =
 			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
 		Ok(pallet_common::eth::convert_cross_account_to_tuple::<T>(
@@ -220,7 +220,7 @@ where
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
-	fn get_sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
+	fn sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
 		self.recorder().consume_sload()?;
 
 		Ok(<SponsoringRateLimit<T>>::get(contract_address)
@@ -273,7 +273,7 @@ where
 	/// @param contractAddress Contract to get sponsoring fee limit of
 	/// @return uint256 Maximum amount of fee that could be spent by single
 	///  transaction
-	fn get_sponsoring_fee_limit(&self, contract_address: address) -> Result<uint256> {
+	fn sponsoring_fee_limit(&self, contract_address: address) -> Result<uint256> {
 		self.recorder().consume_sload()?;
 
 		Ok(get_sponsoring_fee_limit::<T>(contract_address))
