@@ -209,7 +209,7 @@ describe('Negative integration test: ext. createItem():', () => {
     const mintTx = async () => collection.mint(bob, 10n, {Substrate: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
-  itSub('Regular user cannot create new item in ReFungible collection', async ({helper}) => {
+  itSub.ifWithPallets('Regular user cannot create new item in ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const mintTx = async () => collection.mintToken(bob, 100n, {Substrate: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
