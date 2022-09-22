@@ -132,7 +132,7 @@ class ArrangeGroup {
       accounts.push(recipient);
       if (balance !== 0n) {
         const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
-        transactions.push(this.helper.signTransaction(donor, tx, 'account generation', {nonce}));
+        transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
         nonce++;
       }
     }
@@ -183,7 +183,7 @@ class ArrangeGroup {
         accounts.push(recepient);
         if (withBalance !== 0n) {
           const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recepient.address}, withBalance * tokenNominal]);
-          transactions.push(this.helper.signTransaction(donor, tx, 'account generation', {nonce}));
+          transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
           nonce++;
         }
       }

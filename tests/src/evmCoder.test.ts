@@ -14,12 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import {IKeyringPair} from '@polkadot/types/types';
 import Web3 from 'web3';
-import {createEthAccountWithBalance, createNonfungibleCollection, GAS_ARGS, itWeb3} from './eth/util/helpers';
+import {itEth, expect, usingEthPlaygrounds} from './eth/util/playgrounds';
 import * as solc from 'solc';
-
-import chai from 'chai';
-const expect = chai.expect;
 
 async function compileTestContract(collectionAddress: string, contractAddress: string) {
   const input = {
@@ -79,22 +77,30 @@ async function compileTestContract(collectionAddress: string, contractAddress: s
   };
 }
 
-async function deployTestContract(web3: Web3, owner: string, collectionAddress: string, contractAddress: string) {
+async function deployTestContract(web3: Web3, owner: string, collectionAddress: string, contractAddress: string, gas: number) {
   const compiled = await compileTestContract(collectionAddress, contractAddress);
   const fractionalizerContract = new web3.eth.Contract(compiled.abi, undefined, {
     data: compiled.object,
     from: owner,
-    ...GAS_ARGS,
+    gas,
   });
   return await fractionalizerContract.deploy({data: compiled.object}).send({from: owner});
 }
 
 describe('Evm Coder tests', () => {
-  itWeb3('Call non-existing function', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress} = await createNonfungibleCollection(api, web3, owner);
-    const contract = await deployTestContract(web3, owner, collectionIdAddress, '0x1bfed5D614b886b9Ab2eA4CBAc22A96B7EC29c9c');
-    const testContract = await deployTestContract(web3, owner, collectionIdAddress, contract.options.address);
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+  
+  itEth('Call non-existing function', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.eth.createNonfungibleCollection(owner, 'EVMCODER', '', 'TEST');
+    const contract = await deployTestContract(helper.getWeb3(), owner, collection.collectionAddress, '0x1bfed5D614b886b9Ab2eA4CBAc22A96B7EC29c9c', helper.eth.DEFAULT_GAS);
+    const testContract = await deployTestContract(helper.getWeb3(), owner, collection.collectionAddress, contract.options.address, helper.eth.DEFAULT_GAS);
     {
       const result = await testContract.methods.test1().send();
       expect(result.events.Result.returnValues).to.deep.equal({
