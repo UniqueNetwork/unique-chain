@@ -29,7 +29,7 @@ async function mintCollectionHelper(helper: DevUniqueHelper, signer: IKeyringPai
     collection = await helper.rft.mintCollection(signer, options);
   }
   const data = await collection.getData();
-  expect(data?.normalizedOwner).to.be.equal(signer.address);
+  expect(data?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(signer.address));
   expect(data?.name).to.be.equal(options.name);
   expect(data?.description).to.be.equal(options.description);
   expect(data?.raw.tokenPrefix).to.be.equal(options.tokenPrefix);
@@ -96,7 +96,7 @@ describe('integration test: ext. createCollection():', () => {
     const limits = await collection.getEffectiveLimits();
     const raw = data?.raw;
 
-    expect(data?.normalizedOwner).to.be.equal(alice.address);
+    expect(data?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(alice.address));
     expect(data?.name).to.be.equal('name');
     expect(data?.description).to.be.equal('descr');
     expect(raw.permissions.access).to.be.equal('AllowList');

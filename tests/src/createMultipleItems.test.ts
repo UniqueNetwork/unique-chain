@@ -48,7 +48,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: alice.address});
+      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -116,7 +116,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: alice.address});
+      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -138,7 +138,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: alice.address});
+      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -160,7 +160,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: alice.address});
+      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
