@@ -8,7 +8,8 @@ import waitNewBlocks from '../substrate/wait-new-blocks';
 import find from 'find-process';
 
 // todo un-skip for migrations
-describe.skip('Migration testing', () => {
+// todo:playgrounds skipped, this one is outdated. Probably to be deleted/replaced.
+describe.skip('Migration testing: Properties', () => {
   let alice: IKeyringPair;
 
   before(async() => {

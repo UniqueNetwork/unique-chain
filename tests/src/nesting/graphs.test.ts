@@ -1,9 +1,22 @@
-import {ApiPromise} from '@polkadot/api';
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect} from 'chai';
-import {tokenIdToCross} from '../eth/util/helpers';
-import usingApi, {executeTransaction} from '../substrate/substrate-api';
-import {getCreateCollectionResult, transferExpectSuccess, setCollectionLimitsExpectSuccess} from '../util/helpers';
+import {expect, itSub, usingPlaygrounds} from '../util/playgrounds';
+import {UniqueHelper, UniqueNFTToken} from '../util/playgrounds/unique';
 
 /**
  * ```dot
@@ -12,46 +25,47 @@ import {getCreateCollectionResult, transferExpectSuccess, setCollectionLimitsExp
  * 8 -> 5
  * ```
  */
-async function buildComplexObjectGraph(api: ApiPromise, sender: IKeyringPair): Promise<number> {
-  const events = await executeTransaction(api, sender, api.tx.unique.createCollectionEx({mode: 'NFT', permissions: {nesting: {tokenOwner: true}}}));
-  const {collectionId} = getCreateCollectionResult(events);
+async function buildComplexObjectGraph(helper: UniqueHelper, sender: IKeyringPair): Promise<UniqueNFTToken[]> {
+  const collection = await helper.nft.mintCollection(sender, {permissions: {nesting: {tokenOwner: true}}});
+  const tokens = await collection.mintMultipleTokens(sender, Array(8).fill({owner: {Substrate: sender.address}}));
 
-  await executeTransaction(api, sender, api.tx.unique.createMultipleItemsEx(collectionId, {NFT: Array(8).fill({owner: {Substrate: sender.address}})}));
+  await tokens[7].nest(sender, tokens[4]);
+  await tokens[6].nest(sender, tokens[5]);
+  await tokens[5].nest(sender, tokens[4]);
+  await tokens[4].nest(sender, tokens[1]);
+  await tokens[3].nest(sender, tokens[2]);
+  await tokens[2].nest(sender, tokens[1]);
+  await tokens[1].nest(sender, tokens[0]);
 
-  await transferExpectSuccess(collectionId, 8, sender, tokenIdToCross(collectionId, 5));
-
-  await transferExpectSuccess(collectionId, 7, sender, tokenIdToCross(collectionId, 6));
-  await transferExpectSuccess(collectionId, 6, sender, tokenIdToCross(collectionId, 5));
-  await transferExpectSuccess(collectionId, 5, sender, tokenIdToCross(collectionId, 2));
-
-  await transferExpectSuccess(collectionId, 4, sender, tokenIdToCross(collectionId, 3));
-  await transferExpectSuccess(collectionId, 3, sender, tokenIdToCross(collectionId, 2));
-  await transferExpectSuccess(collectionId, 2, sender, tokenIdToCross(collectionId, 1));
-
-  return collectionId;
+  return tokens;
 }
 
 describe('Graphs', () => {
-  it('Ouroboros can\'t be created in a complex graph', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const collection = await buildComplexObjectGraph(api, alice);
-      const tokenTwoParent = tokenIdToCross(collection, 1);
+  let alice: IKeyringPair;
 
-      // to self
-      await expect(
-        executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 1), collection, 1, 1)),
-        'first transaction',  
-      ).to.be.rejectedWith(/structure\.OuroborosDetected/);
-      // to nested part of graph
-      await expect(
-        executeTransaction(api, alice, api.tx.unique.transfer(tokenIdToCross(collection, 5), collection, 1, 1)),
-        'second transaction',
-      ).to.be.rejectedWith(/structure\.OuroborosDetected/);
-      await expect(
-        executeTransaction(api, alice, api.tx.unique.transferFrom(tokenTwoParent, tokenIdToCross(collection, 8), collection, 2, 1)),
-        'third transaction',
-      ).to.be.rejectedWith(/structure\.OuroborosDetected/);
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
+  });
+
+  itSub('Ouroboros can\'t be created in a complex graph', async ({helper}) => {
+    const tokens = await buildComplexObjectGraph(helper, alice);
+
+    // to self
+    await expect(
+      tokens[0].nest(alice, tokens[0]),
+      'first transaction',  
+    ).to.be.rejectedWith(/structure\.OuroborosDetected/);
+    // to nested part of graph
+    await expect(
+      tokens[0].nest(alice, tokens[4]),
+      'second transaction',
+    ).to.be.rejectedWith(/structure\.OuroborosDetected/);
+    await expect(
+      tokens[1].transferFrom(alice, tokens[0].nestingAddress(), tokens[7].nestingAddress()),
+      'third transaction',
+    ).to.be.rejectedWith(/structure\.OuroborosDetected/);
   });
 });
