@@ -64,7 +64,7 @@ describe('Graphs', () => {
       'second transaction',
     ).to.be.rejectedWith(/structure\.OuroborosDetected/);
     await expect(
-      tokens[1].transferFrom(alice, tokens[0].nestingAddress(), tokens[7].nestingAddress()),
+      tokens[1].transferFrom(alice, tokens[0].nestingAccount(), tokens[7].nestingAccount()),
       'third transaction',
     ).to.be.rejectedWith(/structure\.OuroborosDetected/);
   });

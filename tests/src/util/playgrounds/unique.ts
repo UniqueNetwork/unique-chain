@@ -55,11 +55,11 @@ class UniqueUtil {
     RPC: 'rpc',
   };
 
-  static getNestingTokenAddress(token: IToken) {
-    return {Ethereum: this.getNestingTokenAddressRaw(token).toLowerCase()};
+  static getTokenAccount(token: IToken) {
+    return {Ethereum: this.getTokenAddress(token).toLowerCase()};
   }
 
-  static getNestingTokenAddressRaw(token: IToken) {
+  static getTokenAddress(token: IToken) {
     return nesting.tokenIdToAddress(token.collectionId, token.tokenId);
   }
 
@@ -1370,7 +1370,7 @@ class NFTGroup extends NFTnRFT {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken): Promise<boolean> {
-    const rootTokenAddress = this.helper.util.getNestingTokenAddress(rootTokenObj);
+    const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferToken(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress);
     if(!result) {
       throw Error('Unable to nest token!');
@@ -1388,7 +1388,7 @@ class NFTGroup extends NFTnRFT {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId): Promise<boolean> {
-    const rootTokenAddress = this.helper.util.getNestingTokenAddress(rootTokenObj);
+    const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferTokenFrom(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, toAddressObj);
     if(!result) {
       throw Error('Unable to unnest token!');
@@ -2566,8 +2566,8 @@ export class UniqueTokenBase implements IToken {
     return await this.collection.deleteTokenProperties(signer, this.tokenId, propertyKeys);
   }
 
-  nestingAddress() {
-    return this.collection.helper.util.getNestingTokenAddress(this);
+  nestingAccount() {
+    return this.collection.helper.util.getTokenAccount(this);
   }
 }
 

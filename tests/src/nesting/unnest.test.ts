@@ -32,15 +32,15 @@ describe('Integration Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
     
     // Create a nested token
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
 
     // Unnest
-    await expect(nestedToken.transferFrom(alice, targetToken.nestingAddress(), {Substrate: alice.address}), 'while unnesting').to.be.fulfilled;
+    await expect(nestedToken.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}), 'while unnesting').to.be.fulfilled;
     expect(await nestedToken.getOwner()).to.be.deep.equal({Substrate: alice.address});
 
     // Nest and burn
     await nestedToken.nest(alice, targetToken);
-    await expect(nestedToken.burnFrom(alice, targetToken.nestingAddress()), 'while burning').to.be.fulfilled;
+    await expect(nestedToken.burnFrom(alice, targetToken.nestingAccount()), 'while burning').to.be.fulfilled;
     await expect(nestedToken.getOwner()).to.be.rejected;
   });
 
@@ -51,16 +51,16 @@ describe('Integration Test: Unnesting', () => {
     const collectionFT = await helper.ft.mintCollection(alice);
     
     // Nest and unnest
-    await collectionFT.mint(alice, 10n, targetToken.nestingAddress());
-    await expect(collectionFT.transferFrom(alice, targetToken.nestingAddress(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
+    await collectionFT.mint(alice, 10n, targetToken.nestingAccount());
+    await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
     expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(9n);
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(1n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
 
     // Nest and burn
-    await collectionFT.transfer(alice, targetToken.nestingAddress(), 5n);
-    await expect(collectionFT.burnTokensFrom(alice, targetToken.nestingAddress(), 6n), 'while burning').to.be.fulfilled;
+    await collectionFT.transfer(alice, targetToken.nestingAccount(), 5n);
+    await expect(collectionFT.burnTokensFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
     expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(4n);
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(0n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.be.length(0);
   });
 
@@ -71,16 +71,16 @@ describe('Integration Test: Unnesting', () => {
     const collectionRFT = await helper.rft.mintCollection(alice);
     
     // Nest and unnest
-    const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAddress());
-    await expect(token.transferFrom(alice, targetToken.nestingAddress(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
+    const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
+    await expect(token.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(9n);
-    expect(await token.getBalance(targetToken.nestingAddress())).to.be.equal(1n);
+    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
 
     // Nest and burn
-    await token.transfer(alice, targetToken.nestingAddress(), 5n);
-    await expect(token.burnFrom(alice, targetToken.nestingAddress(), 6n), 'while burning').to.be.fulfilled;
+    await token.transfer(alice, targetToken.nestingAccount(), 5n);
+    await expect(token.burnFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(4n);
-    expect(await token.getBalance(targetToken.nestingAddress())).to.be.equal(0n);
+    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.be.length(0);
   });
 });
@@ -101,15 +101,15 @@ describe('Negative Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Create a nested token
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
 
     // Try to unnest
     await expect(nestedToken.unnest(bob, targetToken, {Substrate: alice.address})).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Try to burn
-    await expect(nestedToken.burnFrom(bob, targetToken.nestingAddress())).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    await expect(nestedToken.burnFrom(bob, targetToken.nestingAccount())).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   // todo another test for creating excessive depth matryoshka with Ethereum?
@@ -120,7 +120,7 @@ describe('Negative Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Fail to create a nested token ouroboros
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
     await expect(targetToken.nest(alice, nestedToken)).to.be.rejectedWith(/^structure\.OuroborosDetected$/);
   });
 });

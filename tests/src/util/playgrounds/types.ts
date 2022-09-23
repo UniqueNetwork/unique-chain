@@ -109,7 +109,6 @@ export interface ITokenPropertyPermission {
 export interface IToken {
   collectionId: number;
   tokenId: number;
-  //nestingAddress: () => {Ethereum: string};
 }
 
 export interface IBlock {

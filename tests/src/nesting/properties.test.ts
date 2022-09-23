@@ -651,7 +651,7 @@ describe('Integration Test: Token Properties', () => {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.nft.mintCollection(alice);
     const targetToken = await collectionA.mintToken(alice);
-    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
 
     await collectionB.addAdmin(alice, {Substrate: bob.address});
     await targetToken.transfer(alice, {Substrate: charlie.address});
@@ -692,7 +692,7 @@ describe('Integration Test: Token Properties', () => {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.nft.mintCollection(alice);
     const targetToken = await collectionA.mintToken(alice);
-    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
 
     await collectionB.addAdmin(alice, {Substrate: bob.address});
     await targetToken.transfer(alice, {Substrate: charlie.address});
@@ -739,7 +739,7 @@ describe('Integration Test: Token Properties', () => {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.nft.mintCollection(alice);
     const targetToken = await collectionA.mintToken(alice);
-    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
 
     await collectionB.addAdmin(alice, {Substrate: bob.address});
     await targetToken.transfer(alice, {Substrate: charlie.address});

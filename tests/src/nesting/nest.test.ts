@@ -33,9 +33,9 @@ describe('Integration Test: Composite nesting tests', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Create an immediately nested token
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
     
     // Create a token to be nested
     const newToken = await collection.mintToken(alice);
@@ -43,14 +43,14 @@ describe('Integration Test: Composite nesting tests', () => {
     // Nest
     await newToken.nest(alice, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Move bundle to different user
     await targetToken.transfer(alice, {Substrate: bob.address});
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Unnest
     await newToken.unnest(bob, targetToken, {Substrate: bob.address});
@@ -64,13 +64,13 @@ describe('Integration Test: Composite nesting tests', () => {
     const tokenB = await collection.mintToken(alice);
 
     // Create a nested token
-    const tokenC = await collection.mintToken(alice, tokenA.nestingAddress());
-    expect(await tokenC.getOwner()).to.be.deep.equal(tokenA.nestingAddress());
+    const tokenC = await collection.mintToken(alice, tokenA.nestingAccount());
+    expect(await tokenC.getOwner()).to.be.deep.equal(tokenA.nestingAccount());
     
     // Transfer the nested token to another token
-    await expect(tokenC.transferFrom(alice, tokenA.nestingAddress(), tokenB.nestingAddress())).to.be.fulfilled;
+    await expect(tokenC.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount())).to.be.fulfilled;
     expect(await tokenC.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await tokenC.getOwner()).to.be.deep.equal(tokenB.nestingAddress());
+    expect(await tokenC.getOwner()).to.be.deep.equal(tokenB.nestingAccount());
   });
 
   itSub('Checks token children', async ({helper}) => {
@@ -81,7 +81,7 @@ describe('Integration Test: Composite nesting tests', () => {
     expect((await targetToken.getChildren()).length).to.be.equal(0, 'Children length check at creation');
 
     // Create a nested NFT token
-    const tokenA = await collectionA.mintToken(alice, targetToken.nestingAddress());
+    const tokenA = await collectionA.mintToken(alice, targetToken.nestingAccount());
     expect(await targetToken.getChildren()).to.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
     ], 'Children contents check at nesting #1').and.be.length(1, 'Children length check at nesting #1');
@@ -102,7 +102,7 @@ describe('Integration Test: Composite nesting tests', () => {
 
     // Create a fungible token in another collection and then nest
     await collectionB.mint(alice, 10n);
-    await collectionB.transfer(alice, targetToken.nestingAddress(), 2n);
+    await collectionB.transfer(alice, targetToken.nestingAccount(), 2n);
     expect(await targetToken.getChildren()).to.be.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
       {tokenId: 0, collectionId: collectionB.collectionId},
@@ -110,7 +110,7 @@ describe('Integration Test: Composite nesting tests', () => {
       .and.be.length(2, 'Children length check at nesting #4 (from another collection)');
     
     // Move part of the fungible token inside token A deeper in the nesting tree
-    await collectionB.transferFrom(alice, targetToken.nestingAddress(), tokenA.nestingAddress(), 1n);
+    await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
     expect(await targetToken.getChildren()).to.be.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
       {tokenId: 0, collectionId: collectionB.collectionId},
@@ -120,7 +120,7 @@ describe('Integration Test: Composite nesting tests', () => {
     ], 'Children contents check at nesting #5.5 (deeper)').and.be.length(1, 'Children length check at nesting #5.5 (deeper)');
 
     // Move the remaining part of the fungible token inside token A deeper in the nesting tree
-    await collectionB.transferFrom(alice, targetToken.nestingAddress(), tokenA.nestingAddress(), 1n);
+    await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
     expect(await targetToken.getChildren()).to.be.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
     ], 'Children contents check at nesting #6 (deeper)').and.be.length(1, 'Children length check at nesting #6 (deeper)');
@@ -148,15 +148,15 @@ describe('Integration Test: Various token type nesting', () => {
     const targetToken = await collection.mintToken(alice, {Substrate: charlie.address});
 
     // Create an immediately nested token
-    const nestedToken = await collection.mintToken(bob, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Create a token to be nested and nest
     const newToken = await collection.mintToken(bob);
     await newToken.nest(bob, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   itSub('Admin (NFT): Admin and Token Owner can operate together', async ({helper}) => {
@@ -165,15 +165,15 @@ describe('Integration Test: Various token type nesting', () => {
     const targetToken = await collection.mintToken(alice, {Substrate: charlie.address});
 
     // Create an immediately nested token by an administrator
-    const nestedToken = await collection.mintToken(bob, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Create a token to be nested and nest
     const newToken = await collection.mintToken(alice, {Substrate: charlie.address});
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   itSub('Admin (NFT): allows an Admin to nest a token (Restricted nesting)', async ({helper}) => {
@@ -185,15 +185,15 @@ describe('Integration Test: Various token type nesting', () => {
     const targetToken = await collectionA.mintToken(alice, {Substrate: charlie.address});
 
     // Create an immediately nested token
-    const nestedToken = await collectionB.mintToken(bob, targetToken.nestingAddress());
+    const nestedToken = await collectionB.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Create a token to be nested and nest
     const newToken = await collectionB.mintToken(bob);
     await newToken.nest(bob, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   // ---------- Non-Fungible ----------
@@ -202,18 +202,18 @@ describe('Integration Test: Various token type nesting', () => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}}});
     await collection.addToAllowList(alice, {Substrate: charlie.address});
     const targetToken = await collection.mintToken(charlie);
-    await collection.addToAllowList(alice, targetToken.nestingAddress());
+    await collection.addToAllowList(alice, targetToken.nestingAccount());
 
     // Create an immediately nested token
-    const nestedToken = await collection.mintToken(charlie, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(charlie, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Create a token to be nested and nest
     const newToken = await collection.mintToken(charlie);
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   itSub('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async ({helper}) => {
@@ -224,22 +224,22 @@ describe('Integration Test: Various token type nesting', () => {
 
     await collectionA.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted:[collectionB.collectionId]}});
     await collectionA.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionA.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionA.addToAllowList(alice, targetToken.nestingAccount());
 
     await collectionB.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await collectionB.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionB.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionB.addToAllowList(alice, targetToken.nestingAccount());
 
     // Create an immediately nested token
-    const nestedToken = await collectionB.mintToken(charlie, targetToken.nestingAddress());
+    const nestedToken = await collectionB.mintToken(charlie, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
 
     // Create a token to be nested and nest
     const newToken = await collectionB.mintToken(charlie);
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   // ---------- Fungible ----------
@@ -250,20 +250,20 @@ describe('Integration Test: Various token type nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice, {Substrate: charlie.address});
 
     await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
     await collectionFT.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await collectionFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionFT.addToAllowList(alice, targetToken.nestingAccount());
 
     // Create an immediately nested token
-    await collectionFT.mint(charlie, 5n, targetToken.nestingAddress());
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(5n);
+    await collectionFT.mint(charlie, 5n, targetToken.nestingAccount());
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
 
     // Create a token to be nested and nest
     await collectionFT.mint(charlie, 5n);
-    await collectionFT.transfer(charlie, targetToken.nestingAddress(), 2n);
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(7n);
+    await collectionFT.transfer(charlie, targetToken.nestingAccount(), 2n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(7n);
   });
 
   itSub('Fungible: allows an Owner to nest/unnest their token (Restricted nesting)', async ({helper}) => {
@@ -273,20 +273,20 @@ describe('Integration Test: Various token type nesting', () => {
 
     await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted:[collectionFT.collectionId]}});
     await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
     await collectionFT.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await collectionFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionFT.addToAllowList(alice, targetToken.nestingAccount());
 
     // Create an immediately nested token
-    await collectionFT.mint(charlie, 5n, targetToken.nestingAddress());
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(5n);
+    await collectionFT.mint(charlie, 5n, targetToken.nestingAccount());
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
 
     // Create a token to be nested and nest
     await collectionFT.mint(charlie, 5n);
-    await collectionFT.transfer(charlie, targetToken.nestingAddress(), 2n);
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(7n);
+    await collectionFT.transfer(charlie, targetToken.nestingAccount(), 2n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(7n);
   });
 
   // ---------- Re-Fungible ----------
@@ -297,20 +297,20 @@ describe('Integration Test: Various token type nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice, {Substrate: charlie.address});
 
     await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
     await collectionRFT.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await collectionRFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionRFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionRFT.addToAllowList(alice, targetToken.nestingAccount());
 
     // Create an immediately nested token
-    const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAddress());
-    expect(await nestedToken.getBalance(targetToken.nestingAddress())).to.be.equal(5n);
+    const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAccount());
+    expect(await nestedToken.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
 
     // Create a token to be nested and nest
     const newToken = await collectionRFT.mintToken(charlie, 5n);
-    await newToken.transfer(charlie, targetToken.nestingAddress(), 2n);
-    expect(await newToken.getBalance(targetToken.nestingAddress())).to.be.equal(2n);
+    await newToken.transfer(charlie, targetToken.nestingAccount(), 2n);
+    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(2n);
   });
 
   itSub.ifWithPallets('ReFungible: allows an Owner to nest/unnest their token (Restricted nesting)', [Pallets.ReFungible], async ({helper}) => {
@@ -320,20 +320,20 @@ describe('Integration Test: Various token type nesting', () => {
 
     await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted:[collectionRFT.collectionId]}});
     await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
     await collectionRFT.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await collectionRFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionRFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionRFT.addToAllowList(alice, targetToken.nestingAccount());
 
     // Create an immediately nested token
-    const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAddress());
-    expect(await nestedToken.getBalance(targetToken.nestingAddress())).to.be.equal(5n);
+    const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAccount());
+    expect(await nestedToken.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
 
     // Create a token to be nested and nest
     const newToken = await collectionRFT.mintToken(charlie, 5n);
-    await newToken.transfer(charlie, targetToken.nestingAddress(), 2n);
-    expect(await newToken.getBalance(targetToken.nestingAddress())).to.be.equal(2n);
+    await newToken.transfer(charlie, targetToken.nestingAccount(), 2n);
+    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(2n);
   });
 });
 
@@ -356,11 +356,11 @@ describe('Negative Test: Nesting', () => {
 
     // Create a nested-token matryoshka
     for (let i = 0; i < maxNestingLevel; i++) {
-      token = await collection.mintToken(alice, token.nestingAddress());
+      token = await collection.mintToken(alice, token.nestingAccount());
     }
 
     // The nesting depth is limited by `maxNestingLevel`
-    await expect(collection.mintToken(alice, token.nestingAddress()))
+    await expect(collection.mintToken(alice, token.nestingAccount()))
       .to.be.rejectedWith(/structure\.DepthLimit/);
     expect(await token.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
     expect(await token.getChildren()).to.be.length(0);
@@ -374,7 +374,7 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Try to create an immediately nested token as collection admin when it's disallowed
-    await expect(collection.mintToken(bob, targetToken.nestingAddress()))
+    await expect(collection.mintToken(bob, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
     // Try to create a token to be nested and nest
@@ -390,10 +390,10 @@ describe('Negative Test: Nesting', () => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {access: 'AllowList', mintMode: true, nesting: {collectionAdmin: true}}});
     const targetToken = await collection.mintToken(alice, {Substrate: bob.address});
     await collection.addToAllowList(alice, {Substrate: bob.address});
-    await collection.addToAllowList(alice, targetToken.nestingAddress());
+    await collection.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to create a nested token as token owner when it's disallowed
-    await expect(collection.mintToken(bob, targetToken.nestingAddress()))
+    await expect(collection.mintToken(bob, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
     // Try to create a token to be nested and nest
@@ -410,7 +410,7 @@ describe('Negative Test: Nesting', () => {
     //await collection.addAdmin(alice, {Substrate: bob.address});
     const targetToken = await collection.mintToken(alice, {Substrate: bob.address});
     await collection.addToAllowList(alice, {Substrate: bob.address});
-    await collection.addToAllowList(alice, targetToken.nestingAddress());
+    await collection.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to nest somebody else's token
     const newToken = await collection.mintToken(bob);
@@ -418,13 +418,13 @@ describe('Negative Test: Nesting', () => {
       .to.be.rejectedWith(/common\.NoPermission/);
 
     // Try to unnest a token belonging to someone else as collection admin
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAddress());
+    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
     await expect(nestedToken.unnest(alice, targetToken, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
 
     expect(await targetToken.getChildren()).to.be.length(1);
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAddress());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount());
   });
 
   itSub('Admin (NFT): disallows an Admin to nest a token from an unlisted collection (Restricted nesting)', async ({helper}) => {
@@ -434,7 +434,7 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collectionA.mintToken(alice);
 
     // Try to create a nested token from another collection
-    await expect(collectionB.mintToken(alice, targetToken.nestingAddress()))
+    await expect(collectionB.mintToken(alice, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
 
     // Create a token in another collection yet to be nested and try to nest
@@ -454,7 +454,7 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Try to create a nested token as token owner when it's disallowed
-    await expect(collection.mintToken(alice, targetToken.nestingAddress()))
+    await expect(collection.mintToken(alice, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
     // Try to create a token to be nested and nest
@@ -472,7 +472,7 @@ describe('Negative Test: Nesting', () => {
 
     await collection.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}});
     await collection.addToAllowList(alice, {Substrate: bob.address});
-    await collection.addToAllowList(alice, targetToken.nestingAddress());
+    await collection.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to create a token to be nested and nest
     const newToken = await collection.mintToken(alice);
@@ -488,11 +488,11 @@ describe('Negative Test: Nesting', () => {
 
     await collection.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}});
     await collection.addToAllowList(alice, {Substrate: bob.address});
-    await collection.addToAllowList(alice, targetToken.nestingAddress());
+    await collection.addToAllowList(alice, targetToken.nestingAccount());
 
     const collectionB = await helper.nft.mintCollection(alice, {permissions: {access: 'AllowList', mintMode: true}});
     await collectionB.addToAllowList(alice, {Substrate: bob.address});
-    await collectionB.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionB.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to create a token to be nested and nest
     const newToken = await collectionB.mintToken(alice);
@@ -508,10 +508,10 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collection.mintToken(alice, {Substrate: bob.address});
 
     await collection.addToAllowList(alice, {Substrate: bob.address});
-    await collection.addToAllowList(alice, targetToken.nestingAddress());
+    await collection.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to mint in own collection after allowlisting the accounts
-    await expect(collection.mintToken(bob, targetToken.nestingAddress()))
+    await expect(collection.mintToken(bob, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
   });
 
@@ -523,12 +523,12 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice);
 
     // Try to create an immediately nested token
-    await expect(collectionFT.mint(alice, 5n, targetToken.nestingAddress()))
+    await expect(collectionFT.mint(alice, 5n, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
     // Try to create a token to be nested and nest
     await collectionFT.mint(alice, 5n);
-    await expect(collectionFT.transfer(alice, targetToken.nestingAddress(), 2n))
+    await expect(collectionFT.transfer(alice, targetToken.nestingAccount(), 2n))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
     expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(5n);
   });
@@ -539,12 +539,12 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice, {Substrate: bob.address});
 
     // Nest some tokens as Alice into Bob's token
-    await collectionFT.mint(alice, 5n, targetToken.nestingAddress());
+    await collectionFT.mint(alice, 5n, targetToken.nestingAccount());
 
     // Try to pull it out
-    await expect(collectionFT.transferFrom(alice, targetToken.nestingAddress(), {Substrate: bob.address}, 1n))
+    await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: bob.address}, 1n))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(5n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
   });
 
   itSub('Fungible: disallows a non-Owner to unnest someone else\'s token (Restricted nesting)', async ({helper}) => {
@@ -555,12 +555,12 @@ describe('Negative Test: Nesting', () => {
     await collectionNFT.setPermissions(alice, {nesting: {collectionAdmin: true, tokenOwner: true, restricted: [collectionFT.collectionId]}});
 
     // Nest some tokens as Alice into Bob's token
-    await collectionFT.mint(alice, 5n, targetToken.nestingAddress());
+    await collectionFT.mint(alice, 5n, targetToken.nestingAccount());
 
     // Try to pull it out as Alice still
-    await expect(collectionFT.transferFrom(alice, targetToken.nestingAddress(), {Substrate: bob.address}, 1n))
+    await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: bob.address}, 1n))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(5n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
   });
 
   itSub('Fungible: disallows to nest token in an unlisted collection', async ({helper}) => {
@@ -569,15 +569,15 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice);
 
     // Try to mint an immediately nested token
-    await expect(collectionFT.mint(alice, 5n, targetToken.nestingAddress()))
+    await expect(collectionFT.mint(alice, 5n, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
 
     // Mint a token and try to nest it
     await collectionFT.mint(alice, 5n);
-    await expect(collectionFT.transfer(alice, targetToken.nestingAddress(), 1n))
+    await expect(collectionFT.transfer(alice, targetToken.nestingAccount(), 1n))
       .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
 
-    expect(await collectionFT.getBalance(targetToken.nestingAddress())).to.be.equal(0n);
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(5n);
   });
 
@@ -589,12 +589,12 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice);
 
     // Try to create an immediately nested token
-    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAddress()))
+    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
 
     // Try to create a token to be nested and nest
     const token = await collectionRFT.mintToken(alice, 5n);
-    await expect(token.transfer(alice, targetToken.nestingAddress(), 2n))
+    await expect(token.transfer(alice, targetToken.nestingAccount(), 2n))
       .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(5n);
   });
@@ -606,22 +606,22 @@ describe('Negative Test: Nesting', () => {
 
     await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}});
     await collectionNFT.addToAllowList(alice, {Substrate: bob.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to create a token to be nested and nest
     const newToken = await collectionRFT.mintToken(alice);
-    await expect(newToken.transfer(bob, targetToken.nestingAddress())).to.be.rejectedWith(/common\.TokenValueTooLow/);
+    await expect(newToken.transfer(bob, targetToken.nestingAccount())).to.be.rejectedWith(/common\.TokenValueTooLow/);
 
     expect(await targetToken.getChildren()).to.be.length(0);
     expect(await newToken.getBalance({Substrate: alice.address})).to.be.equal(1n);
 
     // Nest some tokens as Alice into Bob's token
-    await newToken.transfer(alice, targetToken.nestingAddress());
+    await newToken.transfer(alice, targetToken.nestingAccount());
 
     // Try to pull it out
-    await expect(newToken.transferFrom(bob, targetToken.nestingAddress(), {Substrate: alice.address}, 1n))
+    await expect(newToken.transferFrom(bob, targetToken.nestingAccount(), {Substrate: alice.address}, 1n))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await newToken.getBalance(targetToken.nestingAddress())).to.be.equal(1n);
+    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
   });
 
   itSub.ifWithPallets('ReFungible: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', [Pallets.ReFungible], async ({helper}) => {
@@ -631,22 +631,22 @@ describe('Negative Test: Nesting', () => {
 
     await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: [collectionRFT.collectionId]}});
     await collectionNFT.addToAllowList(alice, {Substrate: bob.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAddress());
+    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
     // Try to create a token to be nested and nest
     const newToken = await collectionRFT.mintToken(alice);
-    await expect(newToken.transfer(bob, targetToken.nestingAddress())).to.be.rejectedWith(/common\.TokenValueTooLow/);
+    await expect(newToken.transfer(bob, targetToken.nestingAccount())).to.be.rejectedWith(/common\.TokenValueTooLow/);
 
     expect(await targetToken.getChildren()).to.be.length(0);
     expect(await newToken.getBalance({Substrate: alice.address})).to.be.equal(1n);
 
     // Nest some tokens as Alice into Bob's token
-    await newToken.transfer(alice, targetToken.nestingAddress());
+    await newToken.transfer(alice, targetToken.nestingAccount());
 
     // Try to pull it out
-    await expect(newToken.transferFrom(bob, targetToken.nestingAddress(), {Substrate: alice.address}, 1n))
+    await expect(newToken.transferFrom(bob, targetToken.nestingAccount(), {Substrate: alice.address}, 1n))
       .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await newToken.getBalance(targetToken.nestingAddress())).to.be.equal(1n);
+    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
   });
 
   itSub.ifWithPallets('ReFungible: disallows to nest token to an unlisted collection', [Pallets.ReFungible], async ({helper}) => {
@@ -655,12 +655,12 @@ describe('Negative Test: Nesting', () => {
     const targetToken = await collectionNFT.mintToken(alice);
 
     // Try to create an immediately nested token
-    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAddress()))
+    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAccount()))
       .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
 
     // Try to create a token to be nested and nest
     const token = await collectionRFT.mintToken(alice, 5n);
-    await expect(token.transfer(alice, targetToken.nestingAddress(), 2n))
+    await expect(token.transfer(alice, targetToken.nestingAccount(), 2n))
       .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(5n);
   });
