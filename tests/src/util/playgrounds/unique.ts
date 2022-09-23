@@ -554,7 +554,6 @@ export class ChainHelperBase {
   }
 
   constructApiCall(apiCall: string, params: any[]) {
-    if(this.api === null) throw Error('API not initialized');
     if(!apiCall.startsWith('api.')) throw Error(`Invalid api call: ${apiCall}`);
     let call = this.getApi() as any;
     for(const part of apiCall.slice(4).split('.')) {
