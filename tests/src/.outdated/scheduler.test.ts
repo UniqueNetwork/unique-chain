@@ -15,11 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {
-  default as usingApi,
-  submitTransactionAsync,
-  submitTransactionExpectFailAsync,
-} from '../substrate/substrate-api';
-import {
   UNIQUE,
   waitNewBlocks,
 } from './util/helpers';
