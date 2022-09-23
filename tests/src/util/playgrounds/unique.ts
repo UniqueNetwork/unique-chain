@@ -2772,6 +2772,8 @@ export class AcalaHelper extends XcmChainHelper {
   }
 }
 
+export type UniqueHelperConstructor = new(...args: any[]) => UniqueHelper;
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
   return class extends Base {

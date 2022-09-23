@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {UniqueHelper} from './unique';
 
 export interface IEvent {
   section: string;

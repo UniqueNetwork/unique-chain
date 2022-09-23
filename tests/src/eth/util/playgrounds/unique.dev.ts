@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract, NormalizedEvent, EthUniqueHelperConstructor} from './types';
+import {ContractImports, CompiledContract, NormalizedEvent} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';

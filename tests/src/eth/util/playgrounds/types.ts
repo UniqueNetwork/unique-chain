@@ -1,5 +1,3 @@
-import {EthUniqueHelper} from './unique.dev';
-
 export interface ContractImports {
   solPath: string;
   fsPath: string;
@@ -15,5 +13,3 @@ export type NormalizedEvent = {
   event: string,
   args: { [key: string]: string }
 };
-
-export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
