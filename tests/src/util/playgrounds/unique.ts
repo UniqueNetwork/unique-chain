@@ -596,11 +596,7 @@ class CollectionGroup extends HelperGroup {
     const admins = (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])).toHuman();
 
     return normalize
-      ? admins.map((address: any) => {
-        return address.Substrate
-          ? {Substrate: this.helper.address.normalizeSubstrate(address.Substrate)}
-          : address;
-      })
+      ? admins.map((address: any) => this.helper.address.normalizeCrossAccountIfSubstrate(address))
       : admins;
   }
 
@@ -614,11 +610,7 @@ class CollectionGroup extends HelperGroup {
   async getAllowList(collectionId: number, normalize = false): Promise<ICrossAccountId[]> {
     const allowListed = (await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId])).toHuman();
     return normalize
-      ? allowListed.map((address: any) => {
-        return address.Substrate
-          ? {Substrate: this.helper.address.normalizeSubstrate(address.Substrate)}
-          : address;
-      })
+      ? allowListed.map((address: any) => this.helper.address.normalizeCrossAccountIfSubstrate(address))
       : allowListed;
   }
 
@@ -1122,7 +1114,7 @@ class NFTnRFT extends CollectionGroup {
     if (tokenData === null || tokenData.owner === null) return null;
     const owner = {} as any;
     for (const key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() === 'substrate' ? this.helper.address.normalizeSubstrate(tokenData.owner[key]) : tokenData.owner[key];
+      owner[key.toLocaleLowerCase()] = this.helper.address.normalizeCrossAccountIfSubstrate(tokenData.owner[key]);
     }
     tokenData.normalizedOwner = crossAccountIdFromLower(owner);
     return tokenData;
@@ -1345,9 +1337,7 @@ class NFTGroup extends NFTnRFT {
 
     if (owner === null) return null;
 
-    owner = owner.toHuman();
-
-    return owner.Substrate ? {Substrate: this.helper.address.normalizeSubstrate(owner.Substrate)} : owner;
+    return owner.toHuman();
   }
 
   /**
@@ -2069,6 +2059,19 @@ class AddressGroup extends HelperGroup {
    */
   normalizeSubstrate(address: TSubstrateAccount, ss58Format = 42): TSubstrateAccount {
     return this.helper.util.normalizeSubstrateAddress(address, ss58Format);
+  }
+
+  /**
+   * Normalizes the address of an account ONLY if it's Substrate to the specified ss58 format, by default ```42```.
+   * @param account account of either Substrate type or Ethereum, but only Substrate will be changed
+   * @param ss58Format format for address conversion, by default ```42```
+   * @example normalizeCrossAccountIfSubstrate({Substrate: "unjKJQJrRd238pkUZZvzDQrfKuM39zBSnQ5zjAGAGcdRhaJTx"}) // returns 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+   * @returns untouched ethereum account or substrate account converted to normalized (i.e., starting with 5) or specified explicitly representation
+   */
+  normalizeCrossAccountIfSubstrate(account: ICrossAccountId, ss58Format = 42): ICrossAccountId  {
+    return account.Substrate
+      ? {Substrate: this.normalizeSubstrate(account.Substrate, ss58Format)}
+      : account;
   }
 
   /**
