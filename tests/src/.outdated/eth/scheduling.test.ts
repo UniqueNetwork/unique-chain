@@ -15,55 +15,43 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from '../../deprecated-helpers/eth/helpers';
-import {makeScheduledId, scheduleAfter, waitNewBlocks, requirePallets, Pallets} from '../../deprecated-helpers/helpers';
+import {subToEth} from './util/helpers';
+import {waitNewBlocks, Pallets} from '../util/helpers';
+import {EthUniqueHelper, itEth} from './util/playgrounds';
 
-// TODO mrshiposha update this test in #581
-describe.skip('Scheduing EVM smart contracts', () => {
-  before(async function() {
-    await requirePallets(this, [Pallets.Scheduler]);
-  });
+describe('Scheduing EVM smart contracts', () => {
 
-  itWeb3('Successfully schedules and periodically executes an EVM contract', async ({api, web3, privateKeyWrapper}) => {
-    const scheduledId = await makeScheduledId();
-    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const flipper = await deployFlipper(web3, deployer);
+  itEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+
+    const scheduledId = await helper.arrange.makeScheduledId();
+
+    const deployer = await helper.eth.createAccountWithBalance(alice);
+    const flipper = await helper.eth.deployFlipper(deployer);
+
     const initialValue = await flipper.methods.getValue().call();
-    const alice = privateKeyWrapper('//Alice');
-    await transferBalanceToEth(api, alice, subToEth(alice.address));
+    await helper.eth.transferBalanceFromSubstrate(alice, subToEth(alice.address));
 
-    {
-      const tx = api.tx.evm.call(
-        subToEth(alice.address),
+    const waitForBlocks = 4;
+    const periodic = {
+      period: 2,
+      repetitions: 2,
+    };
+
+    await helper.scheduler.scheduleAfter<EthUniqueHelper>(scheduledId, waitForBlocks, {periodic})
+      .eth.callEVM(
+        alice,
         flipper.options.address,
         flipper.methods.flip().encodeABI(),
         '0',
-        GAS_ARGS.gas,
-        await web3.eth.getGasPrice(),
-        null,
-        null,
-        [],
       );
-      const waitForBlocks = 4;
-      const periodBlocks = 2;
-      const repetitions = 2;
 
-      await expect(scheduleAfter(
-        api,
-        tx,
-        alice,
-        waitForBlocks,
-        scheduledId,
-        periodBlocks,
-        repetitions,
-      )).to.not.be.rejected;
-      expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
-      
-      await waitNewBlocks(waitForBlocks + 1);
-      expect(await flipper.methods.getValue().call()).to.be.not.equal(initialValue);
-  
-      await waitNewBlocks(periodBlocks);
-      expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
-    }
+    expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
+    
+    await waitNewBlocks(waitForBlocks + 1);
+    expect(await flipper.methods.getValue().call()).to.be.not.equal(initialValue);
+
+    await waitNewBlocks(periodic.period);
+    expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
   });
 });
