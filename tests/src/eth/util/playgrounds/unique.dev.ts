@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract, NormalizedEvent} from './types';
+import {ContractImports, CompiledContract, NormalizedEvent, EthUniqueHelperConstructor} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';
@@ -340,7 +340,6 @@ class EthAddressGroup extends EthGroupBase {
     return '0x' + address.substring(address.length - 40);
   }
 }
-
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthUniqueHelper extends DevUniqueHelper {

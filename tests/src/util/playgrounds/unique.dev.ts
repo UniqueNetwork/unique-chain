@@ -11,6 +11,7 @@ import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -496,13 +497,13 @@ class EventCapture {
 
   async startCapture() {
     this.stopCapture();
-    this.unsubscribe = await this.helper.getApi().query.system.events(eventRecords => {
+    this.unsubscribe = (await this.helper.getApi().query.system.events((eventRecords: FrameSystemEventRecord[]) => {
       const newEvents = eventRecords.filter(r => {
         return r.event.section == this.eventSection && r.event.method == this.eventMethod;
       });
 
       this.events.push(...newEvents);
-    });
+    })) as any;
   }
 
   stopCapture() {

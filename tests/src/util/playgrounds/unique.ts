@@ -2439,6 +2439,10 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
 }
 
 class SchedulerGroup extends HelperGroup<UniqueHelper> {
+  constructor(helper: UniqueHelper) {
+    super(helper);
+  }
+
   async cancelScheduled(signer: TSigner, scheduledId: string) {
     return this.helper.executeExtrinsic(
       signer,
@@ -2828,7 +2832,6 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       expectSuccess?: boolean,
     ): Promise<ITransactionResult> {
       const call = this.constructApiCall(extrinsic, params);
-
       return super.executeExtrinsic(
         sender,
         'api.tx.sudo.sudo',
@@ -2964,10 +2967,6 @@ export class UniqueBaseCollection {
 
   getSudo<T extends UniqueHelper>() {
     return new UniqueBaseCollection(this.collectionId, this.helper.getSudo<T>());
-  }
-
-  getSudo() {
-    return new UniqueCollectionBase(this.collectionId, this.helper.getSudo());
   }
 }
 
