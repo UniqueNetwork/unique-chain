@@ -139,25 +139,26 @@ where
 		save(self)
 	}
 
-	/// Set the substrate sponsor of the collection.
-	///
-	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	///
-	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	fn set_collection_sponsor_substrate(
-		&mut self,
-		caller: caller,
-		sponsor: uint256,
-	) -> Result<void> {
-		self.consume_store_reads_and_writes(1, 1)?;
+	// TODO: Temprorary off. Need refactor
+	// /// Set the substrate sponsor of the collection.
+	// ///
+	// /// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	// ///
+	// /// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
+	// fn set_collection_sponsor_substrate(
+	// 	&mut self,
+	// 	caller: caller,
+	// 	sponsor: uint256,
+	// ) -> Result<void> {
+	// 	self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+	// 	check_is_owner_or_admin(caller, self)?;
 
-		let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
-		self.set_sponsor(sponsor.as_sub().clone())
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
-	}
+	// 	let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
+	// 	self.set_sponsor(sponsor.as_sub().clone())
+	// 		.map_err(dispatch_to_evm::<T>)?;
+	// 	save(self)
+	// }
 
 	/// Whether there is a pending sponsor.
 	fn has_collection_pending_sponsor(&self) -> Result<bool> {
@@ -299,35 +300,37 @@ where
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
 
-	/// Add collection admin by substrate address.
-	/// @param newAdmin Substrate administrator address.
-	fn add_collection_admin_substrate(
-		&mut self,
-		caller: caller,
-		new_admin: uint256,
-	) -> Result<void> {
-		self.consume_store_writes(2)?;
+	// TODO: Temprorary off. Need refactor
+	// /// Add collection admin by substrate address.
+	// /// @param newAdmin Substrate administrator address.
+	// fn add_collection_admin_substrate(
+	// 	&mut self,
+	// 	caller: caller,
+	// 	new_admin: uint256,
+	// ) -> Result<void> {
+	// 	self.consume_store_writes(2)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let new_admin = convert_uint256_to_cross_account::<T>(new_admin);
-		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
+	// 	let caller = T::CrossAccountId::from_eth(caller);
+	// 	let new_admin = convert_uint256_to_cross_account::<T>(new_admin);
+	// 	<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
+	// 	Ok(())
+	// }
 
-	/// Remove collection admin by substrate address.
-	/// @param admin Substrate administrator address.
-	fn remove_collection_admin_substrate(
-		&mut self,
-		caller: caller,
-		admin: uint256,
-	) -> Result<void> {
-		self.consume_store_writes(2)?;
+	// TODO: Temprorary off. Need refactor
+	// /// Remove collection admin by substrate address.
+	// /// @param admin Substrate administrator address.
+	// fn remove_collection_admin_substrate(
+	// 	&mut self,
+	// 	caller: caller,
+	// 	admin: uint256,
+	// ) -> Result<void> {
+	// 	self.consume_store_writes(2)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let admin = convert_uint256_to_cross_account::<T>(admin);
-		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
+	// 	let caller = T::CrossAccountId::from_eth(caller);
+	// 	let admin = convert_uint256_to_cross_account::<T>(admin);
+	// 	<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
+	// 	Ok(())
+	// }
 
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
@@ -476,21 +479,22 @@ where
 		Ok(())
 	}
 
-	/// Add substrate user to allowed list.
-	///
-	/// @param user User substrate address.
-	fn add_to_collection_allow_list_substrate(
-		&mut self,
-		caller: caller,
-		user: uint256,
-	) -> Result<void> {
-		self.consume_store_writes(1)?;
+	// TODO: Temprorary off. Need refactor
+	// /// Add substrate user to allowed list.
+	// ///
+	// /// @param user User substrate address.
+	// fn add_to_collection_allow_list_substrate(
+	// 	&mut self,
+	// 	caller: caller,
+	// 	user: uint256,
+	// ) -> Result<void> {
+	// 	self.consume_store_writes(1)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let user = convert_uint256_to_cross_account::<T>(user);
-		Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
+	// 	let caller = T::CrossAccountId::from_eth(caller);
+	// 	let user = convert_uint256_to_cross_account::<T>(user);
+	// 	Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
+	// 	Ok(())
+	// }
 
 	/// Remove the user from the allowed list.
 	///
@@ -504,21 +508,22 @@ where
 		Ok(())
 	}
 
-	/// Remove substrate user from allowed list.
-	///
-	/// @param user User substrate address.
-	fn remove_from_collection_allow_list_substrate(
-		&mut self,
-		caller: caller,
-		user: uint256,
-	) -> Result<void> {
-		self.consume_store_writes(1)?;
+	// TODO: Temprorary off. Need refactor
+	// /// Remove substrate user from allowed list.
+	// ///
+	// /// @param user User substrate address.
+	// fn remove_from_collection_allow_list_substrate(
+	// 	&mut self,
+	// 	caller: caller,
+	// 	user: uint256,
+	// ) -> Result<void> {
+	// 	self.consume_store_writes(1)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let user = convert_uint256_to_cross_account::<T>(user);
-		Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
-		Ok(())
-	}
+	// 	let caller = T::CrossAccountId::from_eth(caller);
+	// 	let user = convert_uint256_to_cross_account::<T>(user);
+	// 	Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
+	// 	Ok(())
+	// }
 
 	/// Switch permission for minting.
 	///
@@ -551,14 +556,15 @@ where
 		Ok(self.is_owner_or_admin(&user))
 	}
 
-	/// Check that substrate account is the owner or admin of the collection
-	///
-	/// @param user account to verify
-	/// @return "true" if account is the owner or admin
-	fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
-		let user = convert_uint256_to_cross_account::<T>(user);
-		Ok(self.is_owner_or_admin(&user))
-	}
+	// TODO: Temprorary off. Need refactor
+	// /// Check that substrate account is the owner or admin of the collection
+	// ///
+	// /// @param user account to verify
+	// /// @return "true" if account is the owner or admin
+	// fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
+	// 	let user = convert_uint256_to_cross_account::<T>(user);
+	// 	Ok(self.is_owner_or_admin(&user))
+	// }
 
 	/// Returns collection type
 	///
@@ -595,18 +601,19 @@ where
 			.map_err(dispatch_to_evm::<T>)
 	}
 
-	/// Changes collection owner to another substrate account
-	///
-	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner substrate account
-	fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
-		self.consume_store_writes(1)?;
+	// TODO: Temprorary off. Need refactor
+	// /// Changes collection owner to another substrate account
+	// ///
+	// /// @dev Owner can be changed only by current owner
+	// /// @param newOwner new owner substrate account
+	// fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
+	// 	self.consume_store_writes(1)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let new_owner = convert_uint256_to_cross_account::<T>(new_owner);
-		self.set_owner_internal(caller, new_owner)
-			.map_err(dispatch_to_evm::<T>)
-	}
+	// 	let caller = T::CrossAccountId::from_eth(caller);
+	// 	let new_owner = convert_uint256_to_cross_account::<T>(new_owner);
+	// 	self.set_owner_internal(caller, new_owner)
+	// 		.map_err(dispatch_to_evm::<T>)
+	// }
 
 	// TODO: need implement AbiWriter for &Vec<T>
 	// fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
