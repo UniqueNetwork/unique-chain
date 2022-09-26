@@ -695,7 +695,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get collection properties, optionally limited to the provided keys
        **/
-      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get chain stats about collections
        **/
@@ -723,7 +723,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get property permissions, optionally limited to the provided keys
        **/
-      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
+      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
       /**
        * Get tokens nested directly into the token
        **/
@@ -731,7 +731,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get token data, including properties, optionally limited to the provided keys, and total pieces for an RFT
        **/
-      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
+      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
       /**
        * Check if the token exists
        **/
@@ -747,7 +747,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get token properties, optionally limited to the provided keys
        **/
-      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get the topmost token owner in the hierarchy of a possibly nested token
        **/

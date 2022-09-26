@@ -691,6 +691,9 @@ export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 /** @name FrameSystemExtensionsCheckSpecVersion */
 export interface FrameSystemExtensionsCheckSpecVersion extends Null {}
 
+/** @name FrameSystemExtensionsCheckTxVersion */
+export interface FrameSystemExtensionsCheckTxVersion extends Null {}
+
 /** @name FrameSystemExtensionsCheckWeight */
 export interface FrameSystemExtensionsCheckWeight extends Null {}
 
