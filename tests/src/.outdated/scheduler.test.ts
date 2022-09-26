@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {
-  UNIQUE,
-  waitNewBlocks,
-} from './util/helpers';
+import {UNIQUE} from './util/helpers';
 import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -98,7 +95,7 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.scheduler.cancelScheduled(alice, scheduledId);
 
-    await waitNewBlocks(waitForBlocks + 1);
+    await helper.wait.newBlocks(waitForBlocks + 1);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
@@ -276,7 +273,7 @@ describe('Scheduling token and balance transfers', () => {
       .to.be.equal(finalTestVal);
 
     for (let i = 1; i < periodic.repetitions; i++) {
-      await waitNewBlocks(periodic.period);
+      await helper.wait.newBlocks(periodic.period);
       expect((await helper.api!.query.testUtils.testValue()).toNumber())
         .to.be.equal(finalTestVal);
     }
