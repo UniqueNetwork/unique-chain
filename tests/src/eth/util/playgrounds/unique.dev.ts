@@ -152,6 +152,11 @@ class EthGroup extends EthGroupBase {
   async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=1000n, inTokens=true) {
     return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
   }
+  
+  async getCollectionCreationFee(signer: string) {
+    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    return await collectionHelper.methods.collectionCreationFee().call();
+  }
 
   async sendEVM(signer: IKeyringPair, contractAddress: string, abi: string, value: string, gasLimit?: number) {
     if(!gasLimit) gasLimit = this.DEFAULT_GAS;

@@ -171,6 +171,11 @@ describe('EVM transaction fees', () => {
     expect(finalContractBalance == initialContractBalance).to.be.true;
   });
 
+  itEth('Get collection creation fee', async({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    expect(await helper.eth.getCollectionCreationFee(deployer)).to.be.equal(String(2n * helper.balance.getOneTokenNominal()));
+  });
+
   async function deployProxyContract(helper: EthUniqueHelper, deployer: string) {
     return await helper.ethContract.deployByCode(
       deployer,
