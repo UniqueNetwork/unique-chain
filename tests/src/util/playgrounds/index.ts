@@ -9,9 +9,15 @@ import config from '../../config';
 import '../../interfaces/augment-api-events';
 import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 
-
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
+
+export const U128_MAX = (1n << 128n) - 1n;
+
+const MICROUNIQUE = 1_000_000_000_000n;
+const MILLIUNIQUE = 1_000n * MICROUNIQUE;
+const CENTIUNIQUE = 10n * MILLIUNIQUE;
+export const UNIQUE = 100n * CENTIUNIQUE;
 
 export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>, url: string = config.substrateUrl) => {
   const silentConsole = new SilentConsole();
