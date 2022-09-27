@@ -171,6 +171,26 @@ describe('EVM transaction fees', () => {
     expect(finalContractBalance == initialContractBalance).to.be.true;
   });
 
+  itEth('Negative test: call createNFTCollection with wrong fee', async({helper}) => {
+    const SMALL_FEE = 1n * helper.balance.getOneTokenNominal();
+    const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
+        
+    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+  });
+
+  itEth('Negative test: call createRFTCollection with wrong fee', async({helper}) => {
+    const SMALL_FEE = 1n * helper.balance.getOneTokenNominal();
+    const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
+        
+    await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+  });
+
   itEth('Get collection creation fee', async({helper}) => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     expect(await helper.eth.getCollectionCreationFee(deployer)).to.be.equal(String(2n * helper.balance.getOneTokenNominal()));
