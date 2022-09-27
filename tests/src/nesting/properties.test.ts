@@ -1,1004 +1,788 @@
-import {expect} from 'chai';
-import usingApi, {executeTransaction} from '../substrate/substrate-api';
-import {
-  addCollectionAdminExpectSuccess,
-  CollectionMode,
-  createCollectionExpectSuccess,
-  setCollectionPermissionsExpectSuccess,
-  createItemExpectSuccess,
-  getCreateCollectionResult,
-  transferExpectSuccess,
-  requirePallets,
-  Pallets,
-} from '../util/helpers';
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
 import {IKeyringPair} from '@polkadot/types/types';
-import {tokenIdToAddress} from '../eth/util/helpers';
-
-let alice: IKeyringPair;
-let bob: IKeyringPair;
-let charlie: IKeyringPair;
-
-describe('Composite Properties Test', () => {
-  before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-    });
-  });
-
-  async function testMakeSureSuppliesRequired(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collectionId = await createCollectionExpectSuccess({mode: mode});
-
-      const collectionOption = await api.rpc.unique.collectionById(collectionId);
-      expect(collectionOption.isSome).to.be.true;
-      let collection = collectionOption.unwrap();
-      expect(collection.tokenPropertyPermissions.toHuman()).to.be.empty;
-      expect(collection.properties.toHuman()).to.be.empty;
-
-      const propertyPermissions = [
-        {key: 'mindgame', permission: {collectionAdmin: true, mutable: false, tokenOwner: true}},
-        {key: 'skullduggery', permission: {collectionAdmin: false, mutable: true, tokenOwner: false}},
-      ];
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collectionId, propertyPermissions), 
-      )).to.not.be.rejected;
-
-      const collectionProperties = [
-        {key: 'black_hole', value: 'LIGO'},
-        {key: 'electron', value: 'come bond'}, 
-      ];
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collectionId, collectionProperties), 
-      )).to.not.be.rejected;
-
-      collection = (await api.rpc.unique.collectionById(collectionId)).unwrap();
-      expect(collection.tokenPropertyPermissions.toHuman()).to.be.deep.equal(propertyPermissions);
-      expect(collection.properties.toHuman()).to.be.deep.equal(collectionProperties);
-    });
-  }
-
-  it('Makes sure collectionById supplies required fields for NFT', async () => {
-    await testMakeSureSuppliesRequired({type: 'NFT'});
-  });
-
-  it('Makes sure collectionById supplies required fields for ReFungible', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await testMakeSureSuppliesRequired({type: 'ReFungible'});
-  });
-});
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../util/playgrounds';
+import {UniqueHelper, UniqueBaseCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '../util/playgrounds/unique';
 
 // ---------- COLLECTION PROPERTIES
 
 describe('Integration Test: Collection Properties', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
 
-  it('Reads properties from a collection', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess();
-      const properties = (await api.query.common.collectionProperties(collection)).toJSON();
-      expect(properties.map).to.be.empty;
-      expect(properties.consumedSpace).to.equal(0);
-    });
+  itSub('Properties are initially empty', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    expect(await collection.getProperties()).to.be.empty;
   });
 
+  async function testSetsPropertiesForCollection(collection: UniqueBaseCollection) {
+    // As owner
+    await expect(collection.setProperties(alice, [{key: 'electron', value: 'come bond'}])).to.be.fulfilled;
 
-  async function testSetsPropertiesForCollection(mode: string) {
-    await usingApi(async api => {
-      const events = await executeTransaction(api, bob, api.tx.unique.createCollectionEx({mode: mode}));
-      const {collectionId} = getCreateCollectionResult(events);
+    await collection.addAdmin(alice, {Substrate: bob.address});
 
-      // As owner
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'electron', value: 'come bond'}]), 
-      )).to.not.be.rejected;
+    // As administrator
+    await expect(collection.setProperties(bob, [{key: 'black_hole'}])).to.be.fulfilled;
 
-      await addCollectionAdminExpectSuccess(bob, collectionId, alice.address);
-
-      // As administrator
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'black_hole'}]), 
-      )).to.not.be.rejected;
-
-      const properties = (await api.rpc.unique.collectionProperties(collectionId, ['electron', 'black_hole'])).toHuman();
-      expect(properties).to.be.deep.equal([
-        {key: 'electron', value: 'come bond'},
-        {key: 'black_hole', value: ''},
-      ]);
-    });
+    const properties = await collection.getProperties();
+    expect(properties).to.include.deep.members([
+      {key: 'electron', value: 'come bond'},
+      {key: 'black_hole', value: ''},
+    ]);
   }
-  it('Sets properties for a NFT collection', async () => {
-    await testSetsPropertiesForCollection('NFT');
-  });
-  it('Sets properties for a ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testSetsPropertiesForCollection('ReFungible');
+  itSub('Sets properties for a NFT collection', async ({helper}) =>  {
+    await testSetsPropertiesForCollection(await helper.nft.mintCollection(alice));
   });
 
-  async function testCheckValidNames(mode: string) {
-    await usingApi(async api => {
-      const events = await executeTransaction(api, bob, api.tx.unique.createCollectionEx({mode: mode}));
-      const {collectionId} = getCreateCollectionResult(events);
-  
-      // alpha symbols
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'alpha'}]), 
-      )).to.not.be.rejected;
-  
-      // numeric symbols
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: '123'}]), 
-      )).to.not.be.rejected;
-  
-      // underscore symbol
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'black_hole'}]), 
-      )).to.not.be.rejected;
-  
-      // dash symbol
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'semi-automatic'}]), 
-      )).to.not.be.rejected;
-  
-      // underscore symbol
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collectionId, [{key: 'build.rs'}]), 
-      )).to.not.be.rejected;
-  
-      const propertyKeys = ['alpha', '123', 'black_hole', 'semi-automatic', 'build.rs'];
-      const properties = (await api.rpc.unique.collectionProperties(collectionId, propertyKeys)).toHuman();
-      expect(properties).to.be.deep.equal([
-        {key: 'alpha', value: ''},
-        {key: '123', value: ''},
-        {key: 'black_hole', value: ''},
-        {key: 'semi-automatic', value: ''},
-        {key: 'build.rs', value: ''},
-      ]);
-    });
+  itSub.ifWithPallets('Sets properties for a ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
+    await testSetsPropertiesForCollection(await helper.rft.mintCollection(alice));
+  });
+
+  async function testCheckValidNames(collection: UniqueBaseCollection) {
+    // alpha symbols
+    await expect(collection.setProperties(alice, [{key: 'answer'}])).to.be.fulfilled;
+
+    // numeric symbols
+    await expect(collection.setProperties(alice, [{key: '451'}])).to.be.fulfilled;
+
+    // underscore symbol
+    await expect(collection.setProperties(alice, [{key: 'black_hole'}])).to.be.fulfilled;
+
+    // dash symbol
+    await expect(collection.setProperties(alice, [{key: '-'}])).to.be.fulfilled;
+
+    // dot symbol
+    await expect(collection.setProperties(alice, [{key: 'once.in.a.long.long.while...', value: 'you get a little lost'}])).to.be.fulfilled;
+
+    const properties = await collection.getProperties();
+    expect(properties).to.include.deep.members([
+      {key: 'answer', value: ''},
+      {key: '451', value: ''},
+      {key: 'black_hole', value: ''},
+      {key: '-', value: ''},
+      {key: 'once.in.a.long.long.while...', value: 'you get a little lost'},
+    ]);
   }
-  it('Check valid names for NFT collection properties keys', async () => {
-    await testCheckValidNames('NFT');
-  });
-  it('Check valid names for ReFungible collection properties keys', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testCheckValidNames('ReFungible');
+  itSub('Check valid names for NFT collection properties keys', async ({helper}) =>  {
+    await testCheckValidNames(await helper.nft.mintCollection(alice));
   });
 
-  async function testChangesProperties(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black_hole'}]), 
-      )).to.not.be.rejected;
-  
-      // Mutate the properties
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'bonded'}, {key: 'black_hole', value: 'LIGO'}]), 
-      )).to.not.be.rejected;
-  
-      const properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black_hole'])).toHuman();
-      expect(properties).to.be.deep.equal([
-        {key: 'electron', value: 'bonded'},
-        {key: 'black_hole', value: 'LIGO'},
-      ]);
-    });
+  itSub.ifWithPallets('Check valid names for ReFungible collection properties keys', [Pallets.ReFungible], async ({helper}) => {
+    await testCheckValidNames(await helper.rft.mintCollection(alice));
+  });
+
+  async function testChangesProperties(collection: UniqueBaseCollection) {
+    await expect(collection.setProperties(alice, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: ''}])).to.be.fulfilled;
+
+    // Mutate the properties
+    await expect(collection.setProperties(alice, [{key: 'black_hole', value: 'LIGO'}])).to.be.fulfilled;
+
+    const properties = await collection.getProperties();
+    expect(properties).to.include.deep.members([
+      {key: 'electron', value: 'come bond'},
+      {key: 'black_hole', value: 'LIGO'},
+    ]);
   }
-  it('Changes properties of a NFT collection', async () => {
-    await testChangesProperties({type: 'NFT'});
-  });
-  it('Changes properties of a ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testChangesProperties({type: 'ReFungible'});
+  itSub('Changes properties of a NFT collection', async ({helper}) =>  {
+    await testChangesProperties(await helper.nft.mintCollection(alice));
   });
 
-  async function testDeleteProperties(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]), 
-      )).to.not.be.rejected;
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.deleteCollectionProperties(collection, ['electron']), 
-      )).to.not.be.rejected;
-  
-      const properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black_hole'])).toHuman();
-      expect(properties).to.be.deep.equal([
-        {key: 'black_hole', value: 'LIGO'},
-      ]);
-    });  
+  itSub.ifWithPallets('Changes properties of a ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
+    await testChangesProperties(await helper.rft.mintCollection(alice));
+  });
+
+  async function testDeleteProperties(collection: UniqueBaseCollection) {
+    await expect(collection.setProperties(alice, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}])).to.be.fulfilled;
+
+    await expect(collection.deleteProperties(alice, ['electron'])).to.be.fulfilled;
+
+    const properties = await collection.getProperties(['black_hole', 'electron']);
+    expect(properties).to.be.deep.equal([
+      {key: 'black_hole', value: 'LIGO'},
+    ]);
   }
-  it('Deletes properties of a NFT collection', async () => {
-    await testDeleteProperties({type: 'NFT'});
-  });
-  it('Deletes properties of a ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testDeleteProperties({type: 'ReFungible'});
+  itSub('Deletes properties of a NFT collection', async ({helper}) =>  {
+    await testDeleteProperties(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Deletes properties of a ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
+    await testDeleteProperties(await helper.rft.mintCollection(alice));
   });
 });
 
 describe('Negative Integration Test: Collection Properties', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
   
-  async function testFailsSetPropertiesIfNotOwnerOrAdmin(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]), 
-      )).to.be.rejectedWith(/common\.NoPermission/);
-  
-      const properties = (await api.query.common.collectionProperties(collection)).toJSON();
-      expect(properties.map).to.be.empty;
-      expect(properties.consumedSpace).to.equal(0);
-    });  
-  }
-  it('Fails to set properties in a NFT collection if not its onwer/administrator', async () => {
-    await testFailsSetPropertiesIfNotOwnerOrAdmin({type: 'NFT'});
-  });
-  it('Fails to set properties in a ReFungible collection if not its onwer/administrator', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  async function testFailsSetPropertiesIfNotOwnerOrAdmin(collection: UniqueBaseCollection) {  
+    await expect(collection.setProperties(bob, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]))
+      .to.be.rejectedWith(/common\.NoPermission/);
 
-    await testFailsSetPropertiesIfNotOwnerOrAdmin({type: 'ReFungible'});
-  });
-  
-  async function testFailsSetPropertiesThatExeedLimits(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-      const spaceLimit = (await api.query.common.collectionProperties(collection)).toJSON().spaceLimit as number; 
-  
-      // Mute the general tx parsing error, too many bytes to process
-      {
-        console.error = () => {};
-        await expect(executeTransaction(
-          api, 
-          alice, 
-          api.tx.unique.setCollectionProperties(collection, [{key: 'electron', value: 'low high '.repeat(Math.ceil(spaceLimit! / 9))}]), 
-        )).to.be.rejected;
-      }
-  
-      let properties = (await api.rpc.unique.collectionProperties(collection, ['electron'])).toJSON();
-      expect(properties).to.be.empty;
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, [
-          {key: 'electron', value: 'low high '.repeat(Math.ceil(spaceLimit! / 18))}, 
-          {key: 'black_hole', value: '0'.repeat(Math.ceil(spaceLimit! / 2))}, 
-        ]), 
-      )).to.be.rejectedWith(/common\.NoSpaceForProperty/);
-  
-      properties = (await api.rpc.unique.collectionProperties(collection, ['electron', 'black hole'])).toJSON();
-      expect(properties).to.be.empty;
-    });  
+    expect(await collection.getProperties()).to.be.empty;
   }
-  it('Fails to set properties that exceed the limits (NFT)', async () => {
-    await testFailsSetPropertiesThatExeedLimits({type: 'NFT'});
-  });
-  it('Fails to set properties that exceed the limits (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testFailsSetPropertiesThatExeedLimits({type: 'ReFungible'});
+  itSub('Fails to set properties in a NFT collection if not its onwer/administrator', async ({helper}) =>  {
+    await testFailsSetPropertiesIfNotOwnerOrAdmin(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Fails to set properties in a ReFungible collection if not its onwer/administrator', [Pallets.ReFungible], async ({helper}) => {
+    await testFailsSetPropertiesIfNotOwnerOrAdmin(await helper.rft.mintCollection(alice));
   });
   
-  async function testFailsSetMorePropertiesThanAllowed(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
+  async function testFailsSetPropertiesThatExeedLimits(collection: UniqueBaseCollection) {
+    const spaceLimit = (await (collection.helper!.api! as any).query.common.collectionProperties(collection.collectionId)).spaceLimit.toNumber();
   
-      const propertiesToBeSet = [];
-      for (let i = 0; i < 65; i++) {
-        propertiesToBeSet.push({
-          key: 'electron_' + i,
-          value: Math.random() > 0.5 ? 'high' : 'low',
-        });
-      }
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, propertiesToBeSet), 
-      )).to.be.rejectedWith(/common\.PropertyLimitReached/);
-  
-      const properties = (await api.query.common.collectionProperties(collection)).toJSON();
-      expect(properties.map).to.be.empty;
-      expect(properties.consumedSpace).to.equal(0);
-    });  
+    // Mute the general tx parsing error, too many bytes to process
+    {
+      console.error = () => {};
+      await expect(collection.setProperties(alice, [
+        {key: 'electron', value: 'low high '.repeat(Math.ceil(spaceLimit! / 9))},
+      ])).to.be.rejected;
+    }
+
+    expect(await collection.getProperties(['electron'])).to.be.empty;
+
+    await expect(collection.setProperties(alice, [
+      {key: 'electron', value: 'low high '.repeat(Math.ceil(spaceLimit! / 18))}, 
+      {key: 'black_hole', value: '0'.repeat(Math.ceil(spaceLimit! / 2))}, 
+    ])).to.be.rejectedWith(/common\.NoSpaceForProperty/);
+
+    expect(await collection.getProperties(['electron', 'black_hole'])).to.be.empty;
   }
-  it('Fails to set more properties than it is allowed (NFT)', async () => {
-    await testFailsSetMorePropertiesThanAllowed({type: 'NFT'});
-  });
-  it('Fails to set more properties than it is allowed (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testFailsSetMorePropertiesThanAllowed({type: 'ReFungible'});
+  itSub('Fails to set properties that exceed the limits (NFT)', async ({helper}) =>  {
+    await testFailsSetPropertiesThatExeedLimits(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Fails to set properties that exceed the limits (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testFailsSetPropertiesThatExeedLimits(await helper.rft.mintCollection(alice));
   });
   
-  async function testFailsSetPropertiesWithInvalidNames(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      const invalidProperties = [
-        [{key: 'electron', value: 'negative'}, {key: 'string theory', value: 'understandable'}],
-        [{key: 'Mr/Sandman', value: 'Bring me a gene'}],
-        [{key: 'déjà vu', value: 'hmm...'}],
-      ];
-  
-      for (let i = 0; i < invalidProperties.length; i++) {
-        await expect(executeTransaction(
-          api, 
-          alice, 
-          api.tx.unique.setCollectionProperties(collection, invalidProperties[i]), 
-        ), `on rejecting the new badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
-      }
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, [{key: '', value: 'nothing must not exist'}]), 
-      ), 'on rejecting an unnamed property').to.be.rejectedWith(/common\.EmptyPropertyKey/);
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setCollectionProperties(collection, [
-          {key: 'CRISPR-Cas9', value: 'rewriting nature!'},
-        ]), 
-      ), 'on setting the correctly-but-still-badly-named property').to.not.be.rejected;
-  
-      const keys = invalidProperties.flatMap(propertySet => propertySet.map(property => property.key)).concat('CRISPR-Cas9').concat('');
-  
-      const properties = (await api.rpc.unique.collectionProperties(collection, keys)).toHuman();
-      expect(properties).to.be.deep.equal([
-        {key: 'CRISPR-Cas9', value: 'rewriting nature!'},
-      ]);
-  
-      for (let i = 0; i < invalidProperties.length; i++) {
-        await expect(executeTransaction(
-          api, 
-          alice, 
-          api.tx.unique.deleteCollectionProperties(collection, invalidProperties[i].map(propertySet => propertySet.key)), 
-        ), `on trying to delete the non-existent badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
-      }
-    });
+  async function testFailsSetMorePropertiesThanAllowed(collection: UniqueBaseCollection) {
+    const propertiesToBeSet = [];
+    for (let i = 0; i < 65; i++) {
+      propertiesToBeSet.push({
+        key: 'electron_' + i,
+        value: Math.random() > 0.5 ? 'high' : 'low',
+      });
+    }
+
+    await expect(collection.setProperties(alice, propertiesToBeSet)).
+      to.be.rejectedWith(/common\.PropertyLimitReached/);
+
+    expect(await collection.getProperties()).to.be.empty;
   }
-  it('Fails to set properties with invalid names (NFT)', async () => {
-    await testFailsSetPropertiesWithInvalidNames({type: 'NFT'});
-  });
-  it('Fails to set properties with invalid names (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testFailsSetPropertiesWithInvalidNames({type: 'ReFungible'});
+  itSub('Fails to set more properties than it is allowed (NFT)', async ({helper}) =>  {
+    await testFailsSetMorePropertiesThanAllowed(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Fails to set more properties than it is allowed (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testFailsSetMorePropertiesThanAllowed(await helper.rft.mintCollection(alice));
+  });
+  
+  async function testFailsSetPropertiesWithInvalidNames(collection: UniqueBaseCollection) {
+    const invalidProperties = [
+      [{key: 'electron', value: 'negative'}, {key: 'string theory', value: 'understandable'}],
+      [{key: 'Mr/Sandman', value: 'Bring me a gene'}],
+      [{key: 'déjà vu', value: 'hmm...'}],
+    ];
+
+    for (let i = 0; i < invalidProperties.length; i++) {
+      await expect(
+        collection.setProperties(alice, invalidProperties[i]), 
+        `on rejecting the new badly-named property #${i}`,
+      ).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
+    }
+
+    await expect(
+      collection.setProperties(alice, [{key: '', value: 'nothing must not exist'}]), 
+      'on rejecting an unnamed property',
+    ).to.be.rejectedWith(/common\.EmptyPropertyKey/);
+
+    await expect(
+      collection.setProperties(alice, [{key: 'CRISPR-Cas9', value: 'rewriting nature!'}]), 
+      'on setting the correctly-but-still-badly-named property',
+    ).to.be.fulfilled;
+
+    const keys = invalidProperties.flatMap(propertySet => propertySet.map(property => property.key)).concat('CRISPR-Cas9').concat('');
+
+    const properties = await collection.getProperties(keys);
+    expect(properties).to.be.deep.equal([
+      {key: 'CRISPR-Cas9', value: 'rewriting nature!'},
+    ]);
+
+    for (let i = 0; i < invalidProperties.length; i++) {
+      await expect(
+        collection.deleteProperties(alice, invalidProperties[i].map(propertySet => propertySet.key)), 
+        `on trying to delete the non-existent badly-named property #${i}`,
+      ).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
+    }
+  }
+
+  itSub('Fails to set properties with invalid names (NFT)', async ({helper}) =>  {
+    await testFailsSetPropertiesWithInvalidNames(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Fails to set properties with invalid names (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testFailsSetPropertiesWithInvalidNames(await helper.rft.mintCollection(alice));
   });
 });
 
 // ---------- ACCESS RIGHTS
 
 describe('Integration Test: Access Rights to Token Properties', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
   
-  it('Reads access rights to properties of a collection', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess();
-      const propertyRights = (await api.query.common.collectionPropertyPermissions(collection)).toJSON();
-      expect(propertyRights).to.be.empty;
-    });
+  itSub('Reads access rights to properties of a collection', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const propertyRights = (await helper.api!.query.common.collectionPropertyPermissions(collection.collectionId)).toJSON();
+    expect(propertyRights).to.be.empty;
   });
   
-  async function testSetsAccessRightsToProperties(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true}}]), 
-      )).to.not.be.rejected;
-  
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'mindgame', permission: {collectionAdmin: true, tokenOwner: false}}]), 
-      )).to.not.be.rejected;
-  
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery', 'mindgame'])).toHuman();
-      expect(propertyRights).to.be.deep.equal([
-        {key: 'skullduggery', permission: {'mutable': true, 'collectionAdmin': false, 'tokenOwner': false}},
-        {key: 'mindgame', permission: {'mutable': false, 'collectionAdmin': true, 'tokenOwner': false}},
-      ]);
-    });  
-  }
-  it('Sets access rights to properties of a collection (NFT)', async () => {
-    await testSetsAccessRightsToProperties({type: 'NFT'});
-  });
-  it('Sets access rights to properties of a collection (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  async function testSetsAccessRightsToProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {  
+    await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: true}}]))
+      .to.be.fulfilled;
 
-    await testSetsAccessRightsToProperties({type: 'ReFungible'});
-  });
-  
-  async function testChangesAccessRightsToProperty(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true, collectionAdmin: true}}]), 
-      )).to.not.be.rejected;
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
-      )).to.not.be.rejected;
-  
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toHuman();
-      expect(propertyRights).to.be.deep.equal([
-        {key: 'skullduggery', permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
-      ]);
-    });
-  }
-  it('Changes access rights to properties of a NFT collection', async () => {
-    await testChangesAccessRightsToProperty({type: 'NFT'});
-  });
-  it('Changes access rights to properties of a ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await collection.addAdmin(alice, {Substrate: bob.address});
 
-    await testChangesAccessRightsToProperty({type: 'ReFungible'});
+    await expect(collection.setTokenPropertyPermissions(bob, [{key: 'mindgame', permission: {collectionAdmin: true, tokenOwner: false}}]))
+      .to.be.fulfilled;
+
+    const propertyRights = await collection.getPropertyPermissions(['skullduggery', 'mindgame']);
+    expect(propertyRights).to.include.deep.members([
+      {key: 'skullduggery', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}},
+      {key: 'mindgame', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}},
+    ]);
+  }
+
+  itSub('Sets access rights to properties of a collection (NFT)', async ({helper}) =>  {
+    await testSetsAccessRightsToProperties(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Sets access rights to properties of a collection (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testSetsAccessRightsToProperties(await helper.rft.mintCollection(alice));
+  });
+  
+  async function testChangesAccessRightsToProperty(collection: UniqueNFTCollection | UniqueRFTCollection) {
+    await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: true, collectionAdmin: true}}]))
+      .to.be.fulfilled;
+
+    await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]))
+      .to.be.fulfilled;
+
+    const propertyRights = await collection.getPropertyPermissions();
+    expect(propertyRights).to.be.deep.equal([
+      {key: 'skullduggery', permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
+    ]);
+  }
+
+  itSub('Changes access rights to properties of a NFT collection', async ({helper}) =>  {
+    await testChangesAccessRightsToProperty(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Changes access rights to properties of a ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
+    await testChangesAccessRightsToProperty(await helper.rft.mintCollection(alice));
   });
 });
 
 describe('Negative Integration Test: Access Rights to Token Properties', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
 
-  async function testPreventsFromSettingAccessRightsNotAdminOrOwner(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        bob, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: true, tokenOwner: true}}]), 
-      )).to.be.rejectedWith(/common\.NoPermission/);
-  
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toJSON();
-      expect(propertyRights).to.be.empty;
-    });
+  async function testPreventsFromSettingAccessRightsNotAdminOrOwner(collection: UniqueNFTCollection | UniqueRFTCollection) {
+    await expect(collection.setTokenPropertyPermissions(bob, [{key: 'skullduggery', permission: {mutable: true, tokenOwner: true}}]))
+      .to.be.rejectedWith(/common\.NoPermission/);
+
+    const propertyRights = await collection.getPropertyPermissions(['skullduggery']);
+    expect(propertyRights).to.be.empty;
   }
-  it('Prevents from setting access rights to properties of a NFT collection if not an onwer/admin', async () => {
-    await testPreventsFromSettingAccessRightsNotAdminOrOwner({type: 'NFT'});
-  });
-  it('Prevents from setting access rights to properties of a ReFungible collection if not an onwer/admin', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testPreventsFromSettingAccessRightsNotAdminOrOwner({type: 'ReFungible'});
+  itSub('Prevents from setting access rights to properties of a NFT collection if not an onwer/admin', async ({helper}) =>  {
+    await testPreventsFromSettingAccessRightsNotAdminOrOwner(await helper.nft.mintCollection(alice));
   });
 
-  async function testPreventFromAddingTooManyPossibleProperties(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      const constitution = [];
-      for (let i = 0; i < 65; i++) {
-        constitution.push({
-          key: 'property_' + i,
-          permission: Math.random() > 0.5 ? {mutable: true, collectionAdmin: true, tokenOwner: true} : {},
-        });
-      }
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, constitution), 
-      )).to.be.rejectedWith(/common\.PropertyLimitReached/);
-  
-      const propertyRights = (await api.query.common.collectionPropertyPermissions(collection)).toJSON();
-      expect(propertyRights).to.be.empty;
-    });  
+  itSub.ifWithPallets('Prevents from setting access rights to properties of a ReFungible collection if not an onwer/admin', [Pallets.ReFungible], async ({helper}) => {
+    await testPreventsFromSettingAccessRightsNotAdminOrOwner(await helper.rft.mintCollection(alice));
+  });
+
+  async function testPreventFromAddingTooManyPossibleProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {  
+    const constitution = [];
+    for (let i = 0; i < 65; i++) {
+      constitution.push({
+        key: 'property_' + i,
+        permission: Math.random() > 0.5 ? {mutable: true, collectionAdmin: true, tokenOwner: true} : {},
+      });
+    }
+
+    await expect(collection.setTokenPropertyPermissions(alice, constitution))
+      .to.be.rejectedWith(/common\.PropertyLimitReached/);
+
+    const propertyRights = await collection.getPropertyPermissions();
+    expect(propertyRights).to.be.empty;
   }
-  it('Prevents from adding too many possible properties (NFT)', async () => {
-    await testPreventFromAddingTooManyPossibleProperties({type: 'NFT'});
-  });
-  it('Prevents from adding too many possible properties (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testPreventFromAddingTooManyPossibleProperties({type: 'ReFungible'});
+  itSub('Prevents from adding too many possible properties (NFT)', async ({helper}) =>  {
+    await testPreventFromAddingTooManyPossibleProperties(await helper.nft.mintCollection(alice));
   });
 
-  async function testPreventAccessRightsModifiedIfConstant(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]), 
-      )).to.not.be.rejected;
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'skullduggery', permission: {}}]), 
-      )).to.be.rejectedWith(/common\.NoPermission/);
-  
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, ['skullduggery'])).toHuman();
-      expect(propertyRights).to.deep.equal([
-        {key: 'skullduggery', permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
-      ]);
-    });  
+  itSub.ifWithPallets('Prevents from adding too many possible properties (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testPreventFromAddingTooManyPossibleProperties(await helper.rft.mintCollection(alice));
+  });
+
+  async function testPreventAccessRightsModifiedIfConstant(collection: UniqueNFTCollection | UniqueRFTCollection) {
+    await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]))
+      .to.be.fulfilled;
+
+    await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {collectionAdmin: true}}]))
+      .to.be.rejectedWith(/common\.NoPermission/);
+
+    const propertyRights = await collection.getPropertyPermissions(['skullduggery']);
+    expect(propertyRights).to.deep.equal([
+      {key: 'skullduggery', permission: {'mutable': false, 'collectionAdmin': false, 'tokenOwner': true}},
+    ]);
   }
-  it('Prevents access rights to be modified if constant (NFT)', async () => {
-    await testPreventAccessRightsModifiedIfConstant({type: 'NFT'});
-  });
-  it('Prevents access rights to be modified if constant (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testPreventAccessRightsModifiedIfConstant({type: 'ReFungible'});
+  itSub('Prevents access rights to be modified if constant (NFT)', async ({helper}) =>  {
+    await testPreventAccessRightsModifiedIfConstant(await helper.nft.mintCollection(alice));
   });
 
-  async function testPreventsAddingPropertiesWithInvalidNames(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-  
-      const invalidProperties = [
-        [{key: 'skullduggery', permission: {tokenOwner: true}}, {key: 'im possible', permission: {collectionAdmin: true}}],
-        [{key: 'G#4', permission: {tokenOwner: true}}],
-        [{key: 'HÆMILTON', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}],
-      ];
-  
-      for (let i = 0; i < invalidProperties.length; i++) {
-        await expect(executeTransaction(
-          api, 
-          alice, 
-          api.tx.unique.setTokenPropertyPermissions(collection, invalidProperties[i]), 
-        ), `on setting the new badly-named property #${i}`).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
-      }
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: '', permission: {}}]), 
-      ), 'on rejecting an unnamed property').to.be.rejectedWith(/common\.EmptyPropertyKey/);
-  
-      const correctKey = '--0x03116e387820CA05'; // PolkadotJS would parse this as an already encoded hex-string
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [
-          {key: correctKey, permission: {collectionAdmin: true}},
-        ]), 
-      ), 'on setting the correctly-but-still-badly-named property').to.not.be.rejected;
-  
-      const keys = invalidProperties.flatMap(propertySet => propertySet.map(property => property.key)).concat(correctKey).concat('');
-  
-      const propertyRights = (await api.rpc.unique.propertyPermissions(collection, keys)).toHuman();
-      expect(propertyRights).to.be.deep.equal([
-        {key: correctKey, permission: {mutable: false, collectionAdmin: true, tokenOwner: false}},
-      ]);
-    });
+  itSub.ifWithPallets('Prevents access rights to be modified if constant (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testPreventAccessRightsModifiedIfConstant(await helper.rft.mintCollection(alice));
+  });
+
+  async function testPreventsAddingPropertiesWithInvalidNames(collection: UniqueNFTCollection | UniqueRFTCollection) {
+    const invalidProperties = [
+      [{key: 'skullduggery', permission: {tokenOwner: true}}, {key: 'im possible', permission: {collectionAdmin: true}}],
+      [{key: 'G#4', permission: {tokenOwner: true}}],
+      [{key: 'HÆMILTON', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}],
+    ];
+
+    for (let i = 0; i < invalidProperties.length; i++) {
+      await expect(
+        collection.setTokenPropertyPermissions(alice, invalidProperties[i]), 
+        `on setting the new badly-named property #${i}`,
+      ).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
+    }
+
+    await expect(
+      collection.setTokenPropertyPermissions(alice, [{key: '', permission: {}}]), 
+      'on rejecting an unnamed property',
+    ).to.be.rejectedWith(/common\.EmptyPropertyKey/);
+
+    const correctKey = '--0x03116e387820CA05'; // PolkadotJS would parse this as an already encoded hex-string
+    await expect(
+      collection.setTokenPropertyPermissions(alice, [
+        {key: correctKey, permission: {collectionAdmin: true}},
+      ]), 
+      'on setting the correctly-but-still-badly-named property',
+    ).to.be.fulfilled;
+
+    const keys = invalidProperties.flatMap(propertySet => propertySet.map(property => property.key)).concat(correctKey).concat('');
+
+    const propertyRights = await collection.getPropertyPermissions(keys);
+    expect(propertyRights).to.be.deep.equal([
+      {key: correctKey, permission: {mutable: false, collectionAdmin: true, tokenOwner: false}},
+    ]);
   }
-  it('Prevents adding properties with invalid names (NFT)', async () => {
-    await testPreventsAddingPropertiesWithInvalidNames({type: 'NFT'});
-  });
-  it('Prevents adding properties with invalid names (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testPreventsAddingPropertiesWithInvalidNames({type: 'ReFungible'});
+  itSub('Prevents adding properties with invalid names (NFT)', async ({helper}) =>  {
+    await testPreventsAddingPropertiesWithInvalidNames(await helper.nft.mintCollection(alice));
+  });
+
+  itSub.ifWithPallets('Prevents adding properties with invalid names (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    await testPreventsAddingPropertiesWithInvalidNames(await helper.rft.mintCollection(alice));
   });
 });
 
 // ---------- TOKEN PROPERTIES
 
 describe('Integration Test: Token Properties', () => {
+  let alice: IKeyringPair; // collection owner
+  let bob: IKeyringPair; // collection admin
+  let charlie: IKeyringPair; // token owner
+
   let permissions: {permission: any, signers: IKeyringPair[]}[];
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice'); // collection owner
-      bob = privateKeyWrapper('//Bob'); // collection admin
-      charlie = privateKeyWrapper('//Charlie'); // token owner
-
-      permissions = [
-        {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob]},
-        {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob]},
-        {permission: {mutable: true, tokenOwner: true}, signers: [charlie]},
-        {permission: {mutable: false, tokenOwner: true}, signers: [charlie]},
-        {permission: {mutable: true, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
-        {permission: {mutable: false, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
-      ];
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
+
+    // todo:playgrounds probably separate these tests later
+    permissions = [
+      {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob]},
+      {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob]},
+      {permission: {mutable: true, tokenOwner: true}, signers: [charlie]},
+      {permission: {mutable: false, tokenOwner: true}, signers: [charlie]},
+      {permission: {mutable: true, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
+      {permission: {mutable: false, collectionAdmin: true, tokenOwner: true}, signers: [alice, bob, charlie]},
+    ];
   });
   
-  async function testReadsYetEmptyProperties(mode: CollectionMode) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-      const token = await createItemExpectSuccess(alice, collection, mode.type);
-  
-      const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
-      expect(properties.map).to.be.empty;
-      expect(properties.consumedSpace).to.be.equal(0);
-  
-      const tokenData = (await api.rpc.unique.tokenData(collection, token, ['anything'])).toJSON().properties;
-      expect(tokenData).to.be.empty;
-    });
+  async function testReadsYetEmptyProperties(token: UniqueNFToken | UniqueRFToken) {
+    const properties = await token.getProperties();
+    expect(properties).to.be.empty;
+
+    const tokenData = await token.getData();
+    expect(tokenData!.properties).to.be.empty;
   }
-  it('Reads yet empty properties of a token (NFT)', async () => {
-    await testReadsYetEmptyProperties({type: 'NFT'});
-  });
-  it('Reads yet empty properties of a token (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testReadsYetEmptyProperties({type: 'ReFungible'});
+  itSub('Reads yet empty properties of a token (NFT)', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testReadsYetEmptyProperties(token);
   });
 
-  async function testAssignPropertiesAccordingToPermissions(mode: CollectionMode, pieces: number) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-      const token = await createItemExpectSuccess(alice, collection, mode.type);
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
+  itSub.ifWithPallets('Reads yet empty properties of a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testReadsYetEmptyProperties(token);
+  });
 
-      const propertyKeys: string[] = [];
-      let i = 0;
-      for (const permission of permissions) {
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
+  async function testAssignPropertiesAccordingToPermissions(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    await token.collection.addAdmin(alice, {Substrate: bob.address});
+    await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
+    const propertyKeys: string[] = [];
+    let i = 0;
+    for (const permission of permissions) {
+      i++;
+      let j = 0;
+      for (const signer of permission.signers) {
+        j++;
+        const key = i + '_' + signer.address;
+        propertyKeys.push(key);
 
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
+        await expect(
+          token.collection.setTokenPropertyPermissions(alice, [{key: key, permission: permission.permission}]), 
+          `on setting permission #${i} by alice`,
+        ).to.be.fulfilled;
 
-        i++;
+        await expect(
+          token.setProperties(signer, [{key: key, value: 'Serotonin increase'}]), 
+          `on adding property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
       }
+    }
 
-      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
-      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
-      for (let i = 0; i < properties.length; i++) {
-        expect(properties[i].value).to.be.equal('Serotonin increase');
-        expect(tokensData[i].value).to.be.equal('Serotonin increase');
-      }
-    });
+    const properties = await token.getProperties(propertyKeys);
+    const tokenData = await token.getData();
+    for (let i = 0; i < properties.length; i++) {
+      expect(properties[i].value).to.be.equal('Serotonin increase');
+      expect(tokenData!.properties[i].value).to.be.equal('Serotonin increase');
+    }
   }
-  it('Assigns properties to a token according to permissions (NFT)', async () => {
-    await testAssignPropertiesAccordingToPermissions({type: 'NFT'}, 1);
-  });
-  it('Assigns properties to a token according to permissions (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testAssignPropertiesAccordingToPermissions({type: 'ReFungible'}, 100);
+  itSub('Assigns properties to a token according to permissions (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testAssignPropertiesAccordingToPermissions(token, 1n);
   });
 
-  async function testChangesPropertiesAccordingPermission(mode: CollectionMode, pieces: number) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-      const token = await createItemExpectSuccess(alice, collection, mode.type);
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
+  itSub.ifWithPallets('Assigns properties to a token according to permissions (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testAssignPropertiesAccordingToPermissions(token, 100n);
+  });
 
-      const propertyKeys: string[] = [];
-      let i = 0;
-      for (const permission of permissions) {
-        if (!permission.permission.mutable) continue;
-        
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
-  
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-  
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-  
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin stable'}]), 
-          ), `on changing property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
-  
-        i++;
+  async function testChangesPropertiesAccordingPermission(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    await token.collection.addAdmin(alice, {Substrate: bob.address});
+    await token.transfer(alice, {Substrate: charlie.address}, pieces);
+
+    const propertyKeys: string[] = [];
+    let i = 0;
+    for (const permission of permissions) {
+      i++;
+      if (!permission.permission.mutable) continue;
+      
+      let j = 0;
+      for (const signer of permission.signers) {
+        j++;
+        const key = i + '_' + signer.address;
+        propertyKeys.push(key);
+
+        await expect(
+          token.collection.setTokenPropertyPermissions(alice, [{key: key, permission: permission.permission}]), 
+          `on setting permission #${i} by alice`,
+        ).to.be.fulfilled;
+
+        await expect(
+          token.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          `on adding property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
+
+        await expect(
+          token.setProperties(signer, [{key, value: 'Serotonin stable'}]), 
+          `on changing property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
       }
-  
-      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toHuman() as any[];
-      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toHuman().properties as any[];
-      for (let i = 0; i < properties.length; i++) {
-        expect(properties[i].value).to.be.equal('Serotonin stable');
-        expect(tokensData[i].value).to.be.equal('Serotonin stable');
-      }
-    });
+    }
+
+    const properties = await token.getProperties(propertyKeys);
+    const tokenData = await token.getData();
+    for (let i = 0; i < properties.length; i++) {
+      expect(properties[i].value).to.be.equal('Serotonin stable');
+      expect(tokenData!.properties[i].value).to.be.equal('Serotonin stable');
+    }
   }
-  it('Changes properties of a token according to permissions (NFT)', async () => {
-    await testChangesPropertiesAccordingPermission({type: 'NFT'}, 1);
-  });
-  it('Changes properties of a token according to permissions (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testChangesPropertiesAccordingPermission({type: 'ReFungible'}, 100);
+  itSub('Changes properties of a token according to permissions (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testChangesPropertiesAccordingPermission(token, 1n);
   });
 
-  async function testDeletePropertiesAccordingPermission(mode: CollectionMode, pieces: number) {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: mode});
-      const token = await createItemExpectSuccess(alice, collection, mode.type);
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
+  itSub.ifWithPallets('Changes properties of a token according to permissions (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testChangesPropertiesAccordingPermission(token, 100n);
+  });
 
-      const propertyKeys: string[] = [];
-      let i = 0;
-  
-      for (const permission of permissions) {
-        if (!permission.permission.mutable) continue;
-        
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
-  
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-  
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, token, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-  
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.deleteTokenProperties(collection, token, [key]), 
-          ), `on deleting property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
-        
-        i++;
+  async function testDeletePropertiesAccordingPermission(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    await token.collection.addAdmin(alice, {Substrate: bob.address});
+    await token.transfer(alice, {Substrate: charlie.address}, pieces);
+
+    const propertyKeys: string[] = [];
+    let i = 0;
+
+    for (const permission of permissions) {
+      i++;
+      if (!permission.permission.mutable) continue;
+      
+      let j = 0;
+      for (const signer of permission.signers) {
+        j++;
+        const key = i + '_' + signer.address;
+        propertyKeys.push(key);
+
+        await expect(
+          token.collection.setTokenPropertyPermissions(alice, [{key: key, permission: permission.permission}]), 
+          `on setting permission #${i} by alice`,
+        ).to.be.fulfilled;
+
+        await expect(
+          token.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          `on adding property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
+
+        await expect(
+          token.deleteProperties(signer, [key]), 
+          `on deleting property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
       }
-  
-      const properties = (await api.rpc.unique.tokenProperties(collection, token, propertyKeys)).toJSON() as any[];
-      expect(properties).to.be.empty;
-      const tokensData = (await api.rpc.unique.tokenData(collection, token, propertyKeys)).toJSON().properties as any[];
-      expect(tokensData).to.be.empty;
-      expect((await api.query.nonfungible.tokenProperties(collection, token)).toJSON().consumedSpace).to.be.equal(0);
-    });
+    }
+
+    expect(await token.getProperties(propertyKeys)).to.be.empty;
+    expect((await token.getData())!.properties).to.be.empty;
   }
-  it('Deletes properties of a token according to permissions (NFT)', async () => {
-    await testDeletePropertiesAccordingPermission({type: 'NFT'}, 1);
-  });
-  it('Deletes properties of a token according to permissions (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await testDeletePropertiesAccordingPermission({type: 'ReFungible'}, 100);
+  
+  itSub('Deletes properties of a token according to permissions (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testDeletePropertiesAccordingPermission(token, 1n);
   });
 
-  it('Assigns properties to a nested token according to permissions', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
-      const token = await createItemExpectSuccess(alice, collection, 'NFT');
-      const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie);
-
-      const propertyKeys: string[] = [];
-      let i = 0;
-      for (const permission of permissions) {
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
-
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
-
-        i++;
-      }
-
-      const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toHuman() as any[];
-      const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toHuman().properties as any[];
-      for (let i = 0; i < properties.length; i++) {
-        expect(properties[i].value).to.be.equal('Serotonin increase');
-        expect(tokensData[i].value).to.be.equal('Serotonin increase');
-      }
-    });
+  itSub.ifWithPallets('Deletes properties of a token according to permissions (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testDeletePropertiesAccordingPermission(token, 100n);
   });
 
-  it('Changes properties of a nested token according to permissions', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
-      const token = await createItemExpectSuccess(alice, collection, 'NFT');
-      const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie);
+  itSub('Assigns properties to a nested token according to permissions', async ({helper}) =>  {
+    const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const collectionB = await helper.nft.mintCollection(alice);
+    const targetToken = await collectionA.mintToken(alice);
+    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
 
-      const propertyKeys: string[] = [];
-      let i = 0;
-      for (const permission of permissions) {
-        if (!permission.permission.mutable) continue;
+    await collectionB.addAdmin(alice, {Substrate: bob.address});
+    await targetToken.transfer(alice, {Substrate: charlie.address});
+
+    const propertyKeys: string[] = [];
+    let i = 0;
+    for (const permission of permissions) {
+      i++;
+      let j = 0;
+      for (const signer of permission.signers) {
+        j++;
+        const key = i + '_' + signer.address;
+        propertyKeys.push(key);
         
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
+        await expect(
+          nestedToken.collection.setTokenPropertyPermissions(alice, [{key: key, permission: permission.permission}]), 
+          `on setting permission #${i} by alice`,
+        ).to.be.fulfilled;
 
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin stable'}]), 
-          ), `on changing property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
-
-        i++;
+        await expect(
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          `on adding property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
       }
 
-      const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toHuman() as any[];
-      const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toHuman().properties as any[];
-      for (let i = 0; i < properties.length; i++) {
-        expect(properties[i].value).to.be.equal('Serotonin stable');
-        expect(tokensData[i].value).to.be.equal('Serotonin stable');
-      }
-    });
+    }
+
+    const properties = await nestedToken.getProperties(propertyKeys);
+    const tokenData = await nestedToken.getData();
+    for (let i = 0; i < properties.length; i++) {
+      expect(properties[i].value).to.be.equal('Serotonin increase');
+      expect(tokenData!.properties[i].value).to.be.equal('Serotonin increase');
+    }
+    expect(await targetToken.getProperties()).to.be.empty;
   });
 
-  it('Deletes properties of a nested token according to permissions', async () => {
-    await usingApi(async api => {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await setCollectionPermissionsExpectSuccess(alice, collection, {nesting: {tokenOwner: true}});
-      const token = await createItemExpectSuccess(alice, collection, 'NFT');
-      const nestedToken = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: tokenIdToAddress(collection, token)});
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-      await transferExpectSuccess(collection, token, alice, charlie);
+  itSub('Changes properties of a nested token according to permissions', async ({helper}) =>  {
+    const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const collectionB = await helper.nft.mintCollection(alice);
+    const targetToken = await collectionA.mintToken(alice);
+    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
 
-      const propertyKeys: string[] = [];
-      let i = 0;
+    await collectionB.addAdmin(alice, {Substrate: bob.address});
+    await targetToken.transfer(alice, {Substrate: charlie.address});
 
-      for (const permission of permissions) {
-        if (!permission.permission.mutable) continue;
-        
-        for (const signer of permission.signers) {
-          const key = i + '_' + signer.address;
-          propertyKeys.push(key);
+    const propertyKeys: string[] = [];
+    let i = 0;
+    for (const permission of permissions) {
+      i++;
+      if (!permission.permission.mutable) continue;
+      
+      let j = 0;
+      for (const signer of permission.signers) {
+        j++;
+        const key = i + '_' + signer.address;
+        propertyKeys.push(key);
 
-          await expect(executeTransaction(
-            api, 
-            alice, 
-            api.tx.unique.setTokenPropertyPermissions(collection, [{key: key, permission: permission.permission}]), 
-          ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
+        await expect(
+          nestedToken.collection.setTokenPropertyPermissions(alice, [{key: key, permission: permission.permission}]), 
+          `on setting permission #${i} by alice`,
+        ).to.be.fulfilled;
 
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.setTokenProperties(collection, nestedToken, [{key: key, value: 'Serotonin increase'}]), 
-          ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
+        await expect(
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          `on adding property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
 
-          await expect(executeTransaction(
-            api, 
-            signer, 
-            api.tx.unique.deleteTokenProperties(collection, nestedToken, [key]), 
-          ), `on deleting property ${i} by ${signer.address}`).to.not.be.rejected;
-        }
-        
-        i++;
+        await expect(
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin stable'}]), 
+          `on changing property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
       }
+    }
 
-      const properties = (await api.rpc.unique.tokenProperties(collection, nestedToken, propertyKeys)).toJSON() as any[];
-      expect(properties).to.be.empty;
-      const tokensData = (await api.rpc.unique.tokenData(collection, nestedToken, propertyKeys)).toJSON().properties as any[];
-      expect(tokensData).to.be.empty;
-      expect((await api.query.nonfungible.tokenProperties(collection, nestedToken)).toJSON().consumedSpace).to.be.equal(0);
-    });
+    const properties = await nestedToken.getProperties(propertyKeys);
+    const tokenData = await nestedToken.getData();
+    for (let i = 0; i < properties.length; i++) {
+      expect(properties[i].value).to.be.equal('Serotonin stable');
+      expect(tokenData!.properties[i].value).to.be.equal('Serotonin stable');
+    }
+    expect(await targetToken.getProperties()).to.be.empty;
+  });
+
+  itSub('Deletes properties of a nested token according to permissions', async ({helper}) =>  {
+    const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const collectionB = await helper.nft.mintCollection(alice);
+    const targetToken = await collectionA.mintToken(alice);
+    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
+
+    await collectionB.addAdmin(alice, {Substrate: bob.address});
+    await targetToken.transfer(alice, {Substrate: charlie.address});
+
+    const propertyKeys: string[] = [];
+    let i = 0;
+    for (const permission of permissions) {
+      i++;
+      if (!permission.permission.mutable) continue;
+      
+      let j = 0;
+      for (const signer of permission.signers) {
+        j++;
+        const key = i + '_' + signer.address;
+        propertyKeys.push(key);
+
+        await expect(
+          nestedToken.collection.setTokenPropertyPermissions(alice, [{key: key, permission: permission.permission}]), 
+          `on setting permission #${i} by alice`,
+        ).to.be.fulfilled;
+
+        await expect(
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          `on adding property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
+
+        await expect(
+          nestedToken.deleteProperties(signer, [key]), 
+          `on deleting property #${i} by signer #${j}`,
+        ).to.be.fulfilled;
+      }
+    }
+
+    expect(await nestedToken.getProperties(propertyKeys)).to.be.empty;
+    expect((await nestedToken.getData())!.properties).to.be.empty;
+    expect(await targetToken.getProperties()).to.be.empty;
   });
 });
 
 describe('Negative Integration Test: Token Properties', () => {
-  let collection: number;
-  let token: number;
-  let originalSpace: number;
+  let alice: IKeyringPair; // collection owner
+  let bob: IKeyringPair; // collection admin
+  let charlie: IKeyringPair; // token owner
+
   let constitution: {permission: any, signers: IKeyringPair[], sinner: IKeyringPair}[];
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
-      const dave = privateKeyWrapper('//Dave');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      let dave: IKeyringPair;
+      [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
 
+      // todo:playgrounds probably separate these tests later
       constitution = [
         {permission: {mutable: true, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},
         {permission: {mutable: false, collectionAdmin: true}, signers: [alice, bob], sinner: charlie},
@@ -1010,278 +794,255 @@ describe('Negative Integration Test: Token Properties', () => {
     });
   });
 
-  async function prepare(mode: CollectionMode, pieces: number) {
-    collection = await createCollectionExpectSuccess({mode: mode});
-    token = await createItemExpectSuccess(alice, collection, mode.type);
-    await addCollectionAdminExpectSuccess(alice, collection, bob.address);
-    await transferExpectSuccess(collection, token, alice, charlie, pieces, mode.type);
-        
-    await usingApi(async api => {
-      let i = 0;
-      for (const passage of constitution) {
-        const signer = passage.signers[0];
-        
-        await expect(executeTransaction(
-          api, 
-          alice, 
-          api.tx.unique.setTokenPropertyPermissions(collection, [{key: `${i}`, permission: passage.permission}]), 
-        ), `on setting permission ${i} by ${signer.address}`).to.not.be.rejected;
-  
-        await expect(executeTransaction(
-          api, 
-          signer, 
-          api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin increase'}]), 
-        ), `on adding property ${i} by ${signer.address}`).to.not.be.rejected;
-  
-        i++;
-      }
-  
-      originalSpace = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON().consumedSpace as number;
-    }); 
+  async function getConsumedSpace(api: any, collectionId: number, tokenId: number, mode: 'NFT' | 'RFT'): Promise<number> {
+    return (await (mode == 'NFT' ? api.query.nonfungible : api.query.refungible).tokenProperties(collectionId, tokenId)).toJSON().consumedSpace;
   }
 
-  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(mode: CollectionMode, pieces: number) {
-    await prepare(mode, pieces);
-  
-    await usingApi(async api => {
-      let i = -1;
-      for (const forbiddance of constitution) {
-        i++;
-        if (!forbiddance.permission.mutable) continue;
-  
-        await expect(executeTransaction(
-          api, 
-          forbiddance.sinner, 
-          api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin down'}]), 
-        ), `on failing to change property ${i} by ${forbiddance.sinner.address}`).to.be.rejectedWith(/common\.NoPermission/);
-  
-        await expect(executeTransaction(
-          api, 
-          forbiddance.sinner, 
-          api.tx.unique.deleteTokenProperties(collection, token, [`${i}`]), 
-        ), `on failing to delete property ${i} by ${forbiddance.sinner.address}`).to.be.rejectedWith(/common\.NoPermission/);
-      }
-  
-      const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
-      expect(properties.consumedSpace).to.be.equal(originalSpace);
-    });
+  async function prepare(token: UniqueNFToken | UniqueRFToken, pieces: bigint): Promise<number> {
+    await token.collection.addAdmin(alice, {Substrate: bob.address});
+    await token.transfer(alice, {Substrate: charlie.address}, pieces);
+
+    let i = 0;
+    for (const passage of constitution) {
+      i++;
+      const signer = passage.signers[0];
+      
+      await expect(
+        token.collection.setTokenPropertyPermissions(alice, [{key: `${i}`, permission: passage.permission}]), 
+        `on setting permission ${i} by alice`,
+      ).to.be.fulfilled;
+
+      await expect(
+        token.setProperties(signer, [{key: `${i}`, value: 'Serotonin increase'}]), 
+        `on adding property ${i} by ${signer.address}`,
+      ).to.be.fulfilled;
+    }
+
+    const originalSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    return originalSpace;
   }
-  it('Forbids changing/deleting properties of a token if the user is outside of permissions (NFT)', async () => {
-    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions({type: 'NFT'}, 1);
-  });
-  it('Forbids changing/deleting properties of a token if the user is outside of permissions (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions({type: 'ReFungible'}, 100);
-  });
+  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(token, pieces);
 
-  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(mode: CollectionMode, pieces: number) {
-    await prepare(mode, pieces);
-    
-    await usingApi(async api => {
-      let i = -1;
-      for (const permission of constitution) {
-        i++;
-        if (permission.permission.mutable) continue;
-  
-        await expect(executeTransaction(
-          api, 
-          permission.signers[0], 
-          api.tx.unique.setTokenProperties(collection, token, [{key: `${i}`, value: 'Serotonin down'}]), 
-        ), `on failing to change property ${i} by ${permission.signers[0].address}`).to.be.rejectedWith(/common\.NoPermission/);
-  
-        await expect(executeTransaction(
-          api, 
-          permission.signers[0], 
-          api.tx.unique.deleteTokenProperties(collection, token, [i.toString()]), 
-        ), `on failing to delete property ${i} by ${permission.signers[0].address}`).to.be.rejectedWith(/common\.NoPermission/);
-      }
-  
-      const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
-      expect(properties.consumedSpace).to.be.equal(originalSpace);
-    });  
+    let i = 0;
+    for (const forbiddance of constitution) {
+      i++;
+      if (!forbiddance.permission.mutable) continue;
+
+      await expect(
+        token.setProperties(forbiddance.sinner, [{key: `${i}`, value: 'Serotonin down'}]), 
+        `on failing to change property ${i} by the malefactor`,
+      ).to.be.rejectedWith(/common\.NoPermission/);
+
+      await expect(
+        token.deleteProperties(forbiddance.sinner, [`${i}`]), 
+        `on failing to delete property ${i} by the malefactor`,
+      ).to.be.rejectedWith(/common\.NoPermission/);
+    }
+
+    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    expect(consumedSpace).to.be.equal(originalSpace);
   }
-  it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async () => {
-    await testForbidsChangingDeletingPropertiesIfPropertyImmutable({type: 'NFT'}, 1);
-  });
-  it('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testForbidsChangingDeletingPropertiesIfPropertyImmutable({type: 'ReFungible'}, 100);
+  itSub('Forbids changing/deleting properties of a token if the user is outside of permissions (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token, 1n);
   });
 
-  async function testForbidsAddingPropertiesIfPropertyNotDeclared(mode: CollectionMode, pieces: number) {
-    await prepare(mode, pieces);
+  itSub.ifWithPallets('Forbids changing/deleting properties of a token if the user is outside of permissions (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token, 100n);
+  });
 
-    await usingApi(async api => {
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [{key: 'non-existent', value: 'I exist!'}]), 
-      ), 'on failing to add a previously non-existent property').to.be.rejectedWith(/common\.NoPermission/);
-        
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'now-existent', permission: {}}]), 
-      ), 'on setting a new non-permitted property').to.not.be.rejected;
+  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(token, pieces);
+
+    let i = 0;
+    for (const permission of constitution) {
+      i++;
+      if (permission.permission.mutable) continue;
+
+      await expect(
+        token.setProperties(permission.signers[0], [{key: `${i}`, value: 'Serotonin down'}]), 
+        `on failing to change property ${i} by signer #0`,
+      ).to.be.rejectedWith(/common\.NoPermission/);
+
+      await expect(
+        token.deleteProperties(permission.signers[0], [i.toString()]), 
+        `on failing to delete property ${i} by signer #0`,
+      ).to.be.rejectedWith(/common\.NoPermission/);
+    }
   
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [{key: 'now-existent', value: 'I exist!'}]), 
-      ), 'on failing to add a property forbidden by the \'None\' permission').to.be.rejectedWith(/common\.NoPermission/);
-  
-      expect((await api.rpc.unique.tokenProperties(collection, token, ['non-existent', 'now-existent'])).toJSON()).to.be.empty;
-      const properties = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
-      expect(properties.consumedSpace).to.be.equal(originalSpace);
-    });
+    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    expect(consumedSpace).to.be.equal(originalSpace);
   }
-  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async () => {
-    await testForbidsAddingPropertiesIfPropertyNotDeclared({type: 'NFT'}, 1);
-  });
-  it('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testForbidsAddingPropertiesIfPropertyNotDeclared({type: 'ReFungible'}, 100);
+  itSub('Forbids changing/deleting properties of a token if the property is permanent (immutable) (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(token, 1n);
   });
 
-  async function testForbidsAddingTooManyProperties(mode: CollectionMode, pieces: number) {
-    await prepare(mode, pieces);
+  itSub.ifWithPallets('Forbids changing/deleting properties of a token if the property is permanent (immutable) (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testForbidsChangingDeletingPropertiesIfPropertyImmutable(token, 100n);
+  });
 
-    await usingApi(async api => {
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [
-          {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}}, 
-          {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
-        ]), 
-      ), 'on setting a new non-permitted property').to.not.be.rejected;
-  
-      // Mute the general tx parsing error
-      {
-        console.error = () => {};
-        await expect(executeTransaction(
-          api, 
-          alice, 
-          api.tx.unique.setCollectionProperties(collection, [{key: 'a_holy_book', value: 'word '.repeat(6554)}]), 
-        )).to.be.rejected;
-      }
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [
-          {key: 'a_holy_book', value: 'word '.repeat(3277)}, 
-          {key: 'young_years', value: 'neverending'.repeat(1490)},
-        ]), 
-      )).to.be.rejectedWith(/common\.NoSpaceForProperty/);
-  
-      expect((await api.rpc.unique.tokenProperties(collection, token, ['a_holy_book', 'young_years'])).toJSON()).to.be.empty;
-      const propertiesMap = (await api.query.nonfungible.tokenProperties(collection, token)).toJSON();
-      expect(propertiesMap.consumedSpace).to.be.equal(originalSpace);
-    });
+  async function testForbidsAddingPropertiesIfPropertyNotDeclared(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(token, pieces);
+
+    await expect(
+      token.setProperties(alice, [{key: 'non-existent', value: 'I exist!'}]), 
+      'on failing to add a previously non-existent property',
+    ).to.be.rejectedWith(/common\.NoPermission/);
+      
+    await expect(
+      token.collection.setTokenPropertyPermissions(alice, [{key: 'now-existent', permission: {}}]), 
+      'on setting a new non-permitted property',
+    ).to.be.fulfilled;
+
+    await expect(
+      token.setProperties(alice, [{key: 'now-existent', value: 'I exist!'}]), 
+      'on failing to add a property forbidden by the \'None\' permission',
+    ).to.be.rejectedWith(/common\.NoPermission/);
+
+    expect(await token.getProperties(['non-existent', 'now-existent'])).to.be.empty;
+      
+    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    expect(consumedSpace).to.be.equal(originalSpace);
   }
-  it('Forbids adding too many properties to a token (NFT)', async () => {
-    await testForbidsAddingTooManyProperties({type: 'NFT'}, 1);
-  });
-  it('Forbids adding too many properties to a token (ReFungible)', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
 
-    await testForbidsAddingTooManyProperties({type: 'ReFungible'}, 100);
+  itSub('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testForbidsAddingPropertiesIfPropertyNotDeclared(token, 1n);
+  });
+
+  itSub.ifWithPallets('Forbids adding properties to a token if the property is not declared / forbidden with the \'None\' permission (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testForbidsAddingPropertiesIfPropertyNotDeclared(token, 100n);
+  });
+
+  async function testForbidsAddingTooManyProperties(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+    const originalSpace = await prepare(token, pieces);
+
+    await expect(
+      token.collection.setTokenPropertyPermissions(alice, [
+        {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}}, 
+        {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
+      ]), 
+      'on setting new permissions for properties',
+    ).to.be.fulfilled;
+
+    // Mute the general tx parsing error
+    {
+      console.error = () => {};
+      await expect(token.setProperties(alice, [{key: 'a_holy_book', value: 'word '.repeat(6554)}]))
+        .to.be.rejected;
+    }
+
+    await expect(token.setProperties(alice, [
+      {key: 'a_holy_book', value: 'word '.repeat(3277)}, 
+      {key: 'young_years', value: 'neverending'.repeat(1490)},
+    ])).to.be.rejectedWith(/common\.NoSpaceForProperty/);
+  
+    expect(await token.getProperties(['a_holy_book', 'young_years'])).to.be.empty;
+    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    expect(consumedSpace).to.be.equal(originalSpace);
+  }
+
+  itSub('Forbids adding too many properties to a token (NFT)', async ({helper}) =>  {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await testForbidsAddingTooManyProperties(token, 1n);
+  });
+
+  itSub.ifWithPallets('Forbids adding too many properties to a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    await testForbidsAddingTooManyProperties(token, 100n);
   });
 });
 
 describe('ReFungible token properties permissions tests', () => {
-  let collection: number;
-  let token: number;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+      const donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
-  beforeEach(async () => {
-    await usingApi(async api => {
-      collection = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      token = await createItemExpectSuccess(alice, collection, 'ReFungible');
-      await addCollectionAdminExpectSuccess(alice, collection, bob.address);
+  async function prepare(helper: UniqueHelper): Promise<UniqueRFToken> {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
+    
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await collection.setTokenPropertyPermissions(alice, [{key: 'fractals', permission: {mutable: true, tokenOwner: true}}]);
+    
+    return token;
+  }
 
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'key', permission: {mutable:true, tokenOwner: true}}]), 
-      )).to.not.be.rejected;
-    });
+  itSub('Forbids adding token property with tokenOwner==true when signer doesn\'t have all pieces', async ({helper}) =>  {
+    const token = await prepare(helper);
+
+    await token.transfer(alice, {Substrate: charlie.address}, 33n);
+
+    await expect(token.setProperties(alice, [
+      {key: 'fractals', value: 'multiverse'}, 
+    ])).to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  it('Forbids add token property with tokenOwher==true but signer have\'t all pieces', async () => {
-    await usingApi(async api => {
-      await transferExpectSuccess(collection, token, alice, charlie, 33, 'ReFungible');
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [
-          {key: 'key', value: 'word'}, 
-        ]), 
-      )).to.be.rejectedWith(/common\.NoPermission/);
-    });
+  itSub('Forbids mutating token property with tokenOwher==true when signer doesn\'t have all pieces', async ({helper}) =>  {
+    const token = await prepare(helper);
+
+    await expect(token.collection.setTokenPropertyPermissions(alice, [{key: 'fractals', permission: {mutable:true, tokenOwner: true}}]))
+      .to.be.fulfilled;
+
+    await expect(token.setProperties(alice, [
+      {key: 'fractals', value: 'multiverse'}, 
+    ])).to.be.fulfilled;
+
+    await token.transfer(alice, {Substrate: charlie.address}, 33n);
+
+    await expect(token.setProperties(alice, [
+      {key: 'fractals', value: 'want to rule the world'}, 
+    ])).to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  it('Forbids mutate token property with tokenOwher==true but signer have\'t all pieces', async () => {
-    await usingApi(async api => {
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collection, [{key: 'key', permission: {mutable:true, tokenOwner: true}}]), 
-      )).to.not.be.rejected;
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [
-          {key: 'key', value: 'word'}, 
-        ]), 
-      )).to.be.not.rejected;
+  itSub('Forbids deleting token property with tokenOwner==true when signer doesn\'t have all pieces', async ({helper}) =>  {
+    const token = await prepare(helper);
 
-      await transferExpectSuccess(collection, token, alice, charlie, 33, 'ReFungible');
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [
-          {key: 'key', value: 'bad word'}, 
-        ]), 
-      )).to.be.rejectedWith(/common\.NoPermission/);
-    });
+    await expect(token.setProperties(alice, [
+      {key: 'fractals', value: 'one headline - why believe it'}, 
+    ])).to.be.fulfilled;
+
+    await token.transfer(alice, {Substrate: charlie.address}, 33n);
+
+    await expect(token.deleteProperties(alice, ['fractals'])).
+      to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  it('Forbids delete token property with tokenOwher==true but signer have\'t all pieces', async () => {
-    await usingApi(async api => {
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.setTokenProperties(collection, token, [
-          {key: 'key', value: 'word'}, 
-        ]), 
-      )).to.be.not.rejected;
+  itSub('Allows token property mutation with collectionOwner==true when admin doesn\'t have all pieces', async ({helper}) =>  {
+    const token = await prepare(helper);
 
-      await transferExpectSuccess(collection, token, alice, charlie, 33, 'ReFungible');
-  
-      await expect(executeTransaction(
-        api, 
-        alice, 
-        api.tx.unique.deleteTokenProperties(collection, token, [
-          'key',
-        ]), 
-      )).to.be.rejectedWith(/common\.NoPermission/);
-    });
+    await token.transfer(alice, {Substrate: charlie.address}, 33n);
+
+    await expect(token.collection.setTokenPropertyPermissions(alice, [{key: 'fractals', permission: {mutable:true, collectionAdmin: true}}]))
+      .to.be.fulfilled;
+
+    await expect(token.setProperties(alice, [
+      {key: 'fractals', value: 'multiverse'}, 
+    ])).to.be.fulfilled;
   });
 });

@@ -9,7 +9,6 @@ import config from '../../config';
 import '../../interfaces/augment-api-events';
 import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 
-
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
 

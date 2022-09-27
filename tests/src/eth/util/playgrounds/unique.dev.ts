@@ -240,7 +240,7 @@ class EthAddressGroup extends EthGroupBase {
   }
 
   fromTokenId(collectionId: number, tokenId: number): string  {
-    return this.helper.util.getNestingTokenAddress(collectionId, tokenId);
+    return this.helper.util.getTokenAddress({collectionId, tokenId});
   }
 
   normalizeAddress(address: string): string {

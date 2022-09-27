@@ -12,7 +12,7 @@ export {EthUniqueHelper} from './unique.dev';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import { requirePalletsOrSkip } from '../../../util/playgrounds';
+import {requirePalletsOrSkip} from '../../../util/playgrounds';
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
