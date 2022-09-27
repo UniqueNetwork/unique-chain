@@ -116,13 +116,17 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
-  rftTokenByAddress(address: string, caller?: string): Contract {
+  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string): Contract {
+    return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller);
+  }
+
+  rftToken(address: string, caller?: string): Contract {
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
-  rftToken(collectionId: number, tokenId: number, caller?: string): Contract {
-    return this.rftTokenByAddress(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
+  rftTokenById(collectionId: number, tokenId: number, caller?: string): Contract {
+    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
   }
 }
 
@@ -164,6 +168,17 @@ class EthGroup extends EthGroupBase {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
         
     const result = await collectionHelper.methods.createNonfungibleCollection(name, description, tokenPrefix).send();
+
+    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
+
+    return {collectionId, collectionAddress};
+  }
+
+  async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+        
+    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send();
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
@@ -214,6 +229,16 @@ class EthGroup extends EthGroupBase {
       }
     }
   `);
+  }
+
+  async recordCallFee(user: string, call: () => Promise<any>): Promise<bigint> {
+    const before = await this.helper.balance.getEthereum(user);
+    await call();
+    // In dev mode, the transaction might not finish processing in time
+    await this.helper.wait.newBlocks(1);
+    const after = await this.helper.balance.getEthereum(user);
+
+    return before - after;
   }
 }  
   
