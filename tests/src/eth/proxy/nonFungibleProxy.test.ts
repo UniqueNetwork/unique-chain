@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, createItemExpectSuccess} from '../../util/helpers';
+import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../../util/helpers';
 import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents} from '../util/helpers';
 import nonFungibleAbi from '../nonFungibleAbi.json';
 import {expect} from 'chai';
@@ -93,7 +93,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const collectionHelper = evmCollectionHelpers(web3, owner);
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'A', 'A')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const receiver = createEthAccount(web3);

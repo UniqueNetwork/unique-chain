@@ -17,6 +17,7 @@
 import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
+import {UNIQUE} from '../util/helpers';
 
 describe('NFT: Information getting', () => {
   let donor: IKeyringPair;
@@ -83,7 +84,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const receiver = helper.eth.createAccount();
 
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send();
+    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * UNIQUE)});
     const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     

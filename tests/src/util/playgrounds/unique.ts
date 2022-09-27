@@ -2027,6 +2027,9 @@ class ChainGroup extends HelperGroup {
 
 
 class BalanceGroup extends HelperGroup {
+  getCollectionCreationPrice(): bigint {
+    return 2n * this.helper.balance.getOneTokenNominal();
+  }
   /**
    * Representation of the native token in the smallest unit - one OPAL (OPL), QUARTZ (QTZ), or UNIQUE (UNQ).
    * @example getOneTokenNominal()

@@ -17,6 +17,7 @@
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {UNIQUE} from '../util/helpers';
 
 describe('Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
@@ -64,7 +65,7 @@ describe('Create NFT collection from EVM', () => {
 
     await collectionHelpers.methods
       .createNonfungibleCollection('A', 'A', 'A')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
@@ -164,7 +165,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
       await expect(collectionHelper.methods
         .createNonfungibleCollection(collectionName, description, tokenPrefix)
-        .call()).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+        .call({value: Number(2n * UNIQUE)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
       
     }
     {
@@ -174,7 +175,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const tokenPrefix = 'A';
       await expect(collectionHelper.methods
         .createNonfungibleCollection(collectionName, description, tokenPrefix)
-        .call()).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+        .call({value: Number(2n * UNIQUE)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
     {
       const MAX_TOKEN_PREFIX_LENGTH = 16;
@@ -183,16 +184,16 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
       await expect(collectionHelper.methods
         .createNonfungibleCollection(collectionName, description, tokenPrefix)
-        .call()).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+        .call({value: Number(2n * UNIQUE)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
   
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
-    const owner = helper.eth.createAccount();
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     await expect(collectionHelper.methods
       .createNonfungibleCollection('Peasantry', 'absolutely anything', 'CVE')
-      .call()).to.be.rejectedWith('NotSufficientFounds');
+      .call({value: Number(1n * UNIQUE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   itEth('(!negative test!) Check owner', async ({helper}) => {
