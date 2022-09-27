@@ -310,11 +310,8 @@ pub mod module {
 				..Default::default()
 			};
 			let owner = T::CrossAccountId::from_sub(owner);
-			let bounded_collection_id = <PalletFungible<T>>::init_foreign_collection(
-				owner.clone(),
-				owner,
-				data,
-			)?;
+			let bounded_collection_id =
+				<PalletFungible<T>>::init_foreign_collection(owner.clone(), owner, data)?;
 			let foreign_asset_id =
 				Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
 
