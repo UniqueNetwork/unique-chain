@@ -250,8 +250,12 @@ pub mod pallet {
 				..Default::default()
 			};
 
-			let collection_id_res =
-				<PalletNft<T>>::init_collection(cross_sender.clone(), cross_sender.clone(), data, true);
+			let collection_id_res = <PalletNft<T>>::init_collection(
+				cross_sender.clone(),
+				cross_sender.clone(),
+				data,
+				true,
+			);
 
 			if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {
 				return Err(<Error<T>>::NoAvailableBaseId.into());
