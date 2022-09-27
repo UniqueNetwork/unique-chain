@@ -191,7 +191,7 @@ describe('EVM transaction fees', () => {
 
       contract ProxyContract {
         bool value = false;
-        address flipper;
+        address innerContract;
 
         event CollectionCreated(address collection);
         event TokenMinted(uint256 tokenId);
@@ -199,12 +199,12 @@ describe('EVM transaction fees', () => {
         receive() external payable {}
 
         constructor() {
-          flipper = address(new Flipper());
+          innerContract = address(new InnerContract());
         }
 
         function flip() public {
           value = !value;
-          Flipper(flipper).flip();
+          InnerContract(innerContract).flip();
         }
 
         function createNonfungibleCollection() external payable {
@@ -221,11 +221,11 @@ describe('EVM transaction fees', () => {
         }
 
         function getValue() external view returns (bool) {
-          return Flipper(flipper).getValue();
+          return InnerContract(innerContract).getValue();
         }
       }
 
-      contract Flipper {
+      contract InnerContract {
         bool value = false;
         function flip() external {
           value = !value;
