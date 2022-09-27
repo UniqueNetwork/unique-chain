@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, ITokenAddress, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks, ICollectionBase, ICollectionNFT, ICollectionRFT, ITokenBase, ITokenNonfungible, ITokenRefungible, ICollectionFT} from './types';
+import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 export const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
   const address = {} as ICrossAccountId;
@@ -55,15 +55,15 @@ class UniqueUtil {
     RPC: 'rpc',
   };
 
-  static getTokenAccount(token: ITokenAddress): ICrossAccountId {
+  static getTokenAccount(token: IToken): ICrossAccountId {
     return {Ethereum: this.getTokenAddress(token)};
   }
 
-  static getTokenAccountInLowerCase(token: ITokenAddress): ICrossAccountId {
+  static getTokenAccountInLowerCase(token: IToken): ICrossAccountId {
     return {Ethereum: this.getTokenAddress(token).toLowerCase()};
   }
 
-  static getTokenAddress(token: ITokenAddress): string {
+  static getTokenAddress(token: IToken): string {
     return nesting.tokenIdToAddress(token.collectionId, token.tokenId);
   }
 
@@ -1218,7 +1218,7 @@ class NFTnRFT extends CollectionGroup {
    * @example mintCollection(aliceKeyring, {name: 'New', description: "New collection", tokenPrefix: "NEW"}, "NFT")
    * @returns object of the created collection
    */
-  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT'): Promise<UniqueCollectionBase> {
+  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT'): Promise<UniqueBaseCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
     collectionOptions.mode = (mode === 'NFT') ? {nft: null} : {refungible: null};
     for (const key of ['name', 'description', 'tokenPrefix']) {
@@ -1260,8 +1260,8 @@ class NFTGroup extends NFTnRFT {
    * @example getTokenObject(10, 5);
    * @returns instance of UniqueNFTToken
    */
-  getTokenObject(collectionId: number, tokenId: number): UniqueNFTToken {
-    return new UniqueNFTToken(tokenId, this.getCollectionObject(collectionId));
+  getTokenObject(collectionId: number, tokenId: number): UniqueNFToken {
+    return new UniqueNFToken(tokenId, this.getCollectionObject(collectionId));
   }
 
   /**
@@ -1352,7 +1352,7 @@ class NFTGroup extends NFTnRFT {
    * @example getTokenChildren(10, 5);
    * @returns tokens whose depth of nesting is <= 5
    */
-  async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<ITokenAddress[]> {
+  async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<IToken[]> {
     let children;
     if(typeof blockHashAt === 'undefined') {
       children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId]);
@@ -1373,7 +1373,7 @@ class NFTGroup extends NFTnRFT {
    * @example nestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async nestToken(signer: TSigner, tokenObj: ITokenAddress, rootTokenObj: ITokenAddress): Promise<boolean> {
+  async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken): Promise<boolean> {
     const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferToken(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress);
     if(!result) {
@@ -1391,7 +1391,7 @@ class NFTGroup extends NFTnRFT {
    * @example unnestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4}, {Substrate: "5DyN4Y92vZCjv38fg..."});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async unnestToken(signer: TSigner, tokenObj: ITokenAddress, rootTokenObj: ITokenAddress, toAddressObj: ICrossAccountId): Promise<boolean> {
+  async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId): Promise<boolean> {
     const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferTokenFrom(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, toAddressObj);
     if(!result) {
@@ -1422,7 +1422,7 @@ class NFTGroup extends NFTnRFT {
    * @param data token data
    * @returns created token object
    */
-  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }): Promise<UniqueNFTToken> {
+  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }): Promise<UniqueNFToken> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
@@ -1453,14 +1453,14 @@ class NFTGroup extends NFTnRFT {
    * }]);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[]): Promise<UniqueNFTToken[]> {
+  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[]): Promise<UniqueNFToken[]> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItemsEx', [collectionId, {NFT: tokens}],
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: ITokenAddress) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1481,7 +1481,7 @@ class NFTGroup extends NFTnRFT {
    * }]);
    * @returns array of newly created tokens
    */
-  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {properties?: IProperty[]}[]): Promise<UniqueNFTToken[]> {
+  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {properties?: IProperty[]}[]): Promise<UniqueNFToken[]> {
     const rawTokens = [];
     for (const token of tokens) {
       const raw = {NFT: {properties: token.properties}};
@@ -1493,7 +1493,7 @@ class NFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: ITokenAddress) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1530,8 +1530,8 @@ class RFTGroup extends NFTnRFT {
    * @example getTokenObject(10, 5);
    * @returns instance of UniqueNFTToken
    */
-  getTokenObject(collectionId: number, tokenId: number): UniqueRFTToken {
-    return new UniqueRFTToken(tokenId, this.getCollectionObject(collectionId));
+  getTokenObject(collectionId: number, tokenId: number): UniqueRFToken {
+    return new UniqueRFToken(tokenId, this.getCollectionObject(collectionId));
   }
 
   /**
@@ -1609,7 +1609,7 @@ class RFTGroup extends NFTnRFT {
    * @example mintToken(aliceKeyring, {collectionId: 10, owner: {Substrate: '5GHoZe9c73RYbVzq...'}, pieces: 10000n});
    * @returns created token object
    */
-  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }): Promise<UniqueRFTToken> {
+  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }): Promise<UniqueRFToken> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
@@ -1626,7 +1626,7 @@ class RFTGroup extends NFTnRFT {
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
   }
 
-  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFTToken[]> {
+  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFToken[]> {
     throw Error('Not implemented');
     const creationResult = await this.helper.executeExtrinsic(
       signer,
@@ -1634,7 +1634,7 @@ class RFTGroup extends NFTnRFT {
       true, // `Unable to mint RFT tokens for ${label}`,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: ITokenAddress) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1646,7 +1646,7 @@ class RFTGroup extends NFTnRFT {
    * @example mintMultipleTokensWithOneOwner(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, [{pieces: 100000n, properties: [{key: "gender", value: "male"}]}]);
    * @returns array of newly created RFT tokens
    */
-  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFTToken[]> {
+  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFToken[]> {
     const rawTokens = [];
     for (const token of tokens) {
       const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
@@ -1658,7 +1658,7 @@ class RFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: ITokenAddress) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1985,7 +1985,7 @@ class ChainGroup extends HelperGroup {
 
 class BalanceGroup extends HelperGroup {
   /**
-   * Representation of the native token in the smallest unit
+   * Representation of the native token in the smallest unit - one OPAL (OPL), QUARTZ (QTZ), or UNIQUE (UNQ).
    * @example getOneTokenNominal()
    * @returns ```BigInt``` representation of the native token in the smallest unit, e.g. ```1_000_000_000_000_000_000n``` for QTZ.
    */
@@ -2223,7 +2223,7 @@ export class UniqueHelper extends ChainHelperBase {
 }
 
 
-class UniqueCollectionBase implements ICollectionBase {
+export class UniqueBaseCollection {
   helper: UniqueHelper;
   collectionId: number;
 
@@ -2326,9 +2326,9 @@ class UniqueCollectionBase implements ICollectionBase {
 }
 
 
-class UniqueNFTCollection extends UniqueCollectionBase implements ICollectionNFT {
+export class UniqueNFTCollection extends UniqueBaseCollection {
   getTokenObject(tokenId: number) {
-    return new UniqueNFTToken(tokenId, this);
+    return new UniqueNFToken(tokenId, this);
   }
 
   async getTokensByAddress(addressObj: ICrossAccountId) {
@@ -2403,19 +2403,19 @@ class UniqueNFTCollection extends UniqueCollectionBase implements ICollectionNFT
     return await this.helper.nft.setTokenPropertyPermissions(signer, this.collectionId, permissions);
   }
 
-  async nestToken(signer: TSigner, tokenId: number, toTokenObj: ITokenAddress) {
+  async nestToken(signer: TSigner, tokenId: number, toTokenObj: IToken) {
     return await this.helper.nft.nestToken(signer, {collectionId: this.collectionId, tokenId}, toTokenObj);
   }
 
-  async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: ITokenAddress, toAddressObj: ICrossAccountId) {
+  async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
     return await this.helper.nft.unnestToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj);
   }
 }
 
 
-class UniqueRFTCollection extends UniqueCollectionBase implements ICollectionRFT {
+export class UniqueRFTCollection extends UniqueBaseCollection {
   getTokenObject(tokenId: number) {
-    return new UniqueRFTToken(tokenId, this);
+    return new UniqueRFToken(tokenId, this);
   }
 
   async getToken(tokenId: number, blockHashAt?: string) {
@@ -2496,7 +2496,7 @@ class UniqueRFTCollection extends UniqueCollectionBase implements ICollectionRFT
 }
 
 
-class UniqueFTCollection extends UniqueCollectionBase implements ICollectionFT {
+export class UniqueFTCollection extends UniqueBaseCollection {
   async getBalance(addressObj: ICrossAccountId) {
     return await this.helper.ft.getBalance(this.collectionId, addressObj);
   }
@@ -2543,7 +2543,7 @@ class UniqueFTCollection extends UniqueCollectionBase implements ICollectionFT {
 }
 
 
-class UniqueTokenBase implements ITokenBase {
+export class UniqueBaseToken {
   collection: UniqueNFTCollection | UniqueRFTCollection;
   collectionId: number;
   tokenId: number;
@@ -2580,7 +2580,7 @@ class UniqueTokenBase implements ITokenBase {
 }
 
 
-class UniqueNFTToken extends UniqueTokenBase implements ITokenNonfungible {
+export class UniqueNFToken extends UniqueBaseToken {
   collection: UniqueNFTCollection;
 
   constructor(tokenId: number, collection: UniqueNFTCollection) {
@@ -2604,11 +2604,11 @@ class UniqueNFTToken extends UniqueTokenBase implements ITokenNonfungible {
     return await this.collection.getTokenChildren(this.tokenId, blockHashAt);
   }
 
-  async nest(signer: TSigner, toTokenObj: ITokenAddress) {
+  async nest(signer: TSigner, toTokenObj: IToken) {
     return await this.collection.nestToken(signer, this.tokenId, toTokenObj);
   }
 
-  async unnest(signer: TSigner, fromTokenObj: ITokenAddress, toAddressObj: ICrossAccountId) {
+  async unnest(signer: TSigner, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
     return await this.collection.unnestToken(signer, this.tokenId, fromTokenObj, toAddressObj);
   }
 
@@ -2637,7 +2637,7 @@ class UniqueNFTToken extends UniqueTokenBase implements ITokenNonfungible {
   }
 }
 
-class UniqueRFTToken extends UniqueTokenBase implements ITokenRefungible {
+export class UniqueRFToken extends UniqueBaseToken {
   collection: UniqueRFTCollection;
 
   constructor(tokenId: number, collection: UniqueRFTCollection) {

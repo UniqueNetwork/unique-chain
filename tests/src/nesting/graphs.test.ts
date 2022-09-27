@@ -16,8 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, usingPlaygrounds} from '../util/playgrounds';
-import {ITokenNonfungible} from '../util/playgrounds/types';
-import {UniqueHelper} from '../util/playgrounds/unique';
+import {UniqueHelper, UniqueNFToken} from '../util/playgrounds/unique';
 
 /**
  * ```dot
@@ -26,7 +25,7 @@ import {UniqueHelper} from '../util/playgrounds/unique';
  * 8 -> 5
  * ```
  */
-async function buildComplexObjectGraph(helper: UniqueHelper, sender: IKeyringPair): Promise<ITokenNonfungible[]> {
+async function buildComplexObjectGraph(helper: UniqueHelper, sender: IKeyringPair): Promise<UniqueNFToken[]> {
   const collection = await helper.nft.mintCollection(sender, {permissions: {nesting: {tokenOwner: true}}});
   const tokens = await collection.mintMultipleTokens(sender, Array(8).fill({owner: {Substrate: sender.address}}));
 

@@ -16,8 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../util/playgrounds';
-import {ICollectionBase, ICollectionNFT, ITokenNonfungible, ICollectionRFT, ITokenRefungible} from '../util/playgrounds/types';
-import {UniqueHelper} from '../util/playgrounds/unique';
+import {UniqueHelper, UniqueBaseCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '../util/playgrounds/unique';
 
 // ---------- COLLECTION PROPERTIES
 
@@ -37,7 +36,7 @@ describe('Integration Test: Collection Properties', () => {
     expect(await collection.getProperties()).to.be.empty;
   });
 
-  async function testSetsPropertiesForCollection(collection: ICollectionBase) {
+  async function testSetsPropertiesForCollection(collection: UniqueBaseCollection) {
     // As owner
     await expect(collection.setProperties(alice, [{key: 'electron', value: 'come bond'}])).to.be.fulfilled;
 
@@ -61,7 +60,7 @@ describe('Integration Test: Collection Properties', () => {
     await testSetsPropertiesForCollection(await helper.rft.mintCollection(alice));
   });
 
-  async function testCheckValidNames(collection: ICollectionBase) {
+  async function testCheckValidNames(collection: UniqueBaseCollection) {
     // alpha symbols
     await expect(collection.setProperties(alice, [{key: 'answer'}])).to.be.fulfilled;
 
@@ -95,7 +94,7 @@ describe('Integration Test: Collection Properties', () => {
     await testCheckValidNames(await helper.rft.mintCollection(alice));
   });
 
-  async function testChangesProperties(collection: ICollectionBase) {
+  async function testChangesProperties(collection: UniqueBaseCollection) {
     await expect(collection.setProperties(alice, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: ''}])).to.be.fulfilled;
 
     // Mutate the properties
@@ -116,7 +115,7 @@ describe('Integration Test: Collection Properties', () => {
     await testChangesProperties(await helper.rft.mintCollection(alice));
   });
 
-  async function testDeleteProperties(collection: ICollectionBase) {
+  async function testDeleteProperties(collection: UniqueBaseCollection) {
     await expect(collection.setProperties(alice, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}])).to.be.fulfilled;
 
     await expect(collection.deleteProperties(alice, ['electron'])).to.be.fulfilled;
@@ -147,7 +146,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     });
   });
   
-  async function testFailsSetPropertiesIfNotOwnerOrAdmin(collection: ICollectionBase) {  
+  async function testFailsSetPropertiesIfNotOwnerOrAdmin(collection: UniqueBaseCollection) {  
     await expect(collection.setProperties(bob, [{key: 'electron', value: 'come bond'}, {key: 'black_hole', value: 'LIGO'}]))
       .to.be.rejectedWith(/common\.NoPermission/);
 
@@ -162,7 +161,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     await testFailsSetPropertiesIfNotOwnerOrAdmin(await helper.rft.mintCollection(alice));
   });
   
-  async function testFailsSetPropertiesThatExeedLimits(collection: ICollectionBase) {
+  async function testFailsSetPropertiesThatExeedLimits(collection: UniqueBaseCollection) {
     const spaceLimit = (await (collection.helper!.api! as any).query.common.collectionProperties(collection.collectionId)).spaceLimit.toNumber();
   
     // Mute the general tx parsing error, too many bytes to process
@@ -191,7 +190,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     await testFailsSetPropertiesThatExeedLimits(await helper.rft.mintCollection(alice));
   });
   
-  async function testFailsSetMorePropertiesThanAllowed(collection: ICollectionBase) {
+  async function testFailsSetMorePropertiesThanAllowed(collection: UniqueBaseCollection) {
     const propertiesToBeSet = [];
     for (let i = 0; i < 65; i++) {
       propertiesToBeSet.push({
@@ -214,7 +213,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     await testFailsSetMorePropertiesThanAllowed(await helper.rft.mintCollection(alice));
   });
   
-  async function testFailsSetPropertiesWithInvalidNames(collection: ICollectionBase) {
+  async function testFailsSetPropertiesWithInvalidNames(collection: UniqueBaseCollection) {
     const invalidProperties = [
       [{key: 'electron', value: 'negative'}, {key: 'string theory', value: 'understandable'}],
       [{key: 'Mr/Sandman', value: 'Bring me a gene'}],
@@ -281,7 +280,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
     expect(propertyRights).to.be.empty;
   });
   
-  async function testSetsAccessRightsToProperties(collection: ICollectionNFT | ICollectionRFT) {  
+  async function testSetsAccessRightsToProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {  
     await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: true}}]))
       .to.be.fulfilled;
 
@@ -305,7 +304,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
     await testSetsAccessRightsToProperties(await helper.rft.mintCollection(alice));
   });
   
-  async function testChangesAccessRightsToProperty(collection: ICollectionNFT | ICollectionRFT) {
+  async function testChangesAccessRightsToProperty(collection: UniqueNFTCollection | UniqueRFTCollection) {
     await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: true, collectionAdmin: true}}]))
       .to.be.fulfilled;
 
@@ -338,7 +337,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
     });
   });
 
-  async function testPreventsFromSettingAccessRightsNotAdminOrOwner(collection: ICollectionNFT | ICollectionRFT) {
+  async function testPreventsFromSettingAccessRightsNotAdminOrOwner(collection: UniqueNFTCollection | UniqueRFTCollection) {
     await expect(collection.setTokenPropertyPermissions(bob, [{key: 'skullduggery', permission: {mutable: true, tokenOwner: true}}]))
       .to.be.rejectedWith(/common\.NoPermission/);
 
@@ -354,7 +353,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
     await testPreventsFromSettingAccessRightsNotAdminOrOwner(await helper.rft.mintCollection(alice));
   });
 
-  async function testPreventFromAddingTooManyPossibleProperties(collection: ICollectionNFT | ICollectionRFT) {  
+  async function testPreventFromAddingTooManyPossibleProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {  
     const constitution = [];
     for (let i = 0; i < 65; i++) {
       constitution.push({
@@ -378,7 +377,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
     await testPreventFromAddingTooManyPossibleProperties(await helper.rft.mintCollection(alice));
   });
 
-  async function testPreventAccessRightsModifiedIfConstant(collection: ICollectionNFT | ICollectionRFT) {
+  async function testPreventAccessRightsModifiedIfConstant(collection: UniqueNFTCollection | UniqueRFTCollection) {
     await expect(collection.setTokenPropertyPermissions(alice, [{key: 'skullduggery', permission: {mutable: false, tokenOwner: true}}]))
       .to.be.fulfilled;
 
@@ -399,7 +398,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
     await testPreventAccessRightsModifiedIfConstant(await helper.rft.mintCollection(alice));
   });
 
-  async function testPreventsAddingPropertiesWithInvalidNames(collection: ICollectionNFT | ICollectionRFT) {
+  async function testPreventsAddingPropertiesWithInvalidNames(collection: UniqueNFTCollection | UniqueRFTCollection) {
     const invalidProperties = [
       [{key: 'skullduggery', permission: {tokenOwner: true}}, {key: 'im possible', permission: {collectionAdmin: true}}],
       [{key: 'G#4', permission: {tokenOwner: true}}],
@@ -469,7 +468,7 @@ describe('Integration Test: Token Properties', () => {
     ];
   });
   
-  async function testReadsYetEmptyProperties(token: ITokenNonfungible | ITokenRefungible) {
+  async function testReadsYetEmptyProperties(token: UniqueNFToken | UniqueRFToken) {
     const properties = await token.getProperties();
     expect(properties).to.be.empty;
 
@@ -489,7 +488,7 @@ describe('Integration Test: Token Properties', () => {
     await testReadsYetEmptyProperties(token);
   });
 
-  async function testAssignPropertiesAccordingToPermissions(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testAssignPropertiesAccordingToPermissions(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     await token.collection.addAdmin(alice, {Substrate: bob.address});
     await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
@@ -535,7 +534,7 @@ describe('Integration Test: Token Properties', () => {
     await testAssignPropertiesAccordingToPermissions(token, 100n);
   });
 
-  async function testChangesPropertiesAccordingPermission(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testChangesPropertiesAccordingPermission(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     await token.collection.addAdmin(alice, {Substrate: bob.address});
     await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
@@ -588,7 +587,7 @@ describe('Integration Test: Token Properties', () => {
     await testChangesPropertiesAccordingPermission(token, 100n);
   });
 
-  async function testDeletePropertiesAccordingPermission(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testDeletePropertiesAccordingPermission(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     await token.collection.addAdmin(alice, {Substrate: bob.address});
     await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
@@ -799,7 +798,7 @@ describe('Negative Integration Test: Token Properties', () => {
     return (await (mode == 'NFT' ? api.query.nonfungible : api.query.refungible).tokenProperties(collectionId, tokenId)).toJSON().consumedSpace;
   }
 
-  async function prepare(token: ITokenNonfungible | ITokenRefungible, pieces: bigint): Promise<number> {
+  async function prepare(token: UniqueNFToken | UniqueRFToken, pieces: bigint): Promise<number> {
     await token.collection.addAdmin(alice, {Substrate: bob.address});
     await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
@@ -823,7 +822,7 @@ describe('Negative Integration Test: Token Properties', () => {
     return originalSpace;
   }
 
-  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     const originalSpace = await prepare(token, pieces);
 
     let i = 0;
@@ -858,7 +857,7 @@ describe('Negative Integration Test: Token Properties', () => {
     await testForbidsChangingDeletingPropertiesUserOutsideOfPermissions(token, 100n);
   });
 
-  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testForbidsChangingDeletingPropertiesIfPropertyImmutable(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     const originalSpace = await prepare(token, pieces);
 
     let i = 0;
@@ -893,7 +892,7 @@ describe('Negative Integration Test: Token Properties', () => {
     await testForbidsChangingDeletingPropertiesIfPropertyImmutable(token, 100n);
   });
 
-  async function testForbidsAddingPropertiesIfPropertyNotDeclared(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testForbidsAddingPropertiesIfPropertyNotDeclared(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     const originalSpace = await prepare(token, pieces);
 
     await expect(
@@ -929,7 +928,7 @@ describe('Negative Integration Test: Token Properties', () => {
     await testForbidsAddingPropertiesIfPropertyNotDeclared(token, 100n);
   });
 
-  async function testForbidsAddingTooManyProperties(token: ITokenNonfungible | ITokenRefungible, pieces: bigint) {
+  async function testForbidsAddingTooManyProperties(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     const originalSpace = await prepare(token, pieces);
 
     await expect(
@@ -984,7 +983,7 @@ describe('ReFungible token properties permissions tests', () => {
     });
   });
 
-  async function prepare(helper: UniqueHelper): Promise<ITokenRefungible> {
+  async function prepare(helper: UniqueHelper): Promise<UniqueRFToken> {
     const collection = await helper.rft.mintCollection(alice);
     const token = await collection.mintToken(alice, 100n);
     
