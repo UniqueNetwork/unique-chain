@@ -1,10 +1,8 @@
-import {addToAllowListExpectSuccess, bigIntToSub, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, getDetailedCollectionInfo, setCollectionSponsorExpectSuccess} from '../util/helpers';
+import {addToAllowListExpectSuccess, confirmSponsorshipExpectSuccess, createCollectionExpectSuccess, enablePublicMintingExpectSuccess, getDetailedCollectionInfo, setCollectionSponsorExpectSuccess, UNIQUE} from '../util/helpers';
 import {itWeb3, createEthAccount, collectionIdToAddress, GAS_ARGS, normalizeEvents, createEthAccountWithBalance, evmCollectionHelpers, getCollectionAddressFromResult, evmCollection, ethBalanceViaSub} from './util/helpers';
 import nonFungibleAbi from './nonFungibleAbi.json';
 import {expect} from 'chai';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {submitTransactionAsync} from '../substrate/substrate-api';
-import getBalance from '../substrate/get-balance';
 
 describe('evm collection sponsoring', () => {
   itWeb3('sponsors mint transactions', async ({web3, privateKeyWrapper}) => {
@@ -64,7 +62,7 @@ describe('evm collection sponsoring', () => {
   itWeb3('Remove sponsor', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
@@ -85,7 +83,7 @@ describe('evm collection sponsoring', () => {
   itWeb3('Sponsoring collection from evm address via access list', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
@@ -210,7 +208,7 @@ describe('evm collection sponsoring', () => {
   itWeb3('Check that transaction via EVM spend money from sponsor address', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelpers = evmCollectionHelpers(web3, owner);
-    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send();
+    let result = await collectionHelpers.methods.createNonfungibleCollection('Sponsor collection', '1', '1').send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
     const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);

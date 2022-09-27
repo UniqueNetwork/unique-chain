@@ -145,7 +145,7 @@ export async function createRFTCollection(api: ApiPromise, web3: Web3, owner: st
   const collectionHelper = evmCollectionHelpers(web3, owner);
   const result = await collectionHelper.methods
     .createRFTCollection('A', 'B', 'C')
-    .send();
+    .send({value: Number(2n * UNIQUE)});
   return await getCollectionAddressFromResult(api, result);
 }
 
@@ -154,7 +154,7 @@ export async function createNonfungibleCollection(api: ApiPromise, web3: Web3, o
   const collectionHelper = evmCollectionHelpers(web3, owner);
   const result = await collectionHelper.methods
     .createNonfungibleCollection('A', 'B', 'C')
-    .send();
+    .send({value: Number(2n * UNIQUE)});
   return await getCollectionAddressFromResult(api, result);
 }
 

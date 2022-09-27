@@ -93,7 +93,7 @@ async function initFractionalizer(api: ApiPromise, web3: Web3, privateKeyWrapper
   const fractionalizer = await deployFractionalizer(web3, owner);
   const amount = 10n * UNIQUE;
   await web3.eth.sendTransaction({from: owner, to: fractionalizer.options.address, value: `${amount}`, ...GAS_ARGS});
-  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send();
+  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({value: Number(2n * UNIQUE)});
   const rftCollectionAddress = result.events.RFTCollectionSet.returnValues._collection;
   return {fractionalizer, rftCollectionAddress};
 }
@@ -141,9 +141,9 @@ describe('Fractionalizer contract usage', () => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const fractionalizer = await deployFractionalizer(web3, owner);
     const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
-    await submitTransactionAsync(alice, tx);
+    await executeTransaction(api, alice, tx);
 
-    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner});
+    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner, value: Number(2n * UNIQUE)});
     expect(result.events).to.be.like({
       RFTCollectionSet: {},
     });
@@ -295,7 +295,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
     await submitTransactionAsync(alice, tx);
 
-    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner});
+    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner, value: Number(2n * UNIQUE)});
     const collectionIdAddress = result.events.RFTCollectionSet.returnValues._collection;
 
     await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())

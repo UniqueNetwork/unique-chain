@@ -30,10 +30,10 @@ describe('Add collection admins', () => {
   itWeb3('Add admin by owner', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
     const collectionHelper = evmCollectionHelpers(web3, owner);
-        
+
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
     const newAdmin = createEthAccount(web3);
@@ -69,7 +69,7 @@ describe('Add collection admins', () => {
         
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
 
     const newAdmin = createEthAccount(web3);
@@ -85,7 +85,7 @@ describe('Add collection admins', () => {
         
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
     const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -108,7 +108,7 @@ describe('Add collection admins', () => {
         
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
     const notAdmin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -174,7 +174,7 @@ describe('Remove collection admins', () => {
         
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
     const newAdmin = createEthAccount(web3);
@@ -222,7 +222,7 @@ describe('Remove collection admins', () => {
         
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
@@ -249,7 +249,7 @@ describe('Remove collection admins', () => {
         
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
@@ -326,7 +326,7 @@ describe('Change owner tests', () => {
     const collectionHelper = evmCollectionHelpers(web3, owner);
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
   
@@ -342,7 +342,7 @@ describe('Change owner tests', () => {
     const collectionHelper = evmCollectionHelpers(web3, owner);
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
 
@@ -357,7 +357,7 @@ describe('Change owner tests', () => {
     const collectionHelper = evmCollectionHelpers(web3, owner);
     const result = await collectionHelper.methods
       .createNonfungibleCollection('A', 'B', 'C')
-      .send();
+      .send({value: Number(2n * UNIQUE)});
     const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
     const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
   

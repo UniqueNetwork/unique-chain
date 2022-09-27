@@ -170,9 +170,10 @@ class EthGroup extends EthGroupBase {
   }
 
   async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+    const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
-
-    const result = await collectionHelper.methods.createNonfungibleCollection(name, description, tokenPrefix).send();
+        
+    const result = await collectionHelper.methods.createNonfungibleCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
@@ -181,9 +182,10 @@ class EthGroup extends EthGroupBase {
   }
 
   async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+    const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
-
-    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send();
+        
+    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
