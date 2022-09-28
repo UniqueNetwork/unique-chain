@@ -105,11 +105,11 @@ describe('Negative Test: Unnesting', () => {
 
     // Try to unnest
     await expect(nestedToken.unnest(bob, targetToken, {Substrate: alice.address})).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Try to burn
     await expect(nestedToken.burnFrom(bob, targetToken.nestingAccount())).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   // todo another test for creating excessive depth matryoshka with Ethereum?

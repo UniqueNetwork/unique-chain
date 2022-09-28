@@ -35,7 +35,7 @@ describe('Integration Test: Composite nesting tests', () => {
     // Create an immediately nested token
     const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
     
     // Create a token to be nested
     const newToken = await collection.mintToken(alice);
@@ -43,14 +43,14 @@ describe('Integration Test: Composite nesting tests', () => {
     // Nest
     await newToken.nest(alice, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Move bundle to different user
     await targetToken.transfer(alice, {Substrate: bob.address});
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Unnest
     await newToken.unnest(bob, targetToken, {Substrate: bob.address});
@@ -65,12 +65,12 @@ describe('Integration Test: Composite nesting tests', () => {
 
     // Create a nested token
     const tokenC = await collection.mintToken(alice, tokenA.nestingAccount());
-    expect(await tokenC.getOwner()).to.be.deep.equal(tokenA.nestingAccountInLowerCase());
+    expect(await tokenC.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
     
     // Transfer the nested token to another token
     await expect(tokenC.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount())).to.be.fulfilled;
     expect(await tokenC.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await tokenC.getOwner()).to.be.deep.equal(tokenB.nestingAccountInLowerCase());
+    expect(await tokenC.getOwner()).to.be.deep.equal(tokenB.nestingAccount().toLowerCase());
   });
 
   itSub('Checks token children', async ({helper}) => {
@@ -150,13 +150,13 @@ describe('Integration Test: Various token type nesting', () => {
     // Create an immediately nested token
     const nestedToken = await collection.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Create a token to be nested and nest
     const newToken = await collection.mintToken(bob);
     await newToken.nest(bob, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   itSub('Admin (NFT): Admin and Token Owner can operate together', async ({helper}) => {
@@ -167,13 +167,13 @@ describe('Integration Test: Various token type nesting', () => {
     // Create an immediately nested token by an administrator
     const nestedToken = await collection.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Create a token to be nested and nest
     const newToken = await collection.mintToken(alice, {Substrate: charlie.address});
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   itSub('Admin (NFT): allows an Admin to nest a token (Restricted nesting)', async ({helper}) => {
@@ -187,13 +187,13 @@ describe('Integration Test: Various token type nesting', () => {
     // Create an immediately nested token
     const nestedToken = await collectionB.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Create a token to be nested and nest
     const newToken = await collectionB.mintToken(bob);
     await newToken.nest(bob, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   // ---------- Non-Fungible ----------
@@ -207,13 +207,13 @@ describe('Integration Test: Various token type nesting', () => {
     // Create an immediately nested token
     const nestedToken = await collection.mintToken(charlie, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Create a token to be nested and nest
     const newToken = await collection.mintToken(charlie);
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   itSub('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async ({helper}) => {
@@ -233,13 +233,13 @@ describe('Integration Test: Various token type nesting', () => {
     // Create an immediately nested token
     const nestedToken = await collectionB.mintToken(charlie, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Create a token to be nested and nest
     const newToken = await collectionB.mintToken(charlie);
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   // ---------- Fungible ----------
@@ -424,7 +424,7 @@ describe('Negative Test: Nesting', () => {
 
     expect(await targetToken.getChildren()).to.be.length(1);
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccountInLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 
   itSub('Admin (NFT): disallows an Admin to nest a token from an unlisted collection (Restricted nesting)', async ({helper}) => {

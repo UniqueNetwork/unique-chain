@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect} from './util/playgrounds';
-import {crossAccountIdFromLower} from './util/playgrounds/unique';
+import {CrossAccountId} from './util/playgrounds/unique';
 
 describe('integration test: RPC methods', () => {
   let donor: IKeyringPair;
@@ -55,7 +55,7 @@ describe('integration test: RPC methods', () => {
     // Set-up over
 
     const owners = await helper.callRpc('api.rpc.unique.tokenOwners', [collection.collectionId, 0]);
-    const ids = (owners.toJSON() as any[]).map(crossAccountIdFromLower);
+    const ids = (owners.toJSON() as any[]).map(CrossAccountId.fromLowerCaseKeys);
 
     expect(ids).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length == 10).to.be.true;
