@@ -175,6 +175,8 @@ where
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
+
+	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
 	use uc_rpc::{AppPromotionApiServer, AppPromotion};
 
 	#[cfg(not(feature = "unique-runtime"))]

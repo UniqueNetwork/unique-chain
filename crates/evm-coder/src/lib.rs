@@ -169,7 +169,7 @@ pub trait Call: Sized {
 /// Should be same between evm-coder and substrate to avoid confusion
 ///
 /// Isn't same thing as gas, some mapping is required between those types
-pub type Weight = u64;
+pub type Weight = frame_support::weights::Weight;
 
 /// In substrate, we have benchmarking, which allows
 /// us to not rely on gas metering, but instead predict amount of gas to execute call

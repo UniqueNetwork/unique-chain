@@ -40,7 +40,7 @@ use sp_std::vec::Vec;
 use sp_version::NativeVersion;
 
 use crate::{
-	Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsReversedWithSystemFirst,
+	Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsWithSystem,
 	InherentDataExt,
 };
 use up_common::types::{AccountId, BlockNumber};
@@ -105,7 +105,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPalletsReversedWithSystemFirst,
+	AllPalletsWithSystem
 >;
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;

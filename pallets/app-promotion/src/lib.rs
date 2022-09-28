@@ -410,7 +410,7 @@ pub mod pallet {
 				.sum();
 
 			if total_staked.is_zero() {
-				return Ok(None.into()); // TO-DO
+				return Ok(None::<Weight>.into()); // TO-DO
 			}
 
 			pendings
@@ -433,7 +433,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::Unstake(staker_id, total_staked));
 
-			Ok(None.into())
+			Ok(None::<Weight>.into())
 		}
 
 		/// Sets the pallet to be the sponsor for the collection.

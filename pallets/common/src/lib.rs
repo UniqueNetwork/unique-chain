@@ -186,9 +186,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
-				<T as frame_system::Config>::DbWeight::get()
-					.read
-					.saturating_mul(reads),
+				Weight::from_ref_time(
+					<T as frame_system::Config>::DbWeight::get()
+						.read
+						.saturating_mul(reads)
+				),
 			))
 	}
 
@@ -196,9 +198,11 @@ impl<T: Config> CollectionHandle<T> {
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
-				<T as frame_system::Config>::DbWeight::get()
-					.write
-					.saturating_mul(writes),
+				Weight::from_ref_time(
+					<T as frame_system::Config>::DbWeight::get()
+						.write
+						.saturating_mul(writes)
+				),
 			))
 	}
 
@@ -213,7 +217,7 @@ impl<T: Config> CollectionHandle<T> {
 		let writes = weight.read.saturating_mul(writes);
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(
-				reads.saturating_add(writes),
+				Weight::from_ref_time(reads.saturating_add(writes)),
 			))
 	}
 
@@ -706,7 +710,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			StorageVersion::new(1).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }

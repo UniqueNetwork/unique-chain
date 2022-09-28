@@ -38,18 +38,18 @@ use crate::{
 
 macro_rules! max_weight_of {
 	($($method:ident ($($args:tt)*)),*) => {
-		0
+		Weight::zero()
 		$(
 			.max(<SelfWeightOf<T>>::$method($($args)*))
 		)*
 	};
 }
 
-fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> u64 {
+fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> Weight {
 	if properties.len() > 0 {
 		<CommonWeights<T>>::set_token_properties(properties.len() as u32)
 	} else {
-		0
+		Weight::zero()
 	}
 }
 
@@ -66,9 +66,9 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 					up_data_structs::CreateItemData::ReFungible(rft_data) => {
 						properties_weight::<T>(&rft_data.properties)
 					}
-					_ => 0,
+					_ => Weight::zero(),
 				})
-				.fold(0, |a, b| a.saturating_add(b)),
+				.fold(Weight::zero(), |a, b| a.saturating_add(b)),
 		)
 	}
 
@@ -83,10 +83,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 					.saturating_add(
 						i.iter()
 							.map(|d| properties_weight::<T>(&d.properties))
-							.fold(0, |a, b| a.saturating_add(b)),
+							.fold(Weight::zero(), |a, b| a.saturating_add(b)),
 					)
 			}
-			_ => 0,
+			_ => Weight::zero(),
 		}
 	}
 
@@ -146,7 +146,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
 		// Refungible token can't have children
-		0
+		Weight::zero()
 	}
 
 	fn token_owner() -> Weight {
