@@ -45,7 +45,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 			CreateItemExData::Fungible(f) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex(f.len() as u32)
 			}
-			_ => 0,
+			_ => Weight::zero(),
 		}
 	}
 
@@ -55,27 +55,27 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn set_collection_properties(_amount: u32) -> Weight {
 		// Error
-		0
+		Weight::zero()
 	}
 
 	fn delete_collection_properties(_amount: u32) -> Weight {
 		// Error
-		0
+		Weight::zero()
 	}
 
 	fn set_token_properties(_amount: u32) -> Weight {
 		// Error
-		0
+		Weight::zero()
 	}
 
 	fn delete_token_properties(_amount: u32) -> Weight {
 		// Error
-		0
+		Weight::zero()
 	}
 
 	fn set_token_property_permissions(_amount: u32) -> Weight {
 		// Error
-		0
+		Weight::zero()
 	}
 
 	fn transfer() -> Weight {
@@ -101,11 +101,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
 		// Fungible tokens can't have children
-		0
+		Weight::zero()
 	}
 
 	fn token_owner() -> Weight {
-		0
+		Weight::zero()
 	}
 }
 

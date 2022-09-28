@@ -54,7 +54,7 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-use xcm::opaque::latest::prelude::XcmError;
+use xcm::opaque::latest::{prelude::XcmError, Weight};
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
 

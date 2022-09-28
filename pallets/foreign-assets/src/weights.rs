@@ -53,16 +53,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Common CollectionProperties (r:0 w:1)
 	// Storage: Common CollectionById (r:0 w:1)
 	fn register_foreign_asset() -> Weight {
-		(52_161_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(11 as Weight))
+		Weight::from_ref_time(52_161_000)
+			.saturating_add(T::DbWeight::get().reads(9 as u64))
+			.saturating_add(T::DbWeight::get().writes(11 as u64))
 	}
 	// Storage: ForeignAssets ForeignAssetLocations (r:1 w:1)
 	// Storage: ForeignAssets AssetMetadatas (r:1 w:1)
 	fn update_foreign_asset() -> Weight {
-		(19_111_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(19_111_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }
 
@@ -80,15 +80,15 @@ impl WeightInfo for () {
 	// Storage: Common CollectionProperties (r:0 w:1)
 	// Storage: Common CollectionById (r:0 w:1)
 	fn register_foreign_asset() -> Weight {
-		(52_161_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(9 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
+		Weight::from_ref_time(52_161_000)
+			.saturating_add(RocksDbWeight::get().reads(9 as u64))
+			.saturating_add(RocksDbWeight::get().writes(11 as u64))
 	}
 	// Storage: ForeignAssets ForeignAssetLocations (r:1 w:1)
 	// Storage: ForeignAssets AssetMetadatas (r:1 w:1)
 	fn update_foreign_asset() -> Weight {
-		(19_111_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(19_111_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 }

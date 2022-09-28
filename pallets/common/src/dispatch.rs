@@ -19,7 +19,7 @@ pub fn dispatch_weight<T: Config>() -> Weight {
 	// Read collection
 	<T as frame_system::Config>::DbWeight::get().reads(1)
 	// Dynamic dispatch?
-	+ 6_000_000
+	+ Weight::from_ref_time(6_000_000)
 	// submit_logs is measured as part of collection pallets
 }
 

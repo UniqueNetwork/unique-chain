@@ -16,14 +16,13 @@
 
 use frame_support::{
 	traits::{Everything, Get},
-	weights::Weight,
 	parameter_types,
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::v1::{Junction::*, MultiLocation, NetworkId};
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, Weight};
 use xcm_builder::{
 	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,

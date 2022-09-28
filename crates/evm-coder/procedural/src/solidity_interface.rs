@@ -1126,7 +1126,7 @@ impl SolidityInterface {
 							#weight_variants,
 						)*
 						// TODO: It should be very cheap, but not free
-						Self::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {..}, _) => 100u64.into(),
+						Self::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {..}, _) => frame_support::weights::Weight::from_ref_time(100).into(),
 						#(
 							#weight_variants_this,
 						)*

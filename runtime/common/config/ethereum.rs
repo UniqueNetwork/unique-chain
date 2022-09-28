@@ -27,9 +27,9 @@ impl pallet_evm::account::Config for Runtime {
 // (contract, which only writes a lot of data),
 // approximating on top of our real store write weight
 parameter_types! {
-	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
+	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND.ref_time() / <Runtime as frame_system::Config>::DbWeight::get().write;
 	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
-	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND / GasPerSecond::get();
+	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND.ref_time() / GasPerSecond::get();
 }
 
 /// Limiting EVM execution to 50% of block for substrate users and management tasks
@@ -37,16 +37,16 @@ parameter_types! {
 /// scheduled fairly
 const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
 parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get());
+	pub BlockGasLimit: U256 = U256::from((NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get()).ref_time());
 }
 
 pub enum FixedGasWeightMapping {}
 impl pallet_evm::GasWeightMapping for FixedGasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight {
-		gas.saturating_mul(WeightPerGas::get())
+		Weight::from_ref_time(gas).saturating_mul(WeightPerGas::get())
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight / WeightPerGas::get()
+		(weight / WeightPerGas::get()).ref_time()
 	}
 }
 

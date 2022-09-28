@@ -46,25 +46,25 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: EVM AccountCodes (r:1 w:0)
 	fn begin() -> Weight {
-		(8_035_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(8_035_000)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:0)
 	// Storage: EVM AccountStorages (r:0 w:1)
 	fn set_data(b: u32, ) -> Weight {
-		(3_076_000 as Weight)
+		Weight::from_ref_time(3_076_000)
 			// Standard Error: 0
-			.saturating_add((828_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(828_000).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:1)
 	// Storage: EVM AccountCodes (r:0 w:1)
 	fn finish(_b: u32, ) -> Weight {
-		(6_591_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(6_591_000)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }
 
@@ -74,24 +74,24 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:0)
 	// Storage: EVM AccountCodes (r:1 w:0)
 	fn begin() -> Weight {
-		(8_035_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(8_035_000)
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:0)
 	// Storage: EVM AccountStorages (r:0 w:1)
 	fn set_data(b: u32, ) -> Weight {
-		(3_076_000 as Weight)
+		Weight::from_ref_time(3_076_000)
 			// Standard Error: 0
-			.saturating_add((828_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(828_000).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: EvmMigration MigrationPending (r:1 w:1)
 	// Storage: EVM AccountCodes (r:0 w:1)
 	fn finish(_b: u32, ) -> Weight {
-		(6_591_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(6_591_000)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 }
