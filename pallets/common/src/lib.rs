@@ -185,25 +185,21 @@ impl<T: Config> CollectionHandle<T> {
 	/// Consume gas for reading.
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
-				Weight::from_ref_time(
-					<T as frame_system::Config>::DbWeight::get()
-						.read
-						.saturating_mul(reads)
-				),
-			))
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+				<T as frame_system::Config>::DbWeight::get()
+					.read
+					.saturating_mul(reads),
+			)))
 	}
 
 	/// Consume gas for writing.
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
-				Weight::from_ref_time(
-					<T as frame_system::Config>::DbWeight::get()
-						.write
-						.saturating_mul(writes)
-				),
-			))
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+				<T as frame_system::Config>::DbWeight::get()
+					.write
+					.saturating_mul(writes),
+			)))
 	}
 
 	/// Consume gas for reading and writing.
@@ -216,9 +212,9 @@ impl<T: Config> CollectionHandle<T> {
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
-				Weight::from_ref_time(reads.saturating_add(writes)),
-			))
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+				reads.saturating_add(writes),
+			)))
 	}
 
 	/// Save collection to storage.

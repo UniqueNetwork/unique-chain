@@ -15,7 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::traits::Everything;
-use xcm::{latest::{Xcm, Weight}, v1::MultiLocation};
+use xcm::{
+	latest::{Xcm, Weight},
+	v1::MultiLocation,
+};
 use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit};
 use xcm_executor::traits::ShouldExecute;
 
