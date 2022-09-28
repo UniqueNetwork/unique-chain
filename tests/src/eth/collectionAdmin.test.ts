@@ -50,17 +50,18 @@ describe('Add collection admins', () => {
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
 
-  itEth.skip('Add substrate admin by owner', async ({helper}) => {
+  itEth('Add cross account admin by owner', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
+        
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    
+    const newAdmin = privateKey('//Bob');
+    const newAdminCross = helper.ethCrossAccount.fromKeyringPair(newAdmin);
+    await collectionEvm.methods.addCollectionAdminCross(newAdminCross).send();
 
-    const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
-    await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
-
-    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
-    expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
-      .to.be.eq(newAdmin.address.toLocaleLowerCase());
+    const adminList = await helper.collection.getAdmins(collectionId);
+    expect(adminList).to.be.like([{Substrate: newAdmin.address}]);
   });
 
   itEth('Verify owner or admin', async ({helper}) => {

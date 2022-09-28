@@ -34,6 +34,7 @@ use pallet_common::{
 		CommonEvmHandler, CollectionCall,
 		static_property::{key, value as property_value},
 	},
+	eth::convert_tuple_to_cross_account,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
@@ -607,7 +608,10 @@ fn get_token_permission<T: Config>(
 
 /// @title Unique extensions for ERC721.
 #[solidity_interface(name = ERC721UniqueExtensions)]
-impl<T: Config> RefungibleHandle<T> {
+impl<T: Config> RefungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid RFT.
@@ -623,10 +627,40 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		to: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let token_id = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(self, token_id, &from)?;
+		ensure_single_owner(self, token_id, balance)?;
+
+		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -647,8 +681,37 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &from)?;
+		ensure_single_owner(self, token, balance)?;
+
+		<Pallet<T>>::burn_from(self, &caller, &from, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Burns a specific ERC721 token.
+	/// @dev Throws unless `msg.sender` is the current owner or an authorized
+	///  operator for this RFT. Throws if `from` is not the current owner. Throws
+	///  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param from The current owner of the RFT
+	/// @param tokenId The RFT to transfer
+	#[weight(<SelfWeightOf<T>>::burn_from())]
+	fn burn_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(self, token, &from)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::burn_from(self, &caller, &from, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;

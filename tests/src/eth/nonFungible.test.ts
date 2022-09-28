@@ -246,6 +246,64 @@ describe('NFT: Plain calls', () => {
     }
   });
 
+  itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = privateKey('//Bob');
+    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+
+    const token = await collection.mintToken(alice, {Substrate: owner.address});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    {
+      await token.approve(owner, {Ethereum: spender});
+      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
+      const result = await contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender});
+      const events = result.events.Transfer;
+
+      expect(events).to.be.like({
+        address,
+        event: 'Transfer',
+        returnValues: {
+          from: helper.address.substrateToEth(owner.address),
+          to: '0x0000000000000000000000000000000000000000',
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+  });
+
+  itEth('Can perform approveCross()', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(alice, 100n);
+    const receiver = privateKey('//Charlie');
+
+    const token = await collection.mintToken(alice, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    {
+      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+      const result = await contract.methods.approveCross(recieverCross, token.tokenId).send({from: owner});
+      const event = result.events.Approval;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Approval',
+        returnValues: {
+          owner,
+          approved: helper.address.substrateToEth(receiver.address),
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+  });
+
   itEth('Can perform transferFrom()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = await helper.eth.createAccountWithBalance(donor);
@@ -349,6 +407,40 @@ describe('NFT: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(spender, () => contract.methods.transferFrom(owner, spender, tokenId).send({from: spender}));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
+  });
+
+  itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = privateKey('//Bob');
+    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+    const receiver = privateKey('//Charlie');
+
+    const token = await collection.mintToken(alice, {Substrate: owner.address});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    await token.approve(owner, {Ethereum: spender});
+
+    {
+      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
+      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender});
+      const event = result.events.Transfer;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Transfer',
+        returnValues: {
+          from: helper.address.substrateToEth(owner.address),
+          to: helper.address.substrateToEth(receiver.address),
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+
+    expect(await token.getOwner()).to.be.like({Substrate: receiver.address});
   });
 
   itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {

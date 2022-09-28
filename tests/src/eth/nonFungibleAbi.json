@@ -91,9 +91,43 @@
   },
   {
     "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "newAdmin",
+        "type": "tuple"
+      }
+    ],
+    "name": "addCollectionAdminCross",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "user", "type": "address" }
     ],
     "name": "addToCollectionAllowList",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "user",
+        "type": "tuple"
+      }
+    ],
+    "name": "addToCollectionAllowListCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -113,6 +147,24 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "approve",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "approved",
+        "type": "tuple"
+      },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "approveCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -146,6 +198,24 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "from",
+        "type": "tuple"
+      },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "burnFromCross",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "collectionAdmins",
     "outputs": [
@@ -154,7 +224,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple17[]",
+        "internalType": "struct Tuple8[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -171,7 +241,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple17",
+        "internalType": "struct Tuple8",
         "name": "",
         "type": "tuple"
       }
@@ -195,7 +265,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple17",
+        "internalType": "struct Tuple8",
         "name": "",
         "type": "tuple"
       }
@@ -278,6 +348,23 @@
   },
   {
     "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "user",
+        "type": "tuple"
+      }
+    ],
+    "name": "isOwnerOrAdminCross",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "to", "type": "address" },
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
@@ -304,7 +391,7 @@
           { "internalType": "uint256", "name": "field_0", "type": "uint256" },
           { "internalType": "string", "name": "field_1", "type": "string" }
         ],
-        "internalType": "struct Tuple8[]",
+        "internalType": "struct Tuple10[]",
         "name": "tokens",
         "type": "tuple[]"
       }
@@ -375,6 +462,23 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "admin",
+        "type": "tuple"
+      }
+    ],
+    "name": "removeCollectionAdminCross",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "removeCollectionSponsor",
     "outputs": [],
@@ -386,6 +490,23 @@
       { "internalType": "address", "name": "user", "type": "address" }
     ],
     "name": "removeFromCollectionAllowList",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "user",
+        "type": "tuple"
+      }
+    ],
+    "name": "removeFromCollectionAllowListCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -499,9 +620,43 @@
   },
   {
     "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "sponsor",
+        "type": "tuple"
+      }
+    ],
+    "name": "setCollectionSponsorCross",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "newOwner", "type": "address" }
     ],
     "name": "setOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "newOwner",
+        "type": "tuple"
+      }
+    ],
+    "name": "setOwnerCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -597,6 +752,33 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "transferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "from",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple8",
+        "name": "to",
+        "type": "tuple"
+      },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "transferFromCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
