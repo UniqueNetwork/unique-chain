@@ -238,10 +238,17 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
+<<<<<<< HEAD
 	function collectionSponsor() public view returns (Tuple6 memory) {
 		require(false, stub_error);
 		dummy;
 		return Tuple6(0x0000000000000000000000000000000000000000, 0);
+=======
+	function collectionSponsor() public view returns (Tuple19 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple19(0x0000000000000000000000000000000000000000, 0);
+>>>>>>> feat: add `EthCrossAccount` type
 	}
 
 	/// Set limits for the collection.
@@ -475,10 +482,17 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
+<<<<<<< HEAD
 	function collectionOwner() public view returns (Tuple6 memory) {
 		require(false, stub_error);
 		dummy;
 		return Tuple6(0x0000000000000000000000000000000000000000, 0);
+=======
+	function collectionOwner() public view returns (Tuple19 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple19(0x0000000000000000000000000000000000000000, 0);
+>>>>>>> feat: add `EthCrossAccount` type
 	}
 
 	/// Changes collection owner to another account
@@ -520,8 +534,8 @@ contract Collection is Dummy, ERC165 {
 
 /// @dev anonymous struct
 struct Tuple19 {
-	string field_0;
-	bytes field_1;
+	address field_0;
+	uint256 field_1;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
@@ -813,10 +827,17 @@ struct Tuple8 {
 	string field_1;
 }
 
+<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple6 {
 	address field_0;
 	uint256 field_1;
+=======
+/// @dev Cross account struct
+struct EthCrossAccount {
+	address eth;
+	uint256 sub;
+>>>>>>> feat: add `EthCrossAccount` type
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension

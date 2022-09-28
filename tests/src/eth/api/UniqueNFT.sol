@@ -159,7 +159,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple6 memory);
+	function collectionSponsor() external view returns (Tuple8 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -310,7 +310,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() external view returns (Tuple6 memory);
+	function collectionOwner() external view returns (Tuple8 memory);
 
 	/// Changes collection owner to another account
 	///
@@ -339,8 +339,8 @@ interface Collection is Dummy, ERC165 {
 
 /// @dev anonymous struct
 struct Tuple19 {
-	string field_0;
-	bytes field_1;
+	address field_0;
+	uint256 field_1;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
@@ -524,7 +524,6 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
 	// function mintBulkWithTokenURI(address to, Tuple8[] memory tokens) external returns (bool);
-
 }
 
 /// @dev anonymous struct
@@ -534,7 +533,7 @@ struct Tuple8 {
 }
 
 /// @dev anonymous struct
-struct Tuple6 {
+struct Tuple8 {
 	address field_0;
 	uint256 field_1;
 }

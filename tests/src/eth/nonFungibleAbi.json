@@ -250,7 +250,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple6",
+=======
+        "internalType": "struct Tuple19",
+>>>>>>> feat: add `EthCrossAccount` type
         "name": "",
         "type": "tuple"
       }
@@ -293,7 +297,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple6",
+=======
+        "internalType": "struct Tuple19",
+>>>>>>> feat: add `EthCrossAccount` type
         "name": "",
         "type": "tuple"
       }
@@ -794,7 +802,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple6",
+=======
+        "internalType": "struct EthCrossAccount",
+>>>>>>> feat: add `EthCrossAccount` type
         "name": "from",
         "type": "tuple"
       },
@@ -803,7 +815,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple6",
+=======
+        "internalType": "struct EthCrossAccount",
+>>>>>>> feat: add `EthCrossAccount` type
         "name": "to",
         "type": "tuple"
       },

@@ -715,13 +715,13 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
-		to: (address, uint256),
+		from: EthCrossAccount,
+		to: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
-		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
 		let token_id = token_id.try_into()?;
 		let budget = self
 			.recorder

@@ -402,6 +402,7 @@ mod sealed {
 impl sealed::CanBePlacedInVec for U256 {}
 impl sealed::CanBePlacedInVec for string {}
 impl sealed::CanBePlacedInVec for H160 {}
+impl sealed::CanBePlacedInVec for EthCrossAccount {}
 
 impl<R: sealed::CanBePlacedInVec> AbiRead<Vec<R>> for AbiReader<'_>
 where
@@ -416,6 +417,70 @@ where
 			out.push(<Self as AbiRead<R>>::abi_read(&mut sub)?);
 		}
 		Ok(out)
+	}
+}
+
+impl TypeHelper for EthCrossAccount {
+	fn is_dynamic() -> bool {
+		address::is_dynamic() || uint256::is_dynamic()
+	}
+}
+
+impl AbiRead<EthCrossAccount> for AbiReader<'_> {
+	fn abi_read(&mut self) -> Result<EthCrossAccount> {
+		let size = if !EthCrossAccount::is_dynamic() {
+			Some(<Self as AbiRead<EthCrossAccount>>::size())
+		} else {
+			None
+		};
+		let mut subresult = self.subresult(size)?;
+		let eth = <Self as AbiRead<address>>::abi_read(&mut subresult)?;
+		let sub = <Self as AbiRead<uint256>>::abi_read(&mut subresult)?;
+
+		Ok(EthCrossAccount { eth: eth, sub: sub })
+	}
+
+	fn size() -> usize {
+		<Self as AbiRead<address>>::size() + <Self as AbiRead<uint256>>::size()
+	}
+}
+
+impl AbiWrite for &EthCrossAccount {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		self.eth.abi_write(writer);
+		self.sub.abi_write(writer);
+	}
+}
+
+impl TypeHelper for EthCrossAccount {
+	fn is_dynamic() -> bool {
+		address::is_dynamic() || uint256::is_dynamic()
+	}
+}
+
+impl AbiRead<EthCrossAccount> for AbiReader<'_> {
+	fn abi_read(&mut self) -> Result<EthCrossAccount> {
+		let size = if !EthCrossAccount::is_dynamic() {
+			Some(<Self as AbiRead<EthCrossAccount>>::size())
+		} else {
+			None
+		};
+		let mut subresult = self.subresult(size)?;
+		let eth = <Self as AbiRead<address>>::abi_read(&mut subresult)?;
+		let sub = <Self as AbiRead<uint256>>::abi_read(&mut subresult)?;
+
+		Ok(EthCrossAccount { eth: eth, sub: sub })
+	}
+
+	fn size() -> usize {
+		<Self as AbiRead<address>>::size() + <Self as AbiRead<uint256>>::size()
+	}
+}
+
+impl AbiWrite for &EthCrossAccount {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		self.eth.abi_write(writer);
+		self.sub.abi_write(writer);
 	}
 }
 
