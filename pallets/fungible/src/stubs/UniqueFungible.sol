@@ -385,7 +385,7 @@ contract Collection is Dummy, ERC165 {
 
 	/// Get collection owner.
 	///
-	/// @return Tuple with sponsor address and his substrate mirror.
+	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()

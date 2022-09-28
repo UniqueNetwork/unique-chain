@@ -381,6 +381,46 @@ export class EthCrossAccountGroup extends EthGroupBase {
   }
 }
 
+export class EthCrossAccountGroup extends EthGroupBase {
+  fromAddress(address: TEthereumAccount): TEthCrossAccount {
+    return {
+      0: address,
+      1: '0',
+      field_0: address,
+      field_1: '0',
+    };
+  }
+
+  fromKeyringPair(keyring: IKeyringPair): TEthCrossAccount {
+    return {
+      0: '0x0000000000000000000000000000000000000000',
+      1: keyring.addressRaw,
+      field_0: '0x0000000000000000000000000000000000000000',
+      field_1: keyring.addressRaw,
+    };
+  }
+}
+
+export class EthCrossAccountGroup extends EthGroupBase {
+  fromAddress(address: TEthereumAccount): TEthCrossAccount {
+    return {
+      0: address,
+      1: '0',
+      field_0: address,
+      field_1: '0',
+    };
+  }
+
+  fromKeyringPair(keyring: IKeyringPair): TEthCrossAccount {
+    return {
+      0: '0x0000000000000000000000000000000000000000',
+      1: keyring.addressRaw,
+      field_0: '0x0000000000000000000000000000000000000000',
+      field_1: keyring.addressRaw,
+    };
+  }
+}
+
 export class EthUniqueHelper extends DevUniqueHelper {
   web3: Web3 | null = null;
   web3Provider: WebsocketProvider | null = null;

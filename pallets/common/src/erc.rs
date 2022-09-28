@@ -656,7 +656,7 @@ where
 
 	/// Get collection owner.
 	///
-	/// @return Tuple with sponsor address and his substrate mirror.
+	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	fn collection_owner(&self) -> Result<(address, uint256)> {
 		Ok(convert_cross_account_to_tuple::<T>(

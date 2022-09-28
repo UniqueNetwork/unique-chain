@@ -228,7 +228,7 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform burnFrom()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
+    const alice = privateKey('//Alice');
     const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(alice, 100n);
@@ -262,10 +262,10 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
+    const alice = privateKey('//Alice');
     const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await privateKey('//Bob');
+    const owner = privateKey('//Bob');
     const spender = await helper.eth.createAccountWithBalance(alice, 100n);
 
     const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
@@ -295,12 +295,12 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
+    const alice = privateKey('//Alice');
     const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await privateKey('//Bob');
+    const owner = privateKey('//Bob');
     const spender = await helper.eth.createAccountWithBalance(alice, 100n);
-    const receiver = await privateKey('//Charlie');
+    const receiver = privateKey('//Charlie');
 
     const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
 

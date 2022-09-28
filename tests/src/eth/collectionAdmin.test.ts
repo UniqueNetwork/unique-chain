@@ -53,10 +53,10 @@ describe('Add collection admins', () => {
   itEth('Add cross account admin by owner', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
         
-    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
-    const newAdmin = await privateKey('//Bob');
+    const newAdmin = privateKey('//Bob');
     const newAdminCross = helper.ethCrossAccount.fromKeyringPair(newAdmin);
     await collectionEvm.methods.addCollectionAdminCross(newAdminCross).send();
 
