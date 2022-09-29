@@ -27,6 +27,7 @@ import nonFungibleAbi from '../../nonFungibleAbi.json';
 import refungibleAbi from '../../reFungibleAbi.json';
 import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
 import contractHelpersAbi from './../contractHelpersAbi.json';
+import {TEthereumAccount} from '../../../util/playgrounds/types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -43,13 +44,13 @@ class ContractGroup extends EthGroupBase {
       return {error: `File not found: ${path}`};
     };
   
-    const knownImports = {} as any;
+    const knownImports = {} as {[key: string]: string};
     for(const imp of imports) {
       knownImports[imp.solPath] = (await readFile(imp.fsPath)).toString();
     }
   
     return function(path: string) {
-      if(knownImports.hasOwnPropertyDescriptor(path)) return {contents: knownImports[path]};
+      if(path in knownImports) return {contents: knownImports[path]};
       return {error: `File not found: ${path}`};
     };
   }
@@ -148,7 +149,7 @@ class EthGroup extends EthGroupBase {
     return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
   }
 
-  async callEVM(signer: IKeyringPair, contractAddress: string, abi: any, value: string, gasLimit?: number) {
+  async sendEVM(signer: IKeyringPair, contractAddress: string, abi: string, value: string, gasLimit?: number) {
     if(!gasLimit) gasLimit = this.DEFAULT_GAS;
     const web3 = this.helper.getWeb3();
     const gasPrice = await web3.eth.getGasPrice();
@@ -158,6 +159,10 @@ class EthGroup extends EthGroupBase {
       'api.tx.evm.call', [this.helper.address.substrateToEth(signer.address), contractAddress, abi, value, gasLimit, gasPrice, null, null, []],
       true,
     );
+  }
+  
+  async callEVM(signer: TEthereumAccount, contractAddress: string, abi: string) {
+    return await this.helper.callRpc('api.rpc.eth.call', [{from: signer, to: contractAddress, data: abi}]);
   }
 
   async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
