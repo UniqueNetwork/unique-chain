@@ -926,8 +926,8 @@ class CollectionGroup extends HelperGroup {
    * @example getProperties(1219, ['location', 'date', 'time', 'isParadise']);
    * @returns array of key-value pairs
    */
-  async getProperties(collectionId: number, propertyKeys: string[] | null = null): Promise<IProperty[]> {
-    return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, ...(propertyKeys === null ? [] : [propertyKeys])])).toHuman();
+  async getProperties(collectionId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
+    return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
   }
 
   /**
@@ -1208,8 +1208,8 @@ class NFTnRFT extends CollectionGroup {
    * @example getTokenProperties(1219, ['location', 'date', 'time', 'isParadise']);
    * @returns array of key-value pairs
    */
-  async getTokenProperties(collectionId: number, tokenId: number, propertyKeys: string[] | null = null): Promise<IProperty[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, ...(propertyKeys === null ? [] : [propertyKeys])])).toHuman();
+  async getTokenProperties(collectionId: number, tokenId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
+    return (await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, propertyKeys])).toHuman();
   }
 
   /**
@@ -2265,7 +2265,7 @@ export class UniqueBaseCollection {
     return await this.helper.collection.getEffectiveLimits(this.collectionId);
   }
 
-  async getProperties(propertyKeys: string[] | null = null) {
+  async getProperties(propertyKeys?: string[] | null) {
     return await this.helper.collection.getProperties(this.collectionId, propertyKeys);
   }
 
@@ -2364,7 +2364,7 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.getPropertyPermissions(this.collectionId, propertyKeys);
   }
 
-  async getTokenProperties(tokenId: number, propertyKeys: string[] | null = null) {
+  async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.nft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
   }
 
@@ -2455,7 +2455,7 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
     return await this.helper.rft.getPropertyPermissions(this.collectionId, propertyKeys);
   }
 
-  async getTokenProperties(tokenId: number, propertyKeys: string[] | null = null) {
+  async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.rft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
   }
 
@@ -2567,7 +2567,7 @@ export class UniqueBaseToken {
     return await this.collection.getTokenNextSponsored(this.tokenId, addressObj);
   }
 
-  async getProperties(propertyKeys: string[] | null = null) {
+  async getProperties(propertyKeys?: string[] | null) {
     return await this.collection.getTokenProperties(this.tokenId, propertyKeys);
   }
 

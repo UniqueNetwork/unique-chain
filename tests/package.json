@@ -38,7 +38,7 @@
     "testNesting": "mocha --timeout 9999999 -r ts-node/register ./**/nest.test.ts",
     "testUnnesting": "mocha --timeout 9999999 -r ts-node/register ./**/unnest.test.ts",
     "testStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/**.test.ts",
-    "testProperties": "mocha --timeout 9999999 -r ts-node/register ./**/properties.test.ts",
+    "testProperties": "mocha --timeout 9999999 -r ts-node/register ./**/properties.test.ts ./**/getPropertiesRpc.test.ts",
     "testMigration": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/migration-check.test.ts",
     "testRmrk": "mocha --timeout 9999999 -r ts-node/register ./**/rmrk/**.test.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
