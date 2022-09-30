@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
+import {GAS_ARGS} from './util/helpers';
 
 import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util/playgrounds';
 
@@ -29,22 +30,26 @@ describe('EVM payable contracts', () => {
 
   itEth('Update proxy contract', async({helper}) => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const proxyContract = await deployProxyContract(helper, deployer);
     const realContractV1 = await deployRealContractV1(helper, deployer);
+    const realContractV1proxy = new helper.web3!.eth.Contract(realContractV1.options.jsonInterface, proxyContract.options.address, {from: caller, ...GAS_ARGS});
     await proxyContract.methods.updateVersion(realContractV1.options.address).send();
-    await proxyContract.methods.flip().send();
-    await proxyContract.methods.flip().send();
-    await proxyContract.methods.flip().send();
-    const value1 = await proxyContract.methods.getValue().call();
-    const flipCount1 = await proxyContract.methods.getFlipCount().call();
-    expect(value1).to.be.equal(true);
+    
+    await realContractV1proxy.methods.flip().send();
+    await realContractV1proxy.methods.flip().send();
+    await realContractV1proxy.methods.flip().send();
+    const value1 = await realContractV1proxy.methods.getValue().call();
+    const flipCount1 = await realContractV1proxy.methods.getFlipCount().call();
     expect(flipCount1).to.be.equal('3');
+    expect(value1).to.be.equal(true);
     const realContractV2 = await deployRealContractV2(helper, deployer);
+    const realContractV2proxy = new helper.web3!.eth.Contract(realContractV2.options.jsonInterface, proxyContract.options.address, {from: caller, ...GAS_ARGS});
     await proxyContract.methods.updateVersion(realContractV2.options.address).send();
-    await proxyContract.methods.flip().send();
-    await proxyContract.methods.flip().send();
-    const value2 = await proxyContract.methods.getValue().call();
-    const flipCount2 = await proxyContract.methods.getFlipCount().call();
+    await realContractV2proxy.methods.flip().send();
+    await realContractV2proxy.methods.flip().send();
+    const value2 = await realContractV2proxy.methods.getValue().call();
+    const flipCount2 = await realContractV2proxy.methods.getFlipCount().call();
     expect(value2).to.be.equal(true);
     expect(flipCount2).to.be.equal('1');
   });
@@ -55,21 +60,33 @@ describe('EVM payable contracts', () => {
       pragma solidity ^0.8.6;
       
       contract ProxyContract {
-        address realContract;
         event NewEvent(uint data);
         receive() external payable {}
+        bytes32 private constant implementationSlot =  bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1);
         constructor() {}
         function updateVersion(address newContractAddress) external {
-          realContract = newContractAddress;
+          bytes32 slot = implementationSlot;
+          assembly {
+            sstore(slot, newContractAddress)
+          }
         }
-        function flip() external {
-          RealContract(realContract).flip();
-        }
-        function getValue() external view returns (bool) {
-          return RealContract(realContract).getValue();
-        }
-        function getFlipCount() external view returns (uint) {
-            return RealContract(realContract).getFlipCount();
+        fallback() external {
+          bytes32 slot = implementationSlot;
+          assembly {
+            let ptr := mload(0x40)
+            let contractAddress := sload(slot)
+            
+            calldatacopy(ptr, 0, calldatasize())
+            
+            let result := delegatecall(gas(), contractAddress, ptr, calldatasize(), 0, 0)
+            let size := returndatasize()
+            
+            returndatacopy(ptr, 0, size)
+            
+            switch result
+            case 0 { revert(ptr, size) }
+            default { return(ptr, size) }
+          }
         }
       }
       
