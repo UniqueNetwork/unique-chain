@@ -194,6 +194,7 @@ where
 	fn create_nonfungible_collection(
 		&mut self,
 		caller: caller,
+		value: value,
 		name: string,
 		description: string,
 		token_prefix: string,

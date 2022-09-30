@@ -114,7 +114,7 @@ use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap, collections::btree_set::BTreeSet};
+use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
 use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
