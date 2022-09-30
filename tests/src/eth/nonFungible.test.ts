@@ -171,70 +171,38 @@ describe('NFT: Plain calls', () => {
   });
 
   //TODO: CORE-302 add eth methods
-  /* todo:playgrounds skipped test!
-  itWeb3.skip('Can perform mintBulk()', async ({helper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
+  itEth.skip('Can perform mintBulk()', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
 
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: caller});
-    await submitTransactionAsync(alice, changeAdminTx);
-    const receiver = createEthAccount(web3);
+    const collection = await helper.nft.mintCollection(alice);
+    await collection.addAdmin(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
-
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     {
+      const bulkSize = 3;
       const nextTokenId = await contract.methods.nextTokenId().call();
       expect(nextTokenId).to.be.equal('1');
       const result = await contract.methods.mintBulkWithTokenURI(
         receiver,
-        [
-          [nextTokenId, 'Test URI 0'],
-          [+nextTokenId + 1, 'Test URI 1'],
-          [+nextTokenId + 2, 'Test URI 2'],
-        ],
+        Array.from({length: bulkSize}, (_, i) => (
+          [+nextTokenId + i, `Test URI ${i}`]
+        )),
       ).send({from: caller});
-      const events = normalizeEvents(result.events);
 
-      expect(events).to.be.deep.equal([
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId: nextTokenId,
-          },
-        },
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId: String(+nextTokenId + 1),
-          },
-        },
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId: String(+nextTokenId + 2),
-          },
-        },
-      ]);
+      const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
+      for (let i = 0; i < bulkSize; i++) {
+        const event = events[i];
+        expect(event.address).to.equal(collectionAddress);
+        expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+        expect(event.returnValues.to).to.equal(receiver);
+        expect(event.returnValues.tokenId).to.equal(`${+nextTokenId + i}`);
 
-      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI 0');
-      expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
-      expect(await contract.methods.tokenURI(+nextTokenId + 2).call()).to.be.equal('Test URI 2');
+        expect(await contract.methods.tokenURI(+nextTokenId + i).call()).to.be.equal(`Test URI ${i}`);
+      }
     }
   });
-  */
 
   itEth('Can perform burn()', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);

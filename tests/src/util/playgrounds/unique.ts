@@ -20,8 +20,11 @@ export class CrossAccountId implements ICrossAccountId {
     if (account.Ethereum) this.Ethereum = account.Ethereum;
   }
 
-  static fromKeyring(account: IKeyringPair) {
-    return new CrossAccountId({Substrate: account.address});
+  static fromKeyring(account: IKeyringPair, domain: 'Substrate' | 'Ethereum' = 'Substrate') {
+    switch (domain) {
+      case 'Substrate': return new CrossAccountId({Substrate: account.address});
+      case 'Ethereum': return new CrossAccountId({Substrate: account.address}).toEthereum();
+    }
   }
 
   static fromLowerCaseKeys(address: ICrossAccountIdLower): CrossAccountId {
@@ -38,6 +41,24 @@ export class CrossAccountId implements ICrossAccountId {
   
   withNormalizedSubstrate(ss58Format = 42): CrossAccountId {
     if (this.Substrate) return CrossAccountId.withNormalizedSubstrate(this.Substrate, ss58Format);
+    return this;
+  }
+
+  static translateSubToEth(address: TSubstrateAccount): TEthereumAccount {
+    return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(address), i => i.toString(16).padStart(2, '0')).join(''));
+  }
+
+  toEthereum(): CrossAccountId {
+    if (this.Substrate) return new CrossAccountId({Ethereum: CrossAccountId.translateSubToEth(this.Substrate)});
+    return this;
+  }
+
+  static translateEthToSub(address: TEthereumAccount, ss58Format?: number): TSubstrateAccount {
+    return evmToAddress(address, ss58Format);
+  }
+
+  toSubstrate(ss58Format?: number): CrossAccountId {
+    if (this.Ethereum) return new CrossAccountId({Substrate: CrossAccountId.translateEthToSub(this.Ethereum, ss58Format)});
     return this;
   }
   
@@ -2093,9 +2114,8 @@ class AddressGroup extends HelperGroup {
    * @example normalizeSubstrateToChainFormat("5GrwvaEF5zXb26Fz...") // returns unjKJQJrRd238pkUZZ... for Unique Network
    * @returns address in chain format
    */
-  async normalizeSubstrateToChainFormat(address: TSubstrateAccount): Promise<TSubstrateAccount> {
-    const info = this.helper.chain.getChainProperties();
-    return encodeAddress(decodeAddress(address), info.ss58Format);
+  normalizeSubstrateToChainFormat(address: TSubstrateAccount): TSubstrateAccount {
+    return this.normalizeSubstrate(address, this.helper.chain.getChainProperties().ss58Format);
   }
 
   /**
@@ -2105,10 +2125,8 @@ class AddressGroup extends HelperGroup {
    * @example ethToSubstrate('0x9F0583DbB855d...')
    * @returns substrate mirror of a provided ethereum address
    */
-  async ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat=false): Promise<TSubstrateAccount> {
-    if(!toChainFormat) return evmToAddress(ethAddress);
-    const info = this.helper.chain.getChainProperties();
-    return evmToAddress(ethAddress, info.ss58Format);
+  ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat=false): TSubstrateAccount {
+    return CrossAccountId.translateEthToSub(ethAddress, toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined);
   }
 
   /**
@@ -2118,7 +2136,7 @@ class AddressGroup extends HelperGroup {
    * @returns ethereum mirror of a provided substrate address
    */
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
-    return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(subAddress), i => i.toString(16).padStart(2, '0')).join(''));
+    return CrossAccountId.translateSubToEth(subAddress);
   }
 }
 

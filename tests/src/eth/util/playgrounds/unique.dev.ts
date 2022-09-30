@@ -131,7 +131,7 @@ class NativeContractGroup extends EthGroupBase {
   }
 }
 
-  
+
 class EthGroup extends EthGroupBase {
   DEFAULT_GAS = 2_500_000;
 
@@ -164,14 +164,14 @@ class EthGroup extends EthGroupBase {
       true,
     );
   }
-  
+
   async callEVM(signer: TEthereumAccount, contractAddress: string, abi: string) {
     return await this.helper.callRpc('api.rpc.eth.call', [{from: signer, to: contractAddress, data: abi}]);
   }
 
   async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
-        
+
     const result = await collectionHelper.methods.createNonfungibleCollection(name, description, tokenPrefix).send();
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
@@ -182,7 +182,7 @@ class EthGroup extends EthGroupBase {
 
   async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
-        
+
     const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send();
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
@@ -246,7 +246,7 @@ class EthGroup extends EthGroupBase {
     return before - after;
   }
 }  
-  
+
 class EthAddressGroup extends EthGroupBase {
   extractCollectionId(address: string): number {
     if (!(address.length === 42 || address.length === 40)) throw new Error('address wrong format');
