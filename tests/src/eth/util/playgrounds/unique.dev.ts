@@ -71,7 +71,6 @@ class ContractGroup extends EthGroupBase {
         },
       },
     }), {import: await this.findImports(imports)})).contracts[`${name}.sol`][name];
-  
     return {
       abi: out.abi,
       object: '0x' + out.evm.bytecode.object,
