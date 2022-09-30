@@ -14,12 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect} from 'chai';
-import {submitTransactionAsync} from '../substrate/substrate-api';
-import {createEthAccountWithBalance, GAS_ARGS, itWeb3} from './util/helpers';
+import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {IKeyringPair} from '@polkadot/types/types';
 
 describe('EVM Migrations', () => {
-  itWeb3('Deploy contract saved state', async ({web3, api, privateKeyWrapper}) => {
+  let superuser: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      superuser = privateKey('//Alice');
+    });
+  });
+  
+  // todo:playgrounds requires sudo, look into later
+  itEth('Deploy contract saved state', async ({helper}) => {
     /*
       contract StatefulContract {
         uint counter;
@@ -53,13 +61,16 @@ describe('EVM Migrations', () => {
       ['0xedc95719e9a3b28dd8e80877cb5880a9be7de1a13fc8b05e7999683b6b567643', '0x0000000000000000000000000000000000000000000000000000000000000004'],
     ];
 
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const caller = await helper.eth.createAccountWithBalance(superuser);
 
-    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.begin(ADDRESS) as any));
-    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.setData(ADDRESS, DATA as any) as any));
-    await submitTransactionAsync(alice, api.tx.sudo.sudo(api.tx.evmMigration.finish(ADDRESS, CODE) as any));
+    const txBegin = helper.constructApiCall('api.tx.evmMigration.begin', [ADDRESS]);
+    const txSetData = helper.constructApiCall('api.tx.evmMigration.setData', [ADDRESS, DATA]);
+    const txFinish = helper.constructApiCall('api.tx.evmMigration.finish', [ADDRESS, CODE]);
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txBegin])).to.be.fulfilled;
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txSetData])).to.be.fulfilled;
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txFinish])).to.be.fulfilled;
 
+    const web3 = helper.getWeb3();
     const contract = new web3.eth.Contract([
       {
         inputs: [],
@@ -87,7 +98,7 @@ describe('EVM Migrations', () => {
         stateMutability: 'view',
         type: 'function',
       },
-    ], ADDRESS, {from: caller, ...GAS_ARGS});
+    ], ADDRESS, {from: caller, gas: helper.eth.DEFAULT_GAS});
 
     expect(await contract.methods.counterValue().call()).to.be.equal('10');
     for (let i = 1; i <= 4; i++) {

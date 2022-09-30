@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess,
+/*import {createCollectionExpectSuccess,
   createFungibleItemExpectSuccess,
   transferExpectSuccess,
   transferFromExpectSuccess,
@@ -23,81 +23,94 @@ import {createCollectionExpectSuccess,
 import {collectionIdToAddress,
   createEthAccountWithBalance,
   subToEth,
-  GAS_ARGS, itWeb3} from './util/helpers';
+  GAS_ARGS, itEth} from './util/helpers';
 import fungibleAbi from './fungibleAbi.json';
-import nonFungibleAbi from './nonFungibleAbi.json';
+import nonFungibleAbi from './nonFungibleAbi.json';*/
+import {itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {CrossAccountId} from '../util/playgrounds/unique';
+import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Token transfer between substrate address and EVM address. Fungible', () => {
-  itWeb3('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
-    const alice = privateKeyWrapper('//Alice');
-    const bob = privateKeyWrapper('//Bob');
-    const charlie = privateKeyWrapper('//Charlie');
-    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Substrate: alice.address});
-    await transferExpectSuccess(collection, 0, alice, {Ethereum: subToEth(charlie.address)} , 200, 'Fungible');
-    await transferFromExpectSuccess(collection, 0, alice, {Ethereum: subToEth(charlie.address)}, charlie, 50, 'Fungible');
-    await transferExpectSuccess(collection, 0, charlie, bob, 50, 'Fungible');
+  });
+  
+  itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {  
+    const bobCA = CrossAccountId.fromKeyring(bob);
+    const charlieCA = CrossAccountId.fromKeyring(charlie);
+
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+
+    await collection.mint(alice, 200n);
+    await collection.transfer(alice, charlieCA.toEthereum(), 200n);
+    await collection.transferFrom(alice, charlieCA.toEthereum(), charlieCA, 50n);
+    await collection.transfer(charlie, bobCA, 50n);
   });
 
-  itWeb3('The private key X create a EVM address. Alice sends a token to the substrate address corresponding to this EVM address, and X can send it to Bob in the EVM', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const bob = privateKeyWrapper('//Bob');
-    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
-    const bobProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const aliceProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('The private key X create a EVM address. Alice sends a token to the substrate address corresponding to this EVM address, and X can send it to Bob in the EVM', async ({helper}) => {
+    const aliceProxy = await helper.eth.createAccountWithBalance(donor);
+    const bobProxy = await helper.eth.createAccountWithBalance(donor);
 
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, alice.address);
-    await transferExpectSuccess(collection, 0, alice, {Ethereum: aliceProxy} , 200, 'Fungible');
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(fungibleAbi as any, address, {from: aliceProxy, ...GAS_ARGS});
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
 
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'ft', aliceProxy);
+
+    await collection.mint(alice, 200n, {Ethereum: aliceProxy});
     await contract.methods.transfer(bobProxy, 50).send({from: aliceProxy});
-    await transferFromExpectSuccess(collection, 0, alice, {Ethereum: bobProxy}, bob, 50, 'Fungible');
-    await transferExpectSuccess(collection, 0, bob, alice, 50, 'Fungible');
+    await collection.transferFrom(alice, {Ethereum: bobProxy}, CrossAccountId.fromKeyring(bob), 50n);
+    await collection.transfer(bob, CrossAccountId.fromKeyring(alice), 50n);
   });
 });
 
 describe('Token transfer between substrate address and EVM address. NFT', () => {
-  itWeb3('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'NFT'},
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
-    const alice = privateKeyWrapper('//Alice');
-    const bob = privateKeyWrapper('//Bob');
-    const charlie = privateKeyWrapper('//Charlie');
-    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
-    await transferExpectSuccess(collection, tokenId, alice, {Ethereum: subToEth(charlie.address)}, 1, 'NFT');
-    await transferFromExpectSuccess(collection, tokenId, alice, {Ethereum: subToEth(charlie.address)}, charlie, 1, 'NFT');
-    await transferExpectSuccess(collection, tokenId, charlie, bob, 1, 'NFT');
+  });
+  
+  itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {
+    const charlieEth = CrossAccountId.fromKeyring(charlie, 'Ethereum');
+    
+    const collection = await helper.nft.mintCollection(alice);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+    const token = await collection.mintToken(alice);
+    await token.transfer(alice, charlieEth);
+    await token.transferFrom(alice, charlieEth, CrossAccountId.fromKeyring(charlie));
+    await token.transfer(charlie, CrossAccountId.fromKeyring(bob));
   });
 
-  itWeb3('The private key X create a EVM address. Alice sends a token to the substrate address corresponding to this EVM address, and X can send it to Bob in the EVM', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const bob = privateKeyWrapper('//Bob');
-    const charlie = privateKeyWrapper('//Charlie');
-    await setCollectionLimitsExpectSuccess(alice, collection, {ownerCanTransfer: true});
-    const bobProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const aliceProxy = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
-    await transferExpectSuccess(collection, tokenId, alice, {Ethereum: aliceProxy} , 1, 'NFT');
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: aliceProxy, ...GAS_ARGS});
+  itEth('The private key X create a EVM address. Alice sends a token to the substrate address corresponding to this EVM address, and X can send it to Bob in the EVM', async ({helper}) => {
+    const aliceProxy = await helper.eth.createAccountWithBalance(donor);
+    const bobProxy = await helper.eth.createAccountWithBalance(donor);
+
+    const collection = await helper.nft.mintCollection(alice);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', aliceProxy);
+
+    const token = await collection.mintToken(alice);
+    await token.transfer(alice, {Ethereum: aliceProxy});
     await contract.methods.transfer(bobProxy, 1).send({from: aliceProxy});
-    await transferFromExpectSuccess(collection, tokenId, alice, {Ethereum: bobProxy}, bob, 1, 'NFT');
-    await transferExpectSuccess(collection, tokenId, bob, charlie, 1, 'NFT');
+    await token.transferFrom(alice, {Ethereum: bobProxy}, {Substrate: bob.address});
+    await token.transfer(bob, {Substrate: charlie.address});
   });
 });

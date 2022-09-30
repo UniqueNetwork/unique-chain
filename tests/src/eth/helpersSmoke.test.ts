@@ -14,21 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect} from 'chai';
-import {createEthAccountWithBalance, deployFlipper, itWeb3, contractHelpers} from './util/helpers';
+import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Helpers sanity check', () => {
-  itWeb3('Contract owner is recorded', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  let donor: IKeyringPair;
 
-    const flipper = await deployFlipper(web3, owner);
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+  
+  itEth('Contract owner is recorded', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
-    expect(await contractHelpers(web3, owner).methods.contractOwner(flipper.options.address).call()).to.be.equal(owner);
+    const flipper = await helper.eth.deployFlipper(owner);
+
+    expect(await helper.ethNativeContract.contractHelpers(owner).methods.contractOwner(flipper.options.address).call()).to.be.equal(owner);
   });
 
-  itWeb3('Flipper is working', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const flipper = await deployFlipper(web3, owner);
+  itEth('Flipper is working', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+
+    const flipper = await helper.eth.deployFlipper(owner);
 
     expect(await flipper.methods.getValue().call()).to.be.false;
     await flipper.methods.flip().send({from: owner});
