@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds} from './util/playgrounds';
+import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util/playgrounds';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
@@ -103,4 +103,148 @@ describe('EVM payable contracts', () => {
       expect(finalReceiverBalance > initialReceiverBalance).to.be.true;
     }
   });
+});
+
+describe('EVM transaction fees', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+
+  itEth('Fee is withdrawn from the user', async({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await helper.eth.deployFlipper(deployer);
+    
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    await contract.methods.flip().send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+  });
+
+  itEth('Fee for nested calls is withdrawn from the user', async({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await deployProxyContract(helper, deployer);
+    
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
+    await contract.methods.flip().send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+    expect(finalContractBalance == initialContractBalance).to.be.true;
+  });
+  
+  itEth('Fee for nested calls to native methods is withdrawn from the user', async({helper}) => {
+    const CONTRACT_BALANCE = 3n * helper.balance.getOneTokenNominal();
+
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await deployProxyContract(helper, deployer);
+    
+    const web3 = helper.getWeb3();
+    await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), gas: helper.eth.DEFAULT_GAS});
+
+    const collectionAddress = (await contract.methods.createNonfungibleCollection().send({from: caller})).events.CollectionCreated.returnValues.collection;
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
+    await contract.methods.mintNftToken(collectionAddress).send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+    expect(finalContractBalance == initialContractBalance).to.be.true;
+  });
+  
+  itEth('Fee for nested calls to create*Collection methods is withdrawn from the user and from the contract', async({helper}) => {
+    const CONTRACT_BALANCE = 3n * helper.balance.getOneTokenNominal();
+
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await deployProxyContract(helper, deployer);
+    
+    const web3 = helper.getWeb3();
+    await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), gas: helper.eth.DEFAULT_GAS});
+
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
+    await contract.methods.createNonfungibleCollection().send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+    expect(finalContractBalance < initialContractBalance).to.be.true;
+  });
+
+  async function deployProxyContract(helper: EthUniqueHelper, deployer: string) {
+    return await helper.ethContract.deployByCode(
+      deployer,
+      'ProxyContract',
+      `
+      // SPDX-License-Identifier: UNLICENSED
+      pragma solidity ^0.8.6;
+
+      import {CollectionHelpers} from "../api/CollectionHelpers.sol";
+      import {UniqueNFT} from "../api/UniqueNFT.sol";
+
+      contract ProxyContract {
+        bool value = false;
+        address flipper;
+
+        event CollectionCreated(address collection);
+        event TokenMinted(uint256 tokenId);
+
+        receive() external payable {}
+
+        constructor() {
+          flipper = address(new Flipper());
+        }
+
+        function flip() public {
+          value = !value;
+          Flipper(flipper).flip();
+        }
+
+        function createNonfungibleCollection() public {
+          address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
+		      address nftCollection = CollectionHelpers(collectionHelpers).createNonfungibleCollection("A", "B", "C");
+          emit CollectionCreated(nftCollection);
+        }
+
+        function mintNftToken(address collectionAddress) public {
+          UniqueNFT collection = UniqueNFT(collectionAddress);
+          uint256 tokenId = collection.nextTokenId();
+          collection.mint(msg.sender, tokenId);
+          emit TokenMinted(tokenId);
+        }
+
+        function getValue() public view returns (bool) {
+          return Flipper(flipper).getValue();
+        }
+      }
+
+      contract Flipper {
+        bool value = false;
+        function flip() public {
+          value = !value;
+        }
+        function getValue() public view returns (bool) {
+          return value;
+        }
+      }
+      `,
+      [
+        {
+          solPath: 'api/CollectionHelpers.sol',
+          fsPath: `${__dirname}/api/CollectionHelpers.sol`,
+        },
+        {
+          solPath: 'api/UniqueNFT.sol',
+          fsPath: `${__dirname}/api/UniqueNFT.sol`,
+        },
+      ],
+    );
+  }
 });
