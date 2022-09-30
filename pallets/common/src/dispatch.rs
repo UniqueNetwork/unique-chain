@@ -78,6 +78,7 @@ pub trait CollectionDispatch<T: Config> {
 	/// * `data` - Description of the created collection.
 	fn create(
 		sender: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError>;
 

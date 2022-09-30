@@ -31,7 +31,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external returns (address);
+	) external payable returns (address);
 
 	/// @dev EVM selector for this function is: 0xa634a5f9,
 	///  or in textual repr: createERC721MetadataCompatibleCollection(string,string,string,string)
@@ -40,7 +40,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory description,
 		string memory tokenPrefix,
 		string memory baseUri
-	) external returns (address);
+	) external payable returns (address);
 
 	/// @dev EVM selector for this function is: 0xab173450,
 	///  or in textual repr: createRFTCollection(string,string,string)
@@ -48,7 +48,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external returns (address);
+	) external payable returns (address);
 
 	/// @dev EVM selector for this function is: 0xa5596388,
 	///  or in textual repr: createERC721MetadataCompatibleRFTCollection(string,string,string,string)
@@ -57,7 +57,7 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory description,
 		string memory tokenPrefix,
 		string memory baseUri
-	) external returns (address);
+	) external payable returns (address);
 
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question

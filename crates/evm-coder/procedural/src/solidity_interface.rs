@@ -560,6 +560,7 @@ struct Method {
 	selector: u32,
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
+	has_value_args: bool,
 	mutability: Mutability,
 	result: Type,
 	weight: Option<Expr>,
@@ -647,14 +648,20 @@ impl Method {
 			.unwrap_or_else(|| cases::camelcase::to_camel_case(&ident.to_string()));
 		let mut selector_str = camel_name.clone();
 		selector_str.push('(');
-		let mut has_normal_args = false;
-		for (i, arg) in args.iter().filter(|arg| !arg.is_special()).enumerate() {
-			if i != 0 {
-				selector_str.push(',');
+		let mut normal_args_count = 0u32;
+		let mut has_value_args = false;
+		for arg in args.iter() {
+			if arg.is_value() {
+				has_value_args = true;
+			} else if !arg.is_special() {
+				if normal_args_count != 0 {
+					selector_str.push(',');
+				}
+				write!(selector_str, "{}", arg.selector_ty()).unwrap();
+				normal_args_count = normal_args_count.saturating_add(1);
 			}
-			write!(selector_str, "{}", arg.selector_ty()).unwrap();
-			has_normal_args = true;
 		}
+		let has_normal_args = normal_args_count > 0;
 		selector_str.push(')');
 		let selector = fn_selector_str(&selector_str);
 
@@ -667,6 +674,7 @@ impl Method {
 			selector,
 			args,
 			has_normal_args,
+			has_value_args,
 			mutability,
 			result: result.clone(),
 			weight,
@@ -823,7 +831,7 @@ impl Method {
 		let docs = &self.docs;
 		let selector_str = &self.selector_str;
 		let selector = self.selector;
-
+		let is_payable = self.has_value_args;
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
@@ -831,6 +839,7 @@ impl Method {
 				selector: #selector,
 				name: #camel_name,
 				mutability: #mutability,
+				is_payable: #is_payable,
 				args: (
 					#(
 						#args,

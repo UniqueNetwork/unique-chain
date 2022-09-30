@@ -36,7 +36,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -52,7 +52,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory description,
 		string memory tokenPrefix,
 		string memory baseUri
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -68,7 +68,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -84,7 +84,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory description,
 		string memory tokenPrefix,
 		string memory baseUri
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;

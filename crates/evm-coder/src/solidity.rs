@@ -422,6 +422,7 @@ pub struct SolidityFunction<A, R> {
 	pub args: A,
 	pub result: R,
 	pub mutability: SolidityMutability,
+	pub is_payable: bool,
 }
 impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityFunction<A, R> {
 	fn solidity_name(
@@ -451,6 +452,9 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 			SolidityMutability::Pure => write!(writer, " pure")?,
 			SolidityMutability::View => write!(writer, " view")?,
 			SolidityMutability::Mutable => {}
+		}
+		if self.is_payable {
+			write!(writer, " payable")?;
 		}
 		if !self.result.is_empty() {
 			write!(writer, " returns (")?;

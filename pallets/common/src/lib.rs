@@ -866,6 +866,7 @@ impl<T: Config> Pallet<T> {
 	/// * `flags` - Extra flags to store.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
@@ -939,7 +940,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				owner.as_sub(),
+				payer.as_sub(),
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,

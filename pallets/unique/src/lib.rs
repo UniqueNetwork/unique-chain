@@ -344,8 +344,8 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 
 			// =========
-
-			let _id = T::CollectionDispatch::create(T::CrossAccountId::from_sub(sender), data)?;
+			let sender = T::CrossAccountId::from_sub(sender);
+			let _id = T::CollectionDispatch::create(sender.clone(), sender, data)?;
 
 			Ok(())
 		}

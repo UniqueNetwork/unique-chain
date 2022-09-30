@@ -405,11 +405,13 @@ impl<T: Config> Pallet<T> {
 	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(
 			owner,
+			payer,
 			data,
 			CollectionFlags {
 				external: is_external,

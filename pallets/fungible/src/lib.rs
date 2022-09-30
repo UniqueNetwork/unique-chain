@@ -210,18 +210,21 @@ impl<T: Config> Pallet<T> {
 	/// Initializes the collection. Returns [CollectionId] on success, [DispatchError] otherwise.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, CollectionFlags::default())
+		<PalletCommon<T>>::init_collection(owner, payer, data, CollectionFlags::default())
 	}
 
 	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		let id = <PalletCommon<T>>::init_collection(
 			owner,
+			payer,
 			data,
 			CollectionFlags {
 				foreign: true,

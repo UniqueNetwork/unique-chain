@@ -55,21 +55,22 @@ where
 {
 	fn create(
 		sender: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		let id = match data.mode {
-			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, data, false)?,
+			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, payer, data, false)?,
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
 				ensure!(
 					decimal_points <= MAX_DECIMAL_POINTS,
 					pallet_unique::Error::<T>::CollectionDecimalPointLimitExceeded
 				);
-				<PalletFungible<T>>::init_collection(sender, data)?
+				<PalletFungible<T>>::init_collection(sender, payer, data)?
 			}
 
 			#[cfg(feature = "refungible")]
-			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, data)?,
+			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, payer, data)?,
 
 			#[cfg(not(feature = "refungible"))]
 			CollectionMode::ReFungible => return unsupported!(T),

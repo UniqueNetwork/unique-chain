@@ -28,7 +28,7 @@ use pallet_common::{
 		static_property::{key, value as property_value},
 	},
 };
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
@@ -156,6 +156,7 @@ fn create_refungible_collection_internal<
 	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
 >(
 	caller: caller,
+	value: value,
 	name: string,
 	description: string,
 	token_prefix: string,
@@ -172,8 +173,16 @@ fn create_refungible_collection_internal<
 		base_uri_value,
 		add_properties,
 	)?;
+	let value = value.as_u128();
+	let creation_price: Result<u128> = T::CollectionCreationPrice::get()
+		.try_into()
+		.map_err(|_| "collection creation price should be convertible to u128".into());
+	if value != creation_price? {
+		return Err("Sent amount not equals to collection creation price".into());
+	}
+	let collection_helpers_address =  T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-	let collection_id = T::CollectionDispatch::create(caller.clone(), data)
+	let collection_id = T::CollectionDispatch::create(caller.clone(), collection_helpers_address, data)
 		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
@@ -183,7 +192,7 @@ fn create_refungible_collection_internal<
 #[solidity_interface(name = CollectionHelpers, events(CollectionHelpersEvents))]
 impl<T> EvmCollectionHelpers<T>
 where
-	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
+	T: Config + pallet_common::Config + pallet_nonfungible::Config + pallet_refungible::Config,
 {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -209,8 +218,17 @@ where
 			Default::default(),
 			false,
 		)?;
-		let collection_id = T::CollectionDispatch::create(caller, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let value = value.as_u128();
+		let creation_price: Result<u128> = T::CollectionCreationPrice::get()
+			.try_into()
+			.map_err(|_| "collection creation price should be convertible to u128".into());
+		let creation_price = creation_price?;
+		if value != creation_price {
+			return Err(format!("Sent amount not equals to collection creation price ({0})", creation_price).into());
+		}
+		let collection_helpers_address =  T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
+		let collection_id =
+			T::CollectionDispatch::create(caller, collection_helpers_address, data).map_err(dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -221,6 +239,7 @@ where
 	fn create_nonfungible_collection_with_properties(
 		&mut self,
 		caller: caller,
+		value: value,
 		name: string,
 		description: string,
 		token_prefix: string,
@@ -236,7 +255,15 @@ where
 			base_uri_value,
 			true,
 		)?;
-		let collection_id = T::CollectionDispatch::create(caller, data)
+		let value = value.as_u128();
+		let creation_price: Result<u128> = T::CollectionCreationPrice::get()
+			.try_into()
+			.map_err(|_| "collection creation price should be convertible to u128".into());
+		if value != creation_price? {
+			return Err("Sent amount not equals to collection creation price".into());
+		}
+		let collection_helpers_address =  T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
+		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
@@ -248,12 +275,14 @@ where
 	fn create_refungible_collection(
 		&mut self,
 		caller: caller,
+		value: value,
 		name: string,
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
 		create_refungible_collection_internal::<T>(
 			caller,
+			value,
 			name,
 			description,
 			token_prefix,
@@ -267,6 +296,7 @@ where
 	fn create_refungible_collection_with_properties(
 		&mut self,
 		caller: caller,
+		value: value,
 		name: string,
 		description: string,
 		token_prefix: string,
@@ -274,6 +304,7 @@ where
 	) -> Result<address> {
 		create_refungible_collection_internal::<T>(
 			caller,
+			value,
 			name,
 			description,
 			token_prefix,
