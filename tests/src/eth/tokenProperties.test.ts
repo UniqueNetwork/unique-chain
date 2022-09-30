@@ -11,7 +11,7 @@ describe.only('EVM token properties', () => {
       await collection.addAdmin(alice, {Ethereum: caller});
 
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
+      const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
       await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
   
