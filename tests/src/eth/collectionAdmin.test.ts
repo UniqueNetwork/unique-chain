@@ -44,23 +44,24 @@ describe('Add collection admins', () => {
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
 
-  itWeb3('Add substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('Add substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
         
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const newAdmin = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
+  //   const newAdmin = privateKeyWrapper('//Alice');
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  //   await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
-    expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
-      .to.be.eq(newAdmin.address.toLocaleLowerCase());
-  });
+  //   const adminList = await api.rpc.unique.adminlist(collectionId);
+  //   expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
+  //     .to.be.eq(newAdmin.address.toLocaleLowerCase());
+  // });
   
   itWeb3('Verify owner or admin', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -121,47 +122,49 @@ describe('Add collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
         
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    await collectionEvm.methods.addCollectionAdmin(admin).send();
+  //   const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  //   await collectionEvm.methods.addCollectionAdmin(admin).send();
 
-    const notAdmin = privateKey('//Alice');
-    await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin.addressRaw).call({from: admin}))
-      .to.be.rejectedWith('NoPermission');
+  //   const notAdmin = privateKey('//Alice');
+  //   await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin.addressRaw).call({from: admin}))
+  //     .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
-    expect(adminList.length).to.be.eq(1);
-    expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
-      .to.be.eq(admin.toLocaleLowerCase());
-  });
+  //   const adminList = await api.rpc.unique.adminlist(collectionId);
+  //   expect(adminList.length).to.be.eq(1);
+  //   expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
+  //     .to.be.eq(admin.toLocaleLowerCase());
+  // });
   
-  itWeb3('(!negative tests!) Add substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('(!negative tests!) Add substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
         
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const notAdmin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    const notAdmin1 = privateKey('//Alice');
-    await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin1.addressRaw).call({from: notAdmin0}))
-      .to.be.rejectedWith('NoPermission');
+  //   const notAdmin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  //   const notAdmin1 = privateKey('//Alice');
+  //   await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin1.addressRaw).call({from: notAdmin0}))
+  //     .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
-    expect(adminList.length).to.be.eq(0);
-  });
+  //   const adminList = await api.rpc.unique.adminlist(collectionId);
+  //   expect(adminList.length).to.be.eq(0);
+  // });
 });
 
 describe('Remove collection admins', () => {
@@ -189,28 +192,29 @@ describe('Remove collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('Remove substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('Remove substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
         
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const newAdmin = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
-    {
-      const adminList = await api.rpc.unique.adminlist(collectionId);
-      expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
-        .to.be.eq(newAdmin.address.toLocaleLowerCase());
-    }
+  //   const newAdmin = privateKeyWrapper('//Alice');
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  //   await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
+  //   {
+  //     const adminList = await api.rpc.unique.adminlist(collectionId);
+  //     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
+  //       .to.be.eq(newAdmin.address.toLocaleLowerCase());
+  //   }
     
-    await collectionEvm.methods.removeCollectionAdminSubstrate(newAdmin.addressRaw).send();
-    const adminList = await api.rpc.unique.adminlist(collectionId);
-    expect(adminList.length).to.be.eq(0);
-  });
+  //   await collectionEvm.methods.removeCollectionAdminSubstrate(newAdmin.addressRaw).send();
+  //   const adminList = await api.rpc.unique.adminlist(collectionId);
+  //   expect(adminList.length).to.be.eq(0);
+  // });
 
   itWeb3('(!negative tests!) Remove admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
     const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
@@ -264,53 +268,55 @@ describe('Remove collection admins', () => {
     }
   });
 
-  itWeb3('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
         
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const adminSub = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
-    const adminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    await collectionEvm.methods.addCollectionAdmin(adminEth).send();
+  //   const adminSub = privateKeyWrapper('//Alice');
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  //   await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
+  //   const adminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   await collectionEvm.methods.addCollectionAdmin(adminEth).send();
 
-    await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: adminEth}))
-      .to.be.rejectedWith('NoPermission');
+  //   await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: adminEth}))
+  //     .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
-    expect(adminList.length).to.be.eq(2);
-    expect(adminList.toString().toLocaleLowerCase())
-      .to.be.deep.contains(adminSub.address.toLocaleLowerCase())
-      .to.be.deep.contains(adminEth.toLocaleLowerCase());
-  });
+  //   const adminList = await api.rpc.unique.adminlist(collectionId);
+  //   expect(adminList.length).to.be.eq(2);
+  //   expect(adminList.toString().toLocaleLowerCase())
+  //     .to.be.deep.contains(adminSub.address.toLocaleLowerCase())
+  //     .to.be.deep.contains(adminEth.toLocaleLowerCase());
+  // });
 
-  itWeb3('(!negative tests!) Remove substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('(!negative tests!) Remove substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
         
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const adminSub = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
-    const notAdminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const adminSub = privateKeyWrapper('//Alice');
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  //   await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
+  //   const notAdminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
 
-    await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: notAdminEth}))
-      .to.be.rejectedWith('NoPermission');
+  //   await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: notAdminEth}))
+  //     .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
-    expect(adminList.length).to.be.eq(1);
-    expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
-      .to.be.eq(adminSub.address.toLocaleLowerCase());
-  });
+  //   const adminList = await api.rpc.unique.adminlist(collectionId);
+  //   expect(adminList.length).to.be.eq(1);
+  //   expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
+  //     .to.be.eq(adminSub.address.toLocaleLowerCase());
+  // });
 });
 
 describe('Change owner tests', () => {
@@ -361,52 +367,55 @@ describe('Change owner tests', () => {
 });
 
 describe('Change substrate owner tests', () => {
-  itWeb3('Change owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const newOwner = privateKeyWrapper('//Alice');
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('Change owner', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const newOwner = privateKeyWrapper('//Alice');
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
   
-    expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.true;
-    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
+  //   expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.true;
+  //   expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
     
-    await collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send();
+  //   await collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send();
   
-    expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.false;
-    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.true;
-  });
+  //   expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.false;
+  //   expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.true;
+  // });
 
-  itWeb3('change owner call fee', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const newOwner = privateKeyWrapper('//Alice');
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('change owner call fee', async ({web3, api, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const newOwner = privateKeyWrapper('//Alice');
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
 
-    const cost = await recordEthFee(api, owner, () => collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send());
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
-    expect(cost > 0);
-  });
+  //   const cost = await recordEthFee(api, owner, () => collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send());
+  //   expect(cost < BigInt(0.2 * Number(UNIQUE)));
+  //   expect(cost > 0);
+  // });
 
-  itWeb3('(!negative tests!) call setOwner by non owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const otherReceiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const newOwner = privateKeyWrapper('//Alice');
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  // TODO: Temprorary off. Need refactor
+  // itWeb3('(!negative tests!) call setOwner by non owner', async ({api, web3, privateKeyWrapper}) => {
+  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const otherReceiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  //   const newOwner = privateKeyWrapper('//Alice');
+  //   const collectionHelper = evmCollectionHelpers(web3, owner);
+  //   const result = await collectionHelper.methods
+  //     .createNonfungibleCollection('A', 'B', 'C')
+  //     .send();
+  //   const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
+  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
   
-    await expect(collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;
-    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
-  });
+  //   await expect(collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;
+  //   expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
+  // });
 });

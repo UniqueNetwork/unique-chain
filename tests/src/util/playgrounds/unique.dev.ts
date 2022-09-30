@@ -6,6 +6,7 @@ import {UniqueHelper} from './unique';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
+import {ICrossAccountId} from './types';
 
 
 export class SilentLogger {
@@ -230,6 +231,17 @@ class ArrangeGroup {
     const block2date = await findCreationDate(block2);
     if(block2date! - block1date! < 9000) return true;
   };
+  
+  async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
+    const address = payer.Substrate ? payer.Substrate : await this.helper.address.ethToSubstrate(payer.Ethereum!);
+    let balance = await this.helper.balance.getSubstrate(address); 
+    
+    await promise();
+    
+    balance -= await this.helper.balance.getSubstrate(address);
+    
+    return balance;
+  }
 }
 
 class WaitGroup {

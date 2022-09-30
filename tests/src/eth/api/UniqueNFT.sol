@@ -62,7 +62,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x47dbc105
+/// @dev the ERC-165 identifier for this interface is 0x3e1e8083
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -97,15 +97,6 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x7623402e,
 	///  or in textual repr: setCollectionSponsor(address)
 	function setCollectionSponsor(address sponsor) external;
-
-	/// Set the substrate sponsor of the collection.
-	///
-	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	///
-	/// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	/// @dev EVM selector for this function is: 0xc74d6751,
-	///  or in textual repr: setCollectionSponsorSubstrate(uint256)
-	function setCollectionSponsorSubstrate(uint256 sponsor) external;
 
 	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
@@ -161,18 +152,6 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: contractAddress()
 	function contractAddress() external view returns (address);
 
-	/// Add collection admin by substrate address.
-	/// @param newAdmin Substrate administrator address.
-	/// @dev EVM selector for this function is: 0x5730062b,
-	///  or in textual repr: addCollectionAdminSubstrate(uint256)
-	function addCollectionAdminSubstrate(uint256 newAdmin) external;
-
-	/// Remove collection admin by substrate address.
-	/// @param admin Substrate administrator address.
-	/// @dev EVM selector for this function is: 0x4048fcf9,
-	///  or in textual repr: removeCollectionAdminSubstrate(uint256)
-	function removeCollectionAdminSubstrate(uint256 admin) external;
-
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
 	/// @dev EVM selector for this function is: 0x92e462c7,
@@ -223,26 +202,12 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: addToCollectionAllowList(address)
 	function addToCollectionAllowList(address user) external;
 
-	/// Add substrate user to allowed list.
-	///
-	/// @param user User substrate address.
-	/// @dev EVM selector for this function is: 0xd06ad267,
-	///  or in textual repr: addToCollectionAllowListSubstrate(uint256)
-	function addToCollectionAllowListSubstrate(uint256 user) external;
-
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
 	/// @dev EVM selector for this function is: 0x85c51acb,
 	///  or in textual repr: removeFromCollectionAllowList(address)
 	function removeFromCollectionAllowList(address user) external;
-
-	/// Remove substrate user from allowed list.
-	///
-	/// @param user User substrate address.
-	/// @dev EVM selector for this function is: 0xa31913ed,
-	///  or in textual repr: removeFromCollectionAllowListSubstrate(uint256)
-	function removeFromCollectionAllowListSubstrate(uint256 user) external;
 
 	/// Switch permission for minting.
 	///
@@ -258,14 +223,6 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x9811b0c7,
 	///  or in textual repr: isOwnerOrAdmin(address)
 	function isOwnerOrAdmin(address user) external view returns (bool);
-
-	/// Check that substrate account is the owner or admin of the collection
-	///
-	/// @param user account to verify
-	/// @return "true" if account is the owner or admin
-	/// @dev EVM selector for this function is: 0x68910e00,
-	///  or in textual repr: isOwnerOrAdminSubstrate(uint256)
-	function isOwnerOrAdminSubstrate(uint256 user) external view returns (bool);
 
 	/// Returns collection type
 	///
@@ -289,14 +246,6 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x13af4035,
 	///  or in textual repr: setOwner(address)
 	function setOwner(address newOwner) external;
-
-	/// Changes collection owner to another substrate account
-	///
-	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner substrate account
-	/// @dev EVM selector for this function is: 0xb212138f,
-	///  or in textual repr: setOwnerSubstrate(uint256)
-	function setOwnerSubstrate(uint256 newOwner) external;
 }
 
 /// @dev anonymous struct

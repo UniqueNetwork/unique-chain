@@ -27,6 +27,7 @@ import nonFungibleAbi from '../../nonFungibleAbi.json';
 import refungibleAbi from '../../reFungibleAbi.json';
 import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
 import contractHelpersAbi from './../contractHelpersAbi.json';
+import {TEthereumAccount} from '../../../util/playgrounds/types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -43,13 +44,13 @@ class ContractGroup extends EthGroupBase {
       return {error: `File not found: ${path}`};
     };
   
-    const knownImports = {} as any;
+    const knownImports = {} as {[key: string]: string};
     for(const imp of imports) {
       knownImports[imp.solPath] = (await readFile(imp.fsPath)).toString();
     }
   
     return function(path: string) {
-      if(knownImports.hasOwnPropertyDescriptor(path)) return {contents: knownImports[path]};
+      if(path in knownImports) return {contents: knownImports[path]};
       return {error: `File not found: ${path}`};
     };
   }
@@ -116,13 +117,17 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
-  rftTokenByAddress(address: string, caller?: string): Contract {
+  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string): Contract {
+    return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller);
+  }
+
+  rftToken(address: string, caller?: string): Contract {
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
-  rftToken(collectionId: number, tokenId: number, caller?: string): Contract {
-    return this.rftTokenByAddress(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
+  rftTokenById(collectionId: number, tokenId: number, caller?: string): Contract {
+    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
   }
 }
 
@@ -148,7 +153,7 @@ class EthGroup extends EthGroupBase {
     return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
   }
 
-  async callEVM(signer: IKeyringPair, contractAddress: string, abi: any, value: string, gasLimit?: number) {
+  async sendEVM(signer: IKeyringPair, contractAddress: string, abi: string, value: string, gasLimit?: number) {
     if(!gasLimit) gasLimit = this.DEFAULT_GAS;
     const web3 = this.helper.getWeb3();
     const gasPrice = await web3.eth.getGasPrice();
@@ -159,11 +164,26 @@ class EthGroup extends EthGroupBase {
       true,
     );
   }
+  
+  async callEVM(signer: TEthereumAccount, contractAddress: string, abi: string) {
+    return await this.helper.callRpc('api.rpc.eth.call', [{from: signer, to: contractAddress, data: abi}]);
+  }
 
   async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
         
     const result = await collectionHelper.methods.createNonfungibleCollection(name, description, tokenPrefix).send();
+
+    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
+
+    return {collectionId, collectionAddress};
+  }
+
+  async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+        
+    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send();
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
@@ -215,6 +235,16 @@ class EthGroup extends EthGroupBase {
     }
   `);
   }
+
+  async recordCallFee(user: string, call: () => Promise<any>): Promise<bigint> {
+    const before = await this.helper.balance.getEthereum(user);
+    await call();
+    // In dev mode, the transaction might not finish processing in time
+    await this.helper.wait.newBlocks(1);
+    const after = await this.helper.balance.getEthereum(user);
+
+    return before - after;
+  }
 }  
   
 class EthAddressGroup extends EthGroupBase {
@@ -240,7 +270,7 @@ class EthAddressGroup extends EthGroupBase {
   }
 
   fromTokenId(collectionId: number, tokenId: number): string  {
-    return this.helper.util.getNestingTokenAddress(collectionId, tokenId);
+    return this.helper.util.getTokenAddress({collectionId, tokenId});
   }
 
   normalizeAddress(address: string): string {

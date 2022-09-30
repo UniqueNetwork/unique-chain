@@ -9,7 +9,6 @@ import config from '../../config';
 import '../../interfaces/augment-api-events';
 import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 
-
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
@@ -63,6 +62,12 @@ export async function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, 
     });
   });
 }
+export async function itSubIfWithPallet(name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+  return itSub(name, cb, {requiredPallets: required, ...opts});
+}
 itSub.only = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSub(name, cb, {only: true});
 itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSub(name, cb, {skip: true});
-itSub.ifWithPallets = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSub(name, cb, {requiredPallets: required});
+
+itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
+itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
+itSub.ifWithPallets = itSubIfWithPallet;

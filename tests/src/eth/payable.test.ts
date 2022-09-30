@@ -50,7 +50,7 @@ describe('EVM payable contracts', () => {
     await helper.eth.transferBalanceFromSubstrate(alice, helper.address.substrateToEth(alice.address), 5n);
 
 
-    await helper.eth.callEVM(alice, contract.options.address, contract.methods.giveMoney().encodeABI(), weiCount);
+    await helper.eth.sendEVM(alice, contract.options.address, contract.methods.giveMoney().encodeABI(), weiCount);
 
     expect(await contract.methods.getCollected().call()).to.be.equal(weiCount);
   });
