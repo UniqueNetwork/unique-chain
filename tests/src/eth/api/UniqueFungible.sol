@@ -14,14 +14,23 @@ interface ERC165 is Dummy {
 
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
 =======
+=======
+>>>>>>> feat: add delete properties
 <<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x660da1e8
 =======
 /// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
 >>>>>>> 52d7afd4... feat: Add `collection_admins` method to eth collection.
+<<<<<<< HEAD
 >>>>>>> feat: Add `collection_admins` method to eth collection.
+=======
+=======
+/// @dev the ERC-165 identifier for this interface is 0x89055d41
+>>>>>>> 89fdf6c7... feat: add delete properties
+>>>>>>> feat: add delete properties
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -31,12 +40,26 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionProperty(string,bytes)
 	function setCollectionProperty(string memory key, bytes memory value) external;
 
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	/// @dev EVM selector for this function is: 0x50b26b2a,
+	///  or in textual repr: setCollectionProperties((string,bytes)[])
+	function setCollectionProperties(Tuple10[] memory properties) external;
+
 	/// Delete collection property.
 	///
 	/// @param key Property key.
 	/// @dev EVM selector for this function is: 0x7b7debce,
 	///  or in textual repr: deleteCollectionProperty(string)
 	function deleteCollectionProperty(string memory key) external;
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @dev EVM selector for this function is: 0xee206ee3,
+	///  or in textual repr: deleteCollectionProperties(string[])
+	function deleteCollectionProperties(string[] memory keys) external;
 
 	/// Get collection property.
 	///
@@ -47,6 +70,14 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
 	function collectionProperty(string memory key) external view returns (bytes memory);
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0x285fb8e6,
+	///  or in textual repr: collectionProperties(string[])
+	function collectionProperties(string[] memory keys) external view returns (Tuple10[] memory);
 
 	/// Set the sponsor of the collection.
 	///
@@ -277,7 +308,17 @@ interface Collection is Dummy, ERC165 {
 	function setOwnerCross(Tuple6 memory newOwner) external;
 }
 
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x032e5926
+=======
+/// @dev anonymous struct
+struct Tuple10 {
+	string field_0;
+	bytes field_1;
+}
+
+/// @dev the ERC-165 identifier for this interface is 0x63034ac5
+>>>>>>> feat: add delete properties
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)

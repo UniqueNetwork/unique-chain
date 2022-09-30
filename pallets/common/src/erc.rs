@@ -111,14 +111,30 @@ where
 	/// @param key Property key.
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
-		self.consume_store_reads_and_writes(1, 1)?;
-
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;
 
 		<Pallet<T>>::delete_collection_property(self, &caller, key).map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	#[weight(<SelfWeightOf<T>>::delete_collection_properties(keys.len() as u32))]
+	fn delete_collection_properties(&mut self, caller: caller, keys: Vec<string>) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::delete_collection_properties(self, &caller, keys).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get collection property.
@@ -140,28 +156,34 @@ where
 
 	/// Get collection properties.
 	///
-	/// @param keys Properties keys.
+	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
 	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<(string, bytes)>> {
-		let mut keys_ = Vec::<PropertyKey>::with_capacity(keys.len());
-		for key in keys {
-			keys_.push(
+		let keys = keys
+			.into_iter()
+			.map(|key| {
 				<Vec<u8>>::from(key)
 					.try_into()
-					.map_err(|_| Error::Revert("key too large".into()))?,
-			)
-		}
-		let properties = Pallet::<T>::filter_collection_properties(self.id, Some(keys_))
-			.map_err(dispatch_to_evm::<T>)?;
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
 
-		let mut properties_ = Vec::<(string, bytes)>::with_capacity(properties.len());
-		for p in properties {
-			let key =
-				string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
-			let value = bytes(p.value.to_vec());
-			properties_.push((key, value));
-		}
-		Ok(properties_)
+		let properties = Pallet::<T>::filter_collection_properties(
+			self.id,
+			if keys.is_empty() { None } else { Some(keys) },
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		let properties = properties
+			.into_iter()
+			.map(|p| {
+				let key =
+					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
+				let value = bytes(p.value.to_vec());
+				Ok((key, value))
+			})
+			.collect::<Result<Vec<_>>>()?;
+		Ok(properties)
 	}
 
 	/// Set the sponsor of the collection.

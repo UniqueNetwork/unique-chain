@@ -19,10 +19,14 @@ contract ERC165 is Dummy {
 
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
 =======
 /// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
 >>>>>>> feat: Add `collection_admins` method to eth collection.
+=======
+/// @dev the ERC-165 identifier for this interface is 0x89055d41
+>>>>>>> feat: add delete properties
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -37,6 +41,17 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	/// @dev EVM selector for this function is: 0x50b26b2a,
+	///  or in textual repr: setCollectionProperties((string,bytes)[])
+	function setCollectionProperties(Tuple10[] memory properties) public {
+		require(false, stub_error);
+		properties;
+		dummy = 0;
+	}
+
 	/// Delete collection property.
 	///
 	/// @param key Property key.
@@ -45,6 +60,17 @@ contract Collection is Dummy, ERC165 {
 	function deleteCollectionProperty(string memory key) public {
 		require(false, stub_error);
 		key;
+		dummy = 0;
+	}
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @dev EVM selector for this function is: 0xee206ee3,
+	///  or in textual repr: deleteCollectionProperties(string[])
+	function deleteCollectionProperties(string[] memory keys) public {
+		require(false, stub_error);
+		keys;
 		dummy = 0;
 	}
 
@@ -61,6 +87,19 @@ contract Collection is Dummy, ERC165 {
 		key;
 		dummy;
 		return hex"";
+	}
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0x285fb8e6,
+	///  or in textual repr: collectionProperties(string[])
+	function collectionProperties(string[] memory keys) public view returns (Tuple10[] memory) {
+		require(false, stub_error);
+		keys;
+		dummy;
+		return new Tuple10[](0);
 	}
 
 	/// Set the sponsor of the collection.
@@ -414,7 +453,17 @@ contract Collection is Dummy, ERC165 {
 	}
 }
 
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x032e5926
+=======
+/// @dev anonymous struct
+struct Tuple10 {
+	string field_0;
+	bytes field_1;
+}
+
+/// @dev the ERC-165 identifier for this interface is 0x63034ac5
+>>>>>>> feat: add delete properties
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)

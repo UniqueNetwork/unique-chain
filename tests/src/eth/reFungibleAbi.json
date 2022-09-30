@@ -206,7 +206,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple8[]",
+=======
+        "internalType": "struct Tuple19[]",
+>>>>>>> feat: add delete properties
         "name": "",
         "type": "tuple[]"
       }
@@ -223,9 +227,32 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple8",
+=======
+        "internalType": "struct Tuple19",
+>>>>>>> feat: add delete properties
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "collectionProperties",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+        ],
+        "internalType": "struct Tuple17[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -247,7 +274,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple8",
+=======
+        "internalType": "struct Tuple19",
+>>>>>>> feat: add delete properties
         "name": "",
         "type": "tuple"
       }
@@ -267,6 +298,15 @@
     "name": "contractAddress",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "deleteCollectionProperties",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -577,6 +617,23 @@
       }
     ],
     "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+        ],
+        "internalType": "struct Tuple17[]",
+        "name": "properties",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "setCollectionProperties",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

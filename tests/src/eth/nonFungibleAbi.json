@@ -319,6 +319,15 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "deleteCollectionProperties",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
     "name": "deleteCollectionProperty",
     "outputs": [],
