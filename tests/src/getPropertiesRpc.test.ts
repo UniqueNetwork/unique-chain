@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './util/playgrounds';
-import {UniqueHelper, UniqueBaseCollection, UniqueNFTCollection, UniqueNFToken} from './util/playgrounds/unique';
+import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {UniqueHelper, UniqueNFTCollection} from './util/playgrounds/unique';
 
 const collectionProps = [
   {key: 'col-0', value: 'col-0-value'},
