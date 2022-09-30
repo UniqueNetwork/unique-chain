@@ -173,19 +173,25 @@ fn create_refungible_collection_internal<
 		base_uri_value,
 		add_properties,
 	)?;
-	let value = value.as_u128();
-	let creation_price: Result<u128> = T::CollectionCreationPrice::get()
-		.try_into()
-		.map_err(|_| "collection creation price should be convertible to u128".into());
-	if value != creation_price? {
-		return Err("Sent amount not equals to collection creation price".into());
-	}
+	check_sent_amount_equals_collection_creation_price::<T>(value)?;
 	let collection_helpers_address =  T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
 	let collection_id = T::CollectionDispatch::create(caller.clone(), collection_helpers_address, data)
 		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
+}
+
+fn check_sent_amount_equals_collection_creation_price<T: Config>(value: value) -> Result<()> {
+	let value = value.as_u128();
+	let creation_price: u128 = T::CollectionCreationPrice::get()
+		.try_into()
+		.map_err(|_| ()) // workaround for `expect` requiring `Debug` trait
+		.expect("Collection creation price should be convertible to u128");
+	if value != creation_price {
+		return Err(format!("Sent amount not equals to collection creation price ({0})", creation_price).into());
+	}
+	Ok(())
 }
 
 /// @title Contract, which allows users to operate with collections
@@ -218,14 +224,7 @@ where
 			Default::default(),
 			false,
 		)?;
-		let value = value.as_u128();
-		let creation_price: Result<u128> = T::CollectionCreationPrice::get()
-			.try_into()
-			.map_err(|_| "collection creation price should be convertible to u128".into());
-		let creation_price = creation_price?;
-		if value != creation_price {
-			return Err(format!("Sent amount not equals to collection creation price ({0})", creation_price).into());
-		}
+		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =  T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 		let collection_id =
 			T::CollectionDispatch::create(caller, collection_helpers_address, data).map_err(dispatch_to_evm::<T>)?;
@@ -255,13 +254,7 @@ where
 			base_uri_value,
 			true,
 		)?;
-		let value = value.as_u128();
-		let creation_price: Result<u128> = T::CollectionCreationPrice::get()
-			.try_into()
-			.map_err(|_| "collection creation price should be convertible to u128".into());
-		if value != creation_price? {
-			return Err("Sent amount not equals to collection creation price".into());
-		}
+		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =  T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
 			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
