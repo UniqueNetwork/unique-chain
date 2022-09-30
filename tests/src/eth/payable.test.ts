@@ -140,16 +140,13 @@ describe('EVM transaction fees', () => {
   });
   
   itEth('Fee for nested calls to native methods is withdrawn from the user', async({helper}) => {
-    const CONTRACT_BALANCE = 3n * helper.balance.getOneTokenNominal();
+    const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
 
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await deployProxyContract(helper, deployer);
-    
-    const web3 = helper.getWeb3();
-    await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), gas: helper.eth.DEFAULT_GAS});
 
-    const collectionAddress = (await contract.methods.createNonfungibleCollection().send({from: caller})).events.CollectionCreated.returnValues.collection;
+    const collectionAddress = (await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)})).events.CollectionCreated.returnValues.collection;
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
     await contract.methods.mintNftToken(collectionAddress).send({from: caller});
@@ -160,22 +157,18 @@ describe('EVM transaction fees', () => {
   });
   
   itEth('Fee for nested calls to create*Collection methods is withdrawn from the user and from the contract', async({helper}) => {
-    const CONTRACT_BALANCE = 3n * helper.balance.getOneTokenNominal();
-
+    const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await deployProxyContract(helper, deployer);
-    
-    const web3 = helper.getWeb3();
-    await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), gas: helper.eth.DEFAULT_GAS});
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
-    await contract.methods.createNonfungibleCollection().send({from: caller});
+    await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)});
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
-    expect(finalContractBalance < initialContractBalance).to.be.true;
+    expect(finalContractBalance == initialContractBalance).to.be.true;
   });
 
   async function deployProxyContract(helper: EthUniqueHelper, deployer: string) {
@@ -188,6 +181,8 @@ describe('EVM transaction fees', () => {
 
       import {CollectionHelpers} from "../api/CollectionHelpers.sol";
       import {UniqueNFT} from "../api/UniqueNFT.sol";
+
+      error Value(uint256 value);
 
       contract ProxyContract {
         bool value = false;
@@ -207,30 +202,30 @@ describe('EVM transaction fees', () => {
           Flipper(flipper).flip();
         }
 
-        function createNonfungibleCollection() public {
+        function createNonfungibleCollection() external payable {
           address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-		      address nftCollection = CollectionHelpers(collectionHelpers).createNonfungibleCollection("A", "B", "C");
+		      address nftCollection = CollectionHelpers(collectionHelpers).createNonfungibleCollection{value: msg.value}("A", "B", "C");
           emit CollectionCreated(nftCollection);
         }
 
-        function mintNftToken(address collectionAddress) public {
+        function mintNftToken(address collectionAddress) external  {
           UniqueNFT collection = UniqueNFT(collectionAddress);
           uint256 tokenId = collection.nextTokenId();
           collection.mint(msg.sender, tokenId);
           emit TokenMinted(tokenId);
         }
 
-        function getValue() public view returns (bool) {
+        function getValue() external view returns (bool) {
           return Flipper(flipper).getValue();
         }
       }
 
       contract Flipper {
         bool value = false;
-        function flip() public {
+        function flip() external {
           value = !value;
         }
-        function getValue() public view returns (bool) {
+        function getValue() external view returns (bool) {
           return value;
         }
       }

@@ -373,9 +373,10 @@ impl<T: Config> Pallet<T> {
 	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, CollectionFlags::default())
+		<PalletCommon<T>>::init_collection(owner, payer, data, CollectionFlags::default())
 	}
 
 	/// Destroy RFT collection
