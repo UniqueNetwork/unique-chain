@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
 import {ICollectionCreationOptions, IProperty} from './util/playgrounds/types';
-import {DevUniqueHelper} from './util/playgrounds/unique.dev';
+import {UniqueHelper} from './util/playgrounds/unique';
 
-async function mintCollectionHelper(helper: DevUniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
+async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
   let collection;
   if (type === 'nft') {
     collection = await helper.nft.mintCollection(signer, options);
@@ -29,7 +29,7 @@ async function mintCollectionHelper(helper: DevUniqueHelper, signer: IKeyringPai
     collection = await helper.rft.mintCollection(signer, options);
   }
   const data = await collection.getData();
-  expect(data?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(signer.address));
+  expect(data?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(signer.address));
   expect(data?.name).to.be.equal(options.name);
   expect(data?.description).to.be.equal(options.description);
   expect(data?.raw.tokenPrefix).to.be.equal(options.tokenPrefix);
@@ -54,32 +54,27 @@ describe('integration test: ext. createCollection():', () => {
     });
   });
   itSub('Create new NFT collection', async ({helper}) => {
-
     await mintCollectionHelper(helper, alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 'nft');
   });
   itSub('Create new NFT collection whith collection_name of maximum length (64 bytes)', async ({helper}) => {
-
     await mintCollectionHelper(helper, alice, {name: 'A'.repeat(64), description: 'descr', tokenPrefix: 'COL'}, 'nft');
   });
   itSub('Create new NFT collection whith collection_description of maximum length (256 bytes)', async ({helper}) => {
-
     await mintCollectionHelper(helper, alice, {name: 'name', description: 'A'.repeat(256), tokenPrefix: 'COL'}, 'nft');
   });
   itSub('Create new NFT collection whith token_prefix of maximum length (16 bytes)', async ({helper}) => {
-
     await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(16)}, 'nft');
   });
-  itSub('Create new Fungible collection', async ({helper}) => {
 
+  itSub('Create new Fungible collection', async ({helper}) => {
     await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 'fungible');
   });
-  itSub.ifWithPallets('Create new ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
 
+  itSub.ifWithPallets('Create new ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
     await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 'refungible');
   });
 
   itSub('create new collection with properties', async ({helper}) => {
-
     await mintCollectionHelper(helper, alice, {
       name: 'name', description: 'descr', tokenPrefix: 'COL',
       properties: [{key: 'key1', value: 'val1'}],
@@ -88,7 +83,6 @@ describe('integration test: ext. createCollection():', () => {
   });
 
   itSub('Create new collection with extra fields', async ({helper}) => {
-
     const collection = await mintCollectionHelper(helper, alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'}, 'fungible');
     await collection.setPermissions(alice, {access: 'AllowList'});
     await collection.setLimits(alice, {accountTokenOwnershipLimit: 3});
@@ -96,7 +90,7 @@ describe('integration test: ext. createCollection():', () => {
     const limits = await collection.getEffectiveLimits();
     const raw = data?.raw;
 
-    expect(data?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(alice.address));
+    expect(data?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(alice.address));
     expect(data?.name).to.be.equal('name');
     expect(data?.description).to.be.equal('descr');
     expect(raw.permissions.access).to.be.equal('AllowList');
@@ -105,7 +99,6 @@ describe('integration test: ext. createCollection():', () => {
   });
 
   itSub('New collection is not external', async ({helper}) => {
-
     const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
     const data = await collection.getData();
     expect(data?.raw.readOnly).to.be.false;
@@ -131,12 +124,11 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
   itSub('(!negative test!) create new NFT collection whith incorrect data (token_prefix)', async ({helper}) => {
-
     const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(17)});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
+  
   itSub('(!negative test!) fails when bad limits are set', async ({helper}) => {
-
     const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', limits: {tokenLimit: 0}});
     await expect(mintCollectionTx()).to.be.rejectedWith(/common\.CollectionTokenLimitExceeded/);
   });

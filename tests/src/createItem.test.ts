@@ -15,24 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-
-import {
-  createCollection,
-  itApi,
-  normalizeAccountId,
-  getCreateItemResult,
-  CrossAccountId,
-} from './util/helpers';
-
 import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
-import {IProperty} from './util/playgrounds/types';
-import {executeTransaction} from './substrate/substrate-api';
-import {DevUniqueHelper} from './util/playgrounds/unique.dev';
+import {IProperty, ICrossAccountId} from './util/playgrounds/types';
+import {UniqueHelper} from './util/playgrounds/unique';
 
-async function mintTokenHelper(helper: DevUniqueHelper, collection: any, signer: IKeyringPair, owner: CrossAccountId, type: 'nft' | 'fungible' | 'refungible'='nft', properties?: IProperty[]) {
+async function mintTokenHelper(helper: UniqueHelper, collection: any, signer: IKeyringPair, owner: ICrossAccountId, type: 'nft' | 'fungible' | 'refungible'='nft', properties?: IProperty[]) {
   let token;
   const itemCountBefore = await helper.collection.getLastTokenId(collection.collectionId);
-  const itemBalanceBefore = (await helper.api!.rpc.unique.balance(collection.collectionId, owner, 0)).toBigInt();
+  const itemBalanceBefore = (await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0])).toBigInt();
   if (type === 'nft') {
     token = await collection.mintToken(signer, owner, properties);
   } else if (type === 'fungible') {
@@ -42,7 +32,7 @@ async function mintTokenHelper(helper: DevUniqueHelper, collection: any, signer:
   }
 
   const itemCountAfter = await helper.collection.getLastTokenId(collection.collectionId);
-  const itemBalanceAfter = (await helper.api!.rpc.unique.balance(collection.collectionId, owner, 0)).toBigInt();
+  const itemBalanceAfter = (await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0])).toBigInt();
 
   if (type === 'fungible') {
     expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
@@ -75,27 +65,22 @@ describe('integration test: ext. ():', () => {
   });
   itSub('Check events on create new item in Fungible collection', async ({helper}) => {
     const {collectionId} = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
-    const api = helper.api!;
-
-
-    const to = normalizeAccountId(alice);
+    const to = {Substrate: alice.address};
     {
       const createData = {fungible: {value: 100}};
-      const tx = api.tx.unique.createItem(collectionId, to, createData as any);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getCreateItemResult(events);
-      expect(result.amount).to.be.equal(100);
-      expect(result.collectionId).to.be.equal(collectionId);
-      expect(result.recipient).to.be.deep.equal(to);
+      const events = await helper.executeExtrinsic(alice, 'api.tx.unique.createItem', [collectionId, to, createData as any]);
+      const result = helper.util.extractTokensFromCreationResult(events);
+      expect(result.tokens[0].amount).to.be.equal(100n);
+      expect(result.tokens[0].collectionId).to.be.equal(collectionId);
+      expect(result.tokens[0].owner).to.be.deep.equal(to);
     }
     {
       const createData = {fungible: {value: 50}};
-      const tx = api.tx.unique.createItem(collectionId, to, createData as any);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getCreateItemResult(events);
-      expect(result.amount).to.be.equal(50);
-      expect(result.collectionId).to.be.equal(collectionId);
-      expect(result.recipient).to.be.deep.equal(to);
+      const events = await helper.executeExtrinsic(alice, 'api.tx.unique.createItem', [collectionId, to, createData as any]);
+      const result = helper.util.extractTokensFromCreationResult(events);
+      expect(result.tokens[0].amount).to.be.equal(50n);
+      expect(result.tokens[0].collectionId).to.be.equal(collectionId);
+      expect(result.tokens[0].owner).to.be.deep.equal(to);
     }
   });
   itSub.ifWithPallets('Create new item in ReFungible collection', [Pallets.ReFungible], async ({helper}) =>  {
@@ -162,12 +147,12 @@ describe('integration test: ext. ():', () => {
     const amount = 1n;
     const token = await mintTokenHelper(helper, collection, alice, {Substrate: bob.address});
     {
-      const totalPieces = await helper.api?.rpc.unique.totalPieces(collection.collectionId, token.tokenId);
+      const totalPieces = await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, token.tokenId]);
       expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
     }
     await token.transfer(bob, {Substrate: alice.address});
     {
-      const totalPieces = await helper.api?.rpc.unique.totalPieces(collection.collectionId, token.tokenId);
+      const totalPieces = await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, token.tokenId]);
       expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
     }
   });
@@ -267,21 +252,21 @@ describe('Negative integration test: ext. createItem():', () => {
   itSub('Check total pieces for invalid Fungible token', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
     const invalidTokenId = 1_000_000;
-    expect((await helper.api?.rpc.unique.totalPieces(collection.collectionId, invalidTokenId))?.isNone).to.be.true;
-    expect((await helper.api?.rpc.unique.tokenData(collection.collectionId, invalidTokenId))?.pieces.toBigInt()).to.be.equal(0n);
+    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))?.isNone).to.be.true;
+    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces.toBigInt()).to.be.equal(0n);
   });
 
   itSub('Check total pieces for invalid NFT token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const invalidTokenId = 1_000_000;
-    expect((await helper.api?.rpc.unique.totalPieces(collection.collectionId, invalidTokenId))?.isNone).to.be.true;
-    expect((await helper.api?.rpc.unique.tokenData(collection.collectionId, invalidTokenId))?.pieces.toBigInt()).to.be.equal(0n);
+    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))?.isNone).to.be.true;
+    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces.toBigInt()).to.be.equal(0n);
   });
 
   itSub.ifWithPallets('Check total pieces for invalid Refungible token', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const invalidTokenId = 1_000_000;
-    expect((await helper.api?.rpc.unique.totalPieces(collection.collectionId, invalidTokenId))?.isNone).to.be.true;
-    expect((await helper.api?.rpc.unique.tokenData(collection.collectionId, invalidTokenId))?.pieces.toBigInt()).to.be.equal(0n);
+    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))?.isNone).to.be.true;
+    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces.toBigInt()).to.be.equal(0n);
   });
 });
