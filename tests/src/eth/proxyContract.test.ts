@@ -32,6 +32,7 @@ describe('EVM payable contracts', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const proxyContract = await deployProxyContract(helper, deployer);
+    
     const realContractV1 = await deployRealContractV1(helper, deployer);
     const realContractV1proxy = new helper.web3!.eth.Contract(realContractV1.options.jsonInterface, proxyContract.options.address, {from: caller, ...GAS_ARGS});
     await proxyContract.methods.updateVersion(realContractV1.options.address).send();
@@ -43,15 +44,18 @@ describe('EVM payable contracts', () => {
     const flipCount1 = await realContractV1proxy.methods.getFlipCount().call();
     expect(flipCount1).to.be.equal('3');
     expect(value1).to.be.equal(true);
+
     const realContractV2 = await deployRealContractV2(helper, deployer);
     const realContractV2proxy = new helper.web3!.eth.Contract(realContractV2.options.jsonInterface, proxyContract.options.address, {from: caller, ...GAS_ARGS});
     await proxyContract.methods.updateVersion(realContractV2.options.address).send();
+
     await realContractV2proxy.methods.flip().send();
     await realContractV2proxy.methods.flip().send();
+    await realContractV2proxy.methods.increaseFlipCount().send();
     const value2 = await realContractV2proxy.methods.getValue().call();
     const flipCount2 = await realContractV2proxy.methods.getFlipCount().call();
     expect(value2).to.be.equal(true);
-    expect(flipCount2).to.be.equal('1');
+    expect(flipCount2).to.be.equal('6');
   });
 
   async function deployProxyContract(helper: EthUniqueHelper, deployer: string) {
@@ -129,6 +133,9 @@ describe('EVM payable contracts', () => {
         function flip() external {
           value = !value;
           flipCount--;
+        }
+        function increaseFlipCount() external {
+          flipCount = flipCount + 5;
         }
         function getValue() external view returns (bool) {
           return value;
