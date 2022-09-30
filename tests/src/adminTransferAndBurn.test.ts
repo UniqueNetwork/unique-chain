@@ -15,14 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {usingPlaygrounds} from './util/playgrounds';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-
-let donor: IKeyringPair;
+import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
 
 describe('Integration Test: ownerCanTransfer allows admins to use only transferFrom/burnFrom:', () => {
   let alice: IKeyringPair;
@@ -31,44 +24,40 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      const donor = privateKey('//Alice');
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
 
-  it('admin transfers other user\'s token', async () => {
-    await usingPlaygrounds(async (helper) => {
-      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
-      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
-      const limits = await helper.collection.getEffectiveLimits(collectionId);
-      expect(limits.ownerCanTransfer).to.be.true;
+  itSub('admin transfers other user\'s token', async ({helper}) => {
+    const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
+    await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+    const limits = await helper.collection.getEffectiveLimits(collectionId);
+    expect(limits.ownerCanTransfer).to.be.true;
 
-      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-      const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-      await expect(transferResult()).to.be.rejected;
+    const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+    const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
+    await expect(transferResult()).to.be.rejected;
 
-      await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
-      const newTokenOwner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(newTokenOwner.Substrate).to.be.equal(charlie.address);
-    });
+    await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
+    const newTokenOwner = await helper.nft.getTokenOwner(collectionId, tokenId);
+    expect(newTokenOwner.Substrate).to.be.equal(charlie.address);
   });
 
-  it('admin burns other user\'s token', async () => {
-    await usingPlaygrounds(async (helper) => {
-      const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
+  itSub('admin burns other user\'s token', async ({helper}) => {
+    const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
 
-      await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
-      const limits = await helper.collection.getEffectiveLimits(collectionId);
-      expect(limits.ownerCanTransfer).to.be.true;
+    await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
+    const limits = await helper.collection.getEffectiveLimits(collectionId);
+    expect(limits.ownerCanTransfer).to.be.true;
 
-      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-      const burnTxFailed = async () => helper.nft.burnToken(alice, collectionId, tokenId);
+    const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
+    const burnTxFailed = async () => helper.nft.burnToken(alice, collectionId, tokenId);
 
-      await expect(burnTxFailed()).to.be.rejected;
+    await expect(burnTxFailed()).to.be.rejected;
 
-      await helper.nft.burnToken(bob, collectionId, tokenId);
-      const token = await helper.nft.getToken(collectionId, tokenId);
-      expect(token).to.be.null;
-    });
+    await helper.nft.burnToken(bob, collectionId, tokenId);
+    const token = await helper.nft.getToken(collectionId, tokenId);
+    expect(token).to.be.null;
   });
 });

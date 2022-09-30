@@ -44,6 +44,7 @@
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetSchemaVersion": "mocha --timeout 9999999 -r ts-node/register ./**/setSchemaVersion.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
+    "testChangeCollectionOwner": "mocha --timeout 9999999 -r ts-node/register ./**/change-collection-owner.test.ts",
     "testSetCollectionSponsor": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionSponsor.test.ts",
     "testConfirmSponsorship": "mocha --timeout 9999999 -r ts-node/register ./**/confirmSponsorship.test.ts",
     "testRemoveCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/removeCollectionAdmin.test.ts",

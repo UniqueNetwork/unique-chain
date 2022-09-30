@@ -666,7 +666,6 @@ describe('Integration Test: Token Properties', () => {
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
-
     }
 
     const properties = await nestedToken.getProperties(propertyKeys);

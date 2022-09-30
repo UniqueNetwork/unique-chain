@@ -141,7 +141,7 @@ class UniqueUtil {
     return keyring.addFromUri(seed);
   }
 
-  static extractCollectionIdFromCreationResult(creationResult: ITransactionResult) {
+  static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
     if (creationResult.status !== this.transactionStatus.SUCCESS) {
       throw Error('Unable to create collection!');
     }
@@ -160,12 +160,15 @@ class UniqueUtil {
     return collectionId;
   }
 
-  static extractTokensFromCreationResult(creationResult: ITransactionResult) {
+  static extractTokensFromCreationResult(creationResult: ITransactionResult): {
+    success: boolean, 
+    tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
+  } {
     if (creationResult.status !== this.transactionStatus.SUCCESS) {
       throw Error('Unable to create tokens!');
     }
     let success = false;
-    const tokens = [] as any;
+    const tokens = [] as {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[];
     creationResult.result.events.forEach(({event: {data, method, section}}) => {
       if (method === 'ExtrinsicSuccess') {
         success = true;
@@ -173,19 +176,23 @@ class UniqueUtil {
         tokens.push({
           collectionId: parseInt(data[0].toString(), 10),
           tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toJSON(),
+          owner: data[2].toHuman(),
+          amount: data[3].toBigInt(),
         });
       }
     });
     return {success, tokens};
   }
 
-  static extractTokensFromBurnResult(burnResult: ITransactionResult) {
+  static extractTokensFromBurnResult(burnResult: ITransactionResult): {
+    success: boolean, 
+    tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
+  } {
     if (burnResult.status !== this.transactionStatus.SUCCESS) {
       throw Error('Unable to burn tokens!');
     }
     let success = false;
-    const tokens = [] as any;
+    const tokens = [] as {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[];
     burnResult.result.events.forEach(({event: {data, method, section}}) => {
       if (method === 'ExtrinsicSuccess') {
         success = true;
@@ -193,14 +200,15 @@ class UniqueUtil {
         tokens.push({
           collectionId: parseInt(data[0].toString(), 10),
           tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toJSON(),
+          owner: data[2].toHuman(),
+          amount: data[3].toBigInt(),
         });
       }
     });
     return {success, tokens};
   }
 
-  static findCollectionInEvents(events: {event: IEvent}[], collectionId: number, expectedSection: string, expectedMethod: string) {
+  static findCollectionInEvents(events: {event: IEvent}[], collectionId: number, expectedSection: string, expectedMethod: string): boolean {
     let eventId = null;
     events.forEach(({event: {data, method, section}}) => {
       if ((section === expectedSection) && (method === expectedMethod)) {
@@ -1022,12 +1030,9 @@ class CollectionGroup extends HelperGroup {
    * @param tokenId ID of token
    * @param amount amount of tokens to be burned. For NFT must be set to 1n
    * @example burnToken(aliceKeyring, 10, 5);
-   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
+   * @returns ```true``` if the extrinsic is successful, otherwise ```false```
    */
-  async burnToken(signer: TSigner, collectionId: number, tokenId: number, amount=1n): Promise<{
-    success: boolean,
-    token: number | null
-  }> {
+  async burnToken(signer: TSigner, collectionId: number, tokenId: number, amount=1n): Promise<boolean> {
     const burnResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.burnItem', [collectionId, tokenId, amount],
@@ -1035,7 +1040,7 @@ class CollectionGroup extends HelperGroup {
     );
     const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult);
     if (burnedTokens.tokens.length > 1) throw Error('Burned multiple tokens');
-    return {success: burnedTokens.success, token: burnedTokens.tokens.length > 0 ? burnedTokens.tokens[0] : null};
+    return burnedTokens.success;
   }
 
   /**
@@ -1161,7 +1166,9 @@ class NFTnRFT extends CollectionGroup {
     if (tokenData === null || tokenData.owner === null) return null;
     const owner = {} as any;
     for (const key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = new CrossAccountId(tokenData.owner[key]).withNormalizedSubstrate();
+      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate' 
+        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key]) 
+        : tokenData.owner[key];
     }
     tokenData.normalizedOwner = CrossAccountId.fromLowerCaseKeys(owner);
     return tokenData;
@@ -1711,9 +1718,9 @@ class RFTGroup extends NFTnRFT {
    * @param tokenId ID of token
    * @param amount number of pieces to be burnt
    * @example burnToken(aliceKeyring, 10, 5);
-   * @returns ```true``` and burnt token number, if extrinsic is successful. Otherwise ```false``` and ```null```
+   * @returns ```true``` if the extrinsic is successful, otherwise ```false```
    */
-  async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, amount=1n): Promise<{ success: boolean; token: number | null; }> {
+  async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, amount=1n): Promise<boolean> {
     return await super.burnToken(signer, collectionId, tokenId, amount);
   }
 
@@ -1919,7 +1926,7 @@ class FTGroup extends CollectionGroup {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async burnTokens(signer: IKeyringPair, collectionId: number, amount=1n): Promise<boolean> {
-    return (await super.burnToken(signer, collectionId, 0, amount)).success;
+    return await super.burnToken(signer, collectionId, 0, amount);
   }
 
   /**

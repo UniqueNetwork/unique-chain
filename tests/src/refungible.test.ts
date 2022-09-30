@@ -124,7 +124,7 @@ describe('integration test: Refungible functionality:', async () => {
     const token = await collection.mintToken(alice, 100n);
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
-    expect((await token.burn(alice, 99n)).success).to.be.true;
+    expect(await token.burn(alice, 99n)).to.be.true;
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(1n);
   });
@@ -136,7 +136,7 @@ describe('integration test: Refungible functionality:', async () => {
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
 
-    expect((await token.burn(alice, 100n)).success).to.be.true;
+    expect(await token.burn(alice, 100n)).to.be.true;
     expect(await collection.isTokenExists(token.tokenId)).to.be.false;
   });
 
@@ -152,17 +152,17 @@ describe('integration test: Refungible functionality:', async () => {
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(40n);
     expect(await token.getBalance({Substrate: bob.address})).to.be.equal(60n);
 
-    expect((await token.burn(alice, 40n)).success).to.be.true;
+    expect(await token.burn(alice, 40n)).to.be.true;
 
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
 
-    expect((await token.burn(bob, 59n)).success).to.be.true;
+    expect(await token.burn(bob, 59n)).to.be.true;
 
     expect(await token.getBalance({Substrate: bob.address})).to.be.equal(1n);
     expect(await collection.isTokenExists(token.tokenId)).to.be.true;
 
-    expect((await token.burn(bob, 1n)).success).to.be.true;
+    expect(await token.burn(bob, 1n)).to.be.true;
 
     expect(await collection.isTokenExists(token.tokenId)).to.be.false;
   });

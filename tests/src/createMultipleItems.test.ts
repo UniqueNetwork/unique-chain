@@ -14,292 +14,151 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync, executeTransaction} from './substrate/substrate-api';
-import {
-  createCollectionExpectSuccess,
-  destroyCollectionExpectSuccess,
-  getGenericResult,
-  normalizeAccountId,
-  setCollectionLimitsExpectSuccess,
-  addCollectionAdminExpectSuccess,
-  getBalance,
-  getTokenOwner,
-  getLastTokenId,
-  getCreatedCollectionCount,
-  createCollectionWithPropsExpectSuccess,
-  createMultipleItemsWithPropsExpectSuccess,
-  getTokenProperties,
-  requirePallets,
-  Pallets,
-  checkPalletsPresence,
-} from './util/helpers';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {usingPlaygrounds, expect, Pallets, itSub} from './util/playgrounds';
 
 describe('Integration Test createMultipleItems(collection_id, owner, items_data):', () => {
-  it('Create 0x31, 0x32, 0x33 items in active NFT collection and verify tokens data in chain', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-
-      const alice = privateKeyWrapper('//Alice');
-      await submitTransactionAsync(
-        alice, 
-        api.tx.unique.setTokenPropertyPermissions(collectionId, [{key: 'data', permission: {tokenOwner: true}}]),
-      );
-      
-      const args = [
-        {NFT: {properties: [{key: 'data', value: '1'}]}},
-        {NFT: {properties: [{key: 'data', value: '2'}]}},
-        {NFT: {properties: [{key: 'data', value: '3'}]}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await submitTransactionAsync(alice, createMultipleItemsTx);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
-
-      expect((await getTokenProperties(api, collectionId, 1, ['data']))[0].value).to.be.equal('1');
-      expect((await getTokenProperties(api, collectionId, 2, ['data']))[0].value).to.be.equal('2');
-      expect((await getTokenProperties(api, collectionId, 3, ['data']))[0].value).to.be.equal('3');
-    });
-  });
-
-  it('Create 0x01, 0x02, 0x03 items in active Fungible collection and verify tokens data in chain', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper('//Alice');
-      const args = [
-        {Fungible: {value: 1}},
-        {Fungible: {value: 2}},
-        {Fungible: {value: 3}},
-      ];
-      const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await submitTransactionAsync(alice, createMultipleItemsTx);
-      const token1Data = await getBalance(api, collectionId, alice.address, 0);
-
-      expect(token1Data).to.be.equal(6n); // 1 + 2 + 3
-    });
-  });
-
-  it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper('//Alice');
-      const args = [
-        {ReFungible: {pieces: 1}},
-        {ReFungible: {pieces: 2}},
-        {ReFungible: {pieces: 3}},
-      ];
-      const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await submitTransactionAsync(alice, createMultipleItemsTx);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getBalance(api, collectionId, alice.address, 1)).to.be.equal(1n);
-      expect(await getBalance(api, collectionId, alice.address, 2)).to.be.equal(2n);
-      expect(await getBalance(api, collectionId, alice.address, 3)).to.be.equal(3n);
-    });
-  });
-
-  it('Can mint amount of items equals to collection limits', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-
-      const collectionId = await createCollectionExpectSuccess();
-      await setCollectionLimitsExpectSuccess(alice, collectionId, {
-        tokenLimit: 2,
-      });
-      const args = [
-        {NFT: {}},
-        {NFT: {}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      const events = await submitTransactionAsync(alice, createMultipleItemsTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-    });
-  });
-
-  it('Create 0x31, 0x32, 0x33 items in active NFT with property Admin', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}}]});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper('//Alice');
-      const args = [
-        {NFT: {properties: [{key: 'k', value: 'v1'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v3'}]}},
-      ];
-
-      await createMultipleItemsWithPropsExpectSuccess(alice, collectionId, args);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
-
-      expect((await getTokenProperties(api, collectionId, 1, ['k']))[0].value).to.be.equal('v1');
-      expect((await getTokenProperties(api, collectionId, 2, ['k']))[0].value).to.be.equal('v2');
-      expect((await getTokenProperties(api, collectionId, 3, ['k']))[0].value).to.be.equal('v3');
-    });
-  });
-
-  it('Create 0x31, 0x32, 0x33 items in active NFT with property AdminConst', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [
-        {NFT: {properties: [{key: 'k', value: 'v1'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v3'}]}},
-      ];
-
-      await createMultipleItemsWithPropsExpectSuccess(alice, collectionId, args);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
-
-      expect((await getTokenProperties(api, collectionId, 1, ['k']))[0].value).to.be.equal('v1');
-      expect((await getTokenProperties(api, collectionId, 2, ['k']))[0].value).to.be.equal('v2');
-      expect((await getTokenProperties(api, collectionId, 3, ['k']))[0].value).to.be.equal('v3');
-    });
-  });
-
-  it('Create 0x31, 0x32, 0x33 items in active NFT with property itemOwnerOrAdmin', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const alice = privateKeyWrapper('//Alice');
-      const args = [
-        {NFT: {properties: [{key: 'k', value: 'v1'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'k', value: 'v3'}]}},
-      ];
-
-      await createMultipleItemsWithPropsExpectSuccess(alice, collectionId, args);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(alice.address));
-      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(alice.address));
-
-      expect((await getTokenProperties(api, collectionId, 1, ['k']))[0].value).to.be.equal('v1');
-      expect((await getTokenProperties(api, collectionId, 2, ['k']))[0].value).to.be.equal('v2');
-      expect((await getTokenProperties(api, collectionId, 3, ['k']))[0].value).to.be.equal('v3');
-    });
-  });
-});
-
-describe('Integration Test createMultipleItems(collection_id, owner, items_data) with collection admin permissions:', () => {
   let alice: IKeyringPair;
-  let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([100n], donor);
     });
   });
 
-  it('Create 0x31, 0x32, 0x33 items in active NFT collection and verify tokens data in chain', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({propPerm: [{key: 'data', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [
-        {NFT: {properties: [{key: 'data', value: 'v1'}]}},
-        {NFT: {properties: [{key: 'data', value: 'v2'}]}},
-        {NFT: {properties: [{key: 'data', value: 'v3'}]}},
-      ];
-      const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
-      await submitTransactionAsync(bob, createMultipleItemsTx);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getTokenOwner(api, collectionId, 1)).to.be.deep.equal(normalizeAccountId(bob.address));
-      expect(await getTokenOwner(api, collectionId, 2)).to.be.deep.equal(normalizeAccountId(bob.address));
-      expect(await getTokenOwner(api, collectionId, 3)).to.be.deep.equal(normalizeAccountId(bob.address));
-
-      expect((await getTokenProperties(api, collectionId, 1, ['data']))[0].value).to.be.equal('v1');
-      expect((await getTokenProperties(api, collectionId, 2, ['data']))[0].value).to.be.equal('v2');
-      expect((await getTokenProperties(api, collectionId, 3, ['data']))[0].value).to.be.equal('v3');
+  itSub('Create 0x31, 0x32, 0x33 items in active NFT collection and verify tokens data in chain', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: true, mutable: false, collectionAdmin: false}},
+      ],
     });
+    const args = [
+      {properties: [{key: 'data', value: '1'}]},
+      {properties: [{key: 'data', value: '2'}]},
+      {properties: [{key: 'data', value: '3'}]},
+    ];
+    const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    for (const [i, token] of tokens.entries()) {
+      const tokenData = await token.getData();
+      expect(tokenData?.normalizedOwner.Substrate).to.be.deep.equal(helper.address.normalizeSubstrate(alice.address));
+      expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
+    }
   });
 
-  it('Create 0x01, 0x02, 0x03 items in active Fungible collection and verify tokens data in chain', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [
-        {Fungible: {value: 1}},
-        {Fungible: {value: 2}},
-        {Fungible: {value: 3}},
-      ];
-      const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
-      await submitTransactionAsync(bob, createMultipleItemsTx);
-      const token1Data = await getBalance(api, collectionId, bob.address, 0);
-
-      expect(token1Data).to.be.equal(6n); // 1 + 2 + 3
+  itSub('Create 0x01, 0x02, 0x03 items in active Fungible collection and verify tokens data in chain', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
+    const args = [
+      {value: 1n},
+      {value: 2n},
+      {value: 3n},
+    ];
+    await helper.ft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, args, {Substrate: alice.address});
+    expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(6n);
   });
 
-  it('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [
-        {ReFungible: {pieces: 1}},
-        {ReFungible: {pieces: 2}},
-        {ReFungible: {pieces: 3}},
-      ];
-      const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
-      await submitTransactionAsync(bob, createMultipleItemsTx);
-      const itemsListIndexAfter = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexAfter).to.be.equal(3);
-
-      expect(await getBalance(api, collectionId, bob.address, 1)).to.be.equal(1n);
-      expect(await getBalance(api, collectionId, bob.address, 2)).to.be.equal(2n);
-      expect(await getBalance(api, collectionId, bob.address, 3)).to.be.equal(3n);
+  itSub.ifWithPallets('Create 0x31, 0x32, 0x33 items in active ReFungible collection and verify tokens data in chain', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
+    const args = [
+      {pieces: 1n},
+      {pieces: 2n},
+      {pieces: 3n},
+    ];
+    const tokens = await helper.rft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+
+    for (const [i, token] of tokens.entries()) {
+      expect(await token.getBalance({Substrate: alice.address})).to.be.equal(BigInt(i + 1));
+    }
+  });
+
+  itSub('Can mint amount of items equals to collection limits', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      limits: {
+        tokenLimit: 2,
+      },
+    });
+    const args = [{}, {}];
+    await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+  });
+
+  itSub('Create 0x31, 0x32, 0x33 items in active NFT with property Admin', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: false, mutable: true, collectionAdmin: true}},
+      ],
+    });
+    const args = [
+      {properties: [{key: 'data', value: '1'}]},
+      {properties: [{key: 'data', value: '2'}]},
+      {properties: [{key: 'data', value: '3'}]},
+    ];
+    const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    for (const [i, token] of tokens.entries()) {
+      const tokenData = await token.getData();
+      expect(tokenData?.normalizedOwner.Substrate).to.be.deep.equal(helper.address.normalizeSubstrate(alice.address));
+      expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
+    }
+  });
+
+  itSub('Create 0x31, 0x32, 0x33 items in active NFT with property AdminConst', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: false, mutable: false, collectionAdmin: true}},
+      ],
+    });
+    const args = [
+      {properties: [{key: 'data', value: '1'}]},
+      {properties: [{key: 'data', value: '2'}]},
+      {properties: [{key: 'data', value: '3'}]},
+    ];
+    const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    for (const [i, token] of tokens.entries()) {
+      const tokenData = await token.getData();
+      expect(tokenData?.normalizedOwner.Substrate).to.be.deep.equal(helper.address.normalizeSubstrate(alice.address));
+      expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
+    }
+  });
+
+  itSub('Create 0x31, 0x32, 0x33 items in active NFT with property itemOwnerOrAdmin', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}},
+      ],
+    });
+    const args = [
+      {properties: [{key: 'data', value: '1'}]},
+      {properties: [{key: 'data', value: '2'}]},
+      {properties: [{key: 'data', value: '3'}]},
+    ];
+    const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    for (const [i, token] of tokens.entries()) {
+      const tokenData = await token.getData();
+      expect(tokenData?.normalizedOwner.Substrate).to.be.equal(helper.address.normalizeSubstrate(alice.address));
+      expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
+    }
   });
 });
 
@@ -308,238 +167,208 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('Regular user cannot create items in active NFT collection', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{NFT: {}},
-        {NFT: {}},
-        {NFT: {}}];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(executeTransaction(api, bob, createMultipleItemsTx)).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
+  itSub('Regular user cannot create items in active NFT collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
+    const args = [
+      {},
+      {},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
-  it('Regular user cannot create items in active Fungible collection', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'Fungible', decimalPoints: 0}});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [
-        {Fungible: {value: 1}},
-        {Fungible: {value: 2}},
-        {Fungible: {value: 3}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(executeTransaction(api, bob, createMultipleItemsTx)).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
+  itSub('Regular user cannot create items in active Fungible collection', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
+    const args = [
+      {value: 1n},
+      {value: 2n},
+      {value: 3n},
+    ];
+    const mintTx = async () => helper.ft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, args, {Substrate: alice.address});
+    await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
-  it('Regular user cannot create items in active ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [
-        {ReFungible: {pieces: 1}},
-        {ReFungible: {pieces: 1}},
-        {ReFungible: {pieces: 1}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(executeTransaction(api, bob, createMultipleItemsTx)).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
+  itSub.ifWithPallets('Regular user cannot create items in active ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
+    const args = [
+      {pieces: 1n},
+      {pieces: 1n},
+      {pieces: 1n},
+    ];
+    const mintTx = async () => helper.rft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
-  it('Create token in not existing collection', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await getCreatedCollectionCount(api) + 1;
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), ['NFT', 'NFT', 'NFT']);
-      await expect(executeTransaction(api, alice, createMultipleItemsTx)).to.be.rejectedWith(/common\.CollectionNotFound/);
-    });
+  itSub('Create token in not existing collection', async ({helper}) => {
+    const collectionId = 1_000_000;
+    const args = [
+      {},
+      {},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(bob, collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  it('Create NFTs that has reached the maximum data limit', async function() {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
-      });
-      const alice = privateKeyWrapper('//Alice');
-      const args = [
-        {NFT: {properties: [{key: 'key', value: 'A'.repeat(32769)}]}},
-        {NFT: {properties: [{key: 'key', value: 'B'.repeat(32769)}]}},
-        {NFT: {properties: [{key: 'key', value: 'C'.repeat(32769)}]}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
+  itSub('Create NFTs that has reached the maximum data limit', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}},
+      ],
     });
+    const args = [
+      {properties: [{key: 'data', value: 'A'.repeat(32769)}]},
+      {properties: [{key: 'data', value: 'B'.repeat(32769)}]},
+      {properties: [{key: 'data', value: 'C'.repeat(32769)}]},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
-  it('Create Refungible tokens that has reached the maximum data limit', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
-
-    await usingApi(async api => {
-      const collectionIdReFungible =
-        await createCollectionExpectSuccess({mode: {type: 'ReFungible'}});
-      {
-        const argsReFungible = [
-          {ReFungible: [10, [['key', 'A'.repeat(32769)]]]},
-          {ReFungible: [10, [['key', 'B'.repeat(32769)]]]},
-          {ReFungible: [10, [['key', 'C'.repeat(32769)]]]},
-        ];
-        const createMultipleItemsTxFungible = api.tx.unique
-          .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
-        await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTxFungible)).to.be.rejected;
-      }
-      {
-        const argsReFungible = [
-          {ReFungible: {properties: [{key: 'key', value: 'A'.repeat(32769)}]}},
-          {ReFungible: {properties: [{key: 'key', value: 'B'.repeat(32769)}]}},
-          {ReFungible: {properties: [{key: 'key', value: 'C'.repeat(32769)}]}},
-        ];
-        const createMultipleItemsTxFungible = api.tx.unique
-          .createMultipleItems(collectionIdReFungible, normalizeAccountId(alice.address), argsReFungible);
-        await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTxFungible)).to.be.rejected;
-      }
+  itSub.ifWithPallets('Create Refungible tokens that has reached the maximum data limit', [Pallets.ReFungible], async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}},
+      ],
     });
+    const args = [
+      {pieces: 10n, properties: [{key: 'data', value: 'A'.repeat(32769)}]},
+      {pieces: 10n, properties: [{key: 'data', value: 'B'.repeat(32769)}]},
+      {pieces: 10n, properties: [{key: 'data', value: 'C'.repeat(32769)}]},
+    ];
+    const mintTx = async () => helper.rft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
-  it('Create tokens with different types', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionExpectSuccess();
-
-      const types = ['NFT', 'Fungible'];
-
-      if (await checkPalletsPresence([Pallets.ReFungible])) {
-        types.push('ReFungible');
-      }
-
-      const createMultipleItemsTx = api.tx.unique
-        .createMultipleItems(collectionId, normalizeAccountId(alice.address), types);
-      await expect(executeTransaction(api, alice, createMultipleItemsTx)).to.be.rejectedWith(/nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/);
-      // garbage collection :-D // lol
-      await destroyCollectionExpectSuccess(collectionId);
+  itSub.ifWithPallets('Create tokens with different types', [Pallets.ReFungible], async ({helper}) => {
+    const {collectionId} = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
+
+    const types = ['NFT', 'Fungible', 'ReFungible'];
+    await expect(helper.executeExtrinsic(
+      alice, 
+      'api.tx.unique.createMultipleItems', 
+      [collectionId, {Substrate: alice.address}, types],
+    )).to.be.rejectedWith(/nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/);
   });
 
-  it('Create tokens with different data limits <> maximum data limit', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
-      });
-      const args = [
-        {NFT: {properties: [{key: 'key', value: 'A'}]}},
-        {NFT: {properties: [{key: 'key', value: 'B'.repeat(32769)}]}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(submitTransactionExpectFailAsync(alice, createMultipleItemsTx)).to.be.rejected;
+  itSub('Create tokens with different data limits <> maximum data limit', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}},
+      ],
     });
+    const args = [
+      {properties: [{key: 'data', value: 'A'}]},
+      {properties: [{key: 'data', value: 'B'.repeat(32769)}]},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
-  it('Fails when minting tokens exceeds collectionLimits amount', async () => {
-    await usingApi(async (api) => {
-      const collectionId = await createCollectionExpectSuccess();
-      await setCollectionLimitsExpectSuccess(alice, collectionId, {
+  itSub('Fails when minting tokens exceeds collectionLimits amount', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: true, mutable: true, collectionAdmin: true}},
+      ],
+      limits: {
         tokenLimit: 1,
-      });
-      const args = [
-        {NFT: {}},
-        {NFT: {}},
-      ];
-      const createMultipleItemsTx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(executeTransaction(api, alice, createMultipleItemsTx)).to.be.rejectedWith(/common\.CollectionTokenLimitExceeded/);
+      },
     });
+    const args = [
+      {},
+      {},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith(/common\.CollectionTokenLimitExceeded/);
   });
 
-  it('User doesnt have editing rights', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'key1', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
-      });
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      const args = [
-        {NFT: {properties: [{key: 'key1', value: 'v2'}]}},
-        {NFT: {}},
-        {NFT: {}},
-      ];
-
-      const tx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
-      await expect(executeTransaction(api, bob, tx)).to.be.rejectedWith(/common\.NoPermission/);
+  itSub('User doesnt have editing rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {key: 'data', permission: {tokenOwner: false, mutable: true, collectionAdmin: false}},
+      ],
     });
+    const args = [
+      {properties: [{key: 'data', value: 'A'}]},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  it('Adding property without access rights', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({properties: [{key: 'k', value: 'v1'}]});
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{NFT: {properties: [{key: 'k', value: 'v'}]}},
-        {NFT: {}},
-        {NFT: {}}];
-
-      const tx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(bob.address), args);
-      await expect(executeTransaction(api, bob, tx)).to.be.rejectedWith(/common\.NoPermission/);
+  itSub('Adding property without access rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      properties: [
+        {
+          key: 'data',
+          value: 'v',
+        },
+      ],
     });
+    const args = [
+      {properties: [{key: 'data', value: 'A'}]},
+    ];
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  it('Adding more than 64 prps', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const propPerms = [{key: 'key', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}];
-      for (let i = 0; i < 65; i++) {
-        propPerms.push({key: `key${i}`, permission: {mutable: true, collectionAdmin: true, tokenOwner: true}});
-      }
-
-      const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-
-      const tx1 = api.tx.unique.setTokenPropertyPermissions(collectionId, propPerms);
-      await expect(executeTransaction(api, alice, tx1)).to.be.rejectedWith(/common\.PropertyLimitReached/);
-
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-
-      const prps = [];
-
-      for (let i = 0; i < 65; i++) {
-        prps.push({key: `key${i}`, value: `value${i}`});
-      }
-
-      const args = [
-        {NFT: {properties: prps}},
-        {NFT: {properties: prps}},
-        {NFT: {properties: prps}},
-      ];
-
-      // there are no permissions, but will fail anyway because of too much weight for a block
-      const tx2 = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(submitTransactionExpectFailAsync(alice, tx2)).to.be.rejected;
+  itSub('Adding more than 64 prps', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
     });
-  });
+    const prps = [];
 
-  it('Trying to add bigger property than allowed', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionId = await createCollectionWithPropsExpectSuccess({
-        propPerm: [{key: 'k', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}],
-      });
-      const itemsListIndexBefore = await getLastTokenId(api, collectionId);
-      expect(itemsListIndexBefore).to.be.equal(0);
-      const args = [{NFT: {properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]}},
-        {NFT: {properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]}},
-        {NFT: {properties: [{key: 'k', value: 'vvvvvv'.repeat(5000)}, {key: 'k2', value: 'vvv'.repeat(5000)}]}}];
+    for (let i = 0; i < 65; i++) {
+      prps.push({key: `key${i}`, value: `value${i}`});
+    }
 
-      const tx = api.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-      await expect(executeTransaction(api, alice, tx)).to.be.rejectedWith(/common\.NoPermission/);
-    });
+    const args = [
+      {properties: prps},
+      {properties: prps},
+      {properties: prps},
+    ];
+
+    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 });

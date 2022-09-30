@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
 import {ICollectionPermissions} from './util/playgrounds/types';
 
-describe('Integration Test ext. Add to Allow List', () => {  
+describe('Integration Test ext. Allow list tests', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -38,7 +38,7 @@ describe('Integration Test ext. Add to Allow List', () => {
       const allowList = await helper.nft.getAllowList(collectionId);
       expect(allowList).to.deep.contain({Substrate: bob.address});
     });
-  
+
     itSub('Admin can add address to allow list', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addAdmin(alice, collectionId, {Substrate: bob.address});
@@ -64,7 +64,7 @@ describe('Integration Test ext. Add to Allow List', () => {
       await expect(helper.nft.addToAllowList(bob, collectionId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.CollectionNotFound/);
     });
-  
+
     itSub('Nobody can add address to allow list of destroyed collection', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.collection.burn(alice, collectionId);
@@ -80,7 +80,7 @@ describe('Integration Test ext. Add to Allow List', () => {
   });
 });
 
-describe('Integration Test ext. Remove from Allow List', () => {  
+describe('Integration Test ext. Remove from Allow List', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -120,9 +120,9 @@ describe('Integration Test ext. Remove from Allow List', () => {
       await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address});
       const allowListBefore = await helper.nft.getAllowList(collectionId);
       expect(allowListBefore).to.not.deep.contain({Substrate: bob.address});
-  
+
       await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address});
-  
+
       const allowListAfter = await helper.nft.getAllowList(collectionId);
       expect(allowListAfter).to.not.deep.contain({Substrate: bob.address});
     });
@@ -138,25 +138,25 @@ describe('Integration Test ext. Remove from Allow List', () => {
       const allowList = await helper.nft.getAllowList(collectionId);
       expect(allowList).to.deep.contain({Substrate: charlie.address});
     });
-  
+
     itSub('Nobody can remove address from allow list of non-existing collection', async ({helper}) => {
       const collectionId = (1<<32) - 1;
       await expect(helper.collection.removeFromAllowList(bob, collectionId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.CollectionNotFound/);
     });
-  
+
     itSub('Nobody can remove address from allow list of deleted collection', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
       await helper.collection.burn(alice, collectionId);
-  
+
       await expect(helper.collection.removeFromAllowList(alice, collectionId, {Substrate: bob.address}))
         .to.be.rejectedWith(/common\.CollectionNotFound/);
     });
   });
 });
 
-describe('Integration Test ext. Transfer if included in Allow List', () => {  
+describe('Integration Test ext. Transfer if included in Allow List', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -179,7 +179,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
       expect(owner.Substrate).to.be.equal(charlie.address);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can be transferred to a allowlisted address with transferFrom.', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -187,24 +187,24 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-  
+
       await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
       expect(owner.Substrate).to.be.equal(charlie.address);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transfer', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.setPermissions(alice, collectionId, {access: 'AllowList'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
-  
+
       await helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
       expect(owner.Substrate).to.be.equal(charlie.address);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transferFrom', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -212,7 +212,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
-  
+
       await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
       expect(owner.Substrate).to.be.equal(charlie.address);
@@ -225,11 +225,11 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.setPermissions(alice, collectionId, {access: 'AllowList'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
-  
+
       await expect(helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can\'t be transferred from a non-allowlisted address with transfer or transferFrom. Test2', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -238,35 +238,35 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: alice.address});
-  
+
       await expect(helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can\'t be transferred to a non-allowlisted address with transfer or transferFrom. Test1', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.setPermissions(alice, collectionId, {access: 'AllowList'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
-  
+
       await expect(helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can\'t be transferred to a non-allowlisted address with transfer or transferFrom. Test2', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
       await helper.nft.setPermissions(alice, collectionId, {access: 'AllowList'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: alice.address});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
-  
+
       await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       await helper.collection.removeFromAllowList(alice, collectionId, {Substrate: alice.address});
-  
+
       await expect(helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, tokens can\'t be destroyed by a non-allowlisted address (even if it owned them before enabling AllowList mode)', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -274,7 +274,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       await expect(helper.nft.burnToken(bob, collectionId, tokenId))
         .to.be.rejectedWith(/common\.NoPermission/);
     });
-  
+
     itSub('If Public Access mode is set to AllowList, token transfers can\'t be Approved by a non-allowlisted address (see Approve method)', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -285,7 +285,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
   });
 });
 
-describe('Integration Test ext. Mint if included in Allow List', () => {  
+describe('Integration Test ext. Mint if included in Allow List', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
@@ -309,7 +309,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
     const appropriateRejectionMessage = permissions.mintMode! ? /common\.AddressNotInAllowlist/ : /common\.PublicMintingNotAllowed/;
 
     const allowlistedMintingTest = () => itSub(
-      `With the condtions above, tokens can${allowlistedMintingShouldFail ? '\'t' : ''} be created by allow-listed addresses`, 
+      `With the condtions above, tokens can${allowlistedMintingShouldFail ? '\'t' : ''} be created by allow-listed addresses`,
       async ({helper}) => {
         const collection = await helper.nft.mintCollection(alice, {});
         await collection.setPermissions(alice, permissions);
@@ -330,7 +330,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
           await collection.setPermissions(alice, permissions);
           await expect(collection.mintToken(alice, {Substrate: alice.address})).to.not.be.rejected;
         });
-      
+
         itSub('With the condtions above, tokens can be created by admin', async ({helper}) => {
           const collection = await helper.nft.mintCollection(alice, {});
           await collection.setPermissions(alice, permissions);
