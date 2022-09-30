@@ -14,18 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-/*import {createCollectionExpectSuccess,
-  createFungibleItemExpectSuccess,
-  transferExpectSuccess,
-  transferFromExpectSuccess,
-  setCollectionLimitsExpectSuccess,
-  createItemExpectSuccess} from '../util/helpers';
-import {collectionIdToAddress,
-  createEthAccountWithBalance,
-  subToEth,
-  GAS_ARGS, itEth} from './util/helpers';
-import fungibleAbi from './fungibleAbi.json';
-import nonFungibleAbi from './nonFungibleAbi.json';*/
 import {itEth, usingEthPlaygrounds} from './util/playgrounds';
 import {CrossAccountId} from '../util/playgrounds/unique';
 import {IKeyringPair} from '@polkadot/types/types';
