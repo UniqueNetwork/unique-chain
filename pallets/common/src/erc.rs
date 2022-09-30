@@ -27,7 +27,7 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
-	SponsoringRateLimit, SponsorshipState,
+	SponsoringRateLimit, SponsorshipState, PropertyKey,
 };
 use alloc::format;
 
@@ -91,6 +91,21 @@ where
 			.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(properties.len() as u32))]
+	fn set_collection_properties(
+		&mut self,
+		caller: caller,
+		properties: Vec<(string, bytes)>,
+	) -> Result<void> {
+		for (key, value) in properties.into_iter() {
+			self.set_collection_property(caller, key, value)?;
+		}
+		Ok(())
+	}
+
 	/// Delete collection property.
 	///
 	/// @param key Property key.
@@ -117,10 +132,36 @@ where
 			.try_into()
 			.map_err(|_| "key too large")?;
 
-		let props = <CollectionProperties<T>>::get(self.id);
+		let props = CollectionProperties::<T>::get(self.id);
 		let prop = props.get(&key).ok_or("key not found")?;
 
 		Ok(bytes(prop.to_vec()))
+	}
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @return Vector of properties key/value pairs.
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<(string, bytes)>> {
+		let mut keys_ = Vec::<PropertyKey>::with_capacity(keys.len());
+		for key in keys {
+			keys_.push(
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))?,
+			)
+		}
+		let properties = Pallet::<T>::filter_collection_properties(self.id, Some(keys_))
+			.map_err(dispatch_to_evm::<T>)?;
+
+		let mut properties_ = Vec::<(string, bytes)>::with_capacity(properties.len());
+		for p in properties {
+			let key =
+				string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
+			let value = bytes(p.value.to_vec());
+			properties_.push((key, value));
+		}
+		Ok(properties_)
 	}
 
 	/// Set the sponsor of the collection.

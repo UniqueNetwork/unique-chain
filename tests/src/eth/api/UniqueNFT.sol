@@ -63,14 +63,23 @@ interface TokenProperties is Dummy, ERC165 {
 
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
 =======
+=======
+>>>>>>> feat: add eth methots for bulk properties
 <<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x660da1e8
 =======
 /// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
 >>>>>>> 52d7afd4... feat: Add `collection_admins` method to eth collection.
+<<<<<<< HEAD
 >>>>>>> feat: Add `collection_admins` method to eth collection.
+=======
+=======
+/// @dev the ERC-165 identifier for this interface is 0x672533a2
+>>>>>>> 2fb6c7a0... feat: add eth methots for bulk properties
+>>>>>>> feat: add eth methots for bulk properties
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -79,6 +88,13 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x2f073f66,
 	///  or in textual repr: setCollectionProperty(string,bytes)
 	function setCollectionProperty(string memory key, bytes memory value) external;
+
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	/// @dev EVM selector for this function is: 0x50b26b2a,
+	///  or in textual repr: setCollectionProperties((string,bytes)[])
+	function setCollectionProperties(Tuple17[] memory properties) external;
 
 	/// Delete collection property.
 	///
@@ -96,6 +112,14 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
 	function collectionProperty(string memory key) external view returns (bytes memory);
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0x285fb8e6,
+	///  or in textual repr: collectionProperties(string[])
+	function collectionProperties(string[] memory keys) external view returns (Tuple17[] memory);
 
 	/// Set the sponsor of the collection.
 	///
@@ -137,7 +161,11 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
+<<<<<<< HEAD
 	function collectionSponsor() external view returns (Tuple8 memory);
+=======
+	function collectionSponsor() external view returns (Tuple19 memory);
+>>>>>>> feat: add eth methots for bulk properties
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -288,7 +316,11 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
+<<<<<<< HEAD
 	function collectionOwner() external view returns (Tuple8 memory);
+=======
+	function collectionOwner() external view returns (Tuple19 memory);
+>>>>>>> feat: add eth methots for bulk properties
 
 	/// Changes collection owner to another account
 	///
@@ -315,6 +347,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
+<<<<<<< HEAD
 	function collectionAdmins() external view returns (Tuple8[] memory);
 
 	/// Changes collection owner to another account
@@ -324,6 +357,21 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xe5c9913f,
 	///  or in textual repr: setOwnerCross((address,uint256))
 	function setOwnerCross(Tuple8 memory newOwner) external;
+=======
+	function collectionAdmins() external view returns (Tuple19[] memory);
+}
+
+/// @dev anonymous struct
+struct Tuple19 {
+	address field_0;
+	uint256 field_1;
+>>>>>>> feat: add eth methots for bulk properties
+}
+
+/// @dev anonymous struct
+struct Tuple17 {
+	string field_0;
+	bytes field_1;
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).

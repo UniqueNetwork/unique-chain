@@ -54,3 +54,31 @@ describe('EVM collection properties', () => {
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
   });
 });
+
+describe('EVM collection property', () => {
+  itEth.only('Set/read properties', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const sender = await helper.eth.createAccountWithBalance(alice, 100n);
+    await collection.addAdmin(alice, {Ethereum: sender});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', sender);
+
+    const key1 = 'key1';
+    const value1 = Buffer.from('value1');
+    
+    const key2 = 'key2';
+    const value2 = Buffer.from('value2');
+
+    const writeProperties = [
+      [key1, '0x'+value1.toString('hex')],
+      [key2, '0x'+value2.toString('hex')],
+    ];
+
+    await contract.methods.setCollectionProperties(writeProperties).send();
+    const readProperties = await contract.methods.collectionProperties([key1, key2]).call();
+    expect(readProperties).to.be.like(writeProperties);
+  });
+});
