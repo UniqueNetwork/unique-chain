@@ -324,8 +324,11 @@ fn create_multiple_refungible_items() {
 				.collect()
 		));
 		for (index, _data) in items_data.into_iter().enumerate() {
-			let balance =
-				<pallet_refungible::Balance<Test>>::get((CollectionId(1), TokenId((index + 1) as u32), account(1)));
+			let balance = <pallet_refungible::Balance<Test>>::get((
+				CollectionId(1),
+				TokenId((index + 1) as u32),
+				account(1),
+			));
 			assert_eq!(balance, 1023);
 		}
 	});
