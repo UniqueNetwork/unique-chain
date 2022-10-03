@@ -309,13 +309,13 @@ clap = "3.1.2"
 jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }
 tokio = { version = "1.19.2", features = ["time"] }
 
-fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
+fc-rpc-core = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fc-consensus = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fc-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fc-db = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false}

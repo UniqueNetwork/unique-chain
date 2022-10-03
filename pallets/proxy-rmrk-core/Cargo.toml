@@ -20,7 +20,7 @@ pallet-common = { default-features = false, path = '../common' }
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 rmrk-traits = { default-features = false, path = "../../primitives/rmrk-traits" }
 scale-info = { version = "2.0.1", default-features = false, features = [
