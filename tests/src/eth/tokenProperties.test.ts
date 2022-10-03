@@ -1,7 +1,7 @@
 import {cartesian} from './util/helpers';
 import {itEth, expect} from '../eth/util/playgrounds';
 
-describe.only('EVM token properties', () => {
+describe('EVM token properties', () => {
   itEth('Can be reconfigured', async({helper, privateKey}) => {
     const alice = privateKey('//Alice');
     const caller = await helper.eth.createAccountWithBalance(alice);
