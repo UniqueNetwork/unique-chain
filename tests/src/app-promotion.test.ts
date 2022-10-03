@@ -34,7 +34,10 @@ const palletAddress = calculatePalleteAddress('appstake');
 let accounts: IKeyringPair[] = [];
 const LOCKING_PERIOD = 20n; // 20 blocks of relay
 const UNLOCKING_PERIOD = 10n; // 10 blocks of parachain
-const rewardAvailableInBlock = (stakedInBlock: bigint) => (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
+const rewardAvailableInBlock = (stakedInBlock: bigint) => {
+  if (stakedInBlock % LOCKING_PERIOD === 0n) return stakedInBlock + 20n;
+  return (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
+};
 
 describe('App promotion', () => {
   before(async function () {

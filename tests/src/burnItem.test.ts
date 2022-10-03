@@ -14,289 +14,136 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {
-  createCollectionExpectSuccess,
-  createItemExpectSuccess,
-  getGenericResult,
-  normalizeAccountId,
-  addCollectionAdminExpectSuccess,
-  getBalance,
-  setCollectionLimitsExpectSuccess,
-  isTokenExists,
-  requirePallets,
-  Pallets,
-} from './util/helpers';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
-const expect = chai.expect;
-
+let donor: IKeyringPair;
 let alice: IKeyringPair;
 let bob: IKeyringPair;
 
 describe('integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('Burn item in NFT collection', async () => {
-    const createMode = 'NFT';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
+  itSub('Burn item in NFT collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
 
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-
-      expect(result.success).to.be.true;
-      // Get the item
-      expect(await isTokenExists(api, collectionId, tokenId)).to.be.false;
-    });
+    await token.burn(alice);
+    expect(await token.isExist()).to.be.false;
   });
 
-  it('Burn item in Fungible collection', async () => {
-    const createMode = 'Fungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-    await createItemExpectSuccess(alice, collectionId, createMode); // Helper creates 10 fungible tokens
-    const tokenId = 0; // ignored
+  itSub('Burn item in Fungible collection', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {}, 10);
+    await collection.mint(alice, 10n);
 
-    await usingApi(async (api) => {
-      // Destroy 1 of 10
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-
-      // Get alice balance
-      const balance = await getBalance(api, collectionId, alice.address, 0);
-
-      // What to expect
-      expect(result.success).to.be.true;
-      expect(balance).to.be.equal(9n);
-    });
+    await collection.burnTokens(alice, 1n);
+    expect(await collection.getBalance({Substrate: alice.address})).to.eq(9n);
   });
 
-  it('Burn item in ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  itSub.ifWithPallets('Burn item in ReFungible collection', [Pallets.ReFungible], async function({helper}) {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
 
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
+    await token.burn(alice, 90n);
+    expect(await token.getBalance({Substrate: alice.address})).to.eq(10n);
 
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 100);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-
-      // Get alice balance
-      const balance = await getBalance(api, collectionId, alice.address, tokenId);
-
-      // What to expect
-      expect(result.success).to.be.true;
-      expect(balance).to.be.equal(0n);
-    });
+    await token.burn(alice, 10n);
+    expect(await token.getBalance({Substrate: alice.address})).to.eq(0n);
   });
 
-  it('Burn owned portion of item in ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  itSub.ifWithPallets('Burn owned portion of item in ReFungible collection', [Pallets.ReFungible], async function({helper}) {
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 100n);
 
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
+    await token.transfer(alice, {Substrate: bob.address}, 1n);
 
-    await usingApi(async (api) => {
-      // Transfer 1/100 of the token to Bob
-      const transfertx = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
-      const events1 = await submitTransactionAsync(alice, transfertx);
-      const result1 = getGenericResult(events1);
+    expect(await token.getBalance({Substrate: alice.address})).to.eq(99n);
+    expect(await token.getBalance({Substrate: bob.address})).to.eq(1n);
 
-      // Get balances
-      const bobBalanceBefore = await getBalance(api, collectionId, bob.address, tokenId);
-      const aliceBalanceBefore = await getBalance(api, collectionId, alice.address, tokenId);
+    await token.burn(bob, 1n);
 
-      // Bob burns his portion
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
-      const events2 = await submitTransactionAsync(bob, tx);
-      const result2 = getGenericResult(events2);
-
-      // Get balances
-      const bobBalanceAfter = await getBalance(api, collectionId, bob.address, tokenId);
-      const aliceBalanceAfter = await getBalance(api, collectionId, alice.address, tokenId);
-      // console.log(balance);
-
-      // What to expect before burning
-      expect(result1.success).to.be.true;
-      expect(aliceBalanceBefore).to.be.equal(99n);
-      expect(bobBalanceBefore).to.be.equal(1n);
-
-      // What to expect after burning
-      expect(result2.success).to.be.true;
-      expect(aliceBalanceAfter).to.be.equal(99n);
-      expect(bobBalanceAfter).to.be.equal(0n);
-    });
-
+    expect(await token.getBalance({Substrate: alice.address})).to.eq(99n);
+    expect(await token.getBalance({Substrate: bob.address})).to.eq(0n);
   });
-
 });
 
 describe('integration test: ext. burnItem() with admin permissions:', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('Burn item in NFT collection', async () => {
-    const createMode = 'NFT';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+  itSub('Burn item in NFT collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    const token = await collection.mintToken(alice);
 
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnFrom(collectionId, {Substrate: alice.address}, tokenId, 1);
-      const events = await submitTransactionAsync(bob, tx);
-      const result = getGenericResult(events);
-
-      expect(result.success).to.be.true;
-      // Get the item
-      expect(await isTokenExists(api, collectionId, tokenId)).to.be.false;
-    });
+    await token.burnFrom(bob, {Substrate: alice.address});
+    expect(await token.isExist()).to.be.false;
   });
 
-  // TODO: burnFrom
-  it('Burn item in Fungible collection', async () => {
-    const createMode = 'Fungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode); // Helper creates 10 fungible tokens
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
+  itSub('Burn item in Fungible collection', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {}, 0);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await collection.mint(alice, 10n);
 
-    await usingApi(async (api) => {
-      // Destroy 1 of 10
-      const tx = api.tx.unique.burnFrom(collectionId, normalizeAccountId(alice.address), tokenId, 1);
-      const events = await submitTransactionAsync(bob, tx);
-      const result = getGenericResult(events);
-
-      // Get alice balance
-      const balance = await getBalance(api, collectionId, alice.address, 0);
-
-      // What to expect
-      expect(result.success).to.be.true;
-      expect(balance).to.be.equal(9n);
-    });
+    await collection.burnTokensFrom(bob, {Substrate: alice.address}, 1n);
+    expect(await collection.getBalance({Substrate: alice.address})).to.eq(9n);
   });
 
-  // TODO: burnFrom
-  it('Burn item in ReFungible collection', async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+  itSub.ifWithPallets('Burn item in ReFungible collection', [Pallets.ReFungible], async function({helper}) {
+    const collection = await helper.rft.mintCollection(alice);
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    const token = await collection.mintToken(alice, 100n);
 
-    const createMode = 'ReFungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {ownerCanTransfer: true});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
-    await addCollectionAdminExpectSuccess(alice, collectionId, bob.address);
-
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnFrom(collectionId, normalizeAccountId(alice.address), tokenId, 100);
-      const events = await submitTransactionAsync(bob, tx);
-      const result = getGenericResult(events);
-      // Get alice balance
-      expect(result.success).to.be.true;
-      // Get the item
-      expect(await isTokenExists(api, collectionId, tokenId)).to.be.false;
-    });
+    await token.burnFrom(bob, {Substrate: alice.address}, 100n);
+    expect(await token.isExist()).to.be.false;
   });
 });
 
 describe('Negative integration test: ext. burnItem():', () => {
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
-  it('Burn a token that was never created', async () => {
-    const createMode = 'NFT';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = 10;
-
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
-      const badTransaction = async function () {
-        await submitTransactionExpectFailAsync(alice, tx);
-      };
-      await expect(badTransaction()).to.be.rejected;
-    });
-
+  itSub('Burn a token that was never created', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    await expect(collection.burnToken(alice, 10)).to.be.rejectedWith('common.TokenNotFound');
   });
 
-  it('Burn a token using the address that does not own it', async () => {
-    const createMode = 'NFT';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
+  itSub('Burn a token using the address that does not own it', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
 
-    await usingApi(async (api) => {
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 1);
-      const badTransaction = async function () {
-        await submitTransactionExpectFailAsync(bob, tx);
-      };
-      await expect(badTransaction()).to.be.rejected;
-    });
-
+    await expect(token.burn(bob)).to.be.rejectedWith('common.NoPermission');
   });
 
-  it('Transfer a burned a token', async () => {
-    const createMode = 'NFT';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode}});
-    const tokenId = await createItemExpectSuccess(alice, collectionId, createMode);
+  itSub('Transfer a burned token', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice);
+    const token = await collection.mintToken(alice);
+    await token.burn(alice);
 
-    await usingApi(async (api) => {
-
-      const burntx = api.tx.unique.burnItem(collectionId, tokenId, 1);
-      const events1 = await submitTransactionAsync(alice, burntx);
-      const result1 = getGenericResult(events1);
-      expect(result1.success).to.be.true;
-
-      const tx = api.tx.unique.transfer(normalizeAccountId(bob.address), collectionId, tokenId, 1);
-      const badTransaction = async function () {
-        await submitTransactionExpectFailAsync(alice, tx);
-      };
-      await expect(badTransaction()).to.be.rejected;
-    });
-
+    await expect(token.transfer(alice, {Substrate: bob.address})).to.be.rejectedWith('common.TokenNotFound');
   });
 
-  it('Burn more than owned in Fungible collection', async () => {
-    const createMode = 'Fungible';
-    const collectionId = await createCollectionExpectSuccess({mode: {type: createMode, decimalPoints: 0}});
-    // Helper creates 10 fungible tokens
-    await createItemExpectSuccess(alice, collectionId, createMode);
-    const tokenId = 0; // ignored
+  itSub('Burn more than owned in Fungible collection', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {}, 0);
+    await collection.mint(alice, 10n);
 
-    await usingApi(async (api) => {
-      // Destroy 11 of 10
-      const tx = api.tx.unique.burnItem(collectionId, tokenId, 11);
-      const badTransaction = async function () {
-        await submitTransactionExpectFailAsync(alice, tx);
-      };
-      await expect(badTransaction()).to.be.rejected;
-
-      // Get alice balance
-      const balance = await getBalance(api, collectionId, alice.address, 0);
-
-      // What to expect
-      expect(balance).to.be.equal(10n);
-    });
-
+    await expect(collection.burnTokens(alice, 11n)).to.be.rejectedWith('common.TokenValueTooLow');
+    expect(await collection.getBalance({Substrate: alice.address})).to.eq(10n);
   });
-
 });
