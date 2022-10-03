@@ -16,7 +16,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
@@ -25,8 +25,8 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29-fee-limit" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 
 pallet-common = { path = '../../pallets/common' }
 pallet-structure = { path = '../../pallets/structure' }
