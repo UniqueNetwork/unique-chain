@@ -51,6 +51,7 @@ describe('EVM payable contracts', () => {
 
     await realContractV2proxy.methods.flip().send();
     await realContractV2proxy.methods.flip().send();
+    await realContractV2proxy.methods.setStep(5).send();
     await realContractV2proxy.methods.increaseFlipCount().send();
     const value2 = await realContractV2proxy.methods.getValue().call();
     const flipCount2 = await realContractV2proxy.methods.getFlipCount().call();
@@ -130,12 +131,16 @@ describe('EVM payable contracts', () => {
       contract RealContractV2 {
         bool value = false;
         uint flipCount = 10;
+        uint step = 1;
         function flip() external {
           value = !value;
           flipCount--;
         }
+        function setStep(uint value) external {
+          step = value;
+        }
         function increaseFlipCount() external {
-          flipCount = flipCount + 5;
+          flipCount = flipCount + step;
         }
         function getValue() external view returns (bool) {
           return value;
