@@ -2661,6 +2661,10 @@ export class UniqueNFToken extends UniqueBaseToken {
     return await this.collection.isTokenApproved(this.tokenId, toAddressObj);
   }
 
+  async isExist() {
+    return await this.collection.isTokenExists(this.tokenId);
+  }
+
   async burn(signer: TSigner) {
     return await this.collection.burnToken(signer, this.tokenId);
   }
@@ -2692,6 +2696,10 @@ export class UniqueRFToken extends UniqueBaseToken {
 
   async getTotalPieces() {
     return await this.collection.getTokenTotalPieces(this.tokenId);
+  }
+
+  async isExist() {
+    return await this.collection.isTokenExists(this.tokenId);
   }
 
   async getApprovedPieces(fromAddressObj: ICrossAccountId, toAccountObj: ICrossAccountId) {
