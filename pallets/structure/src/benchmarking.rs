@@ -32,7 +32,7 @@ benchmarks! {
 		let caller_cross = T::CrossAccountId::from_sub(caller.clone());
 
 		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
-		T::CollectionDispatch::create(caller_cross.clone(), CreateCollectionData {
+		T::CollectionDispatch::create(caller_cross.clone(), caller_cross.clone(), CreateCollectionData {
 			mode: CollectionMode::NFT,
 			..Default::default()
 		})?;
