@@ -14,82 +14,76 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {approve, createCollection, createRefungibleToken, transfer, transferFrom, UNIQUE, requirePallets, Pallets} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, createRFTCollection, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, subToEth, tokenIdToAddress, transferBalanceToEth, uniqueRefungible, uniqueRefungibleToken} from './util/helpers';
-
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {Pallets, requirePalletsOrSkip} from '../util/playgrounds';
+import {EthUniqueHelper, expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {IKeyringPair} from '@polkadot/types/types';
+import {Contract} from 'web3-eth-contract';
 
 describe('Refungible token: Information getting', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([20n], donor);
+    });
   });
 
-  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('totalSupply', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: caller})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, caller);
+    const contract = helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
     const totalSupply = await contract.methods.totalSupply().call();
-
     expect(totalSupply).to.equal('200');
   });
 
-  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('balanceOf', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: caller})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, caller);
+    const contract = helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
     const balance = await contract.methods.balanceOf(caller).call();
-
     expect(balance).to.equal('200');
   });
 
-  itWeb3('decimals', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('decimals', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: caller})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, caller);
+    const contract = helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
     const decimals = await contract.methods.decimals().call();
-
     expect(decimals).to.equal('0');
   });
 });
 
 // FIXME: Need erc721 for ReFubgible.
 describe('Check ERC721 token URI for ReFungible', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = privateKey('//Alice');
+    });
   });
 
-  itWeb3('Empty tokenURI', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, owner);
-    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', '').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const receiver = createEthAccount(web3);
-    const contract = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
+  async function setup(helper: EthUniqueHelper, tokenPrefix: string, propertyKey?: string, propertyValue?: string): Promise<{contract: Contract, nextTokenId: string}> {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
 
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send();
+    const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    
     const nextTokenId = await contract.methods.nextTokenId().call();
     expect(nextTokenId).to.be.equal('1');
     result = await contract.methods.mint(
@@ -97,166 +91,71 @@ describe('Check ERC721 token URI for ReFungible', () => {
       nextTokenId,
     ).send();
 
-    const events = normalizeEvents(result.events);
-    const address = collectionIdToAddress(collectionId);
+    if (propertyKey && propertyValue) {
+      // Set URL or suffix
+      await contract.methods.setProperty(nextTokenId, propertyKey, Buffer.from(propertyValue)).send();
+    }
 
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver,
-          tokenId: nextTokenId,
-        },
-      },
-    ]);
+    const event = result.events.Transfer;
+    expect(event.address).to.be.equal(collectionAddress);
+    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.be.equal(receiver);
+    expect(event.returnValues.tokenId).to.be.equal(nextTokenId);
 
+    return {contract, nextTokenId};
+  }
+
+  itEth('Empty tokenURI', async ({helper}) => {
+    const {contract, nextTokenId} = await setup(helper, '');
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('');
   });
 
-  itWeb3('TokenURI from url', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, owner);
-    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', 'BaseURI_').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const receiver = createEthAccount(web3);
-    const contract = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
-
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    result = await contract.methods.mint(
-      receiver,
-      nextTokenId,
-    ).send();
-
-    // Set URL
-    await contract.methods.setProperty(nextTokenId, 'url', Buffer.from('Token URI')).send();
-
-    const events = normalizeEvents(result.events);
-    const address = collectionIdToAddress(collectionId);
-
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver,
-          tokenId: nextTokenId,
-        },
-      },
-    ]);
-
+  itEth('TokenURI from url', async ({helper}) => {
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'url', 'Token URI');
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Token URI');
   });
 
-  itWeb3('TokenURI from baseURI + tokenId', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, owner);
-    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', 'BaseURI_').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const receiver = createEthAccount(web3);
-    const contract = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
-
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    result = await contract.methods.mint(
-      receiver,
-      nextTokenId,
-    ).send();
-
-    const events = normalizeEvents(result.events);
-    const address = collectionIdToAddress(collectionId);
-
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver,
-          tokenId: nextTokenId,
-        },
-      },
-    ]);
-
+  itEth('TokenURI from baseURI + tokenId', async ({helper}) => {
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_');
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + nextTokenId);
   });
 
-  itWeb3('TokenURI from baseURI + suffix', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, owner);
-    let result = await helper.methods.createERC721MetadataCompatibleCollection('Mint collection', '1', '1', 'BaseURI_').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const receiver = createEthAccount(web3);
-    const contract = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
-
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    result = await contract.methods.mint(
-      receiver,
-      nextTokenId,
-    ).send();
-
-    // Set suffix
+  itEth('TokenURI from baseURI + suffix', async ({helper}) => {
     const suffix = '/some/suffix';
-    await contract.methods.setProperty(nextTokenId, 'suffix', Buffer.from(suffix)).send();
-
-    const events = normalizeEvents(result.events);
-    const address = collectionIdToAddress(collectionId);
-
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver,
-          tokenId: nextTokenId,
-        },
-      },
-    ]);
-
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'suffix', suffix);
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + suffix);
   });
 });
 
 describe('Refungible: Plain calls', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([50n], donor);
+    });
   });
 
-  itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Can perform approve()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-
-    const spender = createEthAccount(web3);
-
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     {
       const result = await contract.methods.approve(spender, 100).send({from: owner});
-      const events = normalizeEvents(result.events);
-
-      expect(events).to.be.deep.equal([
-        {
-          address,
-          event: 'Approval',
-          args: {
-            owner,
-            spender,
-            value: '100',
-          },
-        },
-      ]);
+      const event = result.events.Approval;
+      expect(event.address).to.be.equal(tokenAddress);
+      expect(event.returnValues.owner).to.be.equal(owner);
+      expect(event.returnValues.spender).to.be.equal(spender);
+      expect(event.returnValues.value).to.be.equal('100');
     }
 
     {
@@ -265,49 +164,31 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Can perform transferFrom()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: owner})).itemId;
-
-    const spender = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, spender);
-
-    const receiver = createEthAccount(web3);
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await contract.methods.approve(spender, 100).send();
 
     {
       const result = await contract.methods.transferFrom(owner, receiver, 49).send({from: spender});
-      const events = normalizeEvents(result.events);
-      expect(events).to.include.deep.members([
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: owner,
-            to: receiver,
-            value: '49',
-          },
-        },
-        {
-          address,
-          event: 'Approval',
-          args: {
-            owner,
-            spender,
-            value: '51',
-          },
-        },
-      ]);
+      let event = result.events.Transfer;
+      expect(event.address).to.be.equal(tokenAddress);
+      expect(event.returnValues.from).to.be.equal(owner);
+      expect(event.returnValues.to).to.be.equal(receiver);
+      expect(event.returnValues.value).to.be.equal('49');
+
+      event = result.events.Approval;
+      expect(event.address).to.be.equal(tokenAddress);
+      expect(event.returnValues.owner).to.be.equal(owner);
+      expect(event.returnValues.spender).to.be.equal(spender);
+      expect(event.returnValues.value).to.be.equal('51');
     }
 
     {
@@ -321,36 +202,22 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Can perform transfer()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: owner})).itemId;
-
-    const receiver = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, receiver);
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     {
       const result = await contract.methods.transfer(receiver, 50).send({from: owner});
-      const events = normalizeEvents(result.events);
-      expect(events).to.include.deep.members([
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: owner,
-            to: receiver,
-            value: '50',
-          },
-        },
-      ]);
+      const event = result.events.Transfer;
+      expect(event.address).to.be.equal(tokenAddress);
+      expect(event.returnValues.from).to.be.equal(owner);
+      expect(event.returnValues.to).to.be.equal(receiver);
+      expect(event.returnValues.value).to.be.equal('50');
     }
 
     {
@@ -364,21 +231,14 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform repartition()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Can perform repartition()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner);
-
-    const receiver = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, receiver);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await contract.methods.repartition(200).send({from: owner});
     expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(200);
@@ -386,289 +246,247 @@ describe('Refungible: Plain calls', () => {
     expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(90);
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(110);
 
-    await expect(contract.methods.repartition(80).send({from: owner})).to.eventually.be.rejected;
+    await expect(contract.methods.repartition(80).send({from: owner})).to.eventually.be.rejected; // Transaction is reverted
 
     await contract.methods.transfer(receiver, 90).send({from: owner});
     expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(0);
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(200);
 
     await contract.methods.repartition(150).send({from: receiver});
-    await expect(contract.methods.transfer(owner, 160).send({from: receiver})).to.eventually.be.rejected;
+    await expect(contract.methods.transfer(owner, 160).send({from: receiver})).to.eventually.be.rejected; // Transaction is reverted
     expect(+await contract.methods.balanceOf(receiver).call()).to.be.equal(150);
   });
 
-  itWeb3('Can repartition with increased amount', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Can repartition with increased amount', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const result = await contract.methods.repartition(200).send();
-    const events = normalizeEvents(result.events);
 
-    expect(events).to.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: owner,
-          value: '100',
-        },
-      },
-    ]);
+    const event = result.events.Transfer;
+    expect(event.address).to.be.equal(tokenAddress);
+    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.be.equal(owner);
+    expect(event.returnValues.value).to.be.equal('100');
   });
 
-  itWeb3('Can repartition with decreased amount', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Can repartition with decreased amount', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {name: 'token name', mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = createEthAccount(web3);
-    await transferBalanceToEth(api, alice, owner);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 100n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const result = await contract.methods.repartition(50).send();
-    const events = normalizeEvents(result.events);
-    expect(events).to.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: owner,
-          to: '0x0000000000000000000000000000000000000000',
-          value: '50',
-        },
-      },
-    ]);
+    const event = result.events.Transfer;
+    expect(event.address).to.be.equal(tokenAddress);
+    expect(event.returnValues.from).to.be.equal(owner);
+    expect(event.returnValues.to).to.be.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.value).to.be.equal('50');
   });
 
-  itWeb3('Receiving Transfer event on burning into full ownership', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRFTCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('Receiving Transfer event on burning into full ownership', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(caller, 'Devastation', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const tokenId = await contract.methods.nextTokenId().call();
     await contract.methods.mint(caller, tokenId).send();
+    const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
+    const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, caller);
 
-    const address = tokenIdToAddress(collectionId, tokenId);
-
-    const tokenContract =  uniqueRefungibleToken(web3, address, caller);
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
 
-    const events =  await recordEvents(contract, async () =>
-      await tokenContract.methods.burnFrom(caller, 1).send());
-    expect(events).to.deep.equal([
-      {
-        address: collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
-          to: receiver,
-          tokenId,
-        },
-      },
-    ]);
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
+    });
+    await tokenContract.methods.burnFrom(caller, 1).send();
+
+    const event = events[0];
+    expect(event.address).to.be.equal(collectionAddress);
+    expect(event.returnValues.from).to.be.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
+    expect(event.returnValues.to).to.be.equal(receiver);
+    expect(event.returnValues.tokenId).to.be.equal(tokenId);
   });
 });
 
 describe('Refungible: Fees', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([50n], donor);
+    });
   });
 
-  itWeb3('approve() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('approve() call fee is less than 0.2UNQ', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const spender = createEthAccount(web3);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
-
-    const cost = await recordEthFee(api, owner, () => contract.methods.approve(spender, 100).send({from: owner}));
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await helper.eth.recordCallFee(owner, () => contract.methods.approve(spender, 100).send({from: owner}));
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
-  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('transferFrom() call fee is less than 0.2UNQ', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
-
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const spender = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await contract.methods.approve(spender, 100).send({from: owner});
 
-    const cost = await recordEthFee(api, spender, () => contract.methods.transferFrom(owner, spender, 100).send({from: spender}));
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await helper.eth.recordCallFee(spender, () => contract.methods.transferFrom(owner, spender, 100).send({from: spender}));
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
-  itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
-    const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n, {Ethereum: owner})).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address, owner);
-
-    const cost = await recordEthFee(api, owner, () => contract.methods.transfer(receiver, 100).send({from: owner}));
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await helper.eth.recordCallFee(owner, () => contract.methods.transfer(receiver, 100).send({from: owner}));
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 });
 
 describe('Refungible: Substrate calls', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([50n], donor);
+    });
   });
 
-  itWeb3('Events emitted for approve()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Events emitted for approve()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 200n);
 
-    const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress);
 
-    const receiver = createEthAccount(web3);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n)).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address);
-
-    const events = await recordEvents(contract, async () => {
-      expect(await approve(api, collectionId, tokenId, alice, {Ethereum: receiver}, 100n)).to.be.true;
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
     });
+    expect(await token.approve(alice, {Ethereum: receiver}, 100n)).to.be.true;
 
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Approval',
-        args: {
-          owner: subToEth(alice.address),
-          spender: receiver,
-          value: '100',
-        },
-      },
-    ]);
+    const event = events[0];
+    expect(event.event).to.be.equal('Approval');
+    expect(event.address).to.be.equal(tokenAddress);
+    expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
+    expect(event.returnValues.spender).to.be.equal(receiver);
+    expect(event.returnValues.value).to.be.equal('100');
   });
 
-  itWeb3('Events emitted for transferFrom()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Events emitted for transferFrom()', async ({helper}) => {
+    const [bob] = await helper.arrange.createAccounts([10n], donor);
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 200n);
+    await token.approve(alice, {Substrate: bob.address}, 100n);
 
-    const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
-    const bob = privateKeyWrapper('//Bob');
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress);
 
-    const receiver = createEthAccount(web3);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n)).itemId;
-    expect(await approve(api, collectionId, tokenId, alice, bob.address, 100n)).to.be.true;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address);
-
-    const events = await recordEvents(contract, async () => {
-      expect(await transferFrom(api, collectionId, tokenId, bob, alice, {Ethereum: receiver},  51n)).to.be.true;
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
     });
 
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: subToEth(alice.address),
-          to: receiver,
-          value: '51',
-        },
-      },
-      {
-        address,
-        event: 'Approval',
-        args: {
-          owner: subToEth(alice.address),
-          spender: subToEth(bob.address),
-          value: '49',
-        },
-      },
-    ]);
+    expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver},  51n)).to.be.true;
+
+    let event = events[0];
+    expect(event.event).to.be.equal('Transfer');
+    expect(event.address).to.be.equal(tokenAddress);
+    expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
+    expect(event.returnValues.to).to.be.equal(receiver);
+    expect(event.returnValues.value).to.be.equal('51');
+
+    event = events[1];
+    expect(event.event).to.be.equal('Approval');
+    expect(event.address).to.be.equal(tokenAddress);
+    expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
+    expect(event.returnValues.spender).to.be.equal(helper.address.substrateToEth(bob.address));
+    expect(event.returnValues.value).to.be.equal('49');
   });
 
-  itWeb3('Events emitted for transfer()', async ({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
+  itEth('Events emitted for transfer()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 200n);
 
-    const collectionId = (await createCollection(api, alice, {mode: {type: 'ReFungible'}})).collectionId;
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const contract = helper.ethNativeContract.rftToken(tokenAddress);
 
-    const receiver = createEthAccount(web3);
-
-    const tokenId = (await createRefungibleToken(api, alice, collectionId, 200n)).itemId;
-
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const contract = uniqueRefungibleToken(web3, address);
-
-    const events = await recordEvents(contract, async () => {
-      expect(await transfer(api, collectionId, tokenId, alice, {Ethereum: receiver},  51n)).to.be.true;
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
     });
 
-    expect(events).to.be.deep.equal([
-      {
-        address,
-        event: 'Transfer',
-        args: {
-          from: subToEth(alice.address),
-          to: receiver,
-          value: '51',
-        },
-      },
-    ]);
+    expect(await token.transfer(alice, {Ethereum: receiver},  51n)).to.be.true;
+
+    const event = events[0];
+    expect(event.event).to.be.equal('Transfer');
+    expect(event.address).to.be.equal(tokenAddress);
+    expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
+    expect(event.returnValues.to).to.be.equal(receiver);
+    expect(event.returnValues.value).to.be.equal('51');
   });
 });
 
 describe('ERC 1633 implementation', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = privateKey('//Alice');
+    });
   });
 
-  itWeb3('Default parent token address and id', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Default parent token address and id', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
-    const {collectionIdAddress, collectionId} = await createRFTCollection(api, web3, owner);
-    const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
-    const refungibleTokenId = await refungibleContract.methods.nextTokenId().call();
-    await refungibleContract.methods.mint(owner, refungibleTokenId).send();
+    const {collectionId, collectionAddress} = await helper.eth.createRefungibleCollection(owner, 'Sands', '', 'GRAIN');
+    const collectionContract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    
+    const tokenId = await collectionContract.methods.nextTokenId().call();
+    await collectionContract.methods.mint(owner, tokenId).send();
+    const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
+    const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    const rftTokenAddress = tokenIdToAddress(collectionId, refungibleTokenId);
-    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
-
-    const tokenAddress = await refungibleTokenContract.methods.parentToken().call();
-    const tokenId = await refungibleTokenContract.methods.parentTokenId().call();
-    expect(tokenAddress).to.be.equal(collectionIdAddress);
-    expect(tokenId).to.be.equal(refungibleTokenId);
+    expect(await tokenContract.methods.parentToken().call()).to.be.equal(collectionAddress);
+    expect(await tokenContract.methods.parentTokenId().call()).to.be.equal(tokenId);
   });
 });

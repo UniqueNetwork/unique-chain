@@ -94,15 +94,15 @@ export interface ICollectionPermissions {
 
 export interface IProperty {
   key: string;
-  value: string;
+  value?: string;
 }
 
 export interface ITokenPropertyPermission {
   key: string;
   permission: {
-    mutable: boolean;
-    tokenOwner: boolean;
-    collectionAdmin: boolean;
+    mutable?: boolean;
+    tokenOwner?: boolean;
+    collectionAdmin?: boolean;
   }
 }
 

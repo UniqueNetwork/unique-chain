@@ -23,4 +23,4 @@ COPY . /dev_chain
 
 WORKDIR /dev_chain
 
-CMD cargo test --features=limit-testing
+CMD cargo test --features=limit-testing --workspace

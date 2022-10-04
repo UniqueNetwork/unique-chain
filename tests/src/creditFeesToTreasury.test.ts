@@ -16,11 +16,6 @@
 
 import './interfaces/augment-api-consts';
 import {IKeyringPair} from '@polkadot/types/types';
-import {
-  UNIQUE,
-} from './util/helpers';
-
-import {default as waitNewBlocks} from './substrate/wait-new-blocks';
 import {ApiPromise} from '@polkadot/api';
 import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
 
@@ -63,7 +58,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   itSub('Total issuance does not change', async ({helper}) => {
     const api = helper.api!;
     await skipInflationBlock(api);
-    await waitNewBlocks(api, 1);
+    await helper.wait.newBlocks(1);
 
     const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
 
@@ -75,9 +70,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async ({helper}) => {
-    const api = helper.api!;
-    await skipInflationBlock(api);
-    await waitNewBlocks(api, 1);
+    await skipInflationBlock(helper.api!);
+    await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
@@ -96,7 +90,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   itSub('Treasury balance increased by failed tx fee', async ({helper}) => {
     const api = helper.api!;
-    await waitNewBlocks(api, 1);
+    await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
@@ -113,9 +107,8 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('NFT Transactions also send fees to Treasury', async ({helper}) => {
-    const api = helper.api!;
-    await skipInflationBlock(api);
-    await waitNewBlocks(api, 1);
+    await skipInflationBlock(helper.api!);
+    await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
@@ -131,9 +124,9 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('Fees are sane', async ({helper}) => {
-    const api = helper.api!;
-    await skipInflationBlock(api);
-    await waitNewBlocks(api, 1);
+    const unique = helper.balance.getOneTokenNominal();
+    await skipInflationBlock(helper.api!);
+    await helper.wait.newBlocks(1);
 
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
@@ -142,14 +135,13 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
     const fee = aliceBalanceBefore - aliceBalanceAfter;
 
-    expect(fee / UNIQUE < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
-    expect(fee / UNIQUE < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
+    expect(fee / unique < BigInt(Math.ceil(saneMaximumFee + createCollectionDeposit))).to.be.true;
+    expect(fee / unique < BigInt(Math.ceil(saneMinimumFee  + createCollectionDeposit))).to.be.true;
   });
 
   itSub('NFT Transfer fee is close to 0.1 Unique', async ({helper}) => {
-    const api = helper.api!;
-    await skipInflationBlock(api);
-    await waitNewBlocks(api, 1);
+    await skipInflationBlock(helper.api!);
+    await helper.wait.newBlocks(1);
 
     const collection = await helper.nft.mintCollection(alice, {
       name: 'test',
@@ -163,7 +155,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE);
+    const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal());
     const expectedTransferFee = 0.1;
     // fee drifts because of NextFeeMultiplier
     const tolerance = 0.001;

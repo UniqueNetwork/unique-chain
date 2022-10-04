@@ -31,11 +31,11 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
   itSub('Changing owner changes owner address', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const beforeChanging = await helper.collection.getData(collection.collectionId);
-    expect(beforeChanging?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(alice.address));
+    expect(beforeChanging?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(alice.address));
 
     await collection.changeOwner(alice, bob.address);
     const afterChanging = await helper.collection.getData(collection.collectionId);
-    expect(afterChanging?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(bob.address));
+    expect(afterChanging?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(bob.address));
   });
 });
 
@@ -60,7 +60,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.NoPermission/);
 
     const afterChanging = await helper.collection.getData(collection.collectionId);
-    expect(afterChanging?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(bob.address));
+    expect(afterChanging?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(bob.address));
   });
 
   itSub('New collectionOwner has access to sponsorship management operations in the collection', async ({helper}) => {
@@ -68,7 +68,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
     await collection.changeOwner(alice, bob.address);
 
     const afterChanging = await helper.collection.getData(collection.collectionId);
-    expect(afterChanging?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(bob.address));
+    expect(afterChanging?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(bob.address));
 
     await collection.setSponsor(bob, charlie.address);
     await collection.confirmSponsorship(charlie);
@@ -97,7 +97,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
     await collection.changeOwner(alice, bob.address);
     await collection.changeOwner(bob, charlie.address);
     const collectionData = await collection.getData();
-    expect(collectionData?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(charlie.address));
+    expect(collectionData?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(charlie.address));
   });
 });
 
@@ -140,7 +140,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.NoPermission/);
 
     const afterChanging = await helper.collection.getData(collection.collectionId);
-    expect(afterChanging?.normalizedOwner).to.be.equal(helper.util.normalizeSubstrateAddress(bob.address));
+    expect(afterChanging?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(bob.address));
 
     const setSponsorTx = async () => collection.setSponsor(alice, charlie.address);
     const confirmSponsorshipTx = async () => collection.confirmSponsorship(alice);

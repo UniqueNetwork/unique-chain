@@ -15,11 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {
-  normalizeAccountId,
-} from './util/helpers';
 import {usingPlaygrounds, expect, Pallets, itSub} from './util/playgrounds';
-
 
 describe('Integration Test createMultipleItems(collection_id, owner, items_data):', () => {
   let alice: IKeyringPair;
@@ -48,7 +44,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
+      expect(tokenData?.normalizedOwner.Substrate).to.be.deep.equal(helper.address.normalizeSubstrate(alice.address));
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -116,7 +112,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
+      expect(tokenData?.normalizedOwner.Substrate).to.be.deep.equal(helper.address.normalizeSubstrate(alice.address));
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -138,7 +134,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
+      expect(tokenData?.normalizedOwner.Substrate).to.be.deep.equal(helper.address.normalizeSubstrate(alice.address));
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -160,7 +156,7 @@ describe('Integration Test createMultipleItems(collection_id, owner, items_data)
     const tokens = await helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     for (const [i, token] of tokens.entries()) {
       const tokenData = await token.getData();
-      expect(tokenData?.normalizedOwner).to.be.deep.equal({Substrate: helper.util.normalizeSubstrateAddress(alice.address)});
+      expect(tokenData?.normalizedOwner.Substrate).to.be.equal(helper.address.normalizeSubstrate(alice.address));
       expect(tokenData?.properties[0].value).to.be.equal(args[i].properties[0].value);
     }
   });
@@ -275,8 +271,11 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     });
 
     const types = ['NFT', 'Fungible', 'ReFungible'];
-    const mintTx = helper.api?.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), types);
-    await expect(helper.signTransaction(alice, mintTx)).to.be.rejected;
+    await expect(helper.executeExtrinsic(
+      alice, 
+      'api.tx.unique.createMultipleItems', 
+      [collectionId, {Substrate: alice.address}, types],
+    )).to.be.rejectedWith(/nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/);
   });
 
   itSub('Create tokens with different data limits <> maximum data limit', async ({helper}) => {
