@@ -42,7 +42,7 @@ describe('Add collection admins', () => {
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
 
-  itEth('Add substrate admin by owner', async ({helper}) => {
+  itEth.skip('Add substrate admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -100,7 +100,7 @@ describe('Add collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itEth('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({helper}) => {
+  itEth.skip('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
 
@@ -118,7 +118,7 @@ describe('Add collection admins', () => {
       .to.be.eq(admin.toLocaleLowerCase());
   });
 
-  itEth('(!negative tests!) Add substrate admin by USER is not allowed', async ({helper}) => {
+  itEth.skip('(!negative tests!) Add substrate admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
 
@@ -162,7 +162,7 @@ describe('Remove collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itEth('Remove substrate admin by owner', async ({helper}) => {
+  itEth.skip('Remove substrate admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
 
@@ -222,7 +222,7 @@ describe('Remove collection admins', () => {
     }
   });
 
-  itEth('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({helper}) => {
+  itEth.skip('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
 
@@ -242,7 +242,7 @@ describe('Remove collection admins', () => {
       .to.be.deep.contains(adminEth.toLocaleLowerCase());
   });
 
-  itEth('(!negative tests!) Remove substrate admin by USER is not allowed', async ({helper}) => {
+  itEth.skip('(!negative tests!) Remove substrate admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
 
@@ -315,7 +315,7 @@ describe('Change substrate owner tests', () => {
   });
 
   //FIXME
-  itEth('Change owner', async ({helper}) => {
+  itEth.skip('Change owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
@@ -330,7 +330,7 @@ describe('Change substrate owner tests', () => {
     expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.true;
   });
 
-  itEth('change owner call fee', async ({helper}) => {
+  itEth.skip('change owner call fee', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
@@ -342,7 +342,7 @@ describe('Change substrate owner tests', () => {
   });
 
   //FIXME
-  itEth('(!negative tests!) call setOwner by non owner', async ({helper}) => {
+  itEth.skip('(!negative tests!) call setOwner by non owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const otherReceiver = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
