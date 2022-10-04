@@ -16,8 +16,7 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {executeTransaction} from '../substrate/substrate-api';
-import {uniqueEventMessage} from '../util/helpers';
+import {getEventMessage} from '../util/helpers';
 import {usingPlaygrounds, expect, itSub} from '../util/playgrounds';
 
 
@@ -35,10 +34,9 @@ describe('Burn Item event ', () => {
   itSub('Check event from burnItem(): ', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, {Substrate: alice.address});
+    await token.burn(alice);
 
-    const tx = helper.api!.tx.unique.burnItem(collection.collectionId, token.tokenId, 1);
-    const events = await executeTransaction(helper.api!, alice, tx);
-    const msg = JSON.stringify(uniqueEventMessage(events));
+    const msg = JSON.stringify(getEventMessage(helper.chainLog[helper.chainLog.length - 1].events));
     expect(msg).to.be.contain(checkSection);
     expect(msg).to.be.contain(checkTreasury);
     expect(msg).to.be.contain(checkSystem);

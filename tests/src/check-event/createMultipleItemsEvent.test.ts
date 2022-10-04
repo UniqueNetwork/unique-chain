@@ -16,8 +16,7 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {executeTransaction} from '../substrate/substrate-api';
-import {uniqueEventMessage, normalizeAccountId} from '../util/helpers';
+import {getEventMessage} from '../util/helpers';
 import {usingPlaygrounds, itSub, expect} from '../util/playgrounds';
 
 describe('Create Multiple Items Event event ', () => {
@@ -32,11 +31,14 @@ describe('Create Multiple Items Event event ', () => {
     });
   });
   itSub('Check event from createMultipleItems(): ', async ({helper}) => {
-    const {collectionId} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const args = [{NFT: {}}, {NFT: {}}, {NFT: {}}];
-    const createMultipleItemsTx = helper.api!.tx.unique.createMultipleItems(collectionId, normalizeAccountId(alice.address), args);
-    const events = await executeTransaction(helper.api!, alice, createMultipleItemsTx);
-    const msg = JSON.stringify(uniqueEventMessage(events));
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+
+    await collection.mintMultipleTokens(alice, [
+      {owner: {Substrate: alice.address}},
+      {owner: {Substrate: alice.address}},
+    ]);
+
+    const msg = JSON.stringify(getEventMessage(helper.chainLog[helper.chainLog.length - 1].events));
     expect(msg).to.be.contain(checkSection);
     expect(msg).to.be.contain(checkTreasury);
     expect(msg).to.be.contain(checkSystem);

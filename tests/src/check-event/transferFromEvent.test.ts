@@ -16,8 +16,7 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {executeTransaction} from '../substrate/substrate-api';
-import {uniqueEventMessage, normalizeAccountId} from '../util/helpers';
+import {getEventMessage} from '../util/helpers';
 import {usingPlaygrounds, expect, itSub} from '../util/playgrounds';
 
 describe('Transfer event ', () => {
@@ -36,10 +35,9 @@ describe('Transfer event ', () => {
 
   itSub('Check event from transfer(): ', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const {tokenId} = await collection.mintToken(alice, {Substrate: alice.address});
-    const transferTx = helper.api!.tx.unique.transferFrom(normalizeAccountId(alice.address), normalizeAccountId(bob.address), collection.collectionId, tokenId, 1);
-    const events = await executeTransaction(helper.api!, alice, transferTx);
-    const msg = JSON.stringify(uniqueEventMessage(events));
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    await token.transferFrom(alice, {Substrate: alice.address}, {Substrate: bob.address});
+    const msg = JSON.stringify(getEventMessage(helper.chainLog[helper.chainLog.length - 1].events));
     expect(msg).to.be.contain(checkSection);
     expect(msg).to.be.contain(checkTreasury);
     expect(msg).to.be.contain(checkSystem);
