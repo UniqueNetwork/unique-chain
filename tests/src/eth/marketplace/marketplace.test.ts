@@ -51,15 +51,15 @@ describe('Matcher contract usage', () => {
   });
 
   itEth('With UNQ', async ({helper}) => {
-    const web3 = helper.web3!;
-
-    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const web3 = helper.getWeb3();
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
+
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = contractHelpers(web3, matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
@@ -108,16 +108,16 @@ describe('Matcher contract usage', () => {
   });
 
   itEth('With escrow', async ({helper}) => {
-    const web3 = helper.web3!;
-
-    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const web3 = helper.getWeb3();
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const escrow = await helper.eth.createAccountWithBalance(donor);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments: [matcherOwner]}).send({from: matcherOwner, gas: 10000000});
+
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const escrow = await helper.eth.createAccountWithBalance(donor);
     await matcher.methods.setEscrow(escrow).send({from: matcherOwner});
     const helpers = contractHelpers(web3, matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
@@ -176,15 +176,15 @@ describe('Matcher contract usage', () => {
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 
-  itEth('Sell tokens from substrate user via EVM contract', async ({helper, privateKey}) => {
-    const web3 = helper.web3!;
-
+  itEth('Sell tokens from substrate user via EVM contract', async ({helper}) => {
+    const web3 = helper.getWeb3();
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
       ...GAS_ARGS,
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
+
     await helper.eth.transferBalanceFromSubstrate(donor, matcher.options.address);
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}});
