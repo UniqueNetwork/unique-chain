@@ -16,13 +16,11 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {getEventMessage} from '../util/helpers';
 import {itSub, usingPlaygrounds, expect} from '../util/playgrounds';
+import {IEvent} from '../util/playgrounds/types';
 
 describe('Destroy collection event ', () => {
   let alice: IKeyringPair;
-  const checkTreasury = 'Deposit';
-  const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = privateKey('//Alice');
@@ -33,8 +31,11 @@ describe('Destroy collection event ', () => {
   itSub('Check event from destroyCollection(): ', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.burn(alice);
-    const msg = JSON.stringify(getEventMessage(helper.chainLog[helper.chainLog.length - 1].events));
-    expect(msg).to.be.contain(checkTreasury);
-    expect(msg).to.be.contain(checkSystem);
+    const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
+    const eventStrings = event.map(e => `${e.section}.${e.method}`);
+
+    expect(eventStrings).to.contains('common.CollectionDestroyed');
+    expect(eventStrings).to.contains('treasury.Deposit');
+    expect(eventStrings).to.contains('system.ExtrinsicSuccess');
   });
 });
