@@ -2161,7 +2161,7 @@ class StakingGroup extends HelperGroup {
    */
   async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
     if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
-    const stakeResult = await this.helper.executeExtrinsic(
+    const _stakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.stake',
       [amountToStake], true,
     );
@@ -2178,7 +2178,7 @@ class StakingGroup extends HelperGroup {
    */
   async unstake(signer: TSigner, label?: string): Promise<number> {
     if(typeof label === 'undefined') label = `${signer.address}`;
-    const unstakeResult = await this.helper.executeExtrinsic(
+    const _unstakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.unstake',
       [], true,
     );
