@@ -16,24 +16,10 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util/playgrounds';
 
-async function waitNewBlocks(helper: EthUniqueHelper, count: number) {
-  // eslint-disable-next-line no-async-promise-executor
-  return new Promise<void>(async (resolve) => {
-    const unsubscribe = await helper.callRpc('api.rpc.chain.subscribeNewHeads', [() => {
-      if (count > 0) {
-        count--;
-      } else {
-        unsubscribe();
-        resolve();
-      }
-    }]);
-  });
-}
-
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
   await call();
-  waitNewBlocks(helper, 1);
+  await helper.wait.newBlocks(1);
   const after = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
 
   expect(after < before).to.be.true;
