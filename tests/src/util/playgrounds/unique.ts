@@ -275,6 +275,7 @@ class UniqueEventHelper {
   }
   
   private static extractData(data: any, type: any): any {
+    if(!type) return data.toHuman();
     if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
     if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
