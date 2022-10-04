@@ -51,29 +51,29 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AppPromotion PendingUnstake (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn on_initialize(b: u32, ) -> Weight {
-		(2_651_000 as Weight)
+		Weight::from_ref_time(2_651_000)
 			// Standard Error: 103_000
-			.saturating_add((6_024_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(6_024_000).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(b as u64)))
+			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: AppPromotion Admin (r:0 w:1)
 	fn set_admin_address() -> Weight {
-		(7_117_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(7_117_000)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: AppPromotion NextCalculatedRecord (r:1 w:1)
 	// Storage: AppPromotion Staked (r:2 w:0)
 	fn payout_stakers(b: u32, ) -> Weight {
-		(9_958_000 as Weight)
+		Weight::from_ref_time(9_958_000)
 			// Standard Error: 8_000
-			.saturating_add((4_406_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(4_406_000).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(b as u64)))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion StakesPerAccount (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
@@ -82,9 +82,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AppPromotion Staked (r:1 w:1)
 	// Storage: AppPromotion TotalStaked (r:1 w:1)
 	fn stake() -> Weight {
-		(20_574_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(20_574_000)
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: AppPromotion PendingUnstake (r:1 w:1)
 	// Storage: AppPromotion Staked (r:2 w:1)
@@ -93,37 +93,37 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AppPromotion TotalStaked (r:1 w:1)
 	// Storage: AppPromotion StakesPerAccount (r:0 w:1)
 	fn unstake() -> Weight {
-		(31_703_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		Weight::from_ref_time(31_703_000)
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:1)
 	fn sponsor_collection() -> Weight {
-		(12_932_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(12_932_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:1)
 	fn stop_sponsoring_collection() -> Weight {
-		(12_453_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(12_453_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: EvmContractHelpers Sponsoring (r:0 w:1)
 	fn sponsor_contract() -> Weight {
-		(11_952_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(11_952_000)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: EvmContractHelpers Sponsoring (r:1 w:1)
 	fn stop_sponsoring_contract() -> Weight {
-		(12_538_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(12_538_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }
 
@@ -132,29 +132,29 @@ impl WeightInfo for () {
 	// Storage: AppPromotion PendingUnstake (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn on_initialize(b: u32, ) -> Weight {
-		(2_651_000 as Weight)
+		Weight::from_ref_time(2_651_000)
 			// Standard Error: 103_000
-			.saturating_add((6_024_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(6_024_000).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(b as u64)))
+			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: AppPromotion Admin (r:0 w:1)
 	fn set_admin_address() -> Weight {
-		(7_117_000 as Weight)
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(7_117_000)
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: ParachainSystem ValidationData (r:1 w:0)
 	// Storage: AppPromotion NextCalculatedRecord (r:1 w:1)
 	// Storage: AppPromotion Staked (r:2 w:0)
 	fn payout_stakers(b: u32, ) -> Weight {
-		(9_958_000 as Weight)
+		Weight::from_ref_time(9_958_000)
 			// Standard Error: 8_000
-			.saturating_add((4_406_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(4_406_000).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(4 as u64))
+			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(b as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion StakesPerAccount (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
@@ -163,9 +163,9 @@ impl WeightInfo for () {
 	// Storage: AppPromotion Staked (r:1 w:1)
 	// Storage: AppPromotion TotalStaked (r:1 w:1)
 	fn stake() -> Weight {
-		(20_574_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(20_574_000)
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	// Storage: AppPromotion PendingUnstake (r:1 w:1)
 	// Storage: AppPromotion Staked (r:2 w:1)
@@ -174,36 +174,36 @@ impl WeightInfo for () {
 	// Storage: AppPromotion TotalStaked (r:1 w:1)
 	// Storage: AppPromotion StakesPerAccount (r:0 w:1)
 	fn unstake() -> Weight {
-		(31_703_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
+		Weight::from_ref_time(31_703_000)
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(6 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:1)
 	fn sponsor_collection() -> Weight {
-		(12_932_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(12_932_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:1)
 	fn stop_sponsoring_collection() -> Weight {
-		(12_453_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(12_453_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: EvmContractHelpers Sponsoring (r:0 w:1)
 	fn sponsor_contract() -> Weight {
-		(11_952_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(11_952_000)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: AppPromotion Admin (r:1 w:0)
 	// Storage: EvmContractHelpers Sponsoring (r:1 w:1)
 	fn stop_sponsoring_contract() -> Weight {
-		(12_538_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(12_538_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 }

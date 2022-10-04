@@ -185,21 +185,21 @@ impl<T: Config> CollectionHandle<T> {
 	/// Consume gas for reading.
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
 					.read
 					.saturating_mul(reads),
-			))
+			)))
 	}
 
 	/// Consume gas for writing.
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
 					.write
 					.saturating_mul(writes),
-			))
+			)))
 	}
 
 	/// Consume gas for reading and writing.
@@ -212,9 +212,9 @@ impl<T: Config> CollectionHandle<T> {
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				reads.saturating_add(writes),
-			))
+			)))
 	}
 
 	/// Save collection to storage.
@@ -706,7 +706,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			StorageVersion::new(1).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -866,6 +866,7 @@ impl<T: Config> Pallet<T> {
 	/// * `flags` - Extra flags to store.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
@@ -939,7 +940,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				owner.as_sub(),
+				payer.as_sub(),
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,

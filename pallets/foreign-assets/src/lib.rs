@@ -54,7 +54,7 @@ use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
-use xcm::opaque::latest::prelude::XcmError;
+use xcm::opaque::latest::{prelude::XcmError, Weight};
 use xcm::{v1::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
 
@@ -309,11 +309,9 @@ pub mod module {
 				mode: CollectionMode::Fungible(md.decimals),
 				..Default::default()
 			};
-
-			let bounded_collection_id = <PalletFungible<T>>::init_foreign_collection(
-				CrossAccountId::from_sub(owner),
-				data,
-			)?;
+			let owner = T::CrossAccountId::from_sub(owner);
+			let bounded_collection_id =
+				<PalletFungible<T>>::init_foreign_collection(owner.clone(), owner, data)?;
 			let foreign_asset_id =
 				Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
 

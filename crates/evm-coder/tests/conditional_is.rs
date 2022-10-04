@@ -1,4 +1,4 @@
-use evm_coder::{types::*, solidity_interface, execution::Result, Call};
+use evm_coder::{types::*, solidity_interface, execution::Result};
 
 pub struct Contract(bool);
 

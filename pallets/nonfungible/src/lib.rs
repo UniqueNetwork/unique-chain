@@ -114,7 +114,7 @@ use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap, collections::btree_set::BTreeSet};
+use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
 use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -278,7 +278,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			StorageVersion::new(1).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -405,11 +405,13 @@ impl<T: Config> Pallet<T> {
 	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 		is_external: bool,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(
 			owner,
+			payer,
 			data,
 			CollectionFlags {
 				external: is_external,
@@ -543,7 +545,7 @@ impl<T: Config> Pallet<T> {
 		let current_token_account =
 			T::CrossTokenAddressMapping::token_to_address(collection.id, token);
 
-		let mut weight = 0 as Weight;
+		let mut weight = Weight::zero();
 
 		// This method is transactional, if user in fact doesn't have permissions to remove token -
 		// tokens removed here will be restored after rejected transaction

@@ -23,7 +23,7 @@ contract CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x88ee8ef1
+/// @dev the ERC-165 identifier for this interface is 0x5ad4f440
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -36,7 +36,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -52,7 +52,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory description,
 		string memory tokenPrefix,
 		string memory baseUri
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -68,7 +68,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -84,7 +84,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory description,
 		string memory tokenPrefix,
 		string memory baseUri
-	) public returns (address) {
+	) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -104,5 +104,13 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		collectionAddress;
 		dummy;
 		return false;
+	}
+
+	/// @dev EVM selector for this function is: 0xd23a7ab1,
+	///  or in textual repr: collectionCreationFee()
+	function collectionCreationFee() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
 	}
 }

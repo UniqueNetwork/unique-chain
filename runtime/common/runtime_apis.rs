@@ -190,6 +190,7 @@ macro_rules! impl_common_runtime_apis {
             }
 
             impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
+                #[allow(unused_variables)]
                 fn total_staked(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -198,6 +199,7 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default());
                 }
 
+                #[allow(unused_variables)]
                 fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -206,6 +208,7 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
                 }
 
+                #[allow(unused_variables)]
                 fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -214,6 +217,7 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker));
                 }
 
+                #[allow(unused_variables)]
                 fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();

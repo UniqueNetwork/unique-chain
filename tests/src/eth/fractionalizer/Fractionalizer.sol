@@ -18,7 +18,8 @@ contract Fractionalizer {
 	mapping(address => bool) nftCollectionAllowList;
 	mapping(address => mapping(uint256 => uint256)) public nft2rftMapping;
 	mapping(address => Token) public rft2nftMapping;
-	bytes32 refungibleCollectionType = keccak256(bytes("ReFungible"));
+	//use constant to reduce gas cost
+	bytes32 constant refungibleCollectionType = keccak256(bytes("ReFungible"));
 
 	receive() external payable onlyOwner {}
 
@@ -51,11 +52,12 @@ contract Fractionalizer {
 	///  Throws if `msg.sender` is not owner or admin of provided RFT collection.
 	///  Can only be called by contract owner.
 	/// @param _collection address of RFT collection.
-	function setRFTCollection(address _collection) public onlyOwner {
+	function setRFTCollection(address _collection) external onlyOwner {
 		require(rftCollection == address(0), "RFT collection is already set");
 		UniqueRefungible refungibleContract = UniqueRefungible(_collection);
 		string memory collectionType = refungibleContract.uniqueCollectionType();
 
+		// compare hashed to reduce gas cost
 		require(
 			keccak256(bytes(collectionType)) == refungibleCollectionType,
 			"Wrong collection type. Collection is not refungible."
@@ -79,10 +81,10 @@ contract Fractionalizer {
 		string calldata _name,
 		string calldata _description,
 		string calldata _tokenPrefix
-	) public onlyOwner {
+	) external payable onlyOwner {
 		require(rftCollection == address(0), "RFT collection is already set");
 		address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-		rftCollection = CollectionHelpers(collectionHelpers).createRFTCollection(_name, _description, _tokenPrefix);
+		rftCollection = CollectionHelpers(collectionHelpers).createRFTCollection{value: msg.value}(_name, _description, _tokenPrefix);
 		emit RFTCollectionSet(rftCollection);
 	}
 
@@ -90,7 +92,7 @@ contract Fractionalizer {
 	/// @dev Can only be called by contract owner.
 	/// @param collection NFT token address.
 	/// @param status `true` to allow and `false` to disallow NFT token.
-	function setNftCollectionIsAllowed(address collection, bool status) public onlyOwner {
+	function setNftCollectionIsAllowed(address collection, bool status) external onlyOwner {
 		nftCollectionAllowList[collection] = status;
 		emit AllowListSet(collection, status);
 	}
@@ -109,7 +111,7 @@ contract Fractionalizer {
 		address _collection,
 		uint256 _token,
 		uint128 _pieces
-	) public {
+	) external {
 		require(rftCollection != address(0), "RFT collection is not set");
 		UniqueRefungible rftCollectionContract = UniqueRefungible(rftCollection);
 		require(
@@ -148,7 +150,7 @@ contract Fractionalizer {
 	///  Throws if `msg.sender` isn't owner of all RFT token pieces.
 	/// @param _collection RFT collection address
 	/// @param _token id of RFT token
-	function rft2nft(address _collection, uint256 _token) public {
+	function rft2nft(address _collection, uint256 _token) external {
 		require(rftCollection != address(0), "RFT collection is not set");
 		require(rftCollection == _collection, "Wrong RFT collection");
 		UniqueRefungible rftCollectionContract = UniqueRefungible(rftCollection);

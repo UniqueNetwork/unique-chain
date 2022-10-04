@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds} from './util/playgrounds';
+import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util/playgrounds';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
@@ -103,4 +103,168 @@ describe('EVM payable contracts', () => {
       expect(finalReceiverBalance > initialReceiverBalance).to.be.true;
     }
   });
+});
+
+describe('EVM transaction fees', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+
+  itEth('Fee is withdrawn from the user', async({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await helper.eth.deployFlipper(deployer);
+    
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    await contract.methods.flip().send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+  });
+
+  itEth('Fee for nested calls is withdrawn from the user', async({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await deployProxyContract(helper, deployer);
+    
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
+    await contract.methods.flip().send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+    expect(finalContractBalance == initialContractBalance).to.be.true;
+  });
+  
+  itEth('Fee for nested calls to native methods is withdrawn from the user', async({helper}) => {
+    const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
+
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await deployProxyContract(helper, deployer);
+
+    const collectionAddress = (await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)})).events.CollectionCreated.returnValues.collection;
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
+    await contract.methods.mintNftToken(collectionAddress).send({from: caller});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+    expect(finalContractBalance == initialContractBalance).to.be.true;
+  });
+  
+  itEth('Fee for nested calls to create*Collection methods is withdrawn from the user and from the contract', async({helper}) => {
+    const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const contract = await deployProxyContract(helper, deployer);
+
+    const initialCallerBalance = await helper.balance.getEthereum(caller);
+    const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
+    await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)});
+    const finalCallerBalance = await helper.balance.getEthereum(caller);
+    const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
+    expect(finalCallerBalance < initialCallerBalance).to.be.true;
+    expect(finalContractBalance == initialContractBalance).to.be.true;
+  });
+
+  itEth('Negative test: call createNFTCollection with wrong fee', async({helper}) => {
+    const SMALL_FEE = 1n * helper.balance.getOneTokenNominal();
+    const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
+        
+    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+  });
+
+  itEth('Negative test: call createRFTCollection with wrong fee', async({helper}) => {
+    const SMALL_FEE = 1n * helper.balance.getOneTokenNominal();
+    const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
+        
+    await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+  });
+
+  itEth('Get collection creation fee', async({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    expect(await helper.eth.getCollectionCreationFee(deployer)).to.be.equal(String(2n * helper.balance.getOneTokenNominal()));
+  });
+
+  async function deployProxyContract(helper: EthUniqueHelper, deployer: string) {
+    return await helper.ethContract.deployByCode(
+      deployer,
+      'ProxyContract',
+      `
+      // SPDX-License-Identifier: UNLICENSED
+      pragma solidity ^0.8.6;
+
+      import {CollectionHelpers} from "../api/CollectionHelpers.sol";
+      import {UniqueNFT} from "../api/UniqueNFT.sol";
+
+      error Value(uint256 value);
+
+      contract ProxyContract {
+        bool value = false;
+        address innerContract;
+
+        event CollectionCreated(address collection);
+        event TokenMinted(uint256 tokenId);
+
+        receive() external payable {}
+
+        constructor() {
+          innerContract = address(new InnerContract());
+        }
+
+        function flip() public {
+          value = !value;
+          InnerContract(innerContract).flip();
+        }
+
+        function createNonfungibleCollection() external payable {
+          address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
+		      address nftCollection = CollectionHelpers(collectionHelpers).createNonfungibleCollection{value: msg.value}("A", "B", "C");
+          emit CollectionCreated(nftCollection);
+        }
+
+        function mintNftToken(address collectionAddress) external  {
+          UniqueNFT collection = UniqueNFT(collectionAddress);
+          uint256 tokenId = collection.nextTokenId();
+          collection.mint(msg.sender, tokenId);
+          emit TokenMinted(tokenId);
+        }
+
+        function getValue() external view returns (bool) {
+          return InnerContract(innerContract).getValue();
+        }
+      }
+
+      contract InnerContract {
+        bool value = false;
+        function flip() external {
+          value = !value;
+        }
+        function getValue() external view returns (bool) {
+          return value;
+        }
+      }
+      `,
+      [
+        {
+          solPath: 'api/CollectionHelpers.sol',
+          fsPath: `${__dirname}/api/CollectionHelpers.sol`,
+        },
+        {
+          solPath: 'api/UniqueNFT.sol',
+          fsPath: `${__dirname}/api/UniqueNFT.sol`,
+        },
+      ],
+    );
+  }
 });

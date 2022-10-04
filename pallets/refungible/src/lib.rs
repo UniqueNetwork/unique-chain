@@ -99,11 +99,7 @@ use frame_support::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CollectionHandle, CommonCollectionOperations,
-	dispatch::CollectionDispatch,
-	erc::static_property::{key, property_value_from_bytes},
-	Error as CommonError,
-	eth::collection_id_to_address,
+	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
 	Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
@@ -112,10 +108,10 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionMode, CollectionFlags,
-	CollectionPropertiesVec, CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping,
-	MAX_ITEMS_PER_BATCH, MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission,
-	PropertyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
+	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
+	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
+	PropertyScope, PropertyValue, TokenId, TrySetProperty,
 };
 use frame_support::BoundedBTreeMap;
 use derivative::Derivative;
@@ -287,7 +283,7 @@ pub mod pallet {
 			}
 			StorageVersion::new(2).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -373,9 +369,10 @@ impl<T: Config> Pallet<T> {
 	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, CollectionFlags::default())
+		<PalletCommon<T>>::init_collection(owner, payer, data, CollectionFlags::default())
 	}
 
 	/// Destroy RFT collection

@@ -560,6 +560,7 @@ struct Method {
 	selector: u32,
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
+	has_value_args: bool,
 	mutability: Mutability,
 	result: Type,
 	weight: Option<Expr>,
@@ -655,6 +656,7 @@ impl Method {
 			write!(selector_str, "{}", arg.selector_ty()).unwrap();
 			has_normal_args = true;
 		}
+		let has_value_args = args.iter().any(|a| a.is_value());
 		selector_str.push(')');
 		let selector = fn_selector_str(&selector_str);
 
@@ -667,6 +669,7 @@ impl Method {
 			selector,
 			args,
 			has_normal_args,
+			has_value_args,
 			mutability,
 			result: result.clone(),
 			weight,
@@ -823,7 +826,7 @@ impl Method {
 		let docs = &self.docs;
 		let selector_str = &self.selector_str;
 		let selector = self.selector;
-
+		let is_payable = self.has_value_args;
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
@@ -831,6 +834,7 @@ impl Method {
 				selector: #selector,
 				name: #camel_name,
 				mutability: #mutability,
+				is_payable: #is_payable,
 				args: (
 					#(
 						#args,
@@ -1122,7 +1126,7 @@ impl SolidityInterface {
 							#weight_variants,
 						)*
 						// TODO: It should be very cheap, but not free
-						Self::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {..}, _) => 100u64.into(),
+						Self::ERC165Call(::evm_coder::ERC165Call::SupportsInterface {..}, _) => ::frame_support::weights::Weight::from_ref_time(100).into(),
 						#(
 							#weight_variants_this,
 						)*
