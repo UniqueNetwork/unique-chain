@@ -1114,10 +1114,10 @@ class CollectionGroup extends HelperGroup {
    *
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @example isTokenExists(10, 20);
+   * @example doesTokenExist(10, 20);
    * @returns true if the token exists, otherwise false
    */
-  async isTokenExists(collectionId: number, tokenId: number): Promise<boolean> {
+  async doesTokenExist(collectionId: number, tokenId: number): Promise<boolean> {
     return (await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId])).toJSON();
   }
 }
@@ -2277,8 +2277,8 @@ export class UniqueBaseCollection {
     return await this.helper.collection.getLastTokenId(this.collectionId);
   }
 
-  async isTokenExists(tokenId: number) {
-    return await this.helper.collection.isTokenExists(this.collectionId, tokenId);
+  async doesTokenExist(tokenId: number) {
+    return await this.helper.collection.doesTokenExist(this.collectionId, tokenId);
   }
 
   async getAdmins() {
@@ -2607,8 +2607,8 @@ export class UniqueBaseToken {
     return await this.collection.deleteTokenProperties(signer, this.tokenId, propertyKeys);
   }
 
-  async isExist() {
-    return await this.collection.isTokenExists(this.tokenId);
+  async doesExist() {
+    return await this.collection.doesTokenExist(this.tokenId);
   }
 
   nestingAccount() {

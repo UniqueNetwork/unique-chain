@@ -17,11 +17,12 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 
-let donor: IKeyringPair;
-let alice: IKeyringPair;
-let bob: IKeyringPair;
 
 describe('integration test: ext. burnItem():', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       donor = privateKey('//Alice');
@@ -34,7 +35,7 @@ describe('integration test: ext. burnItem():', () => {
     const token = await collection.mintToken(alice);
 
     await token.burn(alice);
-    expect(await token.isExist()).to.be.false;
+    expect(await token.doesExist()).to.be.false;
   });
 
   itSub('Burn item in Fungible collection', async ({helper}) => {
@@ -73,6 +74,10 @@ describe('integration test: ext. burnItem():', () => {
 });
 
 describe('integration test: ext. burnItem() with admin permissions:', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       donor = privateKey('//Alice');
@@ -87,7 +92,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     const token = await collection.mintToken(alice);
 
     await token.burnFrom(bob, {Substrate: alice.address});
-    expect(await token.isExist()).to.be.false;
+    expect(await token.doesExist()).to.be.false;
   });
 
   itSub('Burn item in Fungible collection', async ({helper}) => {
@@ -107,11 +112,15 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     const token = await collection.mintToken(alice, 100n);
 
     await token.burnFrom(bob, {Substrate: alice.address}, 100n);
-    expect(await token.isExist()).to.be.false;
+    expect(await token.doesExist()).to.be.false;
   });
 });
 
 describe('Negative integration test: ext. burnItem():', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       donor = privateKey('//Alice');

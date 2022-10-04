@@ -122,10 +122,10 @@ describe('integration test: Refungible functionality:', async () => {
   itSub('Burn some pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     expect(await token.burn(alice, 99n)).to.be.true;
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(1n);
   });
 
@@ -133,18 +133,18 @@ describe('integration test: Refungible functionality:', async () => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
     
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
 
     expect(await token.burn(alice, 100n)).to.be.true;
-    expect(await collection.isTokenExists(token.tokenId)).to.be.false;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.false;
   });
 
   itSub('Burn some pieces for multiple users', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
 
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     expect(await token.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
@@ -154,17 +154,17 @@ describe('integration test: Refungible functionality:', async () => {
 
     expect(await token.burn(alice, 40n)).to.be.true;
 
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
 
     expect(await token.burn(bob, 59n)).to.be.true;
 
     expect(await token.getBalance({Substrate: bob.address})).to.be.equal(1n);
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
 
     expect(await token.burn(bob, 1n)).to.be.true;
 
-    expect(await collection.isTokenExists(token.tokenId)).to.be.false;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.false;
   });
 
   itSub('Set allowance for token', async ({helper}) => {
