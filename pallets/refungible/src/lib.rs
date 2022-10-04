@@ -92,7 +92,7 @@ use crate::erc::ERC721Events;
 
 use core::{ops::Deref, cmp::Ordering};
 use evm_coder::ToLog;
-use frame_support::{ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32};
+use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::*};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
@@ -107,7 +107,7 @@ use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
 	CreateCollectionData, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH, MAX_REFUNGIBLE_PIECES,
 	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
-	TokenId, TrySetProperty,
+	TokenId, TrySetProperty, CustomDataLimit,
 };
 use frame_support::BoundedBTreeMap;
 use derivative::Derivative;
@@ -129,13 +129,26 @@ pub struct CreateItemData<CrossAccountId> {
 }
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
+/// Token data, stored independently from other data used to describe it
+/// for the convenience of database access. Notably contains the token metadata.
+#[struct_versioning::versioned(version = 2, upper)]
+#[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
+#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
+pub struct ItemData {
+	pub const_data: BoundedVec<u8, CustomDataLimit>,
+
+	#[version(..2)]
+	pub variable_data: BoundedVec<u8, CustomDataLimit>,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key,
+		Blake2_128, Blake2_128Concat, Twox64Concat, storage::Key,
 		traits::StorageVersion,
 	};
+	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -176,6 +189,16 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
+
+	/// Token data, used to partially describe a token.
+	// TODO: remove
+	#[pallet::storage]
+	#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
+	pub type TokenData<T: Config> = StorageNMap<
+		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
+		Value = ItemData,
+		QueryKind = ValueQuery,
+	>;
 
 	/// Amount of pieces a refungible token is split into.
 	#[pallet::storage]
