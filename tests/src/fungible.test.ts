@@ -101,10 +101,10 @@ describe('integration test: Fungible functionality:', () => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.mint(alice, 500n);
 
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(500n);
     expect(await collection.burnTokens(alice, 499n)).to.be.true;
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(1n);
   });
   
@@ -112,9 +112,9 @@ describe('integration test: Fungible functionality:', () => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.mint(alice, 500n);
 
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.burnTokens(alice, 500n)).to.be.true;
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(0n);
     expect(await collection.getTotalPieces()).to.be.equal(0n);
