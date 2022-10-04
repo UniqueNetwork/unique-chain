@@ -40,13 +40,13 @@ const compileContract = async (helper: EthUniqueHelper): Promise<CompiledContrac
     ]);
   }
   return compiledFractionalizer;
-}
+};
 
 
 const deployContract = async (helper: EthUniqueHelper, owner: string): Promise<Contract> => {
   const compiled = await compileContract(helper);
   return await helper.ethContract.deployByAbi(owner, compiled.abi, compiled.object);
-}
+};
 
 
 const initContract = async (helper: EthUniqueHelper, owner: string): Promise<{contract: Contract, rftCollectionAddress: string}> => {
@@ -57,7 +57,7 @@ const initContract = async (helper: EthUniqueHelper, owner: string): Promise<{co
   const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({value: Number(2n * helper.balance.getOneTokenNominal())});
   const rftCollectionAddress = result.events.RFTCollectionSet.returnValues._collection;
   return {contract: fractionalizer, rftCollectionAddress};
-}
+};
 
 const mintRFTToken = async (helper: EthUniqueHelper, owner: string, fractionalizer: Contract, amount: bigint): Promise<{
   nftCollectionAddress: string, nftTokenId: number, rftTokenAddress: string
@@ -76,7 +76,7 @@ const mintRFTToken = async (helper: EthUniqueHelper, owner: string, fractionaliz
     nftTokenId: _tokenId,
     rftTokenAddress: _rftToken,
   };
-}
+};
 
 
 describe('Fractionalizer contract usage', () => {
