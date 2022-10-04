@@ -770,8 +770,20 @@ macro_rules! impl_common_runtime_apis {
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
                 }
 
-                fn execute_block_no_check(block: Block) -> frame_support::pallet_prelude::Weight {
-                    Executive::execute_block_no_check(block)
+                fn execute_block(
+                    block: Block,
+                    state_root_check: bool,
+                    select: frame_try_runtime::TryStateSelect
+                ) -> frame_support::pallet_prelude::Weight {
+                    log::info!(
+                        target: "node-runtime",
+                        "try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",
+                        block.header.hash(),
+                        state_root_check,
+                        select,
+                    );
+
+                    Executive::try_execute_block(block, state_root_check, select).unwrap()
                 }
             }
         }

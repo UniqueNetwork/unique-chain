@@ -40,7 +40,7 @@ use sp_core::H160;
 
 use evm_coder::{
 	abi::{AbiReader, AbiWrite, AbiWriter},
-	execution::{self, Result},
+	execution,
 	types::{Msg, value},
 };
 
@@ -147,13 +147,13 @@ impl<T: Config> SubstrateRecorder<T> {
 		Ok(())
 	}
 
-	pub fn consume_sload(&self) -> Result<()> {
+	pub fn consume_sload(&self) -> execution::Result<()> {
 		self.consume_gas(G_SLOAD_WORD)
 	}
-	pub fn consume_sstore(&self) -> Result<()> {
+	pub fn consume_sstore(&self) -> execution::Result<()> {
 		self.consume_gas(G_SSTORE_WORD)
 	}
-	pub fn consume_gas(&self, gas: u64) -> Result<()> {
+	pub fn consume_gas(&self, gas: u64) -> execution::Result<()> {
 		if gas == u64::MAX {
 			return Err(execution::Error::Error(ExitError::OutOfGas));
 		}
@@ -172,7 +172,7 @@ impl<T: Config> SubstrateRecorder<T> {
 	pub fn evm_to_precompile_output(
 		self,
 		handle: &mut impl PrecompileHandle,
-		result: evm_coder::execution::Result<Option<AbiWriter>>,
+		result: execution::Result<Option<AbiWriter>>,
 	) -> Option<PrecompileResult> {
 		use evm_coder::execution::Error;
 		// We ignore error here, as it should not occur, as we have our own bookkeeping of gas
@@ -198,7 +198,7 @@ impl<T: Config> SubstrateRecorder<T> {
 	}
 }
 
-pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> evm_coder::execution::Error {
+pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> execution::Error {
 	use evm_coder::execution::Error as ExError;
 	match err {
 		DispatchError::Module(ModuleError { index, error, .. })
@@ -257,7 +257,7 @@ fn call_internal<
 	e: &mut E,
 	value: value,
 	input: &[u8],
-) -> evm_coder::execution::Result<Option<AbiWriter>> {
+) -> execution::Result<Option<AbiWriter>> {
 	let (selector, mut reader) = AbiReader::new_call(input)?;
 	let call = C::parse(selector, &mut reader)?;
 	if call.is_none() {

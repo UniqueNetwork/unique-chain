@@ -38,6 +38,8 @@ std = [
     'serde/std',
 
 ]
+try-runtime = ["frame-support/try-runtime"]
+
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",

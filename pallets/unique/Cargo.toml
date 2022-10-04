@@ -32,6 +32,7 @@ std = [
     'pallet-evm-coder-substrate/std',
     'pallet-nonfungible/std',
 ]
+try-runtime = ["frame-support/try-runtime"]
 limit-testing = ["up-data-structs/limit-testing"]
 
 ################################################################################

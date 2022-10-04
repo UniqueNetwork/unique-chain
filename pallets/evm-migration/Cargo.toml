@@ -38,3 +38,4 @@ std = [
     "fp-evm/std",
 ]
 runtime-benchmarks = ["frame-benchmarking"]
+try-runtime = ["frame-support/try-runtime"]
