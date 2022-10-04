@@ -92,7 +92,9 @@ use crate::erc::ERC721Events;
 
 use core::{ops::Deref, cmp::Ordering};
 use evm_coder::ToLog;
-use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::*};
+use frame_support::{
+	BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::*,
+};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
@@ -145,8 +147,7 @@ pub struct ItemData {
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		Blake2_128, Blake2_128Concat, Twox64Concat, storage::Key,
-		traits::StorageVersion,
+		Blake2_128, Blake2_128Concat, Twox64Concat, storage::Key, traits::StorageVersion,
 	};
 	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
