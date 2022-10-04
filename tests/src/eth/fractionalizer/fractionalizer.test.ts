@@ -15,204 +15,174 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 
-import Web3 from 'web3';
-import {ApiPromise} from '@polkadot/api';
-import {evmToAddress} from '@polkadot/util-crypto';
 import {readFile} from 'fs/promises';
-import {executeTransaction, submitTransactionAsync} from '../../substrate/substrate-api';
-import {getCreateCollectionResult, getCreateItemResult, UNIQUE, requirePallets, Pallets} from '../../util/helpers';
-import {collectionIdToAddress, CompiledContract, createEthAccountWithBalance, createNonfungibleCollection, createRFTCollection, GAS_ARGS, itWeb3, tokenIdFromAddress, uniqueNFT, uniqueRefungible, uniqueRefungibleToken} from '../util/helpers';
-import {Contract} from 'web3-eth-contract';
-import * as solc from 'solc';
 
-import chai from 'chai';
-import chaiLike from 'chai-like';
 import {IKeyringPair} from '@polkadot/types/types';
-chai.use(chaiLike);
-const expect = chai.expect;
-let fractionalizer: CompiledContract;
+import {evmToAddress} from '@polkadot/util-crypto';
 
-async function compileFractionalizer() {
-  if (!fractionalizer) {
-    const input = {
-      language: 'Solidity',
-      sources: {
-        ['Fractionalizer.sol']: {
-          content: (await readFile(`${__dirname}/Fractionalizer.sol`)).toString(),
-        },
-      },
-      settings: {
-        outputSelection: {
-          '*': {
-            '*': ['*'],
-          },
-        },
-      },
-    };
-    const json = JSON.parse(solc.compile(JSON.stringify(input), {import: await findImports()}));
-    const out = json.contracts['Fractionalizer.sol']['Fractionalizer'];
+import {Contract} from 'web3-eth-contract';
 
-    fractionalizer = {
-      abi: out.abi,
-      object: '0x' + out.evm.bytecode.object,
-    };
+import {usingEthPlaygrounds, expect, itEth, EthUniqueHelper} from '../util/playgrounds';
+import {CompiledContract} from '../util/playgrounds/types';
+import {requirePalletsOrSkip, Pallets} from '../../util/playgrounds';
+
+
+let compiledFractionalizer: CompiledContract;
+
+const compileContract = async (helper: EthUniqueHelper): Promise<CompiledContract> => {
+  if(!compiledFractionalizer) {
+    compiledFractionalizer = await helper.ethContract.compile('Fractionalizer', (await readFile(`${__dirname}/Fractionalizer.sol`)).toString(), [
+      {solPath: 'api/CollectionHelpers.sol', fsPath: `${__dirname}/../api/CollectionHelpers.sol`},
+      {solPath: 'api/ContractHelpers.sol', fsPath: `${__dirname}/../api/ContractHelpers.sol`},
+      {solPath: 'api/UniqueRefungibleToken.sol', fsPath: `${__dirname}/../api/UniqueRefungibleToken.sol`},
+      {solPath: 'api/UniqueRefungible.sol', fsPath: `${__dirname}/../api/UniqueRefungible.sol`},
+      {solPath: 'api/UniqueNFT.sol', fsPath: `${__dirname}/../api/UniqueNFT.sol`},
+    ]);
   }
-  return fractionalizer;
-}
+  return compiledFractionalizer;
+};
 
-async function findImports() {
-  const collectionHelpers = (await readFile(`${__dirname}/../api/CollectionHelpers.sol`)).toString();
-  const contractHelpers = (await readFile(`${__dirname}/../api/ContractHelpers.sol`)).toString();
-  const uniqueRefungibleToken = (await readFile(`${__dirname}/../api/UniqueRefungibleToken.sol`)).toString();
-  const uniqueRefungible = (await readFile(`${__dirname}/../api/UniqueRefungible.sol`)).toString();
-  const uniqueNFT = (await readFile(`${__dirname}/../api/UniqueNFT.sol`)).toString();
 
-  return function(path: string) {
-    switch (path) {
-      case 'api/CollectionHelpers.sol': return {contents: `${collectionHelpers}`};
-      case 'api/ContractHelpers.sol': return {contents: `${contractHelpers}`};
-      case 'api/UniqueRefungibleToken.sol': return {contents: `${uniqueRefungibleToken}`};
-      case 'api/UniqueRefungible.sol': return {contents: `${uniqueRefungible}`};
-      case 'api/UniqueNFT.sol': return {contents: `${uniqueNFT}`};
-      default: return {error: 'File not found'};
-    }
-  };
-}
+const deployContract = async (helper: EthUniqueHelper, owner: string): Promise<Contract> => {
+  const compiled = await compileContract(helper);
+  return await helper.ethContract.deployByAbi(owner, compiled.abi, compiled.object);
+};
 
-async function deployFractionalizer(web3: Web3, owner: string) {
-  const compiled = await compileFractionalizer();
-  const fractionalizerContract = new web3.eth.Contract(compiled.abi, undefined, {
-    data: compiled.object,
-    from: owner,
-    ...GAS_ARGS,
-  });
-  return await fractionalizerContract.deploy({data: compiled.object}).send({from: owner});
-}
 
-async function initFractionalizer(api: ApiPromise, web3: Web3, privateKeyWrapper: (account: string) => IKeyringPair, owner: string) {
-  const fractionalizer = await deployFractionalizer(web3, owner);
-  const amount = 10n * UNIQUE;
-  await web3.eth.sendTransaction({from: owner, to: fractionalizer.options.address, value: `${amount}`, ...GAS_ARGS});
-  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({value: Number(2n * UNIQUE)});
+const initContract = async (helper: EthUniqueHelper, owner: string): Promise<{contract: Contract, rftCollectionAddress: string}> => {
+  const fractionalizer = await deployContract(helper, owner);
+  const amount = 10n * helper.balance.getOneTokenNominal();
+  const web3 = helper.getWeb3();
+  await web3.eth.sendTransaction({from: owner, to: fractionalizer.options.address, value: `${amount}`, gas: helper.eth.DEFAULT_GAS});
+  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({value: Number(2n * helper.balance.getOneTokenNominal())});
   const rftCollectionAddress = result.events.RFTCollectionSet.returnValues._collection;
-  return {fractionalizer, rftCollectionAddress};
-}
+  return {contract: fractionalizer, rftCollectionAddress};
+};
 
-async function createRFTToken(api: ApiPromise, web3: Web3, owner: string, fractionalizer: Contract, amount: bigint) {
-  const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-  const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+const mintRFTToken = async (helper: EthUniqueHelper, owner: string, fractionalizer: Contract, amount: bigint): Promise<{
+  nftCollectionAddress: string, nftTokenId: number, rftTokenAddress: string
+}> => {
+  const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+  const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
   const nftTokenId = await nftContract.methods.nextTokenId().call();
-  await nftContract.methods.mint(owner, nftTokenId).send();
+  await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
 
-  await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
-  await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
-  const result = await fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, amount).send();
+  await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+  await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
+  const result = await fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, amount).send({from: owner});
   const {_collection, _tokenId, _rftToken} = result.events.Fractionalized.returnValues;
   return {
     nftCollectionAddress: _collection,
     nftTokenId: _tokenId,
     rftTokenAddress: _rftToken,
   };
-}
+};
+
 
 describe('Fractionalizer contract usage', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      donor = privateKey('//Alice');
+    });
   });
 
-  itWeb3('Set RFT collection', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const {collectionIdAddress} = await createRFTCollection(api, web3, owner);
-    const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
-    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
-    const result = await fractionalizer.methods.setRFTCollection(collectionIdAddress).send();
+  itEth('Set RFT collection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 10n);
+    const fractionalizer = await deployContract(helper, owner);
+    const rftCollection = await helper.eth.createRefungibleCollection(owner, 'rft', 'RFT collection', 'RFT');
+    const rftContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
+
+    await rftContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    const result = await fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).send({from: owner});
     expect(result.events).to.be.like({
       RFTCollectionSet: {
         returnValues: {
-          _collection: collectionIdAddress,
+          _collection: rftCollection.collectionAddress,
         },
       },
     });
   });
 
-  itWeb3('Mint RFT collection', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
-    await executeTransaction(api, alice, tx);
+  itEth('Mint RFT collection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 10n);
+    const fractionalizer = await deployContract(helper, owner);
+    await helper.balance.transferToSubstrate(donor, evmToAddress(fractionalizer.options.address), 10n * helper.balance.getOneTokenNominal());
 
-    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner, value: Number(2n * UNIQUE)});
+    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner, value: Number(2n * helper.balance.getOneTokenNominal())});
     expect(result.events).to.be.like({
       RFTCollectionSet: {},
     });
     expect(result.events.RFTCollectionSet.returnValues._collection).to.be.ok;
   });
 
-  itWeb3('Set Allowlist', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const result1 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send({from: owner});
+  itEth('Set Allowlist', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const {contract: fractionalizer} = await initContract(helper, owner);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+
+    const result1 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
     expect(result1.events).to.be.like({
       AllowListSet: {
         returnValues: {
-          _collection: nftCollectionAddress,
+          _collection: nftCollection.collectionAddress,
           _status: true,
         },
       },
     });
-    const result2 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, false).send({from: owner});
+    const result2 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, false).send({from: owner});
     expect(result2.events).to.be.like({
       AllowListSet: {
         returnValues: {
-          _collection: nftCollectionAddress,
+          _collection: nftCollection.collectionAddress,
           _status: false,
         },
       },
     });
   });
 
-  itWeb3('NFT to RFT', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('NFT to RFT', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
+    await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
 
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
+    const {contract: fractionalizer} = await initContract(helper, owner);
 
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
-    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
-    const result = await fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).send();
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
+    const result = await fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).send({from: owner});
     expect(result.events).to.be.like({
       Fractionalized: {
         returnValues: {
-          _collection: nftCollectionAddress,
+          _collection: nftCollection.collectionAddress,
           _tokenId: nftTokenId,
           _amount: '100',
         },
       },
     });
     const rftTokenAddress = result.events.Fractionalized.returnValues._rftToken;
-    const rftTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
+
+    const rftTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress);
     expect(await rftTokenContract.methods.balanceOf(owner).call()).to.equal('100');
   });
 
-  itWeb3('RFT to NFT', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('RFT to NFT', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {fractionalizer, rftCollectionAddress} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await createRFTToken(api, web3, owner, fractionalizer, 100n);
+    const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
+    const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
 
-    const {collectionId, tokenId} = tokenIdFromAddress(rftTokenAddress);
-    const refungibleAddress = collectionIdToAddress(collectionId);
+    const {collectionId, tokenId} = helper.ethAddress.extractTokenId(rftTokenAddress);
+    const refungibleAddress = helper.ethAddress.fromCollectionId(collectionId);
     expect(rftCollectionAddress).to.be.equal(refungibleAddress);
-    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
-    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send();
-    const result = await fractionalizer.methods.rft2nft(refungibleAddress, tokenId).send();
+    const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send({from: owner});
+    const result = await fractionalizer.methods.rft2nft(refungibleAddress, tokenId).send({from: owner});
     expect(result.events).to.be.like({
       Defractionalized: {
         returnValues: {
@@ -224,17 +194,17 @@ describe('Fractionalizer contract usage', () => {
     });
   });
 
-  itWeb3('Test fractionalizer NFT <-> RFT mapping ', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Test fractionalizer NFT <-> RFT mapping ', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {fractionalizer, rftCollectionAddress} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await createRFTToken(api, web3, owner, fractionalizer, 100n);
+    const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
+    const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
 
-    const {collectionId, tokenId} = tokenIdFromAddress(rftTokenAddress);
-    const refungibleAddress = collectionIdToAddress(collectionId);
+    const {collectionId, tokenId} = helper.ethAddress.extractTokenId(rftTokenAddress);
+    const refungibleAddress = helper.ethAddress.fromCollectionId(collectionId);
     expect(rftCollectionAddress).to.be.equal(refungibleAddress);
-    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
-    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send();
+    const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send({from: owner});
 
     const rft2nft = await fractionalizer.methods.rft2nftMapping(rftTokenAddress).call();
     expect(rft2nft).to.be.like({
@@ -250,251 +220,227 @@ describe('Fractionalizer contract usage', () => {
 
 
 describe('Negative Integration Tests for fractionalizer', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      donor = privateKey('//Alice');
+    });
   });
 
-  itWeb3('call setRFTCollection twice', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress} = await createRFTCollection(api, web3, owner);
-    const refungibleContract = uniqueRefungible(web3, collectionIdAddress, owner);
+  itEth('call setRFTCollection twice', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const rftCollection = await helper.eth.createRefungibleCollection(owner, 'rft', 'RFT collection', 'RFT');
+    const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
-    await fractionalizer.methods.setRFTCollection(collectionIdAddress).send();
+    const fractionalizer = await deployContract(helper, owner);
+    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    await fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).send({from: owner});
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+    await expect(fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).call())
       .to.be.rejectedWith(/RFT collection is already set$/g);
   });
 
-  itWeb3('call setRFTCollection with NFT collection', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, collectionIdAddress, owner);
+  itEth('call setRFTCollection with NFT collection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
 
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    await nftContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
+    const fractionalizer = await deployContract(helper, owner);
+    await nftContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+    await expect(fractionalizer.methods.setRFTCollection(nftCollection.collectionAddress).call())
       .to.be.rejectedWith(/Wrong collection type. Collection is not refungible.$/g);
   });
 
-  itWeb3('call setRFTCollection while not collection admin', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const {collectionIdAddress} = await createRFTCollection(api, web3, owner);
+  itEth('call setRFTCollection while not collection admin', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const fractionalizer = await deployContract(helper, owner);
+    const rftCollection = await helper.eth.createRefungibleCollection(owner, 'rft', 'RFT collection', 'RFT');
 
-    await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
+    await expect(fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).call())
       .to.be.rejectedWith(/Fractionalizer contract should be an admin of the collection$/g);
   });
 
-  itWeb3('call setRFTCollection after createAndSetRFTCollection', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const tx = api.tx.balances.transfer(evmToAddress(fractionalizer.options.address), 10n * UNIQUE);
-    await submitTransactionAsync(alice, tx);
+  itEth('call setRFTCollection after createAndSetRFTCollection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const fractionalizer = await deployContract(helper, owner);
+    await helper.balance.transferToSubstrate(donor, evmToAddress(fractionalizer.options.address), 10n * helper.balance.getOneTokenNominal());
 
-    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner, value: Number(2n * UNIQUE)});
+    const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({from: owner, value: Number(2n * helper.balance.getOneTokenNominal())});
     const collectionIdAddress = result.events.RFTCollectionSet.returnValues._collection;
 
     await expect(fractionalizer.methods.setRFTCollection(collectionIdAddress).call())
       .to.be.rejectedWith(/RFT collection is already set$/g);
   });
 
-  itWeb3('call nft2rft without setting RFT collection for contract', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call nft2rft without setting RFT collection for contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
+    await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
 
-    const fractionalizer = await deployFractionalizer(web3, owner);
+    const fractionalizer = await deployContract(helper, owner);
 
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+    await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call())
       .to.be.rejectedWith(/RFT collection is not set$/g);
   });
 
-  itWeb3('call nft2rft while not owner of NFT token', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const nftOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call nft2rft while not owner of NFT token', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const nftOwner = await helper.eth.createAccountWithBalance(donor, 10n);
 
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
-    await nftContract.methods.transfer(nftOwner, 1).send();
+    await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
+    await nftContract.methods.transfer(nftOwner, 1).send({from: owner});
 
 
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
+    const {contract: fractionalizer} = await initContract(helper, owner);
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
 
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+    await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call({from: owner}))
       .to.be.rejectedWith(/Only token owner could fractionalize it$/g);
   });
 
-  itWeb3('call nft2rft while not in list of allowed accounts', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call nft2rft while not in list of allowed accounts', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
+    await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
 
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
+    const {contract: fractionalizer} = await initContract(helper, owner);
 
-    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
+    await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call())
       .to.be.rejectedWith(/Fractionalization of this collection is not allowed by admin$/g);
   });
 
-  itWeb3('call nft2rft while fractionalizer doesnt have approval for nft token', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call nft2rft while fractionalizer doesnt have approval for nft token', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
+    await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
 
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
+    const {contract: fractionalizer} = await initContract(helper, owner);
 
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+    await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call())
       .to.be.rejectedWith(/ApprovedValueTooLow$/g);
   });
 
-  itWeb3('call rft2nft without setting RFT collection for contract', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call rft2nft without setting RFT collection for contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const {collectionIdAddress: rftCollectionAddress} = await createRFTCollection(api, web3, owner);
-    const refungibleContract = uniqueRefungible(web3, rftCollectionAddress, owner);
+    const fractionalizer = await deployContract(helper, owner);
+    const rftCollection = await helper.eth.createRefungibleCollection(owner, 'rft', 'RFT collection', 'RFT');
+    const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
-    await refungibleContract.methods.mint(owner, rftTokenId).send();
+    await refungibleContract.methods.mint(owner, rftTokenId).send({from: owner});
     
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).call())
+    await expect(fractionalizer.methods.rft2nft(rftCollection.collectionAddress, rftTokenId).call({from: owner}))
       .to.be.rejectedWith(/RFT collection is not set$/g);
   });
 
-  itWeb3('call rft2nft for RFT token that is not from configured RFT collection', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call rft2nft for RFT token that is not from configured RFT collection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    const {collectionIdAddress: rftCollectionAddress} = await createRFTCollection(api, web3, owner);
-    const refungibleContract = uniqueRefungible(web3, rftCollectionAddress, owner);
+    const {contract: fractionalizer} = await initContract(helper, owner);
+    const rftCollection = await helper.eth.createRefungibleCollection(owner, 'rft', 'RFT collection', 'RFT');
+    const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
-    await refungibleContract.methods.mint(owner, rftTokenId).send();
+    await refungibleContract.methods.mint(owner, rftTokenId).send({from: owner});
     
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).call())
+    await expect(fractionalizer.methods.rft2nft(rftCollection.collectionAddress, rftTokenId).call())
       .to.be.rejectedWith(/Wrong RFT collection$/g);
   });
 
-  itWeb3('call rft2nft for RFT token that was not minted by fractionalizer contract', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const {collectionIdAddress: rftCollectionAddress} = await createRFTCollection(api, web3, owner);
+  itEth('call rft2nft for RFT token that was not minted by fractionalizer contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const rftCollection = await helper.eth.createRefungibleCollection(owner, 'rft', 'RFT collection', 'RFT');
+    const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const refungibleContract = uniqueRefungible(web3, rftCollectionAddress, owner);
+    const fractionalizer = await deployContract(helper, owner);
 
-    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send();
-    await fractionalizer.methods.setRFTCollection(rftCollectionAddress).send();
+    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    await fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).send({from: owner});
 
     const rftTokenId = await refungibleContract.methods.nextTokenId().call();
-    await refungibleContract.methods.mint(owner, rftTokenId).send();
+    await refungibleContract.methods.mint(owner, rftTokenId).send({from: owner});
     
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, rftTokenId).call())
+    await expect(fractionalizer.methods.rft2nft(rftCollection.collectionAddress, rftTokenId).call())
       .to.be.rejectedWith(/No corresponding NFT token found$/g);
   });
 
-  itWeb3('call rft2nft without owning all RFT pieces', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('call rft2nft without owning all RFT pieces', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const receiver = await helper.eth.createAccountWithBalance(donor, 10n);
 
-    const {fractionalizer, rftCollectionAddress} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    const {rftTokenAddress} = await createRFTToken(api, web3, owner, fractionalizer, 100n);
+    const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
+    const {rftTokenAddress} = await mintRFTToken(helper, owner, fractionalizer, 100n);
     
-    const {tokenId} = tokenIdFromAddress(rftTokenAddress);
-    const refungibleTokenContract = uniqueRefungibleToken(web3, rftTokenAddress, owner);
-    await refungibleTokenContract.methods.transfer(receiver, 50).send();
-    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 50).send();
-    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, tokenId).call())
+    const {tokenId} = helper.ethAddress.extractTokenId(rftTokenAddress);
+    const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
+    await refungibleTokenContract.methods.transfer(receiver, 50).send({from: owner});
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 50).send({from: receiver});
+    await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, tokenId).call({from: receiver}))
       .to.be.rejectedWith(/Not all pieces are owned by the caller$/g);
   });
 
-  itWeb3('send QTZ/UNQ to contract from non owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const payer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('send QTZ/UNQ to contract from non owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const payer = await helper.eth.createAccountWithBalance(donor, 10n);
 
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    const amount = 10n * UNIQUE;
-    await expect(web3.eth.sendTransaction({from: payer, to: fractionalizer.options.address, value: `${amount}`, ...GAS_ARGS})).to.be.rejected;
+    const fractionalizer = await deployContract(helper, owner);
+    const amount = 10n * helper.balance.getOneTokenNominal();
+    const web3 = helper.getWeb3();
+    await expect(web3.eth.sendTransaction({from: payer, to: fractionalizer.options.address, value: `${amount}`, gas: helper.eth.DEFAULT_GAS})).to.be.rejected;
   });
 
-  itWeb3('fractionalize NFT with NFT transfers disallowed', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    let collectionId;
-    {
-      const tx = api.tx.unique.createCollectionEx({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'NFT'});
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateCollectionResult(events);
-      collectionId = result.collectionId;
-    }
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    let nftTokenId;
-    {
-      const createData = {nft: {}};
-      const tx = api.tx.unique.createItem(collectionId, {Ethereum: owner}, createData as any);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getCreateItemResult(events);
-      nftTokenId = result.itemId;
-    }
-    {
-      const tx = api.tx.unique.setTransfersEnabledFlag(collectionId, false);
-      await executeTransaction(api, alice, tx);
-    }
-    const nftCollectionAddress = collectionIdToAddress(collectionId);
-    const {fractionalizer} = await initFractionalizer(api, web3, privateKeyWrapper, owner);
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
+  itEth('fractionalize NFT with NFT transfers disallowed', async ({helper}) => {
+    const nftCollection = await helper.nft.mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
-    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100).call())
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const nftToken = await nftCollection.mintToken(donor, {Ethereum: owner});
+    await helper.executeExtrinsic(donor, 'api.tx.unique.setTransfersEnabledFlag', [nftCollection.collectionId, false], true);
+    const nftCollectionAddress = helper.ethAddress.fromCollectionId(nftCollection.collectionId);
+    const {contract: fractionalizer} = await initContract(helper, owner);
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send({from: owner});
+
+    const nftContract = helper.ethNativeContract.collection(nftCollectionAddress, 'nft', owner);
+    await nftContract.methods.approve(fractionalizer.options.address, nftToken.tokenId).send({from: owner});
+    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftToken.tokenId, 100).call())
       .to.be.rejectedWith(/TransferNotAllowed$/g);
   });
   
-  itWeb3('fractionalize NFT with RFT transfers disallowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const alice = privateKeyWrapper('//Alice');
+  itEth('fractionalize NFT with RFT transfers disallowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
 
-    let collectionId;
-    {
-      const tx = api.tx.unique.createCollectionEx({name: 'A', description: 'B', tokenPrefix: 'C', mode: 'ReFungible'});
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getCreateCollectionResult(events);
-      collectionId = result.collectionId;
-    }
-    const rftCollectionAddress = collectionIdToAddress(collectionId);
-    const fractionalizer = await deployFractionalizer(web3, owner);
-    {
-      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, {Ethereum: fractionalizer.options.address});
-      await submitTransactionAsync(alice, changeAdminTx);
-    }
-    await fractionalizer.methods.setRFTCollection(rftCollectionAddress).send();
-    {
-      const tx = api.tx.unique.setTransfersEnabledFlag(collectionId, false);
-      await executeTransaction(api, alice, tx);
-    }
+    const rftCollection = await helper.rft.mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const rftCollectionAddress = helper.ethAddress.fromCollectionId(rftCollection.collectionId);
+    const fractionalizer = await deployContract(helper, owner);
+    await rftCollection.addAdmin(donor, {Ethereum: fractionalizer.options.address});
 
-    const {collectionIdAddress: nftCollectionAddress} = await createNonfungibleCollection(api, web3, owner);
-    const nftContract = uniqueNFT(web3, nftCollectionAddress, owner);
+    await fractionalizer.methods.setRFTCollection(rftCollectionAddress).send({from: owner});
+    await helper.executeExtrinsic(donor, 'api.tx.unique.setTransfersEnabledFlag', [rftCollection.collectionId, false], true);
+
+    const nftCollection = await helper.eth.createNonfungibleCollection(owner, 'nft', 'NFT collection', 'NFT');
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const nftTokenId = await nftContract.methods.nextTokenId().call();
-    await nftContract.methods.mint(owner, nftTokenId).send();
+    await nftContract.methods.mint(owner, nftTokenId).send({from: owner});
 
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollectionAddress, true).send();
-    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send();
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
 
-    await expect(fractionalizer.methods.nft2rft(nftCollectionAddress, nftTokenId, 100n).call())
+    await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100n).call())
       .to.be.rejectedWith(/TransferNotAllowed$/g);
   });
 });

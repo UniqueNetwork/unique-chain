@@ -12,8 +12,10 @@ export {EthUniqueHelper} from './unique.dev';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import chaiLike from 'chai-like';
 import {requirePalletsOrSkip} from '../../../util/playgrounds';
 chai.use(chaiAsPromised);
+chai.use(chaiLike);
 export const expect = chai.expect;
 
 export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
