@@ -156,21 +156,14 @@ jobs:
           exit 0
         shell: bash
 
-      - name: Checkout at '${{ matrix.mainnet_branch }}' branch
-        uses: actions/checkout@master
-        with:
-          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
-          path: ${{ matrix.mainnet_branch }}
-
-
       - name: Run tests before Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: tests
         run: |
           yarn install
           yarn add mochawesome
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-before-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
@@ -180,7 +173,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-*.json    # Path to test results
+          path: tests/mochawesome-report/test-before-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
@@ -247,7 +240,7 @@ jobs:
           node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-after-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
@@ -257,7 +250,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          path: tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
