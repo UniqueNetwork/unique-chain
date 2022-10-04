@@ -19,11 +19,6 @@
 //! Provides ERC-20 standart support implementation and EVM API for unique extensions for Refungible Pallet.
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
-extern crate alloc;
-
-#[cfg(not(feature = "std"))]
-use alloc::format;
-
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
