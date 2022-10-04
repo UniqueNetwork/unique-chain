@@ -46,5 +46,4 @@ RUN echo "Requested features: $FEATURE\n" && \
     echo "Fork from: $REPLICA_FROM\n" && \
     cargo build --features=$FEATURE --release
     
-
 CMD cargo run --features=try-runtime,$FEATURE --release -- try-runtime --no-spec-name-check on-runtime-upgrade live --uri $REPLICA_FROM
