@@ -51,6 +51,6 @@ describe('EVM collection properties', () => {
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
     const value = await contract.methods.collectionProperty('testKey').call();
-    expect(value).to.equal(helper.web3?.utils.toHex('testValue'));
+    expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
   });
 });

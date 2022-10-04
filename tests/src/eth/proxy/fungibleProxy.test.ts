@@ -23,7 +23,8 @@ import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util/playgrounds';
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const proxyContract = new helper.web3!.eth.Contract(JSON.parse((await readFile(`${__dirname}/UniqueFungibleProxy.abi`)).toString()), undefined, {
+  const web3 = helper.getWeb3();
+  const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/UniqueFungibleProxy.abi`)).toString()), undefined, {
     from: owner,
     ...GAS_ARGS,
   });

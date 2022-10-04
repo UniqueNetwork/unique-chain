@@ -23,7 +23,6 @@ import {Contract} from 'web3-eth-contract';
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
-import {UNIQUE} from '../util/helpers';
 
 describe('Contract calls', () => {
   let donor: IKeyringPair;
@@ -39,7 +38,7 @@ describe('Contract calls', () => {
     const flipper = await helper.eth.deployFlipper(deployer);
 
     const cost = await recordEthFee(helper.api!, deployer, () => flipper.methods.flip().send({from: deployer}));
-    expect(cost < BigInt(0.2 * Number(UNIQUE))).to.be.true;
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
 
   itEth('Balance transfer fee is less than 0.2 UNQ', async ({helper}) => {
@@ -47,7 +46,7 @@ describe('Contract calls', () => {
     const userB = helper.eth.createAccount();
     const cost = await recordEthFee(helper.api!, userA, () => helper.web3!.eth.sendTransaction({from: userA, to: userB, value: '1000000', ...GAS_ARGS}));
     const balanceB = await ethBalanceViaSub(helper.api!, userB);
-    expect(cost - balanceB < BigInt(0.2 * Number(UNIQUE))).to.be.true;
+    expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
 
   itEth('NFT transfer is close to 0.15 UNQ', async ({helper}) => {
@@ -63,7 +62,7 @@ describe('Contract calls', () => {
 
     const cost = await recordEthFee(helper.api!, caller, () => contract.methods.transfer(receiver, tokenId).send(caller));
 
-    const fee = Number(cost) / Number(UNIQUE);
+    const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());
     const expectedFee = 0.15;
     const tolerance = 0.001;
 

@@ -14,11 +14,32 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {UNIQUE} from '../util/helpers';
-import {
-  recordEthFee,
-} from './util/helpers';
-import {usingEthPlaygrounds, itEth, expect} from './util/playgrounds';
+import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util/playgrounds';
+
+async function waitNewBlocks(helper: EthUniqueHelper, count: number) {
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise<void>(async (resolve) => {
+    const unsubscribe = await helper.callRpc('api.rpc.chain.subscribeNewHeads', [() => {
+      if (count > 0) {
+        count--;
+      } else {
+        unsubscribe();
+        resolve();
+      }
+    }]);
+  });
+}
+
+async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
+  const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
+  await call();
+  waitNewBlocks(helper, 1);
+  const after = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
+
+  expect(after < before).to.be.true;
+
+  return before - after;
+}
 
 describe('Add collection admins', () => {
   let donor: IKeyringPair;
@@ -37,7 +58,7 @@ describe('Add collection admins', () => {
     const newAdmin = helper.eth.createAccount();
 
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
@@ -50,12 +71,11 @@ describe('Add collection admins', () => {
     const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(newAdmin.address.toLocaleLowerCase());
   });
 
-  //FIXME:
   itEth('Verify owner or admin', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
@@ -79,7 +99,7 @@ describe('Add collection admins', () => {
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(admin.toLocaleLowerCase());
@@ -96,7 +116,7 @@ describe('Add collection admins', () => {
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: notAdmin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 
@@ -112,7 +132,7 @@ describe('Add collection admins', () => {
     await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin.addressRaw).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(admin.toLocaleLowerCase());
@@ -128,7 +148,7 @@ describe('Add collection admins', () => {
     await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin1.addressRaw).call({from: notAdmin0}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 });
@@ -151,14 +171,14 @@ describe('Remove collection admins', () => {
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
 
     {
-      const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(1);
       expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
         .to.be.eq(newAdmin.toLocaleLowerCase());
     }
 
     await collectionEvm.methods.removeCollectionAdmin(newAdmin).send();
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 
@@ -170,13 +190,13 @@ describe('Remove collection admins', () => {
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
     {
-      const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
         .to.be.eq(newAdmin.address.toLocaleLowerCase());
     }
 
     await collectionEvm.methods.removeCollectionAdminSubstrate(newAdmin.addressRaw).send();
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 
@@ -194,7 +214,7 @@ describe('Remove collection admins', () => {
     await expect(collectionEvm.methods.removeCollectionAdmin(admin1).call({from: admin0}))
       .to.be.rejectedWith('NoPermission');
     {
-      const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(2);
       expect(adminList.toString().toLocaleLowerCase())
         .to.be.deep.contains(admin0.toLocaleLowerCase())
@@ -215,7 +235,7 @@ describe('Remove collection admins', () => {
     await expect(collectionEvm.methods.removeCollectionAdmin(admin).call({from: notAdmin}))
       .to.be.rejectedWith('NoPermission');
     {
-      const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
         .to.be.eq(admin.toLocaleLowerCase());
       expect(adminList.length).to.be.eq(1);
@@ -235,7 +255,7 @@ describe('Remove collection admins', () => {
     await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: adminEth}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(2);
     expect(adminList.toString().toLocaleLowerCase())
       .to.be.deep.contains(adminSub.address.toLocaleLowerCase())
@@ -254,7 +274,7 @@ describe('Remove collection admins', () => {
     await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: notAdminEth}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.api!.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(adminSub.address.toLocaleLowerCase());
@@ -287,13 +307,11 @@ describe('Change owner tests', () => {
     const newOwner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-
-    const cost = await recordEthFee(helper.api!, owner, () => collectionEvm.methods.setOwner(newOwner).send());
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.setOwner(newOwner).send());
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);
   });
 
-  //FIXME
   itEth('(!negative tests!) call setOwner by non owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
@@ -314,7 +332,6 @@ describe('Change substrate owner tests', () => {
     });
   });
 
-  //FIXME
   itEth.skip('Change owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
@@ -336,12 +353,11 @@ describe('Change substrate owner tests', () => {
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    const cost = await recordEthFee(helper.api!, owner, () => collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send());
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send());
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);
   });
 
-  //FIXME
   itEth.skip('(!negative tests!) call setOwner by non owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const otherReceiver = await helper.eth.createAccountWithBalance(donor);
