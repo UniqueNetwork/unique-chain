@@ -15,33 +15,27 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {createCollectionExpectSuccess, uniqueEventMessage} from '../util/helpers';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {itSub, usingPlaygrounds, expect} from '../util/playgrounds';
+import {IEvent} from '../util/playgrounds/types';
 
 describe('Destroy collection event ', () => {
   let alice: IKeyringPair;
-  const checkTreasury = 'Deposit';
-  const checkSystem = 'ExtrinsicSuccess';
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  it('Check event from destroyCollection(): ', async () => {
-    await usingApi(async (api: ApiPromise) => {
-      const collectionID = await createCollectionExpectSuccess();
-      const destroyCollection = api.tx.unique.destroyCollection(collectionID);
-      const events = await submitTransactionAsync(alice, destroyCollection);
-      const msg = JSON.stringify(uniqueEventMessage(events));
-      expect(msg).to.be.contain(checkTreasury);
-      expect(msg).to.be.contain(checkSystem);
-    });
+
+  itSub('Check event from destroyCollection(): ', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    await collection.burn(alice);
+    const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
+    const eventStrings = event.map(e => `${e.section}.${e.method}`);
+
+    expect(eventStrings).to.contains('common.CollectionDestroyed');
+    expect(eventStrings).to.contains('treasury.Deposit');
+    expect(eventStrings).to.contains('system.ExtrinsicSuccess');
   });
 });

@@ -14,19 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, GAS_ARGS, getCollectionAddressFromResult, itWeb3, normalizeEvents} from '../util/helpers';
-import nonFungibleAbi from '../nonFungibleAbi.json';
+import {GAS_ARGS, itWeb3, normalizeEvents} from '../util/helpers';
 import {expect} from 'chai';
-import {submitTransactionAsync} from '../../substrate/substrate-api';
-import Web3 from 'web3';
 import {readFile} from 'fs/promises';
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util/playgrounds';
 
-async function proxyWrap(api: ApiPromise, web3: Web3, wrapped: any, privateKeyWrapper: (account: string) => IKeyringPair) {
+async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
-  const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  const owner = await helper.eth.createAccountWithBalance(donor);
+  const web3 = helper.getWeb3();
   const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/UniqueNFTProxy.abi`)).toString()), undefined, {
     from: owner,
     ...GAS_ARGS,
@@ -36,51 +33,56 @@ async function proxyWrap(api: ApiPromise, web3: Web3, wrapped: any, privateKeyWr
 }
 
 describe('NFT (Via EVM proxy): Information getting', () => {
-  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
+  let alice: IKeyringPair;
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  });
 
-    await createItemExpectSuccess(alice, collection, 'NFT', {Substrate: alice.address});
+  itEth('totalSupply', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    await collection.mintToken(alice, {Substrate: alice.address});
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
     const totalSupply = await contract.methods.totalSupply().call();
 
     expect(totalSupply).to.equal('1');
   });
 
-  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
+  itEth('balanceOf', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
-    await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
-    await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    await collection.mintMultipleTokens(alice, [
+      {owner: {Ethereum: caller}},
+      {owner: {Ethereum: caller}},
+      {owner: {Ethereum: caller}},
+    ]);
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
     const balance = await contract.methods.balanceOf(caller).call();
 
     expect(balance).to.equal('3');
   });
 
-  itWeb3('ownerOf', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
+  itEth('ownerOf', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
     const owner = await contract.methods.ownerOf(tokenId).call();
 
     expect(owner).to.equal(caller);
@@ -88,18 +90,25 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 });
 
 describe('NFT (Via EVM proxy): Plain calls', () => {
-  itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'A', 'A')
-      .send({value: Number(2n * UNIQUE)});
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-    const collectionEvmOwned = evmCollection(web3, owner, collectionIdAddress);
-    const collectionEvm = evmCollection(web3, caller, collectionIdAddress);
-    const contract = await proxyWrap(api, web3, collectionEvm, privateKeyWrapper);
+  let alice: IKeyringPair;
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
+    });
+  });
+
+  itEth('Can perform mint()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'A', 'A');
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+
+    const collectionEvmOwned = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const contract = await proxyWrap(helper, collectionEvm, donor);
     await collectionEvmOwned.methods.addCollectionAdmin(contract.options.address).send();
 
     {
@@ -115,7 +124,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
       expect(events).to.be.deep.equal([
         {
-          address: collectionIdAddress.toLocaleLowerCase(),
+          address: collectionAddress.toLocaleLowerCase(),
           event: 'Transfer',
           args: {
             from: '0x0000000000000000000000000000000000000000',
@@ -128,9 +137,10 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
     }
   });
-  
+
   //TODO: CORE-302 add eth methods
   itWeb3.skip('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
+    /*
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},
     });
@@ -191,21 +201,18 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
       expect(await contract.methods.tokenURI(+nextTokenId + 2).call()).to.be.equal('Test URI 2');
     }
+    */
   });
 
-  itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Can perform burn()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const caller = await helper.eth.createAccountWithBalance(donor);
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
-
-    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: contract.options.address});
-    await submitTransactionAsync(alice, changeAdminTx);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: contract.options.address});
+    await collection.addAdmin(alice, {Ethereum: contract.options.address});
 
     {
       const result = await contract.methods.burn(tokenId).send({from: caller});
@@ -225,17 +232,15 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const spender = createEthAccount(web3);
+  itEth('Can perform approve()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const spender = helper.eth.createAccount();
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address), privateKeyWrapper);
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: contract.options.address});
 
     {
       const result = await contract.methods.approve(spender, tokenId).send({from: caller, ...GAS_ARGS});
@@ -255,20 +260,17 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Can perform transferFrom()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
-    const receiver = createEthAccount(web3);
+    const receiver = helper.eth.createAccount();
 
-    const address = collectionIdToAddress(collection);
-    const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
-    const contract = await proxyWrap(api, web3, evmCollection, privateKeyWrapper);
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: owner});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
     await evmCollection.methods.approve(contract.options.address, tokenId).send({from: owner});
 
@@ -299,17 +301,15 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
+  itEth('Can perform transfer()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
-    const tokenId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: contract.options.address});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: contract.options.address});
 
     {
       const result = await contract.methods.transfer(receiver, tokenId).send({from: caller});

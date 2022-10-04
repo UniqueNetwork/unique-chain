@@ -14,18 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, createFungibleItemExpectSuccess} from '../../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3, normalizeEvents} from '../util/helpers';
-import fungibleAbi from '../fungibleAbi.json';
+import {GAS_ARGS, normalizeEvents} from '../util/helpers';
 import {expect} from 'chai';
-import {ApiPromise} from '@polkadot/api';
-import Web3 from 'web3';
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util/playgrounds';
 
-async function proxyWrap(api: ApiPromise, web3: Web3, wrapped: any, privateKeyWrapper: (account: string) => IKeyringPair) {
+async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
-  const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  const owner = await helper.eth.createAccountWithBalance(donor);
+  const web3 = helper.getWeb3();
   const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/UniqueFungibleProxy.abi`)).toString()), undefined, {
     from: owner,
     ...GAS_ARGS,
@@ -35,35 +33,38 @@ async function proxyWrap(api: ApiPromise, web3: Web3, wrapped: any, privateKeyWr
 }
 
 describe('Fungible (Via EVM proxy): Information getting', () => {
-  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
+  let alice: IKeyringPair;
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  });
 
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Substrate: alice.address});
+  itEth('totalSupply', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    await collection.mint(alice, 200n, {Substrate: alice.address});
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
     const totalSupply = await contract.methods.totalSupply().call();
 
     expect(totalSupply).to.equal('200');
   });
 
-  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('balanceOf', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    const caller = await helper.eth.createAccountWithBalance(donor);
 
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: caller});
+    await collection.mint(alice, 200n, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
     const balance = await contract.methods.balanceOf(caller).call();
 
     expect(balance).to.equal('200');
@@ -71,18 +72,25 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
 });
 
 describe('Fungible (Via EVM proxy): Plain calls', () => {
-  itWeb3('Can perform approve()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const spender = createEthAccount(web3);
+  let alice: IKeyringPair;
+  let donor: IKeyringPair;
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: contract.options.address});
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([10n], donor);
+    });
+  });
+
+  itEth('Can perform approve()', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const spender = helper.eth.createAccount();
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    await collection.mint(alice, 200n, {Ethereum: contract.options.address});
 
     {
       const result = await contract.methods.approve(spender, 100).send({from: caller});
@@ -107,22 +115,17 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Can perform transferFrom()', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: owner});
+    await collection.mint(alice, 200n, {Ethereum: owner});
+    const receiver = helper.eth.createAccount();
 
-    const receiver = createEthAccount(web3);
-
-    const address = collectionIdToAddress(collection);
-    const evmCollection = new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS});
-    const contract = await proxyWrap(api, web3, evmCollection, privateKeyWrapper);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
 
     await evmCollection.methods.approve(contract.options.address, 100).send({from: owner});
 
@@ -162,18 +165,15 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'Fungible', decimalPoints: 0},
-    });
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Can perform transfer()', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(fungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
-    await createFungibleItemExpectSuccess(alice, collection, {Value: 200n}, {Ethereum: contract.options.address});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    await collection.mint(alice, 200n, {Ethereum: contract.options.address});
 
     {
       const result = await contract.methods.transfer(receiver, 50).send({from: caller});
