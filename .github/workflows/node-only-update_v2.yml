@@ -156,8 +156,15 @@ jobs:
           exit 0
         shell: bash
 
+      - name: Checkout at '${{ matrix.mainnet_branch }}' branch
+        uses: actions/checkout@master
+        with:
+          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
+          path: ${{ matrix.mainnet_branch }}
+
+
       - name: Run tests before Node Parachain upgrade
-        working-directory: tests
+        working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
           yarn add mochawesome
@@ -173,11 +180,11 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-before-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-before-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Send SIGUSR1 to polkadotlaunch process
+      - name: Send SIGUSR1 to polkadot-launch process
         if: success() || failure()
         run: |
           #Get PID of polkadot-launch
@@ -185,6 +192,7 @@ jobs:
           echo "Polkadot-launch PID: $PID"
           #Send SIGUSR1 signal to $PID
           docker exec node-parachain kill -SIGUSR1 ${PID}
+          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
 
       #  🌗 All parachain collators restarted with the new binaries.
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
@@ -233,7 +241,8 @@ jobs:
         shell: bash
 
       - name: Run tests after Node Parachain upgrade
-        working-directory: tests
+        if: success()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
           yarn add mochawesome
@@ -250,7 +259,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-after-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
