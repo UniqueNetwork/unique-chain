@@ -93,7 +93,7 @@ describe('evm collection sponsoring', () => {
     expect(sponsorTuple.field_0).to.be.eq('0x0000000000000000000000000000000000000000');
   });
 
-  itEth('Sponsoring collection from evm address via access list', async ({helper, privateKey}) => {
+  itEth('Sponsoring collection from evm address via access list', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
@@ -106,13 +106,12 @@ describe('evm collection sponsoring', () => {
 
     result = await collectionEvm.methods.setCollectionSponsor(sponsor).send({from: owner});
     let collectionData = (await collection.getData())!;
-    const ss58Format = helper.chain.getChainProperties().ss58Format;
-    expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor));
+    expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
     await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
 
     await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
     collectionData = (await collection.getData())!;
-    expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor));
+    expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
 
     const user = helper.eth.createAccount();
     const nextTokenId = await collectionEvm.methods.nextTokenId().call();
@@ -220,7 +219,7 @@ describe('evm collection sponsoring', () => {
   //   }
   // });
 
-  itEth('Check that transaction via EVM spend money from sponsor address', async ({helper, privateKey}) => {
+  itEth('Check that transaction via EVM spend money from sponsor address', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
@@ -233,13 +232,13 @@ describe('evm collection sponsoring', () => {
 
     result = await collectionEvm.methods.setCollectionSponsor(sponsor).send();
     let collectionData = (await collection.getData())!;
-    expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor));
+    expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
     await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionIdAddress, 'nft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionData = (await collection.getData())!;
-    expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor));
+    expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
 
     const user = helper.eth.createAccount();
     await collectionEvm.methods.addCollectionAdmin(user).send();
@@ -272,9 +271,9 @@ describe('evm collection sponsoring', () => {
     ]);
     expect(await userCollectionEvm.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
   
-    const ownerBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(owner));
+    const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
     expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-    const sponsorBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(sponsor));
+    const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
     expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
   });
 });
