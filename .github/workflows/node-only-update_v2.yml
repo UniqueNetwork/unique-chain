@@ -192,6 +192,7 @@ jobs:
           echo "Polkadot-launch PID: $PID"
           #Send SIGUSR1 signal to $PID
           docker exec node-parachain kill -SIGUSR1 ${PID}
+          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
 
       #  🌗 All parachain collators restarted with the new binaries.
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
@@ -240,14 +241,15 @@ jobs:
         shell: bash
 
       - name: Run tests after Node Parachain upgrade
-        working-directory: tests
+        if: success()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
           yarn add mochawesome
           node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-after-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
@@ -257,7 +259,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
