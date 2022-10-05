@@ -1,10 +1,20 @@
-import {cartesian} from './util/helpers';
+import {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds} from './../util/playgrounds/index';
 import {itEth, expect} from '../eth/util/playgrounds';
 
 describe('EVM token properties', () => {
-  itEth('Can be reconfigured', async({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
+    });
+  });
+
+  itEth('Can be reconfigured', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
 
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
       const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'ethp'});
@@ -23,9 +33,8 @@ describe('EVM token properties', () => {
     }
   });
 
-  itEth('Can be set', async({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('Can be set', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(alice, {
       tokenPrefix: 'ethp',
       tokenPropertyPermissions: [{
@@ -48,9 +57,8 @@ describe('EVM token properties', () => {
     expect(value).to.equal('testValue');
   });
 
-  itEth('Can be deleted', async({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('Can be deleted', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(alice, {
       tokenPrefix: 'ethp',
       tokenPropertyPermissions: [{
@@ -76,9 +84,8 @@ describe('EVM token properties', () => {
     expect(result.length).to.equal(0);
   });
 
-  itEth('Can be read', async({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('Can be read', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(alice, {
       tokenPrefix: 'ethp',
       tokenPropertyPermissions: [{
@@ -98,3 +105,15 @@ describe('EVM token properties', () => {
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
   });
 });
+
+
+type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
+function* cartesian<T extends Array<Array<any>>, R extends Array<any>>(internalRest: [...R], ...args: [...T]): Generator<[...R, ...{[K in keyof T]: ElementOf<T[K]>}]> {
+  if(args.length === 0) {
+    yield internalRest as any;
+    return;
+  }
+  for(const value of args[0]) {
+    yield* cartesian([...internalRest, value], ...args.slice(1)) as any;
+  }
+}
