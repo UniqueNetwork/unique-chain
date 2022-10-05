@@ -14,21 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {SponsoringMode} from './util/helpers';
-import {itEth, expect} from '../eth/util/playgrounds';
+import {IKeyringPair} from '@polkadot/types/types';
+import {itEth, expect, SponsoringMode} from '../eth/util/playgrounds';
+import {usingPlaygrounds} from './../util/playgrounds/index';
 
 describe('EVM sponsoring', () => {
-  itEth('Fee is deducted from contract if sponsoring is enabled', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
+  let donor: IKeyringPair;
 
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccount();
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+
+  itEth('Fee is deducted from contract if sponsoring is enabled', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = helper.eth.createAccount();
     const originalCallerBalance = await helper.balance.getEthereum(caller);
 
     expect(originalCallerBalance).to.be.equal(0n);
 
-    // const flipper = await deployFlipper(web3, owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     const helpers = helper.ethNativeContract.contractHelpers(owner);
@@ -55,12 +61,10 @@ describe('EVM sponsoring', () => {
     expect(await helper.balance.getEthereum(sponsor)).to.be.not.equal(originalSponsorBalance);
   });
 
-  itEth('...but this doesn\'t applies to payable value', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('...but this doesn\'t applies to payable value', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const originalCallerBalance = await helper.balance.getEthereum(caller);
 
     expect(originalCallerBalance).to.be.not.equal(0n);
