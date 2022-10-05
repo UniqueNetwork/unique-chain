@@ -23,7 +23,7 @@ describe('integration test: Inflation', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      superuser = privateKey('//Alice');
+      superuser = await privateKey('//Alice');
     });
   });
   

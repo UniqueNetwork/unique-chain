@@ -26,7 +26,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
@@ -69,7 +69,7 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });

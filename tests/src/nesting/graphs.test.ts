@@ -45,7 +45,7 @@ describe('Graphs', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

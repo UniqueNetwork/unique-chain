@@ -38,7 +38,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -77,7 +77,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

@@ -50,7 +50,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });

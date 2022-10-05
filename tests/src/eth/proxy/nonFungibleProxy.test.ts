@@ -38,7 +38,7 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -95,7 +95,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -139,7 +139,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
   });
 
   //TODO: CORE-302 add eth methods
-  itWeb3.skip('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
+  itWeb3.skip('Can perform mintBulk()', async () => {
     /*
     const collection = await createCollectionExpectSuccess({
       mode: {type: 'NFT'},

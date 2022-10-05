@@ -25,7 +25,7 @@ describe('NFT: Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -75,7 +75,7 @@ describe('Check ERC721 token URI for NFT', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -137,7 +137,7 @@ describe('NFT: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -318,7 +318,7 @@ describe('NFT: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -371,7 +371,7 @@ describe('NFT: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -496,7 +496,7 @@ describe('Common metadata', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });

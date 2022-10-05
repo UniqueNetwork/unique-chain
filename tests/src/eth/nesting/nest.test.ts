@@ -21,7 +21,7 @@ describe('EVM nesting tests group', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

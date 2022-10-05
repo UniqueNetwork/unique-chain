@@ -19,12 +19,13 @@ import {itEth, usingEthPlaygrounds} from './eth/util/playgrounds';
 import {itSub, Pallets, usingPlaygrounds, expect} from './util/playgrounds';
 
 describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
+  let donor: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -42,8 +43,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
     expect(bobsBalanceAfter > bobsBalanceBefore).to.be.true;
   });
 
-  itSub('Inability to pay fees error message is correct', async ({helper, privateKey}) => {
-    const donor = privateKey('//Alice');
+  itSub('Inability to pay fees error message is correct', async ({helper}) => {
     const [zero] = await helper.arrange.createAccounts([0n], donor);
 
     // console.error = () => {};
@@ -117,7 +117,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -256,7 +256,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
   

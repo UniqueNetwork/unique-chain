@@ -23,7 +23,7 @@ describe('Integration Test: Set Permissions', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });
@@ -79,7 +79,7 @@ describe('Negative Integration Test: Set Permissions', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });

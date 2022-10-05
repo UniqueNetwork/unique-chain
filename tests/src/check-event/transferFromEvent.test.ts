@@ -24,7 +24,7 @@ describe('Transfer event ', () => {
   let bob: IKeyringPair;
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });

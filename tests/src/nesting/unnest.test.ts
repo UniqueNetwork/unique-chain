@@ -22,7 +22,7 @@ describe('Integration Test: Unnesting', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -91,7 +91,7 @@ describe('Negative Test: Unnesting', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });

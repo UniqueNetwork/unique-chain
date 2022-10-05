@@ -23,7 +23,7 @@ describe('Fungible: Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -55,7 +55,7 @@ describe('Fungible: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -224,7 +224,7 @@ describe('Fungible: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -277,7 +277,7 @@ describe('Fungible: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });

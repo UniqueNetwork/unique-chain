@@ -21,8 +21,8 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKeyWrapper) => {
-      donor = privateKeyWrapper('//Alice');
+    await usingPlaygrounds(async (_, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -44,8 +44,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKeyWrapper) => {
-      donor = privateKeyWrapper('//Alice');
+    await usingPlaygrounds(async (_, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 

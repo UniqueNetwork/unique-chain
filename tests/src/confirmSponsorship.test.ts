@@ -37,7 +37,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, zeroBalance] = await helper.arrange.createAccounts([100n, 100n, 100n, 0n], donor);
     });
   });
@@ -183,7 +183,7 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, ownerZeroBalance, senderZeroBalance] = await helper.arrange.createAccounts([100n, 100n, 100n, 0n, 0n], donor);
     });
   });

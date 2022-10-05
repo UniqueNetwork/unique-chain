@@ -25,7 +25,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -104,7 +104,7 @@ describe('Normal user can approve other users to transfer:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -141,7 +141,7 @@ describe('Approved users can transferFrom up to approved amount:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -184,7 +184,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -235,7 +235,7 @@ describe('Approved amount decreases by the transferred amount.:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -265,7 +265,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -320,7 +320,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -357,7 +357,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -423,7 +423,7 @@ describe('Repeated approvals add up', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -474,7 +474,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -495,7 +495,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

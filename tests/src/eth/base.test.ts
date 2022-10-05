@@ -29,7 +29,7 @@ describe('Contract calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -82,7 +82,7 @@ describe('ERC165 tests', async () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       const [alice] = await helper.arrange.createAccounts([10n], donor);
       ({collectionId: collection} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}));
       minter = helper.eth.createAccount();

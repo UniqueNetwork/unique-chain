@@ -22,7 +22,7 @@ describe('EVM Migrations', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      superuser = privateKey('//Alice');
+      superuser = await privateKey('//Alice');
     });
   });
   

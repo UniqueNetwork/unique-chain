@@ -25,7 +25,7 @@ describe('integration test: ext. burnItem():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
@@ -80,7 +80,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
@@ -123,7 +123,7 @@ describe('Negative integration test: ext. burnItem():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });

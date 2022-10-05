@@ -22,7 +22,7 @@ describe('Helpers sanity check', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
   

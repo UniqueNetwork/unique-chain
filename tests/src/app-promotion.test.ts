@@ -43,8 +43,8 @@ describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       if (!getModuleNames(helper.api!).includes(Pallets.AppPromotion)) this.skip();
-      alice = privateKey('//Alice');
-      palletAdmin = privateKey('//Charlie'); // TODO use custom address
+      alice = await privateKey({filename: __filename});
+      [palletAdmin] = await helper.arrange.createAccounts([100n], alice);
       await helper.signTransaction(alice, helper.api!.tx.sudo.sudo(helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
       nominal = helper.balance.getOneTokenNominal();
       await helper.balance.transferToSubstrate(alice, palletAdmin.address, 1000n * nominal);

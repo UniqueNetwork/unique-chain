@@ -92,7 +92,7 @@ describe('Evm Coder tests', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
   

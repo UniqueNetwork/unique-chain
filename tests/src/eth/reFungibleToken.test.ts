@@ -28,7 +28,7 @@ describe('Refungible token: Information getting', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -72,7 +72,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -136,7 +136,7 @@ describe('Refungible: Plain calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -327,7 +327,7 @@ describe('Refungible: Fees', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -382,7 +382,7 @@ describe('Refungible: Substrate calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -472,7 +472,7 @@ describe('ERC 1633 implementation', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

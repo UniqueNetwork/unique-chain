@@ -1,6 +1,7 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+import * as path from 'path';
 import {IKeyringPair} from '@polkadot/types/types';
 
 import config from '../../../config';
@@ -13,12 +14,13 @@ export {EthUniqueHelper} from './unique.dev';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {requirePalletsOrSkip} from '../../../util/playgrounds';
+import {getTestSeed, requirePalletsOrSkip} from '../../../util/playgrounds';
+
 chai.use(chaiAsPromised);
 chai.use(chaiLike);
 export const expect = chai.expect;
 
-export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair>) => Promise<void>) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
@@ -28,7 +30,20 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
     await helper.connect(config.substrateUrl);
     await helper.connectWeb3(config.substrateUrl);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const privateKey = (seed: string) => helper.util.fromSeed(seed, ss58Format);
+    const privateKey = async (seed: string | {filename: string}) => {
+      if (typeof seed === 'string') {
+        return helper.util.fromSeed(seed, ss58Format);
+      }
+      else {
+        const actualSeed = getTestSeed(seed.filename);
+        let account = helper.util.fromSeed(actualSeed, ss58Format);
+        if (await helper.balance.getSubstrate(account.address) == 0n) {
+          console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
+          account = helper.util.fromSeed('//Alice', ss58Format);
+        }
+        return account;
+      }
+    };
     await code(helper, privateKey);
   }
   finally {
@@ -38,7 +53,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
   }
 };
   
-export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
   (opts.only ? it.only : 
     opts.skip ? it.skip : it)(name, async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
@@ -51,13 +66,25 @@ export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, 
   });
 }
 
-export async function itEthIfWithPallet(name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export async function itEthIfWithPallet(name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
   return itEth(name, cb, {requiredPallets: required, ...opts});
 }
 
-itEth.only = (name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itEth(name, cb, {only: true});
-itEth.skip = (name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itEth(name, cb, {skip: true});
+itEth.only = (name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEth(name, cb, {only: true});
+itEth.skip = (name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEth(name, cb, {skip: true});
 
-itEthIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itEthIfWithPallet(name, required, cb, {only: true});
-itEthIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itEthIfWithPallet(name, required, cb, {skip: true});
+itEthIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEthIfWithPallet(name, required, cb, {only: true});
+itEthIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEthIfWithPallet(name, required, cb, {skip: true});
 itEth.ifWithPallets = itEthIfWithPallet;
+
+type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
+// I want a fancier api, not a memory efficiency
+export function* cartesian<T extends Array<Array<any>>, R extends Array<any>>(internalRest: [...R], ...args: [...T]): Generator<[...R, ...{[K in keyof T]: ElementOf<T[K]>}]> {
+  if(args.length === 0) {
+    yield internalRest as any;
+    return;
+  }
+  for(const value of args[0]) {
+    yield* cartesian([...internalRest, value], ...args.slice(1)) as any;
+  }
+}

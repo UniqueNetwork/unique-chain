@@ -26,7 +26,7 @@ describe('Integration Test: Collection Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -141,7 +141,7 @@ describe('Negative Integration Test: Collection Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
@@ -269,7 +269,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
@@ -332,7 +332,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -453,7 +453,7 @@ describe('Integration Test: Token Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
 
@@ -777,7 +777,7 @@ describe('Negative Integration Test: Token Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       let dave: IKeyringPair;
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
 
@@ -977,7 +977,7 @@ describe('ReFungible token properties permissions tests', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -1002,7 +1002,7 @@ describe('ReFungible token properties permissions tests', () => {
     ])).to.be.rejectedWith(/common\.NoPermission/);
   });
 
-  itSub('Forbids mutating token property with tokenOwher==true when signer doesn\'t have all pieces', async ({helper}) =>  {
+  itSub('Forbids mutating token property with tokenOwner==true when signer doesn\'t have all pieces', async ({helper}) =>  {
     const token = await prepare(helper);
 
     await expect(token.collection.setTokenPropertyPermissions(alice, [{key: 'fractals', permission: {mutable:true, tokenOwner: true}}]))

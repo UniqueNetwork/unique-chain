@@ -22,7 +22,7 @@ describe('Number of tokens per address (NFT)', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -60,7 +60,7 @@ describe('Number of tokens per address (ReFungible)', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -292,7 +292,7 @@ describe('Collection zero limits (NFT)', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
@@ -333,7 +333,7 @@ describe('Collection zero limits (Fungible)', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
@@ -366,7 +366,7 @@ describe('Collection zero limits (ReFungible)', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
@@ -404,7 +404,7 @@ describe('Effective collection limits (NFT)', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
