@@ -11,6 +11,7 @@ import {
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {it} from 'mocha';
+import {Pallets, requirePallets} from '../util/helpers';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -59,7 +60,8 @@ async function isUnique(): Promise<boolean> {
 describe('RMRK External Integration Test', async () => {
   const it_rmrk = (await isUnique() ? it : it.skip);
 
-  before(async () => {
+  before(async function() {
+    await requirePallets(this, [Pallets.RmrkCore]);
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
 

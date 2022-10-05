@@ -2,10 +2,14 @@ import {getApiConnection} from '../substrate/substrate-api';
 import {NftIdTuple} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, mintNft, sendNft, setNftProperty} from './util/tx';
+import {Pallets, requirePallets} from '../util/helpers';
 
 describe('integration test: set NFT property', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  before(async function() {
+    api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
+  });
 
   const alice = '//Alice';
   const bob = '//Bob';

@@ -1,11 +1,13 @@
 import {getApiConnection} from '../substrate/substrate-api';
 import {expectTxFailure} from './util/helpers';
 import {createCollection, deleteCollection} from './util/tx';
+import {Pallets, requirePallets} from '../util/helpers';
 
 describe('integration test: delete collection', () => {
   let api: any;
-  before(async () => {
+  before(async function() {
     api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   const Alice = '//Alice';

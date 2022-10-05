@@ -2,6 +2,7 @@ import {getApiConnection} from '../substrate/substrate-api';
 import {expectTxFailure} from './util/helpers';
 import {NftIdTuple, getChildren} from './util/fetch';
 import {burnNft, createCollection, sendNft, mintNft} from './util/tx';
+import {Pallets, requirePallets} from '../util/helpers';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -14,8 +15,9 @@ describe('integration test: burn nft', () => {
   const Bob = '//Bob';
 
   let api: any;
-  before(async () => {
+  before(async function() {
     api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   it('burn nft', async () => {
