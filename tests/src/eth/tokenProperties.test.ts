@@ -1,94 +1,119 @@
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, createItemExpectSuccess} from '../util/helpers';
-import {cartesian, collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, itWeb3} from './util/helpers';
-import nonFungibleAbi from './nonFungibleAbi.json';
-import {expect} from 'chai';
-import {executeTransaction} from '../substrate/substrate-api';
+import {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds} from './../util/playgrounds/index';
+import {itEth, expect} from '../eth/util/playgrounds';
 
 describe('EVM token properties', () => {
-  itWeb3('Can be reconfigured', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
+    });
+  });
+
+  itEth('Can be reconfigured', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
-      const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-      await addCollectionAdminExpectSuccess(alice, collection, {Ethereum: caller});
-      
-      const address = collectionIdToAddress(collection);
-      const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
-  
+      const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'ethp'});
+      await collection.addAdmin(alice, {Ethereum: caller});
+
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+
       await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
   
-      const state = (await api.query.common.collectionPropertyPermissions(collection)).toJSON();
-      expect(state).to.be.deep.equal({
-        [web3.utils.toHex('testKey')]: {mutable, collectionAdmin, tokenOwner},
-      });
+      const state = await collection.getPropertyPermissions();
+      expect(state).to.be.deep.equal([{
+        key: 'testKey',
+        permission: {mutable, collectionAdmin, tokenOwner},
+      }]);
     }
   });
-  itWeb3('Can be set', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
-    await executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, [{
-      key: 'testKey',
-      permission: {
-        collectionAdmin: true,
-      },
-    }]));
+  itEth('Can be set', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {
+      tokenPrefix: 'ethp',
+      tokenPropertyPermissions: [{
+        key: 'testKey',
+        permission: {
+          collectionAdmin: true,
+        },
+      }],
+    });
+    const token = await collection.mintToken(alice);
 
-    await addCollectionAdminExpectSuccess(alice, collection, {Ethereum: caller});
+    await collection.addAdmin(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    await contract.methods.setProperty(token, 'testKey', Buffer.from('testValue')).send({from: caller});
+    await contract.methods.setProperty(token.tokenId, 'testKey', Buffer.from('testValue')).send({from: caller});
 
-    const [{value}] = (await api.rpc.unique.tokenProperties(collection, token, ['testKey'])).toHuman()! as any;
+    const [{value}] = await token.getProperties(['testKey']);
     expect(value).to.equal('testValue');
   });
-  itWeb3('Can be deleted', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collection = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
-    await executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, [{
-      key: 'testKey',
-      permission: {
-        mutable: true,
-        collectionAdmin: true,
-      },
-    }]));
-    await executeTransaction(api, alice, api.tx.unique.setTokenProperties(collection, token, [{key: 'testKey', value: 'testValue'}]));
+  itEth('Can be deleted', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {
+      tokenPrefix: 'ethp',
+      tokenPropertyPermissions: [{
+        key: 'testKey',
+        permission: {
+          mutable: true,
+          collectionAdmin: true,
+        },
+      }],
+    });
 
-    await addCollectionAdminExpectSuccess(alice, collection, {Ethereum: caller});
+    await collection.addAdmin(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const token = await collection.mintToken(alice);
+    await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
 
-    await contract.methods.deleteProperty(token, 'testKey').send({from: caller});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const result = (await api.rpc.unique.tokenProperties(collection, token, ['testKey'])).toJSON()! as any;
+    await contract.methods.deleteProperty(token.tokenId, 'testKey').send({from: caller});
+
+    const result = await token.getProperties(['testKey']);
     expect(result.length).to.equal(0);
   });
-  itWeb3('Can be read', async({web3, api, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const caller = createEthAccount(web3);
-    const collection = await createCollectionExpectSuccess({mode: {type:'NFT'}});
-    const token = await createItemExpectSuccess(alice, collection, 'NFT');
 
-    await executeTransaction(api, alice, api.tx.unique.setTokenPropertyPermissions(collection, [{
-      key: 'testKey',
-      permission: {
-        collectionAdmin: true,
-      },
-    }]));
-    await executeTransaction(api, alice, api.tx.unique.setTokenProperties(collection, token, [{key: 'testKey', value: 'testValue'}]));
+  itEth('Can be read', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {
+      tokenPrefix: 'ethp',
+      tokenPropertyPermissions: [{
+        key: 'testKey',
+        permission: {
+          collectionAdmin: true,
+        },
+      }],
+    });
+    const token = await collection.mintToken(alice);
+    await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
 
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const value = await contract.methods.property(token, 'testKey').call();
-    expect(value).to.equal(web3.utils.toHex('testValue'));
+    const value = await contract.methods.property(token.tokenId, 'testKey').call();
+    expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
   });
 });
+
+
+type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
+function* cartesian<T extends Array<Array<any>>, R extends Array<any>>(internalRest: [...R], ...args: [...T]): Generator<[...R, ...{[K in keyof T]: ElementOf<T[K]>}]> {
+  if(args.length === 0) {
+    yield internalRest as any;
+    return;
+  }
+  for(const value of args[0]) {
+    yield* cartesian([...internalRest, value], ...args.slice(1)) as any;
+  }
+}

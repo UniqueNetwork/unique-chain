@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract} from './types';
+import {ContractImports, CompiledContract, NormalizedEvent} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';
@@ -251,6 +251,33 @@ class EthGroup extends EthGroupBase {
     const after = await this.helper.balance.getEthereum(user);
 
     return before - after;
+  }
+
+  normalizeEvents(events: any): NormalizedEvent[] {
+    const output = [];
+    for (const key of Object.keys(events)) {
+      if (key.match(/^[0-9]+$/)) {
+        output.push(events[key]);
+      } else if (Array.isArray(events[key])) {
+        output.push(...events[key]);
+      } else {
+        output.push(events[key]);
+      }
+    }
+    output.sort((a, b) => a.logIndex - b.logIndex);
+    return output.map(({address, event, returnValues}) => {
+      const args: { [key: string]: string } = {};
+      for (const key of Object.keys(returnValues)) {
+        if (!key.match(/^[0-9]+$/)) {
+          args[key] = returnValues[key];
+        }
+      }
+      return {
+        address,
+        event,
+        args,
+      };
+    });
   }
 }  
 

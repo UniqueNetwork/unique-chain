@@ -18,7 +18,8 @@ import {expect} from 'chai';
 import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
 import {scheduleExpectSuccess, waitNewBlocks, requirePallets, Pallets} from '../util/helpers';
 
-describe('Scheduing EVM smart contracts', () => {
+// TODO mrshiposha update this test in #581
+describe.skip('Scheduing EVM smart contracts', () => {
   before(async function() {
     await requirePallets(this, [Pallets.Scheduler]);
   });
