@@ -20,10 +20,10 @@ import chaiAsPromised from 'chai-as-promised';
 import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
-import {getGenericResult} from './util/helpers';
-import waitNewBlocks from './substrate/wait-new-blocks';
-import getBalance from './substrate/get-balance';
+import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
+import {getGenericResult} from '../util/helpers';
+import waitNewBlocks from '../substrate/wait-new-blocks';
+import getBalance from '../substrate/get-balance';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

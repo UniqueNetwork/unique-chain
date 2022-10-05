@@ -19,7 +19,7 @@ import chaiAsPromised from 'chai-as-promised';
 import {
   default as usingApi, 
   submitTransactionAsync,
-} from './substrate/substrate-api';
+} from '../substrate/substrate-api';
 import {
   createItemExpectSuccess,
   createCollectionExpectSuccess,
@@ -39,7 +39,7 @@ import {
   getFreeBalance,
   confirmSponsorshipByKeyExpectSuccess,
   scheduleExpectFailure,
-} from './util/helpers';
+} from '../util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);

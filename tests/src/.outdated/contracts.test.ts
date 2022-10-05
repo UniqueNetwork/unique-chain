@@ -16,14 +16,14 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
+import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
 import fs from 'fs';
 import {Abi, ContractPromise as Contract} from '@polkadot/api-contract';
 import {
   deployFlipper,
   getFlipValue,
   deployTransferContract,
-} from './util/contracthelpers';
+} from '../util/contracthelpers';
 
 import {
   addToAllowListExpectSuccess,
@@ -37,7 +37,7 @@ import {
   isAllowlisted,
   transferFromExpectSuccess,
   getTokenOwner,
-} from './util/helpers';
+} from '../util/helpers';
 
 
 chai.use(chaiAsPromised);
