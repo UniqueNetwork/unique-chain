@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import {IKeyringPair} from '@polkadot/types/types';
 import * as solc from 'solc';
-import {expectSubstrateEventsAtBlock} from '../util/helpers';
-import Web3 from 'web3';
-
-import {
-  SponsoringMode,
-  normalizeEvents,
-  CompiledContract,
-  GAS_ARGS,
-} from './util/helpers';
-import {itEth, expect} from '../eth/util/playgrounds';
-
+import {EthUniqueHelper} from './util/playgrounds/unique.dev';
+import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from '../eth/util/playgrounds';
+import {usingPlaygrounds} from '../util/playgrounds';
+import {CompiledContract} from './util/playgrounds/types';
 
 describe('Sponsoring EVM contracts', () => {
-  itEth('Self sponsored can be set by the address that deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
+  let donor: IKeyringPair;
 
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  before(async () => {
+    await usingPlaygrounds(async (_helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
+
+  itEth('Self sponsored can be set by the address that deployed the contract', async ({helper, privateKey}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
 
@@ -40,15 +40,13 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
   });
 
-  itEth('Set self sponsored events', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Set self sponsored events', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     
     const result = await helpers.methods.selfSponsoredEnable(flipper.options.address).send();
-    const ethEvents = normalizeEvents(result.events);
+    const ethEvents = helper.eth.helper.eth.normalizeEvents(result.events);
     expect(ethEvents).to.be.deep.equal([
       {
         address: flipper.options.address,
@@ -67,21 +65,11 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
-
-    // TODO use helper.getApi() from the sceduler PR
-    await expectSubstrateEventsAtBlock(
-      helper.api!,
-      result.blockNumber,
-      'evmContractHelpers',
-      ['ContractSponsorSet','ContractSponsorshipConfirmed'],
-    );
   });
 
-  itEth('Self sponsored can not be set by the address that did not deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const notOwner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Self sponsored can not be set by the address that did not deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -90,10 +78,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
   });
 
-  itEth('Sponsoring can be set by the address that has deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsoring can be set by the address that has deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -102,11 +88,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
   });
 
-  itEth('Sponsoring cannot be set by the address that did not deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const notOwner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsoring cannot be set by the address that did not deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -115,11 +99,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
   });
   
-  itEth('Sponsor can be set by the address that deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsor can be set by the address that deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -128,16 +110,14 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasPendingSponsor(flipper.options.address).call()).to.be.true;
   });
   
-  itEth('Set sponsor event', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Set sponsor event', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
     
     const result = await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
-    const events = normalizeEvents(result.events);
+    const events = helper.eth.normalizeEvents(result.events);
     expect(events).to.be.deep.equal([
       {
         address: flipper.options.address,
@@ -148,22 +128,12 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
-
-    // TODO use helper.getApi() from the sceduler PR
-    await expectSubstrateEventsAtBlock(
-      helper.api!, 
-      result.blockNumber,
-      'evmContractHelpers',
-      ['ContractSponsorSet'],
-    );
   });
   
-  itEth('Sponsor can not be set by the address that did not deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const notOwner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsor can not be set by the address that did not deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -172,11 +142,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasPendingSponsor(flipper.options.address).call()).to.be.false;
   });
 
-  itEth('Sponsorship can be confirmed by the address that pending as sponsor', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsorship can be confirmed by the address that pending as sponsor', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -186,17 +154,15 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
   });
 
-  itEth('Confirm sponsorship event', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Confirm sponsorship event', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await expect(helpers.methods.setSponsor(flipper.options.address, sponsor).send()).to.be.not.rejected;
     const result = await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
-    const events = normalizeEvents(result.events);
+    const events = helper.eth.normalizeEvents(result.events);
     expect(events).to.be.deep.equal([
       {
         address: flipper.options.address,
@@ -207,22 +173,12 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
-
-    // TODO use helper.getApi() from the sceduler PR
-    await expectSubstrateEventsAtBlock(
-      helper.api!, 
-      result.blockNumber,
-      'evmContractHelpers',
-      ['ContractSponsorshipConfirmed'],
-    );
   });
 
-  itEth('Sponsorship can not be confirmed by the address that not pending as sponsor', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const notSponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsorship can not be confirmed by the address that not pending as sponsor', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const notSponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -232,11 +188,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
   });
 
-  itEth('Sponsorship can not be confirmed by the address that not set as sponsor', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const notSponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsorship can not be confirmed by the address that not set as sponsor', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notSponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -245,10 +199,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
   });
 
-  itEth('Get self sponsored sponsor', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Get self sponsored sponsor', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -260,11 +212,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(result[1]).to.be.eq('0');
   });
 
-  itEth('Get confirmed sponsor', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Get confirmed sponsor', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -277,11 +227,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(result[1]).to.be.eq('0');
   });
 
-  itEth('Sponsor can be removed by the address that deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsor can be removed by the address that deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -294,11 +242,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.false;
   });
 
-  itEth('Remove sponsor event', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Remove sponsor event', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -306,7 +252,7 @@ describe('Sponsoring EVM contracts', () => {
     await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
     
     const result = await helpers.methods.removeSponsor(flipper.options.address).send();
-    const events = normalizeEvents(result.events);
+    const events = helper.eth.normalizeEvents(result.events);
     expect(events).to.be.deep.equal([
       {
         address: flipper.options.address,
@@ -316,22 +262,12 @@ describe('Sponsoring EVM contracts', () => {
         },
       },
     ]);
-
-    // TODO use helper.getApi() from the sceduler PR
-    await expectSubstrateEventsAtBlock(
-      helper.api!, 
-      result.blockNumber,
-      'evmContractHelpers',
-      ['ContractSponsorRemoved'],
-    );
   });
 
-  itEth('Sponsor can not be removed by the address that did not deployed the contract', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const notOwner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsor can not be removed by the address that did not deployed the contract', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -344,12 +280,10 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
   });
 
-  itEth('In generous mode, non-allowlisted user transaction will be sponsored', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('In generous mode, non-allowlisted user transaction will be sponsored', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -372,11 +306,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(callerBalanceAfter).to.be.eq(callerBalanceBefore);
   });
 
-  itEth('In generous mode, non-allowlisted user transaction will be self sponsored', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('In generous mode, non-allowlisted user transaction will be self sponsored', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -385,7 +317,7 @@ describe('Sponsoring EVM contracts', () => {
     await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
 
-    await helper.eth.transferBalanceFromSubstrate(alice, flipper.options.address);
+    await helper.eth.transferBalanceFromSubstrate(donor, flipper.options.address);
 
     const contractBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(flipper.options.address));
     const callerBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
@@ -400,12 +332,10 @@ describe('Sponsoring EVM contracts', () => {
     expect(callerBalanceAfter).to.be.eq(callerBalanceBefore);
   });
 
-  itEth('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccount();
+  itEth('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should decrease (allowlisted)', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = helper.eth.createAccount();
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -429,10 +359,8 @@ describe('Sponsoring EVM contracts', () => {
     expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
   });
 
-  itEth('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccount();
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
@@ -440,7 +368,7 @@ describe('Sponsoring EVM contracts', () => {
     await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
 
-    await helper.eth.transferBalanceFromSubstrate(alice, flipper.options.address);
+    await helper.eth.transferBalanceFromSubstrate(donor, flipper.options.address);
 
     const originalFlipperBalance = await helper.balance.getEthereum(flipper.options.address);
     expect(originalFlipperBalance).to.be.not.equal('0');
@@ -454,12 +382,10 @@ describe('Sponsoring EVM contracts', () => {
     expect(balanceAfter).to.be.equals(originalFlipperBalance);
   });
 
-  itEth('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -484,12 +410,10 @@ describe('Sponsoring EVM contracts', () => {
     expect(callerBalanceAfter).to.be.equals(callerBalanceBefore);
   });
 
-  itEth('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const caller = await helper.eth.createAccountWithBalance(alice);
+  itEth('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
     
@@ -519,10 +443,8 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   // TODO: Find a way to calculate default rate limit
-  itEth('Default rate limit equals 7200', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Default rate limit equals 7200', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -531,9 +453,10 @@ describe('Sponsoring EVM contracts', () => {
 });
 
 describe('Sponsoring Fee Limit', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let DEFAULT_GAS: number;
 
-  let testContract: CompiledContract;
-  
   function compileTestContract() {
     if (!testContract) {
       const input = {
@@ -581,30 +504,44 @@ describe('Sponsoring Fee Limit', () => {
     return testContract;
   }
   
-  async function deployTestContract(web3: Web3, owner: string) {
+  async function deployTestContract(helper: EthUniqueHelper, owner: string) {
+    const web3 = helper.getWeb3();
     const compiled = compileTestContract();
     const testContract = new web3.eth.Contract(compiled.abi, undefined, {
       data: compiled.object,
       from: owner,
-      ...GAS_ARGS,
+      gas: DEFAULT_GAS,
     });
     return await testContract.deploy({data: compiled.object}).send({from: owner});
   }
 
-  itEth('Default fee limit', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
+  before(async () => {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+      DEFAULT_GAS = helper.eth.DEFAULT_GAS;
+    });
+  });
 
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  beforeEach(async () => {
+    await usingPlaygrounds(async (helper) => {
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
+    });
+  });
+
+  let testContract: CompiledContract;
+  
+
+
+  itEth('Default fee limit', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equals('115792089237316195423570985008687907853269984665640564039457584007913129639935');
   });
 
-  itEth('Set fee limit', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
+  itEth('Set fee limit', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
@@ -612,26 +549,22 @@ describe('Sponsoring Fee Limit', () => {
     expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equals('100');
   });
 
-  itEth('Negative test - set fee limit by non-owner', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const stranger = await helper.eth.createAccountWithBalance(alice);
+  itEth('Negative test - set fee limit by non-owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const stranger = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await expect(helpers.methods.setSponsoringFeeLimit(flipper.options.address, 100).send({from: stranger})).to.be.rejected;
   });
 
-  itEth('Negative test - check that eth transactions exceeding fee limit are not executed', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
-    const user = await helper.eth.createAccountWithBalance(alice);
+  itEth('Negative test - check that eth transactions exceeding fee limit are not executed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const user = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
 
-    const testContract = await deployTestContract(helper.getWeb3(), owner);
+    const testContract = await deployTestContract(helper, owner);
     
     await helpers.methods.setSponsoringMode(testContract.options.address, SponsoringMode.Generous).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(testContract.options.address, 0).send({from: owner});
@@ -652,13 +585,11 @@ describe('Sponsoring Fee Limit', () => {
   });
 
   itEth('Negative test - check that evm.call transactions exceeding fee limit are not executed', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-
-    const owner = await helper.eth.createAccountWithBalance(alice);
-    const sponsor = await helper.eth.createAccountWithBalance(alice);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
 
-    const testContract = await deployTestContract(helper.getWeb3(), owner);
+    const testContract = await deployTestContract(helper, owner);
     
     await helpers.methods.setSponsoringMode(testContract.options.address, SponsoringMode.Generous).send({from: owner});
     await helpers.methods.setSponsoringRateLimit(testContract.options.address, 0).send({from: owner});
@@ -672,50 +603,23 @@ describe('Sponsoring Fee Limit', () => {
 
     const originalAliceBalance = await helper.balance.getSubstrate(alice.address);
 
-    // await submitTransactionAsync(
-    //   alice,
-    //   api.tx.evm.call(
-    //     subToEth(alice.address),
-    //     testContract.options.address,
-    //     testContract.methods.test(100).encodeABI(),
-    //     Uint8Array.from([]),
-    //     2_000_000n,
-    //     gasPrice,
-    //     null,
-    //     null,
-    //     [],
-    //   ),
-    // );
     await helper.eth.sendEVM(
       alice,
       testContract.options.address,
       testContract.methods.test(100).encodeABI(),
       '0',
+      2_000_000,
     );
     // expect((await api.query.system.account(alice.address)).data.free.toBigInt()).to.be.equal(originalAliceBalance);
     expect(await helper.balance.getSubstrate(alice.address)).to.be.equal(originalAliceBalance);
     
-    // await submitTransactionAsync(
-    //   alice,
-    //   api.tx.evm.call(
-    //     subToEth(alice.address),
-    //     testContract.options.address,
-    //     testContract.methods.test(100).encodeABI(),
-    //     Uint8Array.from([]),
-    //     2_100_000n,
-    //     gasPrice,
-    //     null,
-    //     null,
-    //     [],
-    //   ),
-    // );
     await helper.eth.sendEVM(
       alice,
       testContract.options.address,
-      testContract.methods.test().encodeABI(),
+      testContract.methods.test(100).encodeABI(),
       '0',
+      2_100_000,
     );
-    // expect((await api.query.system.account(alice.address)).data.free.toBigInt()).to.not.be.equal(originalAliceBalance);
     expect(await helper.balance.getSubstrate(alice.address)).to.not.be.equal(originalAliceBalance);
   });
 });
