@@ -1,6 +1,5 @@
-import {usingPlaygrounds} from './../util/playgrounds/index';
 import {IKeyringPair} from '@polkadot/types/types';
-import {normalizeEvents} from './util/helpers';
+import {usingPlaygrounds} from './../util/playgrounds/index';
 import {itEth, expect} from '../eth/util/playgrounds';
 
 describe('evm collection sponsoring', () => {
@@ -37,7 +36,7 @@ describe('evm collection sponsoring', () => {
     const nextTokenId = await contract.methods.nextTokenId().call();
     expect(nextTokenId).to.equal('1');
     const result = await contract.methods.mint(minter, nextTokenId).send();
-    const events = normalizeEvents(result.events);
+    const events = helper.eth.normalizeEvents(result.events);
     expect(events).to.be.deep.equal([
       {
         address: collectionAddress,
@@ -142,7 +141,7 @@ describe('evm collection sponsoring', () => {
         nextTokenId,
         'Test URI',
       ).send({from: user});
-      const events = normalizeEvents(result.events);
+      const events = helper.eth.normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
         {
@@ -257,7 +256,7 @@ describe('evm collection sponsoring', () => {
       'Test URI',
     ).send();
 
-    const events = normalizeEvents(result.events);
+    const events = helper.eth.normalizeEvents(result.events);
     const address = helper.ethAddress.fromCollectionId(collectionId);
 
     expect(events).to.be.deep.equal([
