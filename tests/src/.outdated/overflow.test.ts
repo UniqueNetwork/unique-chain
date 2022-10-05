@@ -17,8 +17,8 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi from './substrate/substrate-api';
-import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, getAllowance, getBalance, transferExpectFailure, transferExpectSuccess, transferFromExpectFail, transferFromExpectSuccess, U128_MAX} from './util/helpers';
+import usingApi from '../substrate/substrate-api';
+import {approveExpectSuccess, createCollectionExpectSuccess, createFungibleItemExpectSuccess, getAllowance, getBalance, transferExpectFailure, transferExpectSuccess, transferFromExpectFail, transferFromExpectSuccess, U128_MAX} from '../util/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

@@ -20,6 +20,9 @@
   "include": [
     "./src/**/*",
     "./src/interfaces/*.ts"
+, "src/.outdated/collision-tests"  ],
+  "exclude": [
+    "./src/.outdated"
   ],
   "lib": [
     "es2017"
