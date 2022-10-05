@@ -32,7 +32,7 @@ const UNIQUE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const KARURA_PORT = '9946';
 
-describe('Integration test: Exchanging QTZ with Karura', () => {
+describe.skip('Integration test: Exchanging QTZ with Karura', () => {
   let alice: IKeyringPair;
   
   before(async () => {
