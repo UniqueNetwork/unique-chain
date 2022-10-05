@@ -18,6 +18,12 @@ chai.use(chaiAsPromised);
 chai.use(chaiLike);
 export const expect = chai.expect;
 
+export enum SponsoringMode {
+  Disabled = 0,
+  Allowlisted = 1,
+  Generous = 2,
+}
+
 export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
