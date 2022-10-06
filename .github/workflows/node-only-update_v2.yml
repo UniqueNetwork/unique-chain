@@ -268,7 +268,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-after-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
