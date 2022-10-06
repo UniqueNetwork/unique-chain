@@ -172,6 +172,13 @@ export interface ISchedulerOptions {
   },
 }
 
+export interface IForeignAssetMetadata {
+  name?: number | Uint8Array,
+  symbol?: string,
+  decimals?: number,
+  minimalBalance?: bigint,
+}
+
 export type TSubstrateAccount = string;
 export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';

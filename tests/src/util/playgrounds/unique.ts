@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks, IForeignAssetMetadata} from './types';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -2314,6 +2314,30 @@ class SchedulerGroup extends HelperGroup {
   }
 }
 
+class ForeignAssetsGroup extends HelperGroup {
+  constructor(helper: UniqueHelper) {
+    super(helper);
+  }
+
+  async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.registerForeignAsset',
+      [ownerAddress, location, metadata],
+      true,
+    );
+  }
+
+  async update(signer: TSigner, foreignAssetId: number, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.updateForeignAsset',
+      [foreignAssetId, location, metadata],
+      true,
+    );
+  }
+}
+
 export type UniqueHelperConstructor = new(...args: any[]) => UniqueHelper;
 
 export class UniqueHelper extends ChainHelperBase {
@@ -2328,6 +2352,7 @@ export class UniqueHelper extends ChainHelperBase {
   ft: FTGroup;
   staking: StakingGroup;
   scheduler: SchedulerGroup;
+  foreignAssets: ForeignAssetsGroup;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger);
@@ -2343,6 +2368,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.ft = new FTGroup(this);
     this.staking = new StakingGroup(this);
     this.scheduler = new SchedulerGroup(this);
+    this.foreignAssets = new ForeignAssetsGroup(this);
   }
 
   clone(helperCls: UniqueHelperConstructor, options: {[key: string]: any} = {}) {
