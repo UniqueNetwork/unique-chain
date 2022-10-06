@@ -39,7 +39,6 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
   }
   finally {
     await helper.disconnect();
-    await helper.disconnectWeb3();
     silentConsole.disable();
   }
 };

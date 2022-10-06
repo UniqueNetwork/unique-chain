@@ -164,6 +164,14 @@ export interface IStakingInfo {
   amount: bigint,
 }
 
+export interface ISchedulerOptions {
+  priority?: number,
+  periodic?: {
+    period: number,
+    repetitions: number,
+  },
+}
+
 export type TSubstrateAccount = string;
 export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
