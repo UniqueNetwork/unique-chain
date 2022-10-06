@@ -12,7 +12,7 @@ import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
-export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>, url: string = config.substrateUrl) => {
+export async function usingPlaygrounds(code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>, url: string = config.substrateUrl) {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
@@ -28,6 +28,10 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
     await helper.disconnect();
     silentConsole.disable();
   }
+}
+
+usingPlaygrounds.atUrl = (url: string, code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygrounds(code, url);
 };
 
 export enum Pallets {
@@ -72,3 +76,9 @@ itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (s
 itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
 itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
+
+export const describeXcm = (
+  process.env.RUN_XCM_TESTS
+    ? describe
+    : describe.skip
+);
