@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {GAS_ARGS, normalizeEvents} from '../util/helpers';
 import {expect} from 'chai';
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -26,7 +25,7 @@ async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringP
   const web3 = helper.getWeb3();
   const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/UniqueFungibleProxy.abi`)).toString()), undefined, {
     from: owner,
-    ...GAS_ARGS,
+    gas: helper.eth.DEFAULT_GAS,
   });
   const proxy = await proxyContract.deploy({data: (await readFile(`${__dirname}/UniqueFungibleProxy.bin`)).toString(), arguments: [wrapped.options.address]}).send({from: owner});
   return proxy;
@@ -94,7 +93,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     {
       const result = await contract.methods.approve(spender, 100).send({from: caller});
-      const events = normalizeEvents(result.events);
+      const events = helper.eth.normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
         {
@@ -131,7 +130,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     {
       const result = await contract.methods.transferFrom(owner, receiver, 49).send({from: caller});
-      const events = normalizeEvents(result.events);
+      const events = helper.eth.normalizeEvents(result.events);
       expect(events).to.be.deep.equal([
         {
           address,
@@ -177,7 +176,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     {
       const result = await contract.methods.transfer(receiver, 50).send({from: caller});
-      const events = normalizeEvents(result.events);
+      const events = helper.eth.normalizeEvents(result.events);
       expect(events).to.be.deep.equal([
         {
           address,

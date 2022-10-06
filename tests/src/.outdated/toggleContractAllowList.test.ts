@@ -20,10 +20,10 @@ import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from
 import {
   deployFlipper,
   getFlipValue,
-} from '../util/contracthelpers';
+} from '../deprecated-helpers/contracthelpers';
 import {
   getGenericResult,
-} from '../util/helpers';
+} from '../deprecated-helpers/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

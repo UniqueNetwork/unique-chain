@@ -38,6 +38,7 @@ export enum Pallets {
   Fungible = 'fungible',
   NFT = 'nonfungible',
   Scheduler = 'scheduler',
+  AppPromotion = 'apppromotion',
 }
 
 export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {

@@ -27,7 +27,7 @@ import nonFungibleAbi from '../../nonFungibleAbi.json';
 import refungibleAbi from '../../reFungibleAbi.json';
 import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
 import contractHelpersAbi from './../contractHelpersAbi.json';
-import {TEthereumAccount} from '../../../util/playgrounds/types';
+import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -278,6 +278,15 @@ class EthGroup extends EthGroupBase {
         args,
       };
     });
+  }
+
+  async calculateFee(address: ICrossAccountId, code: () => Promise<any>): Promise<bigint> {
+    const wrappedCode = async () => {
+      await code();
+      // In dev mode, the transaction might not finish processing in time
+      await this.helper.wait.newBlocks(1);
+    }
+    return await this.helper.arrange.calculcateFee(address, code);
   }
 }  
 

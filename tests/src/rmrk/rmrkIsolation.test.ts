@@ -9,7 +9,7 @@ import {
   requirePallets,
   normalizeAccountId,
   Pallets,
-} from '../util/helpers';
+} from '../deprecated-helpers/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {it} from 'mocha';

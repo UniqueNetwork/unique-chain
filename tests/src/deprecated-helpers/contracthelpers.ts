@@ -24,7 +24,7 @@ import {ApiPromise} from '@polkadot/api';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
-import {findUnusedAddress, getGenericResult} from '../util/helpers';
+import {findUnusedAddress, getGenericResult} from './helpers';
 
 const value = 0;
 const gasLimit = '200000000000';

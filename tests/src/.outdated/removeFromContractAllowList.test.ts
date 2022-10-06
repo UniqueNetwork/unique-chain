@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import usingApi from '../substrate/substrate-api';
-import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from '../util/contracthelpers';
-import {addToContractAllowListExpectSuccess, isAllowlistedInContract, removeFromContractAllowListExpectFailure, removeFromContractAllowListExpectSuccess, toggleContractAllowlistExpectSuccess} from '../util/helpers';
+import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from '../deprecated-helpers/contracthelpers';
+import {addToContractAllowListExpectSuccess, isAllowlistedInContract, removeFromContractAllowListExpectFailure, removeFromContractAllowListExpectSuccess, toggleContractAllowlistExpectSuccess} from '../deprecated-helpers/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 

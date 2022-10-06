@@ -29,7 +29,7 @@ const createCollectionDeposit = 100;
 /*eslint no-async-promise-executor: "off"*/
 function skipInflationBlock(api: ApiPromise): Promise<void> {
   const promise = new Promise<void>(async (resolve) => {
-    const blockInterval = (await api.consts.inflation.inflationBlockInterval).toNumber();
+    const blockInterval = api.consts.inflation.inflationBlockInterval.toNumber();
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
       if (currentBlock % blockInterval < blockInterval - 10) {
@@ -56,15 +56,15 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('Total issuance does not change', async ({helper}) => {
-    const api = helper.api!;
+    const api = helper.getApi();
     await skipInflationBlock(api);
     await helper.wait.newBlocks(1);
 
-    const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
+    const totalBefore = (await helper.callRpc('api.query.balances.totalIssuance', [])).toBigInt();
 
     await helper.balance.transferToSubstrate(alice, bob.address, 1n);
 
-    const totalAfter = (await api.query.balances.totalIssuance()).toBigInt();
+    const totalAfter = (await helper.callRpc('api.query.balances.totalIssuance', [])).toBigInt();
 
     expect(totalAfter).to.be.equal(totalBefore);
   });

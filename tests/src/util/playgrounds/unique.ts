@@ -330,6 +330,11 @@ class ChainHelperBase {
     this.chainLog = [];
   }
 
+  getApi(): ApiPromise {
+    if(this.api === null) throw Error('API not initialized');
+    return this.api;
+  }
+
   clearChainLog(): void {
     this.chainLog = [];
   }

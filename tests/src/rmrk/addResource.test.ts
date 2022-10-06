@@ -12,7 +12,7 @@ import {
   addNftComposableResource,
 } from './util/tx';
 import {RmrkTraitsResourceResourceInfo as ResourceInfo} from '@polkadot/types/lookup';
-import {requirePallets, Pallets} from '../util/helpers';
+import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
 describe('integration test: add NFT resource', () => {
   const Alice = '//Alice';

@@ -21,7 +21,7 @@ import {
   addCollectionAdminExpectSuccess,
   setChainLimitsExpectFailure,
   IChainLimits,
-} from '../util/helpers';
+} from '../deprecated-helpers/helpers';
 
 // todo:playgrounds skipped ~ postponed
 describe.skip('Negative Integration Test setChainLimits', () => {
