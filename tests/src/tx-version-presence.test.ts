@@ -22,7 +22,7 @@ let metadata: Metadata;
 describe('TxVersion is present', () => {
   before(async () => {
     await usingPlaygrounds(async helper => {
-      metadata = await helper.api!.rpc.state.getMetadata();
+      metadata = await helper.callRpc('api.rpc.state.getMetadata', []);
     });
   });
 

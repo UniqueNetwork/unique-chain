@@ -276,7 +276,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
   
   itSub('Reads access rights to properties of a collection', async ({helper}) =>  {
     const collection = await helper.nft.mintCollection(alice);
-    const propertyRights = (await helper.api!.query.common.collectionPropertyPermissions(collection.collectionId)).toJSON();
+    const propertyRights = (await helper.callRpc('api.query.common.collectionPropertyPermissions', [collection.collectionId])).toJSON();
     expect(propertyRights).to.be.empty;
   });
   
@@ -817,7 +817,7 @@ describe('Negative Integration Test: Token Properties', () => {
       ).to.be.fulfilled;
     }
 
-    const originalSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const originalSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
     return originalSpace;
   }
 
@@ -840,7 +840,7 @@ describe('Negative Integration Test: Token Properties', () => {
       ).to.be.rejectedWith(/common\.NoPermission/);
     }
 
-    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -875,7 +875,7 @@ describe('Negative Integration Test: Token Properties', () => {
       ).to.be.rejectedWith(/common\.NoPermission/);
     }
   
-    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -911,7 +911,7 @@ describe('Negative Integration Test: Token Properties', () => {
 
     expect(await token.getProperties(['non-existent', 'now-existent'])).to.be.empty;
       
-    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -951,7 +951,7 @@ describe('Negative Integration Test: Token Properties', () => {
     ])).to.be.rejectedWith(/common\.NoSpaceForProperty/);
   
     expect(await token.getProperties(['a_holy_book', 'young_years'])).to.be.empty;
-    const consumedSpace = await getConsumedSpace(token.collection.helper.api, token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 

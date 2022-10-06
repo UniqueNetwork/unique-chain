@@ -19,7 +19,7 @@ import {AccountInfo} from '@polkadot/types/interfaces/system';
 import promisifySubstrate from './promisify-substrate';
 import {IKeyringPair} from '@polkadot/types/types';
 import {submitTransactionAsync} from './substrate-api';
-import {getGenericResult} from '../util/helpers';
+import {getGenericResult} from '../deprecated-helpers/helpers';
 import {expect} from 'chai';
 
 export default async function getBalance(api: ApiPromise, accounts: string[]): Promise<Array<bigint>> {

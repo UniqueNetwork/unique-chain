@@ -110,7 +110,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const [alice, ...accounts] = await helper.arrange.createAccounts([10n, 0n, 0n, 0n, 0n, 0n, 0n, 0n], donor);
     const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
-    const chainAdminLimit = (helper.api!.consts.common.collectionAdminsLimit as any).toNumber();
+    const chainAdminLimit = (helper.getApi().consts.common.collectionAdminsLimit as any).toNumber();
     expect(chainAdminLimit).to.be.equal(5);
 
     for (let i = 0; i < chainAdminLimit; i++) {

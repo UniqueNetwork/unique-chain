@@ -3,7 +3,7 @@ import {getApiConnection} from '../substrate/substrate-api';
 import {createBase, addTheme} from './util/tx';
 import {expectTxFailure} from './util/helpers';
 import {getThemeNames} from './util/fetch';
-import {requirePallets, Pallets} from '../util/helpers';
+import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
 describe('integration test: add Theme to Base', () => {
   let api: any;

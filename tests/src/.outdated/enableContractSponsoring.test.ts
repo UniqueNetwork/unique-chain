@@ -17,14 +17,14 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi from './substrate/substrate-api';
-import {deployFlipper, getFlipValue, toggleFlipValueExpectSuccess} from './util/contracthelpers';
+import usingApi from '../substrate/substrate-api';
+import {deployFlipper, getFlipValue, toggleFlipValueExpectSuccess} from '../deprecated-helpers/contracthelpers';
 import {
   enableContractSponsoringExpectFailure,
   enableContractSponsoringExpectSuccess,
   findUnusedAddress,
   setContractSponsoringRateLimitExpectSuccess,
-} from './util/helpers';
+} from '../deprecated-helpers/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

@@ -16,13 +16,9 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {
-  deployFlipper,
-} from './util/contracthelpers';
-import {
-  getGenericResult,
-} from './util/helpers';
+import usingApi, {submitTransactionAsync, submitTransactionExpectFailAsync} from '../substrate/substrate-api';
+import {deployFlipper} from '../deprecated-helpers/contracthelpers';
+import {getGenericResult} from '../deprecated-helpers/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

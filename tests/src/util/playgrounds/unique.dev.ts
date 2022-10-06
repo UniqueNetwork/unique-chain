@@ -8,7 +8,6 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ICrossAccountId} from './types';
 
-
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
   level = {
@@ -63,8 +62,10 @@ export class DevUniqueHelper extends UniqueHelper {
   wait: WaitGroup;
   admin: AdminGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
-    super(logger);
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevUniqueHelper;
+
+    super(logger, options);
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
@@ -108,9 +109,9 @@ export class DevUniqueHelper extends UniqueHelper {
 }
 
 class ArrangeGroup {
-  helper: UniqueHelper;
+  helper: DevUniqueHelper;
 
-  constructor(helper: UniqueHelper) {
+  constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
 
@@ -215,8 +216,8 @@ class ArrangeGroup {
   };
 
   isDevNode = async () => {
-    const block1 = await this.helper.api?.rpc.chain.getBlock(await this.helper.api?.rpc.chain.getBlockHash(1));
-    const block2 = await this.helper.api?.rpc.chain.getBlock(await this.helper.api?.rpc.chain.getBlockHash(2));
+    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [1])]);
+    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [2])]);
     const findCreationDate = async (block: any) => {
       const humanBlock = block.toHuman();
       let date;
@@ -245,21 +246,21 @@ class ArrangeGroup {
 }
 
 class WaitGroup {
-  helper: UniqueHelper;
+  helper: DevUniqueHelper;
 
-  constructor(helper: UniqueHelper) {
+  constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
 
   /**
-   * Wait for specified bnumber of blocks
+   * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
   async newBlocks(blocksCount = 1): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
         if (blocksCount > 0) {
           blocksCount--;
         } else {
@@ -274,7 +275,7 @@ class WaitGroup {
   async forParachainBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async (data: any) => {
         if (data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
@@ -286,7 +287,7 @@ class WaitGroup {
   async forRelayBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.query.parachainSystem.validationData(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData(async (data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();

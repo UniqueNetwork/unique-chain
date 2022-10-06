@@ -15,15 +15,15 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import usingApi from './substrate/substrate-api';
-import waitNewBlocks from './substrate/wait-new-blocks';
-import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from './util/contracthelpers';
+import usingApi from '../substrate/substrate-api';
+import waitNewBlocks from '../substrate/wait-new-blocks';
+import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from '../deprecated-helpers/contracthelpers';
 import {
   enableContractSponsoringExpectSuccess,
   findUnusedAddress,
   setContractSponsoringRateLimitExpectFailure,
   setContractSponsoringRateLimitExpectSuccess,
-} from './util/helpers';
+} from '../deprecated-helpers/helpers';
 
 // todo:playgrounds skipped~postponed test
 describe.skip('Integration Test setContractSponsoringRateLimit', () => {

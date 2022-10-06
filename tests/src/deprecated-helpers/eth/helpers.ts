@@ -27,13 +27,13 @@ import config from '../../config';
 import getBalance from '../../substrate/get-balance';
 import usingApi, {submitTransactionAsync} from '../../substrate/substrate-api';
 import waitNewBlocks from '../../substrate/wait-new-blocks';
-import {CollectionMode, CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../../util/helpers';
-import collectionHelpersAbi from '../collectionHelpersAbi.json';
-import fungibleAbi from '../fungibleAbi.json';
-import nonFungibleAbi from '../nonFungibleAbi.json';
-import refungibleAbi from '../reFungibleAbi.json';
-import refungibleTokenAbi from '../reFungibleTokenAbi.json';
-import contractHelpersAbi from './contractHelpersAbi.json';
+import {CollectionMode, CrossAccountId, getDetailedCollectionInfo, getGenericResult, UNIQUE} from '../helpers';
+import collectionHelpersAbi from '../../eth/collectionHelpersAbi.json';
+import fungibleAbi from '../../eth/fungibleAbi.json';
+import nonFungibleAbi from '../../eth/nonFungibleAbi.json';
+import refungibleAbi from '../../eth/reFungibleAbi.json';
+import refungibleTokenAbi from '../../eth/reFungibleTokenAbi.json';
+import contractHelpersAbi from '../../eth/util/contractHelpersAbi.json';
 
 export const GAS_ARGS = {gas: 2500000};
 

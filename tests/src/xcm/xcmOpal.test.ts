@@ -21,9 +21,8 @@ import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {executeTransaction} from './../substrate/substrate-api';
-import {bigIntToDecimals, describe_xcm, getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
+import {bigIntToDecimals, describe_xcm, getGenericResult, paraSiblingSovereignAccount, normalizeAccountId} from './../deprecated-helpers/helpers';
 import waitNewBlocks from './../substrate/wait-new-blocks';
-import {normalizeAccountId} from './../util/helpers';
 import getBalance from './../substrate/get-balance';
 
 

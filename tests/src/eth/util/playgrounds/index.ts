@@ -20,6 +20,12 @@ chai.use(chaiAsPromised);
 chai.use(chaiLike);
 export const expect = chai.expect;
 
+export enum SponsoringMode {
+  Disabled = 0,
+  Allowlisted = 1,
+  Generous = 2,
+}
+
 export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair>) => Promise<void>) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
@@ -48,7 +54,6 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
   }
   finally {
     await helper.disconnect();
-    await helper.disconnectWeb3();
     silentConsole.disable();
   }
 };
@@ -76,15 +81,3 @@ itEth.skip = (name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (s
 itEthIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEthIfWithPallet(name, required, cb, {only: true});
 itEthIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEthIfWithPallet(name, required, cb, {skip: true});
 itEth.ifWithPallets = itEthIfWithPallet;
-
-type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
-// I want a fancier api, not a memory efficiency
-export function* cartesian<T extends Array<Array<any>>, R extends Array<any>>(internalRest: [...R], ...args: [...T]): Generator<[...R, ...{[K in keyof T]: ElementOf<T[K]>}]> {
-  if(args.length === 0) {
-    yield internalRest as any;
-    return;
-  }
-  for(const value of args[0]) {
-    yield* cartesian([...internalRest, value], ...args.slice(1)) as any;
-  }
-}

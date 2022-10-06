@@ -15,10 +15,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from './util/helpers';
-import {scheduleExpectSuccess, waitNewBlocks, requirePallets, Pallets} from '../util/helpers';
+import {createEthAccountWithBalance, deployFlipper, GAS_ARGS, itWeb3, subToEth, transferBalanceToEth} from '../../deprecated-helpers/eth/helpers';
+import {scheduleExpectSuccess, waitNewBlocks, requirePallets, Pallets} from '../../deprecated-helpers/helpers';
 
-describe('Scheduing EVM smart contracts', () => {
+// TODO mrshiposha update this test in #581
+describe.skip('Scheduing EVM smart contracts', () => {
   before(async function() {
     await requirePallets(this, [Pallets.Scheduler]);
   });

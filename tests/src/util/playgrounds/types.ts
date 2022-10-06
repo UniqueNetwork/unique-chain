@@ -14,6 +14,7 @@ export interface IEvent {
 export interface ITransactionResult {
   status: 'Fail' | 'Success';
   result: {
+      dispatchError: any,
       events: {
         phase: any, // {ApplyExtrinsic: number} | 'Initialization',
         event: IEvent;
@@ -47,6 +48,7 @@ export interface IUniqueHelperLog {
   call: string;
   params: any[];
   moduleError?: string;
+  dispatchError?: any;
   events?: any;
 }
 
@@ -160,6 +162,14 @@ export interface ISubstrateBalance {
 export interface IStakingInfo {
   block: bigint,
   amount: bigint,
+}
+
+export interface ISchedulerOptions {
+  priority?: number,
+  periodic?: {
+    period: number,
+    repetitions: number,
+  },
 }
 
 export type TSubstrateAccount = string;

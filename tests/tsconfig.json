@@ -21,6 +21,9 @@
     "./src/**/*",
     "./src/interfaces/*.ts"
   ],
+  "exclude": [
+    "./src/.outdated"
+  ],
   "lib": [
     "es2017"
   ],

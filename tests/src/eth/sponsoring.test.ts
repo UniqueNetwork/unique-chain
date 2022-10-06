@@ -14,20 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect} from 'chai';
-import {contractHelpers, createEthAccount, createEthAccountWithBalance, deployCollector, deployFlipper, itWeb3, SponsoringMode} from './util/helpers';
+import {IKeyringPair} from '@polkadot/types/types';
+import {itEth, expect, SponsoringMode} from '../eth/util/playgrounds';
+import {usingPlaygrounds} from './../util/playgrounds/index';
 
 describe('EVM sponsoring', () => {
-  itWeb3('Fee is deducted from contract if sponsoring is enabled', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const caller = createEthAccount(web3);
-    const originalCallerBalance = await web3.eth.getBalance(caller);
-    expect(originalCallerBalance).to.be.equal('0');
+  let donor: IKeyringPair;
 
-    const flipper = await deployFlipper(web3, owner);
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      donor = privateKey('//Alice');
+    });
+  });
 
-    const helpers = contractHelpers(web3, owner);
+  itEth('Fee is deducted from contract if sponsoring is enabled', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = helper.eth.createAccount();
+    const originalCallerBalance = await helper.balance.getEthereum(caller);
+
+    expect(originalCallerBalance).to.be.equal(0n);
+
+    const flipper = await helper.eth.deployFlipper(owner);
+
+    const helpers = helper.ethNativeContract.contractHelpers(owner);
+
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
     
@@ -39,27 +50,29 @@ describe('EVM sponsoring', () => {
     await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
     expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
 
-    const originalSponsorBalance = await web3.eth.getBalance(sponsor);
-    expect(originalSponsorBalance).to.be.not.equal('0');
+    const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
+    expect(originalSponsorBalance).to.be.not.equal(0n);
 
     await flipper.methods.flip().send({from: caller});
     expect(await flipper.methods.getValue().call()).to.be.true;
 
     // Balance should be taken from flipper instead of caller
-    expect(await web3.eth.getBalance(caller)).to.be.equals(originalCallerBalance);
-    expect(await web3.eth.getBalance(sponsor)).to.be.not.equals(originalSponsorBalance);
+    expect(await helper.balance.getEthereum(caller)).to.be.equal(originalCallerBalance);
+    expect(await helper.balance.getEthereum(sponsor)).to.be.not.equal(originalSponsorBalance);
   });
 
-  itWeb3('...but this doesn\'t applies to payable value', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const originalCallerBalance = await web3.eth.getBalance(caller);
-    expect(originalCallerBalance).to.be.not.equal('0');
+  itEth('...but this doesn\'t applies to payable value', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const originalCallerBalance = await helper.balance.getEthereum(caller);
 
-    const collector = await deployCollector(web3, owner);
+    expect(originalCallerBalance).to.be.not.equal(0n);
 
-    const helpers = contractHelpers(web3, owner);
+    const collector = await helper.eth.deployCollectorContract(owner);
+
+    const helpers = helper.ethNativeContract.contractHelpers(owner);
+
     await helpers.methods.toggleAllowlist(collector.options.address, true).send({from: owner});
     await helpers.methods.toggleAllowed(collector.options.address, caller, true).send({from: owner});
 
@@ -71,14 +84,14 @@ describe('EVM sponsoring', () => {
     await helpers.methods.setSponsor(collector.options.address, sponsor).send({from: owner});
     await helpers.methods.confirmSponsorship(collector.options.address).send({from: sponsor});
 
-    const originalSponsorBalance = await web3.eth.getBalance(sponsor);
-    expect(originalSponsorBalance).to.be.not.equal('0');
+    const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
+    expect(originalSponsorBalance).to.be.not.equal(0n);
 
     await collector.methods.giveMoney().send({from: caller, value: '10000'});
 
     // Balance will be taken from both caller (value) and from collector (fee)
-    expect(await web3.eth.getBalance(caller)).to.be.equals((BigInt(originalCallerBalance) - 10000n).toString());
-    expect(await web3.eth.getBalance(sponsor)).to.be.not.equals(originalSponsorBalance);
+    expect(await helper.balance.getEthereum(caller)).to.be.equals((originalCallerBalance - 10000n));
+    expect(await helper.balance.getEthereum(sponsor)).to.be.not.equals(originalSponsorBalance);
     expect(await collector.methods.getCollected().call()).to.be.equal('10000');
   });
 });
