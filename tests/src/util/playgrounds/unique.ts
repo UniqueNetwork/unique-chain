@@ -514,12 +514,18 @@ class ChainHelperBase {
       params,
     } as IUniqueHelperLog;
 
-    if(result.status !== this.transactionStatus.SUCCESS && result.moduleError) log.moduleError = result.moduleError;
+    if(result.status !== this.transactionStatus.SUCCESS) {
+      if (result.moduleError) log.moduleError = result.moduleError;
+      else if (result.result.dispatchError) log.dispatchError = result.result.dispatchError;
+    }
     if(events.length > 0) log.events = events;
 
     this.chainLog.push(log);
 
-    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) throw Error(`${result.moduleError}`);
+    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
+      if (result.moduleError) throw Error(`${result.moduleError}`);
+      else if (result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
+    }
     return result;
   }
 
