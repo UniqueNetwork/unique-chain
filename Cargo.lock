@@ -8576,7 +8576,7 @@ dependencies = [
 
 [[package]]
 name = "quartz-runtime"
-version = "0.9.27"
+version = "0.9.29"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -12568,7 +12568,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime"
-version = "0.9.27"
+version = "0.9.29"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
