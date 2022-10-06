@@ -285,8 +285,8 @@ class EthGroup extends EthGroupBase {
       await code();
       // In dev mode, the transaction might not finish processing in time
       await this.helper.wait.newBlocks(1);
-    }
-    return await this.helper.arrange.calculcateFee(address, code);
+    };
+    return await this.helper.arrange.calculcateFee(address, wrappedCode);
   }
 }  
 

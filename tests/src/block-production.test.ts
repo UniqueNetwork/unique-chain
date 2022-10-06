@@ -37,7 +37,7 @@ function getBlocks(api: ApiPromise): Promise<number[]> {
 
 describe('Block Production smoke test', () => {
   itSub('Node produces new blocks', async ({helper}) => {
-    const blocks: number[] | undefined = await getBlocks(helper.api!);
+    const blocks: number[] | undefined = await getBlocks(helper.getApi());
     expect(blocks[0]).to.be.lessThan(blocks[1]);
   });
 });

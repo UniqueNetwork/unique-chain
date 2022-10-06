@@ -152,7 +152,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = privateKey('//Alice');
-      nominal = helper.balance.getOneTokenNominal()
+      nominal = helper.balance.getOneTokenNominal();
     });
   });
 

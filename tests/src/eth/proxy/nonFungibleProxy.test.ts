@@ -138,23 +138,16 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
   });
 
   //TODO: CORE-302 add eth methods
-  itEth.skip('Can perform mintBulk()', async ({helper, privateKey}) => {
-    const api = helper.getApi();
-    const web3 = helper.getWeb3();
-    const privateKeyWrapper = privateKey;
-    /*
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
-    });
-    const alice = privateKeyWrapper('//Alice');
+  itEth.skip('Can perform mintBulk()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(donor, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
 
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
+    const caller = await helper.eth.createAccountWithBalance(donor, 30n);
+    const receiver = helper.eth.createAccount();
 
-    const address = collectionIdToAddress(collection);
-    const contract = await proxyWrap(api, web3, new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS}), privateKeyWrapper);
-    const changeAdminTx = api.tx.unique.addCollectionAdmin(collection, {Ethereum: contract.options.address});
-    await submitTransactionAsync(alice, changeAdminTx);
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await proxyWrap(helper, evmCollection, donor);
+    await collection.addAdmin(donor, {Ethereum: contract.options.address});
 
     {
       const nextTokenId = await contract.methods.nextTokenId().call();
@@ -167,7 +160,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
           [+nextTokenId + 2, 'Test URI 2'],
         ],
       ).send({from: caller});
-      const events = normalizeEvents(result.events);
+      const events = helper.eth.normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
         {
@@ -203,7 +196,6 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
       expect(await contract.methods.tokenURI(+nextTokenId + 2).call()).to.be.equal('Test URI 2');
     }
-    */
   });
 
   itEth('Can perform burn()', async ({helper}) => {
