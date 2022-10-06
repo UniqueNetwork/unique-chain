@@ -161,7 +161,7 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
-    const testVal = (await helper.api!.query.testUtils.testValue()).toNumber();
+    const testVal = (await helper.getApi().query.testUtils.testValue()).toNumber();
     expect(testVal, 'The test value should NOT be commited')
       .to.be.equal(initTestVal);
   });
@@ -263,18 +263,18 @@ describe('Scheduling token and balance transfers', () => {
     await helper.wait.newBlocks(blocksBeforeExecution);
 
     // execution #0
-    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
       .to.be.equal(incTestVal);
 
     await helper.wait.newBlocks(periodic.period);
 
     // execution #1
-    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
       .to.be.equal(finalTestVal);
 
     for (let i = 1; i < periodic.repetitions; i++) {
       await helper.wait.newBlocks(periodic.period);
-      expect((await helper.api!.query.testUtils.testValue()).toNumber())
+      expect((await helper.getApi().query.testUtils.testValue()).toNumber())
         .to.be.equal(finalTestVal);
     }
   });
@@ -308,19 +308,19 @@ describe('Scheduling token and balance transfers', () => {
     await helper.wait.newBlocks(waitForBlocks + 1);
 
     // execution #0
-    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
       .to.be.equal(initTestVal + 1);
 
     await helper.wait.newBlocks(periodic.period);
 
     // execution #1
-    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
       .to.be.equal(initTestVal + 2);
 
     await helper.wait.newBlocks(periodic.period);
 
     // <canceled>
-    expect((await helper.api!.query.testUtils.testValue()).toNumber())
+    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
       .to.be.equal(initTestVal + 2);
   });
 
