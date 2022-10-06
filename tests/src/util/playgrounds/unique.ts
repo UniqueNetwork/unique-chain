@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -318,6 +318,7 @@ class ChainHelperBase {
   forcedNetwork: TUniqueNetworks | null;
   network: TUniqueNetworks | null;
   chainLog: IUniqueHelperLog[];
+  children: ChainHelperBase[];
 
   constructor(logger?: ILogger) {
     this.util = UniqueUtil;
@@ -328,6 +329,7 @@ class ChainHelperBase {
     this.forcedNetwork = null;
     this.network = null;
     this.chainLog = [];
+    this.children = [];
   }
 
   getApi(): ApiPromise {
@@ -351,8 +353,16 @@ class ChainHelperBase {
   }
 
   async disconnect() {
+    for (const child of this.children) {
+      child.clearApi();
+    }
+
     if (this.api === null) return;
     await this.api.disconnect();
+    this.clearApi();
+  }
+
+  clearApi() {
     this.api = null;
     this.network = null;
   }
@@ -479,7 +489,7 @@ class ChainHelperBase {
 
   constructApiCall(apiCall: string, params: any[]) {
     if(!apiCall.startsWith('api.')) throw Error(`Invalid api call: ${apiCall}`);
-    let call = this.api as any;
+    let call = this.getApi() as any;
     for(const part of apiCall.slice(4).split('.')) {
       call = call[part];
     }
@@ -514,12 +524,18 @@ class ChainHelperBase {
       params,
     } as IUniqueHelperLog;
 
-    if(result.status !== this.transactionStatus.SUCCESS && result.moduleError) log.moduleError = result.moduleError;
+    if(result.status !== this.transactionStatus.SUCCESS) {
+      if (result.moduleError) log.moduleError = result.moduleError;
+      else if (result.result.dispatchError) log.dispatchError = result.result.dispatchError;
+    }
     if(events.length > 0) log.events = events;
 
     this.chainLog.push(log);
 
-    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) throw Error(`${result.moduleError}`);
+    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
+      if (result.moduleError) throw Error(`${result.moduleError}`);
+      else if (result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
+    }
     return result;
   }
 
@@ -2242,7 +2258,67 @@ class StakingGroup extends HelperGroup {
   }
 }
 
+class SchedulerGroup extends HelperGroup {
+  constructor(helper: UniqueHelper) {
+    super(helper);
+  }
+
+  async cancelScheduled(signer: TSigner, scheduledId: string) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.scheduler.cancelNamed',
+      [scheduledId],
+      true,
+    );
+  }
+
+  async changePriority(signer: TSigner, scheduledId: string, priority: number) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.scheduler.changeNamedPriority',
+      [scheduledId, priority],
+      true,
+    );
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    return this.schedule<T>('scheduleNamed', scheduledId, executionBlockNumber, options);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    return this.schedule<T>('scheduleNamedAfter', scheduledId, blocksBeforeExecution, options);
+  }
+
+  schedule<T extends UniqueHelper>(
+    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
+    scheduledId: string,
+    blocksNum: number,
+    options: ISchedulerOptions = {},
+  ) {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const ScheduledHelperType = ScheduledUniqueHelper(this.helper.helperBase);
+    return this.helper.clone(ScheduledHelperType, {
+      scheduleFn,
+      scheduledId,
+      blocksNum,
+      options,
+    }) as T;
+  }
+}
+
+export type UniqueHelperConstructor = new(...args: any[]) => UniqueHelper;
+
 export class UniqueHelper extends ChainHelperBase {
+  helperBase: any;
+
   chain: ChainGroup;
   balance: BalanceGroup;
   address: AddressGroup;
@@ -2251,9 +2327,13 @@ export class UniqueHelper extends ChainHelperBase {
   rft: RFTGroup;
   ft: FTGroup;
   staking: StakingGroup;
+  scheduler: SchedulerGroup;
 
-  constructor(logger?: ILogger) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger);
+
+    this.helperBase = options.helperBase ?? UniqueHelper;
+
     this.chain = new ChainGroup(this);
     this.balance = new BalanceGroup(this);
     this.address = new AddressGroup(this);
@@ -2262,9 +2342,98 @@ export class UniqueHelper extends ChainHelperBase {
     this.rft = new RFTGroup(this);
     this.ft = new FTGroup(this);
     this.staking = new StakingGroup(this);
+    this.scheduler = new SchedulerGroup(this);
+  }
+
+  clone(helperCls: UniqueHelperConstructor, options: {[key: string]: any} = {}) {
+    Object.setPrototypeOf(helperCls.prototype, this);
+    const newHelper = new helperCls(this.logger, options);
+
+    newHelper.api = this.api;
+    newHelper.network = this.network;
+    newHelper.forceNetwork = this.forceNetwork;
+
+    this.children.push(newHelper);
+
+    return newHelper;
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoUniqueHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
+  return class extends Base {
+    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter';
+    scheduledId: string;
+    blocksNum: number;
+    options: ISchedulerOptions;
+
+    constructor(...args: any[]) {
+      const logger = args[0] as ILogger;
+      const options = args[1] as {
+        scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
+        scheduledId: string,
+        blocksNum: number,
+        options: ISchedulerOptions
+      };
+
+      super(logger);
+
+      this.scheduleFn = options.scheduleFn;
+      this.scheduledId = options.scheduledId;
+      this.blocksNum = options.blocksNum;
+      this.options = options.options;
+    }
+
+    executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
+      const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
+      const extrinsic = 'api.tx.scheduler.' +  this.scheduleFn;
+
+      return super.executeExtrinsic(
+        sender,
+        extrinsic,
+        [
+          this.scheduledId,
+          this.blocksNum,
+          this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
+          this.options.priority ?? null,
+          {Value: scheduledTx},
+        ],
+        expectSuccess,
+      );
+    }
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function SudoUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
+  return class extends Base {
+    constructor(...args: any[]) {
+      super(...args);
+    }
+
+    executeExtrinsic (
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+
+      return super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudo',
+        [call],
+        expectSuccess,
+      );
+    }
+  };
+}
 
 export class UniqueBaseCollection {
   helper: UniqueHelper;
@@ -2366,6 +2535,28 @@ export class UniqueBaseCollection {
   async burn(signer: TSigner) {
     return await this.helper.collection.burn(signer, this.collectionId);
   }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueBaseCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueBaseCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueBaseCollection(this.collectionId, this.helper.getSudo<T>());
+  }
 }
 
 
@@ -2453,6 +2644,28 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
   async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
     return await this.helper.nft.unnestToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj);
   }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueNFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueNFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueNFTCollection(this.collectionId, this.helper.getSudo<T>());
+  }
 }
 
 
@@ -2536,6 +2749,28 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
   async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[]) {
     return await this.helper.rft.setTokenPropertyPermissions(signer, this.collectionId, permissions);
   }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueRFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueRFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueRFTCollection(this.collectionId, this.helper.getSudo<T>());
+  }
 }
 
 
@@ -2583,6 +2818,28 @@ export class UniqueFTCollection extends UniqueBaseCollection {
   async approveTokens(signer: TSigner, toAddressObj: ICrossAccountId, amount=1n) {
     return await this.helper.ft.approveTokens(signer, this.collectionId, toAddressObj, amount);
   }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueFTCollection(this.collectionId, this.helper.getSudo<T>());
+  }
 }
 
 
@@ -2619,6 +2876,28 @@ export class UniqueBaseToken {
 
   nestingAccount() {
     return this.collection.helper.util.getTokenAccount(this);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueBaseToken(this.tokenId, scheduledCollection);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueBaseToken(this.tokenId, scheduledCollection);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueBaseToken(this.tokenId, this.collection.getSudo<T>());
   }
 }
 
@@ -2678,6 +2957,28 @@ export class UniqueNFToken extends UniqueBaseToken {
   async burnFrom(signer: TSigner, fromAddressObj: ICrossAccountId) {
     return await this.collection.burnTokenFrom(signer, this.tokenId, fromAddressObj);
   }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueNFToken(this.tokenId, scheduledCollection);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueNFToken(this.tokenId, scheduledCollection);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueNFToken(this.tokenId, this.collection.getSudo<T>());
+  }
 }
 
 export class UniqueRFToken extends UniqueBaseToken {
@@ -2730,5 +3031,27 @@ export class UniqueRFToken extends UniqueBaseToken {
 
   async burnFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount=1n) {
     return await this.collection.burnTokenFrom(signer, this.tokenId, fromAddressObj, amount);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueRFToken(this.tokenId, scheduledCollection);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueRFToken(this.tokenId, scheduledCollection);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueRFToken(this.tokenId, this.collection.getSudo<T>());
   }
 }

@@ -321,6 +321,7 @@ class EthAddressGroup extends EthGroupBase {
   }
 }  
  
+export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthUniqueHelper extends DevUniqueHelper {
   web3: Web3 | null = null;
@@ -331,8 +332,10 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
-    super(logger);
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? EthUniqueHelper;
+
+    super(logger, options);
     this.eth = new EthGroup(this);
     this.ethAddress = new EthAddressGroup(this);
     this.ethNativeContract = new NativeContractGroup(this);
@@ -350,10 +353,23 @@ export class EthUniqueHelper extends DevUniqueHelper {
     this.web3 = new Web3(this.web3Provider);
   }
 
-  async disconnectWeb3() {
+  async disconnect() {
     if(this.web3 === null) return;
     this.web3Provider?.connection.close();
+
+    await super.disconnect();
+  }
+
+  clearApi() {
     this.web3 = null;
+  }
+
+  clone(helperCls: EthUniqueHelperConstructor, options?: { [key: string]: any; }): EthUniqueHelper {
+    const newHelper = super.clone(helperCls, options) as EthUniqueHelper;
+    newHelper.web3 = this.web3;
+    newHelper.web3Provider = this.web3Provider;
+
+    return newHelper;
   }
 }
   

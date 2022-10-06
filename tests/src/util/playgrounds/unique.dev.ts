@@ -8,7 +8,6 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ICrossAccountId} from './types';
 
-
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
   level = {
@@ -63,8 +62,10 @@ export class DevUniqueHelper extends UniqueHelper {
   wait: WaitGroup;
   admin: AdminGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
-    super(logger);
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevUniqueHelper;
+
+    super(logger, options);
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
@@ -108,9 +109,9 @@ export class DevUniqueHelper extends UniqueHelper {
 }
 
 class ArrangeGroup {
-  helper: UniqueHelper;
+  helper: DevUniqueHelper;
 
-  constructor(helper: UniqueHelper) {
+  constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
 
@@ -245,14 +246,14 @@ class ArrangeGroup {
 }
 
 class WaitGroup {
-  helper: UniqueHelper;
+  helper: DevUniqueHelper;
 
-  constructor(helper: UniqueHelper) {
+  constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
 
   /**
-   * Wait for specified bnumber of blocks
+   * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
