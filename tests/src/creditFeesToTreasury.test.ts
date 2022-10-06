@@ -29,7 +29,7 @@ const createCollectionDeposit = 100;
 /*eslint no-async-promise-executor: "off"*/
 function skipInflationBlock(api: ApiPromise): Promise<void> {
   const promise = new Promise<void>(async (resolve) => {
-    const blockInterval = (await api.consts.inflation.inflationBlockInterval).toNumber();
+    const blockInterval = api.consts.inflation.inflationBlockInterval.toNumber();
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
       if (currentBlock % blockInterval < blockInterval - 10) {
@@ -56,21 +56,21 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('Total issuance does not change', async ({helper}) => {
-    const api = helper.api!;
+    const api = helper.getApi();
     await skipInflationBlock(api);
     await helper.wait.newBlocks(1);
 
-    const totalBefore = (await api.query.balances.totalIssuance()).toBigInt();
+    const totalBefore = (await helper.callRpc('api.query.balances.totalIssuance', [])).toBigInt();
 
     await helper.balance.transferToSubstrate(alice, bob.address, 1n);
 
-    const totalAfter = (await api.query.balances.totalIssuance()).toBigInt();
+    const totalAfter = (await helper.callRpc('api.query.balances.totalIssuance', [])).toBigInt();
 
     expect(totalAfter).to.be.equal(totalBefore);
   });
 
   itSub('Sender balance decreased by fee+sent amount, Treasury balance increased by fee', async ({helper}) => {
-    await skipInflationBlock(helper.api!);
+    await skipInflationBlock(helper.getApi());
     await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
@@ -89,7 +89,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('Treasury balance increased by failed tx fee', async ({helper}) => {
-    const api = helper.api!;
+    const api = helper.getApi();
     await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
@@ -107,7 +107,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('NFT Transactions also send fees to Treasury', async ({helper}) => {
-    await skipInflationBlock(helper.api!);
+    await skipInflationBlock(helper.getApi());
     await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
@@ -125,7 +125,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   itSub('Fees are sane', async ({helper}) => {
     const unique = helper.balance.getOneTokenNominal();
-    await skipInflationBlock(helper.api!);
+    await skipInflationBlock(helper.getApi());
     await helper.wait.newBlocks(1);
 
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
@@ -140,7 +140,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   });
 
   itSub('NFT Transfer fee is close to 0.1 Unique', async ({helper}) => {
-    await skipInflationBlock(helper.api!);
+    await skipInflationBlock(helper.getApi());
     await helper.wait.newBlocks(1);
 
     const collection = await helper.nft.mintCollection(alice, {

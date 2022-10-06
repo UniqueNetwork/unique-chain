@@ -330,6 +330,11 @@ class ChainHelperBase {
     this.chainLog = [];
   }
 
+  getApi(): ApiPromise {
+    if(this.api === null) throw Error('API not initialized');
+    return this.api;
+  }
+
   clearChainLog(): void {
     this.chainLog = [];
   }
@@ -1986,7 +1991,7 @@ class ChainGroup extends HelperGroup {
    * @returns ss58Format, token decimals, and token symbol
    */
   getChainProperties(): IChainProperties {
-    const properties = (this.helper.api as any).registry.getChainProperties().toJSON();
+    const properties = (this.helper.getApi() as any).registry.getChainProperties().toJSON();
     return {
       ss58Format: properties.ss58Format.toJSON(),
       tokenDecimals: properties.tokenDecimals.toJSON(),
@@ -2029,7 +2034,7 @@ class ChainGroup extends HelperGroup {
    * @returns number, account's nonce
    */
   async getNonce(address: TSubstrateAccount): Promise<number> {
-    return (await (this.helper.api as any).query.system.account(address)).nonce.toNumber();
+    return (await this.helper.callRpc('api.query.system.account', [address])).nonce.toNumber();
   }
 }
 

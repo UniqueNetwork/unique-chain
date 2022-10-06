@@ -3,7 +3,7 @@ import {getApiConnection} from '../substrate/substrate-api';
 import {createCollection, mintNft, sendNft} from './util/tx';
 import {NftIdTuple} from './util/fetch';
 import {isNftChildOfAnother, expectTxFailure} from './util/helpers';
-import {requirePallets, Pallets} from '../util/helpers';
+import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
 describe('integration test: send NFT', () => {
   let api: any;

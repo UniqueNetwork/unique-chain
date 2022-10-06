@@ -21,7 +21,7 @@ import {WsProvider, Keyring} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {getGenericResult, generateKeyringPair, waitEvent, describe_xcm, bigIntToDecimals} from '../util/helpers';
+import {getGenericResult, generateKeyringPair, waitEvent, describe_xcm, bigIntToDecimals} from '../deprecated-helpers/helpers';
 import {MultiLocation} from '@polkadot/types/interfaces';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import waitNewBlocks from '../substrate/wait-new-blocks';

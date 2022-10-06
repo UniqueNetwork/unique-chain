@@ -1,7 +1,7 @@
 import {ApiPromise} from '@polkadot/api';
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../util/helpers';
+import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 import {getNft, getParts, NftIdTuple} from './util/fetch';
 import {expectTxFailure} from './util/helpers';
 import {

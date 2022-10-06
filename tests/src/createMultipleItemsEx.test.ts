@@ -178,13 +178,12 @@ describe('Integration Test: createMultipleItemsEx', () => {
       tokenPrefix: 'COL',
     }, 0);
 
-    const api = helper.api;
-    await helper.signTransaction(alice, api?.tx.unique.createMultipleItemsEx(collection.collectionId, {
+    await helper.executeExtrinsic(alice, 'api.tx.unique.createMultipleItemsEx',[collection.collectionId, {
       Fungible: new Map([
         [JSON.stringify({Substrate: alice.address}), 50],
         [JSON.stringify({Substrate: bob.address}), 100],
       ]),
-    }));
+    }], true);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(50n);
     expect(await collection.getBalance({Substrate: bob.address})).to.be.equal(100n);
@@ -200,8 +199,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
       ],
     });
 
-    const api = helper.api;
-    await helper.signTransaction(alice, api?.tx.unique.createMultipleItemsEx(collection.collectionId, {
+    await helper.executeExtrinsic(alice, 'api.tx.unique.createMultipleItemsEx', [collection.collectionId, {
       RefungibleMultipleOwners: {
         users: new Map([
           [JSON.stringify({Substrate: alice.address}), 1],
@@ -211,7 +209,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
           {key: 'k', value: 'v'},
         ],
       },
-    }));
+    }], true);
     const tokenId = await collection.getLastTokenId();
     expect(tokenId).to.be.equal(1);
     expect(await collection.getTokenBalance(1, {Substrate: alice.address})).to.be.equal(1n);
@@ -228,9 +226,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
       ],
     });
 
-    const api = helper.api;
-
-    await helper.signTransaction(alice, api?.tx.unique.createMultipleItemsEx(collection.collectionId, {
+    await helper.executeExtrinsic(alice, 'api.tx.unique.createMultipleItemsEx', [collection.collectionId, {
       RefungibleMultipleItems: [
         {
           user: {Substrate: alice.address}, pieces: 1,
@@ -245,7 +241,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
           ],
         },
       ],
-    }));
+    }], true);
 
     expect(await collection.getLastTokenId()).to.be.equal(2);
     expect(await collection.getTokenBalance(1, {Substrate: alice.address})).to.be.equal(1n);

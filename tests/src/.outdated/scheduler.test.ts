@@ -39,7 +39,7 @@ import {
   getFreeBalance,
   confirmSponsorshipByKeyExpectSuccess,
   scheduleExpectFailure,
-} from '../util/helpers';
+} from '../deprecated-helpers/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 
 chai.use(chaiAsPromised);

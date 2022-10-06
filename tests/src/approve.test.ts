@@ -60,7 +60,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
     await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-    await helper.signTransaction(alice, helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0));
+    await helper.signTransaction(alice, helper.constructApiCall('api.tx.unique.approve', [{Substrate: bob.address}, collectionId, tokenId, 0]));
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
   });
 
@@ -275,7 +275,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
     await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-    await helper.signTransaction(alice, helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0));
+    await helper.signTransaction(alice, helper.constructApiCall('api.tx.unique.approve', [{Substrate: bob.address}, collectionId, tokenId, 0]));
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
     const transferTokenFromTx = async () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
     await expect(transferTokenFromTx()).to.be.rejected;
@@ -328,7 +328,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
   itSub('1 for NFT', async ({helper}) => {
     const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-    const approveTx = async () => helper.signTransaction(bob, helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2));
+    const approveTx = async () => helper.signTransaction(bob, helper.constructApiCall('api.tx.unique.approve', [{Substrate: charlie.address}, collectionId, tokenId, 2]));
     await expect(approveTx()).to.be.rejected;
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.false;
   });

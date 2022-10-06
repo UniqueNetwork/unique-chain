@@ -14,15 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {
-  ethBalanceViaSub,
-  GAS_ARGS,
-  recordEthFee,
-} from './util/helpers';
 import {Contract} from 'web3-eth-contract';
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+
 
 describe('Contract calls', () => {
   let donor: IKeyringPair;
@@ -37,15 +33,15 @@ describe('Contract calls', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(deployer);
 
-    const cost = await recordEthFee(helper.api!, deployer, () => flipper.methods.flip().send({from: deployer}));
+    const cost = await helper.eth.calculateFee({Ethereum: deployer}, () => flipper.methods.flip().send({from: deployer}));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
 
   itEth('Balance transfer fee is less than 0.2 UNQ', async ({helper}) => {
     const userA = await helper.eth.createAccountWithBalance(donor);
     const userB = helper.eth.createAccount();
-    const cost = await recordEthFee(helper.api!, userA, () => helper.web3!.eth.sendTransaction({from: userA, to: userB, value: '1000000', ...GAS_ARGS}));
-    const balanceB = await ethBalanceViaSub(helper.api!, userB);
+    const cost = await helper.eth.calculateFee({Ethereum: userA}, () => helper.getWeb3().eth.sendTransaction({from: userA, to: userB, value: '1000000', gas: helper.eth.DEFAULT_GAS}));
+    const balanceB = await helper.balance.getEthereum(userB);
     expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
 
@@ -60,7 +56,7 @@ describe('Contract calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await recordEthFee(helper.api!, caller, () => contract.methods.transfer(receiver, tokenId).send(caller));
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, tokenId).send(caller));
 
     const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());
     const expectedFee = 0.15;

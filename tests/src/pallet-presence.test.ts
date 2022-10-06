@@ -59,7 +59,7 @@ const consensusPallets = [
 describe('Pallet presence', () => {
   before(async () => {
     await usingPlaygrounds(async helper => {
-      const chain = await helper.api!.rpc.system.chain();
+      const chain = await helper.callRpc('api.rpc.system.chain', []);
 
       const refungible = 'refungible';
       const scheduler = 'scheduler';

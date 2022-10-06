@@ -18,7 +18,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip} from '../util/playgrounds';
 import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
-import {UNIQUE} from '../util/helpers';
+
 
 describe('Create RFT collection from EVM', () => {
   let donor: IKeyringPair;
@@ -66,7 +66,7 @@ describe('Create RFT collection from EVM', () => {
 
     await collectionHelpers.methods
       .createRFTCollection('A', 'A', 'A')
-      .send({value: Number(2n * UNIQUE)});
+      .send({value: Number(2n * helper.balance.getOneTokenNominal())});
     
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
@@ -148,11 +148,13 @@ describe('Create RFT collection from EVM', () => {
 
 describe('(!negative tests!) Create RFT collection from EVM', () => {
   let donor: IKeyringPair;
+  let nominal: bigint;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
       donor = privateKey('//Alice');
+      nominal = helper.balance.getOneTokenNominal();
     });
   });
 
@@ -167,7 +169,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
 
       await expect(collectionHelper.methods
         .createRFTCollection(collectionName, description, tokenPrefix)
-        .call({value: Number(2n * UNIQUE)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+        .call({value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
     {
       const MAX_DESCRIPTION_LENGTH = 256;
@@ -176,7 +178,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const tokenPrefix = 'A';
       await expect(collectionHelper.methods
         .createRFTCollection(collectionName, description, tokenPrefix)
-        .call({value: Number(2n * UNIQUE)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+        .call({value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
     {
       const MAX_TOKEN_PREFIX_LENGTH = 16;
@@ -185,7 +187,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
       await expect(collectionHelper.methods
         .createRFTCollection(collectionName, description, tokenPrefix)
-        .call({value: Number(2n * UNIQUE)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+        .call({value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
   
@@ -194,7 +196,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     await expect(collectionHelper.methods
       .createRFTCollection('Peasantry', 'absolutely anything', 'TWIW')
-      .call({value: Number(1n * UNIQUE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+      .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   itEth('(!negative test!) Check owner', async ({helper}) => {

@@ -215,8 +215,8 @@ class ArrangeGroup {
   };
 
   isDevNode = async () => {
-    const block1 = await this.helper.api?.rpc.chain.getBlock(await this.helper.api?.rpc.chain.getBlockHash(1));
-    const block2 = await this.helper.api?.rpc.chain.getBlock(await this.helper.api?.rpc.chain.getBlockHash(2));
+    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [1])]);
+    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [2])]);
     const findCreationDate = async (block: any) => {
       const humanBlock = block.toHuman();
       let date;
@@ -259,7 +259,7 @@ class WaitGroup {
   async newBlocks(blocksCount = 1): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
         if (blocksCount > 0) {
           blocksCount--;
         } else {
@@ -274,7 +274,7 @@ class WaitGroup {
   async forParachainBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async (data: any) => {
         if (data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
@@ -286,7 +286,7 @@ class WaitGroup {
   async forRelayBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.query.parachainSystem.validationData(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData(async (data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();
