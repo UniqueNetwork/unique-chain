@@ -7,10 +7,6 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ICrossAccountId} from './types';
-import type {EventRecord} from '@polkadot/types/interfaces';
-import {VoidFn} from '@polkadot/api/types';
-import {FrameSystemEventRecord} from '@polkadot/types/lookup';
-
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }

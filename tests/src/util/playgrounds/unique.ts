@@ -10,7 +10,6 @@ import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
-import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
