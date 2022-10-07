@@ -142,14 +142,14 @@ class EthGroup extends EthGroupBase {
     return account.address;
   }
 
-  async createAccountWithBalance(donor: IKeyringPair, amount=1000n) {
+  async createAccountWithBalance(donor: IKeyringPair, amount=100n) {
     const account = this.createAccount();
     await this.transferBalanceFromSubstrate(donor, account, amount);
   
     return account;
   }
 
-  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=1000n, inTokens=true) {
+  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=100n, inTokens=true) {
     return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
   }
   

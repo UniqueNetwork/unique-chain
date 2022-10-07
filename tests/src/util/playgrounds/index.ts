@@ -22,8 +22,7 @@ export const getTestSeed = (filename: string) => {
   return `//Alice+${getTestHash(filename)}`;
 };
 
-// todo:playgrounds normalize to seed and filename
-export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
+export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
@@ -32,14 +31,14 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
   try {
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const privateKey = async (seed: string | {filename: string}) => {
+    const privateKey = async (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => {
       if (typeof seed === 'string') {
         return helper.util.fromSeed(seed, ss58Format);
       }
       else {
         const actualSeed = getTestSeed(seed.filename);
         let account = helper.util.fromSeed(actualSeed, ss58Format);
-        if (await helper.balance.getSubstrate(account.address) == 0n) {
+        if (!seed.ignoreFundsPresence && await helper.balance.getSubstrate(account.address) == 0n) {
           console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
           account = helper.util.fromSeed('//Alice', ss58Format);
         }

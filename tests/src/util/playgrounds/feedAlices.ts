@@ -26,23 +26,23 @@ const fundFilenames = async () => {
     const nonce = await helper.chain.getNonce(alice.address);
     const filenames = await getFiles(path.resolve(__dirname, '../..'));
 
-    console.log(`Main Alice address: ${alice.address}, with balance:`, await helper.balance.getSubstrate(alice.address));
-
-    const batchSize = 20;
+    // batching is actually undesired, it takes away the time while all the transactions actually succeed
+    const batchSize = 300;
     let balanceGrantedCounter = 0;
     for (let b = 0; b < filenames.length; b += batchSize) {
       const tx = [];
       let batchBalanceGrantedCounter = 0;
-      for (const f of filenames.slice(b, b + batchSize)) {
-        if (!f.endsWith('.test.ts')) continue;
-        const account = await privateKey({filename: f});
+      for (let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filenames.length; i++) {
+        const f = filenames[b + i];
+        if (!f.endsWith('.test.ts') || f.includes('.outdated')) continue;
+        const account = await privateKey({filename: f, ignoreFundsPresence: true});
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 
-        if (aliceBalance < 5000n * oneToken) {
+        if (aliceBalance < 7500n * oneToken) {
           tx.push(helper.executeExtrinsic(
             alice, 
             'api.tx.balances.transfer',
-            [account.address, 10000n * oneToken],
+            [account.address, 15000n * oneToken],
             true,
             {nonce: nonce + balanceGrantedCounter++},
           ).then(() => true).catch(() => {console.error(`Transaction to ${path.basename(f)} registered as failed. Strange.`); return false;}));
@@ -65,13 +65,14 @@ const fundFilenamesWithRetries = async (retriesLeft: number): Promise<boolean> =
   if (retriesLeft <= 0) return Promise.resolve(false);
   return fundFilenames()
     .then(() => Promise.resolve(true))
-    .catch(() => {
-      console.error(`Some transactions have failed. ${retriesLeft >= 1 ? 'Retrying...' : 'Something is wrong.'}`);
+    .catch(e => {
+      console.error(e);
+      console.error(`Some transactions might have failed. ${retriesLeft > 1 ? 'Retrying...' : 'Something is wrong.'}\n`);
       return fundFilenamesWithRetries(--retriesLeft);
     });
 };
 
-fundFilenamesWithRetries(2).then((result) => process.exit(result ? 0 : 1)).catch(e => {
+fundFilenamesWithRetries(3).then((result) => process.exit(result ? 0 : 1)).catch(e => {
   console.error(e);
   process.exit(1);
 });
