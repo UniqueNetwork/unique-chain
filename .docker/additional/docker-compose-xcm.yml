@@ -1,0 +1,24 @@
+version: "3.5"
+
+services:
+  xcm_nodes:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-xcm
+    container_name: xcm-${CHAIN}-testnet-local
+    expose:
+      - 9844
+      - 9944
+      - 9946
+      - 9947
+      - 9948
+    ports:
+      - 127.0.0.1:9844:9844
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9946:9946
+      - 127.0.0.1:9947:9947
+      - 127.0.0.1:9948:9948
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"
