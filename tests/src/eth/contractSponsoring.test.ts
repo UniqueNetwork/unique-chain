@@ -26,11 +26,11 @@ describe('Sponsoring EVM contracts', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
-  itEth('Self sponsored can be set by the address that deployed the contract', async ({helper, privateKey}) => {
+  itEth('Self sponsored can be set by the address that deployed the contract', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
@@ -517,20 +517,13 @@ describe('Sponsoring Fee Limit', () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
+      [alice] = await helper.arrange.createAccounts([100n], donor);
       DEFAULT_GAS = helper.eth.DEFAULT_GAS;
     });
   });
 
-  beforeEach(async () => {
-    await usingPlaygrounds(async (helper) => {
-      [alice] = await helper.arrange.createAccounts([1000n], donor);
-    });
-  });
-
   let testContract: CompiledContract;
-  
-
 
   itEth('Default fee limit', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
@@ -584,7 +577,7 @@ describe('Sponsoring Fee Limit', () => {
     expect(await helper.balance.getEthereum(user)).to.not.be.equal(originalUserBalance);
   });
 
-  itEth('Negative test - check that evm.call transactions exceeding fee limit are not executed', async ({helper, privateKey}) => {
+  itEth('Negative test - check that evm.call transactions exceeding fee limit are not executed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);

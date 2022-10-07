@@ -35,24 +35,17 @@ describe('Create NFT collection from EVM', () => {
     const description = 'Some description';
     const prefix = 'token prefix';
 
-    // todo:playgrounds this might fail when in async environment.
-    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
     const {collectionId} = await helper.eth.createNonfungibleCollection(owner, name, description, prefix);
-    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-
-    const collection = helper.nft.getCollectionObject(collectionId);
-    const data = (await collection.getData())!;
+    const data = (await helper.rft.getData(collectionId))!;
     
-    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-    expect(collectionId).to.be.eq(collectionCountAfter);
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
     expect(data.raw.mode).to.be.eq('NFT');
   });
 
-  // todo:playgrounds this test will fail when in async environment.
-  itEth('Check collection address exist', async ({helper}) => {
+  // this test will occasionally fail when in async environment.
+  itEth.skip('Check collection address exist', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;

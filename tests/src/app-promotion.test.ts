@@ -37,7 +37,7 @@ describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
-      alice = await privateKey({filename: __filename});
+      alice = await privateKey('//Alice');
       [palletAdmin] = await helper.arrange.createAccounts([100n], alice);
       const api = helper.getApi();
       await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
@@ -557,7 +557,7 @@ describe('App promotion', () => {
   
       // caller payed for call
       expect(1000n * nominal > callerBalance).to.be.true;
-      expect(contractBalanceAfter).to.be.equal(1000n * nominal);
+      expect(contractBalanceAfter).to.be.equal(100n * nominal);
     });
   
     itEth('can not be called by non-admin', async ({helper}) => {
@@ -613,7 +613,7 @@ describe('App promotion', () => {
       await helper.staking.stake(staker, 200n * nominal);
   
       // wait rewards are available:
-      const [_, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      const [_stake1, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
   
       const payoutToStaker = (await helper.admin.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;

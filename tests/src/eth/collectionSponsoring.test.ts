@@ -9,17 +9,12 @@ describe('evm collection sponsoring', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
+      [alice] = await helper.arrange.createAccounts([100n], donor);
       nominal = helper.balance.getOneTokenNominal();
     });
   });
-
-  beforeEach(async () => {
-    await usingPlaygrounds(async (helper) => {
-      [alice] = await helper.arrange.createAccounts([1000n], donor);
-    });
-  });
-
+  
   itEth('sponsors mint transactions', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'spnr', permissions: {mintMode: true}});
     await collection.setSponsor(alice, alice.address);

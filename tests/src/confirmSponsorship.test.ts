@@ -109,7 +109,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   itSub('NFT: Sponsoring of transfers is rate limited', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL', limits: {
+      sponsorTransferTimeout: 1000,
+    }});
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
 
@@ -125,7 +127,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   itSub('Fungible: Sponsoring is rate limited', async ({helper}) => {
-    const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL', limits: {
+      sponsorTransferTimeout: 1000,
+    }});
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
 
@@ -141,7 +145,9 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   itSub.ifWithPallets('ReFungible: Sponsoring is rate limited', [Pallets.ReFungible], async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL', limits: {
+      sponsorTransferTimeout: 1000,
+    }});
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
 

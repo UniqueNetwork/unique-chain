@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {usingPlaygrounds} from './../../util/playgrounds/index';
 import {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {itEth, expect, SponsoringMode} from '../util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util/playgrounds';
 
 describe('Matcher contract usage', () => {
   const PRICE = 2000n;
@@ -29,17 +28,17 @@ describe('Matcher contract usage', () => {
   let sellerMirror: string;
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
     }); 
   });
 
   beforeEach(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      [alice] = await helper.arrange.createAccounts([10000n], donor);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
       aliceMirror = helper.address.substrateToEth(alice.address).toLowerCase();
       aliceDoubleMirror = helper.address.ethToSubstrate(aliceMirror);
-      seller = privateKey(`//Seller/${Date.now()}`);
+      seller = await privateKey(`//Seller/${Date.now()}`);
       sellerMirror = helper.address.substrateToEth(seller.address).toLowerCase();
 
       await helper.balance.transferToSubstrate(donor, aliceDoubleMirror, 10_000_000_000_000_000_000n);

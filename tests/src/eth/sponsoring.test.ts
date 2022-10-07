@@ -22,8 +22,8 @@ describe('EVM sponsoring', () => {
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+    await usingPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 
