@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import * as solc from 'solc';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev';
 import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from '../eth/util/playgrounds';
 import {usingPlaygrounds} from '../util/playgrounds';
@@ -455,75 +454,47 @@ describe('Sponsoring EVM contracts', () => {
 describe('Sponsoring Fee Limit', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
-  let DEFAULT_GAS: number;
+  let testContract: CompiledContract;
 
-  function compileTestContract() {
+  async function compileTestContract(helper: EthUniqueHelper) {
     if (!testContract) {
-      const input = {
-        language: 'Solidity',
-        sources: {
-          ['TestContract.sol']: {
-            content:
-            `
-            // SPDX-License-Identifier: MIT
-            pragma solidity ^0.8.0;
-            
-            contract TestContract {
-              event Result(bool);
+      testContract = await helper.ethContract.compile(
+        'TestContract',
+        `
+        // SPDX-License-Identifier: MIT
+        pragma solidity ^0.8.0;
+        
+        contract TestContract {
+          event Result(bool);
 
-              function test(uint32 cycles) public {
-                uint256 counter = 0;
-                while(true) {
-                  counter ++;
-                  if (counter > cycles){
-                    break;
-                  }
-                }
-                emit Result(true);
+          function test(uint32 cycles) public {
+            uint256 counter = 0;
+            while(true) {
+              counter ++;
+              if (counter > cycles){
+                break;
               }
             }
-            `,
-          },
-        },
-        settings: {
-          outputSelection: {
-            '*': {
-              '*': ['*'],
-            },
-          },
-        },
-      };
-      const json = JSON.parse(solc.compile(JSON.stringify(input)));
-      const out = json.contracts['TestContract.sol']['TestContract'];
-  
-      testContract = {
-        abi: out.abi,
-        object: '0x' + out.evm.bytecode.object,
-      };
+            emit Result(true);
+          }
+        }
+      `,
+      );
     }
     return testContract;
   }
   
   async function deployTestContract(helper: EthUniqueHelper, owner: string) {
-    const web3 = helper.getWeb3();
-    const compiled = compileTestContract();
-    const testContract = new web3.eth.Contract(compiled.abi, undefined, {
-      data: compiled.object,
-      from: owner,
-      gas: DEFAULT_GAS,
-    });
-    return await testContract.deploy({data: compiled.object}).send({from: owner});
+    const compiled = await compileTestContract(helper);
+    return await helper.ethContract.deployByAbi(owner, compiled.abi, compiled.object);
   }
 
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([100n], donor);
-      DEFAULT_GAS = helper.eth.DEFAULT_GAS;
     });
   });
-
-  let testContract: CompiledContract;
 
   itEth('Default fee limit', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);

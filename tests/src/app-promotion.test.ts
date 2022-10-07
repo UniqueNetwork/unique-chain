@@ -557,6 +557,7 @@ describe('App promotion', () => {
   
       // caller payed for call
       expect(1000n * nominal > callerBalance).to.be.true;
+      // todo:playgrounds look into. why did it work before with 1000n, and is now 100n?
       expect(contractBalanceAfter).to.be.equal(100n * nominal);
     });
   

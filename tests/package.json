@@ -40,6 +40,7 @@
 
     "testEthPayable": "mocha --timeout 9999999 -r ts-node/register './**/eth/payable.test.ts'",
     "testEthTokenProperties": "mocha --timeout 9999999 -r ts-node/register ./**/eth/tokenProperties.test.ts",
+    "testEvmCoder": "mocha --timeout 9999999 -r ts-node/register './**/eth/evmCoder.test.ts'",
     "testNesting": "mocha --timeout 9999999 -r ts-node/register ./**/nest.test.ts",
     "testUnnesting": "mocha --timeout 9999999 -r ts-node/register ./**/unnest.test.ts",
     "testProperties": "mocha --timeout 9999999 -r ts-node/register ./**/properties.test.ts ./**/getPropertiesRpc.test.ts",
@@ -68,7 +69,7 @@
     "testAdminTransferAndBurn": "mocha --timeout 9999999 -r ts-node/register ./**/adminTransferAndBurn.test.ts",
     "testSetPermissions": "mocha --timeout 9999999 -r ts-node/register ./**/setPermissions.test.ts",
     "testCreditFeesToTreasury": "mocha --timeout 9999999 -r ts-node/register ./**/creditFeesToTreasury.test.ts",
-    "testContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/contractSponsoring.test.ts",
+    "testContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/eth/contractSponsoring.test.ts",
     "testEnableContractSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/enableContractSponsoring.test.ts",
     "testRemoveFromContractAllowList": "mocha --timeout 9999999 -r ts-node/register ./**/removeFromContractAllowList.test.ts",
     "testSetContractSponsoringRateLimit": "mocha --timeout 9999999 -r ts-node/register ./**/setContractSponsoringRateLimit.test.ts",
