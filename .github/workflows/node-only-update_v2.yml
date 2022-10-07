@@ -49,7 +49,7 @@ jobs:
 
 
 
-    timeout-minutes: 1380
+    timeout-minutes: 2880
 
     name: ${{ matrix.network }}
 
@@ -189,13 +189,14 @@ jobs:
         run: |
           ContainerID=$(docker ps -aqf "name=node-parachain")
           PID=$(docker exec node-parachain pidof 'polkadot-launch')
-          echo "Show logs of node-parachain container.\n"
+          sleep 30s
+          echo -e "Show logs of node-parachain container.\n"
           docker logs ${ContainerID}
-          echo "\n"
-          echo "Restart polkadot-launch process: $PID\n"
+          echo -e "\n"
+          echo -e "Restart polkadot-launch process: $PID\n"
           docker exec node-parachain kill -SIGUSR1 ${PID}
-          echo "SIGUSR1 sent to Polkadot-launch PID: $PID\n"
-          echo "Get node-parachain logs:\n"
+          echo -e "SIGUSR1 sent to Polkadot-launch PID: $PID\n"
+          echo -e "Get node-parachain logs:\n"
           docker logs -t -n 5 ${ContainerID}
       
       - name: Get chain logs
