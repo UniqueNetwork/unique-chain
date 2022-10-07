@@ -81,7 +81,7 @@
     "parachains": [
         {
             "bin": "/unique-chain/target/release/unique-collator",
-            "id": "2037",
+            "id": "2095",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -90,10 +90,8 @@
                     "rpcPort": 9933,
                     "name": "alice",
                     "flags": [
-			            "-lruntime=trace",
-			            "-lxcm=trace",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external"
 		    ]
                 }
             ]
@@ -101,43 +99,39 @@
         {
             "bin": "/acala/target/release/acala",
             "id": "2000",
-            "chain":  "acala-dev",
+            "chain":  "karura-dev",
             "balance": "1000000000000000000000",
-            "chainInitializer": [
-                    "chainql",
-                    "-e",
-                    "(import '${spec}') {id+: '-local'}"
-            ],
             "nodes": [
                 {
                     "wsPort": 9946,
                     "port": 31202,
                     "name": "alice",
                     "flags": [
-			            "-lruntime=trace",
-			            "-lxcm=trace",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
-		    ]
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external"
+                     ]
                 }
               ]
         },
         {
             "bin": "/moonbeam/target/release/moonbeam",
-            "id": "2004",
+            "id": 2023,
             "balance": "1000000000000000000000",
-            "chain": "moonbeam-local",
+            "chain": "moonriver-local",
+            "chainInitializer": [
+                "chainql",
+                "--tla-code=spec=import '${spec}'",
+                "minBondFix.jsonnet"
+            ],		    
             "nodes": [
                 {
                     "wsPort": 9947,
                     "port": 31203,
                     "name": "alice",
                     "flags": [
-			            "-lruntime=trace",
-			            "-lxcm=trace",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external",
-  			            "--",
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external",
+                        "--",
                         "--execution=wasm"
                     ]
                 }
@@ -146,7 +140,7 @@
         {
             "bin": "/cumulus/target/release/cumulus",
             "id": "1000",
-            "chain": "statemint-local",
+            "chain": "statemine-local",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -154,11 +148,9 @@
                     "port": 31204,
                     "name": "alice",
                     "flags": [
-			            "-lruntime=trace",
-			            "-lxcm=trace",
-                        "--unsafe-rpc-external",
-                        "--unsafe-ws-external"
-		    ]
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external"
+                    ]
                 }
             ]
         }
@@ -166,38 +158,38 @@
     "simpleParachains": [],
     "hrmpChannels": [
         {
-            "sender": 2037,
+            "sender": 2095,
             "recipient": 2000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
             "sender": 2000,
-            "recipient": 2037,
+            "recipient": 2095,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
-            "sender": 2037,
-            "recipient": 2004,
+            "sender": 2095,
+            "recipient": 2023,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
-            "sender": 2004,
-            "recipient": 2037,
+            "sender": 2023,
+            "recipient": 2095,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
-            "sender": 2037,
+            "sender": 2095,
             "recipient": 1000,
             "maxCapacity": 8,
             "maxMessageSize": 512
         },
         {
             "sender": 1000,
-            "recipient": 2037,
+            "recipient": 2095,
             "maxCapacity": 8,
             "maxMessageSize": 512
         }
