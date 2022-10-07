@@ -463,7 +463,7 @@ createCollection(
 }
 
 export async function createCollectionExpectSuccess(params: Partial<CreateCollectionParams> = {}): Promise<number> {
-  const {name, description, mode, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
+  const {name, description, tokenPrefix} = {...defaultCreateCollectionParams, ...params};
 
   let collectionId = 0;
   await usingApi(async (api, privateKeyWrapper) => {
@@ -763,7 +763,7 @@ export async function confirmSponsorshipExpectSuccess(collectionId: number, send
 }
 
 export async function confirmSponsorshipByKeyExpectSuccess(collectionId: number, sender: IKeyringPair) {
-  await usingApi(async (api, privateKeyWrapper) => {
+  await usingApi(async (api) => {
 
     // Run the transaction
     const tx = api.tx.unique.confirmSponsorship(collectionId);
@@ -1764,11 +1764,11 @@ export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
-export const describe_xcm = (
+/*export const describe_xcm = (
   process.env.RUN_XCM_TESTS
     ? describe
     : describe.skip
-);
+);*/
 
 export async function waitNewBlocks(blocksCount = 1): Promise<void> {
   await usingApi(async (api) => {

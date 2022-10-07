@@ -107,7 +107,7 @@ export async function isNftChildOfAnother(
 export function isTxResultSuccess(events: EventRecord[]): boolean {
   let success = false;
 
-  events.forEach(({event: {data, method, section}}) => {
+  events.forEach(({event: {method}}) => {
     if (method == 'ExtrinsicSuccess') {
       success = true;
     }

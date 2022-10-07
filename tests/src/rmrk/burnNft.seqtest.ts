@@ -11,8 +11,8 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('integration test: burn nft', () => {
-  const Alice = '//Alice';
-  const Bob = '//Bob';
+  const alice = '//Alice';
+  const bob = '//Bob';
 
   let api: any;
   before(async function() {
@@ -24,26 +24,26 @@ describe('integration test: burn nft', () => {
   it('burn nft', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
       const nftId = await mintNft(
         api,
-        Alice,
-        Alice,
+        alice,
+        alice,
         collectionId,
         'nft-metadata',
       );
-      await burnNft(api, Alice, collectionId, nftId);
+      await burnNft(api, alice, collectionId, nftId);
     });
   });
 
   it('burn nft with children', async () => {
     const collectionId = await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
@@ -51,23 +51,23 @@ describe('integration test: burn nft', () => {
 
     const parentNftId = await mintNft(
       api,
-      Alice,
-      Alice,
+      alice,
+      alice,
       collectionId,
       'nft-metadata',
     );
 
     const childNftId = await mintNft(
       api,
-      Alice,
-      Alice,
+      alice,
+      alice,
       collectionId,
       'nft-metadata',
     );
 
     const newOwnerNFT: NftIdTuple = [collectionId, parentNftId];
 
-    await sendNft(api, 'sent', Alice, collectionId, childNftId, newOwnerNFT);
+    await sendNft(api, 'sent', alice, collectionId, childNftId, newOwnerNFT);
 
     const childrenBefore = await getChildren(api, collectionId, parentNftId);
     expect(childrenBefore.length === 1, 'Error: parent NFT should have children')
@@ -80,7 +80,7 @@ describe('integration test: burn nft', () => {
     expect(child.nftId.eq(childNftId), 'Error: invalid child NFT Id')
       .to.be.true;
 
-    await burnNft(api, Alice, collectionId, parentNftId);
+    await burnNft(api, alice, collectionId, parentNftId);
 
     const childrenAfter = await getChildren(api, collectionId, parentNftId);
 
@@ -90,7 +90,7 @@ describe('integration test: burn nft', () => {
   it('burn child nft', async () => {
     const collectionId = await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
@@ -98,23 +98,23 @@ describe('integration test: burn nft', () => {
 
     const parentNftId = await mintNft(
       api,
-      Alice,
-      Alice,
+      alice,
+      alice,
       collectionId,
       'nft-metadata',
     );
 
     const childNftId = await mintNft(
       api,
-      Alice,
-      Alice,
+      alice,
+      alice,
       collectionId,
       'nft-metadata',
     );
 
     const newOwnerNFT: NftIdTuple = [collectionId, parentNftId];
 
-    await sendNft(api, 'sent', Alice, collectionId, childNftId, newOwnerNFT);
+    await sendNft(api, 'sent', alice, collectionId, childNftId, newOwnerNFT);
 
     const childrenBefore = await getChildren(api, collectionId, parentNftId);
     expect(childrenBefore.length === 1, 'Error: parent NFT should have children')
@@ -127,7 +127,7 @@ describe('integration test: burn nft', () => {
     expect(child.nftId.eq(childNftId), 'Error: invalid child NFT Id')
       .to.be.true;
 
-    await burnNft(api, Alice, collectionId, childNftId);
+    await burnNft(api, alice, collectionId, childNftId);
 
     const childrenAfter = await getChildren(api, collectionId, parentNftId);
 
@@ -137,12 +137,12 @@ describe('integration test: burn nft', () => {
   it('[negative] burn non-existing NFT', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      const tx = burnNft(api, Alice, collectionId, 99999);
+      const tx = burnNft(api, alice, collectionId, 99999);
       await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
     });
   });
@@ -150,19 +150,19 @@ describe('integration test: burn nft', () => {
   it('[negative] burn not an owner NFT user', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
       const nftId = await mintNft(
         api,
-        Alice,
-        Alice,
+        alice,
+        alice,
         collectionId,
         'nft-metadata',
       );
-      const tx = burnNft(api, Bob, collectionId, nftId);
+      const tx = burnNft(api, bob, collectionId, nftId);
       await expectTxFailure(/rmrkCore\.NoPermission/, tx);
     });
   });

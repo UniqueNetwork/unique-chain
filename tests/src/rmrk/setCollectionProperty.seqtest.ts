@@ -4,8 +4,8 @@ import {expectTxFailure} from './util/helpers';
 import {createCollection, setPropertyCollection} from './util/tx';
 
 describe('integration test: set collection property', () => {
-  const Alice = '//Alice';
-  const Bob = '//Bob';
+  const alice = '//Alice';
+  const bob = '//Bob';
 
   let api: any;
   before(async function () {
@@ -16,16 +16,16 @@ describe('integration test: set collection property', () => {
   it('set collection property', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      await setPropertyCollection(api, Alice, collectionId, 'test_key', '42');
-      await setPropertyCollection(api, Alice, collectionId, 'test_key', '10');
+      await setPropertyCollection(api, alice, collectionId, 'test_key', '42');
+      await setPropertyCollection(api, alice, collectionId, 'test_key', '10');
       await setPropertyCollection(
         api,
-        Alice,
+        alice,
         collectionId,
         'second_test_key',
         '111',
@@ -36,7 +36,7 @@ describe('integration test: set collection property', () => {
   it('[negative] set non-existing collection property', async () => {
     const tx = setPropertyCollection(
       api,
-      Alice,
+      alice,
       9999,
       'test_key',
       '42',
@@ -47,14 +47,14 @@ describe('integration test: set collection property', () => {
   it('[negative] set property not an owner NFT collection issuer', async () => {
     await createCollection(
       api,
-      Bob,
+      bob,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
       const tx = setPropertyCollection(
         api,
-        Alice,
+        alice,
         collectionId,
         'test_key',
         '42',

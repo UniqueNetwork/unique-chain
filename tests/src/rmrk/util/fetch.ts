@@ -1,5 +1,5 @@
 import {ApiPromise} from '@polkadot/api';
-import type {Option, Bytes} from '@polkadot/types-codec';
+import type {Option} from '@polkadot/types-codec';
 import type {
   RmrkTraitsCollectionCollectionInfo as Collection,
   RmrkTraitsNftNftInfo as Nft,

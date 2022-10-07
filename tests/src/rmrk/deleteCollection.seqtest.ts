@@ -10,35 +10,35 @@ describe('integration test: delete collection', () => {
     await requirePallets(this, [Pallets.RmrkCore]);
   });
 
-  const Alice = '//Alice';
-  const Bob = '//Bob';
+  const alice = '//Alice';
+  const bob = '//Bob';
 
   it('delete NFT collection', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      await deleteCollection(api, Alice, collectionId.toString());
+      await deleteCollection(api, alice, collectionId.toString());
     });
   });
 
   it('[negative] delete non-existing NFT collection', async () => {
-    const tx = deleteCollection(api, Alice, '99999');
+    const tx = deleteCollection(api, alice, '99999');
     await expectTxFailure(/rmrkCore\.CollectionUnknown/, tx);
   });
 
   it('[negative] delete not an owner NFT collection', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      const tx = deleteCollection(api, Bob, collectionId.toString());
+      const tx = deleteCollection(api, bob, collectionId.toString());
       await expectTxFailure(/rmrkCore.NoPermission/, tx);
     });
   });

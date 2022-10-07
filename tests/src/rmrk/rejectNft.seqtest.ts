@@ -6,7 +6,7 @@ import {
   sendNft,
   rejectNft,
 } from './util/tx';
-import {getChildren, NftIdTuple} from './util/fetch';
+import {NftIdTuple} from './util/fetch';
 import {isNftChildOfAnother, expectTxFailure} from './util/helpers';
 import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
