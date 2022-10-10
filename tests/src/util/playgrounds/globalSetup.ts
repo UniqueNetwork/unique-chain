@@ -1,9 +1,38 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+import {usingPlaygrounds, Pallets} from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
-import {usingPlaygrounds} from '.';
+
+// This file is used in the mocha package.json section
+export async function mochaGlobalSetup() {
+  await usingPlaygrounds(async (helper, privateKey) => {
+    try {
+      // 1. Create donors
+      await fundFilenamesWithRetries(3)
+        .then((result) => {
+          if (!result) process.exit(1);
+        });
+
+      // 2. Set up App Promotion admin 
+      const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
+      if (missingPallets.length === 0) {
+        const superuser = await privateKey('//Alice');
+        const palletAddress = helper.arrange.calculatePalleteAddress('appstake');
+        const palletAdmin = await privateKey('//PromotionAdmin');
+        const api = helper.getApi();
+        await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+        const nominal = helper.balance.getOneTokenNominal();
+        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 1000n * nominal);
+        await helper.balance.transferToSubstrate(superuser, palletAddress, 1000n * nominal);
+      }
+    } catch (error) {
+      console.error(error);
+      process.exit(1);
+    }
+  });
+}
 
 async function getFiles(rootPath: string): Promise<string[]> {
   const files = await fs.readdir(rootPath, {withFileTypes: true});
@@ -71,8 +100,3 @@ const fundFilenamesWithRetries = async (retriesLeft: number): Promise<boolean> =
       return fundFilenamesWithRetries(--retriesLeft);
     });
 };
-
-fundFilenamesWithRetries(3).then((result) => process.exit(result ? 0 : 1)).catch(e => {
-  console.error(e);
-  process.exit(1);
-});
