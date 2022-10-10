@@ -79,6 +79,19 @@
         "type": "address"
       }
     ],
+    "name": "destroyCollection",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collectionAddress",
+        "type": "address"
+      }
+    ],
     "name": "isCollectionExist",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",

@@ -230,4 +230,20 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       .setCollectionLimit('badLimit', 'true')
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');
   });
+  
+  itEth('destroyCollection test', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Limits', 'absolutely anything', 'OLF');
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+    
+    
+    
+    await expect(collectionHelper.methods
+      .destroyCollection(collectionAddress)
+      .send({from: owner})).to.be.fulfilled;
+    
+    expect(await collectionHelper.methods
+      .isCollectionExist(collectionAddress)
+      .call()).to.be.false;
+  });
 });
