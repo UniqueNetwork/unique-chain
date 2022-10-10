@@ -59,7 +59,6 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
       randomAccount = generateKeyringPair(keyringSr25519);
     });
 
-    // Karura side
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
         V0: {
