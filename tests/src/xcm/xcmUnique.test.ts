@@ -16,13 +16,10 @@
 
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {submitTransactionAsync} from '../substrate/substrate-api';
-import {getGenericResult, generateKeyringPair, waitEvent, bigIntToDecimals} from '../deprecated-helpers/helpers';
-import {MultiLocation} from '@polkadot/types/interfaces';
+import {generateKeyringPair, bigIntToDecimals} from '../deprecated-helpers/helpers';
 import {blake2AsHex} from '@polkadot/util-crypto';
-import getBalance from '../substrate/get-balance';
 import {XcmV2TraitsError, XcmV2TraitsOutcome} from '../interfaces';
-import {itSub, expect, describeXcm, usingPlaygrounds} from '../util/playgrounds';
+import {itSub, expect, describeXcm, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds} from '../util/playgrounds';
 
 const UNIQUE_CHAIN = 2037;
 const ACALA_CHAIN = 2000;
@@ -62,8 +59,7 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
       randomAccount = generateKeyringPair(keyringSr25519);
     });
 
-    // Acala side
-    await usingPlaygrounds.atUrl(acalaUrl, async (helper) => {
+    await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
         V0: {
           X2: [
@@ -79,47 +75,23 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
         name: 'UNQ',
         symbol: 'UNQ',
         decimals: 18,
-        minimalBalance: 1,
+        minimalBalance: 1n,
       };
 
-      // TODO
-      const tx = helper.getApi().tx.assetRegistry.registerForeignAsset(destination, metadata);
-      const sudoTx = helper.getApi().tx.sudo.sudo(tx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      // const tx1 = api.tx.balances.transfer(randomAccount.address, 10000000000000n);
-      // const events1 = await submitTransactionAsync(alice, tx1);
-      // const result1 = getGenericResult(events1);
-      // expect(result1.success).to.be.true;
+      await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
-
-      // [balanceAcalaTokenInit] = await getBalance(api, [randomAccount.address]);
       balanceAcalaTokenInit = await helper.balance.getSubstrate(randomAccount.address);
-      {
-        // TODO
-        const {free} = (await helper.getApi().query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-        balanceUniqueForeignTokenInit = BigInt(free);
-      }
+      balanceUniqueForeignTokenInit = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
     });
 
-    // Unique side
     await usingPlaygrounds(async (helper) => {
-      // const tx0 = api.tx.balances.transfer(randomAccount.address, 10n * TRANSFER_AMOUNT);
-      // const events0 = await submitTransactionAsync(alice, tx0);
-      // const result0 = getGenericResult(events0);
-      // expect(result0.success).to.be.true;
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10n * TRANSFER_AMOUNT);
-
-      // [balanceUniqueTokenInit] = await getBalance(api, [randomAccount.address]);
       balanceUniqueTokenInit = await helper.balance.getSubstrate(randomAccount.address);
     });
   });
 
   itSub('Should connect and send UNQ to Acala', async ({helper}) => {
 
-    // Unique side
     const destination = {
       V0: {
         X2: [
@@ -159,34 +131,20 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
     };
 
     const feeAssetItem = 0;
+    const weightLimit = 5000000000;
 
-    const weightLimit = {
-      Limited: 5000000000,
-    };
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, weightLimit);
 
-    // TODO
-    const tx = helper.getApi().tx.polkadotXcm.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-    const events = await submitTransactionAsync(randomAccount, tx);
-    const result = getGenericResult(events);
-    expect(result.success).to.be.true;
-
-    // [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccount.address]);
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
     console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', bigIntToDecimals(unqFees));
     expect(unqFees > 0n).to.be.true;
 
-    // Acala side
-    await usingPlaygrounds.atUrl(acalaUrl, async (helper) => {
-      // await waitNewBlocks(api, 3);
+    await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.wait.newBlocks(3);
 
-      // TODO
-      const {free} = (await helper.getApi().query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-      balanceUniqueForeignTokenMiddle = BigInt(free);
-
-      // [balanceAcalaTokenMiddle] = await getBalance(api, [randomAccount.address]);
+      balanceUniqueForeignTokenMiddle = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
       balanceAcalaTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
       const acaFees = balanceAcalaTokenInit - balanceAcalaTokenMiddle;
@@ -203,9 +161,7 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
   });
 
   itSub('Should connect to Acala and send UNQ back', async ({helper}) => {
-
-    // Acala side
-    await usingPlaygrounds.atUrl(acalaUrl, async (helper) => {
+    await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 1,
@@ -229,19 +185,10 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
       const destWeight = 50000000;
 
-      // TODO
-      const tx = helper.getApi().tx.xTokens.transfer(id as any, TRANSFER_AMOUNT, destination, destWeight);
-      const events = await submitTransactionAsync(randomAccount, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, destWeight);
 
-      // [balanceAcalaTokenFinal] = await getBalance(api, [randomAccount.address]);
       balanceAcalaTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
-      {
-        // TODO
-        const {free} = (await helper.getApi().query.tokens.accounts(randomAccount.addressRaw, id)).toJSON() as any;
-        balanceUniqueForeignTokenFinal = BigInt(free);
-      }
+      balanceUniqueForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
       const acaFees = balanceAcalaTokenMiddle - balanceAcalaTokenFinal;
       const unqOutcomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenFinal;
@@ -256,10 +203,8 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Acala', () => {
       expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
-    // await waitNewBlocks(api, 3);
     await helper.wait.newBlocks(3);
 
-    // [balanceUniqueTokenFinal] = await getBalance(api, [randomAccount.address]);
     balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
     const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
     expect(actuallyDelivered > 0).to.be.true;
@@ -283,7 +228,7 @@ describeXcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
   });
 
   itSub('Unique rejects tokens from the Relay', async ({helper}) => {
-    await usingPlaygrounds.atUrl(relayUrl, async (helper) => {
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 0,
@@ -322,27 +267,14 @@ describeXcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       const feeAssetItem = 0;
+      const weightLimit = 5_000_000_000;
 
-      const weightLimit = {
-        Limited: 5_000_000_000,
-      };
-
-      // TODO
-      const tx = helper.getApi().tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
     });
 
     const maxWaitBlocks = 3;
 
-    // TODO
-    const dmpQueueExecutedDownward = await waitEvent(
-      helper.getApi(),
-      maxWaitBlocks,
-      'dmpQueue',
-      'ExecutedDownward',
-    );
+    const dmpQueueExecutedDownward = await helper.wait.event(maxWaitBlocks, 'dmpQueue', 'ExecutedDownward');
 
     expect(
       dmpQueueExecutedDownward != null,
@@ -365,7 +297,7 @@ describeXcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
   });
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
-    await usingPlaygrounds.atUrl(acalaUrl, async (helper) => {
+    await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 1,
@@ -389,17 +321,12 @@ describeXcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
 
       const destWeight = 50000000;
 
-      // TODO
-      const tx = helper.getApi().tx.xTokens.transfer(id as any, 100_000_000_000, destination, destWeight);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, destWeight);
     });
 
     const maxWaitBlocks = 3;
 
-    // TODO
-    const xcmpQueueFailEvent = await waitEvent(helper.getApi(), maxWaitBlocks, 'xcmpQueue', 'Fail');
+    const xcmpQueueFailEvent = await helper.wait.event(maxWaitBlocks, 'xcmpQueue', 'Fail');
 
     expect(
       xcmpQueueFailEvent != null,
@@ -416,7 +343,7 @@ describeXcm('[XCM] Integration test: Unique rejects non-native tokens', () => {
   });
 });
 
-describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
+describe.only('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
   // Unique constants
   let uniqueAlice: IKeyringPair;
@@ -447,7 +374,7 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     symbol: 'xcUNQ',
     decimals: 18,
     isFrozen: false,
-    minimalBalance: 1,
+    minimalBalance: 1n,
   };
 
   let balanceUniqueTokenInit: bigint;
@@ -472,149 +399,84 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       balanceForeignUnqTokenInit = 0n;
     });
 
-    await usingPlaygrounds.atUrl(moonbeamUrl, async (helper) => {
-      // TODO
-
-      const api = helper.getApi();
-
+    await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       // >>> Sponsoring Dorothy >>>
       console.log('Sponsoring Dorothy.......');
-      // const tx0 = api.tx.balances.transfer(dorothyAccount.address, 11_000_000_000_000_000_000n);
-      // const events0 = await submitTransactionAsync(alithAccount, tx0);
-      // const result0 = getGenericResult(events0);
-      // expect(result0.success).to.be.true;
-      await helper.balance.transferToSubstrate(alithAccount, dorothyAccount.address, 11_000_000_000_000_000_000n);
+      await helper.balance.transferToEthereum(alithAccount, dorothyAccount.address, 11_000_000_000_000_000_000n);
       console.log('Sponsoring Dorothy.......DONE');
       // <<< Sponsoring Dorothy <<<
 
-      const sourceLocation: MultiLocation = api.createType(
-        'MultiLocation',
-        {
+      uniqueAssetLocation = {
+        XCM: {
           parents: 1,
           interior: {X1: {Parachain: UNIQUE_CHAIN}},
         },
-      );
-
-      uniqueAssetLocation = {XCM: sourceLocation};
-      const existentialDeposit = 1;
+      };
+      const existentialDeposit = 1n;
       const isSufficient = true;
-      const unitsPerSecond = '1';
+      const unitsPerSecond = 1n;
       const numAssetsWeightHint = 0;
 
-      const registerTx = api.tx.assetManager.registerForeignAsset(
-        uniqueAssetLocation,
-        uniqueAssetMetadata,
+      const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
+        location: uniqueAssetLocation,
+        metadata: uniqueAssetMetadata,
         existentialDeposit,
         isSufficient,
-      );
-      console.log('Encoded proposal for registerAsset is %s', registerTx.method.toHex() || '');
-
-      const setUnitsTx = api.tx.assetManager.setAssetUnitsPerSecond(
-        uniqueAssetLocation,
         unitsPerSecond,
         numAssetsWeightHint,
-      );
-      console.log('Encoded proposal for setAssetUnitsPerSecond is %s', setUnitsTx.method.toHex() || '');
+      });
+      const proposalHash = blake2AsHex(encodedProposal);
 
-      const batchCall = api.tx.utility.batchAll([registerTx, setUnitsTx]);
-      console.log('Encoded proposal for batchCall is %s', batchCall.method.toHex() || '');
+      console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
+      console.log('Encoded length %d', encodedProposal.length);
+      console.log('Encoded proposal hash for batch utility after schedule is %s', proposalHash);
 
       // >>> Note motion preimage >>>
       console.log('Note motion preimage.......');
-      const encodedProposal = batchCall?.method.toHex() || '';
-      const proposalHash = blake2AsHex(encodedProposal);
-      console.log('Encoded proposal for batch utility after schedule is %s', encodedProposal);
-      console.log('Encoded proposal hash for batch utility after schedule is %s', proposalHash);
-      console.log('Encoded length %d', encodedProposal.length);
-
-      const tx1 = api.tx.democracy.notePreimage(encodedProposal);
-      const events1 = await submitTransactionAsync(baltatharAccount, tx1);
-      const result1 = getGenericResult(events1);
-      expect(result1.success).to.be.true;
+      await helper.democracy.notePreimage(baltatharAccount, encodedProposal);
       console.log('Note motion preimage.......DONE');
       // <<< Note motion preimage <<<
 
       // >>> Propose external motion through council >>>
       console.log('Propose external motion through council.......');
-      const externalMotion = api.tx.democracy.externalProposeMajority(proposalHash);
-      const tx2 = api.tx.councilCollective.propose(
-        councilVotingThreshold,
-        externalMotion,
-        externalMotion.encodedLength,
-      );
-      const events2 = await submitTransactionAsync(baltatharAccount, tx2);
-      const result2 = getGenericResult(events2);
-      expect(result2.success).to.be.true;
-
+      const externalMotion = helper.democracy.externalProposeMajority(proposalHash);
       const encodedMotion = externalMotion?.method.toHex() || '';
       const motionHash = blake2AsHex(encodedMotion);
       console.log('Motion hash is %s', motionHash);
 
-      const tx3 = api.tx.councilCollective.vote(motionHash, 0, true);
-      {
-        const events3 = await submitTransactionAsync(dorothyAccount, tx3);
-        const result3 = getGenericResult(events3);
-        expect(result3.success).to.be.true;
-      }
-      {
-        const events3 = await submitTransactionAsync(baltatharAccount, tx3);
-        const result3 = getGenericResult(events3);
-        expect(result3.success).to.be.true;
-      }
+      await helper.collective.council.propose(baltatharAccount, councilVotingThreshold, externalMotion, externalMotion.encodedLength);
 
-      const tx4 = api.tx.councilCollective.close(motionHash, 0, 1_000_000_000, externalMotion.encodedLength);
-      const events4 = await submitTransactionAsync(dorothyAccount, tx4);
-      const result4 = getGenericResult(events4);
-      expect(result4.success).to.be.true;
+      const councilProposalIdx = await helper.collective.council.proposalCount() - 1;
+      await helper.collective.council.vote(dorothyAccount, motionHash, councilProposalIdx, true);
+      await helper.collective.council.vote(baltatharAccount, motionHash, councilProposalIdx, true);
+
+      await helper.collective.council.close(dorothyAccount, motionHash, councilProposalIdx, 1_000_000_000, externalMotion.encodedLength);
       console.log('Propose external motion through council.......DONE');
       // <<< Propose external motion through council <<<
 
       // >>> Fast track proposal through technical committee >>>
       console.log('Fast track proposal through technical committee.......');
-      const fastTrack = api.tx.democracy.fastTrack(proposalHash, votingPeriod, delayPeriod);
-      const tx5 = api.tx.techCommitteeCollective.propose(
-        technicalCommitteeThreshold,
-        fastTrack,
-        fastTrack.encodedLength,
-      );
-      const events5 = await submitTransactionAsync(alithAccount, tx5);
-      const result5 = getGenericResult(events5);
-      expect(result5.success).to.be.true;
-
+      const fastTrack = helper.democracy.fastTrack(proposalHash, votingPeriod, delayPeriod);
       const encodedFastTrack = fastTrack?.method.toHex() || '';
       const fastTrackHash = blake2AsHex(encodedFastTrack);
       console.log('FastTrack hash is %s', fastTrackHash);
 
-      const proposalIdx = Number(await api.query.techCommitteeCollective.proposalCount()) - 1;
-      const tx6 = api.tx.techCommitteeCollective.vote(fastTrackHash, proposalIdx, true);
-      {
-        const events6 = await submitTransactionAsync(baltatharAccount, tx6);
-        const result6 = getGenericResult(events6);
-        expect(result6.success).to.be.true;
-      }
-      {
-        const events6 = await submitTransactionAsync(alithAccount, tx6);
-        const result6 = getGenericResult(events6);
-        expect(result6.success).to.be.true;
-      }
+      await helper.collective.techCommittee.propose(alithAccount, technicalCommitteeThreshold, fastTrack, fastTrack.encodedLength);
 
-      const tx7 = api.tx.techCommitteeCollective
-        .close(fastTrackHash, proposalIdx, 1_000_000_000, fastTrack.encodedLength);
-      const events7 = await submitTransactionAsync(baltatharAccount, tx7);
-      const result7 = getGenericResult(events7);
-      expect(result7.success).to.be.true;
+      const techProposalIdx = await helper.collective.techCommittee.proposalCount() - 1;
+      await helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
+      await helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
+
+      await helper.collective.techCommittee.close(baltatharAccount, fastTrackHash, techProposalIdx, 1_000_000_000, fastTrack.encodedLength);
       console.log('Fast track proposal through technical committee.......DONE');
       // <<< Fast track proposal through technical committee <<<
 
       // >>> Referendum voting >>>
       console.log('Referendum voting.......');
-      const tx8 = api.tx.democracy.vote(
-        0,
-        {Standard: {balance: 10_000_000_000_000_000_000n, vote: {aye: true, conviction: 1}}},
-      );
-      const events8 = await submitTransactionAsync(dorothyAccount, tx8);
-      const result8 = getGenericResult(events8);
-      expect(result8.success).to.be.true;
+      await helper.democracy.referendumVote(dorothyAccount, 0, {
+        balance: 10_000_000_000_000_000_000n,
+        vote: {aye: true, conviction: 1},
+      });
       console.log('Referendum voting.......DONE');
       // <<< Referendum voting <<<
 
@@ -622,12 +484,9 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       console.log('Acquire Unique AssetId Info on Moonbeam.......');
 
       // Wait for the democracy execute
-      // await waitNewBlocks(api, 5);
       await helper.wait.newBlocks(5);
 
-      assetId = (await api.query.assetManager.assetTypeId({
-        XCM: sourceLocation,
-      })).toString();
+      assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
 
       console.log('UNQ asset ID is %s', assetId);
       console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
@@ -635,25 +494,15 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
       // >>> Sponsoring random Account >>>
       console.log('Sponsoring random Account.......');
-      // const tx10 = api.tx.balances.transfer(randomAccountMoonbeam.address, 11_000_000_000_000_000_000n);
-      // const events10 = await submitTransactionAsync(baltatharAccount, tx10);
-      // const result10 = getGenericResult(events10);
-      // expect(result10.success).to.be.true;
-      await helper.balance.transferToSubstrate(baltatharAccount, randomAccountMoonbeam.address, 11_000_000_000_000_000_000n);
+      await helper.balance.transferToEthereum(baltatharAccount, randomAccountMoonbeam.address, 11_000_000_000_000_000_000n);
       console.log('Sponsoring random Account.......DONE');
       // <<< Sponsoring random Account <<<
 
-      [balanceGlmrTokenInit] = await getBalance(api, [randomAccountMoonbeam.address]);
+      balanceGlmrTokenInit = await helper.balance.getEthereum(randomAccountMoonbeam.address);
     });
 
     await usingPlaygrounds(async (helper) => {
-      // const tx0 = api.tx.balances.transfer(randomAccountUnique.address, 10n * TRANSFER_AMOUNT);
-      // const events0 = await submitTransactionAsync(uniqueAlice, tx0);
-      // const result0 = getGenericResult(events0);
-      // expect(result0.success).to.be.true;
       await helper.balance.transferToSubstrate(uniqueAlice, randomAccountUnique.address, 10n * TRANSFER_AMOUNT);
-
-      // [balanceUniqueTokenInit] = await getBalance(api, [randomAccountUnique.address]);
       balanceUniqueTokenInit = await helper.balance.getSubstrate(randomAccountUnique.address);
     });
   });
@@ -676,13 +525,8 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const amount = TRANSFER_AMOUNT;
     const destWeight = 850000000;
 
-    // TODO
-    const tx = helper.getApi().tx.xTokens.transfer(currencyId, amount, dest, destWeight);
-    const events = await submitTransactionAsync(randomAccountUnique, tx);
-    const result = getGenericResult(events);
-    expect(result.success).to.be.true;
+    await helper.xTokens.transfer(randomAccountUnique, currencyId, amount, dest, destWeight);
 
-    // [balanceUniqueTokenMiddle] = await getBalance(api, [randomAccountUnique.address]);
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccountUnique.address);
     expect(balanceUniqueTokenMiddle < balanceUniqueTokenInit).to.be.true;
 
@@ -690,23 +534,17 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     console.log('[Unique -> Moonbeam] transaction fees on Unique: %s UNQ', bigIntToDecimals(transactionFees));
     expect(transactionFees > 0).to.be.true;
 
-    await usingPlaygrounds.atUrl(moonbeamUrl, async (helper) => {
-      // await waitNewBlocks(api, 3);
+    await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       await helper.wait.newBlocks(3);
 
-      // [balanceGlmrTokenMiddle] = await getBalance(api, [randomAccountMoonbeam.address]);
-      balanceGlmrTokenMiddle = await helper.balance.getSubstrate(randomAccountMoonbeam.address);
+      balanceGlmrTokenMiddle = await helper.balance.getEthereum(randomAccountMoonbeam.address);
 
       const glmrFees = balanceGlmrTokenInit - balanceGlmrTokenMiddle;
       console.log('[Unique -> Moonbeam] transaction fees on Moonbeam: %s GLMR', bigIntToDecimals(glmrFees));
       expect(glmrFees == 0n).to.be.true;
 
-      // TODO
-      const unqRandomAccountAsset = (
-        await helper.getApi().query.assets.account(assetId, randomAccountMoonbeam.address)
-      ).toJSON()! as any;
+      balanceForeignUnqTokenMiddle = (await helper.assets.account(assetId, randomAccountMoonbeam.address))!;
 
-      balanceForeignUnqTokenMiddle = BigInt(unqRandomAccountAsset['balance']);
       const unqIncomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenInit;
       console.log('[Unique -> Moonbeam] income %s UNQ', bigIntToDecimals(unqIncomeTransfer));
       expect(unqIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
@@ -714,7 +552,7 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   });
 
   itSub('Should connect to Moonbeam and send UNQ back', async ({helper}) => {
-    await usingPlaygrounds.atUrl(moonbeamUrl, async (helper) => {
+    await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const asset = {
         V1: {
           id: {
@@ -743,26 +581,18 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       };
       const destWeight = 50000000;
 
-      // TODO
-      const tx = helper.getApi().tx.xTokens.transferMultiasset(asset, destination, destWeight);
-      const events = await submitTransactionAsync(randomAccountMoonbeam, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xTokens.transferMultiasset(randomAccountMoonbeam, asset, destination, destWeight);
 
-      // [balanceGlmrTokenFinal] = await getBalance(api, [randomAccountMoonbeam.address]);
-      balanceGlmrTokenFinal = await helper.balance.getSubstrate(randomAccountMoonbeam.address);
+      balanceGlmrTokenFinal = await helper.balance.getEthereum(randomAccountMoonbeam.address);
 
       const glmrFees = balanceGlmrTokenMiddle - balanceGlmrTokenFinal;
       console.log('[Moonbeam -> Unique] transaction fees on Moonbeam: %s GLMR', bigIntToDecimals(glmrFees));
       expect(glmrFees > 0).to.be.true;
 
-      // TODO
-      const unqRandomAccountAsset = (
-        await helper.getApi().query.assets.account(assetId, randomAccountMoonbeam.address)
-      ).toJSON()! as any;
+      const unqRandomAccountAsset = await helper.assets.account(assetId, randomAccountMoonbeam.address);
 
       expect(unqRandomAccountAsset).to.be.null;
-
+      
       balanceForeignUnqTokenFinal = 0n;
 
       const unqOutcomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenFinal;
@@ -770,10 +600,8 @@ describeXcm('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
-    // await waitNewBlocks(api, 3);
     await helper.wait.newBlocks(3);
 
-    // [balanceUniqueTokenFinal] = await getBalance(api, [randomAccountUnique.address]);
     balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccountUnique.address);
     const actuallyDelivered = balanceUniqueTokenFinal - balanceUniqueTokenMiddle;
     expect(actuallyDelivered > 0).to.be.true;
