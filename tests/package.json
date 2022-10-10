@@ -21,7 +21,7 @@
   },
   "mocha": {
     "timeout": 9999999,
-    "require": "ts-node/register"
+    "require": ["ts-node/register", "./globalSetup.ts"]
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js src/",

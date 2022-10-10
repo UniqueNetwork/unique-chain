@@ -16,17 +16,14 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from './util/playgrounds';
-import {encodeAddress} from '@polkadot/util-crypto';
-import {stringToU8a} from '@polkadot/util';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 import {itEth, expect, SponsoringMode} from './eth/util/playgrounds';
 
-let superuser: IKeyringPair;
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;
 let nominal: bigint;
-const palletAddress = calculatePalleteAddress('appstake');
-let accounts: IKeyringPair[] = [];
+let palletAddress: string;
+let accounts: IKeyringPair[];
 const LOCKING_PERIOD = 20n; // 20 blocks of relay
 const UNLOCKING_PERIOD = 10n; // 10 blocks of parachain
 const rewardAvailableInBlock = (stakedInBlock: bigint) => {
@@ -38,11 +35,9 @@ describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
-      superuser = await privateKey('//Alice');
       donor = await privateKey({filename: __filename});
-      [palletAdmin] = await helper.arrange.createAccounts([100n], donor);
-      const api = helper.getApi();
-      await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+      palletAddress = helper.arrange.calculatePalleteAddress('appstake');
+      palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();
       await helper.balance.transferToSubstrate(donor, palletAdmin.address, 1000n * nominal);
       await helper.balance.transferToSubstrate(donor, palletAddress, 1000n * nominal);
@@ -226,55 +221,7 @@ describe('App promotion', () => {
     });
   });
   
-  describe('admin adress', () => {
-    itSub('can be set by sudo only', async ({helper}) => {
-      const api = helper.getApi();
-      const nonAdmin = accounts.pop()!;
-      // nonAdmin can not set admin not from himself nor as a sudo
-      await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address}))).to.be.rejected;
-      await expect(helper.signTransaction(nonAdmin, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address})))).to.be.rejected;
-  
-      // Alice can
-      await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.fulfilled;
-    });
-    
-    itSub('can be any valid CrossAccountId', async ({helper}) => {
-      // We are not going to set an eth address as a sponsor,
-      // but we do want to check, it doesn't break anything;
-      const api = helper.getApi();
-      const account = accounts.pop()!;
-      const ethAccount = helper.address.substrateToEth(account.address); 
-      // Alice sets Ethereum address as a sudo. Then Substrate address back...
-      await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Ethereum: ethAccount})))).to.be.fulfilled;
-      await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.fulfilled;
-        
-      // ...It doesn't break anything;
-      const collection = await helper.nft.mintCollection(account, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-      await expect(helper.signTransaction(account, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.rejected;
-    });
-  
-    itSub('can be reassigned', async ({helper}) => {
-      const api = helper.getApi();
-      const [oldAdmin, newAdmin, collectionOwner] = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
-      const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-        
-      await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: oldAdmin.address})))).to.be.fulfilled;
-      await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: newAdmin.address})))).to.be.fulfilled;
-      await expect(helper.signTransaction(oldAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.rejected;
-        
-      await expect(helper.signTransaction(newAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.fulfilled;
-    });
-  });
-  
   describe('collection sponsoring', () => {
-    before(async function () {
-      await usingPlaygrounds(async (helper) => {
-        const api = helper.getApi();
-        const tx = api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address}));
-        await helper.signTransaction(superuser, tx);
-      });
-    });
-  
     itSub('should actually sponsor transactions', async ({helper}) => {
       const api = helper.getApi();
       const [collectionOwner, tokenSender, receiver] = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
@@ -708,11 +655,6 @@ describe('App promotion', () => {
     });
   });
 });
-
-function calculatePalleteAddress(palletId: any) {
-  const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
-  return encodeAddress(address);
-}
 
 function calculateIncome(base: bigint, calcPeriod: bigint, iter = 0): bigint {
   const DAY = 7200n;

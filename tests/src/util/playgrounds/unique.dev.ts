@@ -1,7 +1,8 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {mnemonicGenerate} from '@polkadot/util-crypto';
+import {stringToU8a} from '@polkadot/util';
+import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper} from './unique';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
@@ -242,6 +243,11 @@ class ArrangeGroup {
     balance -= await this.helper.balance.getSubstrate(address);
     
     return balance;
+  }
+
+  calculatePalleteAddress(palletId: any) {
+    const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
+    return encodeAddress(address);
   }
 }
 
