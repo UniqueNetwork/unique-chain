@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper} from './unique';
-import {ApiPromise, WsProvider} from '@polkadot/api';
+import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper} from './unique';
+import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
+import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId} from './types';
 
 export class SilentLogger {
@@ -52,7 +53,6 @@ export class SilentConsole {
     console.warn = this.consoleWarn;
   }
 }
-
 
 export class DevUniqueHelper extends UniqueHelper {
   /**
@@ -107,6 +107,36 @@ export class DevUniqueHelper extends UniqueHelper {
     this.network = await UniqueHelper.detectNetwork(this.api);
   }
 }
+
+export class DevRelayHelper extends RelayHelper {}
+
+export class DevMoonbeamHelper extends MoonbeamHelper {
+  account: MoonbeamAccountGroup;
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevMoonbeamHelper;
+
+    super(logger, options);
+    this.account = new MoonbeamAccountGroup(this);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevMoonriverHelper extends DevMoonbeamHelper {}
+
+export class DevAcalaHelper extends AcalaHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevAcalaHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevKaruraHelper extends DevAcalaHelper {}
 
 class ArrangeGroup {
   helper: DevUniqueHelper;
@@ -245,10 +275,43 @@ class ArrangeGroup {
   }
 }
 
-class WaitGroup {
-  helper: DevUniqueHelper;
+class MoonbeamAccountGroup {
+  helper: MoonbeamHelper;
 
-  constructor(helper: DevUniqueHelper) {
+  _alithAccount: IKeyringPair;
+  _baltatharAccount: IKeyringPair;
+  _dorothyAccount: IKeyringPair;
+
+  constructor(helper: MoonbeamHelper) {
+    this.helper = helper;
+
+    const keyring = new Keyring({type: 'ethereum'});
+    const alithPrivateKey = '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
+    const baltatharPrivateKey = '0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b';
+    const dorothyPrivateKey = '0x39539ab1876910bbf3a223d84a29e28f1cb4e2e456503e7e91ed39b2e7223d68';
+
+    this._alithAccount = keyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
+    this._baltatharAccount = keyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
+    this._dorothyAccount = keyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
+  }
+
+  alithAccount() {
+    return this._alithAccount;
+  }
+
+  baltatharAccount() {
+    return this._baltatharAccount;
+  }
+
+  dorothyAccount() {
+    return this._dorothyAccount;
+  }
+}
+
+class WaitGroup {
+  helper: ChainHelperBase;
+
+  constructor(helper: ChainHelperBase) {
     this.helper = helper;
   }
 
@@ -295,6 +358,40 @@ class WaitGroup {
         }
       });
     });
+  }
+
+  async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<EventRecord | null>(async (resolve) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
+        const blockNumber = header.number.toHuman();
+        const blockHash = header.hash;
+        const eventIdStr = `${eventSection}.${eventMethod}`;
+        const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
+  
+        console.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
+  
+        const apiAt = await this.helper.getApi().at(blockHash);
+        const eventRecords = await apiAt.query.system.events();
+  
+        const neededEvent = eventRecords.find(r => {
+          return r.event.section == eventSection && r.event.method == eventMethod;
+        });
+  
+        if (neededEvent) {
+          unsubscribe();
+          resolve(neededEvent);
+        } else if (maxBlocksToWait > 0) {
+          maxBlocksToWait--;
+        } else {
+          console.log(`Event \`${eventIdStr}\` is NOT found`);
+  
+          unsubscribe();
+          resolve(null);
+        }
+      });
+    });
+    return promise;
   }
 }
 
