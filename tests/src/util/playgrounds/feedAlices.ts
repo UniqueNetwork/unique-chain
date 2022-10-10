@@ -38,11 +38,11 @@ const fundFilenames = async () => {
         const account = await privateKey({filename: f, ignoreFundsPresence: true});
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 
-        if (aliceBalance < 7500n * oneToken) {
+        if (aliceBalance < 100_000n * oneToken) {
           tx.push(helper.executeExtrinsic(
             alice, 
             'api.tx.balances.transfer',
-            [account.address, 15000n * oneToken],
+            [account.address, 1_000_000n * oneToken],
             true,
             {nonce: nonce + balanceGrantedCounter++},
           ).then(() => true).catch(() => {console.error(`Transaction to ${path.basename(f)} registered as failed. Strange.`); return false;}));
