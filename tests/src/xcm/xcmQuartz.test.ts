@@ -16,13 +16,10 @@
 
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {submitTransactionAsync} from '../substrate/substrate-api';
-import {getGenericResult, generateKeyringPair, waitEvent, bigIntToDecimals} from '../deprecated-helpers/helpers';
-import {MultiLocation} from '@polkadot/types/interfaces';
+import {generateKeyringPair, bigIntToDecimals} from '../deprecated-helpers/helpers';
 import {blake2AsHex} from '@polkadot/util-crypto';
-import getBalance from '../substrate/get-balance';
 import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
-import {itSub, expect, describeXcm, usingPlaygrounds} from '../util/playgrounds';
+import {itSub, expect, describeXcm, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds} from '../util/playgrounds';
 
 const QUARTZ_CHAIN = 2095;
 const KARURA_CHAIN = 2000;
@@ -63,9 +60,7 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
     });
 
     // Karura side
-    await usingPlaygrounds.atUrl(karuraUrl, async (helper) => {
-      const api = helper.getApi();
-
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
         V0: {
           X2: [
@@ -81,43 +76,22 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
         name: 'QTZ',
         symbol: 'QTZ',
         decimals: 18,
-        minimalBalance: 1,
+        minimalBalance: 1n,
       };
 
-      const tx = api.tx.assetRegistry.registerForeignAsset(destination, metadata);
-      const sudoTx = api.tx.sudo.sudo(tx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      const tx1 = api.tx.balances.transfer(randomAccount.address, 10000000000000n);
-      const events1 = await submitTransactionAsync(alice, tx1);
-      const result1 = getGenericResult(events1);
-      expect(result1.success).to.be.true;
-
-      [balanceKaruraTokenInit] = await getBalance(api, [randomAccount.address]);
-      {
-        const {free} = (await api.query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-        balanceQuartzForeignTokenInit = BigInt(free);
-      }
+      await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+      balanceKaruraTokenInit = await helper.balance.getSubstrate(randomAccount.address);
+      balanceQuartzForeignTokenInit = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
     });
 
-    // Quartz side
     await usingPlaygrounds(async (helper) => {
-      // const tx0 = api.tx.balances.transfer(randomAccount.address, 10n * TRANSFER_AMOUNT);
-      // const events0 = await submitTransactionAsync(alice, tx0);
-      // const result0 = getGenericResult(events0);
-      // expect(result0.success).to.be.true;
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10n * TRANSFER_AMOUNT);
-
-      // [balanceQuartzTokenInit] = await getBalance(api, [randomAccount.address]);
       balanceQuartzTokenInit = await helper.balance.getSubstrate(randomAccount.address);
     });
   });
 
   itSub('Should connect and send QTZ to Karura', async ({helper}) => {
-
-    // Quartz side
     const destination = {
       V0: {
         X2: [
@@ -157,34 +131,18 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
     };
 
     const feeAssetItem = 0;
+    const weightLimit = 5000000000;
 
-    const weightLimit = {
-      Limited: 5000000000,
-    };
-
-    // TODO
-    const tx = helper.getApi().tx.polkadotXcm.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-    const events = await submitTransactionAsync(randomAccount, tx);
-    const result = getGenericResult(events);
-    expect(result.success).to.be.true;
-
-    // [balanceQuartzTokenMiddle] = await getBalance(api, [randomAccount.address]);
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, weightLimit);
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
     console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', bigIntToDecimals(qtzFees));
     expect(qtzFees > 0n).to.be.true;
 
-    // Karura side
-    await usingPlaygrounds.atUrl(karuraUrl, async (helper) => {
-      // await waitNewBlocks(api, 3);
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-
-      // TODO
-      const {free} = (await helper.getApi().query.tokens.accounts(randomAccount.addressRaw, {ForeignAsset: 0})).toJSON() as any;
-      balanceQuartzForeignTokenMiddle = BigInt(free);
-
-      // [balanceKaruraTokenMiddle] = await getBalance(api, [randomAccount.address]);
+      balanceQuartzForeignTokenMiddle = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
       balanceKaruraTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
       const karFees = balanceKaruraTokenInit - balanceKaruraTokenMiddle;
@@ -201,9 +159,7 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
   });
 
   itSub('Should connect to Karura and send QTZ back', async ({helper}) => {
-
-    // Karura side
-    await usingPlaygrounds.atUrl(karuraUrl, async (helper) => {
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 1,
@@ -227,19 +183,9 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
       const destWeight = 50000000;
 
-      // TODO
-      const tx = helper.getApi().tx.xTokens.transfer(id as any, TRANSFER_AMOUNT, destination, destWeight);
-      const events = await submitTransactionAsync(randomAccount, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      // [balanceKaruraTokenFinal] = await getBalance(api, [randomAccount.address]);
+      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, destWeight);
       balanceKaruraTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
-      {
-        // TODO
-        const {free} = (await helper.getApi().query.tokens.accounts(randomAccount.addressRaw, id)).toJSON() as any;
-        balanceQuartzForeignTokenFinal = BigInt(free);
-      }
+      balanceQuartzForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
       const karFees = balanceKaruraTokenMiddle - balanceKaruraTokenFinal;
       const qtzOutcomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenFinal;
@@ -254,11 +200,8 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
-    // Quartz side
-    // await waitNewBlocks(api, 3);
     await helper.wait.newBlocks(3);
 
-    // [balanceQuartzTokenFinal] = await getBalance(api, [randomAccount.address]);
     balanceQuartzTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
     const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
     expect(actuallyDelivered > 0).to.be.true;
@@ -282,7 +225,7 @@ describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   });
 
   itSub('Quartz rejects tokens from the Relay', async ({helper}) => {
-    await usingPlaygrounds.atUrl(relayUrl, async (helper) => {
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 0,
@@ -321,27 +264,14 @@ describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       };
 
       const feeAssetItem = 0;
+      const weightLimit = 5_000_000_000;
 
-      const weightLimit = {
-        Limited: 5_000_000_000,
-      };
-
-      // TODO
-      const tx = helper.getApi().tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
     });
 
     const maxWaitBlocks = 3;
 
-    // TODO
-    const dmpQueueExecutedDownward = await waitEvent(
-      helper.getApi(),
-      maxWaitBlocks,
-      'dmpQueue',
-      'ExecutedDownward',
-    );
+    const dmpQueueExecutedDownward = await helper.wait.event(maxWaitBlocks, 'dmpQueue', 'ExecutedDownward');
 
     expect(
       dmpQueueExecutedDownward != null,
@@ -364,7 +294,7 @@ describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   });
 
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
-    await usingPlaygrounds.atUrl(karuraUrl, async (helper) => {
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 1,
@@ -388,17 +318,12 @@ describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
 
       const destWeight = 50000000;
 
-      // TODO
-      const tx = helper.getApi().tx.xTokens.transfer(id as any, 100_000_000_000, destination, destWeight);
-      const events = await submitTransactionAsync(alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, destWeight);
     });
 
     const maxWaitBlocks = 3;
 
-    // TODO
-    const xcmpQueueFailEvent = await waitEvent(helper.getApi(), maxWaitBlocks, 'xcmpQueue', 'Fail');
+    const xcmpQueueFailEvent = await helper.wait.event(maxWaitBlocks, 'xcmpQueue', 'Fail');
 
     expect(
       xcmpQueueFailEvent != null,
@@ -427,15 +352,6 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   // Moonriver constants
   let assetId: string;
 
-  const moonriverKeyring = new Keyring({type: 'ethereum'});
-  const alithPrivateKey = '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
-  const baltatharPrivateKey = '0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b';
-  const dorothyPrivateKey = '0x39539ab1876910bbf3a223d84a29e28f1cb4e2e456503e7e91ed39b2e7223d68';
-
-  const alithAccount = moonriverKeyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
-  const baltatharAccount = moonriverKeyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
-  const dorothyAccount = moonriverKeyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
-
   const councilVotingThreshold = 2;
   const technicalCommitteeThreshold = 2;
   const votingPeriod = 3;
@@ -446,7 +362,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     symbol: 'xcQTZ',
     decimals: 18,
     isFrozen: false,
-    minimalBalance: 1,
+    minimalBalance: 1n,
   };
 
   let balanceQuartzTokenInit: bigint;
@@ -471,149 +387,88 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       balanceForeignQtzTokenInit = 0n;
     });
 
-    await usingPlaygrounds.atUrl(moonriverUrl, async (helper) => {
-      // TODO
-
-      const api = helper.getApi();
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const alithAccount = helper.account.alithAccount();
+      const baltatharAccount = helper.account.baltatharAccount();
+      const dorothyAccount = helper.account.dorothyAccount();
 
       // >>> Sponsoring Dorothy >>>
       console.log('Sponsoring Dorothy.......');
-      // const tx0 = api.tx.balances.transfer(dorothyAccount.address, 11_000_000_000_000_000_000n);
-      // const events0 = await submitTransactionAsync(alithAccount, tx0);
-      // const result0 = getGenericResult(events0);
-      // expect(result0.success).to.be.true;
-      await helper.balance.transferToSubstrate(alithAccount, dorothyAccount.address, 11_000_000_000_000_000_000n);
+      await helper.balance.transferToEthereum(alithAccount, dorothyAccount.address, 11_000_000_000_000_000_000n);
       console.log('Sponsoring Dorothy.......DONE');
       // <<< Sponsoring Dorothy <<<
 
-      const sourceLocation: MultiLocation = api.createType(
-        'MultiLocation',
-        {
+      quartzAssetLocation = {
+        XCM: {
           parents: 1,
           interior: {X1: {Parachain: QUARTZ_CHAIN}},
         },
-      );
-
-      quartzAssetLocation = {XCM: sourceLocation};
-      const existentialDeposit = 1;
+      };
+      const existentialDeposit = 1n;
       const isSufficient = true;
-      const unitsPerSecond = '1';
+      const unitsPerSecond = 1n;
       const numAssetsWeightHint = 0;
 
-      const registerTx = api.tx.assetManager.registerForeignAsset(
-        quartzAssetLocation,
-        quartzAssetMetadata,
+      const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
+        location: quartzAssetLocation,
+        metadata: quartzAssetMetadata,
         existentialDeposit,
         isSufficient,
-      );
-      console.log('Encoded proposal for registerAsset is %s', registerTx.method.toHex() || '');
-
-      const setUnitsTx = api.tx.assetManager.setAssetUnitsPerSecond(
-        quartzAssetLocation,
         unitsPerSecond,
         numAssetsWeightHint,
-      );
-      console.log('Encoded proposal for setAssetUnitsPerSecond is %s', setUnitsTx.method.toHex() || '');
+      });
+      const proposalHash = blake2AsHex(encodedProposal);
 
-      const batchCall = api.tx.utility.batchAll([registerTx, setUnitsTx]);
-      console.log('Encoded proposal for batchCall is %s', batchCall.method.toHex() || '');
+      console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
+      console.log('Encoded length %d', encodedProposal.length);
+      console.log('Encoded proposal hash for batch utility after schedule is %s', proposalHash);
 
       // >>> Note motion preimage >>>
       console.log('Note motion preimage.......');
-      const encodedProposal = batchCall?.method.toHex() || '';
-      const proposalHash = blake2AsHex(encodedProposal);
-      console.log('Encoded proposal for batch utility after schedule is %s', encodedProposal);
-      console.log('Encoded proposal hash for batch utility after schedule is %s', proposalHash);
-      console.log('Encoded length %d', encodedProposal.length);
-
-      const tx1 = api.tx.democracy.notePreimage(encodedProposal);
-      const events1 = await submitTransactionAsync(baltatharAccount, tx1);
-      const result1 = getGenericResult(events1);
-      expect(result1.success).to.be.true;
+      await helper.democracy.notePreimage(baltatharAccount, encodedProposal);
       console.log('Note motion preimage.......DONE');
       // <<< Note motion preimage <<<
 
       // >>> Propose external motion through council >>>
       console.log('Propose external motion through council.......');
-      const externalMotion = api.tx.democracy.externalProposeMajority(proposalHash);
-      const tx2 = api.tx.councilCollective.propose(
-        councilVotingThreshold,
-        externalMotion,
-        externalMotion.encodedLength,
-      );
-      const events2 = await submitTransactionAsync(baltatharAccount, tx2);
-      const result2 = getGenericResult(events2);
-      expect(result2.success).to.be.true;
-
+      const externalMotion = helper.democracy.externalProposeMajority(proposalHash);
       const encodedMotion = externalMotion?.method.toHex() || '';
       const motionHash = blake2AsHex(encodedMotion);
       console.log('Motion hash is %s', motionHash);
 
-      const tx3 = api.tx.councilCollective.vote(motionHash, 0, true);
-      {
-        const events3 = await submitTransactionAsync(dorothyAccount, tx3);
-        const result3 = getGenericResult(events3);
-        expect(result3.success).to.be.true;
-      }
-      {
-        const events3 = await submitTransactionAsync(baltatharAccount, tx3);
-        const result3 = getGenericResult(events3);
-        expect(result3.success).to.be.true;
-      }
+      await helper.collective.council.propose(baltatharAccount, councilVotingThreshold, externalMotion, externalMotion.encodedLength);
 
-      const tx4 = api.tx.councilCollective.close(motionHash, 0, 1_000_000_000, externalMotion.encodedLength);
-      const events4 = await submitTransactionAsync(dorothyAccount, tx4);
-      const result4 = getGenericResult(events4);
-      expect(result4.success).to.be.true;
+      const councilProposalIdx = await helper.collective.council.proposalCount() - 1;
+      await helper.collective.council.vote(dorothyAccount, motionHash, councilProposalIdx, true);
+      await helper.collective.council.vote(baltatharAccount, motionHash, councilProposalIdx, true);
+
+      await helper.collective.council.close(dorothyAccount, motionHash, councilProposalIdx, 1_000_000_000, externalMotion.encodedLength);
       console.log('Propose external motion through council.......DONE');
       // <<< Propose external motion through council <<<
 
       // >>> Fast track proposal through technical committee >>>
       console.log('Fast track proposal through technical committee.......');
-      const fastTrack = api.tx.democracy.fastTrack(proposalHash, votingPeriod, delayPeriod);
-      const tx5 = api.tx.techCommitteeCollective.propose(
-        technicalCommitteeThreshold,
-        fastTrack,
-        fastTrack.encodedLength,
-      );
-      const events5 = await submitTransactionAsync(alithAccount, tx5);
-      const result5 = getGenericResult(events5);
-      expect(result5.success).to.be.true;
-
+      const fastTrack = helper.democracy.fastTrack(proposalHash, votingPeriod, delayPeriod);
       const encodedFastTrack = fastTrack?.method.toHex() || '';
       const fastTrackHash = blake2AsHex(encodedFastTrack);
       console.log('FastTrack hash is %s', fastTrackHash);
 
-      const proposalIdx = Number(await api.query.techCommitteeCollective.proposalCount()) - 1;
-      const tx6 = api.tx.techCommitteeCollective.vote(fastTrackHash, proposalIdx, true);
-      {
-        const events6 = await submitTransactionAsync(baltatharAccount, tx6);
-        const result6 = getGenericResult(events6);
-        expect(result6.success).to.be.true;
-      }
-      {
-        const events6 = await submitTransactionAsync(alithAccount, tx6);
-        const result6 = getGenericResult(events6);
-        expect(result6.success).to.be.true;
-      }
+      await helper.collective.techCommittee.propose(alithAccount, technicalCommitteeThreshold, fastTrack, fastTrack.encodedLength);
 
-      const tx7 = api.tx.techCommitteeCollective
-        .close(fastTrackHash, proposalIdx, 1_000_000_000, fastTrack.encodedLength);
-      const events7 = await submitTransactionAsync(baltatharAccount, tx7);
-      const result7 = getGenericResult(events7);
-      expect(result7.success).to.be.true;
+      const techProposalIdx = await helper.collective.techCommittee.proposalCount() - 1;
+      await helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
+      await helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
+
+      await helper.collective.techCommittee.close(baltatharAccount, fastTrackHash, techProposalIdx, 1_000_000_000, fastTrack.encodedLength);
       console.log('Fast track proposal through technical committee.......DONE');
       // <<< Fast track proposal through technical committee <<<
 
       // >>> Referendum voting >>>
       console.log('Referendum voting.......');
-      const tx8 = api.tx.democracy.vote(
-        0,
-        {Standard: {balance: 10_000_000_000_000_000_000n, vote: {aye: true, conviction: 1}}},
-      );
-      const events8 = await submitTransactionAsync(dorothyAccount, tx8);
-      const result8 = getGenericResult(events8);
-      expect(result8.success).to.be.true;
+      await helper.democracy.referendumVote(dorothyAccount, 0, {
+        balance: 10_000_000_000_000_000_000n,
+        vote: {aye: true, conviction: 1},
+      });
       console.log('Referendum voting.......DONE');
       // <<< Referendum voting <<<
 
@@ -621,12 +476,9 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       console.log('Acquire Quartz AssetId Info on Moonriver.......');
 
       // Wait for the democracy execute
-      // await waitNewBlocks(api, 5);
       await helper.wait.newBlocks(5);
 
-      assetId = (await api.query.assetManager.assetTypeId({
-        XCM: sourceLocation,
-      })).toString();
+      assetId = (await helper.assetManager.assetTypeId(quartzAssetLocation)).toString();
 
       console.log('QTZ asset ID is %s', assetId);
       console.log('Acquire Quartz AssetId Info on Moonriver.......DONE');
@@ -634,26 +486,15 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
       // >>> Sponsoring random Account >>>
       console.log('Sponsoring random Account.......');
-      // const tx10 = api.tx.balances.transfer(randomAccountMoonriver.address, 11_000_000_000_000_000_000n);
-      // const events10 = await submitTransactionAsync(baltatharAccount, tx10);
-      // const result10 = getGenericResult(events10);
-      // expect(result10.success).to.be.true;
-      await helper.balance.transferToSubstrate(baltatharAccount, randomAccountMoonriver.address, 11_000_000_000_000_000_000n);
+      await helper.balance.transferToEthereum(baltatharAccount, randomAccountMoonriver.address, 11_000_000_000_000_000_000n);
       console.log('Sponsoring random Account.......DONE');
       // <<< Sponsoring random Account <<<
 
-      // [balanceMovrTokenInit] = await getBalance(api, [randomAccountMoonriver.address]);
-      balanceMovrTokenInit = await helper.balance.getSubstrate(randomAccountMoonriver.address);
+      balanceMovrTokenInit = await helper.balance.getEthereum(randomAccountMoonriver.address);
     });
 
     await usingPlaygrounds(async (helper) => {
-      // const tx0 = api.tx.balances.transfer(randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
-      // const events0 = await submitTransactionAsync(quartzAlice, tx0);
-      // const result0 = getGenericResult(events0);
-      // expect(result0.success).to.be.true;
       await helper.balance.transferToSubstrate(quartzAlice, randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
-
-      // [balanceQuartzTokenInit] = await getBalance(api, [randomAccountQuartz.address]);
       balanceQuartzTokenInit = await helper.balance.getSubstrate(randomAccountQuartz.address);
     });
   });
@@ -676,13 +517,8 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const amount = TRANSFER_AMOUNT;
     const destWeight = 850000000;
 
-    // TODO
-    const tx = helper.getApi().tx.xTokens.transfer(currencyId, amount, dest, destWeight);
-    const events = await submitTransactionAsync(randomAccountQuartz, tx);
-    const result = getGenericResult(events);
-    expect(result.success).to.be.true;
+    await helper.xTokens.transfer(randomAccountQuartz, currencyId, amount, dest, destWeight);
 
-    // [balanceQuartzTokenMiddle] = await getBalance(api, [randomAccountQuartz.address]);
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccountQuartz.address);
     expect(balanceQuartzTokenMiddle < balanceQuartzTokenInit).to.be.true;
 
@@ -690,23 +526,16 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     console.log('[Quartz -> Moonriver] transaction fees on Quartz: %s QTZ', bigIntToDecimals(transactionFees));
     expect(transactionFees > 0).to.be.true;
 
-    await usingPlaygrounds.atUrl(moonriverUrl, async (helper) => {
-      // await waitNewBlocks(api, 3);
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       await helper.wait.newBlocks(3);
 
-      // [balanceMovrTokenMiddle] = await getBalance(api, [randomAccountMoonriver.address]);
-      balanceMovrTokenMiddle = await helper.balance.getSubstrate(randomAccountMoonriver.address);
+      balanceMovrTokenMiddle = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
       const movrFees = balanceMovrTokenInit - balanceMovrTokenMiddle;
       console.log('[Quartz -> Moonriver] transaction fees on Moonriver: %s MOVR',bigIntToDecimals(movrFees));
       expect(movrFees == 0n).to.be.true;
 
-      // TODO
-      const qtzRandomAccountAsset = (
-        await helper.getApi().query.assets.account(assetId, randomAccountMoonriver.address)
-      ).toJSON()! as any;
-
-      balanceForeignQtzTokenMiddle = BigInt(qtzRandomAccountAsset['balance']);
+      balanceForeignQtzTokenMiddle = (await helper.assets.account(assetId, randomAccountMoonriver.address))!; // BigInt(qtzRandomAccountAsset['balance']);
       const qtzIncomeTransfer = balanceForeignQtzTokenMiddle - balanceForeignQtzTokenInit;
       console.log('[Quartz -> Moonriver] income %s QTZ', bigIntToDecimals(qtzIncomeTransfer));
       expect(qtzIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
@@ -714,7 +543,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   });
 
   itSub('Should connect to Moonriver and send QTZ back', async ({helper}) => {
-    await usingPlaygrounds.atUrl(moonriverUrl, async (helper) => {
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       const asset = {
         V1: {
           id: {
@@ -743,22 +572,15 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       };
       const destWeight = 50000000;
 
-      // TODO
-      const tx = helper.getApi().tx.xTokens.transferMultiasset(asset, destination, destWeight);
-      const events = await submitTransactionAsync(randomAccountMoonriver, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, destWeight);
 
-      // [balanceMovrTokenFinal] = await getBalance(api, [randomAccountMoonriver.address]);
-      balanceMovrTokenFinal = await helper.balance.getSubstrate(randomAccountMoonriver.address);
+      balanceMovrTokenFinal = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
       const movrFees = balanceMovrTokenMiddle - balanceMovrTokenFinal;
       console.log('[Moonriver -> Quartz] transaction fees on Moonriver: %s MOVR', bigIntToDecimals(movrFees));
       expect(movrFees > 0).to.be.true;
 
-      const qtzRandomAccountAsset = (
-        await helper.getApi().query.assets.account(assetId, randomAccountMoonriver.address)
-      ).toJSON()! as any;
+      const qtzRandomAccountAsset = await helper.assets.account(assetId, randomAccountMoonriver.address);
 
       expect(qtzRandomAccountAsset).to.be.null;
 
@@ -769,10 +591,8 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
-    // await waitNewBlocks(api, 3);
     await helper.wait.newBlocks(3);
 
-    // [balanceQuartzTokenFinal] = await getBalance(api, [randomAccountQuartz.address]);
     balanceQuartzTokenFinal = await helper.balance.getSubstrate(randomAccountQuartz.address);
     const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
     expect(actuallyDelivered > 0).to.be.true;
