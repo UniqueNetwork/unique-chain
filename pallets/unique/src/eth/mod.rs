@@ -19,8 +19,8 @@
 use core::marker::PhantomData;
 use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
-use frame_support::traits::Get;
-
+use frame_support::{traits::Get, storage::StorageNMap};
+use crate::sp_api_hidden_includes_decl_storage::hidden_include::StorageDoubleMap;
 use crate::Pallet;
 
 use pallet_common::{
@@ -37,7 +37,10 @@ use up_data_structs::{
 	CreateCollectionData,
 };
 
-use crate::{weights::WeightInfo, Config, SelfWeightOf};
+use crate::{
+	weights::WeightInfo, Config, SelfWeightOf, NftTransferBasket, FungibleTransferBasket,
+	ReFungibleTransferBasket, NftApproveBasket, FungibleApproveBasket, RefungibleApproveBasket,
+};
 
 use alloc::format;
 use sp_std::vec::Vec;
