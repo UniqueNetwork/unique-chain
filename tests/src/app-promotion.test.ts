@@ -39,8 +39,6 @@ describe('App promotion', () => {
       palletAddress = helper.arrange.calculatePalleteAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();
-      await helper.balance.transferToSubstrate(donor, palletAdmin.address, 1000n * nominal);
-      await helper.balance.transferToSubstrate(donor, palletAddress, 1000n * nominal);
       accounts = await helper.arrange.createCrowd(100, 1000n, donor); // create accounts-pool to speed up tests
     });
   });

@@ -21,10 +21,6 @@ import {expect} from './eth/util/playgrounds';
 let superuser: IKeyringPair;
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;
-let nominal: bigint;
-let palletAddress;
-let accounts: IKeyringPair[];
-
 
 describe('App promotion', () => {
   before(async function () {
@@ -32,21 +28,16 @@ describe('App promotion', () => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
       superuser = await privateKey('//Alice');
       donor = await privateKey({filename: __filename});
-      palletAddress = helper.arrange.calculatePalleteAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
       const api = helper.getApi();
       await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
-      nominal = helper.balance.getOneTokenNominal();
-      await helper.balance.transferToSubstrate(donor, palletAdmin.address, 1000n * nominal);
-      await helper.balance.transferToSubstrate(donor, palletAddress, 1000n * nominal);
-      accounts = await helper.arrange.createCrowd(100, 1000n, donor); // create accounts-pool to speed up tests
     });
   });
 
   describe('admin adress', () => {
     itSub('can be set by sudo only', async ({helper}) => {
       const api = helper.getApi();
-      const nonAdmin = accounts.pop()!;
+      const [nonAdmin] = await helper.arrange.createAccounts([10n], donor);
       // nonAdmin can not set admin not from himself nor as a sudo
       await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address}))).to.be.rejected;
       await expect(helper.signTransaction(nonAdmin, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address})))).to.be.rejected;
@@ -56,7 +47,7 @@ describe('App promotion', () => {
       // We are not going to set an eth address as a sponsor,
       // but we do want to check, it doesn't break anything;
       const api = helper.getApi();
-      const account = accounts.pop()!;
+      const [account] = await helper.arrange.createAccounts([10n], donor);
       const ethAccount = helper.address.substrateToEth(account.address); 
       // Alice sets Ethereum address as a sudo. Then Substrate address back...
       await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Ethereum: ethAccount})))).to.be.fulfilled;
@@ -69,7 +60,7 @@ describe('App promotion', () => {
   
     itSub('can be reassigned', async ({helper}) => {
       const api = helper.getApi();
-      const [oldAdmin, newAdmin, collectionOwner] = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
+      const [oldAdmin, newAdmin, collectionOwner] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
         
       await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: oldAdmin.address})))).to.be.fulfilled;
