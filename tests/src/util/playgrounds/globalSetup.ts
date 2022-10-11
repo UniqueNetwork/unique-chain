@@ -63,7 +63,7 @@ const fundFilenames = async () => {
       let batchBalanceGrantedCounter = 0;
       for (let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filenames.length; i++) {
         const f = filenames[b + i];
-        if (!f.endsWith('.test.ts') || f.includes('.outdated')) continue;
+        if (!f.endsWith('.test.ts') && !f.endsWith('seqtest.ts') || f.includes('.outdated')) continue;
         const account = await privateKey({filename: f, ignoreFundsPresence: true});
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 

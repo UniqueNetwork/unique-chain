@@ -27,8 +27,10 @@
     "lint": "eslint --ext .ts,.js src/",
     "fix": "eslint --ext .ts,.js src/ --fix",
 
-    "test": "mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
+    "test": "npm run testParallel && npm run testSequential",
+    "testParallel": "mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
     "testSequential": "mocha --timeout 9999999 -r ts-node/register './src/**/*.seqtest.ts'",
+    "testDevnode": "mocha --timeout 9999999 -r ts-node/register './src/**/*test.ts'",
     "testStructure": "mocha --parallel --timeout 9999999 -r ts-node/register ./**/nesting/**.test.ts",
     "testEth": "mocha --parallel --timeout 9999999 -r ts-node/register './**/eth/**/*.test.ts'",
     "testEthNesting": "mocha --parallel --timeout 9999999 -r ts-node/register './**/eth/nesting/**/*.test.ts'",
