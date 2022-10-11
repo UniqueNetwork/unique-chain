@@ -24,10 +24,12 @@ describe('Scheduling token and balance transfers', () => {
   let charlie: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKeyWrapper) => {
+    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
       charlie = privateKeyWrapper('//Charlie');
+
+      await helper.testUtils.enable();
     });
   });
 
@@ -414,9 +416,11 @@ describe('Negative Test: Scheduling', () => {
   let bob: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKeyWrapper) => {
+    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob');
+
+      await helper.testUtils.enable();
     });
   });
 

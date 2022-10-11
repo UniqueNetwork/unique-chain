@@ -16,9 +16,15 @@
 
 import {expect} from 'chai';
 import {EthUniqueHelper, itEth} from './util/playgrounds';
-import {Pallets} from '../util/playgrounds';
+import {Pallets, usingPlaygrounds} from '../util/playgrounds';
 
 describe('Scheduing EVM smart contracts', () => {
+
+  before(async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.testUtils.enable();
+    });
+  });
 
   itEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async ({helper, privateKey}) => {
     const alice = privateKey('//Alice');
