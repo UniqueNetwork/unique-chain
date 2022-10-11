@@ -8,7 +8,7 @@ import '@polkadot/api-base/types/submittable';
 import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction } from '@polkadot/api-base/types';
 import type { Bytes, Compact, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill, Weight } from '@polkadot/types/interfaces/runtime';
 import type { CumulusPrimitivesParachainInherentParachainInherentData, EthereumTransactionTransactionV2, FrameSupportScheduleMaybeHashed, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, RmrkTraitsNftAccountIdOrCollectionNftTuple, RmrkTraitsPartEquippableList, RmrkTraitsPartPartType, RmrkTraitsResourceBasicResource, RmrkTraitsResourceComposableResource, RmrkTraitsResourceResourceTypes, RmrkTraitsResourceSlotResource, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCreateCollectionData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
@@ -243,7 +243,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Events:
        * - `OverweightServiced`: On success.
        **/
-      serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u64]>;
+      serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, Weight]>;
       /**
        * Generic tx
        **/
@@ -367,7 +367,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * NOTE: A successful return to this does *not* imply that the `msg` was executed successfully
        * to completion; only that *some* of it was executed.
        **/
-      execute: AugmentedSubmittable<(message: XcmVersionedXcm | { V0: any } | { V1: any } | { V2: any } | string | Uint8Array, maxWeight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedXcm, u64]>;
+      execute: AugmentedSubmittable<(message: XcmVersionedXcm | { V0: any } | { V1: any } | { V2: any } | string | Uint8Array, maxWeight: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedXcm, Weight]>;
       /**
        * Set a safe XCM version (the version that XCM should be encoded with if the most recent
        * version a destination can accept is unknown).
@@ -902,7 +902,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - The weight of this call is defined by the caller.
        * # </weight>
        **/
-      sudoUncheckedWeight: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array, weight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call, u64]>;
+      sudoUncheckedWeight: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array, weight: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Call, Weight]>;
       /**
        * Generic tx
        **/
@@ -1683,7 +1683,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * Events:
        * - `OverweightServiced`: On success.
        **/
-      serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, u64]>;
+      serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64, Weight]>;
       /**
        * Suspends all XCM executions for the XCMP queue, regardless of the sender's origin.
        * 
@@ -1720,7 +1720,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `origin`: Must pass `Root`.
        * - `new`: Desired value for `QueueConfigData.threshold_weight`
        **/
-      updateThresholdWeight: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      updateThresholdWeight: AugmentedSubmittable<(updated: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Weight]>;
       /**
        * Overwrites the speed to which the available weight approaches the maximum weight.
        * A lower number results in a faster progression. A value of 1 makes the entire weight available initially.
@@ -1728,7 +1728,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `origin`: Must pass `Root`.
        * - `new`: Desired value for `QueueConfigData.weight_restrict_decay`.
        **/
-      updateWeightRestrictDecay: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      updateWeightRestrictDecay: AugmentedSubmittable<(updated: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Weight]>;
       /**
        * Overwrite the maximum amount of weight any individual message may consume.
        * Messages above this weight go into the overweight queue and may only be serviced explicitly.
@@ -1736,7 +1736,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - `origin`: Must pass `Root`.
        * - `new`: Desired value for `QueueConfigData.xcmp_max_individual_weight`.
        **/
-      updateXcmpMaxIndividualWeight: AugmentedSubmittable<(updated: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u64]>;
+      updateXcmpMaxIndividualWeight: AugmentedSubmittable<(updated: Weight | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [Weight]>;
       /**
        * Generic tx
        **/
