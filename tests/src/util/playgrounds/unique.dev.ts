@@ -486,6 +486,11 @@ class TestUtilGroup {
     this.helper = helper;
   }
 
+  async enable() {
+    const signer = this.helper.util.fromSeed('//Alice');
+    await this.helper.getSudo<DevUniqueHelper>().executeExtrinsic(signer, 'api.tx.testUtils.enable', [], true);
+  }
+
   async setTestValue(signer: TSigner, testVal: number) {
     await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValue', [testVal], true);
   }
