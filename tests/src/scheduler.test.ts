@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {UNIQUE} from './util/helpers';
 import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
+import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 
 describe('Scheduling token and balance transfers', () => {
   let alice: IKeyringPair;
@@ -51,7 +51,7 @@ describe('Scheduling token and balance transfers', () => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 1;
 
-    const amount = 1n * UNIQUE;
+    const amount = 1n * helper.balance.getOneTokenNominal();
     const periodic = {
       period: 2,
       repetitions: 2,
@@ -109,7 +109,7 @@ describe('Scheduling token and balance transfers', () => {
 
     const scheduledId = await helper.arrange.makeScheduledId();
 
-    const amount = 1n * UNIQUE;
+    const amount = 1n * helper.balance.getOneTokenNominal();
 
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
@@ -144,24 +144,14 @@ describe('Scheduling token and balance transfers', () => {
     const initTestVal = 42;
     const changedTestVal = 111;
 
-    await helper.executeExtrinsic(
-      alice,
-      'api.tx.testUtils.setTestValue',
-      [initTestVal],
-      true,
-    );
+    await helper.testUtils.setTestValue(alice, initTestVal);
 
-    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks)
-      .executeExtrinsic(
-        alice,
-        'api.tx.testUtils.setTestValueAndRollback',
-        [changedTestVal],
-        true,
-      );
+    await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks)
+      .testUtils.setTestValueAndRollback(alice, changedTestVal);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
-    const testVal = (await helper.getApi().query.testUtils.testValue()).toNumber();
+    const testVal = await helper.testUtils.testValue();
     expect(testVal, 'The test value should NOT be commited')
       .to.be.equal(initTestVal);
   });
@@ -180,8 +170,8 @@ describe('Scheduling token and balance transfers', () => {
     const expectedScheduledFee = (await helper.getPaymentInfo(alice, dummyTx, scheduledLen))
       .partialFee.toBigInt();
 
-    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
-      .executeExtrinsic(alice, 'api.tx.testUtils.justTakeFee', [], true);
+    await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks, {periodic})
+      .testUtils.justTakeFee(alice);
 
     await helper.wait.newBlocks(1);
 
@@ -238,20 +228,10 @@ describe('Scheduling token and balance transfers', () => {
     const incTestVal = initTestVal + 1;
     const finalTestVal = initTestVal + 2;
 
-    await helper.executeExtrinsic(
-      alice,
-      'api.tx.testUtils.setTestValue',
-      [initTestVal],
-      true,
-    );
+    await helper.testUtils.setTestValue(alice, initTestVal);
 
-    await helper.scheduler.scheduleAt(scheduledId, firstExecutionBlockNumber, {periodic})
-      .executeExtrinsic(
-        alice,
-        'api.tx.testUtils.incTestValue',
-        [],
-        true,
-      );
+    await helper.scheduler.scheduleAt<DevUniqueHelper>(scheduledId, firstExecutionBlockNumber, {periodic})
+      .testUtils.incTestValue(alice);
 
     // Cancel the inc tx after 2 executions
     // *in the same block* in which the second execution is scheduled
@@ -263,18 +243,18 @@ describe('Scheduling token and balance transfers', () => {
     await helper.wait.newBlocks(blocksBeforeExecution);
 
     // execution #0
-    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
+    expect(await helper.testUtils.testValue())
       .to.be.equal(incTestVal);
 
     await helper.wait.newBlocks(periodic.period);
 
     // execution #1
-    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
+    expect(await helper.testUtils.testValue())
       .to.be.equal(finalTestVal);
 
     for (let i = 1; i < periodic.repetitions; i++) {
       await helper.wait.newBlocks(periodic.period);
-      expect((await helper.getApi().query.testUtils.testValue()).toNumber())
+      expect(await helper.testUtils.testValue())
         .to.be.equal(finalTestVal);
     }
   });
@@ -290,37 +270,27 @@ describe('Scheduling token and balance transfers', () => {
     const initTestVal = 0;
     const maxTestVal = 2;
 
-    await helper.executeExtrinsic(
-      alice,
-      'api.tx.testUtils.setTestValue',
-      [initTestVal],
-      true,
-    );
+    await helper.testUtils.setTestValue(alice, initTestVal);
 
-    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
-      .executeExtrinsic(
-        alice,
-        'api.tx.testUtils.selfCancelingInc',
-        [scheduledId, maxTestVal],
-        true,
-      );
+    await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks, {periodic})
+      .testUtils.selfCancelingInc(alice, scheduledId, maxTestVal);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
     // execution #0
-    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
+    expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 1);
 
     await helper.wait.newBlocks(periodic.period);
 
     // execution #1
-    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
+    expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 2);
 
     await helper.wait.newBlocks(periodic.period);
 
     // <canceled>
-    expect((await helper.getApi().query.testUtils.testValue()).toNumber())
+    expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 2);
   });
 
@@ -345,7 +315,7 @@ describe('Scheduling token and balance transfers', () => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    const amount = 42n * UNIQUE;
+    const amount = 42n * helper.balance.getOneTokenNominal();
 
     const balanceBefore = await helper.balance.getSubstrate(charlie.address);
 
@@ -404,7 +374,7 @@ describe('Scheduling token and balance transfers', () => {
       repetitions: 2,
     };
 
-    const amount = 1n * UNIQUE;
+    const amount = 1n * helper.balance.getOneTokenNominal();
 
     // Scheduler a task with a lower priority first, then with a higher priority
     await helper.getSudo().scheduler.scheduleAt(scheduledFirstId, firstExecutionBlockNumber, {priority: prioLow, periodic})
@@ -461,7 +431,7 @@ describe('Negative Test: Scheduling', () => {
       .transfer(alice, {Substrate: bob.address});
 
     const scheduled = helper.scheduler.scheduleAfter(scheduledId, waitForBlocks);
-    await expect(scheduled.balance.transferToSubstrate(alice, bob.address, 1n * UNIQUE))
+    await expect(scheduled.balance.transferToSubstrate(alice, bob.address, 1n * helper.balance.getOneTokenNominal()))
       .to.be.rejectedWith(/scheduler\.FailedToSchedule/);
 
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
@@ -502,7 +472,7 @@ describe('Negative Test: Scheduling', () => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    const amount = 42n * UNIQUE;
+    const amount = 42n * helper.balance.getOneTokenNominal();
 
     const balanceBefore = await helper.balance.getSubstrate(bob.address);
 
