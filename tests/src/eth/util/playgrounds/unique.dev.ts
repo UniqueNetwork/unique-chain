@@ -361,6 +361,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
   }
 
   clearApi() {
+    super.clearApi();
     this.web3 = null;
   }
 
