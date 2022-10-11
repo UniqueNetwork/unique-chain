@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {generateKeyringPair, bigIntToDecimals} from '../deprecated-helpers/helpers';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
 import {itSub, expect, describeXcm, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds} from '../util/playgrounds';
@@ -53,10 +51,8 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const keyringSr25519 = new Keyring({type: 'sr25519'});
-
       alice = privateKey('//Alice');
-      randomAccount = generateKeyringPair(keyringSr25519);
+      [randomAccount] = await helper.arrange.createAccounts([0n], alice);
     });
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
@@ -136,7 +132,7 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
-    console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', bigIntToDecimals(qtzFees));
+    console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees > 0n).to.be.true;
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
@@ -149,9 +145,9 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
       console.log(
         '[Quartz -> Karura] transaction fees on Karura: %s KAR',
-        bigIntToDecimals(karFees, KARURA_DECIMALS),
+        helper.util.bigIntToDecimals(karFees, KARURA_DECIMALS),
       );
-      console.log('[Quartz -> Karura] income %s QTZ', bigIntToDecimals(qtzIncomeTransfer));
+      console.log('[Quartz -> Karura] income %s QTZ', helper.util.bigIntToDecimals(qtzIncomeTransfer));
       expect(karFees == 0n).to.be.true;
       expect(qtzIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
@@ -191,9 +187,9 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
       console.log(
         '[Karura -> Quartz] transaction fees on Karura: %s KAR',
-        bigIntToDecimals(karFees, KARURA_DECIMALS),
+        helper.util.bigIntToDecimals(karFees, KARURA_DECIMALS),
       );
-      console.log('[Karura -> Quartz] outcome %s QTZ', bigIntToDecimals(qtzOutcomeTransfer));
+      console.log('[Karura -> Quartz] outcome %s QTZ', helper.util.bigIntToDecimals(qtzOutcomeTransfer));
 
       expect(karFees > 0).to.be.true;
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
@@ -205,10 +201,10 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
     const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
     expect(actuallyDelivered > 0).to.be.true;
 
-    console.log('[Karura -> Quartz] actually delivered %s QTZ', bigIntToDecimals(actuallyDelivered));
+    console.log('[Karura -> Quartz] actually delivered %s QTZ', helper.util.bigIntToDecimals(actuallyDelivered));
 
     const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
-    console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', bigIntToDecimals(qtzFees));
+    console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
 });
@@ -342,7 +338,7 @@ describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
 describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
   // Quartz constants
-  let quartzAlice: IKeyringPair;
+  let quartzDonor: IKeyringPair;
   let quartzAssetLocation;
 
   let randomAccountQuartz: IKeyringPair;
@@ -375,13 +371,9 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   let balanceMovrTokenFinal: bigint;
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
-      const keyringEth = new Keyring({type: 'ethereum'});
-      const keyringSr25519 = new Keyring({type: 'sr25519'});
-
-      quartzAlice = privateKey('//Alice');
-      randomAccountQuartz = generateKeyringPair(keyringSr25519);
-      randomAccountMoonriver = generateKeyringPair(keyringEth);
+    await usingPlaygrounds(async (helper, privateKey) => {
+      quartzDonor = privateKey('//Alice');
+      [randomAccountQuartz] = await helper.arrange.createAccounts([0n], quartzDonor);
 
       balanceForeignQtzTokenInit = 0n;
     });
@@ -390,6 +382,8 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       const alithAccount = helper.account.alithAccount();
       const baltatharAccount = helper.account.baltatharAccount();
       const dorothyAccount = helper.account.dorothyAccount();
+
+      randomAccountMoonriver = helper.account.create();
 
       // >>> Sponsoring Dorothy >>>
       console.log('Sponsoring Dorothy.......');
@@ -493,7 +487,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     });
 
     await usingPlaygrounds(async (helper) => {
-      await helper.balance.transferToSubstrate(quartzAlice, randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
+      await helper.balance.transferToSubstrate(quartzDonor, randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
       balanceQuartzTokenInit = await helper.balance.getSubstrate(randomAccountQuartz.address);
     });
   });
@@ -522,7 +516,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     expect(balanceQuartzTokenMiddle < balanceQuartzTokenInit).to.be.true;
 
     const transactionFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
-    console.log('[Quartz -> Moonriver] transaction fees on Quartz: %s QTZ', bigIntToDecimals(transactionFees));
+    console.log('[Quartz -> Moonriver] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(transactionFees));
     expect(transactionFees > 0).to.be.true;
 
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
@@ -531,12 +525,12 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       balanceMovrTokenMiddle = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
       const movrFees = balanceMovrTokenInit - balanceMovrTokenMiddle;
-      console.log('[Quartz -> Moonriver] transaction fees on Moonriver: %s MOVR',bigIntToDecimals(movrFees));
+      console.log('[Quartz -> Moonriver] transaction fees on Moonriver: %s MOVR',helper.util.bigIntToDecimals(movrFees));
       expect(movrFees == 0n).to.be.true;
 
       balanceForeignQtzTokenMiddle = (await helper.assets.account(assetId, randomAccountMoonriver.address))!; // BigInt(qtzRandomAccountAsset['balance']);
       const qtzIncomeTransfer = balanceForeignQtzTokenMiddle - balanceForeignQtzTokenInit;
-      console.log('[Quartz -> Moonriver] income %s QTZ', bigIntToDecimals(qtzIncomeTransfer));
+      console.log('[Quartz -> Moonriver] income %s QTZ', helper.util.bigIntToDecimals(qtzIncomeTransfer));
       expect(qtzIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
   });
@@ -576,7 +570,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       balanceMovrTokenFinal = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
       const movrFees = balanceMovrTokenMiddle - balanceMovrTokenFinal;
-      console.log('[Moonriver -> Quartz] transaction fees on Moonriver: %s MOVR', bigIntToDecimals(movrFees));
+      console.log('[Moonriver -> Quartz] transaction fees on Moonriver: %s MOVR', helper.util.bigIntToDecimals(movrFees));
       expect(movrFees > 0).to.be.true;
 
       const qtzRandomAccountAsset = await helper.assets.account(assetId, randomAccountMoonriver.address);
@@ -586,7 +580,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       balanceForeignQtzTokenFinal = 0n;
 
       const qtzOutcomeTransfer = balanceForeignQtzTokenMiddle - balanceForeignQtzTokenFinal;
-      console.log('[Quartz -> Moonriver] outcome %s QTZ', bigIntToDecimals(qtzOutcomeTransfer));
+      console.log('[Quartz -> Moonriver] outcome %s QTZ', helper.util.bigIntToDecimals(qtzOutcomeTransfer));
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
@@ -596,10 +590,10 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
     expect(actuallyDelivered > 0).to.be.true;
 
-    console.log('[Moonriver -> Quartz] actually delivered %s QTZ', bigIntToDecimals(actuallyDelivered));
+    console.log('[Moonriver -> Quartz] actually delivered %s QTZ', helper.util.bigIntToDecimals(actuallyDelivered));
 
     const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
-    console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', bigIntToDecimals(qtzFees));
+    console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
 });
