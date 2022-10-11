@@ -227,7 +227,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   });
 });
 
-describe('Approved amount decreases by the transferred amount.:', () => {
+describe('Approved amount decreases by the transferred amount:', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;

@@ -21,7 +21,7 @@ import {WsProvider} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {executeTransaction} from './../substrate/substrate-api';
-import {bigIntToDecimals, describe_xcm, getGenericResult, paraSiblingSovereignAccount, normalizeAccountId} from './../deprecated-helpers/helpers';
+import {bigIntToDecimals, describeXCM, getGenericResult, paraSiblingSovereignAccount, normalizeAccountId} from './../deprecated-helpers/helpers';
 import waitNewBlocks from './../substrate/wait-new-blocks';
 import getBalance from './../substrate/get-balance';
 
@@ -49,7 +49,7 @@ const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 // 10,000.00 (ten thousands) USDT
 const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n; 
 
-describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
+describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   

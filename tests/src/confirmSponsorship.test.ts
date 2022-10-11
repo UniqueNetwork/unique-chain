@@ -73,7 +73,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   itSub('Fungible: Transfer fees are paid by the sponsor after confirmation', async ({helper}) => {
-    const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
+    const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
@@ -163,7 +163,10 @@ describe('integration test: ext. confirmSponsorship():', () => {
   });
 
   itSub('NFT: Sponsoring of createItem is rate limited', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL', limits: {
+      sponsoredDataRateLimit: {blocks: 1000},
+      sponsorTransferTimeout: 1000,
+    }});
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
     await collection.setPermissions(alice, {mintMode: true, access: 'AllowList'});
@@ -195,7 +198,7 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
   });
 
   itSub('(!negative test!) Confirm sponsorship for a collection that never existed', async ({helper}) => {
-    const collectionId = 1_000_000;
+    const collectionId = (1 << 32) - 1;
     const confirmSponsorshipTx = async () => helper.collection.confirmSponsorship(bob, collectionId);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
