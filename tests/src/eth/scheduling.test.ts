@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {subToEth} from './util/helpers';
-import {waitNewBlocks, Pallets} from '../util/helpers';
+// import {subToEth} from './util/helpers';
 import {EthUniqueHelper, itEth} from './util/playgrounds';
+import {Pallets} from '../util/playgrounds';
 
 describe('Scheduing EVM smart contracts', () => {
 
@@ -30,7 +30,7 @@ describe('Scheduing EVM smart contracts', () => {
     const flipper = await helper.eth.deployFlipper(deployer);
 
     const initialValue = await flipper.methods.getValue().call();
-    await helper.eth.transferBalanceFromSubstrate(alice, subToEth(alice.address));
+    await helper.eth.transferBalanceFromSubstrate(alice, helper.address.substrateToEth(alice.address));
 
     const waitForBlocks = 4;
     const periodic = {
@@ -39,7 +39,7 @@ describe('Scheduing EVM smart contracts', () => {
     };
 
     await helper.scheduler.scheduleAfter<EthUniqueHelper>(scheduledId, waitForBlocks, {periodic})
-      .eth.callEVM(
+      .eth.sendEVM(
         alice,
         flipper.options.address,
         flipper.methods.flip().encodeABI(),
@@ -48,10 +48,10 @@ describe('Scheduing EVM smart contracts', () => {
 
     expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
     
-    await waitNewBlocks(waitForBlocks + 1);
+    await helper.wait.newBlocks(waitForBlocks + 1);
     expect(await flipper.methods.getValue().call()).to.be.not.equal(initialValue);
 
-    await waitNewBlocks(periodic.period);
+    await helper.wait.newBlocks(periodic.period);
     expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
   });
 });
