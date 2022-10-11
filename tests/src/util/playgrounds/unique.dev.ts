@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper} from './unique';
+import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -109,6 +109,17 @@ export class DevUniqueHelper extends UniqueHelper {
 }
 
 export class DevRelayHelper extends RelayHelper {}
+
+export class DevWestmintHelper extends WestmintHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevWestmintHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
 
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;

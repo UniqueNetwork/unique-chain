@@ -9,7 +9,7 @@ import config from '../../config';
 import '../../interfaces/augment-api-events';
 import {ChainHelperBase} from './unique';
 import {ILogger} from './types';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper} from './unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper} from './unique.dev';
 
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
@@ -36,9 +36,8 @@ export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (se
   return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
 };
 
-// TODO specific type
-export const usingStatemintPlaygrounds = async (url: string, code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
+export const usingWestmintPlaygrounds = async (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 };
 
 export const usingRelayPlaygrounds = async (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {

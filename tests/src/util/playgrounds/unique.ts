@@ -2468,12 +2468,42 @@ class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: number) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
   }
+
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
+  }
 }
 
 class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async accounts(address: string, currencyId: any) {
     const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
     return BigInt(free);
+  }
+}
+
+class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async create(signer: TSigner, assetId: number, admin: string, minimalBalance: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
+  }
+
+  async setMetadata(signer: TSigner, assetId: number, name: string, symbol: string, decimals: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
+  }
+
+  async mint(signer: TSigner, assetId: number, beneficiary: string, amount: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
+  }
+
+  async account(assetId: string | number, address: string) {
+    const accountAsset = (
+      await this.helper.callRpc('api.query.assets.account', [assetId, address])
+    ).toJSON()! as any;
+
+    if (accountAsset !== null) {
+      return BigInt(accountAsset['balance']);
+    } else {
+      return null;
+    }
   }
 }
 
@@ -2504,20 +2534,6 @@ class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
 
   async assetTypeId(location: any) {
     return await this.helper.callRpc('api.query.assetManager.assetTypeId', [location]);
-  }
-}
-
-class MoonbeamAssetsGroup extends HelperGroup<MoonbeamHelper> {
-  async account(assetId: string, address: string) {
-    const accountAsset = (
-      await this.helper.callRpc('api.query.assets.account', [assetId, address])
-    ).toJSON()! as any;
-
-    if (accountAsset !== null) {
-      return BigInt(accountAsset['balance']);
-    } else {
-      return null;
-    }
   }
 }
 
@@ -2626,10 +2642,26 @@ export class RelayHelper extends XcmChainHelper {
   }
 }
 
+export class WestmintHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<WestmintHelper>;
+  xcm: XcmGroup<WestmintHelper>;
+  assets: AssetsGroup<WestmintHelper>;
+  xTokens: XTokensGroup<WestmintHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? WestmintHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.assets = new AssetsGroup(this);
+    this.xTokens = new XTokensGroup(this);
+  }
+}
+
 export class MoonbeamHelper extends XcmChainHelper {
   balance: EthereumBalanceGroup<MoonbeamHelper>;
   assetManager: MoonbeamAssetManagerGroup;
-  assets: MoonbeamAssetsGroup;
+  assets: AssetsGroup<MoonbeamHelper>;
   xTokens: XTokensGroup<MoonbeamHelper>;
   democracy: MoonbeamDemocracyGroup;
   collective: {
@@ -2642,7 +2674,7 @@ export class MoonbeamHelper extends XcmChainHelper {
 
     this.balance = new EthereumBalanceGroup(this);
     this.assetManager = new MoonbeamAssetManagerGroup(this);
-    this.assets = new MoonbeamAssetsGroup(this);
+    this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
     this.democracy = new MoonbeamDemocracyGroup(this);
     this.collective = {
