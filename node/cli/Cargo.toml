@@ -335,8 +335,3 @@ try-runtime = [
     'quartz-runtime?/try-runtime',
     'opal-runtime?/try-runtime',
 ]
-
-test-pallets = [
-    'unique-runtime?/test-pallets',
-    'quartz-runtime?/test-pallets',
-]

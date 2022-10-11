@@ -165,10 +165,7 @@ std = [
     "orml-xtokens/std",
     "orml-traits/std",
     "pallet-foreign-assets/std",
-
-    'pallet-test-utils?/std',
 ]
-test-pallets = ['pallet-test-utils']
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 quartz-runtime = ['refungible']
 
@@ -490,11 +487,6 @@ fp-self-contained = { default-features = false, git = "https://github.com/unique
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.30' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
-
-################################################################################
-# Test dependencies
-
-pallet-test-utils = { optional = true, default-features = false, path = "../../test-pallets/utils" }
 
 ################################################################################
 # Other Dependencies
