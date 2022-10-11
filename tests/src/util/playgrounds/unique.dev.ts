@@ -8,6 +8,7 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId} from './types';
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -289,6 +290,7 @@ class ArrangeGroup {
 class MoonbeamAccountGroup {
   helper: MoonbeamHelper;
 
+  keyring: Keyring;
   _alithAccount: IKeyringPair;
   _baltatharAccount: IKeyringPair;
   _dorothyAccount: IKeyringPair;
@@ -296,14 +298,14 @@ class MoonbeamAccountGroup {
   constructor(helper: MoonbeamHelper) {
     this.helper = helper;
 
-    const keyring = new Keyring({type: 'ethereum'});
+    this.keyring = new Keyring({type: 'ethereum'});
     const alithPrivateKey = '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
     const baltatharPrivateKey = '0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b';
     const dorothyPrivateKey = '0x39539ab1876910bbf3a223d84a29e28f1cb4e2e456503e7e91ed39b2e7223d68';
 
-    this._alithAccount = keyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
-    this._baltatharAccount = keyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
-    this._dorothyAccount = keyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
+    this._alithAccount = this.keyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
+    this._baltatharAccount = this.keyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
+    this._dorothyAccount = this.keyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
   }
 
   alithAccount() {
@@ -316,6 +318,10 @@ class MoonbeamAccountGroup {
 
   dorothyAccount() {
     return this._dorothyAccount;
+  }
+
+  create() {
+    return this.keyring.addFromUri(mnemonicGenerate());
   }
 }
 
@@ -383,9 +389,9 @@ class WaitGroup {
         console.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
   
         const apiAt = await this.helper.getApi().at(blockHash);
-        const eventRecords = await apiAt.query.system.events();
+        const eventRecords = (await apiAt.query.system.events()) as any;
   
-        const neededEvent = eventRecords.find(r => {
+        const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
           return r.event.section == eventSection && r.event.method == eventMethod;
         });
   
