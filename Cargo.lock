@@ -1096,6 +1096,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4c78c047431fee22c1a7bb92e00ad095a02a983affe4d8a72e2a2c62c1b94f3"
 
 [[package]]
+name = "const_format"
+version = "0.2.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "939dc9e2eb9077e0679d2ce32de1ded8531779360b003b4a972a7a39ec263495"
+dependencies = [
+ "const_format_proc_macros",
+]
+
+[[package]]
+name = "const_format_proc_macros"
+version = "0.2.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef196d5d972878a48da7decb7686eded338b4858fbabeed513d63a7c98b2b82d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-xid",
+]
+
+[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2353,6 +2373,7 @@ name = "evm-coder"
 version = "0.1.3"
 dependencies = [
  "concat-idents",
+ "const_format",
  "ethereum",
  "evm-coder-procedural",
  "evm-core 0.35.0 (git+https://github.com/uniquenetwork/evm?branch=unique-polkadot-v0.9.30)",
@@ -2362,6 +2383,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "pallet-evm 6.0.0-dev (git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.27-fee-limit)",
  "primitive-types",
+ "sha3-const",
  "similar-asserts",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30)",
 ]
@@ -11083,6 +11105,12 @@ dependencies = [
  "digest 0.10.5",
  "keccak",
 ]
+
+[[package]]
+name = "sha3-const"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af9625d558d174dbdc711248b479271c0fdca39e9d3d67f6e890b3d4251fbf8e"
 
 [[package]]
 name = "sharded-slab"

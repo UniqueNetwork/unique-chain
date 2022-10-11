@@ -90,6 +90,8 @@ pub use evm_coder_procedural::solidity_interface;
 pub use evm_coder_procedural::solidity;
 /// See [`solidity_interface`]
 pub use evm_coder_procedural::weight;
+pub use const_format;
+pub use sha3_const;
 
 /// Derives [`ToLog`] for enum
 ///
@@ -227,6 +229,14 @@ pub mod types {
 		}
 	}
 
+	impl SignatureString for EthCrossAccount {
+		const SIGNATURE_STRING: &'static str = "(address,uint256)";
+	}
+
+	pub trait SignatureString {
+		const SIGNATURE_STRING: &'static str;
+	}
+
 	/// Convert `CrossAccountId` to `uint256`.
 	pub fn convert_cross_account_to_uint256<T: pallet_evm::account::Config>(
 		from: &T::CrossAccountId,
@@ -347,6 +357,18 @@ mod tests {
 	fn function_selector_generation() {
 		assert_eq!(fn_selector!(transfer(address, uint256)), 0xa9059cbb);
 	}
+
+	// #[test]
+	// fn function_selector_generation_1() {
+	// 	assert_eq!(
+	// 		fn_selector!(transferFromCrossAccountToCrossAccount(
+	// 			EthCrossAccount,
+	// 			EthCrossAccount,
+	// 			uint256
+	// 		)),
+	// 		2543295963
+	// 	);
+	// }
 
 	#[test]
 	fn event_topic_generation() {

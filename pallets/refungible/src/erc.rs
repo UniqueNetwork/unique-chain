@@ -21,6 +21,7 @@
 
 extern crate alloc;
 
+use alloc::{format, string::ToString};
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,

@@ -20,6 +20,7 @@
 // about Procedural Macros in Rust book:
 // https://doc.rust-lang.org/reference/procedural-macros.html
 
+use proc_macro2::{TokenStream, Group};
 use quote::{quote, ToTokens};
 use inflector::cases;
 use std::fmt::Write;
@@ -328,6 +329,7 @@ impl Parse for MethodInfo {
 	}
 }
 
+#[derive(Debug)]
 enum AbiType {
 	// type
 	Plain(Ident),
@@ -473,6 +475,7 @@ impl ToTokens for AbiType {
 	}
 }
 
+#[derive(Debug)]
 struct MethodArg {
 	name: Ident,
 	camel_name: String,
@@ -722,13 +725,25 @@ impl Method {
 		}
 	}
 
+	fn expand_selector(&self) -> proc_macro2::TokenStream {
+		let custom_signature = self.expand_custom_signature();
+		quote! {
+			 {
+				let a = ::evm_coder::sha3_const::Keccak256::new()
+					.update(#custom_signature.as_bytes())
+					.finalize();
+				[a[0], a[1], a[2], a[3]]
+			}
+		}
+	}
+
 	fn expand_const(&self) -> proc_macro2::TokenStream {
 		let screaming_name = &self.screaming_name;
-		let selector = u32::to_be_bytes(self.selector);
 		let selector_str = &self.selector_str;
+		let selector = &self.expand_selector();
 		quote! {
 			#[doc = #selector_str]
-			const #screaming_name: ::evm_coder::types::bytes4 = [#(#selector,)*];
+			const #screaming_name: ::evm_coder::types::bytes4 = #selector;
 		}
 	}
 
@@ -831,6 +846,59 @@ impl Method {
 		}
 	}
 
+	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
+		let mut first_comma = true;
+		let mut custom_signature = TokenStream::new();
+		let mut template = self.camel_name.clone() + "(";
+		self.args
+			.iter()
+			.filter_map(|a| {
+				if a.is_special() {
+					return None;
+				};
+
+				match a.ty {
+					AbiType::Plain(ref ident) => Some(ident),
+					_ => None,
+				}
+			})
+			.for_each(|ident| {
+				if !first_comma {
+					custom_signature.extend(quote!(,));
+					template.push(',');
+				} else {
+					first_comma = false;
+				};
+				template.push_str("{}");
+				let ident_str = ident.to_string();
+				match ident_str.as_str() {
+					"address" | "uint8" | "uint16" | "uint32" | "uint64" | "uint128"
+					| "uint256" | "bytes4" | "topic" | "string" | "bytes" | "void" | "caller"
+					| "bool" | "" => {
+						custom_signature.extend(quote!(#ident_str));
+					}
+					_ => {
+						custom_signature.extend(quote! {
+							#ident::SIGNATURE_STRING
+						});
+					}
+				}
+			});
+
+		template.push(')');
+		let mut template = quote!(#template);
+		template.extend(quote!(,));
+		template.extend(custom_signature);
+		let custom_signature_group = Group::new(proc_macro2::Delimiter::Parenthesis, template);
+		let mut custom_signature = quote! {
+			::evm_coder::const_format::formatcp!
+		};
+		custom_signature.extend(custom_signature_group.to_token_stream());
+
+		// println!("!!!!! {}", custom_signature);
+		custom_signature
+	}
+
 	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
 		let camel_name = &self.camel_name;
 		let mutability = match self.mutability {
@@ -847,15 +915,17 @@ impl Method {
 			.map(MethodArg::expand_solidity_argument);
 		let docs = &self.docs;
 		let selector_str = &self.selector_str;
-		let selector = self.selector;
+		let selector = &self.expand_selector();
 		let hide = self.hide;
+		let custom_signature = self.expand_custom_signature();
 		let is_payable = self.has_value_args;
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
 				selector_str: #selector_str,
-				selector: #selector,
 				hide: #hide,
+				selector: u32::from_be_bytes(#selector),
+				custom_signature: #custom_signature,
 				name: #camel_name,
 				mutability: #mutability,
 				is_payable: #is_payable,
