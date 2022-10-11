@@ -8,10 +8,9 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId} from './types';
+import {ICrossAccountId, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
-import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -65,6 +64,7 @@ export class DevUniqueHelper extends UniqueHelper {
   arrange: ArrangeGroup;
   wait: WaitGroup;
   admin: AdminGroup;
+  testUtils: TestUtilGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
@@ -73,6 +73,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
+    this.testUtils = new TestUtilGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -475,6 +476,38 @@ class WaitGroup {
       });
     });
     return promise;
+  }
+}
+
+class TestUtilGroup {
+  helper: DevUniqueHelper;
+
+  constructor(helper: DevUniqueHelper) {
+    this.helper = helper;
+  }
+
+  async setTestValue(signer: TSigner, testVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValue', [testVal], true);
+  }
+
+  async incTestValue(signer: TSigner) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.incTestValue', [], true);
+  }
+
+  async setTestValueAndRollback(signer: TSigner, testVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
+  }
+
+  async testValue() {
+    return (await this.helper.callRpc('api.query.testUtils.testValue', [])).toNumber();
+  }
+
+  async justTakeFee(signer: TSigner) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.justTakeFee', [], true);
+  }
+
+  async selfCancelingInc(signer: TSigner, scheduledId: string, maxTestVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.selfCancelingInc', [scheduledId, maxTestVal], true);
   }
 }
 
