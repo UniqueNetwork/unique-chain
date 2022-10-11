@@ -17,6 +17,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -41,19 +43,32 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
+	#[pallet::getter(fn is_enabled)]
+	pub type Enabled<T> = StorageValue<_, bool, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn test_value)]
 	pub type TestValue<T> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
+		TestPalletDisabled,
 		TriggerRollback,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
+		pub fn enable(origin: OriginFor<T>) -> DispatchResult {
+			ensure_root(origin)?;
+			<Enabled<T>>::set(true);
+
+			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
 		pub fn set_test_value(origin: OriginFor<T>, value: u32) -> DispatchResult {
-			ensure_signed(origin)?;
+			Self::ensure_origin_and_enabled(origin)?;
 
 			<TestValue<T>>::put(value);
 
@@ -82,6 +97,8 @@ pub mod pallet {
 			id: ScheduledId,
 			max_test_value: u32,
 		) -> DispatchResult {
+			Self::ensure_origin_and_enabled(origin.clone())?;
+
 			if <TestValue<T>>::get() < max_test_value {
 				Self::inc_test_value(origin)?;
 			} else {
@@ -92,8 +109,16 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(100_000_000)]
-		pub fn just_take_fee(_origin: OriginFor<T>) -> DispatchResult {
+		pub fn just_take_fee(origin: OriginFor<T>) -> DispatchResult {
+			Self::ensure_origin_and_enabled(origin)?;
 			Ok(())
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	fn ensure_origin_and_enabled(origin: OriginFor<T>) -> DispatchResult {
+		ensure_signed(origin)?;
+		<Enabled<T>>::get().then(|| ()).ok_or(<Error<T>>::TestPalletDisabled.into())
 	}
 }
