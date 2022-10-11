@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-// import {subToEth} from './util/helpers';
 import {EthUniqueHelper, itEth} from './util/playgrounds';
 import {Pallets} from '../util/playgrounds';
 
