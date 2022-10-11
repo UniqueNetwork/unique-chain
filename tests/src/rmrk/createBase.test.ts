@@ -1,5 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
+import {requirePallets, Pallets} from './util/helpers';
 import {createCollection, createBase} from './util/tx';
 
 describe('integration test: create new Base', () => {

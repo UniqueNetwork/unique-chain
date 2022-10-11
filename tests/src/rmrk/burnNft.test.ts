@@ -1,11 +1,10 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {NftIdTuple, getChildren} from './util/fetch';
 import {burnNft, createCollection, sendNft, mintNft} from './util/tx';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

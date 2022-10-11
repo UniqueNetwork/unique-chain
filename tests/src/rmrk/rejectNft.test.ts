@@ -7,8 +7,7 @@ import {
   rejectNft,
 } from './util/tx';
 import {getChildren, NftIdTuple} from './util/fetch';
-import {isNftChildOfAnother, expectTxFailure} from './util/helpers';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
+import {isNftChildOfAnother, expectTxFailure, requirePallets, Pallets} from './util/helpers';
 
 describe('integration test: reject NFT', () => {
   let api: any;

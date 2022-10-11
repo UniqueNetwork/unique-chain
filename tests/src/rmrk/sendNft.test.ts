@@ -2,8 +2,7 @@ import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
 import {createCollection, mintNft, sendNft} from './util/tx';
 import {NftIdTuple} from './util/fetch';
-import {isNftChildOfAnother, expectTxFailure} from './util/helpers';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
+import {isNftChildOfAnother, expectTxFailure, requirePallets, Pallets} from './util/helpers';
 
 describe('integration test: send NFT', () => {
   let api: any;
