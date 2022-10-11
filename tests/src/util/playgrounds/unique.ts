@@ -252,6 +252,19 @@ class UniqueUtil {
     isSuccess = isSuccess && amount === transfer.amount;
     return isSuccess;
   }
+
+  static bigIntToDecimals(number: bigint, decimals = 18) {
+    const numberStr = number.toString();
+    const dotPos = numberStr.length - decimals;
+  
+    if (dotPos <= 0) {
+      return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
+    } else {
+      const intPart = numberStr.substring(0, dotPos);
+      const fractPart = numberStr.substring(dotPos);
+      return intPart + '.' + fractPart;
+    }
+  }
 }
 
 class UniqueEventHelper {
@@ -2282,6 +2295,17 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
     return CrossAccountId.translateSubToEth(subAddress);
   }
+
+  paraSiblingSovereignAccount(paraid: number) {
+    // We are getting a *sibling* parachain sovereign account,
+    // so we need a sibling prefix: encoded(b"sibl") == 0x7369626c
+    const siblingPrefix = '0x7369626c';
+
+    const encodedParaId = this.helper.getApi().createType('u32', paraid).toHex(true).substring(2);
+    const suffix = '000000000000000000000000000000000000000000000000';
+
+    return siblingPrefix + encodedParaId + suffix;
+  }
 }
 
 class StakingGroup extends HelperGroup<UniqueHelper> {
@@ -2601,7 +2625,6 @@ export class UniqueHelper extends ChainHelperBase {
     super(logger, options.helperBase ?? UniqueHelper);
 
     this.balance = new BalanceGroup(this);
-    this.address = new AddressGroup(this);
     this.collection = new CollectionGroup(this);
     this.nft = new NFTGroup(this);
     this.rft = new RFTGroup(this);
