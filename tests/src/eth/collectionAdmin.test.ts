@@ -75,7 +75,7 @@ describe('Add collection admins', () => {
     expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.true;
   });
   
-  itEth('Check adminlist', async ({helper, privateKey}) => {
+  itEth.skip('Check adminlist', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
         
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
