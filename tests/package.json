@@ -27,7 +27,7 @@
     "lint": "eslint --ext .ts,.js src/",
     "fix": "eslint --ext .ts,.js src/ --fix",
 
-    "test": "npm run testParallel && npm run testSequential",
+    "test": "yarn testParallel && yarn testSequential",
     "testParallel": "mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
     "testSequential": "mocha --timeout 9999999 -r ts-node/register './src/**/*.seqtest.ts'",
     "testDevnode": "mocha --timeout 9999999 -r ts-node/register './src/**/*test.ts'",
