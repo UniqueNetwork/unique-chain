@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {bigIntToDecimals, paraSiblingSovereignAccount} from './../deprecated-helpers/helpers';
 import {itSub, expect, describeXcm, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util/playgrounds';
 
 const STATEMINE_CHAIN = 1000;
@@ -75,7 +74,7 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       await helper.assets.mint(alice, ASSET_ID, alice.address, ASSET_AMOUNT);
 
       // funding parachain sovereing account (Parachain: 2095)
-      const parachainSovereingAccount = await paraSiblingSovereignAccount(UNIQUE_CHAIN);
+      const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(UNIQUE_CHAIN);
       await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, fundingAmount);
     });
 
@@ -215,7 +214,7 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       // common good parachain take commission in it native token
       console.log(
         'Opal to Westmint transaction fees on Westmint: %s WND',
-        bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, WESTMINT_DECIMALS),
+        helper.util.bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, WESTMINT_DECIMALS),
       );
       expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
 
@@ -234,13 +233,13 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     expect(free == TRANSFER_AMOUNT).to.be.true;
     console.log(
       'Opal to Westmint transaction fees on Opal: %s USDT',
-      bigIntToDecimals(TRANSFER_AMOUNT - free),
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free),
     );
     // ... and parachain native token
     expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
     console.log(
       'Opal to Westmint transaction fees on Opal: %s WND',
-      bigIntToDecimals(balanceOpalAfter - balanceOpalBefore, WESTMINT_DECIMALS),
+      helper.util.bigIntToDecimals(balanceOpalAfter - balanceOpalBefore, WESTMINT_DECIMALS),
     );    
   });
 
@@ -355,11 +354,11 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore; 
     console.log(
       'Relay (Westend) to Opal transaction fees: %s OPL',
-      bigIntToDecimals(balanceBobAfter - balanceBobBefore),
+      helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
     );
     console.log(
       'Relay (Westend) to Opal transaction fees: %s WND',
-      bigIntToDecimals(wndFee, WESTMINT_DECIMALS),
+      helper.util.bigIntToDecimals(wndFee, WESTMINT_DECIMALS),
     );
     expect(balanceBobBefore == balanceBobAfter).to.be.true;
     expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
