@@ -80,7 +80,7 @@ describe('ERC165 tests', async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       const donor = privateKey('//Alice');
       const [alice] = await helper.arrange.createAccounts([10n], donor);
-      ({collectionId: collection} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}));
+      ({collectionId: collection} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test', properties: [{key: 'ERC721Metadata', value: '1'}]}));
       minter = helper.eth.createAccount();
     });
   });

@@ -433,7 +433,6 @@ const defaultCreateCollectionParams: CreateCollectionParams = {
   mode: {type: 'NFT'},
   name: 'name',
   tokenPrefix: 'prefix',
-  properties: [{key: 'ERC721Metadata', value: '1'}],
 };
 
 export async function

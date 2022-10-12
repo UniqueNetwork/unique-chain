@@ -709,9 +709,6 @@ pub mod static_property {
 		/// Value "1" ERC721 metadata supported.
 		pub const ERC721_METADATA_SUPPORTED: &[u8] = b"1";
 
-		/// Value "0" ERC721 metadata supported.
-		pub const ERC721_METADATA_UNSUPPORTED: &[u8] = b"0";
-
 		/// Value for [`ERC721_METADATA`].
 		pub fn erc721() -> up_data_structs::PropertyValue {
 			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)

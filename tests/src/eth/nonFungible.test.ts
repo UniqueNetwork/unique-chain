@@ -501,7 +501,7 @@ describe('Common metadata', () => {
 
   itEth('Returns collection name', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'oh River', tokenPrefix: 'CHANGE'});
+    const collection = await helper.nft.mintCollection(alice, {name: 'oh River', tokenPrefix: 'CHANGE', properties: [{key: 'ERC721Metadata', value: '1'}]});
 
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const name = await contract.methods.name().call();
@@ -510,7 +510,7 @@ describe('Common metadata', () => {
 
   itEth('Returns symbol name', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'oh River', tokenPrefix: 'CHANGE'});
+    const collection = await helper.nft.mintCollection(alice, {name: 'oh River', tokenPrefix: 'CHANGE', properties: [{key: 'ERC721Metadata', value: '1'}]});
 
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const symbol = await contract.methods.symbol().call();

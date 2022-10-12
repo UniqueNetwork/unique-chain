@@ -35,7 +35,7 @@ describe('Composite Properties Test', () => {
     expect(collectionOption).is.not.null;
     let collection = collectionOption;
     expect(collection.tokenPropertyPermissions).to.be.empty;
-    expect(collection.properties).to.be.deep.equal([{key: 'ERC721Metadata', value: '1'}]);
+    expect(collection.properties).to.be.empty;
 
     const propertyPermissions = [
       {key: 'mindgame', permission: {collectionAdmin: true, mutable: false, tokenOwner: true}},
@@ -44,7 +44,6 @@ describe('Composite Properties Test', () => {
     await expect(await baseCollection.setTokenPropertyPermissions(alice, propertyPermissions)).to.be.true;
 
     const collectionProperties = [
-      {key: 'ERC721Metadata', value: '1'}, 
       {key: 'black_hole', value: 'LIGO'},
       {key: 'electron', value: 'come bond'}, 
     ];
@@ -80,10 +79,7 @@ describe('Integration Test: Collection Properties', () => {
   itSub('Properties are initially empty', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice);
     const properties = await collection.getProperties();
-    expect(properties).to.be.deep.equal([{
-      'key': 'ERC721Metadata',
-      'value': '1',
-    }]);
+    expect(properties).to.be.empty;
   });
 
   async function testSetsPropertiesForCollection(collection: UniqueBaseCollection) {
@@ -201,10 +197,7 @@ describe('Negative Integration Test: Collection Properties', () => {
       .to.be.rejectedWith(/common\.NoPermission/);
 
     const properties = await collection.getProperties();
-    expect(properties).to.be.deep.equal([{
-      'key': 'ERC721Metadata',
-      'value': '1',
-    }]);
+    expect(properties).to.be.empty;
   }
 
   itSub('Fails to set properties in a NFT collection if not its onwer/administrator', async ({helper}) =>  {
@@ -257,10 +250,7 @@ describe('Negative Integration Test: Collection Properties', () => {
       to.be.rejectedWith(/common\.PropertyLimitReached/);
 
     const properties = await collection.getProperties();
-    expect(properties).to.be.deep.equal([{
-      'key': 'ERC721Metadata',
-      'value': '1',
-    }]);
+    expect(properties).to.be.empty;
   }
 
   itSub('Fails to set more properties than it is allowed (NFT)', async ({helper}) =>  {

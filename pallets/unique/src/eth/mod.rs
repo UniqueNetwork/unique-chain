@@ -104,7 +104,7 @@ fn make_data<T: Config>(
 		.try_push(up_data_structs::PropertyKeyPermission {
 			key: key::url(),
 			permission: up_data_structs::PropertyPermission {
-				mutable: false,
+				mutable: true,
 				collection_admin: true,
 				token_owner: false,
 			},
@@ -115,17 +115,6 @@ fn make_data<T: Config>(
 		token_property_permissions
 			.try_push(up_data_structs::PropertyKeyPermission {
 				key: key::suffix(),
-				permission: up_data_structs::PropertyPermission {
-					mutable: true,
-					collection_admin: true,
-					token_owner: false,
-				},
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		token_property_permissions
-			.try_push(up_data_structs::PropertyKeyPermission {
-				key: key::url(),
 				permission: up_data_structs::PropertyPermission {
 					mutable: true,
 					collection_admin: true,

@@ -377,7 +377,7 @@ describe('Common metadata', () => {
 
   itEth('Returns collection name', async ({helper}) => {
     const caller = helper.eth.createAccount();
-    const collection = await helper.rft.mintCollection(alice, {name: 'Leviathan', tokenPrefix: '11'});
+    const collection = await helper.rft.mintCollection(alice, {name: 'Leviathan', tokenPrefix: '11', properties: [{key: 'ERC721Metadata', value: '1'}]});
     
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'rft', caller);
     const name = await contract.methods.name().call();
@@ -386,7 +386,7 @@ describe('Common metadata', () => {
 
   itEth('Returns symbol name', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionId} = await helper.rft.mintCollection(alice, {name: 'Leviathan', tokenPrefix: '12'});
+    const {collectionId} = await helper.rft.mintCollection(alice, {name: 'Leviathan', tokenPrefix: '12', properties: [{key: 'ERC721Metadata', value: '1'}]});
     const contract = helper.ethNativeContract.collectionById(collectionId, 'rft', caller);
     const symbol = await contract.methods.symbol().call();
     expect(symbol).to.equal('12');
