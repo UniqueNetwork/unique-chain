@@ -459,7 +459,6 @@ pub mod pallet {
 				let ensured_origin =
 					T::ScheduleOrigin::ensure_origin(scheduled_origin.into()).unwrap();
 
-				let r;
 				let r = match ensured_origin {
 					ScheduledEnsureOriginSuccess::Root => {
 						r = Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()));
