@@ -461,18 +461,18 @@ pub mod pallet {
 
 				let r = match ensured_origin {
 					ScheduledEnsureOriginSuccess::Root => {
-						r = Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()));
+						Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()))
 					}
 					ScheduledEnsureOriginSuccess::Signed(sender) => {
 						// Execute transaction via chain default pipeline
 						// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
-						r = T::CallExecutor::dispatch_call(Some(sender), call.clone());
+						T::CallExecutor::dispatch_call(Some(sender), call.clone())
 					}
 					ScheduledEnsureOriginSuccess::Unsigned => {
 						// Unsigned version of the above
-						r = T::CallExecutor::dispatch_call(None, call.clone());
+						T::CallExecutor::dispatch_call(None, call.clone())
 					}
-				}
+				};
 
 				let mut actual_call_weight: Weight = item_weight;
 				let result: Result<_, DispatchError> = match r {
