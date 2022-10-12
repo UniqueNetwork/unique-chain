@@ -7,9 +7,9 @@ import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {Context} from 'mocha';
-import config from '../../config';
-import '../../interfaces/augment-api-events';
-import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
+import config from '../config';
+import '../interfaces/augment-api-events';
+import {DevUniqueHelper, SilentLogger, SilentConsole} from './playgrounds/unique.dev';
 
 chai.use(chaiAsPromised);
 export const expect = chai.expect;

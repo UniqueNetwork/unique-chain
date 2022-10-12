@@ -16,7 +16,7 @@
 
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from '../util/playgrounds';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from '../util';
 
 
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {

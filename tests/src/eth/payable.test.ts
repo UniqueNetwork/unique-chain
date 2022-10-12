@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util/playgrounds';
+import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;

@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from './util/playgrounds';
+import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from './util';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
-import {itEth, expect, SponsoringMode} from './eth/util/playgrounds';
+import {itEth, expect, SponsoringMode} from './eth/util';
 
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;
@@ -36,7 +36,7 @@ describe('App promotion', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
       donor = await privateKey({filename: __filename});
-      palletAddress = helper.arrange.calculatePalleteAddress('appstake');
+      palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();
       accounts = await helper.arrange.createCrowd(100, 1000n, donor); // create accounts-pool to speed up tests

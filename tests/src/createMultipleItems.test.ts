@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, Pallets, itSub} from './util/playgrounds';
+import {usingPlaygrounds, expect, Pallets, itSub} from './util';
 
 describe('Integration Test createMultipleItems(collection_id, owner, items_data):', () => {
   let alice: IKeyringPair;

@@ -9,7 +9,7 @@ import {promises as fs} from 'fs';
 export async function mochaGlobalSetup() {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
-      // 1. Create donors
+      // 1. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
           if (!result) process.exit(1);
@@ -19,7 +19,7 @@ export async function mochaGlobalSetup() {
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
-        const palletAddress = helper.arrange.calculatePalleteAddress('appstake');
+        const palletAddress = helper.arrange.calculatePalletAddress('appstake');
         const palletAdmin = await privateKey('//PromotionAdmin');
         const api = helper.getApi();
         await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
@@ -53,9 +53,9 @@ const fundFilenames = async () => {
     const oneToken = helper.balance.getOneTokenNominal();
     const alice = await privateKey('//Alice');
     const nonce = await helper.chain.getNonce(alice.address);
-    const filenames = await getFiles(path.resolve(__dirname, '../..'));
+    const filenames = await getFiles(path.resolve(__dirname, '..'));
 
-    // batching is actually undesired, it takes away the time while all the transactions actually succeed
+    // batching is actually undesireable, it takes away the time while all the transactions actually succeed
     const batchSize = 300;
     let balanceGrantedCounter = 0;
     for (let b = 0; b < filenames.length; b += batchSize) {

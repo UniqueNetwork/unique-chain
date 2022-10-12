@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util';
 
 describe('Matcher contract usage', () => {
   const PRICE = 2000n;

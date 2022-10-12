@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
+import {usingPlaygrounds, expect, itSub, Pallets} from './util';
 
 async function setSponsorHelper(collection: any, signer: IKeyringPair, sponsorAddress: string) {
   await collection.setSponsor(signer, sponsorAddress);

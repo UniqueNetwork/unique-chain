@@ -21,23 +21,23 @@
   },
   "mocha": {
     "timeout": 9999999,
-    "require": ["ts-node/register", "./src/util/playgrounds/globalSetup.ts"]
+    "require": ["ts-node/register", "./src/util/globalSetup.ts"]
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js src/",
     "fix": "eslint --ext .ts,.js src/ --fix",
 
-    "test": "yarn testParallel && yarn testSequential",
+    "test": "mocha --timeout 9999999 -r ts-node/register './src/**/*.*test.ts'",
+    "testParallelFull": "yarn testParallel && yarn testSequential",
     "testParallel": "mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
     "testSequential": "mocha --timeout 9999999 -r ts-node/register './src/**/*.seqtest.ts'",
-    "testDevnode": "mocha --timeout 9999999 -r ts-node/register './src/**/*test.ts'",
-    "testStructure": "mocha --parallel --timeout 9999999 -r ts-node/register ./**/nesting/**.test.ts",
-    "testEth": "mocha --parallel --timeout 9999999 -r ts-node/register './**/eth/**/*.test.ts'",
-    "testEthNesting": "mocha --parallel --timeout 9999999 -r ts-node/register './**/eth/nesting/**/*.test.ts'",
-    "testEthFractionalizer": "mocha --parallel --timeout 9999999 -r ts-node/register './**/eth/fractionalizer/**/*.test.ts'",
-    "testEthMarketplace": "mocha --parallel --timeout 9999999 -r ts-node/register './**/eth/marketplace/**/*.test.ts'",
-    "testEvent": "mocha --parallel --timeout 9999999 -r ts-node/register ./src/check-event/*.test.ts",
-    "testRmrk": "mocha --timeout 9999999 -r ts-node/register ./**/rmrk/**test.ts",
+    "testStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/*.*test.ts",
+    "testEth": "mocha --timeout 9999999 -r ts-node/register './**/eth/**/*.*test.ts'",
+    "testEthNesting": "mocha --timeout 9999999 -r ts-node/register './**/eth/nesting/**/*.*test.ts'",
+    "testEthFractionalizer": "mocha --timeout 9999999 -r ts-node/register './**/eth/fractionalizer/**/*.*test.ts'",
+    "testEthMarketplace": "mocha --timeout 9999999 -r ts-node/register './**/eth/marketplace/**/*.*test.ts'",
+    "testEvent": "mocha --timeout 9999999 -r ts-node/register ./src/check-event/*.*test.ts",
+    "testRmrk": "mocha --timeout 9999999 -r ts-node/register ./**/rmrk/*.*test.ts",
 
     "testEthPayable": "mocha --timeout 9999999 -r ts-node/register './**/eth/payable.test.ts'",
     "testEthTokenProperties": "mocha --timeout 9999999 -r ts-node/register ./**/eth/tokenProperties.test.ts",

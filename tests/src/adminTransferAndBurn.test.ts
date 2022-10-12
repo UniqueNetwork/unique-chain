@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
+import {usingPlaygrounds, expect, itSub} from './util';
 
 describe('Integration Test: ownerCanTransfer allows admins to use only transferFrom/burnFrom:', () => {
   let alice: IKeyringPair;

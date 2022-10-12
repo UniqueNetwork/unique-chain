@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds} from './util';
 import {CrossAccountId} from '../util/playgrounds/unique';
 import {IKeyringPair} from '@polkadot/types/types';
 

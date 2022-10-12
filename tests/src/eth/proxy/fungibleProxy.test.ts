@@ -17,7 +17,7 @@
 import {expect} from 'chai';
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util/playgrounds';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util';
 
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them

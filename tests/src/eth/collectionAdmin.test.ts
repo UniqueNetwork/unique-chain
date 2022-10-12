@@ -14,7 +14,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util/playgrounds';
+import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));

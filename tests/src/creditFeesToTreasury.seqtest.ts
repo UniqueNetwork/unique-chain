@@ -17,7 +17,7 @@
 import './interfaces/augment-api-consts';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
+import {usingPlaygrounds, expect, itSub} from './util';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;

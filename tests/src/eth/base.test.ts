@@ -17,7 +17,7 @@
 import {Contract} from 'web3-eth-contract';
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util';
 
 
 describe('Contract calls', () => {

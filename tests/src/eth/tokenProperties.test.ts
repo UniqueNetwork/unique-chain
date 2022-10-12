@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 
 describe('EVM token properties', () => {

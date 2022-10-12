@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../util/playgrounds';
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../util';
 import {UniqueHelper, UniqueNFToken, UniqueRFToken} from '../util/playgrounds/unique';
 
 describe('Integration Test: Token Properties', () => {

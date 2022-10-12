@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSub} from './util/playgrounds';
+import {expect, itSub} from './util';
 
 const BLOCK_TIME_MS = 12000;
 const TOLERANCE_MS = 3000;

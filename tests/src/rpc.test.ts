@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect} from './util/playgrounds';
+import {usingPlaygrounds, itSub, expect} from './util';
 import {CrossAccountId} from './util/playgrounds/unique';
 
 describe('integration test: RPC methods', () => {

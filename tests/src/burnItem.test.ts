@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util';
 
 
 describe('integration test: ext. burnItem():', () => {

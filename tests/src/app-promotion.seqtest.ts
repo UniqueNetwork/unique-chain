@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from './util/playgrounds';
-import {expect} from './eth/util/playgrounds';
+import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from './util';
+import {expect} from './eth/util';
 
 let superuser: IKeyringPair;
 let donor: IKeyringPair;

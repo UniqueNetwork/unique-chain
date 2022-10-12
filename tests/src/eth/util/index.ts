@@ -4,17 +4,17 @@
 import * as path from 'path';
 import {IKeyringPair} from '@polkadot/types/types';
 
-import config from '../../../config';
+import config from '../../config';
 
-import {EthUniqueHelper} from './unique.dev';
-import {SilentLogger, SilentConsole} from '../../../util/playgrounds/unique.dev';
+import {EthUniqueHelper} from './playgrounds/unique.dev';
+import {SilentLogger, SilentConsole} from '../../util/playgrounds/unique.dev';
 
-export {EthUniqueHelper} from './unique.dev';
+export {EthUniqueHelper} from './playgrounds/unique.dev';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {getTestSeed, requirePalletsOrSkip} from '../../../util/playgrounds';
+import {getTestSeed, requirePalletsOrSkip} from '../../util';
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);

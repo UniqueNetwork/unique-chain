@@ -16,7 +16,7 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;

@@ -1,6 +1,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util/playgrounds';
+import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util';
 
 
 function linearRegression(points: { x: bigint, y: bigint }[]) {
@@ -56,9 +56,9 @@ function _error(points: { x: bigint, y: bigint }[], hypothesis: (a: bigint) => b
   }).reduce((a, b) => a + b, 0n) / BigInt(points.length));
 }
 
-async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (account: string) => IKeyringPair) {
-  const alice = privateKey('//Alice');
-  const bob = privateKey('//Bob');
+async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
+  const alice = await privateKey('//Alice');
+  const bob = await privateKey('//Bob');
   const dataPoints = [];
 
   {
@@ -106,8 +106,8 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
   }
 }
 
-async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (account: string) => IKeyringPair) {
-  const alice = privateKey('//Alice');
+async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
+  const alice = await privateKey('//Alice');
   const caller = await helper.eth.createAccountWithBalance(alice);
   const receiver = helper.eth.createAccount();
   const dataPoints = [];

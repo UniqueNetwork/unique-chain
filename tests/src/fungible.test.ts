@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 const U128_MAX = (1n << 128n) - 1n;
 

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/playgrounds';
+import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 
 describe('Number of tokens per address (NFT)', () => {
   let alice: IKeyringPair;
