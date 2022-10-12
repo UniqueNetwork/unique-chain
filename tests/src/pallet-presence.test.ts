@@ -70,6 +70,7 @@ describe('Pallet presence', () => {
       const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
+      const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(
@@ -77,6 +78,7 @@ describe('Pallet presence', () => {
           // scheduler,
           foreignAssets,
           appPromotion,
+          testUtils,
           ...rmrkPallets,
         );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
