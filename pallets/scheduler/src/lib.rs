@@ -412,6 +412,8 @@ pub mod pallet {
 								Lookup::<T>::insert(id, (until, index as u32));
 							}
 							Agenda::<T>::append(until, Some(s));
+						} else if let Some(ref id) = s.maybe_id {
+							Lookup::<T>::remove(id);
 						}
 						continue;
 					}
