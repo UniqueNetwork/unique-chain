@@ -457,21 +457,22 @@ pub mod pallet {
 				let scheduled_origin =
 					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(s.origin.clone());
 				let ensured_origin =
-					T::ScheduleOrigin::ensure_origin(scheduled_origin.into()).unwrap();
+					T::ScheduleOrigin::ensure_origin(scheduled_origin.into());
 
 				let r = match ensured_origin {
-					ScheduledEnsureOriginSuccess::Root => {
+					Ok(ScheduledEnsureOriginSuccess::Root) => {
 						Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()))
 					}
-					ScheduledEnsureOriginSuccess::Signed(sender) => {
+					Ok(ScheduledEnsureOriginSuccess::Signed(sender)) => {
 						// Execute transaction via chain default pipeline
 						// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 						T::CallExecutor::dispatch_call(Some(sender), call.clone())
 					}
-					ScheduledEnsureOriginSuccess::Unsigned => {
+					Ok(ScheduledEnsureOriginSuccess::Unsigned) => {
 						// Unsigned version of the above
 						T::CallExecutor::dispatch_call(None, call.clone())
-					}
+					},
+					Err(e) => Ok(Err(e.into())),
 				};
 
 				let mut actual_call_weight: Weight = item_weight;
