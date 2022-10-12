@@ -140,7 +140,7 @@ fn make_data<T: Config>(
 				value: property_value::erc721(),
 			})
 			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-			
+
 		properties
 			.try_push(up_data_structs::Property {
 				key: key::schema_version(),
