@@ -119,6 +119,8 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
 	fn ensure_origin_and_enabled(origin: OriginFor<T>) -> DispatchResult {
 		ensure_signed(origin)?;
-		<Enabled<T>>::get().then(|| ()).ok_or(<Error<T>>::TestPalletDisabled.into())
+		<Enabled<T>>::get()
+			.then(|| ())
+			.ok_or(<Error<T>>::TestPalletDisabled.into())
 	}
 }

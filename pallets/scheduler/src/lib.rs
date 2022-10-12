@@ -456,8 +456,7 @@ pub mod pallet {
 
 				let scheduled_origin =
 					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(s.origin.clone());
-				let ensured_origin =
-					T::ScheduleOrigin::ensure_origin(scheduled_origin.into());
+				let ensured_origin = T::ScheduleOrigin::ensure_origin(scheduled_origin.into());
 
 				let r = match ensured_origin {
 					Ok(ScheduledEnsureOriginSuccess::Root) => {
@@ -471,7 +470,7 @@ pub mod pallet {
 					Ok(ScheduledEnsureOriginSuccess::Unsigned) => {
 						// Unsigned version of the above
 						T::CallExecutor::dispatch_call(None, call.clone())
-					},
+					}
 					Err(e) => Ok(Err(e.into())),
 				};
 
