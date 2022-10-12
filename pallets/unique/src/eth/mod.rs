@@ -35,7 +35,7 @@ use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorde
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue,
+	CollectionMode, PropertyValue, DecimalPoints,
 };
 
 use crate::{Config, SelfWeightOf, weights::WeightInfo};
@@ -155,9 +155,7 @@ fn make_data<T: Config>(
 	Ok(data)
 }
 
-fn create_refungible_collection_internal<
-	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
->(
+fn create_refungible_collection_internal<T: Config>(
 	caller: caller,
 	value: value,
 	name: string,
@@ -171,6 +169,37 @@ fn create_refungible_collection_internal<
 	let data = make_data::<T>(
 		name,
 		CollectionMode::ReFungible,
+		description,
+		token_prefix,
+		base_uri_value,
+		add_properties,
+	)?;
+	check_sent_amount_equals_collection_creation_price::<T>(value)?;
+	let collection_helpers_address =
+		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
+
+	let collection_id =
+		T::CollectionDispatch::create(caller.clone(), collection_helpers_address, data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	let address = pallet_common::eth::collection_id_to_address(collection_id);
+	Ok(address)
+}
+
+fn create_collection_internal<T: Config>(
+	caller: caller,
+	value: value,
+	name: string,
+	collection_mode: CollectionMode,
+	description: string,
+	token_prefix: string,
+	base_uri: string,
+	add_properties: bool,
+) -> Result<address> {
+	let (caller, name, description, token_prefix, base_uri_value) =
+		convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
+	let data = make_data::<T>(
+		name,
+		collection_mode,
 		description,
 		token_prefix,
 		base_uri_value,
@@ -295,6 +324,28 @@ where
 		)
 	}
 
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createRTCollection")]
+	fn create_fungible_collection(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		decimals: uint8,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::Fungible(decimals),
+			description,
+			token_prefix,
+			Default::default(),
+			false,
+		)
+	}
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
 	fn create_refungible_collection_with_properties(

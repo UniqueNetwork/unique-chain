@@ -19,7 +19,7 @@ interface CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x0c9ac65f
+/// @dev the ERC-165 identifier for this interface is 0xf6cad6c5
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -47,6 +47,15 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	///  or in textual repr: createRFTCollection(string,string,string)
 	function createRFTCollection(
 		string memory name,
+		string memory description,
+		string memory tokenPrefix
+	) external payable returns (address);
+
+	/// @dev EVM selector for this function is: 0xac1e2285,
+	///  or in textual repr: createRTCollection(string,uint8,string,string)
+	function createRTCollection(
+		string memory name,
+		uint8 decimals,
 		string memory description,
 		string memory tokenPrefix
 	) external payable returns (address);

@@ -192,10 +192,24 @@ class EthGroup extends EthGroupBase {
     return this.createCollecion('createNonfungibleCollection', signer, name, description, tokenPrefix);
   }
 
-  async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+  async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
     return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
   }
+  
+  async createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+    const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
+    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+        
+    const result = await collectionHelper.methods.createRTCollection(name, decimals, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
 
+    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
+    
+    const events = this.helper.eth.normalizeEvents(result.events);
+    
+    return {collectionId, collectionAddress, events};
+  }
+  
   async deployCollectorContract(signer: string): Promise<Contract> {
     return await this.helper.ethContract.deployByCode(signer, 'Collector', `
     // SPDX-License-Identifier: UNLICENSED
