@@ -336,27 +336,6 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[deprecated(note = "mathod was renamed to `create_rft_collection`, prefer it instead")]
-	fn create_refungible_collection(
-		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
-			caller,
-			value,
-			name,
-			description,
-			token_prefix,
-			Default::default(),
-			false,
-		)
-	}
-
-	#[weight(<SelfWeightOf<T>>::create_collection())]
 	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
 	fn create_refungible_collection_with_properties(
 		&mut self,

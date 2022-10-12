@@ -79,11 +79,11 @@ describe('Check ERC721 token URI for NFT', () => {
     });
   });
 
-  async function setup(helper: EthUniqueHelper, tokenPrefix: string, propertyKey?: string, propertyValue?: string): Promise<{contract: Contract, nextTokenId: string}> {
+  async function setup(helper: EthUniqueHelper, baseUri: string, propertyKey?: string, propertyValue?: string): Promise<{contract: Contract, nextTokenId: string}> {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', tokenPrefix);
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
     const nextTokenId = await contract.methods.nextTokenId().call();

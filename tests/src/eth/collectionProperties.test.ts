@@ -1,5 +1,6 @@
 import {itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
+import {Pallets} from '../util/playgrounds';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;
@@ -80,7 +81,7 @@ describe('Supports ERC721Metadata', () => {
     expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
   });
 
-  itEth('ERC721Metadata property can be set for RFT collection', async({helper}) => {
+  itEth.ifWithPallets('ERC721Metadata property can be set for RFT collection', [Pallets.ReFungible], async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.rft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
 

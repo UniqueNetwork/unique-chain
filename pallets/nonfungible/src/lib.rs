@@ -297,18 +297,6 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
-impl<T: Config> NonfungibleHandle<T> {
-	pub fn supports_metadata(&self) -> bool {
-		if let Some(erc721_metadata) =
-			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::erc721_metadata())
-		{
-			*erc721_metadata.into_inner() == *value::ERC721_METADATA_SUPPORTED
-		} else {
-			false
-		}
-	}
-}
-
 impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		self.0.recorder()

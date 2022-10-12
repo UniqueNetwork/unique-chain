@@ -34,15 +34,14 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{
-		CommonEvmHandler, PrecompileResult, CollectionCall,
-		static_property::{key, value as property_value},
+		CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key,
+		static_property::value,
 	},
 	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use alloc::string::ToString;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -226,37 +225,44 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-
-		if let Ok(url) = get_token_property(self, token_id_u32, &key::url()) {
-			if !url.is_empty() {
-				return Ok(url);
-			}
-		} else if !self.supports_metadata() {
-			return Err("tokenURI not set".into());
+		if !self.supports_metadata() {
+			return Ok("".into());
 		}
 
-		if let Some(base_uri) =
+		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		match get_token_property(self, token_id_u32, &key::url()).as_deref() {
+			Err(_) | Ok("") => (),
+			Ok(url) => {
+				return Ok(url.into());
+			}
+		};
+
+		let base_uri =
 			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::base_uri())
-		{
-			if !base_uri.is_empty() {
-				let base_uri = string::from_utf8(base_uri.into_inner()).map_err(|e| {
+				.map(BoundedVec::into_inner)
+				.map(string::from_utf8)
+				.transpose()
+				.map_err(|e| {
 					Error::Revert(alloc::format!(
 						"Can not convert value \"baseURI\" to string with error \"{}\"",
 						e
 					))
 				})?;
-				if let Ok(suffix) = get_token_property(self, token_id_u32, &key::suffix()) {
-					if !suffix.is_empty() {
-						return Ok(base_uri + suffix.as_str());
-					}
-				}
 
-				return Ok(base_uri);
+		let base_uri = match base_uri.as_deref() {
+			None | Some("") => {
+				return Ok("".into());
 			}
-		}
+			Some(base_uri) => base_uri.into(),
+		};
 
-		Ok("".into())
+		Ok(
+			match get_token_property(self, token_id_u32, &key::suffix()).as_deref() {
+				Err(_) | Ok("") => base_uri,
+				Ok(suffix) => base_uri + suffix,
+			},
+		)
 	}
 }
 
@@ -706,17 +712,29 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
+impl<T: Config> NonfungibleHandle<T> {
+	pub fn supports_metadata(&self) -> bool {
+		if let Some(erc721_metadata) =
+			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::erc721_metadata())
+		{
+			*erc721_metadata.into_inner() == *value::ERC721_METADATA_SUPPORTED
+		} else {
+			false
+		}
+	}
+}
+
 #[solidity_interface(
 	name = UniqueNFT,
 	is(
 		ERC721,
-		ERC721Metadata(if(this.supports_metadata())),
 		ERC721Enumerable,
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
 		Collection(via(common_mut returns CollectionHandle<T>)),
 		TokenProperties,
+		ERC721Metadata(if(this.supports_metadata())),
 	)
 )]
 impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
