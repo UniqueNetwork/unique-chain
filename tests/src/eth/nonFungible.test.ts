@@ -117,9 +117,9 @@ describe('Check ERC721 token URI for NFT', () => {
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Token URI');
   });
 
-  itEth('TokenURI from baseURI + tokenId', async ({helper}) => {
+  itEth('TokenURI from baseURI', async ({helper}) => {
     const {contract, nextTokenId} = await setup(helper, 'BaseURI_');
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + nextTokenId);
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_');
   });
 
   itEth('TokenURI from baseURI + suffix', async ({helper}) => {

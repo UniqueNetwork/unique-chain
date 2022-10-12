@@ -252,7 +252,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					}
 				}
 
-				return Ok(base_uri + token_id.to_string().as_str());
+				return Ok(base_uri);
 			}
 		}
 
