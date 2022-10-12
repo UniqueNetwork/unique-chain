@@ -21,7 +21,7 @@ import {WsProvider, Keyring} from '@polkadot/api';
 import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from '../substrate/substrate-api';
-import {getGenericResult, generateKeyringPair, waitEvent, describe_xcm, bigIntToDecimals} from '../deprecated-helpers/helpers';
+import {getGenericResult, generateKeyringPair, waitEvent, describeXCM, bigIntToDecimals} from '../deprecated-helpers/helpers';
 import {MultiLocation} from '@polkadot/types/interfaces';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import waitNewBlocks from '../substrate/wait-new-blocks';
@@ -61,7 +61,7 @@ function relayOptions(): ApiOptions {
   return parachainApiOptions(RELAY_PORT);
 }
 
-describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -292,7 +292,7 @@ describe_xcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 });
 
 // These tests are relevant only when the foreign asset pallet is disabled
-describe_xcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
+describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
@@ -433,7 +433,7 @@ describe_xcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   });
 });
 
-describe_xcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
+describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
   // Quartz constants
   let quartzAlice: IKeyringPair;

@@ -62,7 +62,7 @@ describe('integration test: Refungible functionality:', async () => {
       .to.eventually.be.rejectedWith(/refungible\.WrongRefungiblePieces/);
   });
   
-  itSub('RPC method tokenOnewrs for refungible collection and token', async ({helper}) => {
+  itSub('RPC method tokenOwners for refungible collection and token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
     const facelessCrowd = (await helper.arrange.createAccounts(Array(7).fill(0n), donor)).map(keyring => {return {Substrate: keyring.address};});
 
@@ -212,7 +212,8 @@ describe('integration test: Refungible functionality:', async () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 200n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    expect(chainEvents).to.deep.include({
+    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemCreated');
+    expect(event).to.deep.include({
       section: 'common',
       method: 'ItemCreated',
       index: [66, 2],
@@ -222,7 +223,6 @@ describe('integration test: Refungible functionality:', async () => {
         {substrate: alice.address}, 
         100n,
       ],
-      phase: {applyExtrinsic: 2},
     });
   });
 
@@ -231,9 +231,10 @@ describe('integration test: Refungible functionality:', async () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 50n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    expect(chainEvents).to.deep.include({
-      method: 'ItemDestroyed',
+    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemDestroyed');
+    expect(event).to.deep.include({
       section: 'common',
+      method: 'ItemDestroyed',
       index: [66, 3],
       data: [
         collection.collectionId,
@@ -241,7 +242,6 @@ describe('integration test: Refungible functionality:', async () => {
         {substrate: alice.address}, 
         50n,
       ],
-      phase: {applyExtrinsic: 2},
     });
   });
   

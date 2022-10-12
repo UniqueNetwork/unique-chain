@@ -5,11 +5,11 @@
   "main": "",
   "devDependencies": {
     "@polkadot/ts": "0.4.22",
-    "@polkadot/typegen": "9.2.2",
+    "@polkadot/typegen": "9.5.1",
     "@types/chai": "^4.3.1",
     "@types/chai-as-promised": "^7.1.5",
     "@types/chai-like": "^1.1.1",
-    "@types/mocha": "^9.1.1",
+    "@types/mocha": "^10.0.0",
     "@types/node": "^17.0.35",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/parser": "^5.26.0",
@@ -93,7 +93,7 @@
     "testEthFT": "mocha --timeout 9999999 -r ts-node/register ./**/eth/fungible.test.ts",
     "testRPC": "mocha --timeout 9999999 -r ts-node/register ./**/rpc.test.ts",
     "testPromotion": "mocha --timeout 9999999 -r ts-node/register ./**/app-promotion.test.ts",
-    
+
     "testXcmUnique": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmUnique.test.ts",
     "testXcmQuartz": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmQuartz.test.ts",
     "testXcmOpal": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmOpal.test.ts",
@@ -103,7 +103,7 @@
 
     "load": "mocha --timeout 9999999 -r ts-node/register './**/*.load.ts'",
     "loadTransfer": "ts-node src/transfer.nload.ts",
-    
+
     "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > src/interfaces/metadata.json",
     "polkadot-types-from-defs": "ts-node ./node_modules/.bin/polkadot-types-from-defs --endpoint src/interfaces/metadata.json --input src/interfaces/ --package .",
     "polkadot-types-from-chain": "ts-node ./node_modules/.bin/polkadot-types-from-chain --endpoint src/interfaces/metadata.json --output src/interfaces/ --package .",
@@ -113,14 +113,14 @@
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "9.2.2",
-    "@polkadot/api-contract": "9.2.2",
-    "@polkadot/util-crypto": "10.1.7",
-    "bignumber.js": "^9.0.2",
+    "@polkadot/api": "9.5.1",
+    "@polkadot/api-contract": "9.5.1",
+    "@polkadot/util-crypto": "10.1.10",
+    "bignumber.js": "^9.1.0",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "find-process": "^1.4.7",
-    "solc": "0.8.14-fixed",
+    "solc": "0.8.17",
     "web3": "^1.7.3"
   },
   "standard": {

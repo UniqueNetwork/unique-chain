@@ -1764,7 +1764,7 @@ export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
-export const describe_xcm = (
+export const describeXCM = (
   process.env.RUN_XCM_TESTS
     ? describe
     : describe.skip
