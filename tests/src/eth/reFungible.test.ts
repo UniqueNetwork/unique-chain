@@ -124,7 +124,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform mint()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createERC721MetadataRFTCollection(owner, 'Minty', '6', '6', '');
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Minty', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     
     const nextTokenId = await contract.methods.nextTokenId().call();
@@ -147,7 +147,7 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform mintBulk()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createERC721MetadataRFTCollection(owner, 'MintBulky', '6', '6', '');
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'MintBulky', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     {

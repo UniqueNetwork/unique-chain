@@ -14,7 +14,7 @@ describe('EVM collection properties', () => {
 
   itEth('Can be set', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test'});
+    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -24,7 +24,7 @@ describe('EVM collection properties', () => {
 
     const raw = (await collection.getData())?.raw;
 
-    expect(raw.properties[1].value).to.equal('testValue');
+    expect(raw.properties[0].value).to.equal('testValue');
   });
 
   itEth('Can be deleted', async({helper}) => {

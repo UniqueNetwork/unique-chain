@@ -665,6 +665,11 @@ pub mod static_property {
 			property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
 		}
 
+		/// Key "schemaVersion".
+		pub fn schema_version() -> up_data_structs::PropertyKey {
+			property_key_from_bytes(b"schemaVersion").expect(EXPECT_CONVERT_ERROR)
+		}
+
 		/// Key "baseURI".
 		pub fn base_uri() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
@@ -672,12 +677,12 @@ pub mod static_property {
 
 		/// Key "url".
 		pub fn url() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
+			property_key_from_bytes(b"URI").expect(EXPECT_CONVERT_ERROR)
 		}
 
 		/// Key "suffix".
 		pub fn suffix() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
+			property_key_from_bytes(b"URISuffix").expect(EXPECT_CONVERT_ERROR)
 		}
 
 		/// Key "parentNft".
@@ -685,7 +690,7 @@ pub mod static_property {
 			property_key_from_bytes(b"parentNft").expect(EXPECT_CONVERT_ERROR)
 		}
 
-		/// Key "parentNft".
+		/// Key "ERC721Metadata".
 		pub fn erc721_metadata() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"ERC721Metadata").expect(EXPECT_CONVERT_ERROR)
 		}
@@ -694,6 +699,9 @@ pub mod static_property {
 	/// Values.
 	pub mod value {
 		use super::*;
+
+		/// Value "Schema version".
+		pub const SCHEMA_VERSION: &[u8] = b"1.0.0";
 
 		/// Value "ERC721Metadata".
 		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
@@ -709,7 +717,12 @@ pub mod static_property {
 			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
 		}
 
-		/// Value for [`ERC721_METADATA`].
+		/// Value for [`SCHEMA_VERSION`].
+		pub fn schema_version() -> up_data_structs::PropertyValue {
+			property_value_from_bytes(SCHEMA_VERSION).expect(EXPECT_CONVERT_ERROR)
+		}
+
+		/// Value for [`ERC721_METADATA_SUPPORTED`].
 		pub fn erc721_metadata_supported() -> up_data_structs::PropertyValue {
 			property_value_from_bytes(ERC721_METADATA_SUPPORTED).expect(EXPECT_CONVERT_ERROR)
 		}

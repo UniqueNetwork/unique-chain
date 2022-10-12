@@ -116,7 +116,18 @@ fn make_data<T: Config>(
 			.try_push(up_data_structs::PropertyKeyPermission {
 				key: key::suffix(),
 				permission: up_data_structs::PropertyPermission {
-					mutable: false,
+					mutable: true,
+					collection_admin: true,
+					token_owner: false,
+				},
+			})
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+
+		token_property_permissions
+			.try_push(up_data_structs::PropertyKeyPermission {
+				key: key::url(),
+				permission: up_data_structs::PropertyPermission {
+					mutable: true,
 					collection_admin: true,
 					token_owner: false,
 				},
@@ -127,6 +138,13 @@ fn make_data<T: Config>(
 			.try_push(up_data_structs::Property {
 				key: key::schema_name(),
 				value: property_value::erc721(),
+			})
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+			
+		properties
+			.try_push(up_data_structs::Property {
+				key: key::schema_version(),
+				value: property_value::schema_version(),
 			})
 			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
 
@@ -266,7 +284,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataNFTCollection")]
+	#[solidity(rename_selector = "createERC721MetadataCompatibleNFTCollection")]
 	fn create_nonfungible_collection_with_properties(
 		&mut self,
 		caller: caller,
@@ -339,7 +357,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataRFTCollection")]
+	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
 	fn create_refungible_collection_with_properties(
 		&mut self,
 		caller: caller,

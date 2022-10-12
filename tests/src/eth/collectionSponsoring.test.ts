@@ -97,7 +97,7 @@ describe('evm collection sponsoring', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
-    let result = await collectionHelpers.methods.createERC721MetadataNFTCollection('Sponsor collection', '1', '1', '').send({value: Number(2n * nominal)});
+    let result = await collectionHelpers.methods.createERC721MetadataCompatibleNFTCollection('Sponsor collection', '1', '1', '').send({value: Number(2n * nominal)});
     const collectionIdAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = helper.ethAddress.extractCollectionId(collectionIdAddress);
     const collection = helper.nft.getCollectionObject(collectionId);
@@ -167,7 +167,7 @@ describe('evm collection sponsoring', () => {
   // itWeb3('Sponsoring collection from substrate address via access list', async ({api, web3, privateKeyWrapper}) => {
   //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
   //   const collectionHelpers = evmCollectionHelpers(web3, owner);
-  //   const result = await collectionHelpers.methods.createERC721MetadataNFTCollection('Sponsor collection', '1', '1', '').send();
+  //   const result = await collectionHelpers.methods.createERC721MetadataCompatibleNFTCollection('Sponsor collection', '1', '1', '').send();
   //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
   //   const sponsor = privateKeyWrapper('//Alice');
   //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
@@ -223,7 +223,7 @@ describe('evm collection sponsoring', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
-    let result = await collectionHelpers.methods.createERC721MetadataNFTCollection('Sponsor collection', '1', '1', '').send({value: Number(2n * nominal)});
+    let result = await collectionHelpers.methods.createERC721MetadataCompatibleNFTCollection('Sponsor collection', '1', '1', '').send({value: Number(2n * nominal)});
     const collectionIdAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = helper.ethAddress.extractCollectionId(collectionIdAddress);
     const collection = helper.nft.getCollectionObject(collectionId);

@@ -32,7 +32,7 @@
       { "internalType": "string", "name": "tokenPrefix", "type": "string" },
       { "internalType": "string", "name": "baseUri", "type": "string" }
     ],
-    "name": "createERC721MetadataNFTCollection",
+    "name": "createERC721MetadataCompatibleNFTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "payable",
     "type": "function"
@@ -44,7 +44,7 @@
       { "internalType": "string", "name": "tokenPrefix", "type": "string" },
       { "internalType": "string", "name": "baseUri", "type": "string" }
     ],
-    "name": "createERC721MetadataRFTCollection",
+    "name": "createERC721MetadataCompatibleRFTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "payable",
     "type": "function"

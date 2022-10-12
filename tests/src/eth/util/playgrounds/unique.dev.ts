@@ -186,11 +186,11 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress};
   }
 
-  async createERC721MetadataNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string}> {
+  async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
         
-    const result = await collectionHelper.methods.createERC721MetadataNFTCollection(name, description, tokenPrefix, baseUri).send({value: Number(collectionCreationPrice)});
+    const result = await collectionHelper.methods.createERC721MetadataCompatibleNFTCollection(name, description, tokenPrefix, baseUri).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
@@ -210,11 +210,11 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress};
   }
 
-  async createERC721MetadataRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string}> {
+  async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
         
-    const result = await collectionHelper.methods.createERC721MetadataRFTCollection(name, description, tokenPrefix, baseUri).send({value: Number(collectionCreationPrice)});
+    const result = await collectionHelper.methods.createERC721MetadataCompatibleRFTCollection(name, description, tokenPrefix, baseUri).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);

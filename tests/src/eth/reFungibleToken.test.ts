@@ -80,14 +80,12 @@ describe('Check ERC721 token URI for ReFungible', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    let result = await collectionHelper.methods.createERC721MetadataNFTCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
-    const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Mint collection', 'a', 'b', tokenPrefix);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     
     const nextTokenId = await contract.methods.nextTokenId().call();
     expect(nextTokenId).to.be.equal('1');
-    result = await contract.methods.mint(
+    const result = await contract.methods.mint(
       receiver,
       nextTokenId,
     ).send();
@@ -112,7 +110,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
   });
 
   itEth('TokenURI from url', async ({helper}) => {
-    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'url', 'Token URI');
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'URI', 'Token URI');
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Token URI');
   });
 
@@ -123,7 +121,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
 
   itEth('TokenURI from baseURI + suffix', async ({helper}) => {
     const suffix = '/some/suffix';
-    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'suffix', suffix);
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'URISuffix', suffix);
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + suffix);
   });
 });
