@@ -97,6 +97,16 @@
   },
   {
     "inputs": [
+      { "internalType": "address", "name": "collection", "type": "address" },
+      { "internalType": "string", "name": "baseUri", "type": "string" }
+    ],
+    "name": "makeCollectionERC721MetadataCompatible",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "bytes4", "name": "interfaceID", "type": "bytes4" }
     ],
     "name": "supportsInterface",

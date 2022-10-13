@@ -27,6 +27,7 @@ use pallet_common::{
 		CollectionHelpersEvents,
 		static_property::{key, value as property_value},
 	},
+	Pallet as PalletCommon,
 };
 use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
@@ -338,6 +339,83 @@ where
 			base_uri,
 			true,
 		)
+	}
+
+	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
+	fn make_collection_metadata_compatible(
+		&mut self,
+		caller: caller,
+		collection: address,
+		base_uri: string,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let collection =
+			pallet_common::eth::map_eth_to_id(&collection).ok_or("not a collection address")?;
+		let mut collection =
+			<crate::CollectionHandle<T>>::new(collection).ok_or("collection not found")?;
+
+		if !matches!(
+			collection.mode,
+			CollectionMode::NFT | CollectionMode::ReFungible
+		) {
+			return Err("target collection should be either NFT or Refungible".into());
+		}
+
+		self.recorder().consume_sstore()?;
+		collection
+			.check_is_owner_or_admin(&caller)
+			.map_err(dispatch_to_evm::<T>)?;
+
+		if collection.flags.erc721metadata {
+			return Err("target collection is already Erc721Metadata compatible".into());
+		}
+		collection.flags.erc721metadata = true;
+
+		let all_permissions = <pallet_common::CollectionPropertyPermissions<T>>::get(collection.id);
+		if all_permissions.get(&key::url()).is_none() {
+			self.recorder().consume_sstore()?;
+			<PalletCommon<T>>::set_property_permission(&collection, &caller, default_url_pkp())
+				.map_err(dispatch_to_evm::<T>)?;
+		}
+		if all_permissions.get(&key::suffix()).is_none() {
+			self.recorder().consume_sstore()?;
+			<PalletCommon<T>>::set_property_permission(&collection, &caller, default_suffix_pkp())
+				.map_err(dispatch_to_evm::<T>)?;
+		}
+
+		let all_properties = <pallet_common::CollectionProperties<T>>::get(collection.id);
+		let mut new_properties = vec![];
+		if all_properties.get(&key::schema_name()).is_none() {
+			self.recorder().consume_sstore()?;
+			new_properties.push(up_data_structs::Property {
+				key: key::schema_name(),
+				value: property_value::erc721(),
+			});
+			new_properties.push(up_data_structs::Property {
+				key: key::schema_version(),
+				value: property_value::schema_version(),
+			});
+		}
+		if all_properties.get(&key::base_uri()).is_none() && !base_uri.is_empty() {
+			new_properties.push(up_data_structs::Property {
+				key: key::base_uri(),
+				value: base_uri
+					.into_bytes()
+					.try_into()
+					.map_err(|_| "base uri is too large")?,
+			});
+		}
+
+		if !new_properties.is_empty() {
+			self.recorder().consume_sstore()?;
+			<PalletCommon<T>>::set_collection_properties(&collection, &caller, new_properties)
+				.map_err(dispatch_to_evm::<T>)?;
+		}
+
+		self.recorder().consume_sstore()?;
+		collection.save().map_err(dispatch_to_evm::<T>)?;
+
+		Ok(())
 	}
 
 	/// Check if a collection exists
