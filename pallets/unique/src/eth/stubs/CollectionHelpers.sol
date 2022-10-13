@@ -20,6 +20,7 @@ contract ERC165 is Dummy {
 /// @dev inlined interface
 contract CollectionHelpersEvents {
 	event CollectionCreated(address indexed owner, address indexed collectionId);
+	event CollectionDestroyed(address indexed collectionId);
 }
 
 /// @title Contract, which allows users to operate with collections

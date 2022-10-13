@@ -19,9 +19,10 @@
 use core::marker::PhantomData;
 use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
-use frame_support::{traits::Get, storage::StorageNMap};
+use frame_support::traits::Get;
 
-use crate::sp_api_hidden_includes_decl_storage::hidden_include::StorageDoubleMap;
+use crate::Pallet;
+
 use pallet_common::{
 	CollectionById,
 	dispatch::CollectionDispatch,
@@ -37,10 +38,7 @@ use up_data_structs::{
 	CollectionMode, PropertyValue,
 };
 
-use crate::{
-	Config, SelfWeightOf, weights::WeightInfo, NftTransferBasket, FungibleTransferBasket,
-	ReFungibleTransferBasket, NftApproveBasket, FungibleApproveBasket, RefungibleApproveBasket,
-};
+use crate::{Config, SelfWeightOf, weights::WeightInfo};
 
 use sp_std::vec::Vec;
 use alloc::format;
@@ -320,30 +318,13 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
-	#[solidity(rename_selector = "destroyCollection")]
 	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
+
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
-			.ok_or("Invalid collection address format".into())
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		let collection = <pallet_common::CollectionHandle<T>>::try_get(collection_id)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-		collection
-			.check_is_internal()
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		T::CollectionDispatch::destroy(caller, collection)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
-
-		let _ = <NftApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <FungibleApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
-
-		Ok(())
+			.ok_or("Invalid collection address format")?;
+		<Pallet<T>>::destroy_collection_internal(caller, collection_id)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)
 	}
 
 	/// Check if a collection exists

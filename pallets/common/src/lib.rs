@@ -994,6 +994,13 @@ impl<T: Config> Pallet<T> {
 		<CollectionProperties<T>>::remove(collection.id);
 
 		<Pallet<T>>::deposit_event(Event::CollectionDestroyed(collection.id));
+
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionDestroyed {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 		Ok(())
 	}
 

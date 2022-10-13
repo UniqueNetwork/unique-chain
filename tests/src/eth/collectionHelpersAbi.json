@@ -19,6 +19,19 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "collectionId",
+        "type": "address"
+      }
+    ],
+    "name": "CollectionDestroyed",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "collectionCreationFee",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
