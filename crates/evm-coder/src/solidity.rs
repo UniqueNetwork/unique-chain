@@ -225,7 +225,7 @@ impl_tuples! {A B C D E F G H I J}
 
 pub trait SolidityArguments {
 	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
-	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result;
+	fn solidity_get(&self, prefix: &str, writer: &mut impl fmt::Write) -> fmt::Result;
 	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
 	fn is_empty(&self) -> bool {
 		self.len() == 0
@@ -248,7 +248,7 @@ impl<T: SolidityTypeName> SolidityArguments for UnnamedArgument<T> {
 			Ok(())
 		}
 	}
-	fn solidity_get(&self, _writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_get(&self, _prefix: &str, _writer: &mut impl fmt::Write) -> fmt::Result {
 		Ok(())
 	}
 	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
@@ -283,8 +283,8 @@ impl<T: SolidityTypeName> SolidityArguments for NamedArgument<T> {
 			Ok(())
 		}
 	}
-	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
-		writeln!(writer, "\t\t{};", self.0)
+	fn solidity_get(&self, prefix: &str, writer: &mut impl fmt::Write) -> fmt::Result {
+		writeln!(writer, "\t{prefix}\t{};", self.0)
 	}
 	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
 		T::solidity_default(writer, tc)
@@ -318,8 +318,8 @@ impl<T: SolidityTypeName> SolidityArguments for SolidityEventArgument<T> {
 			Ok(())
 		}
 	}
-	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
-		writeln!(writer, "\t\t{};", self.1)
+	fn solidity_get(&self, prefix: &str, writer: &mut impl fmt::Write) -> fmt::Result {
+		writeln!(writer, "\t{prefix}\t{};", self.1)
 	}
 	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
 		T::solidity_default(writer, tc)
@@ -337,7 +337,7 @@ impl SolidityArguments for () {
 	fn solidity_name(&self, _writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
 		Ok(())
 	}
-	fn solidity_get(&self, _writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_get(&self, _prefix: &str, _writer: &mut impl fmt::Write) -> fmt::Result {
 		Ok(())
 	}
 	fn solidity_default(&self, _writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
@@ -365,9 +365,9 @@ impl SolidityArguments for Tuple {
         )* );
 		Ok(())
 	}
-	fn solidity_get(&self, writer: &mut impl fmt::Write) -> fmt::Result {
+	fn solidity_get(&self, prefix: &str, writer: &mut impl fmt::Write) -> fmt::Result {
 		for_tuples!( #(
-            Tuple.solidity_get(writer)?;
+            Tuple.solidity_get(prefix, writer)?;
         )* );
 		Ok(())
 	}
@@ -470,7 +470,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		if is_impl {
 			writeln!(writer, " {{")?;
 			writeln!(writer, "\t{hide_comment}\trequire(false, stub_error);")?;
-			self.args.solidity_get(writer)?;
+			self.args.solidity_get(hide_comment, writer)?;
 			match &self.mutability {
 				SolidityMutability::Pure => {}
 				SolidityMutability::View => writeln!(writer, "\t{hide_comment}\tdummy;")?,
