@@ -418,6 +418,7 @@ pub struct SolidityFunction<A, R> {
 	pub docs: &'static [&'static str],
 	pub selector_str: &'static str,
 	pub selector: u32,
+	pub hide: bool,
 	pub name: &'static str,
 	pub args: A,
 	pub result: R,
@@ -431,16 +432,21 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writer: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
+		let hide_comment = self.hide.then(|| "// ").unwrap_or("");
 		for doc in self.docs {
-			writeln!(writer, "\t///{}", doc)?;
+			writeln!(writer, "\t{hide_comment}///{}", doc)?;
 		}
 		writeln!(
 			writer,
-			"\t/// @dev EVM selector for this function is: 0x{:0>8x},",
+			"\t{hide_comment}/// @dev EVM selector for this function is: 0x{:0>8x},",
 			self.selector
 		)?;
-		writeln!(writer, "\t///  or in textual repr: {}", self.selector_str)?;
-		write!(writer, "\tfunction {}(", self.name)?;
+		writeln!(
+			writer,
+			"\t{hide_comment}///  or in textual repr: {}",
+			self.selector_str
+		)?;
+		write!(writer, "\t{hide_comment}function {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;
 		if is_impl {
@@ -463,21 +469,24 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		}
 		if is_impl {
 			writeln!(writer, " {{")?;
-			writeln!(writer, "\t\trequire(false, stub_error);")?;
+			writeln!(writer, "\t{hide_comment}\trequire(false, stub_error);")?;
 			self.args.solidity_get(writer)?;
 			match &self.mutability {
 				SolidityMutability::Pure => {}
-				SolidityMutability::View => writeln!(writer, "\t\tdummy;")?,
-				SolidityMutability::Mutable => writeln!(writer, "\t\tdummy = 0;")?,
+				SolidityMutability::View => writeln!(writer, "\t{hide_comment}\tdummy;")?,
+				SolidityMutability::Mutable => writeln!(writer, "\t{hide_comment}\tdummy = 0;")?,
 			}
 			if !self.result.is_empty() {
-				write!(writer, "\t\treturn ")?;
+				write!(writer, "\t{hide_comment}\treturn ")?;
 				self.result.solidity_default(writer, tc)?;
 				writeln!(writer, ";")?;
 			}
-			writeln!(writer, "\t}}")?;
+			writeln!(writer, "\t{hide_comment}}}")?;
 		} else {
 			writeln!(writer, ";")?;
+		}
+		if self.hide {
+			writeln!(writer, "// FORMATTING: FORCE NEWLINE")?;
 		}
 		Ok(())
 	}

@@ -11,4 +11,6 @@ sed -n '/=== SNIP START ===/, /=== SNIP END ===/{ /=== SNIP START ===/! { /=== S
 formatted=$(mktemp)
 prettier --config $PRETTIER_CONFIG $raw > $formatted
 
+sed -i -E -e "s/.+\/\/ FORMATTING: FORCE NEWLINE//g" $formatted
+
 mv $formatted $OUTPUT
