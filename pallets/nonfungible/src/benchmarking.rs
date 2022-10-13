@@ -55,7 +55,7 @@ fn create_collection<T: Config>(
 		owner,
 		CollectionMode::NFT,
 		|owner: T::CrossAccountId, data| {
-			<Pallet<T>>::init_collection(owner.clone(), owner, data, true)
+			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
 		},
 		NonfungibleHandle::cast,
 	)

@@ -371,8 +371,9 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data, CollectionFlags::default())
+		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
 	}
 
 	/// Destroy RFT collection

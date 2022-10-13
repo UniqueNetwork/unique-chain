@@ -34,7 +34,7 @@ use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, Precom
 use sp_std::vec;
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue,
+	CollectionMode, PropertyValue, CollectionFlags,
 };
 
 use crate::{Config, SelfWeightOf, weights::WeightInfo};
@@ -186,9 +186,16 @@ fn create_refungible_collection_internal<
 	let collection_helpers_address =
 		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-	let collection_id =
-		T::CollectionDispatch::create(caller.clone(), collection_helpers_address, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	let collection_id = T::CollectionDispatch::create(
+		caller.clone(),
+		collection_helpers_address,
+		data,
+		CollectionFlags {
+			erc721metadata: add_properties,
+			..Default::default()
+		},
+	)
+	.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
 }
@@ -243,8 +250,13 @@ where
 		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(dispatch_to_evm::<T>)?;
+		let collection_id = T::CollectionDispatch::create(
+			caller,
+			collection_helpers_address,
+			data,
+			Default::default(),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -291,8 +303,16 @@ where
 		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+		let collection_id = T::CollectionDispatch::create(
+			caller,
+			collection_helpers_address,
+			data,
+			CollectionFlags {
+				erc721metadata: true,
+				..Default::default()
+			},
+		)
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
