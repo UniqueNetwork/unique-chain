@@ -94,6 +94,7 @@ contract TokenProperties is Dummy, ERC165 {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
 =======
 /// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
@@ -104,6 +105,9 @@ contract TokenProperties is Dummy, ERC165 {
 =======
 /// @dev the ERC-165 identifier for this interface is 0x89055d41
 >>>>>>> feat: add delete properties
+=======
+/// @dev the ERC-165 identifier for this interface is 0xf0c01cc7
+>>>>>>> fix: after rebase
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///

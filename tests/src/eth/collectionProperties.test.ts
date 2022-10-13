@@ -1,5 +1,6 @@
-import {itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
+import {TCollectionMode} from '../util/playgrounds/types';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;

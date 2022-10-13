@@ -93,6 +93,7 @@ contract TokenProperties is Dummy, ERC165 {
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
 =======
 =======
@@ -109,6 +110,9 @@ contract TokenProperties is Dummy, ERC165 {
 /// @dev the ERC-165 identifier for this interface is 0x89055d41
 >>>>>>> 89fdf6c7... feat: add delete properties
 >>>>>>> feat: add delete properties
+=======
+/// @dev the ERC-165 identifier for this interface is 0xf0c01cc7
+>>>>>>> fix: after rebase
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -517,6 +521,7 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
+<<<<<<< HEAD
 	function collectionAdmins() public view returns (Tuple8[] memory) {
 		require(false, stub_error);
 		dummy;
@@ -531,6 +536,8 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
+=======
+>>>>>>> fix: after rebase
 	function collectionAdmins() public view returns (Tuple19[] memory) {
 		require(false, stub_error);
 		dummy;

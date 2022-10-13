@@ -64,6 +64,7 @@ interface TokenProperties is Dummy, ERC165 {
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x792435cf
 =======
 =======
@@ -80,6 +81,9 @@ interface TokenProperties is Dummy, ERC165 {
 /// @dev the ERC-165 identifier for this interface is 0x89055d41
 >>>>>>> 89fdf6c7... feat: add delete properties
 >>>>>>> feat: add delete properties
+=======
+/// @dev the ERC-165 identifier for this interface is 0xf0c01cc7
+>>>>>>> fix: after rebase
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -339,17 +343,6 @@ interface Collection is Dummy, ERC165 {
 
 	/// Get collection administrators
 	///
-<<<<<<< HEAD
-=======
-	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner substrate account
-	/// @dev EVM selector for this function is: 0xb212138f,
-	///  or in textual repr: setOwnerSubstrate(uint256)
-	function setOwnerSubstrate(uint256 newOwner) external;
-
-	/// Get collection administrators
-	///
->>>>>>> 52d7afd4... feat: Add `collection_admins` method to eth collection.
 	/// @return Vector of tuples with admins address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
