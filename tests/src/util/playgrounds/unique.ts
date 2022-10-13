@@ -426,7 +426,6 @@ export class ChainHelperBase {
     api: ApiPromise;
     network: TNetworks;
   }> {
-    console.log('createConnection network = ', network);
     if(typeof network === 'undefined' || network === null) network = 'opal';
     const supportedRPC = {
       opal: {
