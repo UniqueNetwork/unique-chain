@@ -193,7 +193,7 @@ pub enum ERC721Events {
 }
 
 #[derive(ToLog)]
-pub enum ERC721MintableEvents {
+pub enum ERC721UniqueMintableEvents {
 	#[allow(dead_code)]
 	MintingFinished {},
 }
@@ -431,10 +431,23 @@ impl<T: Config> NonfungibleHandle<T> {
 }
 
 /// @title ERC721 minting logic.
-#[solidity_interface(name = ERC721Mintable, events(ERC721MintableEvents))]
+#[solidity_interface(name = ERC721UniqueMintable, events(ERC721UniqueMintableEvents))]
 impl<T: Config> NonfungibleHandle<T> {
 	fn minting_finished(&self) -> Result<bool> {
 		Ok(false)
+	}
+
+	/// @notice Function to mint token.
+	/// @param to The new owner
+	/// @return uint256 The id of the newly minted token
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint(&mut self, caller: caller, to: address) -> Result<uint256> {
+		let token_id: uint256 = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			.into();
+		self.mint_check_id(caller, to, token_id)?;
+		Ok(token_id)
 	}
 
 	/// @notice Function to mint token.
@@ -442,8 +455,9 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
 	/// @param tokenId ID of the minted NFT
+	#[solidity(hide, rename_selector = "mint")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
+	fn mint_check_id(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
@@ -474,14 +488,34 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @notice Function to mint token with the given tokenUri.
+	/// @param to The new owner
+	/// @param tokenUri Token URI that would be stored in the NFT properties
+	/// @return uint256 The id of the newly minted token
+	#[solidity(rename_selector = "mintWithTokenURI")]
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint_with_token_uri(
+		&mut self,
+		caller: caller,
+		to: address,
+		token_uri: string,
+	) -> Result<uint256> {
+		let token_id: uint256 = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			.into();
+		self.mint_with_token_uri_check_id(caller, to, token_id, token_uri)?;
+		Ok(token_id)
+	}
+
+	/// @notice Function to mint token with the given tokenUri.
 	/// @dev `tokenId` should be obtained with `nextTokenId` method,
 	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
 	/// @param tokenId ID of the minted NFT
 	/// @param tokenUri Token URI that would be stored in the NFT properties
-	#[solidity(rename_selector = "mintWithTokenURI")]
+	#[solidity(hide, rename_selector = "mintWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint_with_token_uri(
+	fn mint_with_token_uri_check_id(
 		&mut self,
 		caller: caller,
 		to: address,
@@ -637,6 +671,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokenIds IDs of the minted NFTs
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -673,7 +708,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
-	#[solidity(rename_selector = "mintBulkWithTokenURI")]
+	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
@@ -728,7 +763,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		ERC721,
 		ERC721Enumerable,
 		ERC721UniqueExtensions,
-		ERC721Mintable,
+		ERC721UniqueMintable,
 		ERC721Burnable,
 		ERC721Metadata(if(this.flags.erc721metadata)),
 		Collection(via(common_mut returns CollectionHandle<T>)),
