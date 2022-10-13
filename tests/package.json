@@ -21,23 +21,24 @@
   },
   "mocha": {
     "timeout": 9999999,
-    "require": ["ts-node/register", "./src/util/globalSetup.ts"]
+    "require": ["ts-node/register"]
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js src/",
     "fix": "eslint --ext .ts,.js src/ --fix",
+    "setup": "ts-node ./src/util/globalSetup.ts",
 
-    "test": "mocha --timeout 9999999 -r ts-node/register './src/**/*.*test.ts'",
+    "test": "yarn setup && mocha --timeout 9999999 -r ts-node/register './src/**/*.*test.ts'",
     "testParallelFull": "yarn testParallel && yarn testSequential",
-    "testParallel": "mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
-    "testSequential": "mocha --timeout 9999999 -r ts-node/register './src/**/*.seqtest.ts'",
-    "testStructure": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/*.*test.ts",
-    "testEth": "mocha --timeout 9999999 -r ts-node/register './**/eth/**/*.*test.ts'",
-    "testEthNesting": "mocha --timeout 9999999 -r ts-node/register './**/eth/nesting/**/*.*test.ts'",
-    "testEthFractionalizer": "mocha --timeout 9999999 -r ts-node/register './**/eth/fractionalizer/**/*.*test.ts'",
-    "testEthMarketplace": "mocha --timeout 9999999 -r ts-node/register './**/eth/marketplace/**/*.*test.ts'",
-    "testEvent": "mocha --timeout 9999999 -r ts-node/register ./src/check-event/*.*test.ts",
-    "testRmrk": "mocha --timeout 9999999 -r ts-node/register ./**/rmrk/*.*test.ts",
+    "testParallel": "yarn setup && mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
+    "testSequential": "yarn setup && mocha --timeout 9999999 -r ts-node/register './src/**/*.seqtest.ts'",
+    "testStructure": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/nesting/*.*test.ts",
+    "testEth": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/**/*.*test.ts'",
+    "testEthNesting": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/nesting/**/*.*test.ts'",
+    "testEthFractionalizer": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/fractionalizer/**/*.*test.ts'",
+    "testEthMarketplace": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/marketplace/**/*.*test.ts'",
+    "testEvent": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./src/check-event/*.*test.ts",
+    "testRmrk": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/rmrk/*.*test.ts",
 
     "testEthPayable": "mocha --timeout 9999999 -r ts-node/register './**/eth/payable.test.ts'",
     "testEthTokenProperties": "mocha --timeout 9999999 -r ts-node/register ./**/eth/tokenProperties.test.ts",
@@ -92,7 +93,7 @@
     "testFT": "mocha --timeout 9999999 -r ts-node/register ./**/fungible.test.ts",
     "testEthFT": "mocha --timeout 9999999 -r ts-node/register ./**/eth/fungible.test.ts",
     "testRPC": "mocha --timeout 9999999 -r ts-node/register ./**/rpc.test.ts",
-    "testPromotion": "mocha --timeout 9999999 -r ts-node/register ./**/app-promotion.test.ts",
+    "testPromotion": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/app-promotion.test.ts",
 
     "testXcmUnique": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmUnique.test.ts",
     "testXcmQuartz": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmQuartz.test.ts",

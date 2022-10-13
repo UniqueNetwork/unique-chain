@@ -5,14 +5,14 @@ import {usingPlaygrounds, Pallets} from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 
-// This file is used in the mocha package.json section
-export async function mochaGlobalSetup() {
+// This function should be called before running test suites.
+const globalSetup = async (): Promise<void> => {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
       // 1. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
-          if (!result) process.exit(1);
+          if (!result) Promise.reject();
         });
 
       // 2. Set up App Promotion admin 
@@ -29,10 +29,10 @@ export async function mochaGlobalSetup() {
       }
     } catch (error) {
       console.error(error);
-      process.exit(1);
+      Promise.reject();
     }
   });
-}
+};
 
 async function getFiles(rootPath: string): Promise<string[]> {
   const files = await fs.readdir(rootPath, {withFileTypes: true});
@@ -100,3 +100,5 @@ const fundFilenamesWithRetries = async (retriesLeft: number): Promise<boolean> =
       return fundFilenamesWithRetries(--retriesLeft);
     });
 };
+
+globalSetup().catch(() => process.exit(1));
