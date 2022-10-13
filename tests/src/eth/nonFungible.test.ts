@@ -68,6 +68,16 @@ describe('NFT: Information getting', () => {
 
     expect(owner).to.equal(caller);
   });
+
+  itEth('name/symbol is available regardless of ERC721Metadata support', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', tokenPrefix: 'TEST'});
+    const caller = helper.eth.createAccount();
+
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+
+    expect(await contract.methods.name().call()).to.equal('test');
+    expect(await contract.methods.symbol().call()).to.equal('TEST');
+  });
 });
 
 describe('Check ERC721 token URI for NFT', () => {
