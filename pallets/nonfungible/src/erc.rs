@@ -203,15 +203,17 @@ pub enum ERC721MintableEvents {
 #[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice A descriptive name for a collection of NFTs in this contract
-	fn name(&self) -> Result<string> {
-		Ok(decode_utf16(self.name.iter().copied())
-			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	#[solidity(hide, rename_selector = "name")]
+	fn name_proxy(&self) -> Result<string> {
+		self.name()
 	}
 
 	/// @notice An abbreviated name for NFTs in this contract
-	fn symbol(&self) -> Result<string> {
-		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	#[solidity(hide, rename_selector = "symbol")]
+	fn symbol_proxy(&self) -> Result<string> {
+		self.symbol()
 	}
 
 	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
@@ -571,6 +573,18 @@ fn get_token_permission<T: Config>(
 /// @title Unique extensions for ERC721.
 #[solidity_interface(name = ERC721UniqueExtensions)]
 impl<T: Config> NonfungibleHandle<T> {
+	/// @notice A descriptive name for a collection of NFTs in this contract
+	fn name(&self) -> Result<string> {
+		Ok(decode_utf16(self.name.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
+	}
+
+	/// @notice An abbreviated name for NFTs in this contract
+	fn symbol(&self) -> Result<string> {
+		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	}
+
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.

@@ -16,15 +16,17 @@ interface ERC165 is Dummy {
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
 interface ERC721Metadata is Dummy, ERC165 {
-	/// @notice A descriptive name for a collection of NFTs in this contract
-	/// @dev EVM selector for this function is: 0x06fdde03,
-	///  or in textual repr: name()
-	function name() external view returns (string memory);
+	// /// @notice A descriptive name for a collection of NFTs in this contract
+	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	// /// @dev EVM selector for this function is: 0x06fdde03,
+	// ///  or in textual repr: name()
+	// function name() external view returns (string memory);
 
-	/// @notice An abbreviated name for NFTs in this contract
-	/// @dev EVM selector for this function is: 0x95d89b41,
-	///  or in textual repr: symbol()
-	function symbol() external view returns (string memory);
+	// /// @notice An abbreviated name for NFTs in this contract
+	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	// /// @dev EVM selector for this function is: 0x95d89b41,
+	// ///  or in textual repr: symbol()
+	// function symbol() external view returns (string memory);
 
 	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
 	///
@@ -336,8 +338,18 @@ interface ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xd74d154f
+/// @dev the ERC-165 identifier for this interface is 0x4468500d
 interface ERC721UniqueExtensions is Dummy, ERC165 {
+	/// @notice A descriptive name for a collection of NFTs in this contract
+	/// @dev EVM selector for this function is: 0x06fdde03,
+	///  or in textual repr: name()
+	function name() external view returns (string memory);
+
+	/// @notice An abbreviated name for NFTs in this contract
+	/// @dev EVM selector for this function is: 0x95d89b41,
+	///  or in textual repr: symbol()
+	function symbol() external view returns (string memory);
+
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
