@@ -169,6 +169,7 @@ pub mod types {
 		}
 	}
 
+	#[allow(clippy::from_over_into)]
 	impl Into<Vec<u8>> for bytes {
 		fn into(self) -> Vec<u8> {
 			self.0

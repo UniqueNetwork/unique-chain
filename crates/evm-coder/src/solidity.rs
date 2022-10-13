@@ -35,12 +35,6 @@ use impl_trait_for_tuples::impl_for_tuples;
 use crate::types::*;
 
 #[derive(Default)]
-pub struct FunctionSelectorMaker {
-	pub name: string,
-	pub args: Vec<fn() -> string>,
-}
-
-#[derive(Default)]
 pub struct TypeCollector {
 	/// Code => id
 	/// id ordering is required to perform topo-sort on the resulting data
@@ -488,19 +482,6 @@ pub enum SolidityMutability {
 	View,
 	Mutable,
 }
-
-// fn fn_selector_str(input: &str) -> u32 {
-// 	use sha3::Digest;
-// 	let mut hasher = sha3::Keccak256::new();
-// 	hasher.update(input.as_bytes());
-// 	let result = hasher.finalize();
-
-// 	let mut selector_bytes = [0; 4];
-// 	selector_bytes.copy_from_slice(&result[0..4]);
-
-// 	u32::from_be_bytes(selector_bytes)
-// }
-
 pub struct SolidityFunction<A, R> {
 	pub docs: &'static [&'static str],
 	pub selector_str: &'static str,

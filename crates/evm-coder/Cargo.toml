@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 const_format = { version = "0.2.26", default-features = false }
-sha3-const = { version = "0.1.0", default-features = false }
+sha3-const = { version = "0.1.1", default-features = false }
 # Ethereum uses keccak (=sha3) for selectors
 # sha3 = "0.10.1"
 # evm-coder reexports those proc-macro
@@ -22,7 +22,7 @@ evm-core = { default-features = false, git = "https://github.com/uniquenetwork/e
 # We have tuple-heavy code in solidity.rs
 impl-trait-for-tuples = "0.2.2"
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 
 [dev-dependencies]
 # We want to assert some large binary blobs equality in tests

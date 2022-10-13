@@ -424,12 +424,16 @@ impl TypeHelper for EthCrossAccount {
 	fn is_dynamic() -> bool {
 		address::is_dynamic() || uint256::is_dynamic()
 	}
+
+	fn size() -> usize {
+		<address as TypeHelper>::size() + <uint256 as TypeHelper>::size()
+	}
 }
 
 impl AbiRead<EthCrossAccount> for AbiReader<'_> {
 	fn abi_read(&mut self) -> Result<EthCrossAccount> {
 		let size = if !EthCrossAccount::is_dynamic() {
-			Some(<Self as AbiRead<EthCrossAccount>>::size())
+			Some(<EthCrossAccount as TypeHelper>::size())
 		} else {
 			None
 		};
@@ -437,43 +441,7 @@ impl AbiRead<EthCrossAccount> for AbiReader<'_> {
 		let eth = <Self as AbiRead<address>>::abi_read(&mut subresult)?;
 		let sub = <Self as AbiRead<uint256>>::abi_read(&mut subresult)?;
 
-		Ok(EthCrossAccount { eth: eth, sub: sub })
-	}
-
-	fn size() -> usize {
-		<Self as AbiRead<address>>::size() + <Self as AbiRead<uint256>>::size()
-	}
-}
-
-impl AbiWrite for &EthCrossAccount {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		self.eth.abi_write(writer);
-		self.sub.abi_write(writer);
-	}
-}
-
-impl TypeHelper for EthCrossAccount {
-	fn is_dynamic() -> bool {
-		address::is_dynamic() || uint256::is_dynamic()
-	}
-}
-
-impl AbiRead<EthCrossAccount> for AbiReader<'_> {
-	fn abi_read(&mut self) -> Result<EthCrossAccount> {
-		let size = if !EthCrossAccount::is_dynamic() {
-			Some(<Self as AbiRead<EthCrossAccount>>::size())
-		} else {
-			None
-		};
-		let mut subresult = self.subresult(size)?;
-		let eth = <Self as AbiRead<address>>::abi_read(&mut subresult)?;
-		let sub = <Self as AbiRead<uint256>>::abi_read(&mut subresult)?;
-
-		Ok(EthCrossAccount { eth: eth, sub: sub })
-	}
-
-	fn size() -> usize {
-		<Self as AbiRead<address>>::size() + <Self as AbiRead<uint256>>::size()
+		Ok(EthCrossAccount { eth, sub })
 	}
 }
 
