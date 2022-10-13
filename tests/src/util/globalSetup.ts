@@ -1,7 +1,7 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {usingPlaygrounds, Pallets} from './index';
+import {usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND} from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 
@@ -67,11 +67,11 @@ const fundFilenames = async () => {
         const account = await privateKey({filename: f, ignoreFundsPresence: true});
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 
-        if (aliceBalance < 100_000n * oneToken) {
+        if (aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
           tx.push(helper.executeExtrinsic(
             alice, 
             'api.tx.balances.transfer',
-            [account.address, 1_000_000n * oneToken],
+            [account.address, DONOR_FUNDING * oneToken],
             true,
             {nonce: nonce + balanceGrantedCounter++},
           ).then(() => true).catch(() => {console.error(`Transaction to ${path.basename(f)} registered as failed. Strange.`); return false;}));

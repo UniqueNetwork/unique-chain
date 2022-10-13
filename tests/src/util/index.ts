@@ -38,7 +38,7 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
       else {
         const actualSeed = getTestSeed(seed.filename);
         let account = helper.util.fromSeed(actualSeed, ss58Format);
-        if (!seed.ignoreFundsPresence && await helper.balance.getSubstrate(account.address) == 0n) {
+        if (!seed.ignoreFundsPresence && await helper.balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND) {
           console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
           account = helper.util.fromSeed('//Alice', ss58Format);
         }
@@ -52,6 +52,9 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
     silentConsole.disable();
   }
 };
+
+export const MINIMUM_DONOR_FUND = 100_000n;
+export const DONOR_FUNDING = 1_000_000n;
 
 export enum Pallets {
   Inflation = 'inflation',

@@ -34,8 +34,9 @@ describe('App promotion', () => {
     });
   });
 
-  after(async () => {
+  after(async function () {
     await usingPlaygrounds(async (helper) => {
+      if (helper.fetchMissingPalletNames([Pallets.AppPromotion]).length != 0) return;
       const api = helper.getApi();
       await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
     });
