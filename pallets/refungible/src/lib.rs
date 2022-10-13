@@ -101,10 +101,7 @@ use frame_support::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CommonCollectionOperations,
-	erc::static_property::{key, value},
-	Error as CommonError,
-	eth::collection_id_to_address,
+	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
 	Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;

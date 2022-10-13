@@ -67,7 +67,15 @@ describe('Supports ERC721Metadata', () => {
 
   itEth('ERC721Metadata property can be set for NFT collection', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const tokenPropertyPermissions = [{
+      key: 'URI',
+      permission: {
+        mutable: true,
+        collectionAdmin: true,
+        tokenOwner: false,
+      },
+    }];
+    const collection = await helper.nft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL', tokenPropertyPermissions});
 
     await collection.addAdmin(donor, {Ethereum: caller});
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
@@ -83,7 +91,15 @@ describe('Supports ERC721Metadata', () => {
 
   itEth.ifWithPallets('ERC721Metadata property can be set for RFT collection', [Pallets.ReFungible], async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.rft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const tokenPropertyPermissions = [{
+      key: 'URI',
+      permission: {
+        mutable: true,
+        collectionAdmin: true,
+        tokenOwner: false,
+      },
+    }];
+    const collection = await helper.rft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL', tokenPropertyPermissions});
 
     await collection.addAdmin(donor, {Ethereum: caller});
 

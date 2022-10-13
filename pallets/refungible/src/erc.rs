@@ -218,10 +218,6 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
-		if !self.supports_metadata() {
-			return Ok("".into());
-		}
-
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
 		match get_token_property(self, token_id_u32, &key::url()).as_deref() {
@@ -770,13 +766,17 @@ impl<T: Config> RefungibleHandle<T> {
 
 impl<T: Config> RefungibleHandle<T> {
 	pub fn supports_metadata(&self) -> bool {
-		if let Some(erc721_metadata) =
+		let has_metadata_support_enabled = if let Some(erc721_metadata) =
 			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::erc721_metadata())
 		{
 			*erc721_metadata.into_inner() == *value::ERC721_METADATA_SUPPORTED
 		} else {
 			false
-		}
+		};
+
+		let has_url_property_permissions = get_token_permission::<T>(self.id, &key::url()).is_ok();
+
+		has_metadata_support_enabled && has_url_property_permissions
 	}
 }
 

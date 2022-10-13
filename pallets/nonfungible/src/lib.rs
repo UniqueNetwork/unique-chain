@@ -108,7 +108,6 @@ use up_data_structs::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	erc::static_property::{key, value},
 	eth::collection_id_to_address,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
