@@ -15,7 +15,7 @@ chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
 const getTestHash = (filename: string) => {
-  return crypto.createHash('md5').update(path.basename(filename)).digest('hex');
+  return crypto.createHash('md5').update(filename).digest('hex');
 };
 
 export const getTestSeed = (filename: string) => {
