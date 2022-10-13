@@ -34,6 +34,13 @@ describe('App promotion', () => {
     });
   });
 
+  after(async () => {
+    await usingPlaygrounds(async (helper) => {
+      const api = helper.getApi();
+      await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+    });
+  });
+
   describe('admin adress', () => {
     itSub('can be set by sudo only', async ({helper}) => {
       const api = helper.getApi();
