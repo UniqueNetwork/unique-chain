@@ -30,6 +30,7 @@ use pallet_common::{
 };
 use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
+use sp_std::vec;
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
 	CollectionMode, PropertyValue,
@@ -96,63 +97,57 @@ fn make_data<T: Config>(
 	base_uri_value: PropertyValue,
 	add_properties: bool,
 ) -> Result<CreateCollectionData<T::AccountId>> {
-	let mut properties = up_data_structs::CollectionPropertiesVec::default();
-	let mut token_property_permissions =
-		up_data_structs::CollectionPropertiesPermissionsVec::default();
-
-	token_property_permissions
-		.try_push(up_data_structs::PropertyKeyPermission {
-			key: key::url(),
-			permission: up_data_structs::PropertyPermission {
-				mutable: true,
-				collection_admin: true,
-				token_owner: false,
+	let token_property_permissions = if add_properties {
+		vec![
+			up_data_structs::PropertyKeyPermission {
+				key: key::url(),
+				permission: up_data_structs::PropertyPermission {
+					mutable: true,
+					collection_admin: true,
+					token_owner: false,
+				},
 			},
-		})
-		.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-	if add_properties {
-		token_property_permissions
-			.try_push(up_data_structs::PropertyKeyPermission {
+			up_data_structs::PropertyKeyPermission {
 				key: key::suffix(),
 				permission: up_data_structs::PropertyPermission {
 					mutable: true,
 					collection_admin: true,
 					token_owner: false,
 				},
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		properties
-			.try_push(up_data_structs::Property {
+			},
+		]
+		.try_into()
+		.map_err(|e| Error::Revert(format!("{:?}", e)))?
+	} else {
+		up_data_structs::CollectionPropertiesPermissionsVec::default()
+	};
+	let properties = if add_properties {
+		let mut properties = vec![
+			up_data_structs::Property {
 				key: key::schema_name(),
 				value: property_value::erc721(),
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		properties
-			.try_push(up_data_structs::Property {
+			},
+			up_data_structs::Property {
 				key: key::schema_version(),
 				value: property_value::schema_version(),
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		properties
-			.try_push(up_data_structs::Property {
+			},
+			up_data_structs::Property {
 				key: key::erc721_metadata(),
 				value: property_value::erc721_metadata_supported(),
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
+			},
+		];
 		if !base_uri_value.is_empty() {
-			properties
-				.try_push(up_data_structs::Property {
-					key: key::base_uri(),
-					value: base_uri_value,
-				})
-				.map_err(|e| Error::Revert(format!("{:?}", e)))?;
+			properties.push(up_data_structs::Property {
+				key: key::base_uri(),
+				value: base_uri_value,
+			})
 		}
-	}
+		properties
+			.try_into()
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?
+	} else {
+		up_data_structs::CollectionPropertiesVec::default()
+	};
 
 	let data = CreateCollectionData {
 		name,

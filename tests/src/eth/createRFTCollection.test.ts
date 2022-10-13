@@ -42,7 +42,8 @@ describe('Create RFT collection from EVM', () => {
     const {collectionId} = await helper.eth.createRFTCollection(owner, name, description, prefix);
     const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
   
-    const data = (await helper.rft.getData(collectionId))!;
+    const collection = helper.rft.getCollectionObject(collectionId);
+    const data = (await collection.getData())!;
 
     expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
     expect(collectionId).to.be.eq(collectionCountAfter);
@@ -50,6 +51,48 @@ describe('Create RFT collection from EVM', () => {
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
     expect(data.raw.mode).to.be.eq('ReFungible');
+
+    const options = await collection.getOptions();
+
+    expect(options.tokenPropertyPermissions).to.be.empty;
+  });
+
+  
+
+  itEth('Create collection with properties', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+
+    const name = 'CollectionEVM';
+    const description = 'Some description';
+    const prefix = 'token prefix';
+    const baseUri = 'BaseURI';
+
+    // todo:playgrounds this might fail when in async environment.
+    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
+    const {collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
+    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
+
+    const collection = helper.rft.getCollectionObject(collectionId);
+    const data = (await collection.getData())!;
+    
+    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
+    expect(collectionId).to.be.eq(collectionCountAfter);
+    expect(data.name).to.be.eq(name);
+    expect(data.description).to.be.eq(description);
+    expect(data.raw.tokenPrefix).to.be.eq(prefix);
+    expect(data.raw.mode).to.be.eq('ReFungible');
+
+    const options = await collection.getOptions();
+    expect(options.tokenPropertyPermissions).to.be.deep.equal([
+      {
+        key: 'URI',
+        permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
+      },
+      {
+        key: 'URISuffix',
+        permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
+      },
+    ]);
   });
 
   // todo:playgrounds this test will fail when in async environment.
