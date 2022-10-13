@@ -156,8 +156,9 @@ class ArrangeGroup {
     };
 
     let accountsCreated = false;
-    // checkBalances retry up to 5 blocks
-    for (let index = 0; index < 5; index++) {
+    const maxBlocksChecked = await this.helper.arrange.isDevNode() ? 50 : 5;
+    // checkBalances retry up to 5-50 blocks
+    for (let index = 0; index < maxBlocksChecked; index++) {
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
       await wait.newBlocks(1);

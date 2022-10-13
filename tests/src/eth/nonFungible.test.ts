@@ -385,9 +385,11 @@ describe('NFT: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    const {tokenId} = await collection.mintToken(alice);
 
+    const {tokenId} = await collection.mintToken(alice);
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
@@ -408,8 +410,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.burn(alice);
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -432,8 +435,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.approve(alice, {Ethereum: receiver});
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Approval');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -458,8 +462,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
-    
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
     expect(event.returnValues.to).to.be.equal(receiver);
@@ -481,8 +486,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.transfer(alice, {Ethereum: receiver});
-    
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
     expect(event.returnValues.to).to.be.equal(receiver);

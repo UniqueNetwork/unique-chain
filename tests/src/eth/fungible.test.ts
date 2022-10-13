@@ -294,9 +294,11 @@ describe('Fungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
+    
     await collection.approveTokens(alice, {Ethereum: receiver}, 100n);
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Approval');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -318,9 +320,11 @@ describe('Fungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver}, 51n);
 
+    await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver}, 51n);
+    if (events.length == 0) await helper.wait.newBlocks(1);
     let event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -347,9 +351,11 @@ describe('Fungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
+    
     await collection.transfer(alice, {Ethereum:receiver}, 51n);
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));

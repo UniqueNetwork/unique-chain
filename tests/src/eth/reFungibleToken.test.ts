@@ -311,6 +311,7 @@ describe('Refungible: Plain calls', () => {
     });
     await tokenContract.methods.burnFrom(caller, 1).send();
 
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
@@ -399,9 +400,11 @@ describe('Refungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    expect(await token.approve(alice, {Ethereum: receiver}, 100n)).to.be.true;
 
+    expect(await token.approve(alice, {Ethereum: receiver}, 100n)).to.be.true;
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Approval');
     expect(event.address).to.be.equal(tokenAddress);
     expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -425,6 +428,7 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver},  51n)).to.be.true;
+    if (events.length == 0) await helper.wait.newBlocks(1);
 
     let event = events[0];
     expect(event.event).to.be.equal('Transfer');
@@ -455,8 +459,9 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transfer(alice, {Ethereum: receiver},  51n)).to.be.true;
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(tokenAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));

@@ -286,9 +286,11 @@ describe('Refungible: Plain calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    await tokenContract.methods.transfer(receiver, 1).send();
 
+    await tokenContract.methods.transfer(receiver, 1).send();
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.equal(collectionAddress);
     expect(event.returnValues.from).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
     expect(event.returnValues.to).to.equal(receiver);
@@ -312,9 +314,11 @@ describe('Refungible: Plain calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    await tokenContract.methods.transfer(receiver, 1).send();
 
+    await tokenContract.methods.transfer(receiver, 1).send();
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.equal(collectionAddress);
     expect(event.returnValues.from).to.equal(caller);
     expect(event.returnValues.to).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
