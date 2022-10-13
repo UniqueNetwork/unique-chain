@@ -224,11 +224,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-<<<<<<< HEAD
         "internalType": "struct Tuple8[]",
-=======
-        "internalType": "struct Tuple19[]",
->>>>>>> feat: add eth methots for bulk properties
         "name": "",
         "type": "tuple[]"
       }
@@ -245,11 +241,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-<<<<<<< HEAD
         "internalType": "struct Tuple8",
-=======
-        "internalType": "struct Tuple19",
->>>>>>> feat: add eth methots for bulk properties
         "name": "",
         "type": "tuple"
       }
@@ -268,7 +260,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple17[]",
+        "internalType": "struct Tuple19[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -292,11 +284,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-<<<<<<< HEAD
         "internalType": "struct Tuple8",
-=======
-        "internalType": "struct Tuple19",
->>>>>>> feat: add eth methots for bulk properties
         "name": "",
         "type": "tuple"
       }
@@ -646,7 +634,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple17[]",
+        "internalType": "struct Tuple19[]",
         "name": "properties",
         "type": "tuple[]"
       }

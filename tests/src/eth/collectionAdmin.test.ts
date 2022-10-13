@@ -64,7 +64,7 @@ describe('Add collection admins', () => {
     expect(adminList).to.be.like([{Substrate: newAdmin.address}]);
   });
 
-  itEth.only('Check adminlist', async ({helper, privateKey}) => {
+  itEth('Check adminlist', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
         
     const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
@@ -73,7 +73,7 @@ describe('Add collection admins', () => {
     const admin1 = helper.eth.createAccount();
     const admin2 = privateKey('admin');
     await collectionEvm.methods.addCollectionAdmin(admin1).send();
-    await collectionEvm.methods.addCollectionAdminCross(admin2.addressRaw).send();
+    await collectionEvm.methods.addCollectionAdminCross(helper.ethCrossAccount.fromKeyringPair(admin2)).send();
 
     const adminListRpc = await helper.collection.getAdmins(collectionId);
     let adminListEth = await collectionEvm.methods.collectionAdmins().call();

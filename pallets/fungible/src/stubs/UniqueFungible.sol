@@ -18,19 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-/// @dev the ERC-165 identifier for this interface is 0x792435cf
-=======
-/// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
->>>>>>> feat: Add `collection_admins` method to eth collection.
-=======
-/// @dev the ERC-165 identifier for this interface is 0x89055d41
->>>>>>> feat: add delete properties
-=======
-/// @dev the ERC-165 identifier for this interface is 0xf0c01cc7
->>>>>>> fix: after rebase
+/// @dev the ERC-165 identifier for this interface is 0xefe988e0
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -430,9 +418,7 @@ contract Collection is Dummy, ERC165 {
 		dummy;
 		return new Tuple6[](0);
 	}
-<<<<<<< HEAD
 
-<<<<<<< HEAD
 	/// Changes collection owner to another account
 	///
 	/// @dev Owner can be changed only by current owner
@@ -443,34 +429,16 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
-=======
-	/// Get collection administrators
-	///
-	/// @return Vector of tuples with admins address and his substrate mirror.
-	/// If address is canonical then substrate mirror is zero and vice versa.
-	/// @dev EVM selector for this function is: 0x5813216b,
-	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() public view returns (Tuple6[] memory) {
-		require(false, stub_error);
-		dummy;
-		return new Tuple6[](0);
->>>>>>> feat: Add `collection_admins` method to eth collection.
 	}
-=======
->>>>>>> fix: after rebase
 }
 
-<<<<<<< HEAD
-/// @dev the ERC-165 identifier for this interface is 0x032e5926
-=======
 /// @dev anonymous struct
 struct Tuple10 {
 	string field_0;
 	bytes field_1;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x63034ac5
->>>>>>> feat: add delete properties
+/// @dev the ERC-165 identifier for this interface is 0x032e5926
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)

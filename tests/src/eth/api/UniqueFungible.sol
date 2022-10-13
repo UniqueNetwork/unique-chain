@@ -13,28 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-/// @dev the ERC-165 identifier for this interface is 0x792435cf
-=======
-=======
->>>>>>> feat: add delete properties
-<<<<<<< HEAD
-/// @dev the ERC-165 identifier for this interface is 0x660da1e8
-=======
-/// @dev the ERC-165 identifier for this interface is 0x1fc8e06e
->>>>>>> 52d7afd4... feat: Add `collection_admins` method to eth collection.
-<<<<<<< HEAD
->>>>>>> feat: Add `collection_admins` method to eth collection.
-=======
-=======
-/// @dev the ERC-165 identifier for this interface is 0x89055d41
->>>>>>> 89fdf6c7... feat: add delete properties
->>>>>>> feat: add delete properties
-=======
-/// @dev the ERC-165 identifier for this interface is 0xf0c01cc7
->>>>>>> fix: after rebase
+/// @dev the ERC-165 identifier for this interface is 0xefe988e0
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -301,17 +280,13 @@ interface Collection is Dummy, ERC165 {
 	function setOwnerCross(Tuple6 memory newOwner) external;
 }
 
-<<<<<<< HEAD
-/// @dev the ERC-165 identifier for this interface is 0x032e5926
-=======
 /// @dev anonymous struct
 struct Tuple10 {
 	string field_0;
 	bytes field_1;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x63034ac5
->>>>>>> feat: add delete properties
+/// @dev the ERC-165 identifier for this interface is 0x032e5926
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
