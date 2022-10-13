@@ -11,6 +11,7 @@ import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
+import {Pallets} from '.';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -487,6 +488,10 @@ class TestUtilGroup {
   }
 
   async enable() {
+    if (this.helper.fetchMissingPalletNames([Pallets.TestUtils]).length != 0) {
+      return;
+    }
+
     const signer = this.helper.util.fromSeed('//Alice');
     await this.helper.getSudo<DevUniqueHelper>().executeExtrinsic(signer, 'api.tx.testUtils.enable', [], true);
   }
