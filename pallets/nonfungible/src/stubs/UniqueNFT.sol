@@ -17,49 +17,6 @@ contract ERC165 is Dummy {
 	}
 }
 
-/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
-/// @dev See https://eips.ethereum.org/EIPS/eip-721
-/// @dev the ERC-165 identifier for this interface is 0x5b5e139f
-contract ERC721Metadata is Dummy, ERC165 {
-	// /// @notice A descriptive name for a collection of NFTs in this contract
-	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
-	// /// @dev EVM selector for this function is: 0x06fdde03,
-	// ///  or in textual repr: name()
-	// function name() public view returns (string memory) {
-	// 	require(false, stub_error);
-	// 	dummy;
-	// 	return "";
-	// }
-
-	// /// @notice An abbreviated name for NFTs in this contract
-	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
-	// /// @dev EVM selector for this function is: 0x95d89b41,
-	// ///  or in textual repr: symbol()
-	// function symbol() public view returns (string memory) {
-	// 	require(false, stub_error);
-	// 	dummy;
-	// 	return "";
-	// }
-
-	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
-	///
-	/// @dev If the token has a `url` property and it is not empty, it is returned.
-	///  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
-	///  If the collection property `baseURI` is empty or absent, return "" (empty string)
-	///  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
-	///  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
-	///
-	/// @return token's const_metadata
-	/// @dev EVM selector for this function is: 0xc87b56dd,
-	///  or in textual repr: tokenURI(uint256)
-	function tokenURI(uint256 tokenId) public view returns (string memory) {
-		require(false, stub_error);
-		tokenId;
-		dummy;
-		return "";
-	}
-}
-
 /// @title A contract that allows to set and delete token properties and change token property permissions.
 /// @dev the ERC-165 identifier for this interface is 0x41369377
 contract TokenProperties is Dummy, ERC165 {
@@ -220,10 +177,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple15 memory) {
+	function collectionSponsor() public view returns (Tuple17 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple15(0x0000000000000000000000000000000000000000, 0);
+		return Tuple17(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -402,10 +359,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() public view returns (Tuple15 memory) {
+	function collectionOwner() public view returns (Tuple17 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple15(0x0000000000000000000000000000000000000000, 0);
+		return Tuple17(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Changes collection owner to another account
@@ -422,9 +379,52 @@ contract Collection is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple15 {
+struct Tuple17 {
 	address field_0;
 	uint256 field_1;
+}
+
+/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+/// @dev See https://eips.ethereum.org/EIPS/eip-721
+/// @dev the ERC-165 identifier for this interface is 0x5b5e139f
+contract ERC721Metadata is Dummy, ERC165 {
+	// /// @notice A descriptive name for a collection of NFTs in this contract
+	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	// /// @dev EVM selector for this function is: 0x06fdde03,
+	// ///  or in textual repr: name()
+	// function name() public view returns (string memory) {
+	// 	require(false, stub_error);
+	// 	dummy;
+	// 	return "";
+	// }
+
+	// /// @notice An abbreviated name for NFTs in this contract
+	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	// /// @dev EVM selector for this function is: 0x95d89b41,
+	// ///  or in textual repr: symbol()
+	// function symbol() public view returns (string memory) {
+	// 	require(false, stub_error);
+	// 	dummy;
+	// 	return "";
+	// }
+
+	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
+	///
+	/// @dev If the token has a `url` property and it is not empty, it is returned.
+	///  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
+	///  If the collection property `baseURI` is empty or absent, return "" (empty string)
+	///  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	///  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
+	///
+	/// @return token's const_metadata
+	/// @dev EVM selector for this function is: 0xc87b56dd,
+	///  or in textual repr: tokenURI(uint256)
+	function tokenURI(uint256 tokenId) public view returns (string memory) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return "";
+	}
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
@@ -790,7 +790,7 @@ contract UniqueNFT is
 	ERC721UniqueExtensions,
 	ERC721Mintable,
 	ERC721Burnable,
+	ERC721Metadata,
 	Collection,
-	TokenProperties,
-	ERC721Metadata
+	TokenProperties
 {}

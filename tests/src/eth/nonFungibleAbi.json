@@ -154,7 +154,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple15",
+        "internalType": "struct Tuple17",
         "name": "",
         "type": "tuple"
       }
@@ -178,7 +178,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple15",
+        "internalType": "struct Tuple17",
         "name": "",
         "type": "tuple"
       }
