@@ -176,7 +176,7 @@ jobs:
 
       - name: Upload Parallel Test Report Before Node upgrade
         uses: phoenix-actions/test-reporting@v8
-        id: test-report-before
+        id: test-parallel-report-before
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
@@ -197,7 +197,7 @@ jobs:
 
       - name: Upload Sequential Test Report Before Node upgrade
         uses: phoenix-actions/test-reporting@v8
-        id: test-report-before
+        id: test-sequential-report-before
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
