@@ -708,22 +708,6 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 }
 
-impl<T: Config> NonfungibleHandle<T> {
-	pub fn supports_metadata(&self) -> bool {
-		let has_metadata_support_enabled = if let Some(erc721_metadata) =
-			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::erc721_metadata())
-		{
-			*erc721_metadata.into_inner() == *value::ERC721_METADATA_SUPPORTED
-		} else {
-			false
-		};
-
-		let has_url_property_permissions = get_token_permission::<T>(self.id, &key::url()).is_ok();
-
-		has_metadata_support_enabled && has_url_property_permissions
-	}
-}
-
 #[solidity_interface(
 	name = UniqueNFT,
 	is(
@@ -732,9 +716,9 @@ impl<T: Config> NonfungibleHandle<T> {
 		ERC721UniqueExtensions,
 		ERC721Mintable,
 		ERC721Burnable,
+		ERC721Metadata(if(this.flags.erc721metadata)),
 		Collection(via(common_mut returns CollectionHandle<T>)),
 		TokenProperties,
-		ERC721Metadata(if(this.supports_metadata())),
 	)
 )]
 impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}

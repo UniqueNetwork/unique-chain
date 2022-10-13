@@ -706,9 +706,6 @@ pub mod static_property {
 		/// Value "ERC721Metadata".
 		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
 
-		/// Value "1" ERC721 metadata supported.
-		pub const ERC721_METADATA_SUPPORTED: &[u8] = b"1";
-
 		/// Value for [`ERC721_METADATA`].
 		pub fn erc721() -> up_data_structs::PropertyValue {
 			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
@@ -717,11 +714,6 @@ pub mod static_property {
 		/// Value for [`SCHEMA_VERSION`].
 		pub fn schema_version() -> up_data_structs::PropertyValue {
 			property_value_from_bytes(SCHEMA_VERSION).expect(EXPECT_CONVERT_ERROR)
-		}
-
-		/// Value for [`ERC721_METADATA_SUPPORTED`].
-		pub fn erc721_metadata_supported() -> up_data_structs::PropertyValue {
-			property_value_from_bytes(ERC721_METADATA_SUPPORTED).expect(EXPECT_CONVERT_ERROR)
 		}
 	}
 

@@ -89,6 +89,26 @@ fn convert_data<T: Config>(
 	Ok((caller, name, description, token_prefix, base_uri_value))
 }
 
+fn default_url_pkp() -> up_data_structs::PropertyKeyPermission {
+	up_data_structs::PropertyKeyPermission {
+		key: key::url(),
+		permission: up_data_structs::PropertyPermission {
+			mutable: true,
+			collection_admin: true,
+			token_owner: false,
+		},
+	}
+}
+fn default_suffix_pkp() -> up_data_structs::PropertyKeyPermission {
+	up_data_structs::PropertyKeyPermission {
+		key: key::suffix(),
+		permission: up_data_structs::PropertyPermission {
+			mutable: true,
+			collection_admin: true,
+			token_owner: false,
+		},
+	}
+}
 fn make_data<T: Config>(
 	name: CollectionName,
 	mode: CollectionMode,
@@ -98,26 +118,9 @@ fn make_data<T: Config>(
 	add_properties: bool,
 ) -> Result<CreateCollectionData<T::AccountId>> {
 	let token_property_permissions = if add_properties {
-		vec![
-			up_data_structs::PropertyKeyPermission {
-				key: key::url(),
-				permission: up_data_structs::PropertyPermission {
-					mutable: true,
-					collection_admin: true,
-					token_owner: false,
-				},
-			},
-			up_data_structs::PropertyKeyPermission {
-				key: key::suffix(),
-				permission: up_data_structs::PropertyPermission {
-					mutable: true,
-					collection_admin: true,
-					token_owner: false,
-				},
-			},
-		]
-		.try_into()
-		.map_err(|e| Error::Revert(format!("{:?}", e)))?
+		vec![default_url_pkp(), default_suffix_pkp()]
+			.try_into()
+			.map_err(|e| Error::Revert(format!("{:?}", e)))?
 	} else {
 		up_data_structs::CollectionPropertiesPermissionsVec::default()
 	};
@@ -130,10 +133,6 @@ fn make_data<T: Config>(
 			up_data_structs::Property {
 				key: key::schema_version(),
 				value: property_value::schema_version(),
-			},
-			up_data_structs::Property {
-				key: key::erc721_metadata(),
-				value: property_value::erc721_metadata_supported(),
 			},
 		];
 		if !base_uri_value.is_empty() {
