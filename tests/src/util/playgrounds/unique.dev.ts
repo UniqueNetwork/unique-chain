@@ -386,7 +386,7 @@ class WaitGroup {
         const eventIdStr = `${eventSection}.${eventMethod}`;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
   
-        console.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
+        this.helper.logger.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
   
         const apiAt = await this.helper.getApi().at(blockHash);
         const eventRecords = (await apiAt.query.system.events()) as any;
@@ -401,7 +401,7 @@ class WaitGroup {
         } else if (maxBlocksToWait > 0) {
           maxBlocksToWait--;
         } else {
-          console.log(`Event \`${eventIdStr}\` is NOT found`);
+          this.helper.logger.log(`Event \`${eventIdStr}\` is NOT found`);
   
           unsubscribe();
           resolve(null);
