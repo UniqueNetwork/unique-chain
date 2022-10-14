@@ -42,6 +42,7 @@ export function getModuleNames(api: ApiPromise): string[] {
 export async function missingRequiredPallets(requiredPallets: string[]): Promise<string[]> {
   const api = await getApiConnection();
   const pallets = getModuleNames(api);
+  await api.disconnect();
 
   return requiredPallets.filter(p => !pallets.includes(p));
 }
