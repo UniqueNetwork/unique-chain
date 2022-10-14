@@ -42,7 +42,5 @@ describe('integration test: delete collection', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

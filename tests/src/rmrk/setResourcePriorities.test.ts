@@ -54,5 +54,5 @@ describe('integration test: set NFT resource priorities', () => {
     await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

@@ -49,7 +49,5 @@ describe('integration test: collection issuer', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

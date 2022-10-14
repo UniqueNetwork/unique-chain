@@ -207,5 +207,5 @@ describe('integration test: mint new NFT', () => {
     expect(nft.isSome).to.be.false;
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

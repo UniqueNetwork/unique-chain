@@ -251,5 +251,5 @@ describe('integration test: send NFT', () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

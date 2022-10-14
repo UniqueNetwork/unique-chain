@@ -336,7 +336,5 @@ describe.skip('integration test: Equip NFT', () => {
     await expectTxFailure(/rmrkEquip\.CollectionNotEquippable/, tx);
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

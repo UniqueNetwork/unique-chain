@@ -84,5 +84,5 @@ describe('integration test: create new Base', () => {
     ]);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

@@ -432,6 +432,6 @@ describe('integration test: add NFT resource', () => {
 
 
   after(() => {
-    api.disconnect();
+    after(async() => { await api.disconnect(); });
   });
 });

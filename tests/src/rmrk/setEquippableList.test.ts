@@ -110,5 +110,5 @@ describe("integration test: set slot's Equippable List", () => {
     await expectTxFailure(/rmrkEquip\.PartDoesntExist/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

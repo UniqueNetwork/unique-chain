@@ -76,5 +76,5 @@ describe('integration test: get owned NFTs', () => {
     });
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

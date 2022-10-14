@@ -343,7 +343,5 @@ describe('Integration test: remove nft resource', () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

@@ -90,5 +90,5 @@ describe('integration test: reject NFT', () => {
     await expectTxFailure(/rmrkCore\.CannotRejectNonPendingNft/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

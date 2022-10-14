@@ -103,5 +103,5 @@ describe('integration test: accept NFT', () => {
     expect(isChild).to.be.false;
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

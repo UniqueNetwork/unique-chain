@@ -90,7 +90,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', async 
       bob = privateKey('//Bob');
       normalizedAlice = {Substrate: helper.address.normalizeSubstrateToChainFormat(alice.address)};
 
-      requirePalletsOrSkip(this, helper, [Pallets.RmrkCore]);
+      await requirePalletsOrSkip(this, helper, [Pallets.RmrkCore]);
 
       const collectionIds = await createRmrkCollection(helper, alice);
       uniqueCollectionId = collectionIds.uniqueId;

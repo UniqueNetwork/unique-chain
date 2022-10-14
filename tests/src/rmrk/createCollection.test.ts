@@ -21,5 +21,5 @@ describe('Integration test: create new collection', () => {
     await createCollection(api, alice, 'no-limit-metadata', null, 'no-limit-symbol');
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

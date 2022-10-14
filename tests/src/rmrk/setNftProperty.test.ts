@@ -84,5 +84,5 @@ describe('integration test: set NFT property', () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

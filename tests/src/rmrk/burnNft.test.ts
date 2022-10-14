@@ -166,7 +166,5 @@ describe('integration test: burn nft', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

@@ -62,7 +62,5 @@ describe('integration test: set collection property', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

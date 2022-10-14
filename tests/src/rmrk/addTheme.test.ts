@@ -125,5 +125,5 @@ describe('integration test: add Theme to Base', () => {
     await expectTxFailure(/rmrkEquip\.PermissionError/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

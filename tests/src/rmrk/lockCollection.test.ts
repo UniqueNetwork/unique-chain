@@ -112,7 +112,5 @@ describe('integration test: lock collection', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });
