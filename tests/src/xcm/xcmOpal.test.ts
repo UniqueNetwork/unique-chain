@@ -69,6 +69,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
 
   before(async () => {
+    console.log('hey babe its opal');
     await usingApi(async (api, privateKeyWrapper) => {
       alice = privateKeyWrapper('//Alice');
       bob = privateKeyWrapper('//Bob'); // funds donor

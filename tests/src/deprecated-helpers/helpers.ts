@@ -1764,11 +1764,13 @@ export async function queryCollectionExpectSuccess(api: ApiPromise, collectionId
   return (await api.rpc.unique.collectionById(collectionId)).unwrap();
 }
 
-export const describeXCM = (
-  process.env.RUN_XCM_TESTS
+export async function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
+  (process.env.RUN_XCM_TESTS && !opts.skip
     ? describe
-    : describe.skip
-);
+    : describe.skip)(title, fn);
+}
+
+describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
 
 export async function waitNewBlocks(blocksCount = 1): Promise<void> {
   await usingApi(async (api) => {

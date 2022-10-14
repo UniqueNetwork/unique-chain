@@ -76,6 +76,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let balanceQuartzForeignTokenFinal: bigint;
 
   before(async () => {
+    console.log('hey babe');
     await usingApi(async (api, privateKeyWrapper) => {
       const keyringSr25519 = new Keyring({type: 'sr25519'});
 
@@ -434,7 +435,6 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
 });
 
 describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
-
   // Quartz constants
   let quartzAlice: IKeyringPair;
   let quartzAssetLocation;
