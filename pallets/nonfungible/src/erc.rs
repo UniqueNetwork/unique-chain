@@ -510,7 +510,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param to The new owner
 	/// @param tokenId ID of the minted NFT
 	/// @param tokenUri Token URI that would be stored in the NFT properties
-	#[solidity(/*hide,*/ rename_selector = "mintWithTokenURI")]
+	#[solidity(hide, rename_selector = "mintWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint_with_token_uri_check_id(
 		&mut self,
@@ -668,7 +668,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokenIds IDs of the minted NFTs
-	#[solidity(hide)]
+	// #[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
