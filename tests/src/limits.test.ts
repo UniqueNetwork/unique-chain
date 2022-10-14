@@ -58,7 +58,7 @@ describe('Number of tokens per address (ReFungible)', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       const donor = privateKey('//Alice');
       [alice] = await helper.arrange.createAccounts([10n], donor);
@@ -364,7 +364,7 @@ describe('Collection zero limits (ReFungible)', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       const donor = privateKey('//Alice');
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);

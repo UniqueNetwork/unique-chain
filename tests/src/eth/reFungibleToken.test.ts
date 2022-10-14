@@ -26,7 +26,7 @@ describe('Refungible token: Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
       [alice] = await helper.arrange.createAccounts([20n], donor);
@@ -70,7 +70,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
     });
@@ -134,7 +134,7 @@ describe('Refungible: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
       [alice] = await helper.arrange.createAccounts([50n], donor);
@@ -325,7 +325,7 @@ describe('Refungible: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
       [alice] = await helper.arrange.createAccounts([50n], donor);
@@ -380,7 +380,7 @@ describe('Refungible: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
       [alice] = await helper.arrange.createAccounts([50n], donor);
@@ -470,7 +470,7 @@ describe('ERC 1633 implementation', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
     });

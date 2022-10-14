@@ -48,7 +48,7 @@ export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, 
     opts.skip ? it.skip : it)(name, async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       if (opts.requiredPallets) {
-        requirePalletsOrSkip(this, helper, opts.requiredPallets);
+        await requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
       await cb({helper, privateKey});

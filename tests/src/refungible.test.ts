@@ -25,7 +25,7 @@ describe('integration test: Refungible functionality:', async () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       const donor = privateKey('//Alice');
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
