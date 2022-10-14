@@ -105,8 +105,8 @@ itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper:
 itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
 
-export const describeXcm = (
-  process.env.RUN_XCM_TESTS
-    ? describe
-    : describe.skip
-);
+export async function describeXcm(name: string, cb: () => any) {
+  (
+    process.env.RUN_XCM_TESTS ? describe : describe.skip
+  )(name, cb);
+}
