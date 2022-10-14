@@ -29,30 +29,6 @@
     "inputs": [
       { "internalType": "string", "name": "name", "type": "string" },
       { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
-      { "internalType": "string", "name": "baseUri", "type": "string" }
-    ],
-    "name": "createERC721MetadataCompatibleNFTCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
-      { "internalType": "string", "name": "baseUri", "type": "string" }
-    ],
-    "name": "createERC721MetadataCompatibleRFTCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
     "name": "createNFTCollection",
