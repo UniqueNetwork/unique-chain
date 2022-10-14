@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
+import config from '../config';
 import {XcmV2TraitsError, XcmV2TraitsOutcome} from '../interfaces';
 import {itSub, expect, describeXcm, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds} from '../util/playgrounds';
 
@@ -23,13 +24,9 @@ const UNIQUE_CHAIN = 2037;
 const ACALA_CHAIN = 2000;
 const MOONBEAM_CHAIN = 2004;
 
-const RELAY_PORT = 9844;
-const ACALA_PORT = 9946;
-const MOONBEAM_PORT = 9947;
-
-const relayUrl = 'ws://127.0.0.1:' + RELAY_PORT;
-const acalaUrl = 'ws://127.0.0.1:' + ACALA_PORT;
-const moonbeamUrl = 'ws://127.0.0.1:' + MOONBEAM_PORT;
+const relayUrl = config.relayUrl;
+const acalaUrl = config.acalaUrl;
+const moonbeamUrl = config.moonbeamUrl;
 
 const ACALA_DECIMALS = 12;
 

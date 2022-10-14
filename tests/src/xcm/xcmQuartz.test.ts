@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
+import config from '../config';
 import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
 import {itSub, expect, describeXcm, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds} from '../util/playgrounds';
 
@@ -23,13 +24,9 @@ const QUARTZ_CHAIN = 2095;
 const KARURA_CHAIN = 2000;
 const MOONRIVER_CHAIN = 2023;
 
-const RELAY_PORT = 9844;
-const KARURA_PORT = 9946;
-const MOONRIVER_PORT = 9947;
-
-const relayUrl = 'ws://127.0.0.1:' + RELAY_PORT;
-const karuraUrl = 'ws://127.0.0.1:' + KARURA_PORT;
-const moonriverUrl = 'ws://127.0.0.1:' + MOONRIVER_PORT;
+const relayUrl = config.relayUrl;
+const karuraUrl = config.karuraUrl;
+const moonriverUrl = config.moonriverUrl;
 
 const KARURA_DECIMALS = 12;
 

@@ -15,16 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
+import config from '../config';
 import {itSub, expect, describeXcm, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util/playgrounds';
 
 const STATEMINE_CHAIN = 1000;
 const UNIQUE_CHAIN = 2095;
 
-const RELAY_PORT = '9844';
-const STATEMINE_PORT = '9948';
-
-const relayUrl = 'ws://127.0.0.1:' + RELAY_PORT;
-const statemineUrl = 'ws://127.0.0.1:' + STATEMINE_PORT;
+const relayUrl = config.relayUrl;
+const westmintUrl = config.westmintUrl;
 
 const STATEMINE_PALLET_INSTANCE = 50;
 const ASSET_ID = 100;
@@ -65,7 +63,7 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       bob = privateKey('//Bob'); // funds donor
     });
 
-    await usingWestmintPlaygrounds(statemineUrl, async (helper) => {
+    await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       // 350.00 (three hundred fifty) DOT
       const fundingAmount = 3_500_000_000_000n; 
 
@@ -157,7 +155,7 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   });
 
   itSub('Should connect and send USDT from Westmint to Opal', async ({helper}) => {
-    await usingWestmintPlaygrounds(statemineUrl, async (helper) => {
+    await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       const dest = {
         V1: {
           parents: 1,
@@ -286,7 +284,7 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     balanceOpalFinal = await helper.balance.getSubstrate(alice.address);
     expect(balanceOpalAfter > balanceOpalFinal).to.be.true;
 
-    await usingWestmintPlaygrounds(statemineUrl, async (helper) => {
+    await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       await helper.wait.newBlocks(3);
       
       // The USDT token never paid fees. Its amount not changed from begin value.
