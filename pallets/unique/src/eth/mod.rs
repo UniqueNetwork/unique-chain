@@ -25,7 +25,7 @@ use pallet_common::{
 	dispatch::CollectionDispatch,
 	erc::{
 		CollectionHelpersEvents,
-		static_property::{key, value as property_value},
+		static_property::{key},
 	},
 	Pallet as PalletCommon,
 };
@@ -125,26 +125,13 @@ fn make_data<T: Config>(
 	} else {
 		up_data_structs::CollectionPropertiesPermissionsVec::default()
 	};
-	let properties = if add_properties {
-		let mut properties = vec![
-			up_data_structs::Property {
-				key: key::schema_name(),
-				value: property_value::erc721(),
-			},
-			up_data_structs::Property {
-				key: key::schema_version(),
-				value: property_value::schema_version(),
-			},
-		];
-		if !base_uri_value.is_empty() {
-			properties.push(up_data_structs::Property {
-				key: key::base_uri(),
-				value: base_uri_value,
-			})
-		}
-		properties
-			.try_into()
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?
+	let properties = if add_properties && !base_uri_value.is_empty() {
+		vec![up_data_structs::Property {
+			key: key::base_uri(),
+			value: base_uri_value,
+		}]
+		.try_into()
+		.expect("limit >= 1")
 	} else {
 		up_data_structs::CollectionPropertiesVec::default()
 	};
@@ -404,32 +391,20 @@ where
 		}
 
 		let all_properties = <pallet_common::CollectionProperties<T>>::get(collection.id);
-		let mut new_properties = vec![];
-		if all_properties.get(&key::schema_name()).is_none() {
-			self.recorder().consume_sstore()?;
-			new_properties.push(up_data_structs::Property {
-				key: key::schema_name(),
-				value: property_value::erc721(),
-			});
-			new_properties.push(up_data_structs::Property {
-				key: key::schema_version(),
-				value: property_value::schema_version(),
-			});
-		}
 		if all_properties.get(&key::base_uri()).is_none() && !base_uri.is_empty() {
-			new_properties.push(up_data_structs::Property {
-				key: key::base_uri(),
-				value: base_uri
-					.into_bytes()
-					.try_into()
-					.map_err(|_| "base uri is too large")?,
-			});
-		}
-
-		if !new_properties.is_empty() {
 			self.recorder().consume_sstore()?;
-			<PalletCommon<T>>::set_collection_properties(&collection, &caller, new_properties)
-				.map_err(dispatch_to_evm::<T>)?;
+			<PalletCommon<T>>::set_collection_properties(
+				&collection,
+				&caller,
+				vec![up_data_structs::Property {
+					key: key::base_uri(),
+					value: base_uri
+						.into_bytes()
+						.try_into()
+						.map_err(|_| "base uri is too large")?,
+				}],
+			)
+			.map_err(dispatch_to_evm::<T>)?;
 		}
 
 		self.recorder().consume_sstore()?;

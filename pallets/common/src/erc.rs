@@ -660,16 +660,6 @@ pub mod static_property {
 	pub mod key {
 		use super::*;
 
-		/// Key "schemaName".
-		pub fn schema_name() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
-		}
-
-		/// Key "schemaVersion".
-		pub fn schema_version() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"schemaVersion").expect(EXPECT_CONVERT_ERROR)
-		}
-
 		/// Key "baseURI".
 		pub fn base_uri() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
@@ -688,32 +678,6 @@ pub mod static_property {
 		/// Key "parentNft".
 		pub fn parent_nft() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"parentNft").expect(EXPECT_CONVERT_ERROR)
-		}
-
-		/// Key "ERC721Metadata".
-		pub fn erc721_metadata() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"ERC721Metadata").expect(EXPECT_CONVERT_ERROR)
-		}
-	}
-
-	/// Values.
-	pub mod value {
-		use super::*;
-
-		/// Value "Schema version".
-		pub const SCHEMA_VERSION: &[u8] = b"1.0.0";
-
-		/// Value "ERC721Metadata".
-		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
-
-		/// Value for [`ERC721_METADATA`].
-		pub fn erc721() -> up_data_structs::PropertyValue {
-			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
-		}
-
-		/// Value for [`SCHEMA_VERSION`].
-		pub fn schema_version() -> up_data_structs::PropertyValue {
-			property_value_from_bytes(SCHEMA_VERSION).expect(EXPECT_CONVERT_ERROR)
 		}
 	}
 

@@ -29,7 +29,7 @@ use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interf
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,
-	erc::{CommonEvmHandler, CollectionCall, static_property::key, static_property::value},
+	erc::{CommonEvmHandler, CollectionCall, static_property::key},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};

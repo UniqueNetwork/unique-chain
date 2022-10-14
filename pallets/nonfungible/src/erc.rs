@@ -33,10 +33,7 @@ use up_data_structs::{
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{
-		CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key,
-		static_property::value,
-	},
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
