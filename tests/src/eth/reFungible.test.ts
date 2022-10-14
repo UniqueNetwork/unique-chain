@@ -238,6 +238,108 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
+  itEth('Can perform burnFrom()', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(alice, 100n);
+    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+
+    const token = await collection.mintToken(alice, 100n, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    await tokenContract.methods.repartition(15).send();
+    await tokenContract.methods.approve(spender, 15).send();
+
+    {
+      const result = await contract.methods.burnFrom(owner, token.tokenId).send({from: spender});
+      const event = result.events.Transfer;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Transfer',
+        returnValues: {
+          from: owner,
+          to: '0x0000000000000000000000000000000000000000',
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+
+    expect(await collection.getTokenBalance(token.tokenId, {Ethereum: owner})).to.be.eq(0n);
+  });
+
+  itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = privateKey('//Bob');
+    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+
+    const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    await token.repartition(owner, 15n);
+    await token.approve(owner, {Ethereum: spender}, 15n);
+
+    {
+      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
+      const result = await contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender});
+      const event = result.events.Transfer;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Transfer',
+        returnValues: {
+          from: helper.address.substrateToEth(owner.address),
+          to: '0x0000000000000000000000000000000000000000',
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+
+    expect(await collection.getTokenBalance(token.tokenId, {Substrate: owner.address})).to.be.eq(0n);
+  });
+
+  itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
+    const alice = privateKey('//Alice');
+    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = privateKey('//Bob');
+    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+    const receiver = privateKey('//Charlie');
+
+    const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    await token.repartition(owner, 15n);
+    await token.approve(owner, {Ethereum: spender}, 15n);
+
+    {
+      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
+      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender});
+      const event = result.events.Transfer;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Transfer',
+        returnValues: {
+          from: helper.address.substrateToEth(owner.address),
+          to: helper.address.substrateToEth(receiver.address),
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+
+    expect(await token.getTop10Owners()).to.be.like([{Substrate: receiver.address}]);
+  });
+
   itEth('Can perform transfer()', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();

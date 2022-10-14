@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract, NormalizedEvent} from './types';
+import {ContractImports, CompiledContract, TEthCrossAccount, NormalizedEvent} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';
@@ -323,6 +323,26 @@ class EthAddressGroup extends EthGroupBase {
  
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
+export class EthCrossAccountGroup extends EthGroupBase {
+  fromAddress(address: TEthereumAccount): TEthCrossAccount {
+    return {
+      0: address,
+      1: '0',
+      field_0: address,
+      field_1: '0',
+    };
+  }
+
+  fromKeyringPair(keyring: IKeyringPair): TEthCrossAccount {
+    return {
+      0: '0x0000000000000000000000000000000000000000',
+      1: keyring.addressRaw,
+      field_0: '0x0000000000000000000000000000000000000000',
+      field_1: keyring.addressRaw,
+    };
+  }
+}
+
 export class EthUniqueHelper extends DevUniqueHelper {
   web3: Web3 | null = null;
   web3Provider: WebsocketProvider | null = null;
@@ -331,6 +351,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethAddress: EthAddressGroup;
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
+  ethCrossAccount: EthCrossAccountGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? EthUniqueHelper;
@@ -338,6 +359,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
     super(logger, options);
     this.eth = new EthGroup(this);
     this.ethAddress = new EthAddressGroup(this);
+    this.ethCrossAccount = new EthCrossAccountGroup(this);
     this.ethNativeContract = new NativeContractGroup(this);
     this.ethContract = new ContractGroup(this);
   }

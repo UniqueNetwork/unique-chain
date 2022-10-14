@@ -13,7 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x660da1e8
+/// @dev the ERC-165 identifier for this interface is 0x792435cf
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -48,6 +48,15 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x7623402e,
 	///  or in textual repr: setCollectionSponsor(address)
 	function setCollectionSponsor(address sponsor) external;
+
+	/// Set the sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0x84a1d5a8,
+	///  or in textual repr: setCollectionSponsorCross((address,uint256))
+	function setCollectionSponsorCross(Tuple6 memory sponsor) external;
 
 	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
@@ -104,6 +113,18 @@ interface Collection is Dummy, ERC165 {
 	function contractAddress() external view returns (address);
 
 	/// Add collection admin.
+	/// @param newAdmin Cross account administrator address.
+	/// @dev EVM selector for this function is: 0x859aa7d6,
+	///  or in textual repr: addCollectionAdminCross((address,uint256))
+	function addCollectionAdminCross(Tuple6 memory newAdmin) external;
+
+	/// Remove collection admin.
+	/// @param admin Cross account administrator address.
+	/// @dev EVM selector for this function is: 0x6c0cd173,
+	///  or in textual repr: removeCollectionAdminCross((address,uint256))
+	function removeCollectionAdminCross(Tuple6 memory admin) external;
+
+	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
 	/// @dev EVM selector for this function is: 0x92e462c7,
 	///  or in textual repr: addCollectionAdmin(address)
@@ -153,12 +174,26 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: addToCollectionAllowList(address)
 	function addToCollectionAllowList(address user) external;
 
+	/// Add user to allowed list.
+	///
+	/// @param user User cross account address.
+	/// @dev EVM selector for this function is: 0xa0184a3a,
+	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
+	function addToCollectionAllowListCross(Tuple6 memory user) external;
+
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
 	/// @dev EVM selector for this function is: 0x85c51acb,
 	///  or in textual repr: removeFromCollectionAllowList(address)
 	function removeFromCollectionAllowList(address user) external;
+
+	/// Remove user from allowed list.
+	///
+	/// @param user User cross account address.
+	/// @dev EVM selector for this function is: 0x09ba452a,
+	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
+	function removeFromCollectionAllowListCross(Tuple6 memory user) external;
 
 	/// Switch permission for minting.
 	///
@@ -175,6 +210,14 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: isOwnerOrAdmin(address)
 	function isOwnerOrAdmin(address user) external view returns (bool);
 
+	/// Check that account is the owner or admin of the collection
+	///
+	/// @param user User cross account to verify
+	/// @return "true" if account is the owner or admin
+	/// @dev EVM selector for this function is: 0x3e75a905,
+	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
+	function isOwnerOrAdminCross(Tuple6 memory user) external view returns (bool);
+
 	/// Returns collection type
 	///
 	/// @return `Fungible` or `NFT` or `ReFungible`
@@ -184,7 +227,7 @@ interface Collection is Dummy, ERC165 {
 
 	/// Get collection owner.
 	///
-	/// @return Tuple with sponsor address and his substrate mirror.
+	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
@@ -205,10 +248,22 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
 	function collectionAdmins() external view returns (Tuple6[] memory);
+
+	/// Changes collection owner to another account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner cross account
+	/// @dev EVM selector for this function is: 0xe5c9913f,
+	///  or in textual repr: setOwnerCross((address,uint256))
+	function setOwnerCross(Tuple6 memory newOwner) external;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x63034ac5
+/// @dev the ERC-165 identifier for this interface is 0x032e5926
 interface ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @dev EVM selector for this function is: 0x0ecd0ab0,
+	///  or in textual repr: approveCross((address,uint256),uint256)
+	function approveCross(Tuple6 memory spender, uint256 amount) external returns (bool);
+
 	/// Burn tokens from account
 	/// @dev Function that burns an `amount` of the tokens of a given account,
 	/// deducting from the sender's allowance for said account.
@@ -218,11 +273,28 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	///  or in textual repr: burnFrom(address,uint256)
 	function burnFrom(address from, uint256 amount) external returns (bool);
 
+	/// Burn tokens from account
+	/// @dev Function that burns an `amount` of the tokens of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
+	/// @dev EVM selector for this function is: 0xbb2f5a58,
+	///  or in textual repr: burnFromCross((address,uint256),uint256)
+	function burnFromCross(Tuple6 memory from, uint256 amount) external returns (bool);
+
 	/// Mint tokens for multiple accounts.
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
 	function mintBulk(Tuple6[] memory amounts) external returns (bool);
+
+	/// @dev EVM selector for this function is: 0xd5cf430b,
+	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	function transferFromCross(
+		Tuple6 memory from,
+		Tuple6 memory to,
+		uint256 amount
+	) external returns (bool);
 }
 
 /// @dev anonymous struct

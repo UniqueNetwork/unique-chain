@@ -19,6 +19,7 @@
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
+use pallet_common::eth::convert_tuple_to_cross_account;
 use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
 use sp_std::vec::Vec;
@@ -149,7 +150,26 @@ impl<T: Config> FungibleHandle<T> {
 }
 
 #[solidity_interface(name = ERC20UniqueExtensions)]
-impl<T: Config> FungibleHandle<T> {
+impl<T: Config> FungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
+	#[weight(<SelfWeightOf<T>>::approve())]
+	fn approve_cross(
+		&mut self,
+		caller: caller,
+		spender: (address, uint256),
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let spender = convert_tuple_to_cross_account::<T>(spender)?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+
+		<Pallet<T>>::set_allowance(self, &caller, &spender, amount)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
 	/// Burn tokens from account
 	/// @dev Function that burns an `amount` of the tokens of a given account,
 	/// deducting from the sender's allowance for said account.
@@ -159,6 +179,30 @@ impl<T: Config> FungibleHandle<T> {
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::burn_from(self, &caller, &from, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	/// Burn tokens from account
+	/// @dev Function that burns an `amount` of the tokens of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
+	#[weight(<SelfWeightOf<T>>::burn_from())]
+	fn burn_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 		let budget = self
 			.recorder
@@ -188,6 +232,27 @@ impl<T: Config> FungibleHandle<T> {
 			.collect::<Result<_>>()?;
 
 		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	#[weight(<SelfWeightOf<T>>::transfer_from())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		to: (address, uint256),
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}

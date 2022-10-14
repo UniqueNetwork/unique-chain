@@ -89,21 +89,21 @@ describe('EVM collection allowlist', () => {
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
   });
 
-  // TODO: Temprorary off. Need refactor
-  // itEth('Collection allowlist can be added and removed by [sub] address', async ({helper}) => {
-  //   const owner = await helper.eth.createAccountWithBalance(donor);
-  //   const user = donor;
-
-  //   const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
-  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
-  //   await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
-
-  //   await collectionEvm.methods.removeFromCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
-  // });
+  itEth('Collection allowlist can be added and removed by [cross] address', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const user = donor;
+    
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const userCross = helper.ethCrossAccount.fromKeyringPair(user);
+    
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
+    await collectionEvm.methods.addToCollectionAllowListCross(userCross).send({from: owner});
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
+    
+    await collectionEvm.methods.removeFromCollectionAllowListCross(userCross).send({from: owner});
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
+  });
 
   itEth('Collection allowlist can not be add and remove [eth] address by not owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
@@ -117,28 +117,27 @@ describe('EVM collection allowlist', () => {
     await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
     await expect(collectionEvm.methods.removeFromCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
   });
 
-  // TODO: Temprorary off. Need refactor
-  // itEth('Collection allowlist can not be add and remove [sub] address by not owner', async ({helper}) => {
-  //   const owner = await helper.eth.createAccountWithBalance(donor);
-  //   const notOwner = await helper.eth.createAccountWithBalance(donor);
-  //   const user = donor;
-
-  //   const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
-  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
-  //   await expect(collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
-  //   await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
-
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
-  //   await expect(collectionEvm.methods.removeFromCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-  //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
-  // });
+  itEth('Collection allowlist can not be add and remove [cross] address by not owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const notOwner = await helper.eth.createAccountWithBalance(donor);
+    const user = donor;
+    
+    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
+    const userCross = helper.ethCrossAccount.fromKeyringPair(user);
+    await expect(collectionEvm.methods.addToCollectionAllowListCross(userCross).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
+    await collectionEvm.methods.addToCollectionAllowListCross(userCross).send({from: owner});
+    
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
+    await expect(collectionEvm.methods.removeFromCollectionAllowListCross(userCross).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+    expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
+  });
 });
