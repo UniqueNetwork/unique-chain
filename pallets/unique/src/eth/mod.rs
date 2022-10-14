@@ -59,13 +59,11 @@ fn convert_data<T: Config>(
 	name: string,
 	description: string,
 	token_prefix: string,
-	base_uri: string,
 ) -> Result<(
 	T::CrossAccountId,
 	CollectionName,
 	CollectionDescription,
 	CollectionTokenPrefix,
-	PropertyValue,
 )> {
 	let caller = T::CrossAccountId::from_eth(caller);
 	let name = name
@@ -83,69 +81,7 @@ fn convert_data<T: Config>(
 	let token_prefix = token_prefix.into_bytes().try_into().map_err(|_| {
 		error_field_too_long(stringify!(token_prefix), CollectionTokenPrefix::bound())
 	})?;
-	let base_uri_value = base_uri
-		.into_bytes()
-		.try_into()
-		.map_err(|_| error_field_too_long(stringify!(token_prefix), PropertyValue::bound()))?;
-	Ok((caller, name, description, token_prefix, base_uri_value))
-}
-
-fn default_url_pkp() -> up_data_structs::PropertyKeyPermission {
-	up_data_structs::PropertyKeyPermission {
-		key: key::url(),
-		permission: up_data_structs::PropertyPermission {
-			mutable: true,
-			collection_admin: true,
-			token_owner: false,
-		},
-	}
-}
-fn default_suffix_pkp() -> up_data_structs::PropertyKeyPermission {
-	up_data_structs::PropertyKeyPermission {
-		key: key::suffix(),
-		permission: up_data_structs::PropertyPermission {
-			mutable: true,
-			collection_admin: true,
-			token_owner: false,
-		},
-	}
-}
-fn make_data<T: Config>(
-	name: CollectionName,
-	mode: CollectionMode,
-	description: CollectionDescription,
-	token_prefix: CollectionTokenPrefix,
-	base_uri_value: PropertyValue,
-	add_properties: bool,
-) -> Result<CreateCollectionData<T::AccountId>> {
-	let token_property_permissions = if add_properties {
-		vec![default_url_pkp(), default_suffix_pkp()]
-			.try_into()
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?
-	} else {
-		up_data_structs::CollectionPropertiesPermissionsVec::default()
-	};
-	let properties = if add_properties && !base_uri_value.is_empty() {
-		vec![up_data_structs::Property {
-			key: key::base_uri(),
-			value: base_uri_value,
-		}]
-		.try_into()
-		.expect("limit >= 1")
-	} else {
-		up_data_structs::CollectionPropertiesVec::default()
-	};
-
-	let data = CreateCollectionData {
-		name,
-		mode,
-		description,
-		token_prefix,
-		token_property_permissions,
-		properties,
-		..Default::default()
-	};
-	Ok(data)
+	Ok((caller, name, description, token_prefix))
 }
 
 fn create_refungible_collection_internal<
@@ -156,19 +92,16 @@ fn create_refungible_collection_internal<
 	name: string,
 	description: string,
 	token_prefix: string,
-	base_uri: string,
-	add_properties: bool,
 ) -> Result<address> {
-	let (caller, name, description, token_prefix, base_uri_value) =
-		convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-	let data = make_data::<T>(
+	let (caller, name, description, token_prefix) =
+		convert_data::<T>(caller, name, description, token_prefix)?;
+	let data = CreateCollectionData {
 		name,
-		CollectionMode::ReFungible,
+		mode: CollectionMode::ReFungible,
 		description,
 		token_prefix,
-		base_uri_value,
-		add_properties,
-	)?;
+		..Default::default()
+	};
 	check_sent_amount_equals_collection_creation_price::<T>(value)?;
 	let collection_helpers_address =
 		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
@@ -177,10 +110,7 @@ fn create_refungible_collection_internal<
 		caller.clone(),
 		collection_helpers_address,
 		data,
-		CollectionFlags {
-			erc721metadata: add_properties,
-			..Default::default()
-		},
+		Default::default(),
 	)
 	.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
@@ -224,16 +154,15 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix, _base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, "".into())?;
-		let data = make_data::<T>(
+		let (caller, name, description, token_prefix) =
+			convert_data::<T>(caller, name, description, token_prefix)?;
+		let data = CreateCollectionData {
 			name,
-			CollectionMode::NFT,
+			mode: CollectionMode::NFT,
 			description,
 			token_prefix,
-			Default::default(),
-			false,
-		)?;
+			..Default::default()
+		};
 		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
@@ -267,45 +196,6 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleNFTCollection")]
-	fn create_nonfungible_collection_with_properties(
-		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-		base_uri: string,
-	) -> Result<address> {
-		let (caller, name, description, token_prefix, base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-		let data = make_data::<T>(
-			name,
-			CollectionMode::NFT,
-			description,
-			token_prefix,
-			base_uri_value,
-			true,
-		)?;
-		check_sent_amount_equals_collection_creation_price::<T>(value)?;
-		let collection_helpers_address =
-			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(
-			caller,
-			collection_helpers_address,
-			data,
-			CollectionFlags {
-				erc721metadata: true,
-				..Default::default()
-			},
-		)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
-	}
-
-	#[weight(<SelfWeightOf<T>>::create_collection())]
 	#[solidity(rename_selector = "createRFTCollection")]
 	fn create_rft_collection(
 		&mut self,
@@ -315,37 +205,7 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
-			caller,
-			value,
-			name,
-			description,
-			token_prefix,
-			Default::default(),
-			false,
-		)
-	}
-
-	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
-	fn create_refungible_collection_with_properties(
-		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-		base_uri: string,
-	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
-			caller,
-			value,
-			name,
-			description,
-			token_prefix,
-			base_uri,
-			true,
-		)
+		create_refungible_collection_internal::<T>(caller, value, name, description, token_prefix)
 	}
 
 	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
@@ -381,13 +241,35 @@ where
 		let all_permissions = <pallet_common::CollectionPropertyPermissions<T>>::get(collection.id);
 		if all_permissions.get(&key::url()).is_none() {
 			self.recorder().consume_sstore()?;
-			<PalletCommon<T>>::set_property_permission(&collection, &caller, default_url_pkp())
-				.map_err(dispatch_to_evm::<T>)?;
+			<PalletCommon<T>>::set_property_permission(
+				&collection,
+				&caller,
+				up_data_structs::PropertyKeyPermission {
+					key: key::url(),
+					permission: up_data_structs::PropertyPermission {
+						mutable: true,
+						collection_admin: true,
+						token_owner: false,
+					},
+				},
+			)
+			.map_err(dispatch_to_evm::<T>)?;
 		}
 		if all_permissions.get(&key::suffix()).is_none() {
 			self.recorder().consume_sstore()?;
-			<PalletCommon<T>>::set_property_permission(&collection, &caller, default_suffix_pkp())
-				.map_err(dispatch_to_evm::<T>)?;
+			<PalletCommon<T>>::set_property_permission(
+				&collection,
+				&caller,
+				up_data_structs::PropertyKeyPermission {
+					key: key::suffix(),
+					permission: up_data_structs::PropertyPermission {
+						mutable: true,
+						collection_admin: true,
+						token_owner: false,
+					},
+				},
+			)
+			.map_err(dispatch_to_evm::<T>)?;
 		}
 
 		let all_properties = <pallet_common::CollectionProperties<T>>::get(collection.id);
