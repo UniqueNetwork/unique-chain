@@ -18,30 +18,30 @@
 
 use core::marker::PhantomData;
 use ethereum as _;
-use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
+use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::traits::Get;
 
 use crate::Pallet;
 
 use pallet_common::{
-	CollectionById,
 	dispatch::CollectionDispatch,
 	erc::{
-		CollectionHelpersEvents,
 		static_property::{key, value as property_value},
+		CollectionHelpersEvents,
 	},
+	CollectionById,
 };
-use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use up_data_structs::{
-	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue, DecimalPoints,
+	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
+	CreateCollectionData, PropertyValue,
 };
 
-use crate::{Config, SelfWeightOf, weights::WeightInfo};
+use crate::{weights::WeightInfo, Config, SelfWeightOf};
 
-use sp_std::vec::Vec;
 use alloc::format;
+use sp_std::vec::Vec;
 
 /// See [`CollectionHelpersCall`]
 pub struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
@@ -155,36 +155,7 @@ fn make_data<T: Config>(
 	Ok(data)
 }
 
-fn create_refungible_collection_internal<T: Config>(
-	caller: caller,
-	value: value,
-	name: string,
-	description: string,
-	token_prefix: string,
-	base_uri: string,
-	add_properties: bool,
-) -> Result<address> {
-	let (caller, name, description, token_prefix, base_uri_value) =
-		convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-	let data = make_data::<T>(
-		name,
-		CollectionMode::ReFungible,
-		description,
-		token_prefix,
-		base_uri_value,
-		add_properties,
-	)?;
-	check_sent_amount_equals_collection_creation_price::<T>(value)?;
-	let collection_helpers_address =
-		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-
-	let collection_id =
-		T::CollectionDispatch::create(caller.clone(), collection_helpers_address, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-	let address = pallet_common::eth::collection_id_to_address(collection_id);
-	Ok(address)
-}
-
+#[inline(always)]
 fn create_collection_internal<T: Config>(
 	caller: caller,
 	value: value,
@@ -252,24 +223,16 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix, _base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, "".into())?;
-		let data = make_data::<T>(
+		create_collection_internal::<T>(
+			caller,
+			value,
 			name,
 			CollectionMode::NFT,
 			description,
 			token_prefix,
 			Default::default(),
 			false,
-		)?;
-		check_sent_amount_equals_collection_creation_price::<T>(value)?;
-		let collection_helpers_address =
-			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
+		)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -283,24 +246,16 @@ where
 		token_prefix: string,
 		base_uri: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix, base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-		let data = make_data::<T>(
+		create_collection_internal::<T>(
+			caller,
+			value,
 			name,
 			CollectionMode::NFT,
 			description,
 			token_prefix,
-			base_uri_value,
+			base_uri,
 			true,
-		)?;
-		check_sent_amount_equals_collection_creation_price::<T>(value)?;
-		let collection_helpers_address =
-			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
+		)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -313,10 +268,11 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
+		create_collection_internal::<T>(
 			caller,
 			value,
 			name,
+			CollectionMode::ReFungible,
 			description,
 			token_prefix,
 			Default::default(),
@@ -325,7 +281,30 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createRTCollection")]
+	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
+	fn create_refungible_collection_with_properties(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+		base_uri: string,
+	) -> Result<address> {
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::ReFungible,
+			description,
+			token_prefix,
+			base_uri,
+			true,
+		)
+	}
+
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createFTCollection")]
 	fn create_fungible_collection(
 		&mut self,
 		caller: caller,
@@ -344,27 +323,6 @@ where
 			token_prefix,
 			Default::default(),
 			false,
-		)
-	}
-	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
-	fn create_refungible_collection_with_properties(
-		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-		base_uri: string,
-	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
-			caller,
-			value,
-			name,
-			description,
-			token_prefix,
-			base_uri,
-			true,
 		)
 	}
 

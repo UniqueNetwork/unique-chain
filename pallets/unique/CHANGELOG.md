@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changes
 
-- Addded **CollectionHelpers** method `destroyCollection`.
+- Added `destroyCollection` and `createFTCollection` methods to **CollectionHelpers**.
 
 ## [v0.2.0] 2022-09-13
 

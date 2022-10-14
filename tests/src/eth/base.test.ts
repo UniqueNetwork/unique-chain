@@ -106,7 +106,7 @@ describe('ERC165 tests', async () => {
   });
 
   itEth('ERC721UniqueExtensions support', async ({helper}) => {
-    expect(await contract(helper).methods.supportsInterface('0xd74d154f').call()).to.be.true;
+    expect(await contract(helper).methods.supportsInterface('0xb76006ac').call()).to.be.true;
   });
 
   itEth('ERC721Burnable support', async ({helper}) => {
