@@ -71,12 +71,14 @@ export enum Pallets {
   AppPromotion = 'apppromotion',
 }
 
-export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {
+export async function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {
   const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
     
   if (missingPallets.length > 0) {
     const skipMsg = `\tSkipping test '${test.test?.title}'.\n\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
     console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+
+    await helper.disconnect();
     test.skip();
   }
 }
@@ -86,7 +88,7 @@ export async function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, 
     opts.skip ? it.skip : it)(name, async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       if (opts.requiredPallets) {
-        requirePalletsOrSkip(this, helper, opts.requiredPallets);
+        await requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
       
       await cb({helper, privateKey});
