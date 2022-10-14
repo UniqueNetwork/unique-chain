@@ -498,22 +498,26 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return 0;
 	}
 
-	// /// @notice Function to mint token with the given tokenUri.
-	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
-	// ///  unlike standard, you can't specify it manually
-	// /// @param to The new owner
-	// /// @param tokenId ID of the minted RFT
-	// /// @param tokenUri Token URI that would be stored in the RFT properties
-	// /// @dev EVM selector for this function is: 0x50bb4e7f,
-	// ///  or in textual repr: mintWithTokenURI(address,uint256,string)
-	// function mintWithTokenURI(address to, uint256 tokenId, string memory tokenUri) public returns (bool) {
-	// 	require(false, stub_error);
-	// 	to;
-	// 	tokenId;
-	// 	tokenUri;
-	// 	dummy = 0;
-	// 	return false;
-	// }
+	/// @notice Function to mint token with the given tokenUri.
+	/// @dev `tokenId` should be obtained with `nextTokenId` method,
+	///  unlike standard, you can't specify it manually
+	/// @param to The new owner
+	/// @param tokenId ID of the minted RFT
+	/// @param tokenUri Token URI that would be stored in the RFT properties
+	/// @dev EVM selector for this function is: 0x50bb4e7f,
+	///  or in textual repr: mintWithTokenURI(address,uint256,string)
+	function mintWithTokenURI(
+		address to,
+		uint256 tokenId,
+		string memory tokenUri
+	) public returns (bool) {
+		require(false, stub_error);
+		to;
+		tokenId;
+		tokenUri;
+		dummy = 0;
+		return false;
+	}
 
 	/// @dev Not implemented
 	/// @dev EVM selector for this function is: 0x7d64bcb4,
@@ -601,20 +605,20 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// 	return false;
 	// }
 
-	// /// @notice Function to mint multiple tokens with the given tokenUris.
-	// /// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
-	// ///  numbers and first number should be obtained with `nextTokenId` method
-	// /// @param to The new owner
-	// /// @param tokens array of pairs of token ID and token URI for minted tokens
-	// /// @dev EVM selector for this function is: 0x36543006,
-	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple6[] memory tokens) public returns (bool) {
-	// 	require(false, stub_error);
-	// 	to;
-	// 	tokens;
-	// 	dummy = 0;
-	// 	return false;
-	// }
+	/// @notice Function to mint multiple tokens with the given tokenUris.
+	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	///  numbers and first number should be obtained with `nextTokenId` method
+	/// @param to The new owner
+	/// @param tokens array of pairs of token ID and token URI for minted tokens
+	/// @dev EVM selector for this function is: 0x36543006,
+	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
+	function mintBulkWithTokenURI(address to, Tuple6[] memory tokens) public returns (bool) {
+		require(false, stub_error);
+		to;
+		tokens;
+		dummy = 0;
+		return false;
+	}
 
 	/// Returns EVM address for refungible token
 	///

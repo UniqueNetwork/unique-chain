@@ -536,7 +536,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param to The new owner
 	/// @param tokenId ID of the minted RFT
 	/// @param tokenUri Token URI that would be stored in the RFT properties
-	#[solidity(hide, rename_selector = "mintWithTokenURI")]
+	#[solidity(/*hide,*/ rename_selector = "mintWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint_with_token_uri_check_id(
 		&mut self,
@@ -748,7 +748,7 @@ impl<T: Config> RefungibleHandle<T> {
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
-	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
+	#[solidity(/*hide,*/ rename_selector = "mintBulkWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
