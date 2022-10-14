@@ -36,7 +36,7 @@ const rewardAvailableInBlock = (stakedInBlock: bigint) => {
 describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
+      requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
       alice = privateKey('//Alice');
       palletAdmin = privateKey('//Charlie'); // TODO use custom address
       const api = helper.getApi();

@@ -23,7 +23,7 @@ describe('Refungible: Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
     });
@@ -115,7 +115,7 @@ describe('Refungible: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
     });
@@ -327,7 +327,7 @@ describe('RFT: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
     });
@@ -368,7 +368,7 @@ describe('Common metadata', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = privateKey('//Alice');
       [alice] = await helper.arrange.createAccounts([20n], donor);

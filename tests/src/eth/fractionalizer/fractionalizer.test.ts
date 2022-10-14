@@ -84,7 +84,7 @@ describe('Fractionalizer contract usage', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
       donor = privateKey('//Alice');
     });
   });
@@ -224,7 +224,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
-      await requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
       donor = privateKey('//Alice');
     });
   });
