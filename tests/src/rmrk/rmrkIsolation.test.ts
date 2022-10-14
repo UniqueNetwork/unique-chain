@@ -1,6 +1,6 @@
 import {executeTransaction} from '../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, expect, usingPlaygrounds, Pallets} from '../util/playgrounds';
+import {itSub, expect, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../util/playgrounds';
 import {UniqueHelper} from '../util/playgrounds/unique';
 
 let alice: IKeyringPair;
@@ -84,11 +84,13 @@ describe('Negative Integration Test: External Collections, Internal Ops', async 
   let rmrkNftId: number;
   let normalizedAlice: {Substrate: string};
 
-  before(async () => {
+  before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = privateKey('//Alice');
       bob = privateKey('//Bob');
       normalizedAlice = {Substrate: helper.address.normalizeSubstrateToChainFormat(alice.address)};
+
+      requirePalletsOrSkip(this, helper, [Pallets.RmrkCore]);
 
       const collectionIds = await createRmrkCollection(helper, alice);
       uniqueCollectionId = collectionIds.uniqueId;
