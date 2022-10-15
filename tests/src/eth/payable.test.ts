@@ -118,7 +118,7 @@ describe('EVM transaction fees', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await helper.eth.deployFlipper(deployer);
-    
+
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     await contract.methods.flip().send({from: caller});
     const finalCallerBalance = await helper.balance.getEthereum(caller);
@@ -129,7 +129,7 @@ describe('EVM transaction fees', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await deployProxyContract(helper, deployer);
-    
+
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
     await contract.methods.flip().send({from: caller});
@@ -138,7 +138,7 @@ describe('EVM transaction fees', () => {
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
     expect(finalContractBalance == initialContractBalance).to.be.true;
   });
-  
+
   itEth('Fee for nested calls to native methods is withdrawn from the user', async({helper}) => {
     const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
 
@@ -155,7 +155,7 @@ describe('EVM transaction fees', () => {
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
     expect(finalContractBalance == initialContractBalance).to.be.true;
   });
-  
+
   itEth('Fee for nested calls to create*Collection methods is withdrawn from the user and from the contract', async({helper}) => {
     const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
     const deployer = await helper.eth.createAccountWithBalance(donor);
@@ -176,7 +176,7 @@ describe('EVM transaction fees', () => {
     const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
-        
+
     await expect(collectionHelper.methods.createNFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
     await expect(collectionHelper.methods.createNFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
@@ -186,7 +186,7 @@ describe('EVM transaction fees', () => {
     const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
-        
+
     await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
     await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
@@ -235,8 +235,7 @@ describe('EVM transaction fees', () => {
 
         function mintNftToken(address collectionAddress) external  {
           UniqueNFT collection = UniqueNFT(collectionAddress);
-          uint256 tokenId = collection.nextTokenId();
-          collection.mint(msg.sender, tokenId);
+          uint256 tokenId = collection.mint(msg.sender);
           emit TokenMinted(tokenId);
         }
 

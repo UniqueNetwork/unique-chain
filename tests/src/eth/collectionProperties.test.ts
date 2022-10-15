@@ -1,6 +1,7 @@
-import {itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util/playgrounds';
+import {IProperty, ITokenPropertyPermission} from "../util/playgrounds/types";
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;
@@ -65,52 +66,82 @@ describe('Supports ERC721Metadata', () => {
     });
   });
 
-  itEth('ERC721Metadata property can be set for NFT collection', async({helper}) => {
+  const checkERC721Metadata = async (helper: EthUniqueHelper, mode: 'nft' | 'rft') => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const tokenPropertyPermissions = [{
-      key: 'URI',
-      permission: {
-        mutable: true,
-        collectionAdmin: true,
-        tokenOwner: false,
-      },
-    }];
-    const collection = await helper.nft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL', tokenPropertyPermissions});
+    const bruh = await helper.eth.createAccountWithBalance(donor);
 
-    await collection.addAdmin(donor, {Ethereum: caller});
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const BASE_URI = 'base/'
+    const SUFFIX = 'suffix1'
+    const URI = 'uri1'
 
-    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('1')).send({from: caller});
+    const collectionHelpers = helper.ethNativeContract.collectionHelpers(caller);
+    const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection'
+
+    const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p')
+
+    const contract = helper.ethNativeContract.collectionById(collectionId, mode, caller);
+    await contract.methods.addCollectionAdmin(bruh).send(); // to check that admin will work too
+
+    const collection1 = await helper.nft.getCollectionObject(collectionId);
+    const data1 = await collection1.getData()
+    expect(data1?.raw.flags.erc721metadata).to.be.false;
+    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
+
+    await collectionHelpers.methods.makeCollectionERC721MetadataCompatible(collectionAddress, BASE_URI)
+      .send({from: bruh});
 
     expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.true;
 
-    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('0')).send({from: caller});
+    const collection2 = await helper.nft.getCollectionObject(collectionId);
+    const data2 = await collection2.getData()
+    expect(data2?.raw.flags.erc721metadata).to.be.true;
 
-    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
+    const TPPs = data2?.raw.tokenPropertyPermissions
+    expect(TPPs?.length).to.equal(2);
+
+    expect(TPPs.find((tpp: ITokenPropertyPermission) => {
+      return tpp.key === "URI" && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner
+    })).to.be.not.null
+
+    expect(TPPs.find((tpp: ITokenPropertyPermission) => {
+      return tpp.key === "URISuffix" && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner
+    })).to.be.not.null
+
+    expect(data2?.raw.properties?.find((property: IProperty) => {
+      return property.key === "baseURI" && property.value === BASE_URI
+    })).to.be.not.null
+
+    const token1Result = await contract.methods.mint(bruh).send();
+    const tokenId1 = token1Result.events.Transfer.returnValues.tokenId;
+
+    expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI);
+
+    await contract.methods.setProperty(tokenId1, "URISuffix", Buffer.from(SUFFIX)).send();
+    expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI + SUFFIX);
+
+    await contract.methods.setProperty(tokenId1, "URI", Buffer.from(URI)).send();
+    expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(URI);
+
+    await contract.methods.deleteProperty(tokenId1, "URI").send();
+    expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI + SUFFIX);
+
+    const token2Result = await contract.methods.mintWithTokenURI(bruh, URI).send();
+    const tokenId2 = token2Result.events.Transfer.returnValues.tokenId;
+
+    expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(URI);
+
+    await contract.methods.deleteProperty(tokenId2, "URI").send();
+    expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI);
+
+    await contract.methods.setProperty(tokenId2, "URISuffix", Buffer.from(SUFFIX)).send();
+    expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI + SUFFIX);
+  }
+
+  itEth('ERC721Metadata property can be set for NFT collection', async({helper}) => {
+    await checkERC721Metadata(helper, 'nft');
   });
 
   itEth.ifWithPallets('ERC721Metadata property can be set for RFT collection', [Pallets.ReFungible], async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const tokenPropertyPermissions = [{
-      key: 'URI',
-      permission: {
-        mutable: true,
-        collectionAdmin: true,
-        tokenOwner: false,
-      },
-    }];
-    const collection = await helper.rft.mintCollection(donor, {name: 'col', description: 'descr', tokenPrefix: 'COL', tokenPropertyPermissions});
-
-    await collection.addAdmin(donor, {Ethereum: caller});
-
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-
-    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('1')).send({from: caller});
-
-    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.true;
-
-    await contract.methods.setCollectionProperty('ERC721Metadata', Buffer.from('0')).send({from: caller});
-
-    expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
+    await checkERC721Metadata(helper, 'rft');
   });
 });

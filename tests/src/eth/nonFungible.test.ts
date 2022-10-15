@@ -29,7 +29,7 @@ describe('NFT: Information getting', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  
+
   itEth('totalSupply', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
     await collection.mintToken(alice);
@@ -95,26 +95,23 @@ describe('Check ERC721 token URI for NFT', () => {
 
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    const result = await contract.methods.mint(
-      receiver,
-      nextTokenId,
-    ).send();
+
+    const result = await contract.methods.mint(receiver).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    expect(tokenId).to.be.equal('1');
 
     if (propertyKey && propertyValue) {
       // Set URL or suffix
-      await contract.methods.setProperty(nextTokenId, propertyKey, Buffer.from(propertyValue)).send();
+      await contract.methods.setProperty(tokenId, propertyKey, Buffer.from(propertyValue)).send();
     }
 
     const event = result.events.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(nextTokenId);
+    expect(event.returnValues.tokenId).to.be.equal(tokenId);
 
-    return {contract, nextTokenId};
+    return {contract, nextTokenId: tokenId};
   }
 
   itEth('Empty tokenURI', async ({helper}) => {
@@ -156,22 +153,17 @@ describe('NFT: Plain calls', () => {
 
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    const nextTokenId = await contract.methods.nextTokenId().call();
 
-    expect(nextTokenId).to.be.equal('1');
-    const result = await contract.methods.mintWithTokenURI(
-      receiver,
-      nextTokenId,
-      'Test URI',
-    ).send();
+    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    expect(tokenId).to.be.equal('1');
 
     const event = result.events.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(nextTokenId);
 
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
 
     // TODO: this wont work right now, need release 919000 first
     // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
@@ -224,7 +216,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const result = await contract.methods.burn(tokenId).send({from: caller});
-      
+
       const event = result.events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.returnValues.from).to.be.equal(caller);
@@ -330,7 +322,7 @@ describe('NFT: Fees', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  
+
   itEth('approve() call fee is less than 0.2UNQ', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
@@ -409,7 +401,7 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
@@ -433,7 +425,7 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
@@ -459,14 +451,14 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
-    
+
     const event = events[0];
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -482,14 +474,14 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
 
     await token.transfer(alice, {Ethereum: receiver});
-    
+
     const event = events[0];
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));

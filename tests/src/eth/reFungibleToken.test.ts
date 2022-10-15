@@ -82,26 +82,22 @@ describe('Check ERC721 token URI for ReFungible', () => {
 
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
-    
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    const result = await contract.methods.mint(
-      receiver,
-      nextTokenId,
-    ).send();
 
-    if (propertyKey && propertyValue) {
-      // Set URL or suffix
-      await contract.methods.setProperty(nextTokenId, propertyKey, Buffer.from(propertyValue)).send();
-    }
+    const result = await contract.methods.mint(receiver).send();
 
     const event = result.events.Transfer;
+    const tokenId = event.returnValues.tokenId;
+    expect(tokenId).to.be.equal('1');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(nextTokenId);
 
-    return {contract, nextTokenId};
+    if (propertyKey && propertyValue) {
+      // Set URL or suffix
+      await contract.methods.setProperty(tokenId, propertyKey, Buffer.from(propertyValue)).send();
+    }
+
+    return {contract, nextTokenId: tokenId};
   }
 
   itEth('Empty tokenURI', async ({helper}) => {
@@ -295,8 +291,8 @@ describe('Refungible: Plain calls', () => {
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Devastation', '6', '6');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
     const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
     const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, caller);
 
@@ -479,9 +475,10 @@ describe('ERC 1633 implementation', () => {
 
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sands', '', 'GRAIN');
     const collectionContract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
-    
-    const tokenId = await collectionContract.methods.nextTokenId().call();
-    await collectionContract.methods.mint(owner, tokenId).send();
+
+    const result = await collectionContract.methods.mint(owner).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+
     const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
     const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 

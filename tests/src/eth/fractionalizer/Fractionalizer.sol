@@ -124,8 +124,7 @@ contract Fractionalizer {
 		address rftTokenAddress;
 		UniqueRefungibleToken rftTokenContract;
 		if (nft2rftMapping[_collection][_token] == 0) {
-			rftTokenId = rftCollectionContract.nextTokenId();
-			rftCollectionContract.mint(address(this), rftTokenId);
+            rftTokenId = rftCollectionContract.mint(address(this));
 			rftTokenAddress = rftCollectionContract.tokenContractAddress(rftTokenId);
 			nft2rftMapping[_collection][_token] = rftTokenId;
 			rft2nftMapping[rftTokenAddress] = Token(_collection, _token);
