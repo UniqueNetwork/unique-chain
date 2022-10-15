@@ -111,7 +111,8 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     await collectionEvmOwned.methods.addCollectionAdmin(contract.options.address).send();
 
     {
-      const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send({from: caller});
+      const nextTokenId = await contract.methods.nextTokenId().call()
+      const result = await contract.methods.mintWithTokenURI(receiver, nextTokenId, 'Test URI').send({from: caller});
       const tokenId = result.events.Transfer.returnValues.tokenId;
       expect(tokenId).to.be.equal('1');
 
