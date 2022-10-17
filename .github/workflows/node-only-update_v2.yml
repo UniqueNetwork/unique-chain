@@ -200,15 +200,28 @@ jobs:
           path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
-
-      - name: Send SIGUSR1 to polkadotlaunch process
+     
+      - name: Send SIGUSR1 to polkadot-launch process
         if: success() || failure()
         run: |
           #Get PID of polkadot-launch
+          ContainerID=$(docker ps -aqf "name=node-parachain")
           PID=$(docker exec node-parachain pidof 'polkadot-launch')
           echo "Polkadot-launch PID: $PID"
           #Send SIGUSR1 signal to $PID
           docker exec node-parachain kill -SIGUSR1 ${PID}
+          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
+          docker logs ${ContainerID}
+      
+      - name: Get chain logs
+        if: failure()                   # run this step only at failure
+        run: |
+          docker exec node-parachain cat /polkadot-launch/9944.log
+          docker exec node-parachain cat /polkadot-launch/9945.log
+          docker exec node-parachain cat /polkadot-launch/alice.log
+          docker exec node-parachain cat /polkadot-launch/eve.log
+          docker exec node-parachain cat /polkadot-launch/dave.log
+          docker exec node-parachain cat /polkadot-launch/charlie.log  
 
       #  🌗 All parachain collators restarted with the new binaries.
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
