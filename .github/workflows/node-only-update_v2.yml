@@ -36,7 +36,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
             network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
             network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
 
