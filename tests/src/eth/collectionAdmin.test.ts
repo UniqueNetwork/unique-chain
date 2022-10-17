@@ -282,7 +282,7 @@ describe('Change owner tests', () => {
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await collectionEvm.methods.setOwner(newOwner).send();
+    await collectionEvm.methods.changeCollectionOwner(newOwner).send();
 
     expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.false;
     expect(await collectionEvm.methods.isOwnerOrAdmin(newOwner).call()).to.be.true;
@@ -293,7 +293,7 @@ describe('Change owner tests', () => {
     const newOwner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.setOwner(newOwner).send());
+    const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.changeCollectionOwner(newOwner).send());
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);
   });
@@ -304,7 +304,7 @@ describe('Change owner tests', () => {
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await expect(collectionEvm.methods.setOwner(newOwner).send({from: newOwner})).to.be.rejected;
+    await expect(collectionEvm.methods.changeCollectionOwner(newOwner).send({from: newOwner})).to.be.rejected;
     expect(await collectionEvm.methods.isOwnerOrAdmin(newOwner).call()).to.be.false;
   });
 });
