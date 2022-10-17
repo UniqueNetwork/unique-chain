@@ -163,6 +163,7 @@ jobs:
           path: ${{ matrix.mainnet_branch }}
 
 
+      # TODO change this step to use testParallel script after the merge
       - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
@@ -184,22 +185,23 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Run Sequential tests before Node Parachain upgrade
-        if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
-        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
+      # TODO uncomment thease steps after the merge
+      # - name: Run Sequential tests before Node Parachain upgrade
+      #   if: success() || failure()
+      #   working-directory: ${{ matrix.mainnet_branch }}/tests
+      #   run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+      #   env:
+      #     RPC_URL: http://127.0.0.1:9933/
 
-      - name: Upload Sequential Test Report Before Node upgrade
-        uses: phoenix-actions/test-reporting@v8
-        id: test-sequential-report-before
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
+      # - name: Upload Sequential Test Report Before Node upgrade
+      #   uses: phoenix-actions/test-reporting@v8
+      #   id: test-sequential-report-before
+      #   if: success() || failure()    # run this step even if previous step failed
+      #   with:
+      #     name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+      #     reporter: mochawesome-json
+      #     fail-on-error: 'false'
      
       - name: Send SIGUSR1 to polkadot-launch process
         if: success() || failure()
