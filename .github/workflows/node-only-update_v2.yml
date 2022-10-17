@@ -256,7 +256,7 @@ jobs:
           exit 0
         shell: bash
 
-      - name: Run tests after Node Parachain upgrade
+      - name: Run Parallel tests after Node Parachain upgrade
         working-directory: tests
         run: NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
@@ -272,7 +272,7 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
       
-      - name: Run Sequential tests before Node Parachain upgrade
+      - name: Run Sequential tests after Node Parachain upgrade
         if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
