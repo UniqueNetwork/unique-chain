@@ -260,8 +260,13 @@ class ArrangeGroup {
   };
 
   isDevNode = async () => {
-    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [1])]);
-    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [2])]);
+    let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
+    if (blockNumber == 0) {
+      await this.helper.wait.newBlocks(1); 
+      blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
+    }
+    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
+    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
     const findCreationDate = async (block: any) => {
       const humanBlock = block.toHuman();
       let date;
