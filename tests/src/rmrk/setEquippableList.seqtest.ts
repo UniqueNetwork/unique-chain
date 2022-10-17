@@ -1,6 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {createCollection, createBase, setEquippableList} from './util/tx';
 
 describe("integration test: set slot's Equippable List", () => {
@@ -111,5 +110,5 @@ describe("integration test: set slot's Equippable List", () => {
     await expectTxFailure(/rmrkEquip\.PartDoesntExist/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

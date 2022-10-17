@@ -1,7 +1,6 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 import {NftIdTuple} from './util/fetch';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {
   acceptResourceRemoval, addNftBasicResource, createCollection, mintNft, removeNftResource, sendNft,
 } from './util/tx';
@@ -337,7 +336,5 @@ describe('Integration test: remove nft resource', () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

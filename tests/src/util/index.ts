@@ -8,8 +8,9 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {Context} from 'mocha';
 import config from '../config';
-import '../interfaces/augment-api-events';
-import {DevUniqueHelper, SilentLogger, SilentConsole} from './playgrounds/unique.dev';
+import {ChainHelperBase} from './playgrounds/unique';
+import {ILogger} from './playgrounds/types';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper} from './playgrounds/unique.dev';
 
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
@@ -22,11 +23,11 @@ export const getTestSeed = (filename: string) => {
   return `//Alice+${getTestHash(filename)}`;
 };
 
-export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
+async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
-  const helper = new DevUniqueHelper(new SilentLogger());
+  const helper = new helperType(new SilentLogger());
 
   try {
     await helper.connect(url);
@@ -38,7 +39,8 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
       else {
         const actualSeed = getTestSeed(seed.filename);
         let account = helper.util.fromSeed(actualSeed, ss58Format);
-        if (!seed.ignoreFundsPresence && await helper.balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND) {
+        // here's to hoping that no 
+        if (!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
           console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
           account = helper.util.fromSeed('//Alice', ss58Format);
         }
@@ -51,6 +53,34 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
     await helper.disconnect();
     silentConsole.disable();
   }
+}
+
+export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
+  return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
+};
+
+export const usingWestmintPlaygrounds = async (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
+};
+
+export const usingRelayPlaygrounds = async (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
+};
+
+export const usingAcalaPlaygrounds = async (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
+};
+
+export const usingKaruraPlaygrounds = async (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
+};
+
+export const usingMoonbeamPlaygrounds = async (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
+};
+
+export const usingMoonriverPlaygrounds = async (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
 };
 
 export const MINIMUM_DONOR_FUND = 100_000n;
@@ -98,3 +128,11 @@ itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (s
 itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
 itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
+
+export async function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
+  (process.env.RUN_XCM_TESTS && !opts.skip
+    ? describe
+    : describe.skip)(title, fn);
+}
+
+describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});

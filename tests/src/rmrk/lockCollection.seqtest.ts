@@ -1,6 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {createCollection, lockCollection, mintNft} from './util/tx';
 
 describe('integration test: lock collection', () => {
@@ -113,7 +112,5 @@ describe('integration test: lock collection', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

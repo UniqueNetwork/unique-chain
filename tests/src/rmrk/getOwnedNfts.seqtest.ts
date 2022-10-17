@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
+import {requirePallets, Pallets} from './util/helpers';
 import {getOwnedNfts} from './util/fetch';
 import {mintNft, createCollection} from './util/tx';
 
@@ -76,5 +76,5 @@ describe('integration test: get owned NFTs', () => {
     });
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

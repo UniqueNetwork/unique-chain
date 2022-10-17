@@ -1,6 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {
   changeIssuer,
   createCollection,
@@ -50,7 +49,5 @@ describe('integration test: collection issuer', () => {
     });
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

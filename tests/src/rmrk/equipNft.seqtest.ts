@@ -1,9 +1,8 @@
 import {ApiPromise} from '@polkadot/api';
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 import {getNft, NftIdTuple} from './util/fetch';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {
   addNftComposableResource,
   addNftSlotResource,
@@ -337,7 +336,5 @@ describe.skip('integration test: Equip NFT', () => {
     await expectTxFailure(/rmrkEquip\.CollectionNotEquippable/, tx);
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

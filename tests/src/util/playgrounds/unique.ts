@@ -9,7 +9,7 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks} from './types';
+import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, IForeignAssetMetadata, TNetworks, MoonbeamAssetInfo, DemocracyStandardAccountVote, AcalaAssetMetadata} from './types';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -252,6 +252,19 @@ class UniqueUtil {
     isSuccess = isSuccess && amount === transfer.amount;
     return isSuccess;
   }
+
+  static bigIntToDecimals(number: bigint, decimals = 18) {
+    const numberStr = number.toString();
+    const dotPos = numberStr.length - decimals;
+  
+    if (dotPos <= 0) {
+      return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
+    } else {
+      const intPart = numberStr.substring(0, dotPos);
+      const fractPart = numberStr.substring(dotPos);
+      return intPart + '.' + fractPart;
+    }
+  }
 }
 
 class UniqueEventHelper {
@@ -308,19 +321,25 @@ class UniqueEventHelper {
   }
 }
 
-class ChainHelperBase {
+export class ChainHelperBase {
+  helperBase: any;
+
   transactionStatus = UniqueUtil.transactionStatus;
   chainLogType = UniqueUtil.chainLogType;
   util: typeof UniqueUtil;
   eventHelper: typeof UniqueEventHelper;
   logger: ILogger;
   api: ApiPromise | null;
-  forcedNetwork: TUniqueNetworks | null;
-  network: TUniqueNetworks | null;
+  forcedNetwork: TNetworks | null;
+  network: TNetworks | null;
   chainLog: IUniqueHelperLog[];
   children: ChainHelperBase[];
+  address: AddressGroup;
+  chain: ChainGroup;
 
-  constructor(logger?: ILogger) {
+  constructor(logger?: ILogger, helperBase?: any) {
+    this.helperBase = helperBase;
+
     this.util = UniqueUtil;
     this.eventHelper = UniqueEventHelper;
     if (typeof logger == 'undefined') logger = this.util.getDefaultLogger();
@@ -330,6 +349,21 @@ class ChainHelperBase {
     this.network = null;
     this.chainLog = [];
     this.children = [];
+    this.address = new AddressGroup(this);
+    this.chain = new ChainGroup(this);
+  }
+
+  clone(helperCls: ChainHelperBaseConstructor, options: {[key: string]: any} = {}) {
+    Object.setPrototypeOf(helperCls.prototype, this);
+    const newHelper = new helperCls(this.logger, options);
+
+    newHelper.api = this.api;
+    newHelper.network = this.network;
+    newHelper.forceNetwork = this.forceNetwork;
+
+    this.children.push(newHelper);
+
+    return newHelper;
   }
 
   getApi(): ApiPromise {
@@ -341,7 +375,7 @@ class ChainHelperBase {
     this.chainLog = [];
   }
 
-  forceNetwork(value: TUniqueNetworks): void {
+  forceNetwork(value: TNetworks): void {
     this.forcedNetwork = value;
   }
 
@@ -367,13 +401,17 @@ class ChainHelperBase {
     this.network = null;
   }
 
-  static async detectNetwork(api: ApiPromise): Promise<TUniqueNetworks> {
+  static async detectNetwork(api: ApiPromise): Promise<TNetworks> {
     const spec = (await api.query.system.lastRuntimeUpgrade()).toJSON() as any;
+    const xcmChains = ['rococo', 'westend', 'westmint', 'acala', 'karura', 'moonbeam', 'moonriver'];
+
+    if(xcmChains.indexOf(spec.specName) > -1) return spec.specName;
+
     if(['quartz', 'unique'].indexOf(spec.specName) > -1) return spec.specName;
     return 'opal';
   }
 
-  static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TUniqueNetworks> {
+  static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TNetworks> {
     const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
     await api.isReady;
 
@@ -384,9 +422,9 @@ class ChainHelperBase {
     return network;
   }
 
-  static async createConnection(wsEndpoint: string, listeners?: IApiListeners, network?: TUniqueNetworks | null): Promise<{
+  static async createConnection(wsEndpoint: string, listeners?: IApiListeners, network?: TNetworks | null): Promise<{
     api: ApiPromise;
-    network: TUniqueNetworks;
+    network: TNetworks;
   }> {
     if(typeof network === 'undefined' || network === null) network = 'opal';
     const supportedRPC = {
@@ -399,6 +437,13 @@ class ChainHelperBase {
       unique: {
         unique: require('@unique-nft/unique-mainnet-types/definitions').unique.rpc,
       },
+      rococo: {},
+      westend: {},
+      moonbeam: {},
+      moonriver: {},
+      acala: {},
+      karura: {},
+      westmint: {},
     };
     if(!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
     const rpc = supportedRPC[network];
@@ -590,16 +635,16 @@ class ChainHelperBase {
 }
 
 
-class HelperGroup {
-  helper: UniqueHelper;
+class HelperGroup<T extends ChainHelperBase> {
+  helper: T;
 
-  constructor(uniqueHelper: UniqueHelper) {
+  constructor(uniqueHelper: T) {
     this.helper = uniqueHelper;
   }
 }
 
 
-class CollectionGroup extends HelperGroup {
+class CollectionGroup extends HelperGroup<UniqueHelper> {
   /**
  * Get number of blocks when sponsored transaction is available.
  *
@@ -2000,7 +2045,7 @@ class FTGroup extends CollectionGroup {
 }
 
 
-class ChainGroup extends HelperGroup {
+class ChainGroup extends HelperGroup<ChainHelperBase> {
   /**
    * Get system properties of a chain
    * @example getChainProperties();
@@ -2054,49 +2099,15 @@ class ChainGroup extends HelperGroup {
   }
 }
 
-
-class BalanceGroup extends HelperGroup {
-  getCollectionCreationPrice(): bigint {
-    return 2n * this.helper.balance.getOneTokenNominal();
-  }
+class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   /**
-   * Representation of the native token in the smallest unit - one OPAL (OPL), QUARTZ (QTZ), or UNIQUE (UNQ).
-   * @example getOneTokenNominal()
-   * @returns ```BigInt``` representation of the native token in the smallest unit, e.g. ```1_000_000_000_000_000_000n``` for QTZ.
-   */
-  getOneTokenNominal(): bigint {
-    const chainProperties = this.helper.chain.getChainProperties();
-    return 10n ** BigInt((chainProperties.tokenDecimals || [18])[0]);
-  }
-
-  /**
-   * Get substrate address balance
-   * @param address substrate address
-   * @example getSubstrate("5GrwvaEF5zXb26Fz...")
-   * @returns amount of tokens on address
-   */
+ * Get substrate address balance
+ * @param address substrate address
+ * @example getSubstrate("5GrwvaEF5zXb26Fz...")
+ * @returns amount of tokens on address
+ */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
     return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
-  }
-
-  /**
-   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
-   * @param address substrate address
-   * @returns
-   */
-  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
-    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
-    return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
-  }
-
-  /**
-   * Get ethereum address balance
-   * @param address ethereum address
-   * @example getEthereum("0x9F0583DbB855d...")
-   * @returns amount of tokens on address
-   */
-  async getEthereum(address: TEthereumAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
   }
 
   /**
@@ -2125,10 +2136,123 @@ class BalanceGroup extends HelperGroup {
       && BigInt(amount) === transfer.amount;
     return isSuccess;
   }
+
+  /**
+   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
+   * @param address substrate address
+   * @returns
+   */
+  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
+    return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
+  }
 }
 
+class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  /**
+   * Get ethereum address balance
+   * @param address ethereum address
+   * @example getEthereum("0x9F0583DbB855d...")
+   * @returns amount of tokens on address
+   */
+  async getEthereum(address: TEthereumAccount): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
+  }
 
-class AddressGroup extends HelperGroup {
+  /**
+   * Transfer tokens to address
+   * @param signer keyring of signer
+   * @param address Ethereum address of a recipient
+   * @param amount amount of tokens to be transfered
+   * @example transferToEthereum(alithKeyring, "0x9F0583DbB855d...", 100_000_000_000n);
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async transferToEthereum(signer: TSigner, address: TEthereumAccount, amount: bigint | string): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true);
+
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'balances') && (method === 'Transfer')) {
+        transfer = {
+          from: data[0].toString(),
+          to: data[1].toString(),
+          amount: BigInt(data[2]),
+        };
+      }
+    });
+    const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from 
+      && address === transfer.to 
+      && BigInt(amount) === transfer.amount;
+    return isSuccess;
+  }
+}
+
+class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  subBalanceGroup: SubstrateBalanceGroup<T>;
+  ethBalanceGroup: EthereumBalanceGroup<T>;
+
+  constructor(helper: T) {
+    super(helper);
+    this.subBalanceGroup = new SubstrateBalanceGroup(helper);
+    this.ethBalanceGroup = new EthereumBalanceGroup(helper);
+  }
+
+  getCollectionCreationPrice(): bigint {
+    return 2n * this.getOneTokenNominal();
+  }
+  /**
+   * Representation of the native token in the smallest unit - one OPAL (OPL), QUARTZ (QTZ), or UNIQUE (UNQ).
+   * @example getOneTokenNominal()
+   * @returns ```BigInt``` representation of the native token in the smallest unit, e.g. ```1_000_000_000_000_000_000n``` for QTZ.
+   */
+  getOneTokenNominal(): bigint {
+    const chainProperties = this.helper.chain.getChainProperties();
+    return 10n ** BigInt((chainProperties.tokenDecimals || [18])[0]);
+  }
+
+  /**
+   * Get substrate address balance
+   * @param address substrate address
+   * @example getSubstrate("5GrwvaEF5zXb26Fz...")
+   * @returns amount of tokens on address
+   */
+  async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
+    return this.subBalanceGroup.getSubstrate(address);
+  }
+
+  /**
+   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
+   * @param address substrate address
+   * @returns
+   */
+  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+    return this.subBalanceGroup.getSubstrateFull(address);
+  }
+
+  /**
+   * Get ethereum address balance
+   * @param address ethereum address
+   * @example getEthereum("0x9F0583DbB855d...")
+   * @returns amount of tokens on address
+   */
+  async getEthereum(address: TEthereumAccount): Promise<bigint> {
+    return this.ethBalanceGroup.getEthereum(address);
+  }
+
+  /**
+   * Transfer tokens to substrate address
+   * @param signer keyring of signer
+   * @param address substrate address of a recipient
+   * @param amount amount of tokens to be transfered
+   * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
+    return this.subBalanceGroup.transferToSubstrate(signer, address, amount);
+  }
+}
+
+class AddressGroup extends HelperGroup<ChainHelperBase> {
   /**
    * Normalizes the address to the specified ss58 format, by default ```42```.
    * @param address substrate address
@@ -2170,9 +2294,20 @@ class AddressGroup extends HelperGroup {
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
     return CrossAccountId.translateSubToEth(subAddress);
   }
+
+  paraSiblingSovereignAccount(paraid: number) {
+    // We are getting a *sibling* parachain sovereign account,
+    // so we need a sibling prefix: encoded(b"sibl") == 0x7369626c
+    const siblingPrefix = '0x7369626c';
+
+    const encodedParaId = this.helper.getApi().createType('u32', paraid).toHex(true).substring(2);
+    const suffix = '000000000000000000000000000000000000000000000000';
+
+    return siblingPrefix + encodedParaId + suffix;
+  }
 }
 
-class StakingGroup extends HelperGroup {
+class StakingGroup extends HelperGroup<UniqueHelper> {
   /**
    * Stake tokens for App Promotion
    * @param signer keyring of signer
@@ -2258,7 +2393,7 @@ class StakingGroup extends HelperGroup {
   }
 }
 
-class SchedulerGroup extends HelperGroup {
+class SchedulerGroup extends HelperGroup<UniqueHelper> {
   constructor(helper: UniqueHelper) {
     super(helper);
   }
@@ -2314,53 +2449,281 @@ class SchedulerGroup extends HelperGroup {
   }
 }
 
+class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
+  async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.registerForeignAsset',
+      [ownerAddress, location, metadata],
+      true,
+    );
+  }
+
+  async update(signer: TSigner, foreignAssetId: number, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.updateForeignAsset',
+      [foreignAssetId, location, metadata],
+      true,
+    );
+  }
+}
+
+class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  palletName: string;
+
+  constructor(helper: T, palletName: string) {
+    super(helper);
+
+    this.palletName = palletName;
+  }
+
+  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, {Limited: weightLimit}], true);
+  }
+}
+
+class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transfer', [currencyId, amount, destination, destWeight], true);
+  }
+
+  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
+  }
+
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
+  }
+}
+
+class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async accounts(address: string, currencyId: any) {
+    const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
+    return BigInt(free);
+  }
+}
+
+class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async create(signer: TSigner, assetId: number, admin: string, minimalBalance: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
+  }
+
+  async setMetadata(signer: TSigner, assetId: number, name: string, symbol: string, decimals: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
+  }
+
+  async mint(signer: TSigner, assetId: number, beneficiary: string, amount: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
+  }
+
+  async account(assetId: string | number, address: string) {
+    const accountAsset = (
+      await this.helper.callRpc('api.query.assets.account', [assetId, address])
+    ).toJSON()! as any;
+
+    if (accountAsset !== null) {
+      return BigInt(accountAsset['balance']);
+    } else {
+      return null;
+    }
+  }
+}
+
+class AcalaAssetRegistryGroup extends HelperGroup<AcalaHelper> {
+  async registerForeignAsset(signer: TSigner, destination: any, metadata: AcalaAssetMetadata) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assetRegistry.registerForeignAsset', [destination, metadata], true);
+  }
+}
+
+class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
+  makeRegisterForeignAssetProposal(assetInfo: MoonbeamAssetInfo) {
+    const apiPrefix = 'api.tx.assetManager.';
+
+    const registerTx = this.helper.constructApiCall(
+      apiPrefix + 'registerForeignAsset',
+      [assetInfo.location, assetInfo.metadata, assetInfo.existentialDeposit, assetInfo.isSufficient],
+    );
+
+    const setUnitsTx = this.helper.constructApiCall(
+      apiPrefix + 'setAssetUnitsPerSecond',
+      [assetInfo.location, assetInfo.unitsPerSecond, assetInfo.numAssetsWeightHint],
+    );
+
+    const batchCall = this.helper.getApi().tx.utility.batchAll([registerTx, setUnitsTx]);
+    const encodedProposal = batchCall?.method.toHex() || '';
+    return encodedProposal;
+  }
+
+  async assetTypeId(location: any) {
+    return await this.helper.callRpc('api.query.assetManager.assetTypeId', [location]);
+  }
+}
+
+class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
+  async notePreimage(signer: TSigner, encodedProposal: string) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.notePreimage', [encodedProposal], true);
+  }
+
+  externalProposeMajority(proposalHash: string) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposalHash]);
+  }
+
+  fastTrack(proposalHash: string, votingPeriod: number, delayPeriod: number) {
+    return this.helper.constructApiCall('api.tx.democracy.fastTrack', [proposalHash, votingPeriod, delayPeriod]);
+  }
+
+  async referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
+  }
+}
+
+class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
+  collective: string;
+
+  constructor(helper: MoonbeamHelper, collective: string) {
+    super(helper);
+
+    this.collective = collective;
+  }
+
+  async propose(signer: TSigner, threshold: number, proposalHash: string, lengthBound: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [threshold, proposalHash, lengthBound], true);
+  }
+
+  async vote(signer: TSigner, proposalHash: string, proposalIndex: number, approve: boolean) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
+  }
+
+  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: number, lengthBound: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
+  }
+
+  async proposalCount() {
+    return Number(await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, []));
+  }
+}
+
+export type ChainHelperBaseConstructor = new(...args: any[]) => ChainHelperBase;
 export type UniqueHelperConstructor = new(...args: any[]) => UniqueHelper;
 
 export class UniqueHelper extends ChainHelperBase {
-  helperBase: any;
-
-  chain: ChainGroup;
-  balance: BalanceGroup;
-  address: AddressGroup;
+  balance: BalanceGroup<UniqueHelper>;
   collection: CollectionGroup;
   nft: NFTGroup;
   rft: RFTGroup;
   ft: FTGroup;
   staking: StakingGroup;
   scheduler: SchedulerGroup;
+  foreignAssets: ForeignAssetsGroup;
+  xcm: XcmGroup<UniqueHelper>;
+  xTokens: XTokensGroup<UniqueHelper>;
+  tokens: TokensGroup<UniqueHelper>;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
-    super(logger);
+    super(logger, options.helperBase ?? UniqueHelper);
 
-    this.helperBase = options.helperBase ?? UniqueHelper;
-
-    this.chain = new ChainGroup(this);
     this.balance = new BalanceGroup(this);
-    this.address = new AddressGroup(this);
     this.collection = new CollectionGroup(this);
     this.nft = new NFTGroup(this);
     this.rft = new RFTGroup(this);
     this.ft = new FTGroup(this);
     this.staking = new StakingGroup(this);
     this.scheduler = new SchedulerGroup(this);
-  }
-
-  clone(helperCls: UniqueHelperConstructor, options: {[key: string]: any} = {}) {
-    Object.setPrototypeOf(helperCls.prototype, this);
-    const newHelper = new helperCls(this.logger, options);
-
-    newHelper.api = this.api;
-    newHelper.network = this.network;
-    newHelper.forceNetwork = this.forceNetwork;
-
-    this.children.push(newHelper);
-
-    return newHelper;
+    this.foreignAssets = new ForeignAssetsGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.xTokens = new XTokensGroup(this);
+    this.tokens = new TokensGroup(this);
   }
 
   getSudo<T extends UniqueHelper>() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const SudoHelperType = SudoUniqueHelper(this.helperBase);
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
+}
+
+export class XcmChainHelper extends ChainHelperBase {
+  async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
+    const wsProvider = new WsProvider(wsEndpoint);
+    this.api = new ApiPromise({
+      provider: wsProvider,
+    });
+    await this.api.isReadyOrError;
+    this.network = await UniqueHelper.detectNetwork(this.api);
+  }
+}
+
+export class RelayHelper extends XcmChainHelper {
+  xcm: XcmGroup<RelayHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? RelayHelper);
+
+    this.xcm = new XcmGroup(this, 'xcmPallet');
+  }
+}
+
+export class WestmintHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<WestmintHelper>;
+  xcm: XcmGroup<WestmintHelper>;
+  assets: AssetsGroup<WestmintHelper>;
+  xTokens: XTokensGroup<WestmintHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? WestmintHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.assets = new AssetsGroup(this);
+    this.xTokens = new XTokensGroup(this);
+  }
+}
+
+export class MoonbeamHelper extends XcmChainHelper {
+  balance: EthereumBalanceGroup<MoonbeamHelper>;
+  assetManager: MoonbeamAssetManagerGroup;
+  assets: AssetsGroup<MoonbeamHelper>;
+  xTokens: XTokensGroup<MoonbeamHelper>;
+  democracy: MoonbeamDemocracyGroup;
+  collective: {
+    council: MoonbeamCollectiveGroup,
+    techCommittee: MoonbeamCollectiveGroup,
+  };
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? MoonbeamHelper);
+
+    this.balance = new EthereumBalanceGroup(this);
+    this.assetManager = new MoonbeamAssetManagerGroup(this);
+    this.assets = new AssetsGroup(this);
+    this.xTokens = new XTokensGroup(this);
+    this.democracy = new MoonbeamDemocracyGroup(this);
+    this.collective = {
+      council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
+      techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),
+    };
+  }
+}
+
+export class AcalaHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<AcalaHelper>;
+  assetRegistry: AcalaAssetRegistryGroup;
+  xTokens: XTokensGroup<AcalaHelper>;
+  tokens: TokensGroup<AcalaHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? AcalaHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.assetRegistry = new AcalaAssetRegistryGroup(this);
+    this.xTokens = new XTokensGroup(this);
+    this.tokens = new TokensGroup(this);
+  }
+
+  getSudo<T extends AcalaHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
     return this.clone(SudoHelperType) as T;
   }
 }
@@ -2411,7 +2774,7 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-function SudoUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
+function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
   return class extends Base {
     constructor(...args: any[]) {
       super(...args);
