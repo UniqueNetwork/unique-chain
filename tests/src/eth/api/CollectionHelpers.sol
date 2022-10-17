@@ -33,18 +33,14 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory tokenPrefix
 	) external payable returns (address);
 
-	/// Create an NFT collection
-	/// @param name Name of the collection
-	/// @param description Informative description of the collection
-	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
-	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0xe34a6844,
-	///  or in textual repr: createNonfungibleCollection(string,string,string)
-	function createNonfungibleCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix
-	) external payable returns (address);
+	// /// Create an NFT collection
+	// /// @param name Name of the collection
+	// /// @param description Informative description of the collection
+	// /// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	// /// @return address Address of the newly created collection
+	// /// @dev EVM selector for this function is: 0xe34a6844,
+	// ///  or in textual repr: createNonfungibleCollection(string,string,string)
+	// function createNonfungibleCollection(string memory name, string memory description, string memory tokenPrefix) external payable returns (address);
 
 	/// @dev EVM selector for this function is: 0xab173450,
 	///  or in textual repr: createRFTCollection(string,string,string)

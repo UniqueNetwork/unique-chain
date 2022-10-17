@@ -62,7 +62,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x3e1e8083
+/// @dev the ERC-165 identifier for this interface is 0x62e22290
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -243,9 +243,9 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
-	/// @dev EVM selector for this function is: 0x13af4035,
-	///  or in textual repr: setOwner(address)
-	function setOwner(address newOwner) external;
+	/// @dev EVM selector for this function is: 0x4f53e226,
+	///  or in textual repr: changeCollectionOwner(address)
+	function changeCollectionOwner(address newOwner) external;
 }
 
 /// @dev anonymous struct

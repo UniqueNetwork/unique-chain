@@ -592,6 +592,7 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
+	#[solidity(rename_selector = "changeCollectionOwner")]
 	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
