@@ -20,10 +20,11 @@ contract ERC165 is Dummy {
 /// @dev inlined interface
 contract CollectionHelpersEvents {
 	event CollectionCreated(address indexed owner, address indexed collectionId);
+	event CollectionDestroyed(address indexed collectionId);
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x5ad4f440
+/// @dev the ERC-165 identifier for this interface is 0x0c9ac65f
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -92,6 +93,14 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		baseUri;
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// @dev EVM selector for this function is: 0x564e321f,
+	///  or in textual repr: destroyCollection(address)
+	function destroyCollection(address collectionAddress) public {
+		require(false, stub_error);
+		collectionAddress;
+		dummy = 0;
 	}
 
 	/// Check if a collection exists

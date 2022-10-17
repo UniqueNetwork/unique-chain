@@ -22,7 +22,7 @@ import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
 describe('Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
 
-  before(async function() {
+  before(async function () {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = privateKey('//Alice');
     });
@@ -37,12 +37,24 @@ describe('Create NFT collection from EVM', () => {
 
     // todo:playgrounds this might fail when in async environment.
     const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-    const {collectionId} = await helper.eth.createNonfungibleCollection(owner, name, description, prefix);
+    const {collectionId, collectionAddress, events} = await helper.eth.createNonfungibleCollection(owner, name, description, prefix);
+    
+    expect(events).to.be.deep.equal([
+      {
+        address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
+        event: 'CollectionCreated',
+        args: {
+          owner: owner,
+          collectionId: collectionAddress,
+        },
+      },
+    ]);
+    
     const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
     const collection = helper.nft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
-    
+
     expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
     expect(collectionId).to.be.eq(collectionCountAfter);
     expect(data.name).to.be.eq(name);
@@ -66,12 +78,12 @@ describe('Create NFT collection from EVM', () => {
     await collectionHelpers.methods
       .createNonfungibleCollection('A', 'A', 'A')
       .send({value: Number(2n * helper.balance.getOneTokenNominal())});
-    
+
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.true;
   });
-  
+
   itEth('Set sponsorship', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
@@ -118,7 +130,7 @@ describe('Create NFT collection from EVM', () => {
     await collection.methods['setCollectionLimit(string,bool)']('ownerCanTransfer', limits.ownerCanTransfer).send();
     await collection.methods['setCollectionLimit(string,bool)']('ownerCanDestroy', limits.ownerCanDestroy).send();
     await collection.methods['setCollectionLimit(string,bool)']('transfersEnabled', limits.transfersEnabled).send();
-    
+
     const data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.limits.accountTokenOwnershipLimit).to.be.eq(limits.accountTokenOwnershipLimit);
     expect(data.raw.limits.sponsoredDataSize).to.be.eq(limits.sponsoredDataSize);
@@ -137,7 +149,7 @@ describe('Create NFT collection from EVM', () => {
     expect(await helper.ethNativeContract.collectionHelpers(collectionAddressForNonexistentCollection)
       .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
-    
+
     const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Exister', 'absolutely anything', 'EVC');
     expect(await helper.ethNativeContract.collectionHelpers(collectionAddress)
       .methods.isCollectionExist(collectionAddress).call())
@@ -149,7 +161,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 
-  before(async function() {
+  before(async function () {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = privateKey('//Alice');
       nominal = helper.balance.getOneTokenNominal();
@@ -168,7 +180,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       await expect(collectionHelper.methods
         .createNonfungibleCollection(collectionName, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
-      
+
     }
     {
       const MAX_DESCRIPTION_LENGTH = 256;
@@ -189,7 +201,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
-  
+
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
@@ -209,7 +221,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       await expect(malfeasantCollection.methods
         .setCollectionSponsor(sponsor)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
-      
+
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
@@ -229,5 +241,32 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     await expect(collectionEvm.methods
       .setCollectionLimit('badLimit', 'true')
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');
+  });
+
+  itEth('destroyCollection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Limits', 'absolutely anything', 'OLF');
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+
+
+    const result = await collectionHelper.methods
+      .destroyCollection(collectionAddress)
+      .send({from: owner});
+
+    const events = helper.eth.normalizeEvents(result.events);
+    
+    expect(events).to.be.deep.equal([
+      {
+        address: collectionHelper.options.address,
+        event: 'CollectionDestroyed',
+        args: {
+          collectionId: collectionAddress,
+        },
+      },
+    ]);
+
+    expect(await collectionHelper.methods
+      .isCollectionExist(collectionAddress)
+      .call()).to.be.false;
   });
 });

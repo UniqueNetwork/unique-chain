@@ -53,6 +53,12 @@ pub enum CollectionHelpersEvents {
 		#[indexed]
 		collection_id: address,
 	},
+	/// The collection has been destroyed.
+	CollectionDestroyed {
+		/// Collection ID.
+		#[indexed]
+		collection_id: address,
+	},
 }
 
 /// Does not always represent a full collection, for RFT it is either

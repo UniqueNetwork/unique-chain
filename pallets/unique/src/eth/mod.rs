@@ -20,6 +20,9 @@ use core::marker::PhantomData;
 use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
 use frame_support::traits::Get;
+
+use crate::Pallet;
+
 use pallet_common::{
 	CollectionById,
 	dispatch::CollectionDispatch,
@@ -312,6 +315,16 @@ where
 			base_uri,
 			true,
 		)
+	}
+
+	#[weight(<SelfWeightOf<T>>::destroy_collection())]
+	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
+			.ok_or("Invalid collection address format")?;
+		<Pallet<T>>::destroy_collection_internal(caller, collection_id)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)
 	}
 
 	/// Check if a collection exists

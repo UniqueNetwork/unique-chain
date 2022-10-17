@@ -173,29 +173,26 @@ class EthGroup extends EthGroupBase {
   async callEVM(signer: TEthereumAccount, contractAddress: string, abi: string) {
     return await this.helper.callRpc('api.rpc.eth.call', [{from: signer, to: contractAddress, data: abi}]);
   }
-
-  async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+  
+  async createCollecion(functionName: string, signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
         
-    const result = await collectionHelper.methods.createNonfungibleCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
+    const result = await collectionHelper.methods[functionName](name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
-
-    return {collectionId, collectionAddress};
+    const events = this.helper.eth.normalizeEvents(result.events);
+    
+    return {collectionId, collectionAddress, events};
+  }
+  
+  async createNonfungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+    return this.createCollecion('createNonfungibleCollection', signer, name, description, tokenPrefix);
   }
 
   async createRefungibleCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
-    const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
-        
-    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
-
-    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
-    const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
-
-    return {collectionId, collectionAddress};
+    return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
   }
 
   async deployCollectorContract(signer: string): Promise<Contract> {

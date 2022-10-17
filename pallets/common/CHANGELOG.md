@@ -2,29 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2022-10-13
+
+## Added
+
+- EVM event for `destroy_collection`.
+
 ## [0.1.8] - 2022-08-24
 
 ## Added
- - Eth methods for collection
-    + set_collection_sponsor_substrate
-    + has_collection_pending_sponsor
-    + remove_collection_sponsor
-    + get_collection_sponsor
+
+- Eth methods for collection
+  - set_collection_sponsor_substrate
+  - has_collection_pending_sponsor
+  - remove_collection_sponsor
+  - get_collection_sponsor
 - Add convert function from `uint256` to `CrossAccountId`.
 
 ## [0.1.7] - 2022-08-19
 
 ### Added
 
- - Add convert funtion from `CrossAccountId` to eth `uint256`.
+- Add convert funtion from `CrossAccountId` to eth `uint256`.
 
- 
 ## [0.1.6] - 2022-08-16
 
 ### Added
--   New Ethereum API methods: changeOwner, changeOwner(Substrate) and verifyOwnerOrAdmin(Substrate).
+
+- New Ethereum API methods: changeOwner, changeOwner(Substrate) and verifyOwnerOrAdmin(Substrate).
 
 <!-- bureaucrate goes here -->
+
 ## [v0.1.5] 2022-08-16
 
 ### Other changes
@@ -45,19 +53,21 @@ Upstream-Change: https://github.com/paritytech/substrate/pull/11490
 - build: Upgrade polkadot to v0.9.25 cdfb9bdc7b205ff1b5134f034ef9973d769e5e6b
 
 ## [0.1.3] - 2022-07-25
+
 ### Add
--   Some static property keys and values.
+
+- Some static property keys and values.
 
 ## [0.1.2] - 2022-07-20
 
 ### Fixed
 
--   Some methods in `#[solidity_interface]` for `CollectionHandle` had invalid
-    mutability modifiers, causing invalid stub/abi generation.
+- Some methods in `#[solidity_interface]` for `CollectionHandle` had invalid
+  mutability modifiers, causing invalid stub/abi generation.
 
 ## [0.1.1] - 2022-07-14
 
 ### Added
 
- - Implementation of RPC method `token_owners` returning 10 owners in no particular order.
-    This was an internal request to improve the web interface and support fractionalization event.
+- Implementation of RPC method `token_owners` returning 10 owners in no particular order.
+  This was an internal request to improve the web interface and support fractionalization event.
