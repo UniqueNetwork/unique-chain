@@ -1,9 +1,8 @@
 import {expect} from 'chai';
 import privateKey from '../substrate/privateKey';
 import {executeTransaction, getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 import {getNft, NftIdTuple} from './util/fetch';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {
   acceptNft, acceptResourceRemoval, addNftBasicResource,
   createBase,
@@ -344,7 +343,5 @@ describe('Integration test: remove nft resource', () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  after(() => {
-    api.disconnect();
-  });
+  after(async() => { await api.disconnect(); });
 });

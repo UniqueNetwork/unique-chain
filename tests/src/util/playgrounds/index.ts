@@ -7,16 +7,18 @@ import chaiAsPromised from 'chai-as-promised';
 import {Context} from 'mocha';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
-import {DevUniqueHelper, SilentLogger, SilentConsole} from './unique.dev';
+import {ChainHelperBase} from './unique';
+import {ILogger} from './types';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper} from './unique.dev';
 
 chai.use(chaiAsPromised);
 export const expect = chai.expect;
 
-export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>, url: string = config.substrateUrl) => {
+async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string) => IKeyringPair) => Promise<void>) {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
-  const helper = new DevUniqueHelper(new SilentLogger());
+  const helper = new helperType(new SilentLogger());
 
   try {
     await helper.connect(url);
@@ -28,6 +30,34 @@ export const usingPlaygrounds = async (code: (helper: DevUniqueHelper, privateKe
     await helper.disconnect();
     silentConsole.disable();
   }
+}
+
+export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>, url: string = config.substrateUrl) => {
+  return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
+};
+
+export const usingWestmintPlaygrounds = async (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
+};
+
+export const usingRelayPlaygrounds = async (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
+};
+
+export const usingAcalaPlaygrounds = async (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
+};
+
+export const usingKaruraPlaygrounds = async (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
+};
+
+export const usingMoonbeamPlaygrounds = async (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
+};
+
+export const usingMoonriverPlaygrounds = async (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => IKeyringPair) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
 };
 
 export enum Pallets {
@@ -72,3 +102,9 @@ itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (s
 itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
 itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => IKeyringPair }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
+
+export async function describeXcm(name: string, cb: () => any) {
+  (
+    process.env.RUN_XCM_TESTS ? describe : describe.skip
+  )(name, cb);
+}

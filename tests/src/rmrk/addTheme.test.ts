@@ -1,9 +1,8 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
 import {createBase, addTheme} from './util/tx';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {getThemeNames} from './util/fetch';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
 describe('integration test: add Theme to Base', () => {
   let api: any;
@@ -126,5 +125,5 @@ describe('integration test: add Theme to Base', () => {
     await expectTxFailure(/rmrkEquip\.PermissionError/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

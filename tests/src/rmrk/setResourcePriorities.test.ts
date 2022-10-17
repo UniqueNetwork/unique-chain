@@ -1,6 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {mintNft, createCollection, setResourcePriorities} from './util/tx';
 
 describe('integration test: set NFT resource priorities', () => {
@@ -55,5 +54,5 @@ describe('integration test: set NFT resource priorities', () => {
     await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

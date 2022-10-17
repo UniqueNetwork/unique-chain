@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
 import {NftIdTuple} from './util/fetch';
-import {expectTxFailure, getResourceById} from './util/helpers';
+import {expectTxFailure, getResourceById, requirePallets, Pallets} from './util/helpers';
 import {
   addNftBasicResource,
   acceptNftResource,
@@ -12,7 +12,6 @@ import {
   addNftComposableResource,
 } from './util/tx';
 import {RmrkTraitsResourceResourceInfo as ResourceInfo} from '@polkadot/types/lookup';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 
 describe('integration test: add NFT resource', () => {
   const Alice = '//Alice';
@@ -433,6 +432,6 @@ describe('integration test: add NFT resource', () => {
 
 
   after(() => {
-    api.disconnect();
+    after(async() => { await api.disconnect(); });
   });
 });

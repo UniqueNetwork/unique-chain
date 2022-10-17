@@ -1,7 +1,6 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 import {NftIdTuple} from './util/fetch';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {createCollection, mintNft, sendNft, setNftProperty} from './util/tx';
 
 describe('integration test: set NFT property', () => {
@@ -85,5 +84,5 @@ describe('integration test: set NFT property', () => {
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

@@ -1,8 +1,7 @@
 import {expect} from 'chai';
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
 import {getNft} from './util/fetch';
-import {expectTxFailure} from './util/helpers';
+import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {createCollection, mintNft} from './util/tx';
 
 describe('integration test: mint new NFT', () => {
@@ -208,5 +207,5 @@ describe('integration test: mint new NFT', () => {
     expect(nft.isSome).to.be.false;
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });

@@ -1,5 +1,5 @@
 import {getApiConnection} from '../substrate/substrate-api';
-import {requirePallets, Pallets} from '../deprecated-helpers/helpers';
+import {requirePallets, Pallets} from './util/helpers';
 import {createCollection} from './util/tx';
 
 describe('Integration test: create new collection', () => {
@@ -21,5 +21,5 @@ describe('Integration test: create new collection', () => {
     await createCollection(api, alice, 'no-limit-metadata', null, 'no-limit-symbol');
   });
 
-  after(() => { api.disconnect(); });
+  after(async() => { await api.disconnect(); });
 });
