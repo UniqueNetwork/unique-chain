@@ -258,7 +258,13 @@ jobs:
 
       - name: Run Parallel tests after Node Parachain upgrade
         working-directory: tests
-        run: NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
