@@ -90,7 +90,7 @@ jobs:
       - name: Generate launch-config-forkless-nodata.json
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/forkless-config/launch-config-forkless-nodata.j2
+          template: .docker/forkless-config/launch-config-node-update-only-v3.j2
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             FEATURE=${{ matrix.features }}
