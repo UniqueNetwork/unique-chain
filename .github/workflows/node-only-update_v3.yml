@@ -207,7 +207,7 @@ jobs:
           
       - name: List files in Workspace
         if: always()
-        uses: ls -la ./
+        run: ls -la ./
 
   sequential-test:
     needs: nodes-execution-matrix
@@ -357,4 +357,4 @@ jobs:
           
       - name: List files in Workspace
         if: always()
-        uses: ls -la ./
+        run: ls -la ./
