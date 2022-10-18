@@ -41,8 +41,15 @@ jobs:
         with:
           matrix: |
             network {opal}, runtime {opal}, features {opal-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
+            network {quartz}, runtime {quartz}, features {quartz-runtime}, acala_version "${{ env.KARURA_BUILD_BRANCH }}", moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
             network {unique}, runtime {unique}, features {unique-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
+
+      - name: echo 1 step env
+        run: |
+          echo "acala_version="${{ matrix.acala_version }}
+          echo "moonbeam_version="${{ matrix.moonbeam_version }}
+          echo "cumulus_version="${{ matrix.cumulus_version }}
+
 
   xcm-build:
     
@@ -76,7 +83,7 @@ jobs:
       - name: Read .env file
         uses: xom9ikk/dotenv@v1.0.2
 
-      - name: echo env
+      - name: echo 2 step env
         run: |
           echo "acala_version=${{ matrix.acala_version }}"
           echo "moonbeam_version="${{ matrix.moonbeam_version }}
