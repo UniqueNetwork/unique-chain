@@ -18,7 +18,7 @@ jobs:
 
     name: Prepare execution matrix
 
-    runs-on: [XL]
+    runs-on: [self-hosted]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -44,18 +44,12 @@ jobs:
             network {quartz}, runtime {quartz}, features {quartz-runtime}, acala_version {"${{ env.KARURA_BUILD_BRANCH }}"}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
             network {unique}, runtime {unique}, features {unique-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
 
-      - name: echo 1 step env
-        run: |
-          echo "acala_version="${{ matrix.acala_version }}
-          echo "moonbeam_version="${{ matrix.moonbeam_version }}
-          echo "cumulus_version="${{ matrix.cumulus_version }}
-
 
   xcm-build:
     
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [XL]
+    runs-on: [self-hosted]
 
     timeout-minutes: 600
 
