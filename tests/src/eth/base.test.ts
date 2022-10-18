@@ -14,57 +14,51 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {
-  collectionIdToAddress,
-  createEthAccount,
-  createEthAccountWithBalance,
-  deployFlipper,
-  ethBalanceViaSub,
-  GAS_ARGS,
-  itWeb3,
-  recordEthFee,
-  usingWeb3,
-} from './util/helpers';
-import {expect} from 'chai';
-import {createCollectionExpectSuccess, createItemExpectSuccess, UNIQUE} from '../util/helpers';
-import nonFungibleAbi from './nonFungibleAbi.json';
 import {Contract} from 'web3-eth-contract';
-import Web3 from 'web3';
+
+import {IKeyringPair} from '@polkadot/types/types';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util';
+
 
 describe('Contract calls', () => {
-  itWeb3('Call of simple contract fee is less than 0.2 UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const deployer = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const flipper = await deployFlipper(web3, deployer);
+  let donor: IKeyringPair;
 
-    const cost = await recordEthFee(api, deployer, () => flipper.methods.flip().send({from: deployer}));
-    expect(cost < BigInt(0.2 * Number(UNIQUE))).to.be.true;
-  });
-
-  itWeb3('Balance transfer fee is less than 0.2 UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const userA = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const userB = createEthAccount(web3);
-
-    const cost = await recordEthFee(api, userA, () => web3.eth.sendTransaction({from: userA, to: userB, value: '1000000', ...GAS_ARGS}));
-    const balanceB = await ethBalanceViaSub(api, userB);
-    expect(cost - balanceB < BigInt(0.2 * Number(UNIQUE))).to.be.true;
-  });
-
-  itWeb3('NFT transfer is close to 0.15 UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-
-    const alice = privateKeyWrapper('//Alice');
-    const collection = await createCollectionExpectSuccess({
-      mode: {type: 'NFT'},
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
-    const itemId = await createItemExpectSuccess(alice, collection, 'NFT', {Ethereum: caller});
+  });
 
-    const address = collectionIdToAddress(collection);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+  itEth('Call of simple contract fee is less than 0.2 UNQ', async ({helper}) => {
+    const deployer = await helper.eth.createAccountWithBalance(donor);
+    const flipper = await helper.eth.deployFlipper(deployer);
 
-    const cost = await recordEthFee(api, caller, () => contract.methods.transfer(receiver, itemId).send(caller));
+    const cost = await helper.eth.calculateFee({Ethereum: deployer}, () => flipper.methods.flip().send({from: deployer}));
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
+  });
 
-    const fee = Number(cost) / Number(UNIQUE);
+  itEth('Balance transfer fee is less than 0.2 UNQ', async ({helper}) => {
+    const userA = await helper.eth.createAccountWithBalance(donor);
+    const userB = helper.eth.createAccount();
+    const cost = await helper.eth.calculateFee({Ethereum: userA}, () => helper.getWeb3().eth.sendTransaction({from: userA, to: userB, value: '1000000', gas: helper.eth.DEFAULT_GAS}));
+    const balanceB = await helper.balance.getEthereum(userB);
+    expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
+  });
+
+  itEth('NFT transfer is close to 0.15 UNQ', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+
+    const [alice] = await helper.arrange.createAccounts([10n], donor);
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, tokenId).send(caller));
+
+    const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());
     const expectedFee = 0.15;
     const tolerance = 0.001;
 
@@ -78,46 +72,48 @@ describe('ERC165 tests', async () => {
   let collection: number;
   let minter: string;
 
-  function contract(web3: Web3): Contract {
-    return new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collection), {from: minter, ...GAS_ARGS});
+  function contract(helper: EthUniqueHelper): Contract {
+    return helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection), 'nft', minter);
   }
 
   before(async () => {
-    await usingWeb3 (async (web3) => {
-      collection = await createCollectionExpectSuccess();
-      minter = createEthAccount(web3);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      const donor = await privateKey({filename: __filename});
+      const [alice] = await helper.arrange.createAccounts([10n], donor);
+      ({collectionId: collection} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}));
+      minter = helper.eth.createAccount();
     });
   });
 
-  itWeb3('interfaceID == 0xffffffff always false', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0xffffffff').call()).to.be.false;
+  itEth('interfaceID == 0xffffffff always false', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0xffffffff').call()).to.be.false;
   });
 
-  itWeb3('ERC721 support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x780e9d63').call()).to.be.true;
+  itEth('ERC721 support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0x780e9d63').call()).to.be.true;
   });
 
-  itWeb3('ERC721Metadata support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x5b5e139f').call()).to.be.true;
+  itEth('ERC721Metadata support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0x5b5e139f').call()).to.be.true;
   });
 
-  itWeb3('ERC721Mintable support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x68ccfe89').call()).to.be.true;
+  itEth('ERC721Mintable support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0x68ccfe89').call()).to.be.true;
   });
 
-  itWeb3('ERC721Enumerable support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x780e9d63').call()).to.be.true;
+  itEth('ERC721Enumerable support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0x780e9d63').call()).to.be.true;
   });
 
-  itWeb3('ERC721UniqueExtensions support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0xd74d154f').call()).to.be.true;
+  itEth('ERC721UniqueExtensions support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0xd74d154f').call()).to.be.true;
   });
 
-  itWeb3('ERC721Burnable support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x42966c68').call()).to.be.true;
+  itEth('ERC721Burnable support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0x42966c68').call()).to.be.true;
   });
 
-  itWeb3('ERC165 support', async ({web3}) => {
-    expect(await contract(web3).methods.supportsInterface('0x01ffc9a7').call()).to.be.true;
+  itEth('ERC165 support', async ({helper}) => {
+    expect(await contract(helper).methods.supportsInterface('0x01ffc9a7').call()).to.be.true;
   });
 });

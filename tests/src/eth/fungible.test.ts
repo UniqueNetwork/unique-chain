@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Fungible: Information getting', () => {
@@ -23,7 +23,7 @@ describe('Fungible: Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -55,7 +55,7 @@ describe('Fungible: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -224,7 +224,7 @@ describe('Fungible: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -277,7 +277,7 @@ describe('Fungible: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -294,9 +294,11 @@ describe('Fungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
+    
     await collection.approveTokens(alice, {Ethereum: receiver}, 100n);
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Approval');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -318,9 +320,11 @@ describe('Fungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver}, 51n);
 
+    await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver}, 51n);
+    if (events.length == 0) await helper.wait.newBlocks(1);
     let event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -347,9 +351,11 @@ describe('Fungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
+    
     await collection.transfer(alice, {Ethereum:receiver}, 51n);
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));

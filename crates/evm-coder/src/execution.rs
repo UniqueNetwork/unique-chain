@@ -58,9 +58,18 @@ impl From<Weight> for DispatchInfo {
 		Self { weight }
 	}
 }
+impl From<u64> for DispatchInfo {
+	fn from(weight: u64) -> Self {
+		Self {
+			weight: Weight::from_ref_time(weight),
+		}
+	}
+}
 impl From<()> for DispatchInfo {
 	fn from(_: ()) -> Self {
-		Self { weight: 0 }
+		Self {
+			weight: Weight::zero(),
+		}
 	}
 }
 

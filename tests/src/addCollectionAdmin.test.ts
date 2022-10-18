@@ -15,14 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKeyWrapper) => {
-      donor = privateKeyWrapper('//Alice');
+    await usingPlaygrounds(async (_, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -44,8 +44,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKeyWrapper) => {
-      donor = privateKeyWrapper('//Alice');
+    await usingPlaygrounds(async (_, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -110,7 +110,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const [alice, ...accounts] = await helper.arrange.createAccounts([10n, 0n, 0n, 0n, 0n, 0n, 0n, 0n], donor);
     const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
-    const chainAdminLimit = (helper.api!.consts.common.collectionAdminsLimit as any).toNumber();
+    const chainAdminLimit = (helper.getApi().consts.common.collectionAdminsLimit as any).toNumber();
     expect(chainAdminLimit).to.be.equal(5);
 
     for (let i = 0; i < chainAdminLimit; i++) {

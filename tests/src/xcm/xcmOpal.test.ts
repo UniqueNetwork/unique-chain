@@ -14,34 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-
-import {WsProvider} from '@polkadot/api';
-import {ApiOptions} from '@polkadot/api/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import usingApi, {executeTransaction} from './../substrate/substrate-api';
-import {bigIntToDecimals, describe_xcm, getGenericResult, paraSiblingSovereignAccount} from './../util/helpers';
-import waitNewBlocks from './../substrate/wait-new-blocks';
-import {normalizeAccountId} from './../util/helpers';
-import getBalance from './../substrate/get-balance';
-
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import config from '../config';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util';
 
 const STATEMINE_CHAIN = 1000;
 const UNIQUE_CHAIN = 2095;
 
-const RELAY_PORT = '9844';
-const UNIQUE_PORT = '9944';
-const STATEMINE_PORT = '9948';
+const relayUrl = config.relayUrl;
+const westmintUrl = config.westmintUrl;
+
 const STATEMINE_PALLET_INSTANCE = 50;
 const ASSET_ID = 100;
 const ASSET_METADATA_DECIMALS = 18;
 const ASSET_METADATA_NAME = 'USDT';
 const ASSET_METADATA_DESCRIPTION = 'USDT';
-const ASSET_METADATA_MINIMAL_BALANCE = 1;
+const ASSET_METADATA_MINIMAL_BALANCE = 1n;
 
 const WESTMINT_DECIMALS = 12;
 
@@ -50,7 +38,7 @@ const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 // 10,000.00 (ten thousands) USDT
 const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n; 
 
-describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
+describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   
@@ -70,57 +58,26 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
 
   before(async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob'); // funds donor
+    await usingPlaygrounds(async (_helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      bob = await privateKey('//Bob'); // funds donor
     });
 
-    const statemineApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + STATEMINE_PORT),
-    };
-
-    const uniqueApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
-    };
-
-    const relayApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + RELAY_PORT),
-    };
-
-    await usingApi(async (api) => {
-
+    await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       // 350.00 (three hundred fifty) DOT
-      const fundingAmount = 3_500_000_000_000; 
+      const fundingAmount = 3_500_000_000_000n; 
 
-      const tx = api.tx.assets.create(ASSET_ID, alice.addressRaw, ASSET_METADATA_MINIMAL_BALANCE);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      // set metadata
-      const tx2 = api.tx.assets.setMetadata(ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
-      const events2 = await executeTransaction(api, alice, tx2);
-      const result2 = getGenericResult(events2);
-      expect(result2.success).to.be.true;
-
-      // mint some amount of asset
-      const tx3 = api.tx.assets.mint(ASSET_ID, alice.addressRaw, ASSET_AMOUNT);
-      const events3 = await executeTransaction(api, alice, tx3);
-      const result3 = getGenericResult(events3);
-      expect(result3.success).to.be.true;
+      await helper.assets.create(alice, ASSET_ID, alice.address, ASSET_METADATA_MINIMAL_BALANCE);
+      await helper.assets.setMetadata(alice, ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
+      await helper.assets.mint(alice, ASSET_ID, alice.address, ASSET_AMOUNT);
 
       // funding parachain sovereing account (Parachain: 2095)
-      const parachainSovereingAccount = await paraSiblingSovereignAccount(UNIQUE_CHAIN);
-      const tx4 = api.tx.balances.transfer(parachainSovereingAccount, fundingAmount);
-      const events4 = await executeTransaction(api, bob, tx4);
-      const result4 = getGenericResult(events4);
-      expect(result4.success).to.be.true;
-
-    }, statemineApiOptions);
+      const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(UNIQUE_CHAIN);
+      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, fundingAmount);
+    });
 
 
-    await usingApi(async (api) => {
-
+    await usingPlaygrounds(async (helper) => {
       const location = {
         V1: {
           parents: 1,
@@ -145,20 +102,13 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
         decimals: ASSET_METADATA_DECIMALS,
         minimalBalance: ASSET_METADATA_MINIMAL_BALANCE,
       };
-      //registerForeignAsset(owner, location, metadata)
-      const tx = api.tx.foreignAssets.registerForeignAsset(alice.addressRaw, location, metadata);
-      const sudoTx = api.tx.sudo.sudo(tx as any);
-      const events = await executeTransaction(api, alice, sudoTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      [balanceOpalBefore] = await getBalance(api, [alice.address]);
-
-    }, uniqueApiOptions);
+      await helper.getSudo().foreignAssets.register(alice, alice.address, location, metadata);
+      balanceOpalBefore = await helper.balance.getSubstrate(alice.address);
+    });
 
 
     // Providing the relay currency to the unique sender account
-    await usingApi(async (api) => {
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 0,
@@ -197,31 +147,15 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const feeAssetItem = 0;
+      const weightLimit = 5_000_000_000;
 
-      const weightLimit = {
-        Limited: 5_000_000_000,
-      };
-
-      const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-    }, relayApiOptions);
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
+    });
   
   });
 
-  it('Should connect and send USDT from Westmint to Opal', async () => {
-    
-    const statemineApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + STATEMINE_PORT),
-    };
-
-    const uniqueApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
-    };
-
-    await usingApi(async (api) => {
-
+  itSub('Should connect and send USDT from Westmint to Opal', async ({helper}) => {
+    await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       const dest = {
         V1: {
           parents: 1,
@@ -268,146 +202,105 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const feeAssetItem = 0;
+      const weightLimit = 5000000000;
 
-      const weightLimit = {
-        Limited: 5000000000,
-      };
+      balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, weightLimit);
 
-      [balanceStmnBefore] = await getBalance(api, [alice.address]);
-
-      const tx = api.tx.polkadotXcm.limitedReserveTransferAssets(dest, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      [balanceStmnAfter] = await getBalance(api, [alice.address]);
+      balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
 
       // common good parachain take commission in it native token
       console.log(
         'Opal to Westmint transaction fees on Westmint: %s WND',
-        bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, WESTMINT_DECIMALS),
+        helper.util.bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, WESTMINT_DECIMALS),
       );
       expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
 
-    }, statemineApiOptions);
+    });
 
 
     // ensure that asset has been delivered
-    await usingApi(async (api) => {
-      await waitNewBlocks(api, 3);
-      // expext collection id will be with id 1
-      const free = (await api.query.fungible.balance(1, normalizeAccountId(alice.address))).toBigInt();
+    await helper.wait.newBlocks(3);
 
-      [balanceOpalAfter] = await getBalance(api, [alice.address]);
+    // expext collection id will be with id 1
+    const free = await helper.ft.getBalance(1, {Substrate: alice.address});
 
-      // commission has not paid in USDT token
-      expect(free == TRANSFER_AMOUNT).to.be.true;
-      console.log(
-        'Opal to Westmint transaction fees on Opal: %s USDT',
-        bigIntToDecimals(TRANSFER_AMOUNT - free),
-      );
-      // ... and parachain native token
-      expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
-      console.log(
-        'Opal to Westmint transaction fees on Opal: %s WND',
-        bigIntToDecimals(balanceOpalAfter - balanceOpalBefore, WESTMINT_DECIMALS),
-      );
+    balanceOpalAfter = await helper.balance.getSubstrate(alice.address);
 
-    }, uniqueApiOptions);
-    
+    // commission has not paid in USDT token
+    expect(free == TRANSFER_AMOUNT).to.be.true;
+    console.log(
+      'Opal to Westmint transaction fees on Opal: %s USDT',
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free),
+    );
+    // ... and parachain native token
+    expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
+    console.log(
+      'Opal to Westmint transaction fees on Opal: %s WND',
+      helper.util.bigIntToDecimals(balanceOpalAfter - balanceOpalBefore, WESTMINT_DECIMALS),
+    );    
   });
 
-  it('Should connect and send USDT from Unique to Statemine back', async () => {
-
-    const uniqueApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
+  itSub('Should connect and send USDT from Unique to Statemine back', async ({helper}) => {
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {X2: [
+          {
+            Parachain: STATEMINE_CHAIN,
+          },
+          {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          },
+        ]},
+      },
     };
 
-    const statemineApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + STATEMINE_PORT),
-    };
-
-    await usingApi(async (api) => {
-      const destination = {
-        V1: {
-          parents: 1,
-          interior: {X2: [
-            {
-              Parachain: STATEMINE_CHAIN,
-            },
-            {
-              AccountId32: {
-                network: 'Any',
-                id: alice.addressRaw,
-              },
-            },
-          ]},
+    const currencies: [any, bigint][] = [
+      [
+        {
+          ForeignAssetId: 0,
         },
-      };
+        //10_000_000_000_000_000n,
+        TRANSFER_AMOUNT,
+      ], 
+      [
+        {
+          NativeAssetId: 'Parent',
+        },
+        400_000_000_000_000n,
+      ],
+    ];
 
-      const currencies: [any, bigint][] = [
-        [
-          {
-            ForeignAssetId: 0,
-          },
-          //10_000_000_000_000_000n,
-          TRANSFER_AMOUNT,
-        ], 
-        [
-          {
-            NativeAssetId: 'Parent',
-          },
-          400_000_000_000_000n,
-        ],
-      ];
+    const feeItem = 1;
+    const destWeight = 500000000000;
 
-      const feeItem = 1;
-      const destWeight = 500000000000;
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, destWeight);
+    
+    // the commission has been paid in parachain native token
+    balanceOpalFinal = await helper.balance.getSubstrate(alice.address);
+    expect(balanceOpalAfter > balanceOpalFinal).to.be.true;
 
-      const tx = api.tx.xTokens.transferMulticurrencies(currencies, feeItem, destination, destWeight);
-      const events = await executeTransaction(api, alice, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-      
-      // the commission has been paid in parachain native token
-      [balanceOpalFinal] = await getBalance(api, [alice.address]);
-      expect(balanceOpalAfter > balanceOpalFinal).to.be.true;
-    }, uniqueApiOptions);
-
-    await usingApi(async (api) => {
-      await waitNewBlocks(api, 3);
+    await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
+      await helper.wait.newBlocks(3);
       
       // The USDT token never paid fees. Its amount not changed from begin value.
       // Also check that xcm transfer has been succeeded 
-      const free = ((await api.query.assets.account(100, alice.address)).toHuman()) as any;
-      expect(BigInt(free.balance.replace(/,/g, '')) == ASSET_AMOUNT).to.be.true;
-    }, statemineApiOptions);
+      expect((await helper.assets.account(ASSET_ID, alice.address))! == ASSET_AMOUNT).to.be.true;
+    });
   });
 
-  it('Should connect and send Relay token to Unique', async () => {
-
-    const uniqueApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
-    };
-
-    const uniqueApiOptions2: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
-    };
-
-    const relayApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + RELAY_PORT),
-    };
-
+  itSub('Should connect and send Relay token to Unique', async ({helper}) => {
     const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
 
-    await usingApi(async (api) => {
-      [balanceBobBefore] = await getBalance(api, [bob.address]);
-      balanceBobRelayTokenBefore = BigInt(((await api.query.tokens.accounts(bob.addressRaw, {NativeAssetId: 'Parent'})).toJSON() as any).free);
-
-    }, uniqueApiOptions);
+    balanceBobBefore = await helper.balance.getSubstrate(bob.address);
+    balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
     // Providing the relay currency to the unique sender account
-    await usingApi(async (api) => {
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
         V1: {
           parents: 0,
@@ -446,82 +339,62 @@ describe_xcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const feeAssetItem = 0;
+      const weightLimit = 5_000_000_000;
 
-      const weightLimit = {
-        Limited: 5_000_000_000,
-      };
-
-      const tx = api.tx.xcmPallet.limitedReserveTransferAssets(destination, beneficiary, assets, feeAssetItem, weightLimit);
-      const events = await executeTransaction(api, bob, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-    }, relayApiOptions);
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, weightLimit);
+    });
   
+    await helper.wait.newBlocks(3);
 
-    await usingApi(async (api) => {
-      await waitNewBlocks(api, 3);
+    balanceBobAfter = await helper.balance.getSubstrate(bob.address);  
+    balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
-      [balanceBobAfter] = await getBalance(api, [bob.address]);
-      balanceBobRelayTokenAfter = BigInt(((await api.query.tokens.accounts(bob.addressRaw, {NativeAssetId: 'Parent'})).toJSON() as any).free);
-      const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore; 
-      console.log(
-        'Relay (Westend) to Opal transaction fees: %s OPL',
-        bigIntToDecimals(balanceBobAfter - balanceBobBefore),
-      );
-      console.log(
-        'Relay (Westend) to Opal transaction fees: %s WND',
-        bigIntToDecimals(wndFee, WESTMINT_DECIMALS),
-      );
-      expect(balanceBobBefore == balanceBobAfter).to.be.true;
-      expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
-    }, uniqueApiOptions2);
-
+    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore; 
+    console.log(
+      'Relay (Westend) to Opal transaction fees: %s OPL',
+      helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
+    );
+    console.log(
+      'Relay (Westend) to Opal transaction fees: %s WND',
+      helper.util.bigIntToDecimals(wndFee, WESTMINT_DECIMALS),
+    );
+    expect(balanceBobBefore == balanceBobAfter).to.be.true;
+    expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
   });
 
-  it('Should connect and send Relay token back', async () => {
-    const uniqueApiOptions: ApiOptions = {
-      provider: new WsProvider('ws://127.0.0.1:' + UNIQUE_PORT),
+  itSub('Should connect and send Relay token back', async ({helper}) => {
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {X2: [
+          {
+            Parachain: STATEMINE_CHAIN,
+          },
+          {
+            AccountId32: {
+              network: 'Any',
+              id: bob.addressRaw,
+            },
+          },
+        ]},
+      },
     };
 
-    await usingApi(async (api) => {
-      const destination = {
-        V1: {
-          parents: 1,
-          interior: {X2: [
-            {
-              Parachain: STATEMINE_CHAIN,
-            },
-            {
-              AccountId32: {
-                network: 'Any',
-                id: bob.addressRaw,
-              },
-            },
-          ]},
+    const currencies: any = [
+      [
+        {
+          NativeAssetId: 'Parent',
         },
-      };
+        50_000_000_000_000_000n,
+      ],
+    ];
 
-      const currencies: any = [
-        [
-          {
-            NativeAssetId: 'Parent',
-          },
-          50_000_000_000_000_000n,
-        ],
-      ];
+    const feeItem = 0;
+    const destWeight = 500000000000;
 
-      const feeItem = 0;
-      const destWeight = 500000000000;
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, destWeight);
 
-      const tx = api.tx.xTokens.transferMulticurrencies(currencies, feeItem, destination, destWeight);
-      const events = await executeTransaction(api, bob, tx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
-
-      [balanceBobFinal] = await getBalance(api, [bob.address]);
-      console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobFinal);
-
-    }, uniqueApiOptions);
+    balanceBobFinal = await helper.balance.getSubstrate(bob.address);
+    console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobFinal);
   });
-
 });

@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {UNIQUE} from '../util/helpers';
+
 
 describe('NFT: Information getting', () => {
   let donor: IKeyringPair;
@@ -25,7 +25,7 @@ describe('NFT: Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -75,7 +75,7 @@ describe('Check ERC721 token URI for NFT', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -84,7 +84,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const receiver = helper.eth.createAccount();
 
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * UNIQUE)});
+    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
     const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
@@ -137,7 +137,7 @@ describe('NFT: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -318,7 +318,7 @@ describe('NFT: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -371,7 +371,7 @@ describe('NFT: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -385,9 +385,11 @@ describe('NFT: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    const {tokenId} = await collection.mintToken(alice);
 
+    const {tokenId} = await collection.mintToken(alice);
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
@@ -408,8 +410,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.burn(alice);
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -432,8 +435,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.approve(alice, {Ethereum: receiver});
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Approval');
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -458,8 +462,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
-    
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
     expect(event.returnValues.to).to.be.equal(receiver);
@@ -481,8 +486,9 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.transfer(alice, {Ethereum: receiver});
-    
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
     expect(event.returnValues.to).to.be.equal(receiver);
@@ -496,7 +502,7 @@ describe('Common metadata', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });

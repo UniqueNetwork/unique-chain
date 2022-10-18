@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 import {UniqueHelper, UniqueNFTCollection} from './util/playgrounds/unique';
 
 const collectionProps = [
@@ -63,7 +63,7 @@ describe('query properties RPC', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      alice = privateKey('//Alice');
+      alice = await privateKey({filename: __filename});
     });
   });
 

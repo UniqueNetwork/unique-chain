@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSub} from './util/playgrounds';
+import {expect, itSub} from './util';
 
 const BLOCK_TIME_MS = 12000;
 const TOLERANCE_MS = 3000;
@@ -37,7 +37,7 @@ function getBlocks(api: ApiPromise): Promise<number[]> {
 
 describe('Block Production smoke test', () => {
   itSub('Node produces new blocks', async ({helper}) => {
-    const blocks: number[] | undefined = await getBlocks(helper.api!);
+    const blocks: number[] | undefined = await getBlocks(helper.getApi());
     expect(blocks[0]).to.be.lessThan(blocks[1]);
   });
 });

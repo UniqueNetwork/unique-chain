@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract} from './types';
+import {ContractImports, CompiledContract, NormalizedEvent} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';
@@ -27,7 +27,7 @@ import nonFungibleAbi from '../../nonFungibleAbi.json';
 import refungibleAbi from '../../reFungibleAbi.json';
 import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
 import contractHelpersAbi from './../contractHelpersAbi.json';
-import {TEthereumAccount} from '../../../util/playgrounds/types';
+import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -71,6 +71,7 @@ class ContractGroup extends EthGroupBase {
         },
       },
     }), {import: await this.findImports(imports)})).contracts[`${name}.sol`][name];
+  
     return {
       abi: out.abi,
       object: '0x' + out.evm.bytecode.object,
@@ -141,14 +142,14 @@ class EthGroup extends EthGroupBase {
     return account.address;
   }
 
-  async createAccountWithBalance(donor: IKeyringPair, amount=1000n) {
+  async createAccountWithBalance(donor: IKeyringPair, amount=100n) {
     const account = this.createAccount();
     await this.transferBalanceFromSubstrate(donor, account, amount);
   
     return account;
   }
 
-  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=1000n, inTokens=true) {
+  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=100n, inTokens=true) {
     return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
   }
   
@@ -251,6 +252,42 @@ class EthGroup extends EthGroupBase {
 
     return before - after;
   }
+
+  normalizeEvents(events: any): NormalizedEvent[] {
+    const output = [];
+    for (const key of Object.keys(events)) {
+      if (key.match(/^[0-9]+$/)) {
+        output.push(events[key]);
+      } else if (Array.isArray(events[key])) {
+        output.push(...events[key]);
+      } else {
+        output.push(events[key]);
+      }
+    }
+    output.sort((a, b) => a.logIndex - b.logIndex);
+    return output.map(({address, event, returnValues}) => {
+      const args: { [key: string]: string } = {};
+      for (const key of Object.keys(returnValues)) {
+        if (!key.match(/^[0-9]+$/)) {
+          args[key] = returnValues[key];
+        }
+      }
+      return {
+        address,
+        event,
+        args,
+      };
+    });
+  }
+
+  async calculateFee(address: ICrossAccountId, code: () => Promise<any>): Promise<bigint> {
+    const wrappedCode = async () => {
+      await code();
+      // In dev mode, the transaction might not finish processing in time
+      await this.helper.wait.newBlocks(1);
+    };
+    return await this.helper.arrange.calculcateFee(address, wrappedCode);
+  }
 }  
 
 class EthAddressGroup extends EthGroupBase {
@@ -284,6 +321,7 @@ class EthAddressGroup extends EthGroupBase {
   }
 }  
  
+export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthUniqueHelper extends DevUniqueHelper {
   web3: Web3 | null = null;
@@ -294,8 +332,10 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
-    super(logger);
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? EthUniqueHelper;
+
+    super(logger, options);
     this.eth = new EthGroup(this);
     this.ethAddress = new EthAddressGroup(this);
     this.ethNativeContract = new NativeContractGroup(this);
@@ -313,10 +353,24 @@ export class EthUniqueHelper extends DevUniqueHelper {
     this.web3 = new Web3(this.web3Provider);
   }
 
-  async disconnectWeb3() {
+  async disconnect() {
     if(this.web3 === null) return;
     this.web3Provider?.connection.close();
+
+    await super.disconnect();
+  }
+
+  clearApi() {
+    super.clearApi();
     this.web3 = null;
+  }
+
+  clone(helperCls: EthUniqueHelperConstructor, options?: { [key: string]: any; }): EthUniqueHelper {
+    const newHelper = super.clone(helperCls, options) as EthUniqueHelper;
+    newHelper.web3 = this.web3;
+    newHelper.web3Provider = this.web3Provider;
+
+    return newHelper;
   }
 }
   

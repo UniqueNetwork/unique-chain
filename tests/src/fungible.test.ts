@@ -15,17 +15,18 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 const U128_MAX = (1n << 128n) - 1n;
 
 describe('integration test: Fungible functionality:', () => {
+  let donor: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
@@ -43,9 +44,9 @@ describe('integration test: Fungible functionality:', () => {
     expect(aliceBalance).to.be.equal(U128_MAX);
   });
   
-  itSub('RPC method tokenOnewrs for fungible collection and token', async ({helper, privateKey}) => {
+  itSub('RPC method tokenOnewrs for fungible collection and token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-    const facelessCrowd = Array(7).fill(0).map((_, i) => ({Substrate: privateKey(`//Alice+${i}`).address}));
+    const facelessCrowd = (await helper.arrange.createAccounts(Array(7).fill(0n), donor)).map(keyring => {return {Substrate: keyring.address};});
 
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
@@ -64,7 +65,7 @@ describe('integration test: Fungible functionality:', () => {
     expect(owners).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length).to.be.equal(10);
     
-    const eleven = privateKey('//ALice+11');
+    const [eleven] = await helper.arrange.createAccounts([0n], donor);
     expect(await collection.transfer(alice, {Substrate: eleven.address}, 10n)).to.be.true;
     expect((await collection.getTop10Owners()).length).to.be.equal(10);
   });
@@ -101,10 +102,10 @@ describe('integration test: Fungible functionality:', () => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.mint(alice, 500n);
 
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(500n);
     expect(await collection.burnTokens(alice, 499n)).to.be.true;
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(1n);
   });
   
@@ -112,9 +113,9 @@ describe('integration test: Fungible functionality:', () => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.mint(alice, 500n);
 
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.burnTokens(alice, 500n)).to.be.true;
-    expect(await collection.isTokenExists(0)).to.be.true;
+    expect(await collection.doesTokenExist(0)).to.be.true;
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(0n);
     expect(await collection.getTotalPieces()).to.be.equal(0n);

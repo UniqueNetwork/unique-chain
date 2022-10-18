@@ -15,14 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Metadata} from '@polkadot/types';
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 let metadata: Metadata;
 
 describe('TxVersion is present', () => {
   before(async () => {
     await usingPlaygrounds(async helper => {
-      metadata = await helper.api!.rpc.state.getMetadata();
+      metadata = await helper.callRpc('api.rpc.state.getMetadata', []);
     });
   });
 

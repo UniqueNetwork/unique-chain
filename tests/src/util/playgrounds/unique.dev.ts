@@ -1,13 +1,15 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper} from './unique';
-import {ApiPromise, WsProvider} from '@polkadot/api';
+import {stringToU8a} from '@polkadot/util';
+import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
+import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper} from './unique';
+import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
+import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId} from './types';
-
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -54,7 +56,6 @@ export class SilentConsole {
   }
 }
 
-
 export class DevUniqueHelper extends UniqueHelper {
   /**
    * Arrange methods for tests
@@ -63,8 +64,10 @@ export class DevUniqueHelper extends UniqueHelper {
   wait: WaitGroup;
   admin: AdminGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }) {
-    super(logger);
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevUniqueHelper;
+
+    super(logger, options);
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
@@ -107,10 +110,51 @@ export class DevUniqueHelper extends UniqueHelper {
   }
 }
 
-class ArrangeGroup {
-  helper: UniqueHelper;
+export class DevRelayHelper extends RelayHelper {}
 
-  constructor(helper: UniqueHelper) {
+export class DevWestmintHelper extends WestmintHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevWestmintHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevMoonbeamHelper extends MoonbeamHelper {
+  account: MoonbeamAccountGroup;
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevMoonbeamHelper;
+
+    super(logger, options);
+    this.account = new MoonbeamAccountGroup(this);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevMoonriverHelper extends DevMoonbeamHelper {}
+
+export class DevAcalaHelper extends AcalaHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevAcalaHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevKaruraHelper extends DevAcalaHelper {}
+
+class ArrangeGroup {
+  helper: DevUniqueHelper;
+
+  constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
 
@@ -154,8 +198,9 @@ class ArrangeGroup {
     };
 
     let accountsCreated = false;
-    // checkBalances retry up to 5 blocks
-    for (let index = 0; index < 5; index++) {
+    const maxBlocksChecked = await this.helper.arrange.isDevNode() ? 50 : 5;
+    // checkBalances retry up to 5-50 blocks
+    for (let index = 0; index < maxBlocksChecked; index++) {
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
       await wait.newBlocks(1);
@@ -215,8 +260,13 @@ class ArrangeGroup {
   };
 
   isDevNode = async () => {
-    const block1 = await this.helper.api?.rpc.chain.getBlock(await this.helper.api?.rpc.chain.getBlockHash(1));
-    const block2 = await this.helper.api?.rpc.chain.getBlock(await this.helper.api?.rpc.chain.getBlockHash(2));
+    let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
+    if (blockNumber == 0) {
+      await this.helper.wait.newBlocks(1); 
+      blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
+    }
+    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
+    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
     const findCreationDate = async (block: any) => {
       const humanBlock = block.toHuman();
       let date;
@@ -242,24 +292,67 @@ class ArrangeGroup {
     
     return balance;
   }
+
+  calculatePalletAddress(palletId: any) {
+    const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
+    return encodeAddress(address);
+  }
+}
+
+class MoonbeamAccountGroup {
+  helper: MoonbeamHelper;
+
+  keyring: Keyring;
+  _alithAccount: IKeyringPair;
+  _baltatharAccount: IKeyringPair;
+  _dorothyAccount: IKeyringPair;
+
+  constructor(helper: MoonbeamHelper) {
+    this.helper = helper;
+
+    this.keyring = new Keyring({type: 'ethereum'});
+    const alithPrivateKey = '0x5fb92d6e98884f76de468fa3f6278f8807c48bebc13595d45af5bdc4da702133';
+    const baltatharPrivateKey = '0x8075991ce870b93a8870eca0c0f91913d12f47948ca0fd25b49c6fa7cdbeee8b';
+    const dorothyPrivateKey = '0x39539ab1876910bbf3a223d84a29e28f1cb4e2e456503e7e91ed39b2e7223d68';
+
+    this._alithAccount = this.keyring.addFromUri(alithPrivateKey, undefined, 'ethereum');
+    this._baltatharAccount = this.keyring.addFromUri(baltatharPrivateKey, undefined, 'ethereum');
+    this._dorothyAccount = this.keyring.addFromUri(dorothyPrivateKey, undefined, 'ethereum');
+  }
+
+  alithAccount() {
+    return this._alithAccount;
+  }
+
+  baltatharAccount() {
+    return this._baltatharAccount;
+  }
+
+  dorothyAccount() {
+    return this._dorothyAccount;
+  }
+
+  create() {
+    return this.keyring.addFromUri(mnemonicGenerate());
+  }
 }
 
 class WaitGroup {
-  helper: UniqueHelper;
+  helper: ChainHelperBase;
 
-  constructor(helper: UniqueHelper) {
+  constructor(helper: ChainHelperBase) {
     this.helper = helper;
   }
 
   /**
-   * Wait for specified bnumber of blocks
+   * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
   async newBlocks(blocksCount = 1): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(() => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
         if (blocksCount > 0) {
           blocksCount--;
         } else {
@@ -274,7 +367,7 @@ class WaitGroup {
   async forParachainBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.rpc.chain.subscribeNewHeads(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async (data: any) => {
         if (data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
@@ -286,7 +379,7 @@ class WaitGroup {
   async forRelayBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.api!.query.parachainSystem.validationData(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData(async (data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();
@@ -294,6 +387,40 @@ class WaitGroup {
         }
       });
     });
+  }
+
+  async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<EventRecord | null>(async (resolve) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
+        const blockNumber = header.number.toHuman();
+        const blockHash = header.hash;
+        const eventIdStr = `${eventSection}.${eventMethod}`;
+        const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
+  
+        this.helper.logger.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
+  
+        const apiAt = await this.helper.getApi().at(blockHash);
+        const eventRecords = (await apiAt.query.system.events()) as any;
+  
+        const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
+          return r.event.section == eventSection && r.event.method == eventMethod;
+        });
+  
+        if (neededEvent) {
+          unsubscribe();
+          resolve(neededEvent);
+        } else if (maxBlocksToWait > 0) {
+          maxBlocksToWait--;
+        } else {
+          this.helper.logger.log(`Event \`${eventIdStr}\` is NOT found`);
+  
+          unsubscribe();
+          resolve(null);
+        }
+      });
+    });
+    return promise;
   }
 }
 

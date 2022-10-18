@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itSub, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 // Pallets that must always be present
 const requiredPallets = [
@@ -59,7 +59,7 @@ const consensusPallets = [
 describe('Pallet presence', () => {
   before(async () => {
     await usingPlaygrounds(async helper => {
-      const chain = await helper.api!.rpc.system.chain();
+      const chain = await helper.callRpc('api.rpc.system.chain', []);
 
       const refungible = 'refungible';
       const scheduler = 'scheduler';

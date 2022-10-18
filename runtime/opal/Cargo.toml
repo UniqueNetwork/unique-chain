@@ -10,7 +10,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'opal-runtime'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = "0.9.27"
+version = "0.9.29"
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -47,7 +47,45 @@ runtime-benchmarks = [
 try-runtime = [
     'frame-try-runtime',
     'frame-executive/try-runtime',
+    'frame-support/try-runtime',
     'frame-system/try-runtime',
+    'cumulus-pallet-parachain-system/try-runtime',
+    'parachain-info/try-runtime',
+    'pallet-aura/try-runtime',
+    'cumulus-pallet-aura-ext/try-runtime',
+    'pallet-balances/try-runtime',
+    'pallet-randomness-collective-flip/try-runtime',
+    'pallet-timestamp/try-runtime',
+    'pallet-transaction-payment/try-runtime',
+    'pallet-treasury/try-runtime',
+    'pallet-sudo/try-runtime',
+    'orml-vesting/try-runtime',
+    'orml-xtokens/try-runtime',
+    'orml-tokens/try-runtime',
+    'cumulus-pallet-xcmp-queue/try-runtime',
+    'pallet-xcm/try-runtime',
+    'cumulus-pallet-xcm/try-runtime',
+    'cumulus-pallet-dmp-queue/try-runtime',
+    'pallet-inflation/try-runtime',
+    'pallet-unique/try-runtime',
+    'pallet-unique-scheduler/try-runtime',
+    'pallet-configuration/try-runtime',
+    'pallet-charge-transaction/try-runtime',
+    'pallet-common/try-runtime',
+    'pallet-fungible/try-runtime',
+    'pallet-refungible/try-runtime',
+    'pallet-nonfungible/try-runtime',
+    'pallet-structure/try-runtime',
+    'pallet-proxy-rmrk-core/try-runtime',
+    'pallet-proxy-rmrk-equip/try-runtime',
+    'pallet-app-promotion/try-runtime',
+    'pallet-foreign-assets/try-runtime',
+    'pallet-evm/try-runtime',
+    'pallet-ethereum/try-runtime',
+    'pallet-evm-coder-substrate/try-runtime',
+    'pallet-evm-contract-helpers/try-runtime',
+    'pallet-evm-transaction-payment/try-runtime',
+    'pallet-evm-migration/try-runtime',
 ]
 std = [
     'codec/std',
@@ -151,39 +189,39 @@ version = '3.1.2'
 default-features = false
 git = "https://github.com/paritytech/substrate"
 optional = true
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-try-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
 optional = true
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-executive]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-system-benchmarking]
 default-features = false
 git = "https://github.com/paritytech/substrate"
 optional = true
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-system-rpc-runtime-api]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.hex-literal]
 optional = true
@@ -198,12 +236,12 @@ version = '1.0.130'
 [dependencies.pallet-aura]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-balances]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 # Contracts specific packages
 # [dependencies.pallet-contracts]
@@ -227,32 +265,32 @@ branch = "polkadot-v0.9.27"
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-sudo]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-transaction-payment]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-transaction-payment-rpc-runtime-api]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-treasury]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 # [dependencies.pallet-vesting]
 # default-features = false
@@ -262,67 +300,67 @@ branch = "polkadot-v0.9.27"
 [dependencies.sp-arithmetic]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-api]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-block-builder]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-consensus-aura]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-inherents]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-io]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-offchain]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-session]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-transaction-pool]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-version]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.smallvec]
 version = '1.6.1'
@@ -333,46 +371,46 @@ version = '1.6.1'
 [dependencies.parachain-info]
 default-features = false
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.cumulus-pallet-aura-ext]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-pallet-parachain-system]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-primitives-core]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-pallet-xcm]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-pallet-dmp-queue]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-pallet-xcmp-queue]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-primitives-utility]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 [dependencies.cumulus-primitives-timestamp]
 git = "https://github.com/paritytech/cumulus"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 default-features = false
 
 ################################################################################
@@ -380,50 +418,50 @@ default-features = false
 
 [dependencies.polkadot-parachain]
 git = "https://github.com/paritytech/polkadot"
-branch = "release-v0.9.27"
+branch = "release-v0.9.29"
 default-features = false
 
 [dependencies.xcm]
 git = "https://github.com/paritytech/polkadot"
-branch = "release-v0.9.27"
+branch = "release-v0.9.29"
 default-features = false
 
 [dependencies.xcm-builder]
 git = "https://github.com/paritytech/polkadot"
-branch = "release-v0.9.27"
+branch = "release-v0.9.29"
 default-features = false
 
 [dependencies.xcm-executor]
 git = "https://github.com/paritytech/polkadot"
-branch = "release-v0.9.27"
+branch = "release-v0.9.29"
 default-features = false
 
 [dependencies.pallet-xcm]
 git = "https://github.com/paritytech/polkadot"
-branch = "release-v0.9.27"
+branch = "release-v0.9.29"
 default-features = false
 
 [dependencies.orml-vesting]
-git = "https://github.com/open-web3-stack/open-runtime-module-library"
-branch = "polkadot-v0.9.27"
+git = "https://github.com/UniqueNetwork/open-runtime-module-library"
+branch = "polkadot-v0.9.29"
 version = "0.4.1-dev"
 default-features = false
 
 [dependencies.orml-xtokens]
-git = "https://github.com/open-web3-stack/open-runtime-module-library"
-branch = "polkadot-v0.9.27"
+git = "https://github.com/UniqueNetwork/open-runtime-module-library"
+branch = "polkadot-v0.9.29"
 version = "0.4.1-dev"
 default-features = false
 
 [dependencies.orml-tokens]
-git = "https://github.com/open-web3-stack/open-runtime-module-library"
-branch = "polkadot-v0.9.27"
+git = "https://github.com/UniqueNetwork/open-runtime-module-library"
+branch = "polkadot-v0.9.29"
 version = "0.4.1-dev"
 default-features = false
 
 [dependencies.orml-traits]
-git = "https://github.com/open-web3-stack/open-runtime-module-library"
-branch = "polkadot-v0.9.27"
+git = "https://github.com/UniqueNetwork/open-runtime-module-library"
+branch = "polkadot-v0.9.29"
 version = "0.4.1-dev"
 default-features = false
 
@@ -441,7 +479,7 @@ pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false}
 rmrk-rpc = { path = "../../primitives/rmrk-rpc", default-features = false }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
@@ -455,18 +493,18 @@ pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy
 pallet-proxy-rmrk-equip = { default-features = false, path = "../../pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
 pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
-pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.27", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
+pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.29", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
 pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.27' }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.29' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
 
 ################################################################################
@@ -485,4 +523,4 @@ version = "2.0.0"
 
 [build-dependencies.substrate-wasm-builder]
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"

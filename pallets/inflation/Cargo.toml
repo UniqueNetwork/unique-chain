@@ -29,6 +29,7 @@ std = [
     'sp-runtime/std',
     'frame-benchmarking/std',
 ]
+try-runtime = ["frame-support/try-runtime"]
 
 ################################################################################
 # Substrate Dependencies
@@ -43,37 +44,37 @@ version = '3.1.2'
 default-features = false
 optional = true
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.frame-system]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-balances]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-timestamp]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.serde]
 default-features = false
@@ -83,17 +84,17 @@ version = '1.0.130'
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies.sp-io]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.27"
+branch = "polkadot-v0.9.29"
 
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [

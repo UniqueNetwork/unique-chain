@@ -23,10 +23,7 @@ use up_data_structs::{
 
 use sp_std::vec::Vec;
 use codec::Decode;
-use sp_runtime::{
-	DispatchError,
-	traits::{AtLeast32BitUnsigned, Member},
-};
+use sp_runtime::DispatchError;
 
 type Result<T> = core::result::Result<T, DispatchError>;
 

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from './util/playgrounds';
+import {expect, itSub, usingPlaygrounds} from './util';
 
 // todo:playgrounds requires sudo, look into on the later stage
 describe('integration test: Inflation', () => {
@@ -23,7 +23,7 @@ describe('integration test: Inflation', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      superuser = privateKey('//Alice');
+      superuser = await privateKey('//Alice');
     });
   });
   
@@ -40,9 +40,9 @@ describe('integration test: Inflation', () => {
     const tx = helper.constructApiCall('api.tx.inflation.startInflation', [1]);
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [tx])).to.not.be.rejected;
 
-    const blockInterval = (helper.api!.consts.inflation.inflationBlockInterval as any).toBigInt();
-    const totalIssuanceStart = ((await helper.api!.query.inflation.startingYearTotalIssuance()) as any).toBigInt();
-    const blockInflation = (await helper.api!.query.inflation.blockInflation() as any).toBigInt();
+    const blockInterval = (helper.getApi().consts.inflation.inflationBlockInterval as any).toBigInt();
+    const totalIssuanceStart = ((await helper.callRpc('api.query.inflation.startingYearTotalIssuance', [])) as any).toBigInt();
+    const blockInflation = (await helper.callRpc('api.query.inflation.blockInflation', []) as any).toBigInt();
 
     const YEAR = 5259600n;  // 6-second block. Blocks in one year
     // const YEAR = 2629800n; // 12-second block. Blocks in one year

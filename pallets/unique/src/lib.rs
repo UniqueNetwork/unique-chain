@@ -83,7 +83,7 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
-use sp_runtime::{sp_std::prelude::Vec};
+use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
@@ -280,11 +280,11 @@ decl_module! {
 		pub fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
-			0
+			Weight::zero()
 		}
 
 		fn on_runtime_upgrade() -> Weight {
-			0
+			Weight::zero()
 		}
 
 		/// Create a collection of tokens.

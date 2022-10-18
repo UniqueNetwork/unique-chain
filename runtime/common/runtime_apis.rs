@@ -190,6 +190,7 @@ macro_rules! impl_common_runtime_apis {
             }
 
             impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
+                #[allow(unused_variables)]
                 fn total_staked(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -198,6 +199,7 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default());
                 }
 
+                #[allow(unused_variables)]
                 fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -206,6 +208,7 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
                 }
 
+                #[allow(unused_variables)]
                 fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -214,6 +217,7 @@ macro_rules! impl_common_runtime_apis {
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker));
                 }
 
+                #[allow(unused_variables)]
                 fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
                     #[cfg(not(feature = "app-promotion"))]
                     return unsupported!();
@@ -766,8 +770,20 @@ macro_rules! impl_common_runtime_apis {
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
                 }
 
-                fn execute_block_no_check(block: Block) -> frame_support::pallet_prelude::Weight {
-                    Executive::execute_block_no_check(block)
+                fn execute_block(
+                    block: Block,
+                    state_root_check: bool,
+                    select: frame_try_runtime::TryStateSelect
+                ) -> frame_support::pallet_prelude::Weight {
+                    log::info!(
+                        target: "node-runtime",
+                        "try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",
+                        block.header.hash(),
+                        state_root_check,
+                        select,
+                    );
+
+                    Executive::try_execute_block(block, state_root_check, select).unwrap()
                 }
             }
         }

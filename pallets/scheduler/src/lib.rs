@@ -497,7 +497,7 @@ pub mod pallet {
 				}
 			}
 			// Total weight should be 0, because the transaction is already paid for
-			0
+			Weight::zero()
 		}
 	}
 

@@ -14,215 +14,207 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+import {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {getBalanceSingle} from '../../substrate/get-balance';
-import {
-  addToAllowListExpectSuccess, 
-  confirmSponsorshipExpectSuccess, 
-  createCollectionExpectSuccess, 
-  createItemExpectSuccess, 
-  getTokenOwner,
-  setCollectionLimitsExpectSuccess, 
-  setCollectionSponsorExpectSuccess, 
-  transferExpectSuccess, 
-  transferFromExpectSuccess,
-  transferBalanceTo,
-} from '../../util/helpers';
-import {collectionIdToAddress, contractHelpers, createEthAccountWithBalance, executeEthTxOnSub, GAS_ARGS, itWeb3, SponsoringMode, subToEth, subToEthLowercase, transferBalanceToEth} from '../util/helpers';
-import {evmToAddress} from '@polkadot/util-crypto';
-import nonFungibleAbi from '../nonFungibleAbi.json';
-
-import {expect} from 'chai';
-
-const PRICE = 2000n;
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util';
 
 describe('Matcher contract usage', () => {
-  itWeb3('With UNQ', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  const PRICE = 2000n;
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let aliceMirror: string;
+  let aliceDoubleMirror: string;
+  let seller: IKeyringPair;
+  let sellerMirror: string;
+
+  before(async () => {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+    }); 
+  });
+
+  beforeEach(async () => {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
+      aliceMirror = helper.address.substrateToEth(alice.address).toLowerCase();
+      aliceDoubleMirror = helper.address.ethToSubstrate(aliceMirror);
+      seller = await privateKey(`//Seller/${Date.now()}`);
+      sellerMirror = helper.address.substrateToEth(seller.address).toLowerCase();
+
+      await helper.balance.transferToSubstrate(donor, aliceDoubleMirror, 10_000_000_000_000_000_000n);
+    });
+  });
+
+  itEth('With UNQ', async ({helper}) => {
+    const web3 = helper.getWeb3();
+    const matcherOwner = await helper.eth.createAccountWithBalance(donor);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
-      ...GAS_ARGS,
+      gas: helper.eth.DEFAULT_GAS,
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
-    const helpers = contractHelpers(web3, matcherOwner);
+
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
     
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
-    const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
-    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
-    await transferBalanceToEth(api, alice, subToEth(alice.address));
-    await confirmSponsorshipExpectSuccess(collectionId);
+    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: alice.address});
+    await collection.confirmSponsorship(alice);
+    await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
+    const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
-    await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
-    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
+    await helpers.methods.toggleAllowed(matcher.options.address, aliceMirror, true).send({from: matcherOwner});
+    await helpers.methods.toggleAllowed(matcher.options.address, sellerMirror, true).send({from: matcherOwner});
 
-    const seller = privateKeyWrapper(`//Seller/${Date.now()}`);
-    await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
-
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
-
-    // To transfer item to matcher it first needs to be transfered to EVM account of bob
-    await transferExpectSuccess(collectionId, tokenId, seller, {Ethereum: subToEth(seller.address)});
+    const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
     // Token is owned by seller initially
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(seller.address)});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
 
     // Ask
     {
-      await executeEthTxOnSub(web3, api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(web3, api, seller, matcher, m => m.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, tokenId));
+      await helper.eth.sendEVM(seller, evmCollection.options.address, evmCollection.methods.approve(matcher.options.address, token.tokenId).encodeABI(), '0');
+      await helper.eth.sendEVM(seller, matcher.options.address, matcher.methods.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, token.tokenId).encodeABI(), '0');
     }
 
     // Token is transferred to matcher
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
 
     // Buy
     {
-      const sellerBalanceBeforePurchase = await getBalanceSingle(api, seller.address);
-      await executeEthTxOnSub(web3, api, alice, matcher, m => m.buy(evmCollection.options.address, tokenId), {value: PRICE});
-      expect(await getBalanceSingle(api, seller.address) - sellerBalanceBeforePurchase === PRICE);
+      const sellerBalanceBeforePurchase = await helper.balance.getSubstrate(seller.address);
+      await helper.eth.sendEVM(alice, matcher.options.address, matcher.methods.buy(evmCollection.options.address, token.tokenId).encodeABI(), PRICE.toString());
+      expect(await helper.balance.getSubstrate(seller.address) - sellerBalanceBeforePurchase === PRICE);
     }
 
     // Token is transferred to evm account of alice
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(alice.address)});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: aliceMirror});
 
     // Transfer token to substrate side of alice
-    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    await token.transferFrom(alice, {Ethereum: aliceMirror}, {Substrate: alice.address});
 
     // Token is transferred to substrate account of alice, seller received funds
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Substrate: alice.address});
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 
-
-  itWeb3('With escrow', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const sponsor = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const escrow = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('With escrow', async ({helper}) => {
+    const web3 = helper.getWeb3();
+    const matcherOwner = await helper.eth.createAccountWithBalance(donor);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
-      ...GAS_ARGS,
+      gas: helper.eth.DEFAULT_GAS,
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments: [matcherOwner]}).send({from: matcherOwner, gas: 10000000});
+
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const escrow = await helper.eth.createAccountWithBalance(donor);
     await matcher.methods.setEscrow(escrow).send({from: matcherOwner});
-    const helpers = contractHelpers(web3, matcherOwner);
+    const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
     
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
-    const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
-    await setCollectionSponsorExpectSuccess(collectionId, alice.address);
-    await transferBalanceToEth(api, alice, subToEth(alice.address));
-    await confirmSponsorshipExpectSuccess(collectionId);
+    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: alice.address});
+    await collection.confirmSponsorship(alice);
+    await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
+    const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
-    await helpers.methods.toggleAllowed(matcher.options.address, subToEth(alice.address), true).send({from: matcherOwner});
-    await addToAllowListExpectSuccess(alice, collectionId, evmToAddress(subToEth(alice.address)));
 
-    const seller = privateKeyWrapper(`//Seller/${Date.now()}`);
-    await helpers.methods.toggleAllowed(matcher.options.address, subToEth(seller.address), true).send({from: matcherOwner});
+    await helpers.methods.toggleAllowed(matcher.options.address, aliceMirror, true).send({from: matcherOwner});
 
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
+    await helpers.methods.toggleAllowed(matcher.options.address, sellerMirror, true).send({from: matcherOwner});
 
-    // To transfer item to matcher it first needs to be transfered to EVM account of bob
-    await transferExpectSuccess(collectionId, tokenId, seller, {Ethereum: subToEth(seller.address)});
+    const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
     // Token is owned by seller initially
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(seller.address)});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
 
     // Ask
     {
-      await executeEthTxOnSub(web3, api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(web3, api, seller, matcher, m => m.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, tokenId));
+      await helper.eth.sendEVM(seller, evmCollection.options.address, evmCollection.methods.approve(matcher.options.address, token.tokenId).encodeABI(), '0');
+      await helper.eth.sendEVM(seller, matcher.options.address, matcher.methods.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, token.tokenId).encodeABI(), '0');
     }
 
     // Token is transferred to matcher
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
 
     // Give buyer KSM
-    await matcher.methods.depositKSM(PRICE, subToEth(alice.address)).send({from: escrow});
+    await matcher.methods.depositKSM(PRICE, aliceMirror).send({from: escrow});
 
     // Buy
     {
-      expect(await matcher.methods.balanceKSM(subToEth(seller.address)).call()).to.be.equal('0');
-      expect(await matcher.methods.balanceKSM(subToEth(alice.address)).call()).to.be.equal(PRICE.toString());
+      expect(await matcher.methods.balanceKSM(sellerMirror).call()).to.be.equal('0');
+      expect(await matcher.methods.balanceKSM(aliceMirror).call()).to.be.equal(PRICE.toString());
 
-      await executeEthTxOnSub(web3, api, alice, matcher, m => m.buyKSM(evmCollection.options.address, tokenId, subToEth(alice.address), subToEth(alice.address)));
+      await helper.eth.sendEVM(alice, matcher.options.address, matcher.methods.buyKSM(evmCollection.options.address, token.tokenId, aliceMirror, aliceMirror).encodeABI(), '0');
 
       // Price is removed from buyer balance, and added to seller
-      expect(await matcher.methods.balanceKSM(subToEth(alice.address)).call()).to.be.equal('0');
-      expect(await matcher.methods.balanceKSM(subToEth(seller.address)).call()).to.be.equal(PRICE.toString());
+      expect(await matcher.methods.balanceKSM(aliceMirror).call()).to.be.equal('0');
+      expect(await matcher.methods.balanceKSM(sellerMirror).call()).to.be.equal(PRICE.toString());
     }
 
     // Token is transferred to evm account of alice
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(alice.address)});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: aliceMirror});
 
     // Transfer token to substrate side of alice
-    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    await token.transferFrom(alice, {Ethereum: aliceMirror}, {Substrate: alice.address});
 
     // Token is transferred to substrate account of alice, seller received funds
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Substrate: alice.address});
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 
-
-  itWeb3('Sell tokens from substrate user via EVM contract', async ({api, web3, privateKeyWrapper}) => {
-    const alice = privateKeyWrapper('//Alice');
-    const matcherOwner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Sell tokens from substrate user via EVM contract', async ({helper}) => {
+    const web3 = helper.getWeb3();
+    const matcherOwner = await helper.eth.createAccountWithBalance(donor);
     const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
       from: matcherOwner,
-      ...GAS_ARGS,
+      gas: helper.eth.DEFAULT_GAS,
     });
     const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
-    await transferBalanceToEth(api, alice, matcher.options.address);
 
-    const collectionId = await createCollectionExpectSuccess({mode: {type: 'NFT'}});
-    await setCollectionLimitsExpectSuccess(alice, collectionId, {sponsorApproveTimeout: 1});
-    const evmCollection = new web3.eth.Contract(nonFungibleAbi as any, collectionIdToAddress(collectionId), {from: matcherOwner});
+    await helper.eth.transferBalanceFromSubstrate(donor, matcher.options.address);
 
-    const seller = privateKeyWrapper(`//Seller/${Date.now()}`);
-    await transferBalanceTo(api, alice, seller.address);
+    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}});
+    const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+
+    await helper.balance.transferToSubstrate(donor, seller.address, 100_000_000_000_000_000_000n);
     
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', seller.address);
-
-    // To transfer item to matcher it first needs to be transfered to EVM account of bob
-    await transferExpectSuccess(collectionId, tokenId, seller, {Ethereum: subToEth(seller.address)});
+    const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
     // Token is owned by seller initially
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(seller.address)});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
 
     // Ask
     {
-      await executeEthTxOnSub(web3, api, seller, evmCollection, m => m.approve(matcher.options.address, tokenId));
-      await executeEthTxOnSub(web3, api, seller, matcher, m => m.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, tokenId));
+      await helper.eth.sendEVM(seller, evmCollection.options.address, evmCollection.methods.approve(matcher.options.address, token.tokenId).encodeABI(), '0');
+      await helper.eth.sendEVM(seller, matcher.options.address, matcher.methods.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, token.tokenId).encodeABI(), '0');
     }
 
     // Token is transferred to matcher
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
 
     // Buy
     {
-      const sellerBalanceBeforePurchase = await getBalanceSingle(api, seller.address);
-      await executeEthTxOnSub(web3, api, alice, matcher, m => m.buy(evmCollection.options.address, tokenId), {value: PRICE});
-      expect(await getBalanceSingle(api, seller.address) - sellerBalanceBeforePurchase === PRICE);
+      const sellerBalanceBeforePurchase = await helper.balance.getSubstrate(seller.address);
+      await helper.eth.sendEVM(alice, matcher.options.address, matcher.methods.buy(evmCollection.options.address, token.tokenId).encodeABI(), PRICE.toString());
+      expect(await helper.balance.getSubstrate(seller.address) - sellerBalanceBeforePurchase === PRICE);
     }
 
     // Token is transferred to evm account of alice
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Ethereum: subToEthLowercase(alice.address)});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: aliceMirror});
 
     // Transfer token to substrate side of alice
-    await transferFromExpectSuccess(collectionId, tokenId, alice, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    await token.transferFrom(alice, {Ethereum: aliceMirror}, {Substrate: alice.address});
 
     // Token is transferred to substrate account of alice, seller received funds
-    expect(await getTokenOwner(api, collectionId, tokenId)).to.be.deep.equal({Substrate: alice.address});
+    expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 });

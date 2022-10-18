@@ -278,7 +278,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			StorageVersion::new(1).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -545,7 +545,7 @@ impl<T: Config> Pallet<T> {
 		let current_token_account =
 			T::CrossTokenAddressMapping::token_to_address(collection.id, token);
 
-		let mut weight = 0 as Weight;
+		let mut weight = Weight::zero();
 
 		// This method is transactional, if user in fact doesn't have permissions to remove token -
 		// tokens removed here will be restored after rejected transaction

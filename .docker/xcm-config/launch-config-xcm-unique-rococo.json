@@ -90,8 +90,8 @@
                     "rpcPort": 9933,
                     "name": "alice",
                     "flags": [
-			"-lruntime=trace",
-			"-lxcm=trace",
+			            "-lruntime=trace",
+			            "-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
 		    ]
@@ -114,8 +114,8 @@
                     "port": 31202,
                     "name": "alice",
                     "flags": [
-			"-lruntime=trace",
-			"-lxcm=trace",
+			            "-lruntime=trace",
+			            "-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
 		    ]
@@ -133,11 +133,11 @@
                     "port": 31203,
                     "name": "alice",
                     "flags": [
-			"-lruntime=trace",
-			"-lxcm=trace",
+			            "-lruntime=trace",
+			            "-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-  			"--",
+  			            "--",
                         "--execution=wasm"
                     ]
                 }
@@ -154,8 +154,8 @@
                     "port": 31204,
                     "name": "alice",
                     "flags": [
-			"-lruntime=trace",
-			"-lxcm=trace",
+			            "-lruntime=trace",
+			            "-lxcm=trace",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
 		    ]

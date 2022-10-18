@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
+import {usingPlaygrounds, expect, itSub} from './util';
 
 describe('Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
   let alice: IKeyringPair;
@@ -23,7 +23,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner):', ()
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
@@ -46,7 +46,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -108,7 +108,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

@@ -44,16 +44,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 			CreateItemExData::NFT(t) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
 					+ t.iter()
-						.map(|t| {
+						.filter_map(|t| {
 							if t.properties.len() > 0 {
-								Self::set_token_properties(t.properties.len() as u32)
+								Some(Self::set_token_properties(t.properties.len() as u32))
 							} else {
-								0
+								None
 							}
 						})
-						.sum::<u64>()
+						.fold(Weight::zero(), |a, b| a.saturating_add(b))
 			}
-			_ => 0,
+			_ => Weight::zero(),
 		}
 	}
 
@@ -67,7 +67,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 					}
 					_ => None,
 				})
-				.sum::<u64>()
+				.fold(Weight::zero(), |a, b| a.saturating_add(b))
 	}
 
 	fn burn_item() -> Weight {

@@ -15,11 +15,12 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './util/playgrounds';
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './util';
 
 const MAX_REFUNGIBLE_PIECES = 1_000_000_000_000_000_000_000n;
 
 describe('integration test: Refungible functionality:', async () => {
+  let donor: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
@@ -27,7 +28,7 @@ describe('integration test: Refungible functionality:', async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      const donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
@@ -61,9 +62,9 @@ describe('integration test: Refungible functionality:', async () => {
       .to.eventually.be.rejectedWith(/refungible\.WrongRefungiblePieces/);
   });
   
-  itSub('RPC method tokenOnewrs for refungible collection and token', async ({helper, privateKey}) => {
+  itSub('RPC method tokenOwners for refungible collection and token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-    const facelessCrowd = Array(7).fill(0).map((_, i) => ({Substrate: privateKey(`//Alice+${i}`).address}));
+    const facelessCrowd = (await helper.arrange.createAccounts(Array(7).fill(0n), donor)).map(keyring => {return {Substrate: keyring.address};});
 
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
@@ -82,7 +83,7 @@ describe('integration test: Refungible functionality:', async () => {
     expect(owners).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length).to.be.equal(10);
     
-    const eleven = privateKey('//ALice+11');
+    const [eleven] = await helper.arrange.createAccounts([0n], donor);
     expect(await token.transfer(alice, {Substrate: eleven.address}, 10n)).to.be.true;
     expect((await token.getTop10Owners()).length).to.be.equal(10);
   });
@@ -122,10 +123,10 @@ describe('integration test: Refungible functionality:', async () => {
   itSub('Burn some pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     expect(await token.burn(alice, 99n)).to.be.true;
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(1n);
   });
 
@@ -133,18 +134,18 @@ describe('integration test: Refungible functionality:', async () => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
     
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
 
     expect(await token.burn(alice, 100n)).to.be.true;
-    expect(await collection.isTokenExists(token.tokenId)).to.be.false;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.false;
   });
 
   itSub('Burn some pieces for multiple users', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
 
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     expect(await token.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
@@ -154,17 +155,17 @@ describe('integration test: Refungible functionality:', async () => {
 
     expect(await token.burn(alice, 40n)).to.be.true;
 
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
 
     expect(await token.burn(bob, 59n)).to.be.true;
 
     expect(await token.getBalance({Substrate: bob.address})).to.be.equal(1n);
-    expect(await collection.isTokenExists(token.tokenId)).to.be.true;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
 
     expect(await token.burn(bob, 1n)).to.be.true;
 
-    expect(await collection.isTokenExists(token.tokenId)).to.be.false;
+    expect(await collection.doesTokenExist(token.tokenId)).to.be.false;
   });
 
   itSub('Set allowance for token', async ({helper}) => {
@@ -211,7 +212,8 @@ describe('integration test: Refungible functionality:', async () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 200n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    expect(chainEvents).to.deep.include({
+    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemCreated');
+    expect(event).to.deep.include({
       section: 'common',
       method: 'ItemCreated',
       index: [66, 2],
@@ -221,7 +223,6 @@ describe('integration test: Refungible functionality:', async () => {
         {substrate: alice.address}, 
         100n,
       ],
-      phase: {applyExtrinsic: 2},
     });
   });
 
@@ -230,9 +231,10 @@ describe('integration test: Refungible functionality:', async () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 50n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    expect(chainEvents).to.deep.include({
-      method: 'ItemDestroyed',
+    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemDestroyed');
+    expect(event).to.deep.include({
       section: 'common',
+      method: 'ItemDestroyed',
       index: [66, 3],
       data: [
         collection.collectionId,
@@ -240,7 +242,6 @@ describe('integration test: Refungible functionality:', async () => {
         {substrate: alice.address}, 
         50n,
       ],
-      phase: {applyExtrinsic: 2},
     });
   });
   

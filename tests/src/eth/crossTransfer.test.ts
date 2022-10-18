@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds} from './util';
 import {CrossAccountId} from '../util/playgrounds/unique';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -26,7 +26,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
@@ -69,7 +69,7 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });

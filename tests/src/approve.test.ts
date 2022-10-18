@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util';
 
 
 describe('Integration Test approve(spender, collection_id, item_id, amount):', () => {
@@ -25,7 +25,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -60,7 +60,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount):', (
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
     await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-    await helper.signTransaction(alice, helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0));
+    await helper.signTransaction(alice, helper.constructApiCall('api.tx.unique.approve', [{Substrate: bob.address}, collectionId, tokenId, 0]));
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
   });
 
@@ -104,7 +104,7 @@ describe('Normal user can approve other users to transfer:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -141,7 +141,7 @@ describe('Approved users can transferFrom up to approved amount:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -184,7 +184,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -227,7 +227,7 @@ describe('Approved users cannot use transferFrom to repeat transfers if approved
   });
 });
 
-describe('Approved amount decreases by the transferred amount.:', () => {
+describe('Approved amount decreases by the transferred amount:', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -235,7 +235,7 @@ describe('Approved amount decreases by the transferred amount.:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -265,7 +265,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -275,7 +275,7 @@ describe('User may clear the approvals to approving for 0 amount:', () => {
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
     await helper.nft.approveToken(alice, collectionId, tokenId, {Substrate: bob.address});
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
-    await helper.signTransaction(alice, helper.api?.tx.unique.approve({Substrate: bob.address}, collectionId, tokenId, 0));
+    await helper.signTransaction(alice, helper.constructApiCall('api.tx.unique.approve', [{Substrate: bob.address}, collectionId, tokenId, 0]));
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
     const transferTokenFromTx = async () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
     await expect(transferTokenFromTx()).to.be.rejected;
@@ -320,7 +320,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -328,7 +328,7 @@ describe('User cannot approve for the amount greater than they own:', () => {
   itSub('1 for NFT', async ({helper}) => {
     const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-    const approveTx = async () => helper.signTransaction(bob, helper.api?.tx.unique.approve({Substrate: charlie.address}, collectionId, tokenId, 2));
+    const approveTx = async () => helper.signTransaction(bob, helper.constructApiCall('api.tx.unique.approve', [{Substrate: charlie.address}, collectionId, tokenId, 2]));
     await expect(approveTx()).to.be.rejected;
     expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: charlie.address})).to.be.false;
   });
@@ -357,7 +357,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -423,7 +423,7 @@ describe('Repeated approvals add up', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -474,7 +474,7 @@ describe('Integration Test approve(spender, collection_id, item_id, amount) with
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -495,7 +495,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

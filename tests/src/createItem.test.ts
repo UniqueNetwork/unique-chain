@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets} from './util/playgrounds';
+import {usingPlaygrounds, expect, itSub, Pallets} from './util';
 import {IProperty, ICrossAccountId} from './util/playgrounds/types';
 import {UniqueHelper} from './util/playgrounds/unique';
 
@@ -50,7 +50,7 @@ describe('integration test: ext. ():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
@@ -179,7 +179,7 @@ describe('Negative integration test: ext. createItem():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });

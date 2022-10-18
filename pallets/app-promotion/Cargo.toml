@@ -38,6 +38,8 @@ std = [
     'serde/std',
 
 ]
+try-runtime = ["frame-support/try-runtime"]
+
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
@@ -46,17 +48,17 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 # Substrate Dependencies
 
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = '3.1.2' }
-frame-benchmarking = {default-features = false, optional = true,  git = "https://github.com/paritytech/substrate",  branch = "polkadot-v0.9.27" }
-frame-support = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-frame-system ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-balances ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-timestamp ={ default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-randomness-collective-flip ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-evm ={ default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.27-fee-limit" }
-sp-std ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-sp-io ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-benchmarking = {default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+frame-system ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+pallet-balances ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+pallet-timestamp ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+pallet-randomness-collective-flip ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+pallet-evm ={ default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+sp-std ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
+sp-io ={ default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 serde = { default-features = false, features = ['derive'], version = '1.0.130' }
 
 ################################################################################

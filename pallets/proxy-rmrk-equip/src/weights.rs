@@ -54,13 +54,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenData (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn create_base(b: u32, ) -> Weight {
-		(58_417_000 as Weight)
+		Weight::from_ref_time(58_417_000)
 			// Standard Error: 27_000
-			.saturating_add((20_439_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(T::DbWeight::get().writes(8 as Weight))
-			.saturating_add(T::DbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(20_439_000).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().reads((2 as u64).saturating_mul(b as u64)))
+			.saturating_add(T::DbWeight::get().writes(8 as u64))
+			.saturating_add(T::DbWeight::get().writes((4 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: Common CollectionProperties (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:0)
@@ -71,20 +71,20 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenData (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn theme_add(b: u32, ) -> Weight {
-		(46_005_000 as Weight)
+		Weight::from_ref_time(46_005_000)
 			// Standard Error: 42_000
-			.saturating_add((2_922_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+			.saturating_add(Weight::from_ref_time(2_922_000).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: Common CollectionProperties (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: RmrkEquip InernalPartId (r:1 w:0)
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	fn equippable() -> Weight {
-		(32_526_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(32_526_000)
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }
 
@@ -103,13 +103,13 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenData (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn create_base(b: u32, ) -> Weight {
-		(58_417_000 as Weight)
+		Weight::from_ref_time(58_417_000)
 			// Standard Error: 27_000
-			.saturating_add((20_439_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((2 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((4 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(20_439_000).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().reads((2 as u64).saturating_mul(b as u64)))
+			.saturating_add(RocksDbWeight::get().writes(8 as u64))
+			.saturating_add(RocksDbWeight::get().writes((4 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: Common CollectionProperties (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:0)
@@ -120,19 +120,19 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenData (r:0 w:1)
 	// Storage: Nonfungible Owned (r:0 w:1)
 	fn theme_add(b: u32, ) -> Weight {
-		(46_005_000 as Weight)
+		Weight::from_ref_time(46_005_000)
 			// Standard Error: 42_000
-			.saturating_add((2_922_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+			.saturating_add(Weight::from_ref_time(2_922_000).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(6 as u64))
+			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
 	// Storage: Common CollectionProperties (r:1 w:0)
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: RmrkEquip InernalPartId (r:1 w:0)
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	fn equippable() -> Weight {
-		(32_526_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(32_526_000)
+			.saturating_add(RocksDbWeight::get().reads(4 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 }

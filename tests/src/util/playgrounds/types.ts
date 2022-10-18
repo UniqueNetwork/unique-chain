@@ -14,6 +14,7 @@ export interface IEvent {
 export interface ITransactionResult {
   status: 'Fail' | 'Success';
   result: {
+      dispatchError: any,
       events: {
         phase: any, // {ApplyExtrinsic: number} | 'Initialization',
         event: IEvent;
@@ -47,6 +48,7 @@ export interface IUniqueHelperLog {
   call: string;
   params: any[];
   moduleError?: string;
+  dispatchError?: any;
   events?: any;
 }
 
@@ -162,8 +164,56 @@ export interface IStakingInfo {
   amount: bigint,
 }
 
+export interface ISchedulerOptions {
+  priority?: number,
+  periodic?: {
+    period: number,
+    repetitions: number,
+  },
+}
+
+export interface IForeignAssetMetadata {
+  name?: number | Uint8Array,
+  symbol?: string,
+  decimals?: number,
+  minimalBalance?: bigint,
+}
+
+export interface MoonbeamAssetInfo {
+  location: any,
+  metadata: {
+    name: string,
+    symbol: string,
+    decimals: number,
+    isFrozen: boolean,
+    minimalBalance: bigint,
+  },
+  existentialDeposit: bigint,
+  isSufficient: boolean,
+  unitsPerSecond: bigint,
+  numAssetsWeightHint: number,
+}
+
+export interface AcalaAssetMetadata {
+  name: string,
+  symbol: string,
+  decimals: number,
+  minimalBalance: bigint,
+}
+
+export interface DemocracyStandardAccountVote {
+  balance: bigint,
+  vote: {
+    aye: boolean,
+    conviction: number,
+  },
+}
+
 export type TSubstrateAccount = string;
 export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
 export type TUniqueNetworks = 'opal' | 'quartz' | 'unique';
+export type TSiblingNetworkds = 'moonbeam' | 'moonriver' | 'acala' | 'karura' | 'westmint';
+export type TRelayNetworks = 'rococo' | 'westend';
+export type TNetworks = TUniqueNetworks | TSiblingNetworkds | TRelayNetworks;
 export type TSigner = IKeyringPair; // | 'string'
