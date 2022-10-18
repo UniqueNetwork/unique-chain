@@ -47,8 +47,6 @@ jobs:
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
-
-
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
     name: ${{ matrix.network }}
@@ -169,7 +167,7 @@ jobs:
           yarn add mochawesome
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-before-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
@@ -179,10 +177,9 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-before-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
-
 
       # TODO uncomment thease steps after the merge
       #- name: Run Parallel tests before Node Parachain upgrade
@@ -229,8 +226,11 @@ jobs:
           #Get PID of polkadot-launch
           ContainerID=$(docker ps -aqf "name=node-parachain")
           PID=$(docker exec node-parachain pidof 'polkadot-launch')
-          echo "Polkadot-launch PID: $PID"
-          #Send SIGUSR1 signal to $PID
+          sleep 30s
+          echo -e "Show logs of node-parachain container.\n"
+          docker logs ${ContainerID}
+          echo -e "\n"
+          echo -e "Restart polkadot-launch process: $PID\n"
           docker exec node-parachain kill -SIGUSR1 ${PID}
           echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
           docker logs ${ContainerID}
@@ -243,9 +243,8 @@ jobs:
           docker exec node-parachain cat /polkadot-launch/alice.log
           docker exec node-parachain cat /polkadot-launch/eve.log
           docker exec node-parachain cat /polkadot-launch/dave.log
-          docker exec node-parachain cat /polkadot-launch/charlie.log  
+          docker exec node-parachain cat /polkadot-launch/charlie.log             
 
-      #  🌗 All parachain collators restarted with the new binaries.
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
         if: success()
         run: |
@@ -297,10 +296,9 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-after-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
@@ -310,7 +308,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
