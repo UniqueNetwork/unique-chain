@@ -49,7 +49,7 @@ jobs:
 
 
 
-    timeout-minutes: 1380
+    timeout-minutes: 2880           # 48 hours for execution jobs.
 
     name: ${{ matrix.network }}
 
@@ -236,7 +236,7 @@ jobs:
           echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
           docker logs ${ContainerID}
       
-      - name: Get chain logs
+      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
         if: failure()                   # run this step only at failure
         run: |
           docker exec node-parachain cat /polkadot-launch/9944.log
