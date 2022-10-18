@@ -11,7 +11,7 @@ jobs:
   market_test:
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
-    timeout-minutes: 1380
+    timeout-minutes: 360
 
     name: ${{ matrix.network }}    
 
