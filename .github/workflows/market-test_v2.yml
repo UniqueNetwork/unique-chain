@@ -10,8 +10,8 @@ jobs:
 
   market_test:
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,large]
-    timeout-minutes: 1380
+    runs-on: [self-hosted-ci,medium]
+    timeout-minutes: 180
 
     name: ${{ matrix.network }}    
 
@@ -91,12 +91,20 @@ jobs:
           rm -rf .env
           cp .env.docker .env
 
+# Temporary disable node readyness check. Have to dig into the script logic.
+#      - name: Wait for chain up and running
+#        working-directory: tests
+#        run: |
+#          yarn install
+#          node scripts/readyness.js
+#          echo "Ready to start tests"
+#        env:
+#          RPC_URL: http://127.0.0.1:9933/
+
       - name: Wait for chain up and running
-        working-directory: tests
         run: |
-          yarn install
-          node scripts/readyness.js
-          echo "Ready to start tests"
+          sleep 1200s
+          echo "Ready to start Market e2e tests"
 
       - name: Show content of .env file and Generate accounts
         working-directory: qa-tests
@@ -184,7 +192,6 @@ jobs:
       - name: Clean Workspace
         if: always()
         uses: AutoModality/action-clean@v1.1.0
-
 
 
 
