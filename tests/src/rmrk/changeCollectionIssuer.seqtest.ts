@@ -6,8 +6,8 @@ import {
 } from './util/tx';
 
 describe('integration test: collection issuer', () => {
-  const Alice = '//Alice';
-  const Bob = '//Bob';
+  const alice = '//Alice';
+  const bob = '//Bob';
 
   let api: any;
   before(async function() {
@@ -20,18 +20,18 @@ describe('integration test: collection issuer', () => {
   it('change collection issuer', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      await changeIssuer(api, Alice, collectionId, Bob);
+      await changeIssuer(api, alice, collectionId, bob);
     });
   });
 
   it('[negative] change not an owner NFT collection issuer', async () => {
-    await createCollection(api, Bob, 'test-metadata', null, 'test-symbol').then(async (collectionId) => {
-      const tx = changeIssuer(api, Alice, collectionId, Bob);
+    await createCollection(api, bob, 'test-metadata', null, 'test-symbol').then(async (collectionId) => {
+      const tx = changeIssuer(api, alice, collectionId, bob);
       await expectTxFailure(/rmrkCore\.NoPermission/, tx);
     });
   });
@@ -39,12 +39,12 @@ describe('integration test: collection issuer', () => {
   it('[negative] change non-existigit NFT collection issuer', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async () => {
-      const tx = changeIssuer(api, Alice, 99999, Bob);
+      const tx = changeIssuer(api, alice, 99999, bob);
       await expectTxFailure(/rmrkCore\.CollectionUnknown/, tx);
     });
   });

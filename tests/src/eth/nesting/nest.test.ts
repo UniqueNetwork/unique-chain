@@ -1,7 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 
-import {itEth, EthUniqueHelper, usingEthPlaygrounds, expect} from '../util/playgrounds';
+import {itEth, EthUniqueHelper, usingEthPlaygrounds, expect} from '../util';
 
 const createNestingCollection = async (
   helper: EthUniqueHelper,
@@ -21,7 +21,7 @@ describe('EVM nesting tests group', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

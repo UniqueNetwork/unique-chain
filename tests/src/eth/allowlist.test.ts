@@ -15,14 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect} from './util';
 
 describe('EVM contract allowlist', () => {
   let donor: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -70,7 +70,7 @@ describe('EVM collection allowlist', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

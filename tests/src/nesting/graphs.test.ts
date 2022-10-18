@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '../util/playgrounds';
+import {expect, itSub, usingPlaygrounds} from '../util';
 import {UniqueHelper, UniqueNFToken} from '../util/playgrounds/unique';
 
 /**
@@ -45,7 +45,7 @@ describe('Graphs', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

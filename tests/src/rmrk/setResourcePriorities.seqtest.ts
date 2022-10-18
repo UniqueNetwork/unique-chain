@@ -44,8 +44,6 @@ describe('integration test: set NFT resource priorities', () => {
   });
 
   it('[negative] set NFT resource priorities to non-existing NFT', async () => {
-    const owner = alice;
-
     const collectionId = 0;
     const maxNftId = 0xFFFFFFFF;
 

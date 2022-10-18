@@ -1,32 +1,45 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+import {itEth, usingEthPlaygrounds, expect} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds} from './../util/playgrounds/index';
-import {itEth, expect} from '../eth/util/playgrounds';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
 
-  before(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
-      [alice] = await helper.arrange.createAccounts([1000n], donor);
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+      [alice] = await helper.arrange.createAccounts([100n], donor);
     });
   });
 
   itEth('Can be reconfigured', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
-      const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'ethp'});
+      const collection = await helper.nft.mintCollection(alice);
       await collection.addAdmin(alice, {Ethereum: caller});
-
+      
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = helper.ethNativeContract.collection(address, 'nft', caller);
-
+  
       await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
   
-      const state = await collection.getPropertyPermissions();
-      expect(state).to.be.deep.equal([{
+      expect(await collection.getPropertyPermissions()).to.be.deep.equal([{
         key: 'testKey',
         permission: {mutable, collectionAdmin, tokenOwner},
       }]);
@@ -36,7 +49,6 @@ describe('EVM token properties', () => {
   itEth('Can be set', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(alice, {
-      tokenPrefix: 'ethp',
       tokenPropertyPermissions: [{
         key: 'testKey',
         permission: {
@@ -60,7 +72,6 @@ describe('EVM token properties', () => {
   itEth('Can be deleted', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(alice, {
-      tokenPrefix: 'ethp',
       tokenPropertyPermissions: [{
         key: 'testKey',
         permission: {
@@ -69,11 +80,11 @@ describe('EVM token properties', () => {
         },
       }],
     });
-
-    await collection.addAdmin(alice, {Ethereum: caller});
-
+    
     const token = await collection.mintToken(alice);
     await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
+
+    await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
@@ -85,9 +96,8 @@ describe('EVM token properties', () => {
   });
 
   itEth('Can be read', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
+    const caller = helper.eth.createAccount();
     const collection = await helper.nft.mintCollection(alice, {
-      tokenPrefix: 'ethp',
       tokenPropertyPermissions: [{
         key: 'testKey',
         permission: {
@@ -95,6 +105,7 @@ describe('EVM token properties', () => {
         },
       }],
     });
+  
     const token = await collection.mintToken(alice);
     await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
 

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets, requirePalletsOrSkip} from '../util/playgrounds';
-import {EthUniqueHelper, expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {Pallets, requirePalletsOrSkip} from '../util';
+import {EthUniqueHelper, expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 
@@ -28,7 +28,7 @@ describe('Refungible token: Information getting', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -72,7 +72,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -136,7 +136,7 @@ describe('Refungible: Plain calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -311,6 +311,7 @@ describe('Refungible: Plain calls', () => {
     });
     await tokenContract.methods.burnFrom(caller, 1).send();
 
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
@@ -327,7 +328,7 @@ describe('Refungible: Fees', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -382,7 +383,7 @@ describe('Refungible: Substrate calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -399,9 +400,11 @@ describe('Refungible: Substrate calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    expect(await token.approve(alice, {Ethereum: receiver}, 100n)).to.be.true;
 
+    expect(await token.approve(alice, {Ethereum: receiver}, 100n)).to.be.true;
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Approval');
     expect(event.address).to.be.equal(tokenAddress);
     expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -425,6 +428,7 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver},  51n)).to.be.true;
+    if (events.length == 0) await helper.wait.newBlocks(1);
 
     let event = events[0];
     expect(event.event).to.be.equal('Transfer');
@@ -455,8 +459,9 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transfer(alice, {Ethereum: receiver},  51n)).to.be.true;
-
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.event).to.be.equal('Transfer');
     expect(event.address).to.be.equal(tokenAddress);
     expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
@@ -472,7 +477,7 @@ describe('ERC 1633 implementation', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

@@ -1,7 +1,8 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {mnemonicGenerate} from '@polkadot/util-crypto';
+import {stringToU8a} from '@polkadot/util';
+import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
@@ -197,8 +198,9 @@ class ArrangeGroup {
     };
 
     let accountsCreated = false;
-    // checkBalances retry up to 5 blocks
-    for (let index = 0; index < 5; index++) {
+    const maxBlocksChecked = await this.helper.arrange.isDevNode() ? 50 : 5;
+    // checkBalances retry up to 5-50 blocks
+    for (let index = 0; index < maxBlocksChecked; index++) {
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
       await wait.newBlocks(1);
@@ -258,8 +260,13 @@ class ArrangeGroup {
   };
 
   isDevNode = async () => {
-    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [1])]);
-    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [2])]);
+    let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
+    if (blockNumber == 0) {
+      await this.helper.wait.newBlocks(1); 
+      blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
+    }
+    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
+    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
     const findCreationDate = async (block: any) => {
       const humanBlock = block.toHuman();
       let date;
@@ -284,6 +291,11 @@ class ArrangeGroup {
     balance -= await this.helper.balance.getSubstrate(address);
     
     return balance;
+  }
+
+  calculatePalletAddress(palletId: any) {
+    const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
+    return encodeAddress(address);
   }
 }
 

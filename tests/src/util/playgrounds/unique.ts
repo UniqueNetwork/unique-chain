@@ -295,12 +295,12 @@ class UniqueEventHelper {
     return data.toHuman();
   }
 
-  public static extractEvents(records: ITransactionResult): IEvent[] {
+  public static extractEvents(events: {event: any, phase: any}[]): IEvent[] {
     const parsedEvents: IEvent[] = [];
 
-    records.result.events.forEach((record) => {
+    events.forEach((record) => {
       const {event, phase} = record;
-      const types = (event as any).typeDef;
+      const types = event.typeDef;
 
       const eventData: IEvent = {
         section: event.section.toString(),
@@ -550,7 +550,7 @@ export class ChainHelperBase {
     let events: IEvent[] = [];
     try {
       result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
-      events = this.eventHelper.extractEvents(result);
+      events = this.eventHelper.extractEvents(result.result.events);
     }
     catch(e) {
       if(!(e as object).hasOwnProperty('status')) throw e;

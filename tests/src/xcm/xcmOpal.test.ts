@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
-import {itSub, expect, describeXcm, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util/playgrounds';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util';
 
 const STATEMINE_CHAIN = 1000;
 const UNIQUE_CHAIN = 2095;
@@ -38,7 +38,7 @@ const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 // 10,000.00 (ten thousands) USDT
 const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n; 
 
-describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
+describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   
@@ -59,8 +59,8 @@ describeXcm('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob'); // funds donor
+      alice = await privateKey('//Alice');
+      bob = await privateKey('//Bob'); // funds donor
     });
 
     await usingWestmintPlaygrounds(westmintUrl, async (helper) => {

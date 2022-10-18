@@ -3,9 +3,9 @@ import {expectTxFailure, requirePallets, Pallets} from './util/helpers';
 import {createCollection, lockCollection, mintNft} from './util/tx';
 
 describe('integration test: lock collection', () => {
-  const Alice = '//Alice';
-  const Bob = '//Bob';
-  const Max = 5;
+  const alice = '//Alice';
+  const bob = '//Bob';
+  const max = 5;
 
   let api: any;
   before(async function () {
@@ -16,29 +16,29 @@ describe('integration test: lock collection', () => {
   it('lock collection', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      await lockCollection(api, Alice, collectionId);
+      await lockCollection(api, alice, collectionId);
     });
   });
 
   it('[negative] lock non-existing NFT collection', async () => {
-    const tx = lockCollection(api, Alice, 99999);
+    const tx = lockCollection(api, alice, 99999);
     await expectTxFailure(/rmrkCore\.CollectionUnknown/, tx);
   });
 
   it('[negative] lock not an owner NFT collection issuer', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
       null,
       'test-symbol',
     ).then(async (collectionId) => {
-      const tx = lockCollection(api, Bob, collectionId);
+      const tx = lockCollection(api, bob, collectionId);
       await expectTxFailure(/rmrkCore\.NoPermission/, tx);
     });
   });
@@ -46,39 +46,39 @@ describe('integration test: lock collection', () => {
   it('lock collection with minting', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
-      Max,
+      max,
       'test-symbol',
     ).then(async (collectionId) => {
       for (let i = 0; i < 5; i++) {
         await mintNft(
           api,
-          Alice,
-          Alice,
+          alice,
+          alice,
           collectionId,
           'test-metadata',
           null,
           null,
         );
       }
-      await lockCollection(api, Alice, collectionId, Max);
+      await lockCollection(api, alice, collectionId, max);
     });
   });
 
   it('[negative] unable to mint NFT inside a locked collection', async () => {
     await createCollection(
       api,
-      Alice,
+      alice,
       'test-metadata',
-      Max,
+      max,
       'test-symbol',
     ).then(async (collectionId) => {
-      await lockCollection(api, Alice, collectionId);
+      await lockCollection(api, alice, collectionId);
       const tx = mintNft(
         api,
-        Alice,
-        Alice,
+        alice,
+        alice,
         collectionId,
         'test-metadata',
         null,
@@ -89,11 +89,11 @@ describe('integration test: lock collection', () => {
   });
 
   it('[negative] unable to mint NFT inside a full collection', async () => {
-    await createCollection(api, Alice, 'test-metadata', 1, 'test-symbol').then(async (collectionId) => {
+    await createCollection(api, alice, 'test-metadata', 1, 'test-symbol').then(async (collectionId) => {
       await mintNft(
         api,
-        Alice,
-        Alice,
+        alice,
+        alice,
         collectionId,
         'test-metadata',
         null,
@@ -101,8 +101,8 @@ describe('integration test: lock collection', () => {
       );
       const tx = mintNft(
         api,
-        Alice,
-        Alice,
+        alice,
+        alice,
         collectionId,
         'test-metadata',
         null,

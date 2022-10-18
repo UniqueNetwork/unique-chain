@@ -16,8 +16,8 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev';
-import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from '../eth/util/playgrounds';
-import {usingPlaygrounds} from '../util/playgrounds';
+import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from './util';
+import {usingPlaygrounds} from '../util';
 import {CompiledContract} from './util/playgrounds/types';
 
 describe('Sponsoring EVM contracts', () => {
@@ -25,11 +25,11 @@ describe('Sponsoring EVM contracts', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
-  itEth('Self sponsored can be set by the address that deployed the contract', async ({helper, privateKey}) => {
+  itEth('Self sponsored can be set by the address that deployed the contract', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
@@ -378,7 +378,7 @@ describe('Sponsoring EVM contracts', () => {
     // Balance should be taken from flipper instead of caller
     // FIXME the comment is wrong! What check should be here?
     const balanceAfter = await helper.balance.getEthereum(flipper.options.address);
-    expect(balanceAfter).to.be.equals(originalFlipperBalance);
+    expect(balanceAfter).to.be.equal(originalFlipperBalance);
   });
 
   itEth('Sponsoring is set, an address that has UNQ can send a transaction and it works. User balance should not change', async ({helper}) => {
@@ -406,7 +406,7 @@ describe('Sponsoring EVM contracts', () => {
     const sponsorBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(sponsor));
     const callerBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
     expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
-    expect(callerBalanceAfter).to.be.equals(callerBalanceBefore);
+    expect(callerBalanceAfter).to.be.equal(callerBalanceBefore);
   });
 
   itEth('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({helper}) => {
@@ -431,23 +431,24 @@ describe('Sponsoring EVM contracts', () => {
 
     await flipper.methods.flip().send({from: caller});
     expect(await flipper.methods.getValue().call()).to.be.true;
-    expect(await helper.balance.getEthereum(caller)).to.be.equals(originalCallerBalance);
+    expect(await helper.balance.getEthereum(caller)).to.be.equal(originalCallerBalance);
 
     const newFlipperBalance = await helper.balance.getEthereum(sponsor);
-    expect(newFlipperBalance).to.be.not.equals(originalFlipperBalance);
+    expect(newFlipperBalance).to.be.not.equal(originalFlipperBalance);
 
     await flipper.methods.flip().send({from: caller});
+    // todo:playgrounds fails rarely (expected 99893341659775672580n to equal 99912598679356033129n) (again, 99893341659775672580n)
     expect(await helper.balance.getEthereum(sponsor)).to.be.equal(newFlipperBalance);
-    expect(await helper.balance.getEthereum(caller)).to.be.not.equals(originalCallerBalance);
+    expect(await helper.balance.getEthereum(caller)).to.be.not.equal(originalCallerBalance);
   });
 
   // TODO: Find a way to calculate default rate limit
-  itEth('Default rate limit equals 7200', async ({helper}) => {
+  itEth('Default rate limit equal 7200', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(await helpers.methods.sponsoringRateLimit(flipper.options.address).call()).to.be.equals('7200');
+    expect(await helpers.methods.sponsoringRateLimit(flipper.options.address).call()).to.be.equal('7200');
   });
 });
 
@@ -490,24 +491,18 @@ describe('Sponsoring Fee Limit', () => {
   }
 
   before(async () => {
-    await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+      [alice] = await helper.arrange.createAccounts([100n], donor);
     });
   });
-
-  beforeEach(async () => {
-    await usingPlaygrounds(async (helper) => {
-      [alice] = await helper.arrange.createAccounts([1000n], donor);
-    });
-  });  
-
 
   itEth('Default fee limit', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equals('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+    expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equal('115792089237316195423570985008687907853269984665640564039457584007913129639935');
   });
 
   itEth('Set fee limit', async ({helper}) => {
@@ -516,7 +511,7 @@ describe('Sponsoring Fee Limit', () => {
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.setSponsoringFeeLimit(flipper.options.address, 100).send();
-    expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equals('100');
+    expect(await helpers.methods.sponsoringFeeLimit(flipper.options.address).call()).to.be.equal('100');
   });
 
   itEth('Negative test - set fee limit by non-owner', async ({helper}) => {
@@ -554,7 +549,7 @@ describe('Sponsoring Fee Limit', () => {
     expect(await helper.balance.getEthereum(user)).to.not.be.equal(originalUserBalance);
   });
 
-  itEth('Negative test - check that evm.call transactions exceeding fee limit are not executed', async ({helper, privateKey}) => {
+  itEth('Negative test - check that evm.call transactions exceeding fee limit are not executed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = helper.ethNativeContract.contractHelpers(owner);

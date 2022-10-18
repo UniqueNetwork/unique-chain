@@ -1,6 +1,6 @@
 import {executeTransaction} from '../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, expect, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../util/playgrounds';
+import {itSub, expect, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../util';
 import {UniqueHelper} from '../util/playgrounds/unique';
 
 let alice: IKeyringPair;
@@ -61,7 +61,7 @@ async function createRmrkNft(helper: UniqueHelper, sender: IKeyringPair, collect
 describe('RMRK External Integration Test', async () => {
   before(async function() {
     await usingPlaygrounds(async (_helper, privateKey) => {
-      alice = privateKey('//Alice');
+      alice = await privateKey('//Alice');
     });
   });
 
@@ -86,11 +86,11 @@ describe('Negative Integration Test: External Collections, Internal Ops', async 
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+      alice = await privateKey('//Alice');
+      bob = await privateKey('//Bob');
       normalizedAlice = {Substrate: helper.address.normalizeSubstrateToChainFormat(alice.address)};
 
-      await requirePalletsOrSkip(this, helper, [Pallets.RmrkCore]);
+      requirePalletsOrSkip(this, helper, [Pallets.RmrkCore]);
 
       const collectionIds = await createRmrkCollection(helper, alice);
       uniqueCollectionId = collectionIds.uniqueId;
@@ -202,8 +202,8 @@ describe('Negative Integration Test: Internal Collections, External Ops', async 
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
+      alice = await privateKey('//Alice');
+      bob = await privateKey('//Bob');
 
       const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'iceo'});
       collectionId = collection.collectionId;

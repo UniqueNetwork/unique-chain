@@ -17,7 +17,7 @@
 import {Contract} from 'web3-eth-contract';
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util';
 
 
 describe('Contract calls', () => {
@@ -25,7 +25,7 @@ describe('Contract calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -78,7 +78,7 @@ describe('ERC165 tests', async () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       const [alice] = await helper.arrange.createAccounts([10n], donor);
       ({collectionId: collection} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}));
       minter = helper.eth.createAccount();

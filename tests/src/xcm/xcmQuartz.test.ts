@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
 import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
-import {itSub, expect, describeXcm, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds} from '../util/playgrounds';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds} from '../util';
 
 const QUARTZ_CHAIN = 2095;
 const KARURA_CHAIN = 2000;
@@ -32,7 +32,7 @@ const KARURA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
-describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -48,7 +48,7 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      alice = privateKey('//Alice');
+      alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([0n], alice);
     });
 
@@ -207,12 +207,12 @@ describeXcm('[XCM] Integration test: Exchanging tokens with Karura', () => {
 });
 
 // These tests are relevant only when the foreign asset pallet is disabled
-describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
+describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
-      alice = privateKey('//Alice');
+      alice = await privateKey('//Alice');
     });
   });
 
@@ -332,8 +332,7 @@ describeXcm('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   });
 });
 
-describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
-
+describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   // Quartz constants
   let quartzDonor: IKeyringPair;
   let quartzAssetLocation;
@@ -369,7 +368,7 @@ describeXcm('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      quartzDonor = privateKey('//Alice');
+      quartzDonor = await privateKey('//Alice');
       [randomAccountQuartz] = await helper.arrange.createAccounts([0n], quartzDonor);
 
       balanceForeignQtzTokenInit = 0n;

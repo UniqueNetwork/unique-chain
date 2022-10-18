@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from './util/playgrounds';
+import {usingPlaygrounds, expect, itSub} from './util';
 import {ICollectionPermissions} from './util/playgrounds/types';
 
 describe('Integration Test ext. Allow list tests', () => {
@@ -25,7 +25,7 @@ describe('Integration Test ext. Allow list tests', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([30n, 10n, 10n], donor);
     });
   });
@@ -87,7 +87,7 @@ describe('Integration Test ext. Remove from Allow List', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([30n, 10n, 10n], donor);
     });
   });
@@ -163,7 +163,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob, charlie] = await helper.arrange.createAccounts([30n, 10n, 10n], donor);
     });
   });
@@ -291,7 +291,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });

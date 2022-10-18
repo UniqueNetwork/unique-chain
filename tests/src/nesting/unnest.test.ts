@@ -15,14 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../util/playgrounds';
+import {expect, itSub, Pallets, usingPlaygrounds} from '../util';
 
 describe('Integration Test: Unnesting', () => {
   let alice: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -91,7 +91,7 @@ describe('Negative Test: Unnesting', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });

@@ -6,7 +6,7 @@ import {
   sendNft,
   rejectNft,
 } from './util/tx';
-import {getChildren, NftIdTuple} from './util/fetch';
+import {NftIdTuple} from './util/fetch';
 import {isNftChildOfAnother, expectTxFailure, requirePallets, Pallets} from './util/helpers';
 
 describe('integration test: reject NFT', () => {
