@@ -78,7 +78,7 @@ jobs:
 
       - name: echo env
         run: |
-          echo "acala_version="${{ matrix.acala_version }}
+          echo "acala_version=${{ matrix.acala_version }}"
           echo "moonbeam_version="${{ matrix.moonbeam_version }}
           echo "cumulus_version="${{ matrix.cumulus_version }}
 
