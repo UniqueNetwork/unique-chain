@@ -14,40 +14,8 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  prepare-execution-marix:
-
-    name: Prepare execution matrix
-
-    runs-on: [self-hosted]
-    outputs:
-      matrix: ${{ steps.create_matrix.outputs.matrix }}
-
-    steps:
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v1.0.2
-
-      - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
-        id: create_matrix
-        with:
-          matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, acala_version {"${{ env.KARURA_BUILD_BRANCH }}"}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
-            network {unique}, runtime {unique}, features {unique-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
-
-
   xcm-build:
     
-    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted]
 
@@ -60,7 +28,6 @@ jobs:
     strategy:
       matrix:
         include:
-        #        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
           - network: opal
             runtime: opal
             features: opal-runtime
