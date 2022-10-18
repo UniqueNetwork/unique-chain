@@ -162,7 +162,7 @@ jobs:
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
                 
-      - name: Run Intergration tests
+      - name: Run Parellel tests 
         working-directory: tests
         run: |
           yarn install
@@ -170,17 +170,39 @@ jobs:
           node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-integration-${NOW}
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
     
-      - name: Test Report
+      - name: Test Report Parallel
         uses: phoenix-actions/test-reporting@v8
-        id: test-report-integration
+        id: test-report-parallel
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-integration-*.json    # Path to test results
+          name: Report Parallel tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+          
+      - name: Run Sequential tests 
+        working-directory: tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+    
+      - name: Test Report Sequential
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-sequential
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Report Sequential tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
