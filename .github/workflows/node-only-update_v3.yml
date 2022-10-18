@@ -153,7 +153,7 @@ jobs:
         shell: bash
 
       - name: Run Parallel tests on Node Parachain
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: tests
         run: |
           yarn install
           yarn add mochawesome
@@ -169,31 +169,11 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Parallel Tests report - ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+          path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
     
-      - name: Run Sequential tests on Node Parachain
-        working-directory: ${{ matrix.mainnet_branch }}/tests
-        run: |
-          yarn install
-          yarn add mochawesome
-          echo "Ready to start tests"
-          yarn polkadot-types
-          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
-
-      - name: Sequential Tests report
-        uses: phoenix-actions/test-reporting@v8
-        id: test-report-sequential
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Parallel Tests report - ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-       
+             
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
@@ -324,7 +304,7 @@ jobs:
         shell: bash
 
       - name: Run Sequential tests on Node Parachain
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: tests
         run: |
           yarn install
           yarn add mochawesome
@@ -340,7 +320,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Parallel Tests report - ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+          path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
        
