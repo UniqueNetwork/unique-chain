@@ -1,0 +1,93 @@
+ARG CHAIN=unique
+ARG LAUNCH_CONFIG_FILE=launch-config-xcm-unique-rococo.json
+
+# ===== Rust builder =====
+FROM ubuntu:20.04 as rust-builder
+LABEL maintainer="Unique.Network"
+
+ARG RUST_TOOLCHAIN
+ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install ${RUST_TOOLCHAIN} && \
+    rustup default ${RUST_TOOLCHAIN} && \
+    rustup target list --installed && \
+    rustup show
+RUN rustup target add wasm32-unknown-unknown --toolchain ${RUST_TOOLCHAIN}
+
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
+
+# ===== BUILD ======
+FROM rust-builder as builder-unique
+
+ARG UNIQUE_BRANCH
+ARG CHAIN
+ARG LAUNCH_CONFIG_FILE
+ARG PROFILE=release
+
+WORKDIR /unique_parachain
+#COPY . .
+
+RUN git clone -b ${UNIQUE_BRANCH} https://github.com/UniqueNetwork/unique-chain.git . && \
+#    cd unique-chain && \
+  cargo build --features=${CHAIN}-runtime --$PROFILE
+
+# ===== RUN ======
+FROM ubuntu:20.04
+
+ARG POLKADOT_LAUNCH_BRANCH
+ARG LAUNCH_CONFIG_FILE
+ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
+ENV LAUNCH_CONFIG_FILE $LAUNCH_CONFIG_FILE
+
+RUN apt-get -y update && \
+      apt-get -y install curl git && \
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+      export NVM_DIR="$HOME/.nvm" && \
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+      nvm install v16.16.0 && \
+      nvm use v16.16.0
+
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b ${POLKADOT_LAUNCH_BRANCH}
+
+RUN export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    cd /polkadot-launch && \
+    npm install --global yarn && \
+    yarn install
+
+COPY --from=builder-unique /unique_parachain/.docker/xcm-config/${LAUNCH_CONFIG_FILE} /polkadot-launch/
+COPY --from=builder-unique /unique_parachain/.docker/xcm-config/5validators.jsonnet /polkadot-launch/5validators.jsonnet
+COPY --from=builder-unique /unique_parachain/.docker/xcm-config/minBondFix.jsonnet /polkadot-launch/minBondFix.jsonnet
+
+COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
+COPY --from=uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from=uniquenetwork/builder-moonbeam:${MOONBEAM_BUILD_BRANCH} /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
+COPY --from=uniquenetwork/builder-cumulus:${STATEMINT_BUILD_BRANCH} /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
+COPY --from=uniquenetwork/builder-acala:${ACALA_BUILD_BRANCH} /unique_parachain/Acala/target/production/acala /acala/target/release/
+COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
+
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9946
+EXPOSE 9947
+EXPOSE 9948
+
+CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    cd /polkadot-launch && \
+    yarn start ${LAUNCH_CONFIG_FILE}
+
+                                                                                        

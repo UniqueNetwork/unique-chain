@@ -22,9 +22,9 @@ import {evmToAddress} from '@polkadot/util-crypto';
 
 import {Contract} from 'web3-eth-contract';
 
-import {usingEthPlaygrounds, expect, itEth, EthUniqueHelper} from '../util/playgrounds';
+import {usingEthPlaygrounds, expect, itEth, EthUniqueHelper} from '../util';
 import {CompiledContract} from '../util/playgrounds/types';
-import {requirePalletsOrSkip, Pallets} from '../../util/playgrounds';
+import {requirePalletsOrSkip, Pallets} from '../../util';
 
 
 let compiledFractionalizer: CompiledContract;
@@ -85,7 +85,7 @@ describe('Fractionalizer contract usage', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -225,7 +225,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

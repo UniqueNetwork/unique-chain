@@ -17,7 +17,7 @@
 import {expect} from 'chai';
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util/playgrounds';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util';
 
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
@@ -37,7 +37,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -76,7 +76,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

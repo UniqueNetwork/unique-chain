@@ -16,7 +16,7 @@
 
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from '../util/playgrounds';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from '../util';
 
 
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
@@ -37,7 +37,7 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -94,7 +94,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

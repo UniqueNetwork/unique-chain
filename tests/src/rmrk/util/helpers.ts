@@ -10,6 +10,8 @@ import privateKey from '../../substrate/privateKey';
 import {NftIdTuple, getChildren, getOwnedNfts, getCollectionProperties, getNftProperties, getResources} from './fetch';
 import chaiAsPromised from 'chai-as-promised';
 import chai from 'chai';
+import {getApiConnection} from '../../substrate/substrate-api';
+import {Context} from 'mocha';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -17,6 +19,46 @@ const expect = chai.expect;
 interface TxResult<T> {
     success: boolean;
     successData: T | null;
+}
+
+export enum Pallets {
+  Inflation = 'inflation',
+  RmrkCore = 'rmrkcore',
+  RmrkEquip = 'rmrkequip',
+  ReFungible = 'refungible',
+  Fungible = 'fungible',
+  NFT = 'nonfungible',
+  Scheduler = 'scheduler',
+  AppPromotion = 'apppromotion',
+}
+
+let modulesNames: any;
+export function getModuleNames(api: ApiPromise): string[] {
+  if (typeof modulesNames === 'undefined')
+    modulesNames = api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+  return modulesNames;
+}
+
+export async function missingRequiredPallets(requiredPallets: string[]): Promise<string[]> {
+  const api = await getApiConnection();
+  const pallets = getModuleNames(api);
+  await api.disconnect();
+
+  return requiredPallets.filter(p => !pallets.includes(p));
+}
+
+export async function requirePallets(mocha: Context, requiredPallets: string[]) {
+  const missingPallets = await missingRequiredPallets(requiredPallets);
+
+  if (missingPallets.length > 0) {
+    const skippingTestMsg = `\tSkipping test "${mocha.test?.title}".`;
+    const missingPalletsMsg = `\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
+    const skipMsg = `${skippingTestMsg}\n${missingPalletsMsg}`;
+
+    console.error('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+
+    mocha.skip();
+  }
 }
 
 export function makeNftOwner(api: ApiPromise, owner: string | NftIdTuple): NftOwner {
@@ -107,7 +149,7 @@ export async function isNftChildOfAnother(
 export function isTxResultSuccess(events: EventRecord[]): boolean {
   let success = false;
 
-  events.forEach(({event: {data, method, section}}) => {
+  events.forEach(({event: {method}}) => {
     if (method == 'ExtrinsicSuccess') {
       success = true;
     }

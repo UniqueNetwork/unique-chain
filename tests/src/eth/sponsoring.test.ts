@@ -15,15 +15,15 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, SponsoringMode} from '../eth/util/playgrounds';
-import {usingPlaygrounds} from './../util/playgrounds/index';
+import {itEth, expect, SponsoringMode} from './util';
+import {usingPlaygrounds} from '../util/index';
 
 describe('EVM sponsoring', () => {
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+    await usingPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 

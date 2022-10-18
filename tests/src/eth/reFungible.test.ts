@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets, requirePalletsOrSkip} from '../util/playgrounds';
-import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {Pallets, requirePalletsOrSkip} from '../util';
+import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Refungible: Information getting', () => {
@@ -25,7 +25,7 @@ describe('Refungible: Information getting', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -109,7 +109,7 @@ describe('Refungible: Plain calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -274,9 +274,11 @@ describe('Refungible: Plain calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    await tokenContract.methods.transfer(receiver, 1).send();
 
+    await tokenContract.methods.transfer(receiver, 1).send();
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.equal(collectionAddress);
     expect(event.returnValues.from).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
     expect(event.returnValues.to).to.equal(receiver);
@@ -300,9 +302,11 @@ describe('Refungible: Plain calls', () => {
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
-    await tokenContract.methods.transfer(receiver, 1).send();
 
+    await tokenContract.methods.transfer(receiver, 1).send();
+    if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
+
     expect(event.address).to.equal(collectionAddress);
     expect(event.returnValues.from).to.equal(caller);
     expect(event.returnValues.to).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
@@ -317,7 +321,7 @@ describe('RFT: Fees', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -358,7 +362,7 @@ describe('Common metadata', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });

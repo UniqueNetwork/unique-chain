@@ -16,14 +16,14 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util/playgrounds';
+import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -68,7 +68,7 @@ describe('EVM payable contracts', () => {
     expect(await contract.methods.getUnaccounted().call()).to.be.equal(weiCount.toString());
   });
 
-  itEth('Balance can be retrieved from evm contract', async({helper, privateKey}) => {
+  itEth('Balance can be retrieved from evm contract', async({helper}) => {
     const FEE_BALANCE = 10n * helper.balance.getOneTokenNominal();
     const CONTRACT_BALANCE = 1n * helper.balance.getOneTokenNominal();
 
@@ -80,7 +80,7 @@ describe('EVM payable contracts', () => {
 
     await web3.eth.sendTransaction({from: deployer, to: contract.options.address, value: CONTRACT_BALANCE.toString(), gas: helper.eth.DEFAULT_GAS});
 
-    const receiver = privateKey(`//Receiver${Date.now()}`);
+    const [receiver] = await helper.arrange.createAccounts([0n], donor);
 
     // First receive balance on eth balance of bob
     {
@@ -110,7 +110,7 @@ describe('EVM transaction fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

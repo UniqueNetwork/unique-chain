@@ -16,14 +16,14 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from '../util/playgrounds';
+import {itSub, usingPlaygrounds, expect} from '../util';
 import {IEvent} from '../util/playgrounds/types';
 
 describe('Destroy collection event ', () => {
   let alice: IKeyringPair;
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

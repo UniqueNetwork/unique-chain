@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Helpers sanity check', () => {
@@ -22,7 +22,7 @@ describe('Helpers sanity check', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
   

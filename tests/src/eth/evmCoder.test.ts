@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, usingEthPlaygrounds} from './util/playgrounds';
+import {itEth, expect, usingEthPlaygrounds} from './util';
 
 const getContractSource = (collectionAddress: string, contractAddress: string): string => {
   return `
@@ -59,7 +59,7 @@ describe('Evm Coder tests', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
   

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from './util/playgrounds';
+import {expect, itSub, usingPlaygrounds} from './util';
 
 // todo:playgrounds requires sudo, look into on the later stage
 describe('integration test: Inflation', () => {
@@ -23,7 +23,7 @@ describe('integration test: Inflation', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      superuser = privateKey('//Alice');
+      superuser = await privateKey('//Alice');
     });
   });
   

@@ -16,7 +16,7 @@
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itEth, usingEthPlaygrounds} from './util/playgrounds';
+import {expect, itEth, usingEthPlaygrounds} from './util';
 
 
 describe('Create NFT collection from EVM', () => {
@@ -24,7 +24,7 @@ describe('Create NFT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -35,16 +35,10 @@ describe('Create NFT collection from EVM', () => {
     const description = 'Some description';
     const prefix = 'token prefix';
 
-    // todo:playgrounds this might fail when in async environment.
-    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
     const {collectionId} = await helper.eth.createNFTCollection(owner, name, description, prefix);
-    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-
+    const data = (await helper.rft.getData(collectionId))!;
     const collection = helper.nft.getCollectionObject(collectionId);
-    const data = (await collection.getData())!;
     
-    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-    expect(collectionId).to.be.eq(collectionCountAfter);
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
@@ -63,16 +57,11 @@ describe('Create NFT collection from EVM', () => {
     const prefix = 'token prefix';
     const baseUri = 'BaseURI';
 
-    // todo:playgrounds this might fail when in async environment.
-    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
     const {collectionId} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, name, description, prefix, baseUri);
-    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
     const collection = helper.nft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
     
-    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-    expect(collectionId).to.be.eq(collectionCountAfter);
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
@@ -91,8 +80,8 @@ describe('Create NFT collection from EVM', () => {
     ]);
   });
 
-  // todo:playgrounds this test will fail when in async environment.
-  itEth('Check collection address exist', async ({helper}) => {
+  // this test will occasionally fail when in async environment.
+  itEth.skip('Check collection address exist', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
@@ -191,7 +180,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       nominal = helper.balance.getOneTokenNominal();
     });
   });
