@@ -15,16 +15,15 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {GAS_ARGS} from './util/helpers';
 
-import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util/playgrounds';
+import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -34,7 +33,7 @@ describe('EVM payable contracts', () => {
     const proxyContract = await deployProxyContract(helper, deployer);
     
     const realContractV1 = await deployRealContractV1(helper, deployer);
-    const realContractV1proxy = new helper.web3!.eth.Contract(realContractV1.options.jsonInterface, proxyContract.options.address, {from: caller, ...GAS_ARGS});
+    const realContractV1proxy = new helper.web3!.eth.Contract(realContractV1.options.jsonInterface, proxyContract.options.address, {from: caller, gas: helper.eth.DEFAULT_GAS});
     await proxyContract.methods.updateVersion(realContractV1.options.address).send();
     
     await realContractV1proxy.methods.flip().send();
@@ -46,7 +45,7 @@ describe('EVM payable contracts', () => {
     expect(value1).to.be.equal(true);
 
     const realContractV2 = await deployRealContractV2(helper, deployer);
-    const realContractV2proxy = new helper.web3!.eth.Contract(realContractV2.options.jsonInterface, proxyContract.options.address, {from: caller, ...GAS_ARGS});
+    const realContractV2proxy = new helper.web3!.eth.Contract(realContractV2.options.jsonInterface, proxyContract.options.address, {from: caller, gas: helper.eth.DEFAULT_GAS});
     await proxyContract.methods.updateVersion(realContractV2.options.address).send();
 
     await realContractV2proxy.methods.flip().send();
