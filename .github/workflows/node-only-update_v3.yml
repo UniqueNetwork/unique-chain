@@ -1,4 +1,4 @@
-name: nodes-only update
+name: Parallele tests
 
 # Controls when the action will run.
 on:
@@ -83,6 +83,7 @@ jobs:
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
+            
       - name: Show build configuration
         run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
 
@@ -171,6 +172,27 @@ jobs:
           path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+    
+      - name: Run Sequential tests on Node Parachain
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      - name: Sequential Tests report
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-sequential
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Parallel Tests report - ${{ matrix.network }}            # Name of the check run which will be created
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
        
       - name: Stop running containers
         if: always()                   # run this step always
@@ -183,7 +205,8 @@ jobs:
           docker system prune -f
           docker image prune -f -a
           
-      - name: List files in Workspace
-        if: always()
-        uses: |
-          ls -la ./
+#      - name: List files in Workspace
+#       if: always()
+#        uses: |
+#          ls -la ./
+#
