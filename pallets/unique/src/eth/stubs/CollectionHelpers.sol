@@ -45,25 +45,21 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	/// Create an NFT collection
-	/// @param name Name of the collection
-	/// @param description Informative description of the collection
-	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
-	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0xe34a6844,
-	///  or in textual repr: createNonfungibleCollection(string,string,string)
-	function createNonfungibleCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix
-	) public payable returns (address) {
-		require(false, stub_error);
-		name;
-		description;
-		tokenPrefix;
-		dummy = 0;
-		return 0x0000000000000000000000000000000000000000;
-	}
+	// /// Create an NFT collection
+	// /// @param name Name of the collection
+	// /// @param description Informative description of the collection
+	// /// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	// /// @return address Address of the newly created collection
+	// /// @dev EVM selector for this function is: 0xe34a6844,
+	// ///  or in textual repr: createNonfungibleCollection(string,string,string)
+	// function createNonfungibleCollection(string memory name, string memory description, string memory tokenPrefix) public payable returns (address) {
+	// 	require(false, stub_error);
+	// 	name;
+	// 	description;
+	// 	tokenPrefix;
+	// 	dummy = 0;
+	// 	return 0x0000000000000000000000000000000000000000;
+	// }
 
 	/// @dev EVM selector for this function is: 0xab173450,
 	///  or in textual repr: createRFTCollection(string,string,string)

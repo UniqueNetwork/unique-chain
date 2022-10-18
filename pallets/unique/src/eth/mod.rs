@@ -184,6 +184,7 @@ where
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
 	#[deprecated(note = "mathod was renamed to `create_nft_collection`, prefer it instead")]
+	#[solidity(hide)]
 	fn create_nonfungible_collection(
 		&mut self,
 		caller: caller,
