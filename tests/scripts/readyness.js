@@ -25,6 +25,7 @@ const main = async () => {
     }
     catch(e) {
       await sleep(10000);
+      console.log(e);
     }
   }
 }

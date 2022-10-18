@@ -30,9 +30,18 @@ jobs:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets
     
+  forkless:
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'forkless')) }}
+    uses: ./.github/workflows/forkless.yml
+
   node-only-update:
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'forkless')) }}
+    uses: ./.github/workflows/node-only-update_v2.yml
+    
+  parallel_and_sequential_tests:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'para')) }}
     uses: ./.github/workflows/node-only-update_v3.yml
+
 
   codestyle:
     if: github.event.pull_request.draft == false

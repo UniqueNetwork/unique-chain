@@ -6711,6 +6711,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-unique-scheduler-v2"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-preimage",
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-test-utils",
+]
+
+[[package]]
 name = "pallet-utility"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.29#cc370aa61e15c18d23a2f686b812fd576a630afe"
@@ -8576,7 +8594,7 @@ dependencies = [
 
 [[package]]
 name = "quartz-runtime"
-version = "0.9.27"
+version = "0.9.29"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -12568,7 +12586,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime"
-version = "0.9.27"
+version = "0.9.29"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
