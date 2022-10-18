@@ -100,6 +100,9 @@ jobs:
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
@@ -162,7 +165,7 @@ jobs:
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
                 
-      - name: Run Parellel tests 
+      - name: Run Parallel tests 
         working-directory: tests
         run: |
           yarn install
