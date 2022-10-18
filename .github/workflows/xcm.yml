@@ -70,7 +70,23 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+        include:
+        #        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+          - network: opal
+            runtime: opal
+            features: opal-runtime
+            acala_version: ${{ env.ACALA_BUILD_BRANCH }}
+            moonbeam_version: ${{ env.MOONBEAM_BUILD_BRANCH }}
+            cumulus_version: ${{ env.WESTMINT_BUILD_BRANCH }}
+            runtest: testXcmOpal
+          - network: quartz
+            runtime: quartz
+            features: quartz-runtime
+            acala_version: ${{ env.KARURA_BUILD_BRANCH }}
+            moonbeam_version: ${{ env.MOONRIVER_BUILD_BRANCH }}
+            cumulus_version: ${{ env.STATEMINE_BUILD_BRANCH }}
+            runtest: testXcmQuartz
+
 
     steps:
       - name: Skip if pull request is in Draft
