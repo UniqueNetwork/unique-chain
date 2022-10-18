@@ -77,7 +77,10 @@ jobs:
         uses: xom9ikk/dotenv@v1.0.2
 
       - name: echo env
-        run: echo "acala_version="${{ matrix.acala_version }}
+        run: |
+          echo "acala_version="${{ matrix.acala_version }}
+          echo "moonbeam_version="${{ matrix.moonbeam_version }}
+          echo "cumulus_version="${{ matrix.cumulus_version }}
 
       # Check ACALA version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for ACALA
