@@ -365,11 +365,14 @@ pub struct CollectionFlags {
 	/// Tokens in foreign collections can be transferred, but not burnt
 	#[bondrewd(bits = "0..1")]
 	pub foreign: bool,
+	/// Supports ERC721Metadata
+	#[bondrewd(bits = "1..2")]
+	pub erc721metadata: bool,
 	/// External collections can't be managed using `unique` api
 	#[bondrewd(bits = "7..8")]
 	pub external: bool,
 
-	#[bondrewd(reserve, bits = "1..7")]
+	#[bondrewd(reserve, bits = "2..7")]
 	pub reserved: u8,
 }
 bondrewd_codec!(CollectionFlags);
@@ -434,6 +437,15 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct RpcCollectionFlags {
+	/// Is collection is foreign.
+	pub foreign: bool,
+	/// Collection supports ERC721Metadata.
+	pub erc721metadata: bool,
+}
+
 /// Collection parameters, used in RPC calls (see [`Collection`] for the storage version).
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
@@ -471,8 +483,8 @@ pub struct RpcCollection<AccountId> {
 	/// Is collection read only.
 	pub read_only: bool,
 
-	/// Is collection is foreign.
-	pub foreign: bool,
+	/// Extra collection flags
+	pub flags: RpcCollectionFlags,
 }
 
 /// Data used for create collection.

@@ -91,7 +91,7 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x3e1e8083
+/// @dev the ERC-165 identifier for this interface is 0x62e22290
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -369,9 +369,9 @@ contract Collection is Dummy, ERC165 {
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
-	/// @dev EVM selector for this function is: 0x13af4035,
-	///  or in textual repr: setOwner(address)
-	function setOwner(address newOwner) public {
+	/// @dev EVM selector for this function is: 0x4f53e226,
+	///  or in textual repr: changeCollectionOwner(address)
+	function changeCollectionOwner(address newOwner) public {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
@@ -382,6 +382,49 @@ contract Collection is Dummy, ERC165 {
 struct Tuple17 {
 	address field_0;
 	uint256 field_1;
+}
+
+/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+/// @dev See https://eips.ethereum.org/EIPS/eip-721
+/// @dev the ERC-165 identifier for this interface is 0x5b5e139f
+contract ERC721Metadata is Dummy, ERC165 {
+	// /// @notice A descriptive name for a collection of NFTs in this contract
+	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	// /// @dev EVM selector for this function is: 0x06fdde03,
+	// ///  or in textual repr: name()
+	// function name() public view returns (string memory) {
+	// 	require(false, stub_error);
+	// 	dummy;
+	// 	return "";
+	// }
+
+	// /// @notice An abbreviated name for NFTs in this contract
+	// /// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	// /// @dev EVM selector for this function is: 0x95d89b41,
+	// ///  or in textual repr: symbol()
+	// function symbol() public view returns (string memory) {
+	// 	require(false, stub_error);
+	// 	dummy;
+	// 	return "";
+	// }
+
+	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
+	///
+	/// @dev If the token has a `url` property and it is not empty, it is returned.
+	///  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
+	///  If the collection property `baseURI` is empty or absent, return "" (empty string)
+	///  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
+	///  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
+	///
+	/// @return token's const_metadata
+	/// @dev EVM selector for this function is: 0xc87b56dd,
+	///  or in textual repr: tokenURI(uint256)
+	function tokenURI(uint256 tokenId) public view returns (string memory) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return "";
+	}
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
@@ -401,13 +444,13 @@ contract ERC721Burnable is Dummy, ERC165 {
 }
 
 /// @dev inlined interface
-contract ERC721MintableEvents {
+contract ERC721UniqueMintableEvents {
 	event MintingFinished();
 }
 
 /// @title ERC721 minting logic.
-/// @dev the ERC-165 identifier for this interface is 0x68ccfe89
-contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
+/// @dev the ERC-165 identifier for this interface is 0x476ff149
+contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 	/// @dev EVM selector for this function is: 0x05d2035b,
 	///  or in textual repr: mintingFinished()
 	function mintingFinished() public view returns (bool) {
@@ -417,40 +460,62 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 	}
 
 	/// @notice Function to mint token.
-	/// @dev `tokenId` should be obtained with `nextTokenId` method,
-	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
-	/// @param tokenId ID of the minted NFT
-	/// @dev EVM selector for this function is: 0x40c10f19,
-	///  or in textual repr: mint(address,uint256)
-	function mint(address to, uint256 tokenId) public returns (bool) {
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0x6a627842,
+	///  or in textual repr: mint(address)
+	function mint(address to) public returns (uint256) {
 		require(false, stub_error);
 		to;
-		tokenId;
 		dummy = 0;
-		return false;
+		return 0;
 	}
 
+	// /// @notice Function to mint token.
+	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
+	// ///  unlike standard, you can't specify it manually
+	// /// @param to The new owner
+	// /// @param tokenId ID of the minted NFT
+	// /// @dev EVM selector for this function is: 0x40c10f19,
+	// ///  or in textual repr: mint(address,uint256)
+	// function mint(address to, uint256 tokenId) public returns (bool) {
+	// 	require(false, stub_error);
+	// 	to;
+	// 	tokenId;
+	// 	dummy = 0;
+	// 	return false;
+	// }
+
 	/// @notice Function to mint token with the given tokenUri.
-	/// @dev `tokenId` should be obtained with `nextTokenId` method,
-	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
-	/// @param tokenId ID of the minted NFT
 	/// @param tokenUri Token URI that would be stored in the NFT properties
-	/// @dev EVM selector for this function is: 0x50bb4e7f,
-	///  or in textual repr: mintWithTokenURI(address,uint256,string)
-	function mintWithTokenURI(
-		address to,
-		uint256 tokenId,
-		string memory tokenUri
-	) public returns (bool) {
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0x45c17782,
+	///  or in textual repr: mintWithTokenURI(address,string)
+	function mintWithTokenURI(address to, string memory tokenUri) public returns (uint256) {
 		require(false, stub_error);
 		to;
-		tokenId;
 		tokenUri;
 		dummy = 0;
-		return false;
+		return 0;
 	}
+
+	// /// @notice Function to mint token with the given tokenUri.
+	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
+	// ///  unlike standard, you can't specify it manually
+	// /// @param to The new owner
+	// /// @param tokenId ID of the minted NFT
+	// /// @param tokenUri Token URI that would be stored in the NFT properties
+	// /// @dev EVM selector for this function is: 0x50bb4e7f,
+	// ///  or in textual repr: mintWithTokenURI(address,uint256,string)
+	// function mintWithTokenURI(address to, uint256 tokenId, string memory tokenUri) public returns (bool) {
+	// 	require(false, stub_error);
+	// 	to;
+	// 	tokenId;
+	// 	tokenUri;
+	// 	dummy = 0;
+	// 	return false;
+	// }
 
 	/// @dev Not implemented
 	/// @dev EVM selector for this function is: 0x7d64bcb4,
@@ -463,8 +528,26 @@ contract ERC721Mintable is Dummy, ERC165, ERC721MintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xd74d154f
+/// @dev the ERC-165 identifier for this interface is 0x4468500d
 contract ERC721UniqueExtensions is Dummy, ERC165 {
+	/// @notice A descriptive name for a collection of NFTs in this contract
+	/// @dev EVM selector for this function is: 0x06fdde03,
+	///  or in textual repr: name()
+	function name() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	/// @notice An abbreviated name for NFTs in this contract
+	/// @dev EVM selector for this function is: 0x95d89b41,
+	///  or in textual repr: symbol()
+	function symbol() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
@@ -525,7 +608,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	/// @dev EVM selector for this function is: 0x36543006,
 	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	function mintBulkWithTokenURI(address to, Tuple8[] memory tokens) public returns (bool) {
+	function mintBulkWithTokenURI(address to, Tuple6[] memory tokens) public returns (bool) {
 		require(false, stub_error);
 		to;
 		tokens;
@@ -535,7 +618,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple8 {
+struct Tuple6 {
 	uint256 field_0;
 	string field_1;
 }
@@ -577,47 +660,6 @@ contract ERC721Enumerable is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy;
 		return 0;
-	}
-}
-
-/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
-/// @dev See https://eips.ethereum.org/EIPS/eip-721
-/// @dev the ERC-165 identifier for this interface is 0x5b5e139f
-contract ERC721Metadata is Dummy, ERC165 {
-	/// @notice A descriptive name for a collection of NFTs in this contract
-	/// @dev EVM selector for this function is: 0x06fdde03,
-	///  or in textual repr: name()
-	function name() public view returns (string memory) {
-		require(false, stub_error);
-		dummy;
-		return "";
-	}
-
-	/// @notice An abbreviated name for NFTs in this contract
-	/// @dev EVM selector for this function is: 0x95d89b41,
-	///  or in textual repr: symbol()
-	function symbol() public view returns (string memory) {
-		require(false, stub_error);
-		dummy;
-		return "";
-	}
-
-	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
-	///
-	/// @dev If the token has a `url` property and it is not empty, it is returned.
-	///  Else If the collection does not have a property with key `schemaName` or its value is not equal to `ERC721Metadata`, it return an error `tokenURI not set`.
-	///  If the collection property `baseURI` is empty or absent, return "" (empty string)
-	///  otherwise, if token property `suffix` present and is non-empty, return concatenation of baseURI and suffix
-	///  otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
-	///
-	/// @return token's const_metadata
-	/// @dev EVM selector for this function is: 0xc87b56dd,
-	///  or in textual repr: tokenURI(uint256)
-	function tokenURI(uint256 tokenId) public view returns (string memory) {
-		require(false, stub_error);
-		tokenId;
-		dummy;
-		return "";
 	}
 }
 
@@ -766,11 +808,11 @@ contract UniqueNFT is
 	Dummy,
 	ERC165,
 	ERC721,
-	ERC721Metadata,
 	ERC721Enumerable,
 	ERC721UniqueExtensions,
-	ERC721Mintable,
+	ERC721UniqueMintable,
 	ERC721Burnable,
+	ERC721Metadata,
 	Collection,
 	TokenProperties
 {}

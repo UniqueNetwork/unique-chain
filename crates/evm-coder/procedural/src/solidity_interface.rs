@@ -291,22 +291,40 @@ impl Parse for InterfaceInfo {
 
 struct MethodInfo {
 	rename_selector: Option<String>,
+	hide: bool,
 }
 impl Parse for MethodInfo {
 	fn parse(input: ParseStream) -> syn::Result<Self> {
 		let mut rename_selector = None;
-		let lookahead = input.lookahead1();
-		if lookahead.peek(kw::rename_selector) {
-			let k = input.parse::<kw::rename_selector>()?;
-			input.parse::<Token![=]>()?;
-			if rename_selector
-				.replace(input.parse::<LitStr>()?.value())
-				.is_some()
-			{
-				return Err(syn::Error::new(k.span(), "rename_selector is already set"));
+		let mut hide = false;
+		while !input.is_empty() {
+			let lookahead = input.lookahead1();
+			if lookahead.peek(kw::rename_selector) {
+				let k = input.parse::<kw::rename_selector>()?;
+				input.parse::<Token![=]>()?;
+				if rename_selector
+					.replace(input.parse::<LitStr>()?.value())
+					.is_some()
+				{
+					return Err(syn::Error::new(k.span(), "rename_selector is already set"));
+				}
+			} else if lookahead.peek(kw::hide) {
+				input.parse::<kw::hide>()?;
+				hide = true;
+			} else {
+				return Err(lookahead.error());
+			}
+
+			if input.peek(Token![,]) {
+				input.parse::<Token![,]>()?;
+			} else if !input.is_empty() {
+				return Err(syn::Error::new(input.span(), "expected end"));
 			}
 		}
-		Ok(Self { rename_selector })
+		Ok(Self {
+			rename_selector,
+			hide,
+		})
 	}
 }
 
@@ -548,6 +566,7 @@ mod kw {
 	syn::custom_keyword!(expect_selector);
 
 	syn::custom_keyword!(rename_selector);
+	syn::custom_keyword!(hide);
 }
 
 /// Rust methods are parsed into this structure when Solidity code is generated
@@ -558,6 +577,7 @@ struct Method {
 	screaming_name: Ident,
 	selector_str: String,
 	selector: u32,
+	hide: bool,
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
 	has_value_args: bool,
@@ -570,6 +590,7 @@ impl Method {
 	fn try_from(value: &ImplItemMethod) -> syn::Result<Self> {
 		let mut info = MethodInfo {
 			rename_selector: None,
+			hide: false,
 		};
 		let mut docs = Vec::new();
 		let mut weight = None;
@@ -667,6 +688,7 @@ impl Method {
 			screaming_name: snake_ident_to_screaming(ident),
 			selector_str,
 			selector,
+			hide: info.hide,
 			args,
 			has_normal_args,
 			has_value_args,
@@ -826,12 +848,14 @@ impl Method {
 		let docs = &self.docs;
 		let selector_str = &self.selector_str;
 		let selector = self.selector;
+		let hide = self.hide;
 		let is_payable = self.has_value_args;
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
 				selector_str: #selector_str,
 				selector: #selector,
+				hide: #hide,
 				name: #camel_name,
 				mutability: #mutability,
 				is_payable: #is_payable,

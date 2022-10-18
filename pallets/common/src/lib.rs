@@ -71,6 +71,7 @@ use up_data_structs::{
 	Collection,
 	RpcCollection,
 	CollectionFlags,
+	RpcCollectionFlags,
 	CollectionId,
 	CreateItemData,
 	MAX_TOKEN_PREFIX_LENGTH,
@@ -824,7 +825,11 @@ impl<T: Config> Pallet<T> {
 			token_property_permissions,
 			properties,
 			read_only: flags.external,
-			foreign: flags.foreign,
+
+			flags: RpcCollectionFlags {
+				foreign: flags.foreign,
+				erc721metadata: flags.erc721metadata,
+			},
 		})
 	}
 }

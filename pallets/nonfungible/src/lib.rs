@@ -295,6 +295,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self.0
 	}
 }
+
 impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		self.0.recorder()
@@ -407,17 +408,9 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
-		is_external: bool,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(
-			owner,
-			payer,
-			data,
-			CollectionFlags {
-				external: is_external,
-				..Default::default()
-			},
-		)
+		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
 	}
 
 	/// Destroy NFT collection

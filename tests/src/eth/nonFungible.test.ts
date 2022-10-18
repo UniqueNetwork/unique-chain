@@ -29,7 +29,7 @@ describe('NFT: Information getting', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  
+
   itEth('totalSupply', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
     await collection.mintToken(alice);
@@ -68,6 +68,16 @@ describe('NFT: Information getting', () => {
 
     expect(owner).to.equal(caller);
   });
+
+  itEth('name/symbol is available regardless of ERC721Metadata support', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', tokenPrefix: 'TEST'});
+    const caller = helper.eth.createAccount();
+
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+
+    expect(await contract.methods.name().call()).to.equal('test');
+    expect(await contract.methods.symbol().call()).to.equal('TEST');
+  });
 });
 
 describe('Check ERC721 token URI for NFT', () => {
@@ -79,34 +89,29 @@ describe('Check ERC721 token URI for NFT', () => {
     });
   });
 
-  async function setup(helper: EthUniqueHelper, tokenPrefix: string, propertyKey?: string, propertyValue?: string): Promise<{contract: Contract, nextTokenId: string}> {
+  async function setup(helper: EthUniqueHelper, baseUri: string, propertyKey?: string, propertyValue?: string): Promise<{contract: Contract, nextTokenId: string}> {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    let result = await collectionHelper.methods.createERC721MetadataCompatibleCollection('Mint collection', 'a', 'b', tokenPrefix).send({value: Number(2n * helper.balance.getOneTokenNominal())});
-    const collectionAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    expect(nextTokenId).to.be.equal('1');
-    result = await contract.methods.mint(
-      receiver,
-      nextTokenId,
-    ).send();
+
+    const result = await contract.methods.mint(receiver).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    expect(tokenId).to.be.equal('1');
 
     if (propertyKey && propertyValue) {
       // Set URL or suffix
-      await contract.methods.setProperty(nextTokenId, propertyKey, Buffer.from(propertyValue)).send();
+      await contract.methods.setProperty(tokenId, propertyKey, Buffer.from(propertyValue)).send();
     }
 
     const event = result.events.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(nextTokenId);
+    expect(event.returnValues.tokenId).to.be.equal(tokenId);
 
-    return {contract, nextTokenId};
+    return {contract, nextTokenId: tokenId};
   }
 
   itEth('Empty tokenURI', async ({helper}) => {
@@ -115,18 +120,18 @@ describe('Check ERC721 token URI for NFT', () => {
   });
 
   itEth('TokenURI from url', async ({helper}) => {
-    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'url', 'Token URI');
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'URI', 'Token URI');
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Token URI');
   });
 
-  itEth('TokenURI from baseURI + tokenId', async ({helper}) => {
+  itEth('TokenURI from baseURI', async ({helper}) => {
     const {contract, nextTokenId} = await setup(helper, 'BaseURI_');
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + nextTokenId);
+    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_');
   });
 
   itEth('TokenURI from baseURI + suffix', async ({helper}) => {
     const suffix = '/some/suffix';
-    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'suffix', suffix);
+    const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'URISuffix', suffix);
     expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + suffix);
   });
 });
@@ -146,24 +151,19 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'Minty', '6', '6');
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', '6', '6', '');
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    const nextTokenId = await contract.methods.nextTokenId().call();
 
-    expect(nextTokenId).to.be.equal('1');
-    const result = await contract.methods.mintWithTokenURI(
-      receiver,
-      nextTokenId,
-      'Test URI',
-    ).send();
+    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    expect(tokenId).to.be.equal('1');
 
     const event = result.events.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(nextTokenId);
 
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
 
     // TODO: this wont work right now, need release 919000 first
     // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
@@ -216,7 +216,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const result = await contract.methods.burn(tokenId).send({from: caller});
-      
+
       const event = result.events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.returnValues.from).to.be.equal(caller);
@@ -322,7 +322,7 @@ describe('NFT: Fees', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  
+
   itEth('approve() call fee is less than 0.2UNQ', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
@@ -403,7 +403,7 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
@@ -428,7 +428,7 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
@@ -455,13 +455,14 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
+
     if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
@@ -479,13 +480,14 @@ describe('NFT: Substrate calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
-    
+
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
       events.push(event);
     });
 
     await token.transfer(alice, {Ethereum: receiver});
+
     if (events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
@@ -509,7 +511,23 @@ describe('Common metadata', () => {
 
   itEth('Returns collection name', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'oh River', tokenPrefix: 'CHANGE'});
+    const tokenPropertyPermissions = [{
+      key: 'URI',
+      permission: {
+        mutable: true,
+        collectionAdmin: true,
+        tokenOwner: false,
+      },
+    }];
+    const collection = await helper.nft.mintCollection(
+      alice,
+      {
+        name: 'oh River',
+        tokenPrefix: 'CHANGE',
+        properties: [{key: 'ERC721Metadata', value: '1'}],
+        tokenPropertyPermissions,
+      },
+    );
 
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const name = await contract.methods.name().call();
@@ -518,7 +536,23 @@ describe('Common metadata', () => {
 
   itEth('Returns symbol name', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'oh River', tokenPrefix: 'CHANGE'});
+    const tokenPropertyPermissions = [{
+      key: 'URI',
+      permission: {
+        mutable: true,
+        collectionAdmin: true,
+        tokenOwner: false,
+      },
+    }];
+    const collection = await helper.nft.mintCollection(
+      alice,
+      {
+        name: 'oh River',
+        tokenPrefix: 'CHANGE',
+        properties: [{key: 'ERC721Metadata', value: '1'}],
+        tokenPropertyPermissions,
+      },
+    );
 
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const symbol = await contract.methods.symbol().call();

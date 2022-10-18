@@ -118,7 +118,7 @@ describe('EVM transaction fees', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await helper.eth.deployFlipper(deployer);
-    
+
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     await contract.methods.flip().send({from: caller});
     const finalCallerBalance = await helper.balance.getEthereum(caller);
@@ -129,7 +129,7 @@ describe('EVM transaction fees', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await deployProxyContract(helper, deployer);
-    
+
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
     await contract.methods.flip().send({from: caller});
@@ -138,7 +138,7 @@ describe('EVM transaction fees', () => {
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
     expect(finalContractBalance == initialContractBalance).to.be.true;
   });
-  
+
   itEth('Fee for nested calls to native methods is withdrawn from the user', async({helper}) => {
     const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
 
@@ -146,7 +146,7 @@ describe('EVM transaction fees', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const contract = await deployProxyContract(helper, deployer);
 
-    const collectionAddress = (await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)})).events.CollectionCreated.returnValues.collection;
+    const collectionAddress = (await contract.methods.createNFTCollection().send({from: caller, value: Number(CONTRACT_BALANCE)})).events.CollectionCreated.returnValues.collection;
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
     await contract.methods.mintNftToken(collectionAddress).send({from: caller});
@@ -155,7 +155,7 @@ describe('EVM transaction fees', () => {
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
     expect(finalContractBalance == initialContractBalance).to.be.true;
   });
-  
+
   itEth('Fee for nested calls to create*Collection methods is withdrawn from the user and from the contract', async({helper}) => {
     const CONTRACT_BALANCE = 2n * helper.balance.getOneTokenNominal();
     const deployer = await helper.eth.createAccountWithBalance(donor);
@@ -164,7 +164,7 @@ describe('EVM transaction fees', () => {
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(contract.options.address);
-    await contract.methods.createNonfungibleCollection().send({from: caller, value: Number(CONTRACT_BALANCE)});
+    await contract.methods.createNFTCollection().send({from: caller, value: Number(CONTRACT_BALANCE)});
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     const finalContractBalance = await helper.balance.getEthereum(contract.options.address);
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
@@ -176,9 +176,9 @@ describe('EVM transaction fees', () => {
     const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
-        
-    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
-    await expect(collectionHelper.methods.createNonfungibleCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+
+    await expect(collectionHelper.methods.createNFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.methods.createNFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   itEth('Negative test: call createRFTCollection with wrong fee', async({helper}) => {
@@ -186,7 +186,7 @@ describe('EVM transaction fees', () => {
     const BIG_FEE = 3n * helper.balance.getOneTokenNominal();
     const caller = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(caller);
-        
+
     await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(SMALL_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
     await expect(collectionHelper.methods.createRFTCollection('A', 'B', 'C').call({value: Number(BIG_FEE)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
@@ -227,16 +227,15 @@ describe('EVM transaction fees', () => {
           InnerContract(innerContract).flip();
         }
 
-        function createNonfungibleCollection() external payable {
+        function createNFTCollection() external payable {
           address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-		      address nftCollection = CollectionHelpers(collectionHelpers).createNonfungibleCollection{value: msg.value}("A", "B", "C");
+		      address nftCollection = CollectionHelpers(collectionHelpers).createNFTCollection{value: msg.value}("A", "B", "C");
           emit CollectionCreated(nftCollection);
         }
 
         function mintNftToken(address collectionAddress) external  {
           UniqueNFT collection = UniqueNFT(collectionAddress);
-          uint256 tokenId = collection.nextTokenId();
-          collection.mint(msg.sender, tokenId);
+          uint256 tokenId = collection.mint(msg.sender);
           emit TokenMinted(tokenId);
         }
 

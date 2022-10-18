@@ -101,7 +101,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
   itEth('Can perform mint()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNonfungibleCollection(owner, 'A', 'A', 'A');
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'A', 'A', 'A', '');
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
@@ -111,13 +111,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     await collectionEvmOwned.methods.addCollectionAdmin(contract.options.address).send();
 
     {
-      const nextTokenId = await contract.methods.nextTokenId().call();
-      expect(nextTokenId).to.be.equal('1');
-      const result = await contract.methods.mintWithTokenURI(
-        receiver,
-        nextTokenId,
-        'Test URI',
-      ).send({from: caller});
+      const nextTokenId = await contract.methods.nextTokenId().call()
+      const result = await contract.methods.mintWithTokenURI(receiver, nextTokenId, 'Test URI').send({from: caller});
+      const tokenId = result.events.Transfer.returnValues.tokenId;
+      expect(tokenId).to.be.equal('1');
+
       const events = helper.eth.normalizeEvents(result.events);
       events[0].address = events[0].address.toLocaleLowerCase();
 
@@ -128,12 +126,12 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
           args: {
             from: '0x0000000000000000000000000000000000000000',
             to: receiver,
-            tokenId: nextTokenId,
+            tokenId,
           },
         },
       ]);
 
-      expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
     }
   });
 

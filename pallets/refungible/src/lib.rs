@@ -92,9 +92,11 @@ use crate::erc::ERC721Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
+use derivative::Derivative;
 use evm_coder::ToLog;
 use frame_support::{
-	BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32,
+	BoundedBTreeMap, BoundedVec, ensure, fail, storage::with_transaction, transactional,
+	pallet_prelude::ConstU32,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
@@ -113,8 +115,6 @@ use up_data_structs::{
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
 	PropertyScope, PropertyValue, TokenId, TrySetProperty,
 };
-use frame_support::BoundedBTreeMap;
-use derivative::Derivative;
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
@@ -371,8 +371,9 @@ impl<T: Config> Pallet<T> {
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data, CollectionFlags::default())
+		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
 	}
 
 	/// Destroy RFT collection
