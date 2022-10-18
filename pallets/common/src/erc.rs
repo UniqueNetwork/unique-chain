@@ -100,10 +100,24 @@ where
 		caller: caller,
 		properties: Vec<(string, bytes)>,
 	) -> Result<void> {
-		for (key, value) in properties.into_iter() {
-			self.set_collection_property(caller, key, value)?;
-		}
-		Ok(())
+		
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let properties = properties
+			.into_iter()
+			.map(|(key, value)| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::set_collection_properties(self, &caller, properties)
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Delete collection property.
@@ -637,7 +651,7 @@ where
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	fn collection_owner(&self) -> Result<(address, uint256)> {
 		Ok(convert_cross_account_to_tuple::<T>(
