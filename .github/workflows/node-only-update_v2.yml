@@ -32,11 +32,11 @@ jobs:
         uses: xom9ikk/dotenv@v1.0.2
 
       - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
+        uses: CertainLach/create-matrix-action@v3
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
             network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
             network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
 
@@ -49,7 +49,7 @@ jobs:
 
 
 
-    timeout-minutes: 1380
+    timeout-minutes: 2880           # 48 hours for execution jobs.
 
     name: ${{ matrix.network }}
 
@@ -162,7 +162,6 @@ jobs:
           ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
           path: ${{ matrix.mainnet_branch }}
 
-
       - name: Run tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
@@ -174,7 +173,7 @@ jobs:
         env:
           RPC_URL: http://127.0.0.1:9933/
 
-      - name: Test Report Before Node upgrade
+      - name: Upload Test Report Before Node upgrade
         uses: phoenix-actions/test-reporting@v8
         id: test-report-before
         if: success() || failure()    # run this step even if previous step failed
@@ -184,14 +183,67 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Send SIGUSR1 to polkadotlaunch process
+
+      # TODO uncomment thease steps after the merge
+      #- name: Run Parallel tests before Node Parachain upgrade
+      #  working-directory: ${{ matrix.mainnet_branch }}/tests
+      #  run: |
+      #    yarn install
+      #    yarn add mochawesome
+      #    echo "Ready to start tests"
+      #    yarn polkadot-types
+      #    NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+      #  env:
+      #    RPC_URL: http://127.0.0.1:9933/
+
+      #- name: Upload Parallel Test Report Before Node upgrade
+      #  uses: phoenix-actions/test-reporting@v8
+      #  id: test-parallel-report-before
+      #  if: success() || failure()    # run this step even if previous step failed
+      #  with:
+      #    name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+      #    reporter: mochawesome-json
+      #    fail-on-error: 'false'
+
+      # - name: Run Sequential tests before Node Parachain upgrade
+      #   if: success() || failure()
+      #   working-directory: ${{ matrix.mainnet_branch }}/tests
+      #   run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+      #   env:
+      #     RPC_URL: http://127.0.0.1:9933/
+
+      # - name: Upload Sequential Test Report Before Node upgrade
+      #   uses: phoenix-actions/test-reporting@v8
+      #   id: test-sequential-report-before
+      #   if: success() || failure()    # run this step even if previous step failed
+      #   with:
+      #     name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+      #     reporter: mochawesome-json
+      #     fail-on-error: 'false'
+     
+      - name: Send SIGUSR1 to polkadot-launch process
         if: success() || failure()
         run: |
           #Get PID of polkadot-launch
+          ContainerID=$(docker ps -aqf "name=node-parachain")
           PID=$(docker exec node-parachain pidof 'polkadot-launch')
           echo "Polkadot-launch PID: $PID"
           #Send SIGUSR1 signal to $PID
           docker exec node-parachain kill -SIGUSR1 ${PID}
+          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
+          docker logs ${ContainerID}
+      
+      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
+        if: failure()                   # run this step only at failure
+        run: |
+          docker exec node-parachain cat /polkadot-launch/9944.log
+          docker exec node-parachain cat /polkadot-launch/9945.log
+          docker exec node-parachain cat /polkadot-launch/alice.log
+          docker exec node-parachain cat /polkadot-launch/eve.log
+          docker exec node-parachain cat /polkadot-launch/dave.log
+          docker exec node-parachain cat /polkadot-launch/charlie.log  
 
       #  🌗 All parachain collators restarted with the new binaries.
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
@@ -238,9 +290,10 @@ jobs:
           echo "Halting script"
           exit 0
         shell: bash
-
+        
+      ## TODO: Remove next two blocks before switch to Parrallel & Sequental tests. Uncoment commented blocks.
       - name: Run tests after Node Parachain upgrade
-        working-directory: tests
+        working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
           yarn add mochawesome
@@ -257,9 +310,49 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+
+      # TODO uncomment thease steps after the merge
+      #- name: Run Parallel tests after Node Parachain upgrade
+      #  working-directory: ${{ matrix.mainnet_branch }}/tests
+      #  run: |
+      #    yarn install
+      #    yarn add mochawesome
+      #    node scripts/readyness.js
+      #    echo "Ready to start tests"
+      #    yarn polkadot-types
+      #    NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+      #  env:
+      #    RPC_URL: http://127.0.0.1:9933/
+
+      #- name: Test Report Parallel After Node upgrade
+      #  uses: phoenix-actions/test-reporting@v8
+      #  id: test-report-parallel-after
+      #  if: success() || failure()    # run this step even if previous step failed
+      #  with:
+      #    name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+      #    reporter: mochawesome-json
+      #    fail-on-error: 'false'
+      
+      #- name: Run Sequential tests after Node Parachain upgrade
+      #  if: success() || failure()
+      #  working-directory: ${{ matrix.mainnet_branch }}/tests
+      #  run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+      #  env:
+      #    RPC_URL: http://127.0.0.1:9933/
+
+      #- name: Upload Sequential Test Report After Node upgrade
+      #  uses: phoenix-actions/test-reporting@v8
+      #  id: test-sequential-report-after
+      #  if: success() || failure()    # run this step even if previous step failed
+      #  with:
+      #    name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+      #    reporter: mochawesome-json
+      #    fail-on-error: 'false'
 
 
       - name: Stop running containers
@@ -273,6 +366,7 @@ jobs:
           docker system prune -f
           docker image prune -f -a
 
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
+      - name: Remove repo at the end
+        if: always()                   # run this step always
+        run: |
+          ls -ls ./

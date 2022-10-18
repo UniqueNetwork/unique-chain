@@ -33,7 +33,7 @@ jobs:
         uses: xom9ikk/dotenv@v1.0.2
 
       - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
+        uses: CertainLach/create-matrix-action@v3
         id: create_matrix
         with:
           matrix: |
@@ -161,6 +161,50 @@ jobs:
       - name: Show docker logs
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
+                
+      - name: Run Parellel tests 
+        working-directory: tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+    
+      - name: Test Report Parallel
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-parallel
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Report Parallel tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+          
+      - name: Run Sequential tests 
+        working-directory: tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+    
+      - name: Test Report Sequential
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-sequential
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Report Sequential tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
 
       - name: Stop running containers
         if: always()                   # run this step always
