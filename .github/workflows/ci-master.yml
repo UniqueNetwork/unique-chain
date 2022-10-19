@@ -1,3 +1,4 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2587656193/CI+Master
 # Workflow which controls starts nested workflows.
 name: master
 
