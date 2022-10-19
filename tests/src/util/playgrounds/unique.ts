@@ -1026,6 +1026,10 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
     return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
   }
 
+  async getCollectionOptions(collectionId: number) {
+    return (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
+  }
+
   /**
    * Deletes onchain properties from the collection.
    *
@@ -2837,6 +2841,10 @@ export class UniqueBaseCollection {
 
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.collection.getTokenNextSponsored(this.collectionId, tokenId, addressObj);
+  }
+
+  async getOptions() {
+    return await this.helper.collection.getCollectionOptions(this.collectionId);
   }
 
   async setSponsor(signer: TSigner, sponsorAddress: TSubstrateAccount) {

@@ -1448,7 +1448,15 @@ impl<T: Config> Pallet<T> {
 		data: CreateCollectionData<T::AccountId>,
 		properties: impl Iterator<Item = Property>,
 	) -> Result<CollectionId, DispatchError> {
-		let collection_id = <PalletNft<T>>::init_collection(sender.clone(), sender, data, true);
+		let collection_id = <PalletNft<T>>::init_collection(
+			sender.clone(),
+			sender,
+			data,
+			up_data_structs::CollectionFlags {
+				external: true,
+				..Default::default()
+			},
+		);
 
 		if let Err(DispatchError::Arithmetic(_)) = &collection_id {
 			return Err(<Error<T>>::NoAvailableCollectionId.into());

@@ -24,7 +24,7 @@ use pallet_evm_transaction_payment::CallContext;
 use pallet_nonfungible::{
 	Config as NonfungibleConfig,
 	erc::{
-		UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721MintableCall, ERC721Call,
+		UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721UniqueMintableCall, ERC721Call,
 		TokenPropertiesCall,
 	},
 };
@@ -82,18 +82,17 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 						let token_id: TokenId = token_id.try_into().ok()?;
 						withdraw_transfer::<T>(&collection, &who, &token_id).map(|()| sponsor)
 					}
-					UniqueNFTCall::ERC721Mintable(
-						ERC721MintableCall::Mint { token_id, .. }
-						| ERC721MintableCall::MintWithTokenUri { token_id, .. },
-					) => {
-						let _token_id: TokenId = token_id.try_into().ok()?;
-						withdraw_create_item::<T>(
-							&collection,
-							&who,
-							&CreateItemData::NFT(CreateNftData::default()),
-						)
-						.map(|()| sponsor)
-					}
+					UniqueNFTCall::ERC721UniqueMintable(
+						ERC721UniqueMintableCall::Mint { .. }
+						| ERC721UniqueMintableCall::MintCheckId { .. }
+						| ERC721UniqueMintableCall::MintWithTokenUri { .. }
+						| ERC721UniqueMintableCall::MintWithTokenUriCheckId { .. },
+					) => withdraw_create_item::<T>(
+						&collection,
+						&who,
+						&CreateItemData::NFT(CreateNftData::default()),
+					)
+					.map(|()| sponsor),
 					UniqueNFTCall::ERC721(ERC721Call::TransferFrom { token_id, from, .. }) => {
 						let token_id: TokenId = token_id.try_into().ok()?;
 						let from = T::CrossAccountId::from_eth(from);

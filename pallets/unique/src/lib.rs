@@ -345,7 +345,7 @@ decl_module! {
 
 			// =========
 			let sender = T::CrossAccountId::from_sub(sender);
-			let _id = T::CollectionDispatch::create(sender.clone(), sender, data)?;
+			let _id = T::CollectionDispatch::create(sender.clone(), sender, data, Default::default())?;
 
 			Ok(())
 		}

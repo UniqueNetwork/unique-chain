@@ -120,20 +120,19 @@ contract UniqueNFTProxy is UniqueNFT {
         return proxied.mintingFinished();
     }
 
-    function mint(address to, uint256 tokenId)
+    function mint(address to)
         external
         override
-        returns (bool)
+        returns (uint256)
     {
-        return proxied.mint(to, tokenId);
+        return proxied.mint(to);
     }
 
     function mintWithTokenURI(
         address to,
-        uint256 tokenId,
         string memory tokenUri
-    ) external override returns (bool) {
-        return proxied.mintWithTokenURI(to, tokenId, tokenUri);
+    ) external override returns (uint256) {
+        return proxied.mintWithTokenURI(to, tokenUri);
     }
 
     function finishMinting() external override returns (bool) {
@@ -169,7 +168,7 @@ contract UniqueNFTProxy is UniqueNFT {
         return proxied.mintBulk(to, tokenIds);
     }
 
-    function mintBulkWithTokenURI(address to, Tuple0[] memory tokens)
+    function mintBulkWithTokenURI(address to, Tuple6[] memory tokens)
         external
         override
         returns (bool)

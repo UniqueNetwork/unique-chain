@@ -31,7 +31,7 @@ use pallet_refungible::{
 };
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, MAX_DECIMAL_POINTS, mapping::TokenAddressMapping,
-	CollectionId,
+	CollectionId, CollectionFlags,
 };
 
 #[cfg(not(feature = "refungible"))]
@@ -57,10 +57,11 @@ where
 		sender: T::CrossAccountId,
 		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
 		let id = match data.mode {
 			CollectionMode::NFT => {
-				<PalletNonfungible<T>>::init_collection(sender, payer, data, false)?
+				<PalletNonfungible<T>>::init_collection(sender, payer, data, flags)?
 			}
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
@@ -68,11 +69,13 @@ where
 					decimal_points <= MAX_DECIMAL_POINTS,
 					pallet_unique::Error::<T>::CollectionDecimalPointLimitExceeded
 				);
-				<PalletFungible<T>>::init_collection(sender, payer, data)?
+				<PalletFungible<T>>::init_collection(sender, payer, data, flags)?
 			}
 
 			#[cfg(feature = "refungible")]
-			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, payer, data)?,
+			CollectionMode::ReFungible => {
+				<PalletRefungible<T>>::init_collection(sender, payer, data, flags)?
+			}
 
 			#[cfg(not(feature = "refungible"))]
 			CollectionMode::ReFungible => return unsupported!(T),

@@ -254,7 +254,10 @@ pub mod pallet {
 				cross_sender.clone(),
 				cross_sender.clone(),
 				data,
-				true,
+				up_data_structs::CollectionFlags {
+					external: true,
+					..Default::default()
+				},
 			);
 
 			if let Err(DispatchError::Arithmetic(_)) = &collection_id_res {

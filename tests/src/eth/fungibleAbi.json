@@ -116,6 +116,15 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "address", "name": "newOwner", "type": "address" }
+    ],
+    "name": "changeCollectionOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "collectionOwner",
     "outputs": [
@@ -329,15 +338,6 @@
       { "internalType": "address", "name": "sponsor", "type": "address" }
     ],
     "name": "setCollectionSponsor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "newOwner", "type": "address" }
-    ],
-    "name": "setOwner",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

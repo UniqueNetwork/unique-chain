@@ -14,7 +14,7 @@ export {EthUniqueHelper} from './playgrounds/unique.dev';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {getTestSeed, requirePalletsOrSkip} from '../../util';
+import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip} from '../../util';
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);
@@ -43,7 +43,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
       else {
         const actualSeed = getTestSeed(seed.filename);
         let account = helper.util.fromSeed(actualSeed, ss58Format);
-        if (await helper.balance.getSubstrate(account.address) == 0n) {
+        if (await helper.balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND) {
           console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
           account = helper.util.fromSeed('//Alice', ss58Format);
         }

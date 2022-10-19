@@ -18,29 +18,29 @@ interface CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x5ad4f440
+/// @dev the ERC-165 identifier for this interface is 0x58918631
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
 	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
 	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0xe34a6844,
-	///  or in textual repr: createNonfungibleCollection(string,string,string)
-	function createNonfungibleCollection(
+	/// @dev EVM selector for this function is: 0x844af658,
+	///  or in textual repr: createNFTCollection(string,string,string)
+	function createNFTCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
 	) external payable returns (address);
 
-	/// @dev EVM selector for this function is: 0xa634a5f9,
-	///  or in textual repr: createERC721MetadataCompatibleCollection(string,string,string,string)
-	function createERC721MetadataCompatibleCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix,
-		string memory baseUri
-	) external payable returns (address);
+	// /// Create an NFT collection
+	// /// @param name Name of the collection
+	// /// @param description Informative description of the collection
+	// /// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	// /// @return address Address of the newly created collection
+	// /// @dev EVM selector for this function is: 0xe34a6844,
+	// ///  or in textual repr: createNonfungibleCollection(string,string,string)
+	// function createNonfungibleCollection(string memory name, string memory description, string memory tokenPrefix) external payable returns (address);
 
 	/// @dev EVM selector for this function is: 0xab173450,
 	///  or in textual repr: createRFTCollection(string,string,string)
@@ -50,14 +50,9 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		string memory tokenPrefix
 	) external payable returns (address);
 
-	/// @dev EVM selector for this function is: 0xa5596388,
-	///  or in textual repr: createERC721MetadataCompatibleRFTCollection(string,string,string,string)
-	function createERC721MetadataCompatibleRFTCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix,
-		string memory baseUri
-	) external payable returns (address);
+	/// @dev EVM selector for this function is: 0x85624258,
+	///  or in textual repr: makeCollectionERC721MetadataCompatible(address,string)
+	function makeCollectionERC721MetadataCompatible(address collection, string memory baseUri) external;
 
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question

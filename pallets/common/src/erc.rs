@@ -592,6 +592,7 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
+	#[solidity(rename_selector = "changeCollectionOwner")]
 	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -660,11 +661,6 @@ pub mod static_property {
 	pub mod key {
 		use super::*;
 
-		/// Key "schemaName".
-		pub fn schema_name() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"schemaName").expect(EXPECT_CONVERT_ERROR)
-		}
-
 		/// Key "baseURI".
 		pub fn base_uri() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"baseURI").expect(EXPECT_CONVERT_ERROR)
@@ -672,30 +668,17 @@ pub mod static_property {
 
 		/// Key "url".
 		pub fn url() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"url").expect(EXPECT_CONVERT_ERROR)
+			property_key_from_bytes(b"URI").expect(EXPECT_CONVERT_ERROR)
 		}
 
 		/// Key "suffix".
 		pub fn suffix() -> up_data_structs::PropertyKey {
-			property_key_from_bytes(b"suffix").expect(EXPECT_CONVERT_ERROR)
+			property_key_from_bytes(b"URISuffix").expect(EXPECT_CONVERT_ERROR)
 		}
 
 		/// Key "parentNft".
 		pub fn parent_nft() -> up_data_structs::PropertyKey {
 			property_key_from_bytes(b"parentNft").expect(EXPECT_CONVERT_ERROR)
-		}
-	}
-
-	/// Values.
-	pub mod value {
-		use super::*;
-
-		/// Value "ERC721Metadata".
-		pub const ERC721_METADATA: &[u8] = b"ERC721Metadata";
-
-		/// Value for [`ERC721_METADATA`].
-		pub fn erc721() -> up_data_structs::PropertyValue {
-			property_value_from_bytes(ERC721_METADATA).expect(EXPECT_CONVERT_ERROR)
 		}
 	}
 

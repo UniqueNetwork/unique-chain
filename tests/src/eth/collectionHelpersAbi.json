@@ -29,33 +29,9 @@
     "inputs": [
       { "internalType": "string", "name": "name", "type": "string" },
       { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
-      { "internalType": "string", "name": "baseUri", "type": "string" }
-    ],
-    "name": "createERC721MetadataCompatibleCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
-      { "internalType": "string", "name": "baseUri", "type": "string" }
-    ],
-    "name": "createERC721MetadataCompatibleRFTCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
-    "name": "createNonfungibleCollection",
+    "name": "createNFTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "payable",
     "type": "function"
@@ -82,6 +58,16 @@
     "name": "isCollectionExist",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "collection", "type": "address" },
+      { "internalType": "string", "name": "baseUri", "type": "string" }
+    ],
+    "name": "makeCollectionERC721MetadataCompatible",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
