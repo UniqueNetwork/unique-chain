@@ -1,3 +1,6 @@
+#https://cryptousetech.atlassian.net/browse/CI-37
+# Nested workflow for lunching Market e2e tests from external repository https://github.com/UniqueNetwork/market-e2e-tests
+
 name: market api tests
 
 # Controls when the action will run.
@@ -22,14 +25,8 @@ jobs:
         include:
           - network: "opal"
             features: "opal-runtime"
-#          - network: "quartz"
-#            features: "quartz-runtime"
-#          - network: "unique"
-#            features: "unique-runtime"
 
     steps:
-
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -188,10 +185,3 @@ jobs:
         run: |
           docker builder prune -f
           docker system prune -f
-
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
-
-
-
