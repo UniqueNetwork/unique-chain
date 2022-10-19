@@ -86,3 +86,16 @@ impl pallet_unique_scheduler::Config for Runtime {
 	type PreimageProvider = ();
 	type NoPreimagePostponement = NoPreimagePostponement;
 }
+
+impl pallet_unique_scheduler_v2::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureSignedOrRoot<AccountId>;
+	type OriginPrivilegeCmp = EqualOrRootOnly;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = ();
+	type Preimages = ();
+}
