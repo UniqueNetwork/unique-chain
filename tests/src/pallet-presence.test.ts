@@ -62,7 +62,7 @@ describe('Pallet presence', () => {
       const chain = await helper.callRpc('api.rpc.system.chain', []);
 
       const refungible = 'refungible';
-      const scheduler = 'scheduler';
+      // const scheduler = 'scheduler';
       const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
@@ -70,7 +70,7 @@ describe('Pallet presence', () => {
       if (chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(
           refungible,
-          scheduler,
+          // scheduler,
           foreignAssets,
           appPromotion,
           ...rmrkPallets,

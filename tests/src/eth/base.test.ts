@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Contract} from 'web3-eth-contract';
-
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util';
 
@@ -44,7 +42,7 @@ describe('Contract calls', () => {
       from: userA,
       to: userB,
       value: '1000000',
-      gas: helper.eth.DEFAULT_GAS
+      gas: helper.eth.DEFAULT_GAS,
     }));
     const balanceB = await helper.balance.getEthereum(userB);
     expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
@@ -93,7 +91,7 @@ describe('ERC165 tests', async () => {
       const donor = await privateKey({filename: __filename});
       const [alice] = await helper.arrange.createAccounts([10n], donor);
       ({collectionId: simpleNftCollectionId} = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}));
-      minter = helper.eth.createAccount();
+      minter = await helper.eth.createAccountWithBalance(donor);
       ({collectionId: erc721MetadataCompatibleNftCollectionId} = await helper.eth.createERC721MetadataCompatibleNFTCollection(minter, 'n', 'd', 'p', BASE_URI));
     });
   });

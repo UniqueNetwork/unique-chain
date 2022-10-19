@@ -189,7 +189,7 @@ class EthGroup extends EthGroupBase {
   async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress} = await this.createNFTCollection(signer, name, description, tokenPrefix)
+    const {collectionId, collectionAddress} = await this.createNFTCollection(signer, name, description, tokenPrefix);
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 
@@ -211,7 +211,7 @@ class EthGroup extends EthGroupBase {
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress} = await this.createRFTCollection(signer, name, description, tokenPrefix)
+    const {collectionId, collectionAddress} = await this.createRFTCollection(signer, name, description, tokenPrefix);
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 

@@ -18,7 +18,6 @@ import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {Pallets} from '../util';
 import {IProperty, ITokenPropertyPermission} from '../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import {Contract} from 'web3-eth-contract';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;
@@ -87,20 +86,20 @@ describe('Supports ERC721Metadata', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const bruh = await helper.eth.createAccountWithBalance(donor);
 
-    const BASE_URI = 'base/'
-    const SUFFIX = 'suffix1'
-    const URI = 'uri1'
+    const BASE_URI = 'base/';
+    const SUFFIX = 'suffix1';
+    const URI = 'uri1';
 
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(caller);
-    const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection'
+    const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection';
 
-    const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p')
+    const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p');
 
     const contract = helper.ethNativeContract.collectionById(collectionId, mode, caller);
     await contract.methods.addCollectionAdmin(bruh).send(); // to check that admin will work too
 
-    const collection1 = await helper.nft.getCollectionObject(collectionId);
-    const data1 = await collection1.getData()
+    const collection1 = helper.nft.getCollectionObject(collectionId);
+    const data1 = await collection1.getData();
     expect(data1?.raw.flags.erc721metadata).to.be.false;
     expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
 
@@ -109,37 +108,37 @@ describe('Supports ERC721Metadata', () => {
 
     expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.true;
 
-    const collection2 = await helper.nft.getCollectionObject(collectionId);
-    const data2 = await collection2.getData()
+    const collection2 = helper.nft.getCollectionObject(collectionId);
+    const data2 = await collection2.getData();
     expect(data2?.raw.flags.erc721metadata).to.be.true;
 
-    const TPPs = data2?.raw.tokenPropertyPermissions
-    expect(TPPs?.length).to.equal(2);
+    const propertyPermissions = data2?.raw.tokenPropertyPermissions;
+    expect(propertyPermissions?.length).to.equal(2);
 
-    expect(TPPs.find((tpp: ITokenPropertyPermission) => {
-      return tpp.key === "URI" && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner
-    })).to.be.not.null
+    expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => {
+      return tpp.key === 'URI' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner;
+    })).to.be.not.null;
 
-    expect(TPPs.find((tpp: ITokenPropertyPermission) => {
-      return tpp.key === "URISuffix" && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner
-    })).to.be.not.null
+    expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => {
+      return tpp.key === 'URISuffix' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner;
+    })).to.be.not.null;
 
     expect(data2?.raw.properties?.find((property: IProperty) => {
-      return property.key === "baseURI" && property.value === BASE_URI
-    })).to.be.not.null
+      return property.key === 'baseURI' && property.value === BASE_URI;
+    })).to.be.not.null;
 
     const token1Result = await contract.methods.mint(bruh).send();
     const tokenId1 = token1Result.events.Transfer.returnValues.tokenId;
 
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI);
 
-    await contract.methods.setProperty(tokenId1, "URISuffix", Buffer.from(SUFFIX)).send();
+    await contract.methods.setProperty(tokenId1, 'URISuffix', Buffer.from(SUFFIX)).send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI + SUFFIX);
 
-    await contract.methods.setProperty(tokenId1, "URI", Buffer.from(URI)).send();
+    await contract.methods.setProperty(tokenId1, 'URI', Buffer.from(URI)).send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(URI);
 
-    await contract.methods.deleteProperty(tokenId1, "URI").send();
+    await contract.methods.deleteProperty(tokenId1, 'URI').send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI + SUFFIX);
 
     const token2Result = await contract.methods.mintWithTokenURI(bruh, URI).send();
@@ -147,12 +146,12 @@ describe('Supports ERC721Metadata', () => {
 
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(URI);
 
-    await contract.methods.deleteProperty(tokenId2, "URI").send();
+    await contract.methods.deleteProperty(tokenId2, 'URI').send();
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI);
 
-    await contract.methods.setProperty(tokenId2, "URISuffix", Buffer.from(SUFFIX)).send();
+    await contract.methods.setProperty(tokenId2, 'URISuffix', Buffer.from(SUFFIX)).send();
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI + SUFFIX);
-  }
+  };
 
   itEth('ERC721Metadata property can be set for NFT collection', async({helper}) => {
     await checkERC721Metadata(helper, 'nft');

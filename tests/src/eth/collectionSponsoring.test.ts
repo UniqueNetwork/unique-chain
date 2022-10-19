@@ -247,7 +247,7 @@ describe('evm collection sponsoring', () => {
 
     const userCollectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', user);
 
-    let result = await userCollectionEvm.methods.mintWithTokenURI(user, 'Test URI',).send();
+    const result = await userCollectionEvm.methods.mintWithTokenURI(user, 'Test URI').send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
 
     const events = helper.eth.normalizeEvents(result.events);
