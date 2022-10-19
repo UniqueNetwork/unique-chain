@@ -705,7 +705,7 @@ impl<T: Config> RefungibleHandle<T> {
 	///  should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokenIds IDs of the minted RFTs
-	// #[solidity(hide)]
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -748,7 +748,7 @@ impl<T: Config> RefungibleHandle<T> {
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
-	#[solidity(/*hide,*/ rename_selector = "mintBulkWithTokenURI")]
+	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
