@@ -1,5 +1,8 @@
+# Nested workflow for checks related to formatting Rust code 
+
 name: cargo fmt
 
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 

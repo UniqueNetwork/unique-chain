@@ -1,11 +1,12 @@
+# https://cryptousetech.atlassian.net/browse/CI-85
+# Node only update with restart polkadot-launch process.
+
 name: nodes-only update
 
-# Controls when the action will run.
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
-#Define Workflow variables
-env:
-  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

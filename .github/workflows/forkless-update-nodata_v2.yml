@@ -1,6 +1,7 @@
+# Forkless update without data replication
+# https://cryptousetech.atlassian.net/browse/CI-41
 
-
-# Controls when the action will run.
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
@@ -213,3 +214,10 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a

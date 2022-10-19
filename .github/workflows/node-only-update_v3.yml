@@ -1,6 +1,7 @@
+# Test workflow for debug parallel and sequental tests in scope of execution time reducing.
 name: Parallele tests
 
-# Controls when the action will run.
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 #Define Workflow variables

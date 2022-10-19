@@ -1,3 +1,7 @@
+# Try-runtime checks
+# https://cryptousetech.atlassian.net/browse/CI-38
+
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
@@ -66,3 +70,10 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+        
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a
