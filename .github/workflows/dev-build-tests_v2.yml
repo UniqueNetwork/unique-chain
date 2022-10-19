@@ -1,15 +1,11 @@
 # Integration test in --dev mode
-# https://cryptousetech.atlassian.net/browse/CI-12
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586411104/Integration+tests
 name: yarn test dev
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
-
-#Define Workflow variables
-env:
-  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
