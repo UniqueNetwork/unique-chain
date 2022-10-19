@@ -95,6 +95,9 @@ macro_rules! construct_runtime {
                 EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
 
                 #[runtimes(opal)]
+                SchedulerV2: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 154,
+
+                #[runtimes(opal)]
                 TestUtils: pallet_test_utils = 255,
             }
         }
