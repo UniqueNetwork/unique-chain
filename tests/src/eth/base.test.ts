@@ -44,7 +44,7 @@ describe('Contract calls', () => {
       from: userA,
       to: userB,
       value: '1000000',
-      gas: helper.eth.DEFAULT_GAS
+      gas: helper.eth.DEFAULT_GAS,
     }));
     const balanceB = await helper.balance.getEthereum(userB);
     expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
