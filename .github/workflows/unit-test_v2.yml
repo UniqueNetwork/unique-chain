@@ -1,8 +1,9 @@
+# Re-Usable Workflow for lanching Unit tests
 name: unit tests
 
 # Controls when the action will run.
+# Triger: only call from main workflow(re-usable workflows)
 on:
- # Triggers the workflow on push or pull request events but only for the master branch
   workflow_call:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -49,3 +50,10 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.unit.yml" down
+        
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a
