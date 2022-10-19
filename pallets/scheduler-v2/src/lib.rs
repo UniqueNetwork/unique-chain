@@ -143,6 +143,14 @@ impl<T: Config> ScheduledCall<T> {
 		}
 	}
 
+	/// Returns whether the image will require a lookup to be peeked.
+	pub fn lookup_needed(&self) -> bool {
+		match self {
+			Self::Inline(_) => false,
+			Self::PreimageLookup { .. } => true,
+		}
+	}
+
 	fn decode(mut data: &[u8]) -> Result<<T as Config>::Call, DispatchError> {
 		<T as Config>::Call::decode(&mut data)
 				.map_err(|_| <Error<T>>::ScheduledCallCorrupted.into())
@@ -153,6 +161,11 @@ pub trait SchedulerPreimages<T: Config>: PreimageRecipient<T::Hash> {
     fn drop(call: &ScheduledCall<T>);
 
 	fn peek(call: &ScheduledCall<T>) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError>;
+
+	/// Convert the given scheduled `call` value back into its original instance. If successful,
+	/// `drop` any data backing it. This will not break the realisability of independently
+	/// created instances of `ScheduledCall` which happen to have identical data.
+	fn realize(call: &ScheduledCall<T>) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError>;
 }
 
 impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
@@ -174,6 +187,12 @@ impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
 				Ok((ScheduledCall::<T>::decode(preimage.as_slice())?, Some(len)))
 			},
 		}
+	}
+
+	fn realize(call: &ScheduledCall<T>) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError> {
+		let r = Self::peek(call)?;
+		Self::drop(call);
+		Ok(r)
 	}
 }
 
