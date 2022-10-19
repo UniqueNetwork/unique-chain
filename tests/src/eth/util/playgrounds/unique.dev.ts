@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract, TEthCrossAccount, NormalizedEvent} from './types';
+import {ContractImports, CompiledContract, TEthCrossAccount, NormalizedEvent, EthProperty} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../collectionHelpersAbi.json';
@@ -28,6 +28,7 @@ import refungibleAbi from '../../reFungibleAbi.json';
 import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
 import contractHelpersAbi from './../contractHelpersAbi.json';
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
+import {TCollectionMode} from '../../../util/playgrounds/types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -107,7 +108,7 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
-  collection(address: string, mode: 'nft' | 'rft' | 'ft', caller?: string): Contract {
+  collection(address: string, mode: TCollectionMode, caller?: string): Contract {
     const abi = {
       'nft': nonFungibleAbi,
       'rft': refungibleAbi,
@@ -317,7 +318,15 @@ class EthAddressGroup extends EthGroupBase {
     return '0x' + address.substring(address.length - 40);
   }
 }  
- 
+
+export class EthPropertyGroup extends EthGroupBase {
+  property(key: string, value: string): EthProperty {
+    return [
+      key, 
+      '0x'+Buffer.from(value).toString('hex'),
+    ];
+  }
+}
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthCrossAccountGroup extends EthGroupBase {
@@ -349,6 +358,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
   ethCrossAccount: EthCrossAccountGroup;
+  ethProperty: EthPropertyGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? EthUniqueHelper;
@@ -359,6 +369,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
     this.ethCrossAccount = new EthCrossAccountGroup(this);
     this.ethNativeContract = new NativeContractGroup(this);
     this.ethContract = new ContractGroup(this);
+    this.ethProperty = new EthPropertyGroup(this);
   }
 
   getWeb3(): Web3 {

@@ -27,7 +27,7 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
-	SponsoringRateLimit, SponsorshipState,
+	SponsoringRateLimit, SponsorshipState, PropertyKey,
 };
 use alloc::format;
 
@@ -97,19 +97,64 @@ where
 			.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(properties.len() as u32))]
+	fn set_collection_properties(
+		&mut self,
+		caller: caller,
+		properties: Vec<(string, bytes)>,
+	) -> Result<void> {
+		
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let properties = properties
+			.into_iter()
+			.map(|(key, value)| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::set_collection_properties(self, &caller, properties)
+			.map_err(dispatch_to_evm::<T>)
+	}
+
 	/// Delete collection property.
 	///
 	/// @param key Property key.
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
-		self.consume_store_reads_and_writes(1, 1)?;
-
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;
 
 		<Pallet<T>>::delete_collection_property(self, &caller, key).map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	#[weight(<SelfWeightOf<T>>::delete_collection_properties(keys.len() as u32))]
+	fn delete_collection_properties(&mut self, caller: caller, keys: Vec<string>) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::delete_collection_properties(self, &caller, keys).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get collection property.
@@ -123,10 +168,42 @@ where
 			.try_into()
 			.map_err(|_| "key too large")?;
 
-		let props = <CollectionProperties<T>>::get(self.id);
+		let props = CollectionProperties::<T>::get(self.id);
 		let prop = props.get(&key).ok_or("key not found")?;
 
 		Ok(bytes(prop.to_vec()))
+	}
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<(string, bytes)>> {
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		let properties = Pallet::<T>::filter_collection_properties(
+			self.id,
+			if keys.is_empty() { None } else { Some(keys) },
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		let properties = properties
+			.into_iter()
+			.map(|p| {
+				let key =
+					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
+				let value = bytes(p.value.to_vec());
+				Ok((key, value))
+			})
+			.collect::<Result<Vec<_>>>()?;
+		Ok(properties)
 	}
 
 	/// Set the sponsor of the collection.
@@ -580,7 +657,7 @@ where
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	fn collection_owner(&self) -> Result<(address, uint256)> {
 		Ok(convert_cross_account_to_tuple::<T>(

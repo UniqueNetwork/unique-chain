@@ -220,6 +220,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "collectionProperties",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+        ],
+        "internalType": "struct Tuple10[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
     "name": "collectionProperty",
     "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
@@ -262,6 +281,15 @@
     "name": "decimals",
     "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "deleteCollectionProperties",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -448,6 +476,23 @@
       }
     ],
     "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+        ],
+        "internalType": "struct Tuple10[]",
+        "name": "properties",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "setCollectionProperties",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

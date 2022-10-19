@@ -62,7 +62,7 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x792435cf
+/// @dev the ERC-165 identifier for this interface is 0xefe988e0
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -72,12 +72,26 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionProperty(string,bytes)
 	function setCollectionProperty(string memory key, bytes memory value) external;
 
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	/// @dev EVM selector for this function is: 0x50b26b2a,
+	///  or in textual repr: setCollectionProperties((string,bytes)[])
+	function setCollectionProperties(Tuple19[] memory properties) external;
+
 	/// Delete collection property.
 	///
 	/// @param key Property key.
 	/// @dev EVM selector for this function is: 0x7b7debce,
 	///  or in textual repr: deleteCollectionProperty(string)
 	function deleteCollectionProperty(string memory key) external;
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @dev EVM selector for this function is: 0xee206ee3,
+	///  or in textual repr: deleteCollectionProperties(string[])
+	function deleteCollectionProperties(string[] memory keys) external;
 
 	/// Get collection property.
 	///
@@ -88,6 +102,14 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xcf24fd6d,
 	///  or in textual repr: collectionProperty(string)
 	function collectionProperty(string memory key) external view returns (bytes memory);
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0x285fb8e6,
+	///  or in textual repr: collectionProperties(string[])
+	function collectionProperties(string[] memory keys) external view returns (Tuple19[] memory);
 
 	/// Set the sponsor of the collection.
 	///
@@ -305,6 +327,12 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xe5c9913f,
 	///  or in textual repr: setOwnerCross((address,uint256))
 	function setOwnerCross(Tuple8 memory newOwner) external;
+}
+
+/// @dev anonymous struct
+struct Tuple19 {
+	string field_0;
+	bytes field_1;
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).

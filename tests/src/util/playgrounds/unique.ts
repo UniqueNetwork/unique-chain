@@ -9,7 +9,33 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, TUniqueNetworks, IEthCrossAccountId} from './types';
+import {
+  IApiListeners,
+  IBlock,
+  IEvent,
+  IChainProperties,
+  ICollectionCreationOptions,
+  ICollectionLimits,
+  ICollectionPermissions,
+  ICrossAccountId,
+  ICrossAccountIdLower,
+  ILogger,
+  INestingPermissions,
+  IProperty,
+  IStakingInfo,
+  ISchedulerOptions,
+  ISubstrateBalance,
+  IToken,
+  ITokenPropertyPermission,
+  ITransactionResult,
+  IUniqueHelperLog,
+  TApiAllowedListeners,
+  TEthereumAccount,
+  TSigner,
+  TSubstrateAccount,
+  TUniqueNetworks,
+  IEthCrossAccountId,
+} from './types';
 import {hexToU8a} from '@polkadot/util/hex';
 import {u8aConcat} from '@polkadot/util/u8a';
 

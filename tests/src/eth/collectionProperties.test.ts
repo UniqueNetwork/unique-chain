@@ -1,5 +1,6 @@
-import {itEth, usingEthPlaygrounds, expect} from './util/playgrounds';
+import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util/playgrounds';
 import {IKeyringPair} from '@polkadot/types/types';
+import {TCollectionMode} from '../util/playgrounds/types';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;
@@ -53,4 +54,92 @@ describe('EVM collection properties', () => {
     const value = await contract.methods.collectionProperty('testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
   });
+});
+
+describe('EVM collection property', () => {
+  let alice: IKeyringPair;
+
+  before(() => {
+    usingEthPlaygrounds(async (_helper, privateKey) => {
+      alice = privateKey('//Alice');
+    });
+  });
+
+  async function testSetReadProperties(helper: EthUniqueHelper, mode: TCollectionMode) {
+    const collection = await helper[mode].mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const sender = await helper.eth.createAccountWithBalance(alice, 100n);
+    await collection.addAdmin(alice, {Ethereum: sender});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, mode, sender);
+
+    const keys = ['key0', 'key1'];
+
+    const writeProperties = [
+      helper.ethProperty.property(keys[0], 'value0'),
+      helper.ethProperty.property(keys[1], 'value1'),
+    ];
+
+    await contract.methods.setCollectionProperties(writeProperties).send();
+    const readProperties = await contract.methods.collectionProperties([keys[0], keys[1]]).call();
+    expect(readProperties).to.be.like(writeProperties);
+  }
+
+  itEth('Set/read properties ft', async ({helper}) => {
+    await testSetReadProperties(helper, 'ft');
+  });
+  itEth('Set/read properties rft', async ({helper}) => {
+    await testSetReadProperties(helper, 'rft');
+  });
+  itEth('Set/read properties nft', async ({helper}) => {
+    await testSetReadProperties(helper, 'nft');
+  });
+
+  async function testDeleteProperties(helper: EthUniqueHelper, mode: TCollectionMode) {
+    const collection = await helper[mode].mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const sender = await helper.eth.createAccountWithBalance(alice, 100n);
+    await collection.addAdmin(alice, {Ethereum: sender});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, mode, sender);
+
+    const keys = ['key0', 'key1', 'key2', 'key3'];
+
+    {
+      const writeProperties = [
+        helper.ethProperty.property(keys[0], 'value0'),
+        helper.ethProperty.property(keys[1], 'value1'),
+        helper.ethProperty.property(keys[2], 'value2'),
+        helper.ethProperty.property(keys[3], 'value3'),
+      ];
+
+      await contract.methods.setCollectionProperties(writeProperties).send();
+      const readProperties = await contract.methods.collectionProperties([keys[0], keys[1], keys[2], keys[3]]).call();
+      expect(readProperties).to.be.like(writeProperties);
+    }
+
+    {
+      const expectProperties = [
+        helper.ethProperty.property(keys[0], 'value0'),
+        helper.ethProperty.property(keys[1], 'value1'),
+      ];
+
+      await contract.methods.deleteCollectionProperties([keys[2], keys[3]]).send();
+      const readProperties = await contract.methods.collectionProperties([]).call();
+      expect(readProperties).to.be.like(expectProperties);
+    }
+  }
+  
+  itEth('Delete properties ft', async ({helper}) => {
+    await testDeleteProperties(helper, 'ft');
+  });
+  itEth('Delete properties rft', async ({helper}) => {
+    await testDeleteProperties(helper, 'rft');
+  });
+  itEth('Delete properties nft', async ({helper}) => {
+    await testDeleteProperties(helper, 'nft');
+  });
+    
 });

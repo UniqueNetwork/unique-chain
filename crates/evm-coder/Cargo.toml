@@ -14,7 +14,7 @@ ethereum = { version = "0.12.0", default-features = false }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29" }
 # Error types for execution
-evm-core = { default-features = false , git = "https://github.com/uniquenetwork/evm", branch = "unique-polkadot-v0.9.29" }
+evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm", branch = "unique-polkadot-v0.9.29" }
 # We have tuple-heavy code in solidity.rs
 impl-trait-for-tuples = "0.2.2"
 
@@ -27,4 +27,9 @@ concat-idents = "1.1.3"
 
 [features]
 default = ["std"]
-std = ["ethereum/std", "primitive-types/std", "evm-core/std", "frame-support/std"]
+std = [
+    "ethereum/std",
+    "primitive-types/std",
+    "evm-core/std",
+    "frame-support/std",
+]

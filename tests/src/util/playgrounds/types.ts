@@ -184,3 +184,4 @@ export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
 export type TUniqueNetworks = 'opal' | 'quartz' | 'unique';
 export type TSigner = IKeyringPair; // | 'string'
+export type TCollectionMode = 'nft' | 'rft' | 'ft';
