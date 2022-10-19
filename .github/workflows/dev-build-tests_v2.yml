@@ -1,8 +1,9 @@
+# Integration test in --dev mode
+# https://cryptousetech.atlassian.net/browse/CI-12
 name: yarn test dev
 
-# Controls when the action will run.
+# Triger: only call from main workflow(re-usable workflows)
 on:
- # Triggers the workflow on push or pull request events but only for the master branch
   workflow_call:
 
 
