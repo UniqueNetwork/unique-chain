@@ -1,5 +1,5 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837021/Forkless+update+without+data
 # Forkless update without data replication
-# https://cryptousetech.atlassian.net/browse/CI-41
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
