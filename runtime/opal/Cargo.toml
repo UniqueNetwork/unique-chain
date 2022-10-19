@@ -42,6 +42,7 @@ runtime-benchmarks = [
     'pallet-inflation/runtime-benchmarks',
     'pallet-app-promotion/runtime-benchmarks',
     'pallet-unique-scheduler/runtime-benchmarks',
+    'pallet-unique-scheduler-v2/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
