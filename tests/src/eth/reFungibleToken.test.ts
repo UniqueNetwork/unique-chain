@@ -85,7 +85,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
 
     const result = await contract.methods.mint(receiver).send();
 
-    const event = result.events.Transfer;
+    const event = result.events!.Transfer;
     const tokenId = event.returnValues.tokenId;
     expect(tokenId).to.be.equal('1');
     expect(event.address).to.be.equal(collectionAddress);
@@ -146,7 +146,7 @@ describe('Refungible: Plain calls', () => {
 
     {
       const result = await contract.methods.approve(spender, 100).send({from: owner});
-      const event = result.events.Approval;
+      const event = result.events!.Approval;
       expect(event.address).to.be.equal(tokenAddress);
       expect(event.returnValues.owner).to.be.equal(owner);
       expect(event.returnValues.spender).to.be.equal(spender);
@@ -173,13 +173,13 @@ describe('Refungible: Plain calls', () => {
 
     {
       const result = await contract.methods.transferFrom(owner, receiver, 49).send({from: spender});
-      let event = result.events.Transfer;
+      let event = result.events!.Transfer;
       expect(event.address).to.be.equal(tokenAddress);
       expect(event.returnValues.from).to.be.equal(owner);
       expect(event.returnValues.to).to.be.equal(receiver);
       expect(event.returnValues.value).to.be.equal('49');
 
-      event = result.events.Approval;
+      event = result.events!.Approval;
       expect(event.address).to.be.equal(tokenAddress);
       expect(event.returnValues.owner).to.be.equal(owner);
       expect(event.returnValues.spender).to.be.equal(spender);
@@ -208,7 +208,7 @@ describe('Refungible: Plain calls', () => {
 
     {
       const result = await contract.methods.transfer(receiver, 50).send({from: owner});
-      const event = result.events.Transfer;
+      const event = result.events!.Transfer;
       expect(event.address).to.be.equal(tokenAddress);
       expect(event.returnValues.from).to.be.equal(owner);
       expect(event.returnValues.to).to.be.equal(receiver);
@@ -262,7 +262,7 @@ describe('Refungible: Plain calls', () => {
 
     const result = await contract.methods.repartition(200).send();
 
-    const event = result.events.Transfer;
+    const event = result.events!.Transfer;
     expect(event.address).to.be.equal(tokenAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(owner);
@@ -278,7 +278,7 @@ describe('Refungible: Plain calls', () => {
     const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const result = await contract.methods.repartition(50).send();
-    const event = result.events.Transfer;
+    const event = result.events!.Transfer;
     expect(event.address).to.be.equal(tokenAddress);
     expect(event.returnValues.from).to.be.equal(owner);
     expect(event.returnValues.to).to.be.equal('0x0000000000000000000000000000000000000000');
@@ -391,7 +391,7 @@ describe('Refungible: Substrate calls', () => {
     const contract = helper.ethNativeContract.rftToken(tokenAddress);
 
     const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
+    contract.events.allEvents(undefined, (_: any, event: any) => {
       events.push(event);
     });
 
@@ -417,7 +417,7 @@ describe('Refungible: Substrate calls', () => {
     const contract = helper.ethNativeContract.rftToken(tokenAddress);
 
     const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
+    contract.events.allEvents(undefined, (_: any, event: any) => {
       events.push(event);
     });
 
@@ -448,7 +448,7 @@ describe('Refungible: Substrate calls', () => {
     const contract = helper.ethNativeContract.rftToken(tokenAddress);
 
     const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
+    contract.events.allEvents(undefined, (_: any, event: any) => {
       events.push(event);
     });
 

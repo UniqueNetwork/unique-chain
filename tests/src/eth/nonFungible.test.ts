@@ -105,7 +105,7 @@ describe('Check ERC721 token URI for NFT', () => {
       await contract.methods.setProperty(tokenId, propertyKey, Buffer.from(propertyValue)).send();
     }
 
-    const event = result.events.Transfer;
+    const event = result.events!.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(receiver);

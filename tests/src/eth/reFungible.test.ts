@@ -197,7 +197,7 @@ describe('Refungible: Plain calls', () => {
 
     {
       const tokenEvents: any = [];
-      tokenContract.events.allEvents((_: any, event: any) => {
+      tokenContract.events.allEvents(undefined, (_: any, event: any) => {
         tokenEvents.push(event);
       });
       const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();

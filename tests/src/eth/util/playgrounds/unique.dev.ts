@@ -29,6 +29,7 @@ import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
 import contractHelpersAbi from './../contractHelpersAbi.json';
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 import {TCollectionMode} from '../../../util/playgrounds/types';
+import {CollectionHelpersAbi, FungibleAbi, NonFungibleAbi, ReFungibleAbi, ReFungibleTokenAbi} from '../../types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -103,9 +104,9 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
-  collectionHelpers(caller: string) {
+  collectionHelpers(caller: string): CollectionHelpersAbi {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS}) as any as CollectionHelpersAbi;
   }
 
   collection(address: string, mode: TCollectionMode, caller?: string): Contract {
@@ -117,17 +118,29 @@ class NativeContractGroup extends EthGroupBase {
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
+  
+  rftCollection(address: string, caller?: string): ReFungibleAbi {
+    return this.collection(address, 'rft', caller) as any as ReFungibleAbi;
+  }
+
+  nftCollection(address: string, caller?: string): NonFungibleAbi {
+    return this.collection(address, 'nft', caller) as any as NonFungibleAbi;
+  }
+
+  ftCollection(address: string, caller?: string): FungibleAbi {
+    return this.collection(address, 'ft', caller) as any as FungibleAbi;
+  }
 
   collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string): Contract {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller);
   }
 
-  rftToken(address: string, caller?: string): Contract {
+  rftToken(address: string, caller?: string): ReFungibleTokenAbi {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
+    return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})}) as any as ReFungibleTokenAbi;
   }
 
-  rftTokenById(collectionId: number, tokenId: number, caller?: string): Contract {
+  rftTokenById(collectionId: number, tokenId: number, caller?: string): ReFungibleTokenAbi {
     return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
   }
 }
@@ -179,9 +192,16 @@ class EthGroup extends EthGroupBase {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const result = await collectionHelper.methods[functionName](name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
+    let result;
+    if (functionName == 'createNFTCollection')
+      result = await collectionHelper.methods.createNFTCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
+    else if (functionName == 'createRFTCollection')
+      result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
+    else
+      throw Error('Unknown method');
 
-    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+
+    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events!.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
     const events = this.helper.eth.normalizeEvents(result.events);
 
@@ -211,7 +231,7 @@ class EthGroup extends EthGroupBase {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
     const result = await collectionHelper.methods.createFTCollection(name, decimals, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
-    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events!.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
 
     const events = this.helper.eth.normalizeEvents(result.events);

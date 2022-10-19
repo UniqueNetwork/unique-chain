@@ -87,20 +87,20 @@ describe('Supports ERC721Metadata', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const bruh = await helper.eth.createAccountWithBalance(donor);
 
-    const BASE_URI = 'base/';
-    const SUFFIX = 'suffix1';
-    const URI = 'uri1';
+    const BASE_URI = 'base/';;
+    const SUFFIX = 'suffix1';;
+    const URI = 'uri1';;
 
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(caller);
-    const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection';
+    const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection';;
 
-    const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p');
+    const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p');;
 
     const contract = helper.ethNativeContract.collectionById(collectionId, mode, caller);
     await contract.methods.addCollectionAdmin(bruh).send(); // to check that admin will work too
 
     const collection1 = helper.nft.getCollectionObject(collectionId);
-    const data1 = await collection1.getData();
+    const data1 = await collection1.getData();;
     expect(data1?.raw.flags.erc721metadata).to.be.false;
     expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.false;
 
@@ -110,10 +110,10 @@ describe('Supports ERC721Metadata', () => {
     expect(await contract.methods.supportsInterface('0x5b5e139f').call()).to.be.true;
 
     const collection2 = helper.nft.getCollectionObject(collectionId);
-    const data2 = await collection2.getData();
+    const data2 = await collection2.getData();;
     expect(data2?.raw.flags.erc721metadata).to.be.true;
 
-    const propertyPermissions = data2?.raw.tokenPropertyPermissions;
+    const propertyPermissions = data2?.raw.tokenPropertyPermissions;;
     expect(propertyPermissions?.length).to.equal(2);
 
     expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => {
