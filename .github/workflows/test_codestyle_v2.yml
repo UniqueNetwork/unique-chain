@@ -1,5 +1,8 @@
+# Yarn Eslint over tests
+#
 name: yarn eslint
 
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
