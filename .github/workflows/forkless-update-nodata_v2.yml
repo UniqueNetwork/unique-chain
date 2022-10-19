@@ -189,6 +189,7 @@ jobs:
           
       - name: Run Sequential tests 
         working-directory: tests
+        if: success() || failure() 
         run: |
           yarn install
           yarn add mochawesome
