@@ -26,11 +26,11 @@ jobs:
 
   canary:
     uses: ./.github/workflows/canary.yml
-    secrets: inherit # pass all secrets
+    secrets: inherit # pass all secrets from initial workflow to nested
 
   xcm:
     uses: ./.github/workflows/xcm.yml
-    secrets: inherit # pass all secrets
+    secrets: inherit # pass all secrets from initial workflow to nested
 
   codestyle:
     uses: ./.github/workflows/codestyle_v2.yml
