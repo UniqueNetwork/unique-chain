@@ -15,7 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #![doc = include_str!("../README.md")]
-#![deny(missing_docs)]
+// #![deny(missing_docs)]
+#![warn(missing_docs)]
+#![macro_use]
 #![cfg_attr(not(feature = "std"), no_std)]
 #[cfg(not(feature = "std"))]
 extern crate alloc;
@@ -26,6 +28,8 @@ pub mod abi;
 pub use events::{ToLog, ToTopic};
 use execution::DispatchInfo;
 pub mod execution;
+#[macro_use]
+pub mod custom_signature;
 
 /// Derives call enum implementing [`crate::Callable`], [`crate::Weighted`]
 /// and [`crate::Call`] from impl block.
@@ -118,27 +122,54 @@ pub mod types {
 	use alloc::{vec::Vec};
 	use pallet_evm::account::CrossAccountId;
 	use primitive_types::{U256, H160, H256};
+	use core::str::from_utf8;
 
-	pub type address = H160;
+	use crate::custom_signature::SIGNATURE_SIZE_LIMIT;
 
-	pub type uint8 = u8;
-	pub type uint16 = u16;
-	pub type uint32 = u32;
-	pub type uint64 = u64;
-	pub type uint128 = u128;
-	pub type uint256 = U256;
+	pub trait Signature {
+		const SIGNATURE: [u8; SIGNATURE_SIZE_LIMIT];
+		const SIGNATURE_LEN: usize;
 
-	pub type bytes4 = [u8; 4];
+		fn as_str() -> &'static str {
+			from_utf8(&Self::SIGNATURE[..Self::SIGNATURE_LEN]).expect("bad utf-8")
+		}
+	}
 
-	pub type topic = H256;
+	impl Signature for bool {
+		make_signature!(new fixed("bool"));
+	}
+
+	macro_rules! define_simple_type {
+		(type $ident:ident = $ty:ty) => {
+			pub type $ident = $ty;
+			impl Signature for $ty {
+				make_signature!(new fixed(stringify!($ident)));
+			}
+		};
+	}
+
+	define_simple_type!(type address = H160);
+
+	define_simple_type!(type uint8 = u8);
+	define_simple_type!(type uint16 = u16);
+	define_simple_type!(type uint32 = u32);
+	define_simple_type!(type uint64 = u64);
+	define_simple_type!(type uint128 = u128);
+	define_simple_type!(type uint256 = U256);
+	define_simple_type!(type bytes4 = [u8; 4]);
+
+	define_simple_type!(type topic = H256);
 
 	#[cfg(not(feature = "std"))]
-	pub type string = ::alloc::string::String;
+	define_simple_type!(type string = ::alloc::string::String);
 	#[cfg(feature = "std")]
-	pub type string = ::std::string::String;
+	define_simple_type!(type string = ::std::string::String);
 
 	#[derive(Default, Debug)]
 	pub struct bytes(pub Vec<u8>);
+	impl Signature for bytes {
+		make_signature!(new fixed("bytes"));
+	}
 
 	/// Solidity doesn't have `void` type, however we have special implementation
 	/// for empty tuple return type
@@ -230,12 +261,8 @@ pub mod types {
 		}
 	}
 
-	impl SignatureString for EthCrossAccount {
-		const SIGNATURE_STRING: &'static str = "(address,uint256)";
-	}
-
-	pub trait SignatureString {
-		const SIGNATURE_STRING: &'static str;
+	impl Signature for EthCrossAccount {
+		make_signature!(new fixed("(address,uint256)"));
 	}
 
 	/// Convert `CrossAccountId` to `uint256`.

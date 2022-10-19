@@ -26,7 +26,15 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
+use evm_coder::{
+	ToLog,
+	execution::*,
+	generate_stubgen, solidity, solidity_interface,
+	types::*,
+	weight,
+	custom_signature::{FunctionName, FunctionSignature},
+	make_signature,
+};
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,

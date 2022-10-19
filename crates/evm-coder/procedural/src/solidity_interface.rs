@@ -21,7 +21,7 @@
 // https://doc.rust-lang.org/reference/procedural-macros.html
 
 use proc_macro2::{TokenStream, Group};
-use quote::{quote, ToTokens};
+use quote::{quote, ToTokens, format_ident};
 use inflector::cases;
 use std::fmt::Write;
 use syn::{
@@ -725,25 +725,20 @@ impl Method {
 		}
 	}
 
-	fn expand_selector(&self) -> proc_macro2::TokenStream {
-		let custom_signature = self.expand_custom_signature();
-		quote! {
-			 {
-				let a = ::evm_coder::sha3_const::Keccak256::new()
-					.update(#custom_signature.as_bytes())
-					.finalize();
-				[a[0], a[1], a[2], a[3]]
-			}
-		}
-	}
-
 	fn expand_const(&self) -> proc_macro2::TokenStream {
 		let screaming_name = &self.screaming_name;
+		let screaming_name_signature = format_ident!("{}_SIGNATURE", &self.screaming_name);
 		let selector_str = &self.selector_str;
-		let selector = &self.expand_selector();
+		let custom_signature = self.expand_custom_signature();
 		quote! {
+			const #screaming_name_signature: ::evm_coder::custom_signature::FunctionSignature = #custom_signature;
 			#[doc = #selector_str]
-			const #screaming_name: ::evm_coder::types::bytes4 = #selector;
+			const #screaming_name: ::evm_coder::types::bytes4 = {
+				let a = ::evm_coder::sha3_const::Keccak256::new()
+				.update_with_size(&Self::#screaming_name_signature.signature, Self::#screaming_name_signature.signature_len)
+				.finalize();
+				[a[0], a[1], a[2], a[3]]
+			};
 		}
 	}
 
@@ -847,9 +842,8 @@ impl Method {
 	}
 
 	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
-		let mut first_comma = true;
 		let mut custom_signature = TokenStream::new();
-		let mut template = self.camel_name.clone() + "(";
+
 		self.args
 			.iter()
 			.filter_map(|a| {
@@ -863,39 +857,18 @@ impl Method {
 				}
 			})
 			.for_each(|ident| {
-				if !first_comma {
-					custom_signature.extend(quote!(,));
-					template.push(',');
-				} else {
-					first_comma = false;
-				};
-				template.push_str("{}");
-				let ident_str = ident.to_string();
-				match ident_str.as_str() {
-					"address" | "uint8" | "uint16" | "uint32" | "uint64" | "uint128"
-					| "uint256" | "bytes4" | "topic" | "string" | "bytes" | "void" | "caller"
-					| "bool" | "" => {
-						custom_signature.extend(quote!(#ident_str));
-					}
-					_ => {
-						custom_signature.extend(quote! {
-							#ident::SIGNATURE_STRING
-						});
-					}
-				}
+				custom_signature.extend(quote! {
+					(<#ident>::SIGNATURE, <#ident>::SIGNATURE_LEN)
+				});
 			});
 
-		template.push(')');
-		let mut template = quote!(#template);
-		template.extend(quote!(,));
-		template.extend(custom_signature);
-		let custom_signature_group = Group::new(proc_macro2::Delimiter::Parenthesis, template);
-		let mut custom_signature = quote! {
-			::evm_coder::const_format::formatcp!
-		};
-		custom_signature.extend(custom_signature_group.to_token_stream());
+		let func_name = self.camel_name.clone();
+		let func_name = quote!(FunctionName::new(#func_name));
+		custom_signature =
+			quote!({ ::evm_coder::make_signature!(new fn(& #func_name),#custom_signature) });
 
-		println!("!!!!! {}", custom_signature);
+		// println!("!!!!! {}", custom_signature);
+
 		custom_signature
 	}
 
@@ -915,16 +888,23 @@ impl Method {
 			.map(MethodArg::expand_solidity_argument);
 		let docs = &self.docs;
 		let selector_str = &self.selector_str;
-		let selector = &self.expand_selector();
+		let screaming_name = &self.screaming_name;
 		let hide = self.hide;
 		let custom_signature = self.expand_custom_signature();
+		let custom_signature = quote!(
+			{
+				const cs: FunctionSignature = #custom_signature;
+				cs
+			}
+		);
+		// println!("!!!!! {}", custom_signature);
 		let is_payable = self.has_value_args;
-		quote! {
+		let out = quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
 				selector_str: #selector_str,
 				hide: #hide,
-				selector: u32::from_be_bytes(#selector),
+				selector: u32::from_be_bytes(Self::#screaming_name),
 				custom_signature: #custom_signature,
 				name: #camel_name,
 				mutability: #mutability,
@@ -936,7 +916,9 @@ impl Method {
 				),
 				result: <UnnamedArgument<#result>>::default(),
 			}
-		}
+		};
+		// println!("@@@ {}", out);
+		out
 	}
 }
 

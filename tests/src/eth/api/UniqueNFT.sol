@@ -70,7 +70,11 @@ interface TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0xb3152af3
+=======
+/// @dev the ERC-165 identifier for this interface is 0x674be726
+>>>>>>> feat: Add custum signature with unlimited nesting.
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -133,7 +137,7 @@ interface Collection is Dummy, ERC165 {
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
 	///
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
-	/// @dev EVM selector for this function is: 0x84a1d5a8,
+	/// @dev EVM selector for this function is: 0x403e96a7,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
 	function setCollectionSponsorCross(Tuple6 memory sponsor) external;
 
@@ -193,13 +197,13 @@ interface Collection is Dummy, ERC165 {
 
 	/// Add collection admin.
 	/// @param newAdmin Cross account administrator address.
-	/// @dev EVM selector for this function is: 0x859aa7d6,
+	/// @dev EVM selector for this function is: 0x62e3c7c2,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
 	function addCollectionAdminCross(Tuple6 memory newAdmin) external;
 
 	/// Remove collection admin.
 	/// @param admin Cross account administrator address.
-	/// @dev EVM selector for this function is: 0x6c0cd173,
+	/// @dev EVM selector for this function is: 0x810d1503,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
 	function removeCollectionAdminCross(Tuple6 memory admin) external;
 
@@ -227,7 +231,7 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
 	/// @param collections Addresses of collections that will be available for nesting.
-	/// @dev EVM selector for this function is: 0x64872396,
+	/// @dev EVM selector for this function is: 0x112d4586,
 	///  or in textual repr: setCollectionNesting(bool,address[])
 	function setCollectionNesting(bool enable, address[] memory collections) external;
 
@@ -256,7 +260,7 @@ interface Collection is Dummy, ERC165 {
 	/// Add user to allowed list.
 	///
 	/// @param user User cross account address.
-	/// @dev EVM selector for this function is: 0xa0184a3a,
+	/// @dev EVM selector for this function is: 0xf074da88,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
 	function addToCollectionAllowListCross(Tuple6 memory user) external;
 
@@ -270,7 +274,7 @@ interface Collection is Dummy, ERC165 {
 	/// Remove user from allowed list.
 	///
 	/// @param user User cross account address.
-	/// @dev EVM selector for this function is: 0x09ba452a,
+	/// @dev EVM selector for this function is: 0xc00df45c,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
 	function removeFromCollectionAllowListCross(Tuple6 memory user) external;
 
@@ -293,7 +297,7 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
-	/// @dev EVM selector for this function is: 0x3e75a905,
+	/// @dev EVM selector for this function is: 0x5aba3351,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
 	function isOwnerOrAdminCross(Tuple6 memory user) external view returns (bool);
 
@@ -332,11 +336,12 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
-	/// @dev EVM selector for this function is: 0xe5c9913f,
+	/// @dev EVM selector for this function is: 0xbdff793d,
 	///  or in textual repr: setOwnerCross((address,uint256))
 	function setOwnerCross(Tuple6 memory newOwner) external;
 }
 
+<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple19 {
 	address field_0;
@@ -373,6 +378,8 @@ interface ERC721Metadata is Dummy, ERC165 {
 	function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
+=======
+>>>>>>> feat: Add custum signature with unlimited nesting.
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
 /// @dev the ERC-165 identifier for this interface is 0x42966c68
 interface ERC721Burnable is Dummy, ERC165 {
@@ -438,7 +445,11 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x244543ee
+=======
+/// @dev the ERC-165 identifier for this interface is 0xcc97cb35
+>>>>>>> feat: Add custum signature with unlimited nesting.
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -456,7 +467,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	///  operator of the current owner.
 	/// @param approved The new substrate address approved NFT controller
 	/// @param tokenId The NFT to approve
-	/// @dev EVM selector for this function is: 0x0ecd0ab0,
+	/// @dev EVM selector for this function is: 0x106fdb59,
 	///  or in textual repr: approveCross((address,uint256),uint256)
 	function approveCross(Tuple6 memory approved, uint256 tokenId) external;
 
@@ -476,10 +487,15 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param to Cross acccount address of new owner
 	/// @param tokenId The NFT to transfer
 	/// @dev EVM selector for this function is: 0xd5cf430b,
-	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	///  or in textual repr: transferFromCross(EthCrossAccount,EthCrossAccount,uint256)
 	function transferFromCross(
+<<<<<<< HEAD
 		Tuple6 memory from,
 		Tuple6 memory to,
+=======
+		EthCrossAccount memory from,
+		EthCrossAccount memory to,
+>>>>>>> feat: Add custum signature with unlimited nesting.
 		uint256 tokenId
 	) external;
 
@@ -499,7 +515,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param from The current owner of the NFT
 	/// @param tokenId The NFT to transfer
-	/// @dev EVM selector for this function is: 0xbb2f5a58,
+	/// @dev EVM selector for this function is: 0xa8106d4a,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
 	function burnFromCross(Tuple6 memory from, uint256 tokenId) external;
 
@@ -507,6 +523,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x75794a3c,
 	///  or in textual repr: nextTokenId()
 	function nextTokenId() external view returns (uint256);
+<<<<<<< HEAD
 	// /// @notice Function to mint multiple tokens.
 	// /// @dev `tokenIds` should be an array of consecutive numbers and first number
 	// ///  should be obtained with `nextTokenId` method
@@ -528,8 +545,38 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 
 /// @dev anonymous struct
 struct Tuple8 {
+=======
+
+	/// @notice Function to mint multiple tokens.
+	/// @dev `tokenIds` should be an array of consecutive numbers and first number
+	///  should be obtained with `nextTokenId` method
+	/// @param to The new owner
+	/// @param tokenIds IDs of the minted NFTs
+	/// @dev EVM selector for this function is: 0xf9d9a5a3,
+	///  or in textual repr: mintBulk(address,uint256[])
+	function mintBulk(address to, uint256[] memory tokenIds) external returns (bool);
+
+	/// @notice Function to mint multiple tokens with the given tokenUris.
+	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	///  numbers and first number should be obtained with `nextTokenId` method
+	/// @param to The new owner
+	/// @param tokens array of pairs of token ID and token URI for minted tokens
+	/// @dev EVM selector for this function is: 0xfd4e2a99,
+	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
+	function mintBulkWithTokenURI(address to, Tuple12[] memory tokens) external returns (bool);
+}
+
+/// @dev anonymous struct
+struct Tuple12 {
+>>>>>>> feat: Add custum signature with unlimited nesting.
 	uint256 field_0;
 	string field_1;
+}
+
+/// @dev anonymous struct
+struct Tuple8 {
+	address field_0;
+	uint256 field_1;
 }
 
 /// @dev anonymous struct

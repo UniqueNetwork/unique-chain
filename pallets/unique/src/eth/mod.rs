@@ -18,7 +18,13 @@
 
 use core::marker::PhantomData;
 use ethereum as _;
-use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
+use evm_coder::{
+	execution::*,
+	generate_stubgen, solidity, solidity_interface,
+	types::*,
+	custom_signature::{FunctionName, FunctionSignature},
+	make_signature,
+, weight};
 use frame_support::{traits::Get, storage::StorageNMap};
 use crate::sp_api_hidden_includes_decl_storage::hidden_include::StorageDoubleMap;
 use crate::Pallet;

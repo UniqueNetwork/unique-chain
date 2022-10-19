@@ -30,9 +30,10 @@ use core::{
 	marker::PhantomData,
 	cell::{Cell, RefCell},
 	cmp::Reverse,
+	str::from_utf8,
 };
 use impl_trait_for_tuples::impl_for_tuples;
-use crate::types::*;
+use crate::{types::*, custom_signature::FunctionSignature};
 
 #[derive(Default)]
 pub struct TypeCollector {
@@ -487,7 +488,7 @@ pub struct SolidityFunction<A, R> {
 	pub selector_str: &'static str,
 	pub selector: u32,
 	pub hide: bool,
-	pub custom_signature: &'static str,
+	pub custom_signature: FunctionSignature,
 	pub name: &'static str,
 	pub args: A,
 	pub result: R,
@@ -513,7 +514,8 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writeln!(
 			writer,
 			"\t{hide_comment}///  or in textual repr: {}",
-			self.custom_signature
+			// from_utf8(self.custom_signature.as_str()).expect("bad utf8")
+			self.selector_str
 		)?;
 		write!(writer, "\t{hide_comment}function {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;

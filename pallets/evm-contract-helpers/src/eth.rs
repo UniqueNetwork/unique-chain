@@ -20,7 +20,13 @@ extern crate alloc;
 use alloc::{format, string::ToString};
 use core::marker::PhantomData;
 use evm_coder::{
-	abi::AbiWriter, execution::Result, generate_stubgen, solidity_interface, types::*, ToLog,
+	abi::AbiWriter,
+	execution::Result,
+	generate_stubgen, solidity_interface,
+	types::*,
+	ToLog,
+	custom_signature::{FunctionName, FunctionSignature},
+	make_signature,
 };
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
