@@ -1,14 +1,18 @@
+# Workflow which controls starts nested workflows.
 name: develop
 
+# Triger: PR at 'develop' branch with following types of events.
 on:
   pull_request:
     branches: [ 'develop' ]
     types: [ opened, reopened, synchronize, ready_for_review, converted_to_draft ]
 
+#Concurency group for control execution queue over github runners.
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
+# List of a jobs included into Workflow.
 jobs:
 
   yarn-test-dev:
