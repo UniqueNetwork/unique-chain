@@ -2987,7 +2987,13 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
   readonly readOnly: bool;
+  readonly flags: UpDataStructsRpcCollectionFlags;
+}
+
+/** @name UpDataStructsRpcCollectionFlags */
+export interface UpDataStructsRpcCollectionFlags extends Struct {
   readonly foreign: bool;
+  readonly erc721metadata: bool;
 }
 
 /** @name UpDataStructsSponsoringRateLimit */
