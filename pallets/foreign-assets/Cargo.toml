@@ -1,3 +1,5 @@
+cargo-features = ["workspace-inheritance"]
+
 [package]
 name = "pallet-foreign-assets"
 version = "0.1.0"
@@ -7,10 +9,12 @@ edition = "2021"
 [dependencies]
 log = { version = "0.4.16", default-features = false }
 serde = { version = "1.0.136", optional = true }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.1", default-features = false, features = [
+	"derive",
+] }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false  }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", default-features = false }
 up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
@@ -46,7 +50,7 @@ std = [
 	"pallet-common/std",
 	"pallet-balances/std",
 	"pallet-fungible/std",
-	"orml-tokens/std"
+	"orml-tokens/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
