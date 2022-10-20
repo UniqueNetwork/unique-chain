@@ -24,7 +24,7 @@ use frame_system::pallet_prelude::*;
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use pallet_unique_scheduler::{ScheduledId, Pallet as SchedulerPallet};
+	use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_unique_scheduler::Config {
@@ -94,7 +94,7 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn self_canceling_inc(
 			origin: OriginFor<T>,
-			id: ScheduledId,
+			id: TaskName,
 			max_test_value: u32,
 		) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin.clone())?;
