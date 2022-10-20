@@ -153,14 +153,6 @@ export interface CumulusPalletXcmEvent extends Enum {
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward';
 }
 
-/** @name CumulusPalletXcmOrigin */
-export interface CumulusPalletXcmOrigin extends Enum {
-  readonly isRelay: boolean;
-  readonly isSiblingParachain: boolean;
-  readonly asSiblingParachain: u32;
-  readonly type: 'Relay' | 'SiblingParachain';
-}
-
 /** @name CumulusPalletXcmpQueueCall */
 export interface CumulusPalletXcmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
@@ -501,88 +493,57 @@ export interface FpRpcTransactionStatus extends Struct {
   readonly logsBloom: EthbloomBloom;
 }
 
-/** @name FrameSupportDispatchRawOrigin */
-export interface FrameSupportDispatchRawOrigin extends Enum {
-  readonly isRoot: boolean;
-  readonly isSigned: boolean;
-  readonly asSigned: AccountId32;
-  readonly isNone: boolean;
-  readonly type: 'Root' | 'Signed' | 'None';
-}
-
-/** @name FrameSupportPalletId */
-export interface FrameSupportPalletId extends U8aFixed {}
-
-/** @name FrameSupportScheduleLookupError */
-export interface FrameSupportScheduleLookupError extends Enum {
-  readonly isUnknown: boolean;
-  readonly isBadFormat: boolean;
-  readonly type: 'Unknown' | 'BadFormat';
-}
-
-/** @name FrameSupportScheduleMaybeHashed */
-export interface FrameSupportScheduleMaybeHashed extends Enum {
-  readonly isValue: boolean;
-  readonly asValue: Call;
-  readonly isHash: boolean;
-  readonly asHash: H256;
-  readonly type: 'Value' | 'Hash';
-}
-
-/** @name FrameSupportTokensMiscBalanceStatus */
-export interface FrameSupportTokensMiscBalanceStatus extends Enum {
-  readonly isFree: boolean;
-  readonly isReserved: boolean;
-  readonly type: 'Free' | 'Reserved';
-}
-
-/** @name FrameSupportWeightsDispatchClass */
-export interface FrameSupportWeightsDispatchClass extends Enum {
+/** @name FrameSupportDispatchDispatchClass */
+export interface FrameSupportDispatchDispatchClass extends Enum {
   readonly isNormal: boolean;
   readonly isOperational: boolean;
   readonly isMandatory: boolean;
   readonly type: 'Normal' | 'Operational' | 'Mandatory';
 }
 
-/** @name FrameSupportWeightsDispatchInfo */
-export interface FrameSupportWeightsDispatchInfo extends Struct {
+/** @name FrameSupportDispatchDispatchInfo */
+export interface FrameSupportDispatchDispatchInfo extends Struct {
   readonly weight: Weight;
-  readonly class: FrameSupportWeightsDispatchClass;
-  readonly paysFee: FrameSupportWeightsPays;
+  readonly class: FrameSupportDispatchDispatchClass;
+  readonly paysFee: FrameSupportDispatchPays;
 }
 
-/** @name FrameSupportWeightsPays */
-export interface FrameSupportWeightsPays extends Enum {
+/** @name FrameSupportDispatchPays */
+export interface FrameSupportDispatchPays extends Enum {
   readonly isYes: boolean;
   readonly isNo: boolean;
   readonly type: 'Yes' | 'No';
 }
 
-/** @name FrameSupportWeightsPerDispatchClassU32 */
-export interface FrameSupportWeightsPerDispatchClassU32 extends Struct {
+/** @name FrameSupportDispatchPerDispatchClassU32 */
+export interface FrameSupportDispatchPerDispatchClassU32 extends Struct {
   readonly normal: u32;
   readonly operational: u32;
   readonly mandatory: u32;
 }
 
-/** @name FrameSupportWeightsPerDispatchClassWeight */
-export interface FrameSupportWeightsPerDispatchClassWeight extends Struct {
+/** @name FrameSupportDispatchPerDispatchClassWeight */
+export interface FrameSupportDispatchPerDispatchClassWeight extends Struct {
   readonly normal: Weight;
   readonly operational: Weight;
   readonly mandatory: Weight;
 }
 
-/** @name FrameSupportWeightsPerDispatchClassWeightsPerClass */
-export interface FrameSupportWeightsPerDispatchClassWeightsPerClass extends Struct {
+/** @name FrameSupportDispatchPerDispatchClassWeightsPerClass */
+export interface FrameSupportDispatchPerDispatchClassWeightsPerClass extends Struct {
   readonly normal: FrameSystemLimitsWeightsPerClass;
   readonly operational: FrameSystemLimitsWeightsPerClass;
   readonly mandatory: FrameSystemLimitsWeightsPerClass;
 }
 
-/** @name FrameSupportWeightsRuntimeDbWeight */
-export interface FrameSupportWeightsRuntimeDbWeight extends Struct {
-  readonly read: u64;
-  readonly write: u64;
+/** @name FrameSupportPalletId */
+export interface FrameSupportPalletId extends U8aFixed {}
+
+/** @name FrameSupportTokensMiscBalanceStatus */
+export interface FrameSupportTokensMiscBalanceStatus extends Enum {
+  readonly isFree: boolean;
+  readonly isReserved: boolean;
+  readonly type: 'Free' | 'Reserved';
 }
 
 /** @name FrameSystemAccountInfo */
@@ -651,12 +612,12 @@ export interface FrameSystemError extends Enum {
 export interface FrameSystemEvent extends Enum {
   readonly isExtrinsicSuccess: boolean;
   readonly asExtrinsicSuccess: {
-    readonly dispatchInfo: FrameSupportWeightsDispatchInfo;
+    readonly dispatchInfo: FrameSupportDispatchDispatchInfo;
   } & Struct;
   readonly isExtrinsicFailed: boolean;
   readonly asExtrinsicFailed: {
     readonly dispatchError: SpRuntimeDispatchError;
-    readonly dispatchInfo: FrameSupportWeightsDispatchInfo;
+    readonly dispatchInfo: FrameSupportDispatchDispatchInfo;
   } & Struct;
   readonly isCodeUpdated: boolean;
   readonly isNewAccount: boolean;
@@ -705,14 +666,14 @@ export interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
 
 /** @name FrameSystemLimitsBlockLength */
 export interface FrameSystemLimitsBlockLength extends Struct {
-  readonly max: FrameSupportWeightsPerDispatchClassU32;
+  readonly max: FrameSupportDispatchPerDispatchClassU32;
 }
 
 /** @name FrameSystemLimitsBlockWeights */
 export interface FrameSystemLimitsBlockWeights extends Struct {
   readonly baseBlock: Weight;
   readonly maxBlock: Weight;
-  readonly perClass: FrameSupportWeightsPerDispatchClassWeightsPerClass;
+  readonly perClass: FrameSupportDispatchPerDispatchClassWeightsPerClass;
 }
 
 /** @name FrameSystemLimitsWeightsPerClass */
@@ -730,21 +691,6 @@ export interface FrameSystemPhase extends Enum {
   readonly isFinalization: boolean;
   readonly isInitialization: boolean;
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
-}
-
-/** @name OpalRuntimeOriginCaller */
-export interface OpalRuntimeOriginCaller extends Enum {
-  readonly isSystem: boolean;
-  readonly asSystem: FrameSupportDispatchRawOrigin;
-  readonly isVoid: boolean;
-  readonly asVoid: SpCoreVoid;
-  readonly isPolkadotXcm: boolean;
-  readonly asPolkadotXcm: PalletXcmOrigin;
-  readonly isCumulusXcm: boolean;
-  readonly asCumulusXcm: CumulusPalletXcmOrigin;
-  readonly isEthereum: boolean;
-  readonly asEthereum: PalletEthereumRawOrigin;
-  readonly type: 'System' | 'Void' | 'PolkadotXcm' | 'CumulusXcm' | 'Ethereum';
 }
 
 /** @name OpalRuntimeRuntime */
@@ -1356,13 +1302,6 @@ export interface PalletEthereumEvent extends Enum {
 
 /** @name PalletEthereumFakeTransactionFinalizer */
 export interface PalletEthereumFakeTransactionFinalizer extends Null {}
-
-/** @name PalletEthereumRawOrigin */
-export interface PalletEthereumRawOrigin extends Enum {
-  readonly isEthereumTransaction: boolean;
-  readonly asEthereumTransaction: H160;
-  readonly type: 'EthereumTransaction';
-}
 
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
@@ -2278,76 +2217,6 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
 }
 
-/** @name PalletUniqueSchedulerCall */
-export interface PalletUniqueSchedulerCall extends Enum {
-  readonly isScheduleNamed: boolean;
-  readonly asScheduleNamed: {
-    readonly id: U8aFixed;
-    readonly when: u32;
-    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-    readonly priority: u8;
-    readonly call: FrameSupportScheduleMaybeHashed;
-  } & Struct;
-  readonly isCancelNamed: boolean;
-  readonly asCancelNamed: {
-    readonly id: U8aFixed;
-  } & Struct;
-  readonly isScheduleNamedAfter: boolean;
-  readonly asScheduleNamedAfter: {
-    readonly id: U8aFixed;
-    readonly after: u32;
-    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-    readonly priority: u8;
-    readonly call: FrameSupportScheduleMaybeHashed;
-  } & Struct;
-  readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter';
-}
-
-/** @name PalletUniqueSchedulerError */
-export interface PalletUniqueSchedulerError extends Enum {
-  readonly isFailedToSchedule: boolean;
-  readonly isNotFound: boolean;
-  readonly isTargetBlockNumberInPast: boolean;
-  readonly isRescheduleNoChange: boolean;
-  readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
-}
-
-/** @name PalletUniqueSchedulerEvent */
-export interface PalletUniqueSchedulerEvent extends Enum {
-  readonly isScheduled: boolean;
-  readonly asScheduled: {
-    readonly when: u32;
-    readonly index: u32;
-  } & Struct;
-  readonly isCanceled: boolean;
-  readonly asCanceled: {
-    readonly when: u32;
-    readonly index: u32;
-  } & Struct;
-  readonly isDispatched: boolean;
-  readonly asDispatched: {
-    readonly task: ITuple<[u32, u32]>;
-    readonly id: Option<U8aFixed>;
-    readonly result: Result<Null, SpRuntimeDispatchError>;
-  } & Struct;
-  readonly isCallLookupFailed: boolean;
-  readonly asCallLookupFailed: {
-    readonly task: ITuple<[u32, u32]>;
-    readonly id: Option<U8aFixed>;
-    readonly error: FrameSupportScheduleLookupError;
-  } & Struct;
-  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'CallLookupFailed';
-}
-
-/** @name PalletUniqueSchedulerScheduledV3 */
-export interface PalletUniqueSchedulerScheduledV3 extends Struct {
-  readonly maybeId: Option<U8aFixed>;
-  readonly priority: u8;
-  readonly call: FrameSupportScheduleMaybeHashed;
-  readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-  readonly origin: OpalRuntimeOriginCaller;
-}
-
 /** @name PalletXcmCall */
 export interface PalletXcmCall extends Enum {
   readonly isSend: boolean;
@@ -2463,15 +2332,6 @@ export interface PalletXcmEvent extends Enum {
   readonly isNotifyTargetMigrationFail: boolean;
   readonly asNotifyTargetMigrationFail: ITuple<[XcmVersionedMultiLocation, u64]>;
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
-}
-
-/** @name PalletXcmOrigin */
-export interface PalletXcmOrigin extends Enum {
-  readonly isXcm: boolean;
-  readonly asXcm: XcmV1MultiLocation;
-  readonly isResponse: boolean;
-  readonly asResponse: XcmV1MultiLocation;
-  readonly type: 'Xcm' | 'Response';
 }
 
 /** @name PhantomTypeUpDataStructs */
@@ -2694,9 +2554,6 @@ export interface SpCoreEd25519Signature extends U8aFixed {}
 /** @name SpCoreSr25519Signature */
 export interface SpCoreSr25519Signature extends U8aFixed {}
 
-/** @name SpCoreVoid */
-export interface SpCoreVoid extends Null {}
-
 /** @name SpRuntimeArithmeticError */
 export interface SpRuntimeArithmeticError extends Enum {
   readonly isUnderflow: boolean;
@@ -2794,6 +2651,12 @@ export interface SpVersionRuntimeVersion extends Struct {
   readonly apis: Vec<ITuple<[U8aFixed, u32]>>;
   readonly transactionVersion: u32;
   readonly stateVersion: u8;
+}
+
+/** @name SpWeightsRuntimeDbWeight */
+export interface SpWeightsRuntimeDbWeight extends Struct {
+  readonly read: u64;
+  readonly write: u64;
 }
 
 /** @name UpDataStructsAccessMode */
