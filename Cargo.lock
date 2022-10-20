@@ -6676,7 +6676,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "pallet-unique-scheduler",
+ "pallet-unique-scheduler-v2",
  "parity-scale-codec 3.2.1",
  "scale-info",
 ]
