@@ -371,19 +371,14 @@ pub fn run() -> Result<()> {
 				cmd.run(&*spec)
 			})
 		}
+		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
-					} else {
-						Err("Benchmarking wasn't enabled when building the node. \
-					You can enable it with `--features runtime-benchmarks`."
-							.into())
-					}
+					runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<

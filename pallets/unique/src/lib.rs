@@ -122,7 +122,7 @@ decl_error! {
 /// Configuration trait of this pallet.
 pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 	/// Overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+	type RuntimeEvent: From<Event<Self>> + Into<<Self as frame_system::Config>::RuntimeEvent>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -273,7 +273,7 @@ decl_module! {
 	/// Type alias to Pallet, to be used by construct_runtime.
 	pub struct Module<T: Config> for enum Call
 	where
-		origin: T::Origin
+		origin: T::RuntimeOrigin
 	{
 		type Error = Error<T>;
 

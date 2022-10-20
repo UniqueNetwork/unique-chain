@@ -17,7 +17,7 @@
 use xcm_executor::traits::ShouldExecute;
 use xcm::latest::prelude::*;
 use logtest::Logger;
-use crate::Call;
+use crate::RuntimeCall;
 use super::new_test_ext;
 
 fn catch_xcm_barrier_log(logger: &mut Logger, expected_msg: &str) -> Result<(), String> {
@@ -51,7 +51,7 @@ pub fn barrier_denies_transact<B: ShouldExecute>(logger: &mut Logger) {
 		call: fake_encoded_call.into(),
 	};
 
-	let mut xcm_program = Xcm::<Call>(vec![transact_inst]);
+	let mut xcm_program = Xcm::<RuntimeCall>(vec![transact_inst]);
 
 	let max_weight = 100_000;
 	let mut weight_credit = 100_000_000;
@@ -69,7 +69,7 @@ pub fn barrier_denies_transact<B: ShouldExecute>(logger: &mut Logger) {
 fn xcm_execute<B: ShouldExecute>(
 	self_para_id: u32,
 	location: &MultiLocation,
-	xcm: &mut Xcm<Call>,
+	xcm: &mut Xcm<RuntimeCall>,
 ) -> Result<(), ()> {
 	new_test_ext(self_para_id).execute_with(|| {
 		let max_weight = 100_000;
@@ -87,7 +87,7 @@ fn make_multiassets(location: &MultiLocation) -> MultiAssets {
 	multiasset.into()
 }
 
-fn make_transfer_reserve_asset(location: &MultiLocation) -> Xcm<Call> {
+fn make_transfer_reserve_asset(location: &MultiLocation) -> Xcm<RuntimeCall> {
 	let assets = make_multiassets(location);
 	let inst = TransferReserveAsset {
 		assets,
@@ -95,10 +95,10 @@ fn make_transfer_reserve_asset(location: &MultiLocation) -> Xcm<Call> {
 		xcm: Xcm(vec![]),
 	};
 
-	Xcm::<Call>(vec![inst])
+	Xcm::<RuntimeCall>(vec![inst])
 }
 
-fn make_deposit_reserve_asset(location: &MultiLocation) -> Xcm<Call> {
+fn make_deposit_reserve_asset(location: &MultiLocation) -> Xcm<RuntimeCall> {
 	let assets = make_multiassets(location);
 	let inst = DepositReserveAsset {
 		assets: assets.into(),
@@ -107,14 +107,14 @@ fn make_deposit_reserve_asset(location: &MultiLocation) -> Xcm<Call> {
 		xcm: Xcm(vec![]),
 	};
 
-	Xcm::<Call>(vec![inst])
+	Xcm::<RuntimeCall>(vec![inst])
 }
 
 fn expect_transfer_location_denied<B: ShouldExecute>(
 	logger: &mut Logger,
 	self_para_id: u32,
 	location: &MultiLocation,
-	xcm: &mut Xcm<Call>,
+	xcm: &mut Xcm<RuntimeCall>,
 ) -> Result<(), String> {
 	let result = xcm_execute::<B>(self_para_id, location, xcm);
 

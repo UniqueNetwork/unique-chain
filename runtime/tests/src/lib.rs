@@ -80,13 +80,13 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -112,7 +112,7 @@ parameter_types! {
 }
 //frame_system::Module<Test>;
 impl pallet_balances::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type AccountStore = System;
 	type Balance = u64;
 	type DustRemoval = ();
@@ -128,7 +128,7 @@ parameter_types! {
 }
 
 impl pallet_transaction_payment::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = CurrencyAdapter<pallet_balances::Pallet<Test>, ()>;
 	type LengthToFee = IdentityFee<u64>;
 	type WeightToFee = IdentityFee<u64>;
@@ -205,12 +205,12 @@ parameter_types! {
 }
 
 impl pallet_ethereum::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
 impl pallet_evm::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type FeeCalculator = ();
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressNever<Self::CrossAccountId>;
@@ -233,7 +233,7 @@ impl pallet_evm_coder_substrate::Config for Test {}
 
 impl pallet_common::Config for Test {
 	type WeightInfo = ();
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -252,8 +252,8 @@ impl pallet_evm::account::Config for Test {
 
 impl pallet_structure::Config for Test {
 	type WeightInfo = ();
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }
 impl pallet_fungible::Config for Test {
 	type WeightInfo = ();
@@ -273,7 +273,7 @@ parameter_types! {
 }
 
 impl pallet_unique::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;

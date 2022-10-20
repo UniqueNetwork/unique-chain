@@ -42,7 +42,10 @@ use sp_std::vec::Vec;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 
-use crate::{Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsWithSystem, InherentDataExt};
+use crate::{
+	Runtime, RuntimeCall, Balances, Treasury, Aura, Signature, AllPalletsWithSystem,
+	InherentDataExt,
+};
 use up_common::types::{AccountId, BlockNumber};
 
 #[macro_export]
@@ -94,10 +97,11 @@ pub type SignedExtra = (
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
+pub type CheckedExtrinsic =
+	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<

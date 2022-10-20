@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{weights::Weight, parameter_types};
-use crate::{Runtime, Event, XcmpQueue, DmpQueue};
+use crate::{Runtime, RuntimeEvent, XcmpQueue, DmpQueue};
 use up_common::constants::*;
 
 parameter_types! {
@@ -24,7 +24,7 @@ parameter_types! {
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type SelfParaId = parachain_info::Pallet<Self>;
 	type OnSystemEvent = ();
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<

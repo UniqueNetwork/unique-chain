@@ -5,7 +5,7 @@ use frame_support::{
 		DispatchResultWithPostInfo, PostDispatchInfo, Weight, DispatchErrorWithPostInfo,
 		DispatchResult,
 	},
-	weights::Pays,
+	dispatch::Pays,
 	traits::Get,
 };
 use sp_runtime::DispatchError;

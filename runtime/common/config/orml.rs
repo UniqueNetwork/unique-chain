@@ -28,7 +28,7 @@ use xcm_executor::XcmExecutor;
 use sp_std::{vec, vec::Vec};
 use pallet_foreign_assets::{CurrencyId, NativeCurrency};
 use crate::{
-	Runtime, Event, RelayChainBlockNumberProvider,
+	Runtime, RuntimeEvent, RelayChainBlockNumberProvider,
 	runtime_common::config::{
 		xcm::{
 			SelfLocation, Weigher, XcmConfig, Ancestry,
@@ -96,7 +96,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 }
 
 impl orml_vesting::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
 	type MinVestedTransfer = MinVestedTransfer;
 	type VestedTransferOrigin = EnsureSigned<AccountId>;
@@ -106,13 +106,16 @@ impl orml_vesting::Config for Runtime {
 }
 
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
+	type OnSlash = ();
+	type OnTransfer = ();
+	type OnDeposit = ();
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
 	// TODO: Add all module accounts
@@ -124,7 +127,7 @@ impl orml_tokens::Config for Runtime {
 }
 
 impl orml_xtokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = CurrencyId;
 	type CurrencyIdConvert = CurrencyIdConvert;

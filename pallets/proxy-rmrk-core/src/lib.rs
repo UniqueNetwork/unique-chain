@@ -197,7 +197,7 @@ pub mod pallet {
 		frame_system::Config + pallet_common::Config + pallet_nonfungible::Config + account::Config
 	{
 		/// Overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;

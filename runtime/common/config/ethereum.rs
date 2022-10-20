@@ -10,7 +10,7 @@ use crate::{
 		dispatch::CollectionDispatchT, ethereum::sponsoring::EvmSponsorshipHandler,
 		config::sponsoring::DefaultSponsoringRateLimit, DealWithFees,
 	},
-	Runtime, Aura, Balances, Event, ChainId,
+	Runtime, Aura, Balances, RuntimeEvent, ChainId,
 };
 use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
 use up_common::constants::*;
@@ -75,7 +75,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
 	type Currency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
@@ -95,7 +95,7 @@ impl pallet_evm_migration::Config for Runtime {
 }
 
 impl pallet_ethereum::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
@@ -112,7 +112,7 @@ parameter_types! {
 }
 
 impl pallet_evm_contract_helpers::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }

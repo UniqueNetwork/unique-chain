@@ -86,13 +86,13 @@ use sp_runtime::{
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter},
+	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter, GetDispatchInfo},
 	traits::{
 		schedule::{self, DispatchTime, MaybeHashed},
 		NamedReservableCurrency, EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp,
 		StorageVersion,
 	},
-	weights::{GetDispatchInfo, Weight},
+	weights::{Weight},
 };
 
 pub use weights::WeightInfo;
@@ -104,7 +104,8 @@ pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
 
 type ScheduledId = [u8; MAX_TASK_ID_LENGTH_IN_BYTES as usize];
-pub type CallOrHashOf<T> = MaybeHashed<<T as Config>::Call, <T as frame_system::Config>::Hash>;
+pub type CallOrHashOf<T> =
+	MaybeHashed<<T as Config>::RuntimeCall, <T as frame_system::Config>::Hash>;
 
 /// Information regarding an item to be executed in the future.
 #[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
@@ -209,12 +210,12 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The aggregated origin which the dispatch will take.
-		type Origin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
+		type RuntimeOrigin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
 			+ From<Self::PalletsOrigin>
-			+ IsType<<Self as system::Config>::Origin>;
+			+ IsType<<Self as system::Config>::RuntimeOrigin>;
 
 		/// The caller origin, overarching type of all pallets origins.
 		type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + Clone + Eq + TypeInfo;
@@ -222,9 +223,11 @@ pub mod pallet {
 		type Currency: NamedReservableCurrency<Self::AccountId, ReserveIdentifier = ScheduledId>;
 
 		/// The aggregated call type.
-		type Call: Parameter
-			+ Dispatchable<Origin = <Self as Config>::Origin, PostInfo = PostDispatchInfo>
-			+ GetDispatchInfo
+		type RuntimeCall: Parameter
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
 			+ From<system::Call<Self>>;
 
 		/// The maximum weight that may be scheduled per block for any dispatchables of less
@@ -233,7 +236,7 @@ pub mod pallet {
 		type MaximumWeight: Get<Weight>;
 
 		/// Required origin to schedule or cancel calls.
-		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::Origin>;
+		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
 
 		/// Compare the privileges of origins.
 		///
@@ -271,7 +274,7 @@ pub mod pallet {
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
-			call: <T as Config>::Call,
+			call: <T as Config>::RuntimeCall,
 			count: u32,
 		) -> Result<(), DispatchError>;
 
@@ -279,13 +282,13 @@ pub mod pallet {
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
-			call: <T as Config>::Call,
+			call: <T as Config>::RuntimeCall,
 		) -> Result<u128, DispatchError>;
 
 		/// Resolve the call dispatch, including any post-dispatch operations.
 		fn dispatch_call(
 			signer: T::AccountId,
-			function: <T as Config>::Call,
+			function: <T as Config>::RuntimeCall,
 		) -> Result<
 			Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 			TransactionValidityError,
@@ -404,9 +407,10 @@ pub mod pallet {
 				let periodic = s.maybe_periodic.is_some();
 				let call_weight = call.get_dispatch_info().weight;
 				let mut item_weight = T::WeightInfo::item(periodic, named, Some(resolved));
-				let origin =
-					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
-						.into();
+				let origin = <<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(
+					s.origin.clone(),
+				)
+				.into();
 				if ensure_signed(origin).is_ok() {
 					// Weights of Signed dispatches expect their signing account to be whitelisted.
 					item_weight.saturating_accrue(T::DbWeight::get().reads_writes(1, 1));
@@ -420,7 +424,7 @@ pub mod pallet {
 				let test_weight = total_weight
 					.saturating_add(call_weight)
 					.saturating_add(item_weight);
-				if !hard_deadline && order > 0 && test_weight > limit {
+				if !hard_deadline && order > 0 && test_weight.all_gt(limit) {
 					// Cannot be scheduled this block - postpone until next.
 					total_weight.saturating_accrue(T::WeightInfo::item(false, named, None));
 					if let Some(ref id) = s.maybe_id {
@@ -436,8 +440,10 @@ pub mod pallet {
 				}
 
 				let sender = ensure_signed(
-					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
-						.into(),
+					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(
+						s.origin.clone(),
+					)
+					.into(),
 				)
 				.unwrap();
 
@@ -514,7 +520,7 @@ pub mod pallet {
 			call: Box<CallOrHashOf<T>>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::At(when),
@@ -530,7 +536,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::cancel_named(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel_named(origin: OriginFor<T>, id: ScheduledId) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_cancel_named(Some(origin.caller().clone()), id)?;
 			Ok(())
 		}
@@ -550,7 +556,7 @@ pub mod pallet {
 			call: Box<CallOrHashOf<T>>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::After(after),

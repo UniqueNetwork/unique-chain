@@ -44,7 +44,7 @@ pub mod pallet {
 		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
 	{
 		/// Overarching event type.
-		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
+		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Address, under which magic contract will be available
 		type ContractAddress: Get<H160>;
