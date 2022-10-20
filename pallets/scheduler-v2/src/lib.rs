@@ -81,17 +81,18 @@ use frame_support::{
 	traits::{
 		schedule::{self, DispatchTime},
 		EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp, StorageVersion, PreimageRecipient,
-		ConstU32,
+		ConstU32, UnfilteredDispatchable,
 	},
-	weights::Weight,
+	weights::{Weight, PostDispatchInfo}, unsigned::TransactionValidityError,
 };
 
 use frame_system::{self as system};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{BadOrigin, One, Saturating, Zero, Hash},
-	BoundedVec, RuntimeDebug,
+	BoundedVec, RuntimeDebug, DispatchErrorWithPostInfo,
 };
+use sp_core::H160;
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 pub use weights::WeightInfo;
 
@@ -206,6 +207,12 @@ impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
 	}
 }
 
+pub enum ScheduledEnsureOriginSuccess<AccountId> {
+	Root,
+	Signed(AccountId),
+	Unsigned,
+}
+
 pub type TaskName = [u8; 32];
 
 /// Information regarding an item to be executed in the future.
@@ -312,6 +319,7 @@ pub mod pallet {
 		/// The aggregated call type.
 		type Call: Parameter
 			+ Dispatchable<Origin = <Self as Config>::Origin, PostInfo = PostDispatchInfo>
+			+ UnfilteredDispatchable<Origin = <Self as system::Config>::Origin>
 			+ GetDispatchInfo
 			+ From<system::Call<Self>>;
 
@@ -320,7 +328,10 @@ pub mod pallet {
 		type MaximumWeight: Get<Weight>;
 
 		/// Required origin to schedule or cancel calls.
-		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::Origin>;
+		type ScheduleOrigin: EnsureOrigin<
+			<Self as system::Config>::Origin,
+			Success = ScheduledEnsureOriginSuccess<Self::AccountId>,
+		>;
 
 		/// Compare the privileges of origins.
 		///
@@ -340,6 +351,9 @@ pub mod pallet {
 
 		/// The preimage provider with which we look up call hashes to get the call.
 		type Preimages: SchedulerPreimages<Self>;
+
+		/// The helper type used for custom transaction fee logic.
+		type CallExecutor: DispatchCall<Self, H160>;
 	}
 
 	#[pallet::storage]
@@ -726,6 +740,18 @@ enum ServiceTaskError {
 }
 use ServiceTaskError::*;
 
+/// A Scheduler-Runtime interface for finer payment handling.
+pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+	/// Resolve the call dispatch, including any post-dispatch operations.
+	fn dispatch_call(
+		signer: Option<T::AccountId>,
+		function: <T as Config>::Call,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	>;
+}
+
 impl<T: Config> Pallet<T> {
 	/// Service up to `max` agendas queue starting from earliest incompletely executed agenda.
 	fn service_agendas(weight: &mut WeightCounter, now: T::BlockNumber, max: u32) {
@@ -927,12 +953,41 @@ impl<T: Config> Pallet<T> {
 			return Err(Overweight);
 		}
 
-		let (maybe_actual_call_weight, result) = match call.dispatch(dispatch_origin) {
-			Ok(post_info) => (post_info.actual_weight, Ok(())),
-			Err(error_and_info) => (
-				error_and_info.post_info.actual_weight,
-				Err(error_and_info.error),
-			),
+		// let scheduled_origin =
+		// 	<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone());
+		let ensured_origin = T::ScheduleOrigin::ensure_origin(dispatch_origin.into());
+
+		let r = match ensured_origin {
+			Ok(ScheduledEnsureOriginSuccess::Root) => {
+				Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()))
+			},
+			Ok(ScheduledEnsureOriginSuccess::Signed(sender)) => {
+				// Execute transaction via chain default pipeline
+				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
+				T::CallExecutor::dispatch_call(Some(sender), call.clone())
+			},
+			Ok(ScheduledEnsureOriginSuccess::Unsigned) => {
+				// Unsigned version of the above
+				T::CallExecutor::dispatch_call(None, call.clone())
+			}
+			Err(e) => Ok(Err(e.into())),
+		};
+
+		let (maybe_actual_call_weight, result) = match r {
+			Ok(result) => match result {
+				Ok(post_info) => (post_info.actual_weight, Ok(())),
+				Err(error_and_info) => (
+					error_and_info.post_info.actual_weight,
+					Err(error_and_info.error),
+				),
+			},
+			Err(_) => {
+				log::error!(
+					target: "runtime::scheduler",
+					"Warning: Scheduler has failed to execute a post-dispatch transaction. \
+					This block might have become invalid.");
+				(None, Err(DispatchError::CannotLookup))
+			}
 		};
 		let call_weight = maybe_actual_call_weight.unwrap_or(call_weight);
 		weight.check_accrue(base_weight);
