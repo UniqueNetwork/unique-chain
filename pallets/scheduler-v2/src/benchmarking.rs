@@ -68,7 +68,10 @@ fn fill_schedule<T: Config>(when: T::BlockNumber, n: u32) -> Result<(), &'static
 		let name = u32_to_name(i);
 		Scheduler::<T>::do_schedule_named(name, t, period, 0, origin.clone(), call)?;
 	}
-	ensure!(Agenda::<T>::get(when).len() == n as usize, "didn't fill schedule");
+	ensure!(
+		Agenda::<T>::get(when).len() == n as usize,
+		"didn't fill schedule"
+	);
 	Ok(())
 }
 
@@ -93,19 +96,30 @@ fn make_task<T: Config>(
 		false => None,
 	};
 	let origin = make_origin::<T>(signed);
-	Scheduled { maybe_id, priority, call, maybe_periodic, origin, _phantom: PhantomData }
+	Scheduled {
+		maybe_id,
+		priority,
+		call,
+		maybe_periodic,
+		origin,
+		_phantom: PhantomData,
+	}
 }
 
 fn bounded<T: Config>(len: u32) -> Option<ScheduledCall<T>> {
-	let call =
-		<<T as Config>::Call>::from(SystemCall::remark { remark: vec![0; len as usize] });
-    ScheduledCall::new(call).ok()
+	let call = <<T as Config>::Call>::from(SystemCall::remark {
+		remark: vec![0; len as usize],
+	});
+	ScheduledCall::new(call).ok()
 }
 
 fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 	let bound = EncodedCall::bound() as u32;
 	let mut len = match maybe_lookup_len {
-		Some(len) => len.min(<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get() - 2).max(bound) - 3,
+		Some(len) => {
+			len.min(<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get() - 2)
+				.max(bound) - 3
+		}
 		None => bound.saturating_sub(4),
 	};
 
@@ -114,11 +128,11 @@ fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 			Some(x) => x,
 			None => {
 				len -= 1;
-				continue
-			},
+				continue;
+			}
 		};
 		if c.lookup_needed() == maybe_lookup_len.is_some() {
-			break c
+			break c;
 		}
 		if maybe_lookup_len.is_some() {
 			len += 1;
@@ -126,7 +140,7 @@ fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 			if len > 0 {
 				len -= 1;
 			} else {
-				break c
+				break c;
 			}
 		}
 	}
@@ -140,11 +154,14 @@ fn make_origin<T: Config>(signed: bool) -> <T as Config>::PalletsOrigin {
 }
 
 fn dummy_counter() -> WeightCounter {
-	WeightCounter { used: Weight::zero(), limit: Weight::MAX }
+	WeightCounter {
+		used: Weight::zero(),
+		limit: Weight::MAX,
+	}
 }
 
 benchmarks! {
-    // `service_agendas` when no work is done.
+	// `service_agendas` when no work is done.
 	service_agendas_base {
 		let now = T::BlockNumber::from(BLOCK_NUMBER);
 		IncompleteSince::<T>::put(now - One::one());
@@ -154,7 +171,7 @@ benchmarks! {
 		assert_eq!(IncompleteSince::<T>::get(), Some(now - One::one()));
 	}
 
-    // `service_agenda` when no work is done.
+	// `service_agenda` when no work is done.
 	service_agenda_base {
 		let now = BLOCK_NUMBER.into();
 		let s in 0 .. T::MaxScheduledPerBlock::get();
@@ -166,7 +183,7 @@ benchmarks! {
 		assert_eq!(executed, 0);
 	}
 
-    // `service_task` when the task is a non-periodic, non-named, non-fetched call which is not
+	// `service_task` when the task is a non-periodic, non-named, non-fetched call which is not
 	// dispatched (e.g. due to being overweight).
 	service_task_base {
 		let now = BLOCK_NUMBER.into();
@@ -179,7 +196,7 @@ benchmarks! {
 		//assert_eq!(result, Ok(()));
 	}
 
-    // `service_task` when the task is a non-periodic, non-named, fetched call (with a known
+	// `service_task` when the task is a non-periodic, non-named, fetched call (with a known
 	// preimage length) and which is not dispatched (e.g. due to being overweight).
 	service_task_fetched {
 		let s in (EncodedCall::bound() as u32) .. (<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get());
@@ -192,7 +209,7 @@ benchmarks! {
 	} verify {
 	}
 
-    // `service_task` when the task is a non-periodic, named, non-fetched call which is not
+	// `service_task` when the task is a non-periodic, named, non-fetched call which is not
 	// dispatched (e.g. due to being overweight).
 	service_task_named {
 		let now = BLOCK_NUMBER.into();
@@ -204,7 +221,7 @@ benchmarks! {
 	} verify {
 	}
 
-    // `service_task` when the task is a periodic, non-named, non-fetched call which is not
+	// `service_task` when the task is a periodic, non-named, non-fetched call which is not
 	// dispatched (e.g. due to being overweight).
 	service_task_periodic {
 		let now = BLOCK_NUMBER.into();
@@ -216,7 +233,7 @@ benchmarks! {
 	} verify {
 	}
 
-    // `execute_dispatch` when the origin is `Signed`, not counting the dispatable's weight.
+	// `execute_dispatch` when the origin is `Signed`, not counting the dispatable's weight.
 	execute_dispatch_signed {
 		let mut counter = WeightCounter { used: Weight::zero(), limit: Weight::MAX };
 		let origin = make_origin::<T>(true);
@@ -227,7 +244,7 @@ benchmarks! {
 	verify {
 	}
 
-    // `execute_dispatch` when the origin is not `Signed`, not counting the dispatable's weight.
+	// `execute_dispatch` when the origin is not `Signed`, not counting the dispatable's weight.
 	execute_dispatch_unsigned {
 		let mut counter = WeightCounter { used: Weight::zero(), limit: Weight::MAX };
 		let origin = make_origin::<T>(false);
@@ -238,7 +255,7 @@ benchmarks! {
 	verify {
 	}
 
-    schedule {
+	schedule {
 		let s in 0 .. (T::MaxScheduledPerBlock::get() - 1);
 		let when = BLOCK_NUMBER.into();
 		let periodic = Some((T::BlockNumber::one(), 100));
@@ -255,7 +272,7 @@ benchmarks! {
 		);
 	}
 
-    cancel {
+	cancel {
 		let s in 1 .. T::MaxScheduledPerBlock::get();
 		let when = BLOCK_NUMBER.into();
 
@@ -275,7 +292,7 @@ benchmarks! {
 		);
 	}
 
-    schedule_named {
+	schedule_named {
 		let s in 0 .. (T::MaxScheduledPerBlock::get() - 1);
 		let id = u32_to_name(s);
 		let when = BLOCK_NUMBER.into();
@@ -293,7 +310,7 @@ benchmarks! {
 		);
 	}
 
-    cancel_named {
+	cancel_named {
 		let s in 1 .. T::MaxScheduledPerBlock::get();
 		let when = BLOCK_NUMBER.into();
 
@@ -311,5 +328,5 @@ benchmarks! {
 		);
 	}
 
-    // impl_benchmark_test_suite!(Scheduler, crate::mock::new_test_ext(), crate::mock::Test);
+	// impl_benchmark_test_suite!(Scheduler, crate::mock::new_test_ext(), crate::mock::Test);
 }
