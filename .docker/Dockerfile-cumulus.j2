@@ -8,7 +8,7 @@ ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && \
-    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
 

@@ -11,7 +11,7 @@ ENV PATH="/cargo-home/bin:$PATH"
 
 RUN echo "$FEATURE\n" && echo "$RUST_TOOLCHAIN\n"
 
-RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake
+RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake protobuf-compiler
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
@@ -20,7 +20,7 @@ RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup default $RUST_TOOLCHAIN && \
     rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
-RUN mkdir /dev_chain 
+RUN mkdir /dev_chain
 COPY . /dev_chain
 
 WORKDIR /dev_chain

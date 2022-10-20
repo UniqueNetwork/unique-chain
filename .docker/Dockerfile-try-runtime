@@ -12,7 +12,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 
 RUN apt-get update && \
-    apt-get install -y curl cmake pkg-config libssl-dev git clang && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang protobuf-compiler && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
 
@@ -45,5 +45,5 @@ WORKDIR /unique_parachain
 RUN echo "Requested features: $FEATURE\n" && \
     echo "Fork from: $REPLICA_FROM\n" && \
     cargo build --features=$FEATURE --release
-    
+
 CMD cargo run --features=try-runtime,$FEATURE --release -- try-runtime --no-spec-name-check on-runtime-upgrade live --uri $REPLICA_FROM
