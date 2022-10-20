@@ -863,13 +863,15 @@ impl<T: Config> Pallet<T> {
 		is_first: bool,
 		mut task: ScheduledOf<T>,
 	) -> Result<(), (ServiceTaskError, Option<ScheduledOf<T>>)> {
-		if let Some(ref id) = task.maybe_id {
-			Lookup::<T>::remove(id);
-		}
-
 		let (call, lookup_len) = match T::Preimages::peek(&task.call) {
 			Ok(c) => c,
-			Err(_) => return Err((Unavailable, Some(task))),
+			Err(_) => {
+				if let Some(ref id) = task.maybe_id {
+					Lookup::<T>::remove(id);
+				}
+
+				return Err((Unavailable, Some(task)));
+			},
 		};
 
 		weight.check_accrue(T::WeightInfo::service_task(
@@ -881,6 +883,11 @@ impl<T: Config> Pallet<T> {
 		match Self::execute_dispatch(weight, task.origin.clone(), call) {
 			Err(Unavailable) => {
 				debug_assert!(false, "Checked to exist with `peek`");
+
+				if let Some(ref id) = task.maybe_id {
+					Lookup::<T>::remove(id);
+				}
+
 				Self::deposit_event(Event::CallUnavailable {
 					task: (when, agenda_index),
 					id: task.maybe_id,
@@ -889,40 +896,60 @@ impl<T: Config> Pallet<T> {
 			}
 			Err(Overweight) if is_first => {
 				T::Preimages::drop(&task.call);
+
+				if let Some(ref id) = task.maybe_id {
+					Lookup::<T>::remove(id);
+				}
+
 				Self::deposit_event(Event::PermanentlyOverweight {
 					task: (when, agenda_index),
 					id: task.maybe_id,
 				});
 				Err((Unavailable, Some(task)))
 			}
-			Err(Overweight) => Err((Overweight, Some(task))),
+			Err(Overweight) => {
+				// Preserve Lookup -- the task will be postponed.
+				Err((Overweight, Some(task)))
+			},
 			Ok(result) => {
 				Self::deposit_event(Event::Dispatched {
 					task: (when, agenda_index),
 					id: task.maybe_id,
 					result,
 				});
-				if let &Some((period, count)) = &task.maybe_periodic {
-					if count > 1 {
-						task.maybe_periodic = Some((period, count - 1));
-					} else {
-						task.maybe_periodic = None;
-					}
-					let wake = now.saturating_add(period);
-					match Self::place_task(wake, task) {
-						Ok(_) => {}
-						Err((_, task)) => {
-							// TODO: Leave task in storage somewhere for it to be rescheduled
-							// manually.
-							T::Preimages::drop(&task.call);
-							Self::deposit_event(Event::PeriodicFailed {
-								task: (when, agenda_index),
-								id: task.maybe_id,
-							});
+
+				let is_canceled = task.maybe_id.as_ref()
+					.map(|id| !Lookup::<T>::contains_key(id))
+					.unwrap_or(false);
+
+				match &task.maybe_periodic {
+					&Some((period, count)) if !is_canceled => {
+						if count > 1 {
+							task.maybe_periodic = Some((period, count - 1));
+						} else {
+							task.maybe_periodic = None;
 						}
-					}
-				} else {
-					T::Preimages::drop(&task.call);
+						let wake = now.saturating_add(period);
+						match Self::place_task(wake, task) {
+							Ok(_) => {}
+							Err((_, task)) => {
+								// TODO: Leave task in storage somewhere for it to be rescheduled
+								// manually.
+								T::Preimages::drop(&task.call);
+								Self::deposit_event(Event::PeriodicFailed {
+									task: (when, agenda_index),
+									id: task.maybe_id,
+								});
+							}
+						}
+					},
+					_ => {
+						if let Some(ref id) = task.maybe_id {
+							Lookup::<T>::remove(id);
+						}
+
+						T::Preimages::drop(&task.call)
+					},
 				}
 				Ok(())
 			}
