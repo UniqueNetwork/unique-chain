@@ -131,7 +131,7 @@ describe('Refungible: Plain calls', () => {
     expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
   });
 
-  itEth('Can perform mintBulk()', async ({helper}) => {
+  itEth.skip('Can perform mintBulk()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'MintBulky', '6', '6', '');
