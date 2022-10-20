@@ -98,10 +98,9 @@ pub mod pallet {
 			max_test_value: u32,
 		) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin.clone())?;
+			Self::inc_test_value(origin.clone())?;
 
-			if <TestValue<T>>::get() < max_test_value {
-				Self::inc_test_value(origin)?;
-			} else {
+			if <TestValue<T>>::get() == max_test_value {
 				SchedulerPallet::<T>::cancel_named(origin, id)?;
 			}
 
