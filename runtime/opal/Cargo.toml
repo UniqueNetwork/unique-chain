@@ -1,6 +1,8 @@
 ################################################################################
 # Package
 
+cargo-features = ["workspace-inheritance"]
+
 [package]
 authors = ['Unique Network <support@uniquenetwork.io>']
 build = 'build.rs'
