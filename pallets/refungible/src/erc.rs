@@ -121,6 +121,47 @@ impl<T: Config> RefungibleHandle<T> {
 		.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// @notice Set token properties value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param properties settable properties
+	fn set_properties(
+		&mut self,
+		caller: caller,
+		token_id: uint256,
+		properties: Vec<(string, bytes)>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let properties = properties
+			.into_iter()
+			.map(|(key, value)| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::set_token_properties(
+			self,
+			&caller,
+			TokenId(token_id),
+			properties.into_iter(),
+			<Pallet<T>>::token_exists(&self, TokenId(token_id)),
+			&nesting_budget,
+		)
+		.map_err(dispatch_to_evm::<T>)
+	}
+
 	/// @notice Delete token property value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.

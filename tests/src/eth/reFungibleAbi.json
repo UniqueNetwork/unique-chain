@@ -691,6 +691,24 @@
   {
     "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+        ],
+        "internalType": "struct Tuple19[]",
+        "name": "properties",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "setProperties",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       { "internalType": "string", "name": "key", "type": "string" },
       { "internalType": "bytes", "name": "value", "type": "bytes" }
     ],
