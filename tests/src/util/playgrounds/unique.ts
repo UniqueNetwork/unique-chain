@@ -2809,7 +2809,7 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
           this.blocksNum,
           this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
           this.options.priority ?? null,
-          {Value: scheduledTx},
+          scheduledTx,
         ],
         expectSuccess,
       );
