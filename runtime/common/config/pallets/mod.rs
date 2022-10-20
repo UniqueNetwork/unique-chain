@@ -23,7 +23,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, Event, Call, Balances,
+	Runtime, RuntimeEvent, RuntimeCall, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64};
 use up_common::{
@@ -53,7 +53,7 @@ parameter_types! {
 
 impl pallet_common::Config for Runtime {
 	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type CollectionCreationPrice = CollectionCreationPrice;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -65,8 +65,8 @@ impl pallet_common::Config for Runtime {
 }
 
 impl pallet_structure::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 	type WeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
@@ -93,7 +93,7 @@ impl pallet_inflation::Config for Runtime {
 }
 
 impl pallet_unique::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;

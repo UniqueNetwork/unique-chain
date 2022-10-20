@@ -438,7 +438,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
 
-	let (network, system_rpc_tx, start_network) =
+	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
@@ -521,6 +521,7 @@ where
 		network: network.clone(),
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
+		tx_handler_controller,
 	})?;
 
 	if let Some(hwbench) = hwbench {
@@ -538,7 +539,9 @@ where
 
 	let announce_block = {
 		let network = network.clone();
-		Arc::new(move |hash, data| network.announce_block(hash, data))
+		Arc::new(Box::new(move |hash, data| {
+			network.announce_block(hash, data)
+		}))
 	};
 
 	let relay_chain_slot_duration = Duration::from_secs(6);
@@ -623,7 +626,6 @@ where
 		_,
 		_,
 		_,
-		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import: client.clone(),
 		client: client.clone(),
@@ -636,10 +638,9 @@ where
 					slot_duration,
 				);
 
-			Ok((time, slot))
+			Ok((slot, time))
 		},
 		registry: config.prometheus_registry(),
-		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
 	})
@@ -747,7 +748,7 @@ where
 								"Failed to create parachain inherent",
 							)
 						})?;
-						Ok((time, slot, parachain_inherent))
+						Ok((slot, time, parachain_inherent))
 					}
 				},
 				block_import: client.clone(),
@@ -861,7 +862,7 @@ where
 		prometheus_registry.clone(),
 	));
 
-	let (network, system_rpc_tx, network_starter) =
+	let (network, system_rpc_tx, tx_handler_controller, network_starter) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -952,12 +953,14 @@ where
 							current_para_block,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
+							para_blocks_per_relay_epoch: 0,
 							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
 								Default::default(),
 								Default::default(),
 							),
+							relay_randomness_config: (),
 							raw_downward_messages: vec![],
 							raw_horizontal_messages: vec![],
 						};
@@ -1034,6 +1037,7 @@ where
 		system_rpc_tx,
 		config,
 		telemetry: None,
+		tx_handler_controller,
 	})?;
 
 	network_starter.start_network();

@@ -62,7 +62,7 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure,
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
-	weights::Pays,
+	dispatch::Pays,
 	transactional,
 };
 use pallet_evm::GasWeightMapping;
@@ -363,7 +363,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Events compatible with [`frame_system::Config::Event`].
-		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
+		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Handler of accounts and payment.
 		type Currency: Currency<Self::AccountId>;

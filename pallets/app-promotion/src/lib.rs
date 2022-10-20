@@ -27,7 +27,7 @@
 //! The App Promotion pallet allows fund holders to stake at a certain daily rate of return.
 //! The mechanics implemented in the pallet allow it to act as a sponsor for collections / contracts,
 //! the list of which is set by the pallet administrator.
-//!  
+//!
 //!
 //! ## Interface
 //!	The pallet provides interfaces for funds, collection/contract operations (see [types] module).
@@ -146,7 +146,7 @@ pub mod pallet {
 		type RelayBlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
 
 		/// Events compatible with [`frame_system::Config::Event`].
-		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
+		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 	}
 
 	#[pallet::pallet]

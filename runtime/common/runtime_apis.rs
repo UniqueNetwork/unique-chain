@@ -558,7 +558,7 @@ macro_rules! impl_common_runtime_apis {
 
                 fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
                     xts.into_iter().filter_map(|xt| match xt.0.function {
-                        Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
+                        RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
                         _ => None
                     }).collect()
                 }

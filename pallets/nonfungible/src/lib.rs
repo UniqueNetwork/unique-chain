@@ -97,7 +97,7 @@ use frame_support::{
 	storage::with_transaction,
 	pallet_prelude::DispatchResultWithPostInfo,
 	pallet_prelude::Weight,
-	weights::{PostDispatchInfo, Pays},
+	dispatch::{PostDispatchInfo, Pays},
 };
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,

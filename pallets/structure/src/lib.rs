@@ -97,8 +97,10 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_common::Config {
 		type WeightInfo: weights::WeightInfo;
-		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
-		type Call: Parameter + UnfilteredDispatchable<Origin = Self::Origin> + GetDispatchInfo;
+		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
+		type RuntimeCall: Parameter
+			+ UnfilteredDispatchable<RuntimeOrigin = Self::RuntimeOrigin>
+			+ GetDispatchInfo;
 	}
 
 	#[pallet::pallet]

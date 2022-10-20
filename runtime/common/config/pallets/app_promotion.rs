@@ -16,7 +16,7 @@
 
 use crate::{
 	runtime_common::config::pallets::{TreasuryAccountId, RelayChainBlockNumberProvider},
-	Runtime, Balances, BlockNumber, Unique, Event, EvmContractHelpers,
+	Runtime, Balances, BlockNumber, Unique, RuntimeEvent, EvmContractHelpers,
 };
 
 use frame_support::{parameter_types, PalletId};
@@ -59,5 +59,5 @@ impl pallet_app_promotion::Config for Runtime {
 	// type Day = Day;
 	type Nominal = Nominal;
 	type IntervalIncome = IntervalIncome;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }

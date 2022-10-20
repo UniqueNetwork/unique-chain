@@ -52,6 +52,7 @@ pub enum Subcommand {
 
 	/// The custom benchmark subcommmand benchmarking runtime pallets.
 	#[clap(subcommand)]
+	#[cfg(feature = "runtime-benchmarks")]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
 	/// Try runtime
