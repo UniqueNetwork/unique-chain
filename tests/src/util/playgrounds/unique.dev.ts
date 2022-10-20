@@ -312,7 +312,7 @@ class ArrangeGroup {
     await this.helper.wait.noScheduledTasks();
 
     function makeId(slider: number) {
-      const scheduledIdSize = 32;
+      const scheduledIdSize = 64;
       const hexId = slider.toString(16);
       const prefixSize = scheduledIdSize - hexId.length;
 
