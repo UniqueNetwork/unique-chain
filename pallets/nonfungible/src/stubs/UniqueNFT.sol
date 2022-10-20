@@ -105,10 +105,14 @@ contract TokenProperties is Dummy, ERC165 {
 
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0xb3152af3
 =======
 /// @dev the ERC-165 identifier for this interface is 0x674be726
 >>>>>>> feat: Add custum signature with unlimited nesting.
+=======
+/// @dev the ERC-165 identifier for this interface is 0x943ee094
+>>>>>>> fix: after rebase
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -126,9 +130,9 @@ contract Collection is Dummy, ERC165 {
 	/// Set collection properties.
 	///
 	/// @param properties Vector of properties key/value pair.
-	/// @dev EVM selector for this function is: 0x50b26b2a,
+	/// @dev EVM selector for this function is: 0xf90c1ce9,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple19[] memory properties) public {
+	function setCollectionProperties(Tuple21[] memory properties) public {
 		require(false, stub_error);
 		properties;
 		dummy = 0;
@@ -148,7 +152,7 @@ contract Collection is Dummy, ERC165 {
 	/// Delete collection properties.
 	///
 	/// @param keys Properties keys.
-	/// @dev EVM selector for this function is: 0xee206ee3,
+	/// @dev EVM selector for this function is: 0x56d4684a,
 	///  or in textual repr: deleteCollectionProperties(string[])
 	function deleteCollectionProperties(string[] memory keys) public {
 		require(false, stub_error);
@@ -175,13 +179,13 @@ contract Collection is Dummy, ERC165 {
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	/// @dev EVM selector for this function is: 0x285fb8e6,
+	/// @dev EVM selector for this function is: 0x5cad7311,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple19[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Tuple21[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple19[](0);
+		return new Tuple21[](0);
 	}
 
 	/// Set the sponsor of the collection.
@@ -489,7 +493,7 @@ contract Collection is Dummy, ERC165 {
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
@@ -551,6 +555,7 @@ contract Collection is Dummy, ERC165 {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple19 {
 	address field_0;
@@ -602,6 +607,14 @@ contract ERC721Metadata is Dummy, ERC165 {
 
 =======
 >>>>>>> feat: Add custum signature with unlimited nesting.
+=======
+/// @dev anonymous struct
+struct Tuple21 {
+	string field_0;
+	bytes field_1;
+}
+
+>>>>>>> fix: after rebase
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
 /// @dev the ERC-165 identifier for this interface is 0x42966c68
 contract ERC721Burnable is Dummy, ERC165 {
