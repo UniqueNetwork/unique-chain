@@ -44,7 +44,7 @@ jobs:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v1.0.2
+        uses: xom9ikk/dotenv@v2
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
