@@ -384,24 +384,24 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x75794a3c,
 	///  or in textual repr: nextTokenId()
 	function nextTokenId() external view returns (uint256);
+	// /// @notice Function to mint multiple tokens.
+	// /// @dev `tokenIds` should be an array of consecutive numbers and first number
+	// ///  should be obtained with `nextTokenId` method
+	// /// @param to The new owner
+	// /// @param tokenIds IDs of the minted NFTs
+	// /// @dev EVM selector for this function is: 0x44a9945e,
+	// ///  or in textual repr: mintBulk(address,uint256[])
+	// function mintBulk(address to, uint256[] memory tokenIds) external returns (bool);
 
-	/// @notice Function to mint multiple tokens.
-	/// @dev `tokenIds` should be an array of consecutive numbers and first number
-	///  should be obtained with `nextTokenId` method
-	/// @param to The new owner
-	/// @param tokenIds IDs of the minted NFTs
-	/// @dev EVM selector for this function is: 0x44a9945e,
-	///  or in textual repr: mintBulk(address,uint256[])
-	function mintBulk(address to, uint256[] memory tokenIds) external returns (bool);
+	// /// @notice Function to mint multiple tokens with the given tokenUris.
+	// /// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
+	// ///  numbers and first number should be obtained with `nextTokenId` method
+	// /// @param to The new owner
+	// /// @param tokens array of pairs of token ID and token URI for minted tokens
+	// /// @dev EVM selector for this function is: 0x36543006,
+	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
+	// function mintBulkWithTokenURI(address to, Tuple6[] memory tokens) external returns (bool);
 
-	/// @notice Function to mint multiple tokens with the given tokenUris.
-	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
-	///  numbers and first number should be obtained with `nextTokenId` method
-	/// @param to The new owner
-	/// @param tokens array of pairs of token ID and token URI for minted tokens
-	/// @dev EVM selector for this function is: 0x36543006,
-	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	function mintBulkWithTokenURI(address to, Tuple6[] memory tokens) external returns (bool);
 }
 
 /// @dev anonymous struct
