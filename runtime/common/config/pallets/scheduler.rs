@@ -27,7 +27,7 @@ use crate::{
 	runtime_common::{scheduler::SchedulerPaymentExecutor, config::substrate::RuntimeBlockWeights},
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, OriginCaller, Balances,
 };
-use pallet_unique_scheduler::ScheduledEnsureOriginSuccess;
+use pallet_unique_scheduler_v2::ScheduledEnsureOriginSuccess;
 use up_common::types::AccountId;
 
 parameter_types! {
@@ -98,4 +98,5 @@ impl pallet_unique_scheduler_v2::Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = ();
 	type Preimages = ();
+	type CallExecutor = SchedulerPaymentExecutor;
 }
