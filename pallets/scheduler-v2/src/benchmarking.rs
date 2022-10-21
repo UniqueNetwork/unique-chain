@@ -42,6 +42,7 @@ use frame_support::{
 };
 use frame_system::RawOrigin;
 use sp_std::{prelude::*, vec};
+use sp_io::hashing::blake2_256;
 
 use crate::{Pallet as Scheduler, ScheduledCall, EncodedCall};
 use frame_system::Call as SystemCall;
@@ -259,7 +260,7 @@ benchmarks! {
 		let s in 0 .. (T::MaxScheduledPerBlock::get() - 1);
 		let when = BLOCK_NUMBER.into();
 		let periodic = Some((T::BlockNumber::one(), 100));
-		let priority = 0;
+		let priority = Some(0);
 		// Essentially a no-op call.
 		let call = Box::new(SystemCall::set_storage { items: vec![] }.into());
 
@@ -297,7 +298,7 @@ benchmarks! {
 		let id = u32_to_name(s);
 		let when = BLOCK_NUMBER.into();
 		let periodic = Some((T::BlockNumber::one(), 100));
-		let priority = 0;
+		let priority = Some(0);
 		// Essentially a no-op call.
 		let call = Box::new(SystemCall::set_storage { items: vec![] }.into());
 
@@ -328,5 +329,21 @@ benchmarks! {
 		);
 	}
 
-	// impl_benchmark_test_suite!(Scheduler, crate::mock::new_test_ext(), crate::mock::Test);
+	change_named_priority {
+		let origin: RawOrigin<T::AccountId> = frame_system::RawOrigin::Root;
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		let idx = s - 1;
+		let id = u32_to_name(idx);
+		let priority = 42;
+		fill_schedule::<T>(when, s)?;
+	}: _(origin, id, priority)
+	verify {
+		ensure!(
+			Agenda::<T>::get(when)[idx as usize].clone().unwrap().priority == priority,
+			"didn't change the priority"
+		);
+	}
+
+	impl_benchmark_test_suite!(Scheduler, crate::mock::new_test_ext(), crate::mock::Test);
 }
