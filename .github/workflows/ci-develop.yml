@@ -40,12 +40,12 @@ jobs:
     uses: ./.github/workflows/forkless.yml
   
   node-only-update:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'forkless')) }}  # Conditional check for draft & labels per job.
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'node-only-update')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/node-only-update_v2.yml
     
   parallel_and_sequential_tests:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'para')) }}      # Conditional check for draft & labels per job.
-    uses: ./.github/workflows/node-only-update_v3.yml
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'integration')) }}      # Conditional check for draft & labels per job.
+    uses: ./.github/workflows/integration-tests.yml
 
   codestyle:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
