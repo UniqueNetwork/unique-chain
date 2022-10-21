@@ -75,6 +75,7 @@ pub trait WeightInfo {
 	fn cancel(s: u32, ) -> Weight;
 	fn schedule_named(s: u32, ) -> Weight;
 	fn cancel_named(s: u32, ) -> Weight;
+	fn change_named_priority(s: u32, ) -> Weight;
 }
 
 /// Weights for pallet_scheduler using the Substrate node and recommended hardware.
@@ -161,6 +162,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
+
+	// Storage: Scheduler Lookup (r:1 w:1)
+	// Storage: Scheduler Agenda (r:1 w:1)
+	fn change_named_priority(s: u32, ) -> Weight {
+		Weight::from_ref_time(8_642_000)
+			// Standard Error: 0
+			.saturating_add(Weight::from_ref_time(431_000).saturating_mul(s as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -243,6 +254,16 @@ impl WeightInfo for () {
 		Weight::from_ref_time(22_875_000 as u64)
 			// Standard Error: 693
 			.saturating_add(Weight::from_ref_time(336_643 as u64).saturating_mul(s as u64))
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+	}
+
+	// Storage: Scheduler Lookup (r:1 w:1)
+	// Storage: Scheduler Agenda (r:1 w:1)
+	fn change_named_priority(s: u32, ) -> Weight {
+		Weight::from_ref_time(8_642_000)
+			// Standard Error: 0
+			.saturating_add(Weight::from_ref_time(431_000).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
