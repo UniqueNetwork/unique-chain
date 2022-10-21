@@ -1,4 +1,4 @@
-#https://cryptousetech.atlassian.net/browse/CI-37
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586509375/Market+e2e+test
 # Nested workflow for lunching Market e2e tests from external repository https://github.com/UniqueNetwork/market-e2e-tests
 
 name: market api tests

@@ -1,5 +1,5 @@
 # Try-runtime checks
-# https://cryptousetech.atlassian.net/browse/CI-38
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2587656213/Try+runtime
 
 # Triger: only call from main workflow(re-usable workflows)
 on:

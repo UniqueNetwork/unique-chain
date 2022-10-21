@@ -1,4 +1,4 @@
-# https://cryptousetech.atlassian.net/browse/CI-85
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837028/Nodes+only+update
 # Node only update with restart polkadot-launch process.
 
 name: nodes-only update
