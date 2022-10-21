@@ -79,7 +79,7 @@ use codec::{Codec, Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult, Dispatchable, GetDispatchInfo, Parameter},
 	traits::{
-		schedule::{self, DispatchTime},
+		schedule::{self, DispatchTime, LOWEST_PRIORITY},
 		EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp, StorageVersion, PreimageRecipient,
 		ConstU32, UnfilteredDispatchable,
 	},
@@ -354,6 +354,9 @@ pub mod pallet {
 
 		/// The helper type used for custom transaction fee logic.
 		type CallExecutor: DispatchCall<Self, H160>;
+
+		/// Required origin to set/change calls' priority.
+		type PrioritySetOrigin: EnsureOrigin<<Self as system::Config>::Origin>;
 	}
 
 	#[pallet::storage]
@@ -387,6 +390,12 @@ pub mod pallet {
 			task: TaskAddress<T::BlockNumber>,
 			id: Option<[u8; 32]>,
 			result: DispatchResult,
+		},
+		/// Scheduled task's priority has changed
+		PriorityChanged {
+			when: T::BlockNumber,
+			index: u32,
+			priority: schedule::Priority,
 		},
 		/// The call for the provided hash was not found so the task has been aborted.
 		CallUnavailable {
@@ -448,15 +457,20 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
+			priority: Option<schedule::Priority>,
 			call: Box<<T as Config>::Call>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
+
+			if priority.is_some() {
+				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			}
+
 			let origin = <T as Config>::Origin::from(origin);
 			Self::do_schedule(
 				DispatchTime::At(when),
 				maybe_periodic,
-				priority,
+				priority.unwrap_or(LOWEST_PRIORITY),
 				origin.caller().clone(),
 				<ScheduledCall<T>>::new(*call)?,
 			)?;
@@ -479,16 +493,21 @@ pub mod pallet {
 			id: TaskName,
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
+			priority: Option<schedule::Priority>,
 			call: Box<<T as Config>::Call>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
+
+			if priority.is_some() {
+				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			}
+
 			let origin = <T as Config>::Origin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::At(when),
 				maybe_periodic,
-				priority,
+				priority.unwrap_or(LOWEST_PRIORITY),
 				origin.caller().clone(),
 				<ScheduledCall<T>>::new(*call)?,
 			)?;
@@ -514,15 +533,20 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			after: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
+			priority: Option<schedule::Priority>,
 			call: Box<<T as Config>::Call>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
+
+			if priority.is_some() {
+				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			}
+
 			let origin = <T as Config>::Origin::from(origin);
 			Self::do_schedule(
 				DispatchTime::After(after),
 				maybe_periodic,
-				priority,
+				priority.unwrap_or(LOWEST_PRIORITY),
 				origin.caller().clone(),
 				<ScheduledCall<T>>::new(*call)?,
 			)?;
@@ -540,20 +564,36 @@ pub mod pallet {
 			id: TaskName,
 			after: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
-			priority: schedule::Priority,
+			priority: Option<schedule::Priority>,
 			call: Box<<T as Config>::Call>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
+
+			if priority.is_some() {
+				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			}
+
 			let origin = <T as Config>::Origin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::After(after),
 				maybe_periodic,
-				priority,
+				priority.unwrap_or(LOWEST_PRIORITY),
 				origin.caller().clone(),
 				<ScheduledCall<T>>::new(*call)?,
 			)?;
 			Ok(())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::change_named_priority(T::MaxScheduledPerBlock::get()))]
+		pub fn change_named_priority(
+			origin: OriginFor<T>,
+			id: TaskName,
+			priority: schedule::Priority,
+		) -> DispatchResult {
+			T::PrioritySetOrigin::ensure_origin(origin.clone())?;
+			let origin = <T as Config>::Origin::from(origin);
+			Self::do_change_named_priority(origin.caller().clone(), id, priority)
 		}
 	}
 }
@@ -729,6 +769,37 @@ impl<T: Config> Pallet<T> {
 				return Err(Error::<T>::NotFound.into());
 			}
 		})
+	}
+
+	fn do_change_named_priority(
+		origin: T::PalletsOrigin,
+		id: TaskName,
+		priority: schedule::Priority,
+	) -> DispatchResult {
+		match Lookup::<T>::get(id) {
+			Some((when, index)) => {
+				let i = index as usize;
+				Agenda::<T>::try_mutate(when, |agenda| {
+					if let Some(Some(s)) = agenda.get_mut(i) {
+						if matches!(
+							T::OriginPrivilegeCmp::cmp_privilege(&origin, &s.origin),
+							Some(Ordering::Less) | None
+						) {
+							return Err(BadOrigin.into());
+						}
+
+						s.priority = priority;
+						Self::deposit_event(Event::PriorityChanged {
+							when,
+							index,
+							priority,
+						});
+					}
+					Ok(())
+				})
+			}
+			None => Err(Error::<T>::NotFound.into()),
+		}
 	}
 }
 

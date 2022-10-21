@@ -99,4 +99,5 @@ impl pallet_unique_scheduler_v2::Config for Runtime {
 	type WeightInfo = ();
 	type Preimages = ();
 	type CallExecutor = SchedulerPaymentExecutor;
+	type PrioritySetOrigin = EnsureRoot<AccountId>;
 }
