@@ -1,13 +1,10 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837021/Forkless+update+without+data
+# Forkless update without data replication
 
-
-# Controls when the action will run.
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
-
-#Define Workflow variables
-env:
-  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -49,7 +46,7 @@ jobs:
 
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}
+    name: ${{ matrix.network }}-nodata
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -189,6 +186,7 @@ jobs:
           
       - name: Run Sequential tests 
         working-directory: tests
+        if: success() || failure() 
         run: |
           yarn install
           yarn add mochawesome
@@ -212,3 +210,10 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a

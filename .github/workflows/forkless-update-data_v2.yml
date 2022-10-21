@@ -1,18 +1,17 @@
-# Controls when the action will run.
+# Forkless update with data replication
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586869792/Forkless+update+with+data
+
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
-
-#Define Workflow variables
-env:
-  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
   execution-marix:
 
-    name: execution matrix
+    name: Prepare execution matrix
 
     runs-on: self-hosted-ci
     outputs:
@@ -46,7 +45,7 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
     
-    name: ${{ matrix.network }}
+    name: ${{ matrix.network }}-data
     strategy:
       matrix:
         include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
@@ -163,3 +162,10 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down --volumes
+        
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a

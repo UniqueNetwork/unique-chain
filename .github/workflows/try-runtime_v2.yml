@@ -1,3 +1,7 @@
+# Try-runtime checks
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2587656213/Try+runtime
+
+# Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
 
@@ -7,7 +11,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: self-hosted-ci
     
-    name: ${{ matrix.network }}
+    name: ${{ matrix.network }}-try-runtime
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -66,3 +70,10 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+        
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a
