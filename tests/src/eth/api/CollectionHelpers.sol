@@ -18,7 +18,7 @@ interface CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x58918631
+/// @dev the ERC-165 identifier for this interface is 0x0edfb42e
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -53,6 +53,10 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// @dev EVM selector for this function is: 0x85624258,
 	///  or in textual repr: makeCollectionERC721MetadataCompatible(address,string)
 	function makeCollectionERC721MetadataCompatible(address collection, string memory baseUri) external;
+
+	/// @dev EVM selector for this function is: 0x564e321f,
+	///  or in textual repr: destroyCollection(address)
+	function destroyCollection(address collectionAddress) external;
 
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question
