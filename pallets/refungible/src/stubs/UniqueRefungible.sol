@@ -91,7 +91,7 @@ contract TokenProperties is Dummy, ERC165 {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x25d897dc
+/// @dev the ERC-165 identifier for this interface is 0x5d354410
 contract Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -103,6 +103,17 @@ contract Collection is Dummy, ERC165 {
 		require(false, stub_error);
 		key;
 		value;
+		dummy = 0;
+	}
+
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	/// @dev EVM selector for this function is: 0x50b26b2a,
+	///  or in textual repr: setCollectionProperties((string,bytes)[])
+	function setCollectionProperties(Tuple19[] memory properties) public {
+		require(false, stub_error);
+		properties;
 		dummy = 0;
 	}
 
@@ -130,6 +141,19 @@ contract Collection is Dummy, ERC165 {
 		key;
 		dummy;
 		return hex"";
+	}
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0x285fb8e6,
+	///  or in textual repr: collectionProperties(string[])
+	function collectionProperties(string[] memory keys) public view returns (Tuple19[] memory) {
+		require(false, stub_error);
+		keys;
+		dummy;
+		return new Tuple19[](0);
 	}
 
 	/// Set the sponsor of the collection.
@@ -468,6 +492,12 @@ contract Collection is Dummy, ERC165 {
 		newOwner;
 		dummy = 0;
 	}
+}
+
+/// @dev anonymous struct
+struct Tuple19 {
+	string field_0;
+	bytes field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
