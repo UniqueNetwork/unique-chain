@@ -4,6 +4,9 @@ LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=
 
+ARG POLKADOT_BUILD_BRANCH=
+#ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
+
 ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
@@ -34,7 +37,7 @@ FROM ubuntu:20.04
 ARG RUNTIME=
 ENV RUNTIME $RUNTIME
 ARG POLKADOT_BUILD_BRANCH=
-ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
+#ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
 
 RUN apt-get -y update && \
     apt-get -y install curl git && \
@@ -55,6 +58,6 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 RUN echo "$RUNTIME"
 RUN echo "$POLKADOT_BUILD_BRANCH"
 
-COPY --from="uniquenetwork/builder-polkadot:$POLKADOT_BUILD_BRANCH" /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
-COPY --from="uniquenetwork/builder-polkadot:$POLKADOT_BUILD_BRANCH" /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
+COPY --from="uniquenetwork/builder-polkadot:$(POLKADOT_BUILD_BRANCH)" /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from="uniquenetwork/builder-polkadot:$(POLKADOT_BUILD_BRANCH)" /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
 
