@@ -1,19 +1,8 @@
-ARG POLKADOT_BUILD_BRANCH=
 ARG POLKADOT_BUILD_BRANCH
-
-
 FROM uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} as polkadot
 
 # ===== RUN ======
 FROM ubuntu:20.04
-
-#ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
-
-RUN echo "$POLKADOT_BUILD_BRANCH"
-
-#RUN export POLKADOT_BUILD_BRANCH=$POLKADOT_BUILD_BRANCH
-
-#RUN echo "POLKADOT_BUILD_BRANCH="$POLKADOT_BUILD_BRANCH
 
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 
