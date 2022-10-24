@@ -1,3 +1,6 @@
+ARG POLKADOT_BUILD_BRANCH
+FROM uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} as polkadot
+
 # ===== Rust builder =====
 FROM ubuntu:20.04 as rust-builder
 LABEL maintainer="Unique.Network"
@@ -84,9 +87,8 @@ COPY --from=builder-unique-current /unique_parachain/target/release/unique-colla
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm
 
-COPY --from=uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
-COPY --from=uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
-
+COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \

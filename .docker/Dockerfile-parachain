@@ -1,3 +1,6 @@
+ARG POLKADOT_BUILD_BRANCH
+FROM uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} as polkadot
+
 # ===== Rust builder =====
 FROM ubuntu:20.04 as rust-builder
 LABEL maintainer="Unique.Network"
@@ -36,7 +39,6 @@ ARG FEATURE=
 ARG REPO_URL=
 ARG BRANCH=
 
-
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH . && \
@@ -68,11 +70,10 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-unique /unique_parachain/launch-config.json /polkadot-launch/launch-config.json
 
-COPY --from=uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /polkadot-launch && \
     yarn start launch-config.json
-
 
