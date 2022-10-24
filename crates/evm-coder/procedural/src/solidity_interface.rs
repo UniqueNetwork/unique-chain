@@ -841,22 +841,30 @@ impl Method {
 		}
 	}
 
-	fn expand_type(ty: &AbiType, token_stream: &mut proc_macro2::TokenStream) {
+	fn expand_type(
+		ty: &AbiType,
+		token_stream: &mut proc_macro2::TokenStream,
+		read_signature: bool,
+	) {
 		match ty {
-			AbiType::Plain(ref ident) => {
-				token_stream.extend(quote! {
+			AbiType::Plain(ref ident) => token_stream.extend(if read_signature {
+				quote! {
 					(<#ident>::SIGNATURE),
-				});
-			}
+				}
+			} else {
+				quote! {
+					#ident,
+				}
+			}),
 
 			AbiType::Tuple(ref tuple_type) => {
 				let mut tuple_types = proc_macro2::TokenStream::new();
 				for ty in tuple_type {
-					Self::expand_type(ty, &mut tuple_types);
+					Self::expand_type(ty, &mut tuple_types, false);
 				}
-				let group =
-					proc_macro2::Group::new(proc_macro2::Delimiter::Parenthesis, tuple_types);
-				token_stream.extend(group.stream());
+				tuple_types = quote! { (<(#tuple_types)>::SIGNATURE), };
+				// println!("{}", tuple_types);
+				token_stream.extend(tuple_types);
 			}
 
 			AbiType::Vec(ref _vec_type) => {}
@@ -873,8 +881,9 @@ impl Method {
 				continue;
 			}
 
-			Self::expand_type(&arg.ty, &mut token_stream);
+			Self::expand_type(&arg.ty, &mut token_stream, true);
 		}
+		// println!("!!!!! {}", token_stream);
 
 		let func_name = self.camel_name.clone();
 		let func_name = quote!(SignaturePreferences {
@@ -885,9 +894,6 @@ impl Method {
 			close_name: None,
 		});
 		token_stream = quote!({ ::evm_coder::make_signature!(new fn(#func_name),#token_stream) });
-
-		// println!("!!!!! {}", custom_signature);
-
 		token_stream
 	}
 
