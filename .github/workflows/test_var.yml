@@ -85,21 +85,5 @@ jobs:
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
-      - name: Generate launch-config-forkless-nodata.json
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/forkless-config/launch-config-forkless-nodata.j2
-          output_file: .docker/launch-config-forkless-nodata.json
-          variables: |
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
-
-      - name: Show launch-config-forkless configuration
-        run: cat .docker/launch-config-forkless-nodata.json
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
