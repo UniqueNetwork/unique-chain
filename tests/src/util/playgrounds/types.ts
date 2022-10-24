@@ -224,3 +224,4 @@ export type TSiblingNetworkds = 'moonbeam' | 'moonriver' | 'acala' | 'karura' | 
 export type TRelayNetworks = 'rococo' | 'westend';
 export type TNetworks = TUniqueNetworks | TSiblingNetworkds | TRelayNetworks;
 export type TSigner = IKeyringPair; // | 'string'
+export type TCollectionMode = 'nft' | 'rft' | 'ft';

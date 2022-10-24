@@ -13,7 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x5d354410
+/// @dev the ERC-165 identifier for this interface is 0xb3152af3
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -37,6 +37,13 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: deleteCollectionProperty(string)
 	function deleteCollectionProperty(string memory key) external;
 
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @dev EVM selector for this function is: 0xee206ee3,
+	///  or in textual repr: deleteCollectionProperties(string[])
+	function deleteCollectionProperties(string[] memory keys) external;
+
 	/// Get collection property.
 	///
 	/// @dev Throws error if key not found.
@@ -49,7 +56,7 @@ interface Collection is Dummy, ERC165 {
 
 	/// Get collection properties.
 	///
-	/// @param keys Properties keys.
+	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])

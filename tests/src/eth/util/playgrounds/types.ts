@@ -19,3 +19,6 @@ export interface TEthCrossAccount {
   readonly field_0: string,
   readonly field_1: string | Uint8Array,
 }
+
+export type EthProperty = string[];
+
