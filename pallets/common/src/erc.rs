@@ -85,7 +85,7 @@ where
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;
-		let value = value.try_into().map_err(|_| "value too large")?;
+		let value = value.0.try_into().map_err(|_| "value too large")?;
 
 		<Pallet<T>>::set_collection_property(self, &caller, Property { key, value })
 			.map_err(dispatch_to_evm::<T>)
@@ -120,7 +120,7 @@ where
 		let props = <CollectionProperties<T>>::get(self.id);
 		let prop = props.get(&key).ok_or("key not found")?;
 
-		Ok(prop.to_vec())
+		Ok(bytes(prop.to_vec()))
 	}
 
 	/// Set the sponsor of the collection.

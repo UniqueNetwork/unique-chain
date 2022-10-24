@@ -22,6 +22,7 @@ impl-trait-for-tuples = "0.2.2"
 # We want to assert some large binary blobs equality in tests
 hex = "0.4.3"
 hex-literal = "0.3.4"
+similar-asserts = "1.4.2"
 
 [features]
 default = ["std"]
