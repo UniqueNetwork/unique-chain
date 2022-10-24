@@ -27,7 +27,7 @@ pub mod pallet {
 	use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_unique_scheduler::Config {
+	pub trait Config: frame_system::Config + pallet_unique_scheduler_v2::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 

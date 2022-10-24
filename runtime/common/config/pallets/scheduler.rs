@@ -88,10 +88,10 @@ impl PrivilegeCmp<OriginCaller> for EqualOrRootOnly {
 // }
 
 impl pallet_unique_scheduler_v2::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
 	type PalletsOrigin = OriginCaller;
-	type Call = Call;
+	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureSignedOrRoot<AccountId>;
 	type OriginPrivilegeCmp = EqualOrRootOnly;
