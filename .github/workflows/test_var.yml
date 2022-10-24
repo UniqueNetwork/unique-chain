@@ -58,11 +58,6 @@ jobs:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker system prune -a -f       
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
@@ -92,3 +87,8 @@ jobs:
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker system prune -a -f        
