@@ -24,7 +24,7 @@ contract CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0xa2c196ab
+/// @dev the ERC-165 identifier for this interface is 0xd8b36039
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -77,9 +77,26 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	/// @dev EVM selector for this function is: 0xac1e2285,
-	///  or in textual repr: createRTCollection(string,uint8,string,string)
-	function createRTCollection(
+	/// @dev EVM selector for this function is: 0xa5596388,
+	///  or in textual repr: createERC721MetadataCompatibleRFTCollection(string,string,string,string)
+	function createERC721MetadataCompatibleRFTCollection(
+		string memory name,
+		string memory description,
+		string memory tokenPrefix,
+		string memory baseUri
+	) public payable returns (address) {
+		require(false, stub_error);
+		name;
+		description;
+		tokenPrefix;
+		baseUri;
+		dummy = 0;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// @dev EVM selector for this function is: 0x7335b79f,
+	///  or in textual repr: createFTCollection(string,uint8,string,string)
+	function createFTCollection(
 		string memory name,
 		uint8 decimals,
 		string memory description,

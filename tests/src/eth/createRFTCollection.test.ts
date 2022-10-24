@@ -264,7 +264,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');
   });
   
-  itEth('destroyCollection test', async ({helper}) => {
+  itEth('destroyCollection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);

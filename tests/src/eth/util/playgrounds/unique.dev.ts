@@ -210,8 +210,7 @@ class EthGroup extends EthGroupBase {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
         
-    const result = await collectionHelper.methods.createRTCollection(name, decimals, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
-
+    const result = await collectionHelper.methods.createFTCollection(name, decimals, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
     

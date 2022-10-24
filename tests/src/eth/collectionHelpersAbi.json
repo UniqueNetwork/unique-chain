@@ -42,6 +42,30 @@
     "inputs": [
       { "internalType": "string", "name": "name", "type": "string" },
       { "internalType": "string", "name": "description", "type": "string" },
+      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
+      { "internalType": "string", "name": "baseUri", "type": "string" }
+    ],
+    "name": "createERC721MetadataCompatibleRFTCollection",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "uint8", "name": "decimals", "type": "uint8" },
+      { "internalType": "string", "name": "description", "type": "string" },
+      { "internalType": "string", "name": "tokenPrefix", "type": "string" }
+    ],
+    "name": "createFTCollection",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
     "name": "createNFTCollection",
@@ -56,18 +80,6 @@
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
     "name": "createRFTCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "uint8", "name": "decimals", "type": "uint8" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" }
-    ],
-    "name": "createRTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "payable",
     "type": "function"

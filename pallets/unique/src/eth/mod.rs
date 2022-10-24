@@ -18,7 +18,7 @@
 
 use core::marker::PhantomData;
 use ethereum as _;
-use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
+use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::traits::Get;
 
 use crate::Pallet;
@@ -27,23 +27,24 @@ use pallet_common::{
 	CollectionById,
 	dispatch::CollectionDispatch,
 	erc::{
+		static_property::key,
 		CollectionHelpersEvents,
-		static_property::{key},
 	},
 	Pallet as PalletCommon,
+	
 };
-use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
+use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use sp_std::vec;
 use up_data_structs::{
-	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue,
+	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
+	CreateCollectionData, PropertyValue,
 };
 
-use crate::{Config, SelfWeightOf, weights::WeightInfo};
+use crate::{weights::WeightInfo, Config, SelfWeightOf};
 
-use sp_std::vec::Vec;
 use alloc::format;
+use sp_std::vec::Vec;
 
 /// See [`CollectionHelpersCall`]
 pub struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
@@ -104,6 +105,7 @@ fn create_refungible_collection_internal<T: Config>(
 	)
 }
 
+#[inline(always)]
 fn create_collection_internal<T: Config>(
 	caller: caller,
 	value: value,
@@ -212,7 +214,14 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		self.create_nft_collection(caller, value, name, description, token_prefix)
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::NFT,
+			description,
+			token_prefix,
+		)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -225,11 +234,39 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		create_refungible_collection_internal::<T>(caller, value, name, description, token_prefix)
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::ReFungible,
+			description,
+			token_prefix,
+		)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createRTCollection")]
+	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
+	fn create_refungible_collection_with_properties(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+		base_uri: string,
+	) -> Result<address> {
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::ReFungible,
+			description,
+			token_prefix,
+		)
+	}
+
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createFTCollection")]
 	fn create_fungible_collection(
 		&mut self,
 		caller: caller,
