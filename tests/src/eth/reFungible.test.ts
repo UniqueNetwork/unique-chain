@@ -201,6 +201,7 @@ describe('Refungible: Plain calls', () => {
         tokenEvents.push(event);
       });
       const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();
+      if (tokenEvents.length == 0) await helper.wait.newBlocks(1);
 
       let event = result.events.Transfer;
       expect(event.address).to.equal(collectionAddress);
