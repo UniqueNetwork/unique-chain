@@ -17,7 +17,7 @@
 //! Implementation of magic contract
 
 extern crate alloc;
-use alloc::{format, string::ToString};
+use alloc::string::ToString;
 use core::marker::PhantomData;
 use evm_coder::{
 	abi::AbiWriter,
@@ -25,7 +25,7 @@ use evm_coder::{
 	generate_stubgen, solidity_interface,
 	types::*,
 	ToLog,
-	custom_signature::{FunctionName, FunctionSignature},
+	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
 	make_signature,
 };
 use pallet_evm::{

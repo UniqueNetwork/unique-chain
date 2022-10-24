@@ -35,7 +35,7 @@ use evm_coder::{
 	generate_stubgen, solidity_interface,
 	types::*,
 	weight,
-	custom_signature::{FunctionName, FunctionSignature},
+	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
 	make_signature,
 };
 use pallet_common::{

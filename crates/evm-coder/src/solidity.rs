@@ -30,7 +30,6 @@ use core::{
 	marker::PhantomData,
 	cell::{Cell, RefCell},
 	cmp::Reverse,
-	str::from_utf8,
 };
 use impl_trait_for_tuples::impl_for_tuples;
 use crate::{types::*, custom_signature::FunctionSignature};
@@ -514,10 +513,16 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writeln!(
 			writer,
 			"\t{hide_comment}///  or in textual repr: {}",
-			// from_utf8(self.custom_signature.as_str()).expect("bad utf8")
 			self.selector_str
 		)?;
-		write!(writer, "\t{hide_comment}function {}(", self.name)?;
+		if self.selector_str != self.custom_signature.as_str() {
+			writeln!(
+				writer,
+				"\t{hide_comment}///  or in the expanded repr: {}",
+				self.custom_signature.as_str()
+			)?;
+		}
+		write!(writer, "\tfunction {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;
 		if is_impl {

@@ -21,7 +21,7 @@ use evm_coder::{
 	types::*,
 	execution::{Result, Error},
 	weight,
-	custom_signature::{FunctionName, FunctionSignature},
+	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
 	make_signature,
 };
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};

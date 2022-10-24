@@ -124,14 +124,13 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 	use core::str::from_utf8;
 
-	use crate::custom_signature::SIGNATURE_SIZE_LIMIT;
+	use crate::custom_signature::{SignatureUnit, SIGNATURE_SIZE_LIMIT};
 
 	pub trait Signature {
-		const SIGNATURE: [u8; SIGNATURE_SIZE_LIMIT];
-		const SIGNATURE_LEN: usize;
+		const SIGNATURE: SignatureUnit;
 
 		fn as_str() -> &'static str {
-			from_utf8(&Self::SIGNATURE[..Self::SIGNATURE_LEN]).expect("bad utf-8")
+			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
 		}
 	}
 

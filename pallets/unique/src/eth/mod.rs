@@ -22,7 +22,7 @@ use evm_coder::{
 	execution::*,
 	generate_stubgen, solidity, solidity_interface,
 	types::*,
-	custom_signature::{FunctionName, FunctionSignature},
+	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
 	make_signature,
 , weight};
 use frame_support::{traits::Get, storage::StorageNMap};

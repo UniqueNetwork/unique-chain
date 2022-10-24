@@ -21,7 +21,7 @@
 
 extern crate alloc;
 
-use alloc::{format, string::ToString};
+use alloc::string::ToString;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
@@ -32,7 +32,7 @@ use evm_coder::{
 	generate_stubgen, solidity, solidity_interface,
 	types::*,
 	weight,
-	custom_signature::{FunctionName, FunctionSignature},
+	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
 	make_signature,
 };
 use frame_support::{BoundedBTreeMap, BoundedVec};

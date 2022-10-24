@@ -26,6 +26,8 @@ use primitive_types::{H160, U256};
 use crate::{
 	execution::{Error, ResultWithPostInfo, WithPostDispatchInfo},
 	types::*,
+	make_signature,
+	custom_signature::{SignatureUnit, SIGNATURE_SIZE_LIMIT},
 };
 use crate::execution::Result;
 
@@ -378,7 +380,6 @@ impl_abi_readable!(uint256, uint256, false);
 impl_abi_readable!(bytes4, bytes4, false);
 impl_abi_readable!(address, address, false);
 impl_abi_readable!(string, string, true);
-// impl_abi_readable!(bytes, bytes, true);
 
 impl TypeHelper for bytes {
 	fn is_dynamic() -> bool {
@@ -418,6 +419,10 @@ where
 		}
 		Ok(out)
 	}
+}
+
+impl<R: Signature> Signature for Vec<R> {
+	make_signature!(new nameof(R) fixed("[]"));
 }
 
 impl TypeHelper for EthCrossAccount {
@@ -471,7 +476,9 @@ macro_rules! impl_tuples {
 				0 $(+ <$ident>::size())+
 			}
 		}
+
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
+
 		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
 		where
 			$(
@@ -487,6 +494,7 @@ macro_rules! impl_tuples {
 				))
 			}
 		}
+
 		#[allow(non_snake_case)]
 		impl<$($ident),+> AbiWrite for ($($ident,)+)
 		where
@@ -502,6 +510,18 @@ macro_rules! impl_tuples {
 					$($ident.abi_write(writer);)+
 				}
 			}
+		}
+
+		impl<$($ident),+> Signature for ($($ident,)+)
+		where
+		$($ident: Signature,)+
+		{
+			make_signature!(
+				new fixed("(")
+				$(nameof($ident) fixed(","))+
+				shift_left(1)
+				fixed(")")
+			);
 		}
 	};
 }
