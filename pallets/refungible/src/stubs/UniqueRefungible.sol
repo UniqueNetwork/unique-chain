@@ -18,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x41369377
+/// @dev the ERC-165 identifier for this interface is 0x55dba919
 contract TokenProperties is Dummy, ERC165 {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
@@ -58,6 +58,19 @@ contract TokenProperties is Dummy, ERC165 {
 		tokenId;
 		key;
 		value;
+		dummy = 0;
+	}
+
+	/// @notice Set token properties value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param properties settable properties
+	/// @dev EVM selector for this function is: 0x14ed3a6e,
+	///  or in textual repr: setProperties(uint256,(string,bytes)[])
+	function setProperties(uint256 tokenId, Tuple19[] memory properties) public {
+		require(false, stub_error);
+		tokenId;
+		properties;
 		dummy = 0;
 	}
 
@@ -458,7 +471,7 @@ contract Collection is Dummy, ERC165 {
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()

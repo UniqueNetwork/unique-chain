@@ -2,12 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.5] - 2022-20-10
+
+### Change
+
+- Added `set_properties` method for `TokenProperties` interface.
+
 ## [v0.2.4] - 2022-08-24
 
 ### Change
- - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
+
+- Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
 
 <!-- bureaucrate goes here -->
+
 ## [v0.2.3] 2022-08-16
 
 ### Other changes

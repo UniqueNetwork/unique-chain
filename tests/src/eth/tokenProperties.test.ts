@@ -16,6 +16,7 @@
 
 import {itEth, usingEthPlaygrounds, expect} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
+import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
@@ -67,6 +68,64 @@ describe('EVM token properties', () => {
 
     const [{value}] = await token.getProperties(['testKey']);
     expect(value).to.equal('testValue');
+  });
+  
+  itEth('Can be multiple set for NFT ', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    
+    const properties = Array(5).fill(0).map((_, i) => { return {field_0: `key_${i}`, field_1: Buffer.from(`value_${i}`)}; });
+    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.field_0, permission: {tokenOwner: true,
+      collectionAdmin: true,
+      mutable: true}}; });
+    
+    const collection = await helper.nft.mintCollection(alice, {
+      tokenPrefix: 'ethp',
+      tokenPropertyPermissions: permissions,
+    });
+    
+    const token = await collection.mintToken(alice);
+    
+    const valuesBefore = await token.getProperties(properties.map(p => p.field_0));
+    expect(valuesBefore).to.be.deep.equal([]);
+    
+    await collection.addAdmin(alice, {Ethereum: caller});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+
+    await contract.methods.setProperties(token.tokenId, properties).send({from: caller});
+
+    const values = await token.getProperties(properties.map(p => p.field_0));
+    expect(values).to.be.deep.equal(properties.map(p => { return {key: p.field_0, value: p.field_1.toString()}; }));
+  });
+  
+  itEth('Can be multiple set for RFT ', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    
+    const properties = Array(5).fill(0).map((_, i) => { return {field_0: `key_${i}`, field_1: Buffer.from(`value_${i}`)}; });
+    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.field_0, permission: {tokenOwner: true,
+      collectionAdmin: true,
+      mutable: true}}; });
+    
+    const collection = await helper.rft.mintCollection(alice, {
+      tokenPrefix: 'ethp',
+      tokenPropertyPermissions: permissions,
+    });
+        
+    const token = await collection.mintToken(alice);
+    
+    const valuesBefore = await token.getProperties(properties.map(p => p.field_0));
+    expect(valuesBefore).to.be.deep.equal([]);
+    
+    await collection.addAdmin(alice, {Ethereum: caller});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft', caller);
+
+    await contract.methods.setProperties(token.tokenId, properties).send({from: caller});
+
+    const values = await token.getProperties(properties.map(p => p.field_0));
+    expect(values).to.be.deep.equal(properties.map(p => { return {key: p.field_0, value: p.field_1.toString()}; }));
   });
 
   itEth('Can be deleted', async({helper}) => {
