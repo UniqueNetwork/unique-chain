@@ -86,7 +86,7 @@ use sp_runtime::{
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, UnfilteredDispatchable, Parameter},
+	dispatch::{DispatchError, DispatchResult, Dispatchable, UnfilteredDispatchable, Parameter, GetDispatchInfo},
 	traits::{
 		schedule::{self, DispatchTime, MaybeHashed},
 		NamedReservableCurrency, EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp,
@@ -101,7 +101,7 @@ pub use weights::WeightInfo;
 pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
 
-type ScheduledId = [u8; MAX_TASK_ID_LENGTH_IN_BYTES as usize];
+pub type ScheduledId = [u8; MAX_TASK_ID_LENGTH_IN_BYTES as usize];
 pub type CallOrHashOf<T> =
 	MaybeHashed<<T as Config>::RuntimeCall, <T as frame_system::Config>::Hash>;
 
@@ -231,10 +231,10 @@ pub mod pallet {
 
 		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<Origin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
-			+ UnfilteredDispatchable<Origin = <Self as system::Config>::RuntimeOrigin>
+			+ Dispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ UnfilteredDispatchable<RuntimeOrigin = <Self as system::Config>::RuntimeOrigin>
 			+ GetDispatchInfo
-			+ From<system::RuntimeCall<Self>>;
+			+ From<system::Call<Self>>;
 
 		/// The maximum weight that may be scheduled per block for any dispatchables of less
 		/// priority than `schedule::HARD_DEADLINE`.
@@ -611,7 +611,7 @@ pub mod pallet {
 			priority: schedule::Priority,
 		) -> DispatchResult {
 			T::PrioritySetOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_change_named_priority(origin.caller().clone(), id, priority)
 		}
 	}

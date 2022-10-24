@@ -16,7 +16,7 @@
 
 use frame_support::{
 	traits::NamedReservableCurrency,
-	weights::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
+	dispatch::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
 };
 use sp_runtime::{
 	traits::{Dispatchable, Applyable, Member},
@@ -25,7 +25,7 @@ use sp_runtime::{
 	DispatchErrorWithPostInfo, DispatchError,
 };
 use codec::Encode;
-use crate::{Runtime, Call, Origin, Balances};
+use crate::{Runtime, RuntimeCall, RuntimeOrigin, Balances};
 use up_common::types::{AccountId, Balance};
 use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler::DispatchCall;
@@ -62,20 +62,20 @@ pub struct SchedulerPaymentExecutor;
 impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
-	<T as frame_system::Config>::Call: Member
-		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
+	<T as frame_system::Config>::RuntimeCall: Member
+		+ Dispatchable<RuntimeOrigin = RuntimeOrigin, Info = DispatchInfo>
 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
 		+ GetDispatchInfo
 		+ From<frame_system::Call<Runtime>>,
 	SelfContainedSignedInfo: Send + Sync + 'static,
-	Call: From<<T as frame_system::Config>::Call>
-		+ From<<T as pallet_unique_scheduler::Config>::Call>
+	RuntimeCall: From<<T as frame_system::Config>::RuntimeCall>
+		+ From<<T as pallet_unique_scheduler::Config>::RuntimeCall>
 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn dispatch_call(
 		signer: Option<<T as frame_system::Config>::AccountId>,
-		call: <T as pallet_unique_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::RuntimeCall,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 		TransactionValidityError,
@@ -93,7 +93,7 @@ where
 
 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
 			AccountId,
-			Call,
+			RuntimeCall,
 			SignedExtraScheduler,
 			SelfContainedSignedInfo,
 		> {
@@ -107,7 +107,7 @@ where
 	fn reserve_balance(
 		id: [u8; 16],
 		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::RuntimeCall,
 		count: u32,
 	) -> Result<(), DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
@@ -125,7 +125,7 @@ where
 	fn pay_for_call(
 		id: [u8; 16],
 		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::Call,
+		call: <T as pallet_unique_scheduler::Config>::RuntimeCall,
 	) -> Result<u128, DispatchError> {
 		let dispatch_info = call.get_dispatch_info();
 		let weight: Balance =
