@@ -1,23 +1,17 @@
-# ===== RUN ======
 ARG POLKADOT_BUILD_BRANCH=
 ARG POLKADOT_BUILD_BRANCH
 
+# ===== RUN ======
 FROM ubuntu:20.04
 
-ARG POLKADOT_BUILD_BRANCH=
-ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
+#ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
 
 RUN echo "$POLKADOT_BUILD_BRANCH"
 
-ARG POLKADOT_BUILD_BRANCH
-ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
+#RUN export POLKADOT_BUILD_BRANCH=$POLKADOT_BUILD_BRANCH
 
-RUN export POLKADOT_BUILD_BRANCH=$POLKADOT_BUILD_BRANCH
+#RUN echo "POLKADOT_BUILD_BRANCH="$POLKADOT_BUILD_BRANCH
 
-RUN echo "POLKADOT_BUILD_BRANCH="$POLKADOT_BUILD_BRANCH
-
-
-ARG POLKADOT_BUILD_BRANCH
 COPY --from=uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
 
