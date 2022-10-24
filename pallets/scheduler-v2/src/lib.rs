@@ -113,7 +113,7 @@ pub enum ScheduledCall<T: Config> {
 }
 
 impl<T: Config> ScheduledCall<T> {
-	pub fn new(call: <T as Config>::Call) -> Result<Self, DispatchError> {
+	pub fn new(call: <T as Config>::RuntimeCall) -> Result<Self, DispatchError> {
 		let encoded = call.encode();
 		let len = encoded.len();
 
@@ -151,8 +151,8 @@ impl<T: Config> ScheduledCall<T> {
 		}
 	}
 
-	fn decode(mut data: &[u8]) -> Result<<T as Config>::Call, DispatchError> {
-		<T as Config>::Call::decode(&mut data)
+	fn decode(mut data: &[u8]) -> Result<<T as Config>::RuntimeCall, DispatchError> {
+		<T as Config>::RuntimeCall::decode(&mut data)
 			.map_err(|_| <Error<T>>::ScheduledCallCorrupted.into())
 	}
 }
@@ -162,14 +162,14 @@ pub trait SchedulerPreimages<T: Config>: PreimageRecipient<T::Hash> {
 
 	fn peek(
 		call: &ScheduledCall<T>,
-	) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError>;
+	) -> Result<(<T as pallet::Config>::RuntimeCall, Option<u32>), DispatchError>;
 
 	/// Convert the given scheduled `call` value back into its original instance. If successful,
 	/// `drop` any data backing it. This will not break the realisability of independently
 	/// created instances of `ScheduledCall` which happen to have identical data.
 	fn realize(
 		call: &ScheduledCall<T>,
-	) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError>;
+	) -> Result<(<T as pallet::Config>::RuntimeCall, Option<u32>), DispatchError>;
 }
 
 impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
@@ -182,7 +182,7 @@ impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
 
 	fn peek(
 		call: &ScheduledCall<T>,
-	) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError> {
+	) -> Result<(<T as pallet::Config>::RuntimeCall, Option<u32>), DispatchError> {
 		match call {
 			ScheduledCall::Inline(data) => Ok((ScheduledCall::<T>::decode(data)?, None)),
 			ScheduledCall::PreimageLookup {
@@ -200,7 +200,7 @@ impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
 
 	fn realize(
 		call: &ScheduledCall<T>,
-	) -> Result<(<T as pallet::Config>::Call, Option<u32>), DispatchError> {
+	) -> Result<(<T as pallet::Config>::RuntimeCall, Option<u32>), DispatchError> {
 		let r = Self::peek(call)?;
 		Self::drop(call);
 		Ok(r)
@@ -252,7 +252,7 @@ struct WeightCounter {
 impl WeightCounter {
 	fn check_accrue(&mut self, w: Weight) -> bool {
 		let test = self.used.saturating_add(w);
-		if test > self.limit {
+		if test.any_gt(self.limit) {
 			false
 		} else {
 			self.used = test;
@@ -261,7 +261,7 @@ impl WeightCounter {
 	}
 
 	fn can_accrue(&mut self, w: Weight) -> bool {
-		self.used.saturating_add(w) <= self.limit
+		self.used.saturating_add(w).all_lte(self.limit)
 	}
 }
 
@@ -300,12 +300,12 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The aggregated origin which the dispatch will take.
-		type Origin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
+		type RuntimeOrigin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
 			+ From<Self::PalletsOrigin>
-			+ IsType<<Self as system::Config>::Origin>
+			+ IsType<<Self as system::Config>::RuntimeOrigin>
 			+ Clone;
 
 		/// The caller origin, overarching type of all pallets origins.
@@ -317,9 +317,9 @@ pub mod pallet {
 			+ MaxEncodedLen;
 
 		/// The aggregated call type.
-		type Call: Parameter
-			+ Dispatchable<Origin = <Self as Config>::Origin, PostInfo = PostDispatchInfo>
-			+ UnfilteredDispatchable<Origin = <Self as system::Config>::Origin>
+		type RuntimeCall: Parameter
+			+ Dispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ UnfilteredDispatchable<RuntimeOrigin = <Self as system::Config>::RuntimeOrigin>
 			+ GetDispatchInfo
 			+ From<system::Call<Self>>;
 
@@ -329,7 +329,7 @@ pub mod pallet {
 
 		/// Required origin to schedule or cancel calls.
 		type ScheduleOrigin: EnsureOrigin<
-			<Self as system::Config>::Origin,
+			<Self as system::Config>::RuntimeOrigin,
 			Success = ScheduledEnsureOriginSuccess<Self::AccountId>,
 		>;
 
@@ -356,7 +356,7 @@ pub mod pallet {
 		type CallExecutor: DispatchCall<Self, H160>;
 
 		/// Required origin to set/change calls' priority.
-		type PrioritySetOrigin: EnsureOrigin<<Self as system::Config>::Origin>;
+		type PrioritySetOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
 	}
 
 	#[pallet::storage]
@@ -458,7 +458,7 @@ pub mod pallet {
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 			priority: Option<schedule::Priority>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 
@@ -466,7 +466,7 @@ pub mod pallet {
 				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
 			}
 
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule(
 				DispatchTime::At(when),
 				maybe_periodic,
@@ -481,7 +481,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::cancel(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel(origin: OriginFor<T>, when: T::BlockNumber, index: u32) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_cancel(Some(origin.caller().clone()), (when, index))?;
 			Ok(())
 		}
@@ -494,7 +494,7 @@ pub mod pallet {
 			when: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 			priority: Option<schedule::Priority>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 
@@ -502,7 +502,7 @@ pub mod pallet {
 				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
 			}
 
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::At(when),
@@ -518,7 +518,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::cancel_named(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel_named(origin: OriginFor<T>, id: TaskName) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_cancel_named(Some(origin.caller().clone()), id)?;
 			Ok(())
 		}
@@ -534,7 +534,7 @@ pub mod pallet {
 			after: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 			priority: Option<schedule::Priority>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 
@@ -542,7 +542,7 @@ pub mod pallet {
 				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
 			}
 
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule(
 				DispatchTime::After(after),
 				maybe_periodic,
@@ -565,7 +565,7 @@ pub mod pallet {
 			after: T::BlockNumber,
 			maybe_periodic: Option<schedule::Period<T::BlockNumber>>,
 			priority: Option<schedule::Priority>,
-			call: Box<<T as Config>::Call>,
+			call: Box<<T as Config>::RuntimeCall>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
 
@@ -573,7 +573,7 @@ pub mod pallet {
 				T::PrioritySetOrigin::ensure_origin(origin.clone())?;
 			}
 
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::After(after),
@@ -592,7 +592,7 @@ pub mod pallet {
 			priority: schedule::Priority,
 		) -> DispatchResult {
 			T::PrioritySetOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_change_named_priority(origin.caller().clone(), id, priority)
 		}
 	}
@@ -816,7 +816,7 @@ pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo
 	/// Resolve the call dispatch, including any post-dispatch operations.
 	fn dispatch_call(
 		signer: Option<T::AccountId>,
-		function: <T as Config>::Call,
+		function: <T as Config>::RuntimeCall,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 		TransactionValidityError,
@@ -1036,9 +1036,9 @@ impl<T: Config> Pallet<T> {
 	fn execute_dispatch(
 		weight: &mut WeightCounter,
 		origin: T::PalletsOrigin,
-		call: <T as Config>::Call,
+		call: <T as Config>::RuntimeCall,
 	) -> Result<DispatchResult, ServiceTaskError> {
-		let dispatch_origin: <T as Config>::Origin = origin.into();
+		let dispatch_origin: <T as Config>::RuntimeOrigin = origin.into();
 		let base_weight = match dispatch_origin.clone().as_signed() {
 			Some(_) => T::WeightInfo::execute_dispatch_signed(),
 			_ => T::WeightInfo::execute_dispatch_unsigned(),
