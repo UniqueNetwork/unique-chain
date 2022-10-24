@@ -11,7 +11,7 @@ import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
-import {Pallets} from '.';
+import {Pallets} from '..';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itSub, Pallets, usingPlaygrounds} from './util/playgrounds';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 
@@ -25,9 +25,9 @@ describe('Scheduling token and balance transfers', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
-      charlie = privateKeyWrapper('//Charlie');
+      alice = await privateKeyWrapper('//Alice');
+      bob = await privateKeyWrapper('//Bob');
+      charlie = await privateKeyWrapper('//Charlie');
 
       await helper.testUtils.enable();
     });
@@ -417,8 +417,8 @@ describe('Negative Test: Scheduling', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      alice = privateKeyWrapper('//Alice');
-      bob = privateKeyWrapper('//Bob');
+      alice = await privateKeyWrapper('//Alice');
+      bob = await privateKeyWrapper('//Bob');
 
       await helper.testUtils.enable();
     });
