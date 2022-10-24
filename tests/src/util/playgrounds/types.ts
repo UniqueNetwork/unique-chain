@@ -70,6 +70,13 @@ export interface ICrossAccountIdLower {
   ethereum?: TEthereumAccount;
 }
 
+export interface IEthCrossAccountId {
+  0: TEthereumAccount;
+  1: TSubstrateAccount;
+  field_0: TEthereumAccount;
+  field_1: TSubstrateAccount;
+}
+
 export interface ICollectionLimits {
   accountTokenOwnershipLimit?: number | null;
   sponsoredDataSize?: number | null;
