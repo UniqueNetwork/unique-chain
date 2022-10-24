@@ -37,7 +37,7 @@ use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, Precom
 use sp_std::vec;
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue, CollectionFlags,
+	CollectionMode, PropertyValue,
 };
 
 use crate::{Config, SelfWeightOf, weights::WeightInfo};
@@ -87,12 +87,28 @@ fn convert_data<T: Config>(
 	Ok((caller, name, description, token_prefix))
 }
 
-fn create_refungible_collection_internal<
-	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
->(
+fn create_refungible_collection_internal<T: Config>(
 	caller: caller,
 	value: value,
 	name: string,
+	description: string,
+	token_prefix: string,
+) -> Result<address> {
+	self::create_collection_internal::<T>(
+		caller,
+		value,
+		name,
+		CollectionMode::ReFungible,
+		description,
+		token_prefix
+	)
+}
+
+fn create_collection_internal<T: Config>(
+	caller: caller,
+	value: value,
+	name: string,
+	collection_mode: CollectionMode,
 	description: string,
 	token_prefix: string,
 ) -> Result<address> {
@@ -100,7 +116,7 @@ fn create_refungible_collection_internal<
 		convert_data::<T>(caller, name, description, token_prefix)?;
 	let data = CreateCollectionData {
 		name,
-		mode: CollectionMode::ReFungible,
+		mode: collection_mode,
 		description,
 		token_prefix,
 		..Default::default()
@@ -210,6 +226,27 @@ where
 		token_prefix: string,
 	) -> Result<address> {
 		create_refungible_collection_internal::<T>(caller, value, name, description, token_prefix)
+	}
+
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createRTCollection")]
+	fn create_fungible_collection(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		decimals: uint8,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::Fungible(decimals),
+			description,
+			token_prefix,
+		)
 	}
 
 	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]

@@ -202,10 +202,24 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress, events};
   }
 
-  async createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
+  async createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
     return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
   }
+  
+  async createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+    const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
+    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+        
+    const result = await collectionHelper.methods.createRTCollection(name, decimals, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
 
+    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
+    const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
+    
+    const events = this.helper.eth.normalizeEvents(result.events);
+    
+    return {collectionId, collectionAddress, events};
+  }
+  
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
