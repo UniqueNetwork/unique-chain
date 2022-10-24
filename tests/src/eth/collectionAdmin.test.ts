@@ -73,7 +73,7 @@ describe('Add collection admins', () => {
     const admin1 = helper.eth.createAccount();
     const admin2 = await privateKey('admin');
     await collectionEvm.methods.addCollectionAdmin(admin1).send();
-    await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
+    await collectionEvm.methods.addCollectionAdminCross(helper.ethCrossAccount.fromKeyringPair(admin2)).send();
 
     const adminListRpc = await helper.collection.getAdmins(collectionId);
     let adminListEth = await collectionEvm.methods.collectionAdmins().call();
