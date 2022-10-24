@@ -1,4 +1,5 @@
 # ===== RUN ======
+ARG POLKADOT_BUILD_BRANCH=
 
 FROM ubuntu:20.04
 
