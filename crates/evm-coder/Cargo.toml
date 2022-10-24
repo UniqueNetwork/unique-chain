@@ -23,6 +23,7 @@ impl-trait-for-tuples = "0.2.2"
 hex = "0.4.3"
 hex-literal = "0.3.4"
 similar-asserts = "1.4.2"
+concat-idents = "1.1.3"
 
 [features]
 default = ["std"]
