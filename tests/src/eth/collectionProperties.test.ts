@@ -164,19 +164,19 @@ describe('Supports ERC721Metadata', () => {
 });
 
 describe('EVM collection property', () => {
-  let alice: IKeyringPair;
+  let donor: IKeyringPair;
 
-  before(() => {
-    usingEthPlaygrounds(async (_helper, privateKey) => {
-      alice = await privateKey('//Alice');
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 
   async function testSetReadProperties(helper: EthUniqueHelper, mode: TCollectionMode) {
-    const collection = await helper[mode].mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const collection = await helper[mode].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const sender = await helper.eth.createAccountWithBalance(alice, 100n);
-    await collection.addAdmin(alice, {Ethereum: sender});
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    await collection.addAdmin(donor, {Ethereum: sender});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, mode, sender);
@@ -204,10 +204,10 @@ describe('EVM collection property', () => {
   });
 
   async function testDeleteProperties(helper: EthUniqueHelper, mode: TCollectionMode) {
-    const collection = await helper[mode].mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const collection = await helper[mode].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const sender = await helper.eth.createAccountWithBalance(alice, 100n);
-    await collection.addAdmin(alice, {Ethereum: sender});
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    await collection.addAdmin(donor, {Ethereum: sender});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, mode, sender);
