@@ -734,23 +734,23 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
-		to: (address, uint256),
+		from: EthCrossAccount,
+		to: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		// let from = convert_tuple_to_cross_account::<T>(from)?;
-		// let to = convert_tuple_to_cross_account::<T>(to)?;
-		// let token_id = token_id.try_into()?;
-		// let budget = self
-		// 	.recorder
-		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
+		let token_id = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		// let balance = balance(self, token_id, &from)?;
-		// ensure_single_owner(self, token_id, balance)?;
+		let balance = balance(self, token_id, &from)?;
+		ensure_single_owner(self, token_id, balance)?;
 
-		// Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, balance, &budget)
-		// 	.map_err(dispatch_to_evm::<T>)?;
+		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
 
@@ -789,11 +789,11 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
+		from: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let from = from.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
 		let budget = self
 			.recorder

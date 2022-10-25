@@ -2430,11 +2430,11 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    * @returns substrate cross account id
    */
   convertCrossAccountFromEthCrossAcoount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
-    if (ethCrossAccount.field_1 === '0') {
-      return {Ethereum: ethCrossAccount.field_0.toLocaleLowerCase()};
+    if (ethCrossAccount.sub === '0') {
+      return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
     }
     
-    const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.field_1));
+    const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.sub));
     return {Substrate: ss58};
   }
 

@@ -203,7 +203,7 @@ impl SolidityTypeName for EthCrossAccount {
 	}
 
 	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}(", tc.collect_tuple::<Self>())?;
+		write!(writer, "{}(", tc.collect_struct::<Self>())?;
 		address::solidity_default(writer, tc)?;
 		write!(writer, ",")?;
 		uint256::solidity_default(writer, tc)?;

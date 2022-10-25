@@ -409,7 +409,7 @@ describe('NFT: Fees', () => {
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
-  itEth.only('Can perform transferFromCross()', async ({helper, privateKey}) => {
+  itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
     const alice = privateKey('//Alice');
     const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
 

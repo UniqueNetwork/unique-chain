@@ -218,7 +218,7 @@ pub mod types {
 		}
 	}
 
-	#[derive(Debug)]
+	#[derive(Debug, Default)]
 	pub struct EthCrossAccount {
 		pub(crate) eth: address,
 		pub(crate) sub: uint256,

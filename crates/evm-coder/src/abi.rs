@@ -450,7 +450,7 @@ impl AbiRead<EthCrossAccount> for AbiReader<'_> {
 	}
 }
 
-impl AbiWrite for &EthCrossAccount {
+impl AbiWrite for EthCrossAccount {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		self.eth.abi_write(writer);
 		self.sub.abi_write(writer);

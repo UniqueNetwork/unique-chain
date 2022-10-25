@@ -684,11 +684,11 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		approved: (address, uint256),
+		approved: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let approved = convert_tuple_to_cross_account::<T>(approved)?;
+		let approved = approved.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
 
 		<Pallet<T>>::set_allowance(self, &caller, token, Some(&approved))
@@ -770,11 +770,11 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
+		from: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let from = from.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
 		let budget = self
 			.recorder
