@@ -968,7 +968,7 @@ impl<T: Config> Pallet<T> {
 				});
 				Err((Unavailable, Some(task)))
 			}
-			Err(Overweight) if is_first => {
+			Err(Overweight) if is_first && !Self::is_runtime_upgraded() => {
 				T::Preimages::drop(&task.call);
 
 				if let Some(ref id) = task.maybe_id {
@@ -1030,6 +1030,13 @@ impl<T: Config> Pallet<T> {
 				Ok(())
 			}
 		}
+	}
+
+	fn is_runtime_upgraded() -> bool {
+		let last = system::LastRuntimeUpgrade::<T>::get();
+		let current = T::Version::get();
+
+		last.map(|v| v.was_upgraded(&current)).unwrap_or(true)
 	}
 
 	/// Make a dispatch to the given `call` from the given `origin`, ensuring that the `weight`
