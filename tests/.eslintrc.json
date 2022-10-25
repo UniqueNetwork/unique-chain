@@ -42,6 +42,7 @@
                 "avoidEscape": true
             }
         ],
+        "require-await": 2,
         "semi": [
             "error",
             "always"
