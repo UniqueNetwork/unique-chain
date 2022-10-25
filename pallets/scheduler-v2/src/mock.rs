@@ -40,11 +40,11 @@ use crate as scheduler;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{
-		ConstU32, ConstU64, Contains, EitherOfDiverse, EqualPrivilegeOnly, OnFinalize, OnInitialize,
+		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, OnFinalize, OnInitialize,
 	},
 	weights::constants::RocksDbWeight,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy, RawOrigin};
+use frame_system::{EnsureRoot, RawOrigin};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,

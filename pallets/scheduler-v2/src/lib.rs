@@ -77,13 +77,13 @@ pub mod weights;
 
 use codec::{Codec, Decode, Encode, MaxEncodedLen};
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, GetDispatchInfo, Parameter},
+	dispatch::{DispatchError, DispatchResult, Dispatchable, GetDispatchInfo, Parameter, PostDispatchInfo},
 	traits::{
 		schedule::{self, DispatchTime, LOWEST_PRIORITY},
 		EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp, StorageVersion, PreimageRecipient,
 		ConstU32, UnfilteredDispatchable,
 	},
-	weights::{Weight, PostDispatchInfo}, unsigned::TransactionValidityError,
+	weights::Weight, unsigned::TransactionValidityError,
 };
 
 use frame_system::{self as system};

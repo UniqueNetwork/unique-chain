@@ -40,8 +40,7 @@ use crate::mock::{
 };
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Contains, GetStorageVersion, OnInitialize},
-	Hashable,
+	traits::{Contains, OnInitialize},
 };
 
 #[test]
