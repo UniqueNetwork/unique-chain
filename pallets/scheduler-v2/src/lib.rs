@@ -430,8 +430,6 @@ pub mod pallet {
 		NotFound,
 		/// Given target block number is in the past.
 		TargetBlockNumberInPast,
-		/// Reschedule failed because it does not change scheduled time.
-		RescheduleNoChange,
 		/// Attempt to use a non-named function on a named task.
 		Named,
 	}
