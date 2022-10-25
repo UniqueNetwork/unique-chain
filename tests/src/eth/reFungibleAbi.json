@@ -93,10 +93,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "newAdmin",
         "type": "tuple"
       }
@@ -119,10 +126,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "user",
         "type": "tuple"
       }
@@ -183,10 +197,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "from",
         "type": "tuple"
       },
@@ -212,10 +233,17 @@
     "outputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6[]",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount[]",
+>>>>>>> misk: update stubs
         "name": "",
         "type": "tuple[]"
       }
@@ -229,10 +257,17 @@
     "outputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "",
         "type": "tuple"
       }
@@ -251,7 +286,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple19[]",
+        "internalType": "struct Tuple20[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -275,7 +310,11 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple6",
+=======
+        "internalType": "struct Tuple23",
+>>>>>>> misk: update stubs
         "name": "",
         "type": "tuple"
       }
@@ -369,10 +408,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "user",
         "type": "tuple"
       }
@@ -383,19 +429,64 @@
     "type": "function"
   },
   {
+<<<<<<< HEAD
     "inputs": [{ "internalType": "address", "name": "to", "type": "address" }],
     "name": "mint",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+=======
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "mint",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+>>>>>>> misk: update stubs
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       { "internalType": "address", "name": "to", "type": "address" },
+<<<<<<< HEAD
       { "internalType": "string", "name": "tokenUri", "type": "string" }
     ],
     "name": "mintWithTokenURI",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+=======
+      { "internalType": "uint256[]", "name": "tokenIds", "type": "uint256[]" }
+    ],
+    "name": "mintBulk",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      {
+        "components": [
+          { "internalType": "uint256", "name": "field_0", "type": "uint256" },
+          { "internalType": "string", "name": "field_1", "type": "string" }
+        ],
+        "internalType": "struct Tuple11[]",
+        "name": "tokens",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "mintBulkWithTokenURI",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      { "internalType": "string", "name": "tokenUri", "type": "string" }
+    ],
+    "name": "mintWithTokenURI",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+>>>>>>> misk: update stubs
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -452,10 +543,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "admin",
         "type": "tuple"
       }
@@ -485,10 +583,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "user",
         "type": "tuple"
       }
@@ -593,7 +698,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple19[]",
+        "internalType": "struct Tuple20[]",
         "name": "properties",
         "type": "tuple[]"
       }
@@ -626,10 +731,17 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "sponsor",
         "type": "tuple"
       }
@@ -641,6 +753,7 @@
   },
   {
     "inputs": [
+<<<<<<< HEAD
       {
         "components": [
           { "internalType": "address", "name": "field_0", "type": "address" },
@@ -650,6 +763,9 @@
         "name": "newOwner",
         "type": "tuple"
       }
+=======
+      { "internalType": "address", "name": "newOwner", "type": "address" }
+>>>>>>> misk: update stubs
     ],
     "name": "setOwnerCross",
     "outputs": [],
@@ -661,12 +777,21 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
         "internalType": "struct Tuple19[]",
         "name": "properties",
         "type": "tuple[]"
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "newOwner",
+        "type": "tuple"
+>>>>>>> misk: update stubs
       }
     ],
     "name": "setProperties",
@@ -782,19 +907,33 @@
     "inputs": [
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "from",
         "type": "tuple"
       },
       {
         "components": [
+<<<<<<< HEAD
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
         "internalType": "struct Tuple6",
+=======
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+>>>>>>> misk: update stubs
         "name": "to",
         "type": "tuple"
       },

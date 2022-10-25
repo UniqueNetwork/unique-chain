@@ -72,6 +72,7 @@ interface TokenProperties is Dummy, ERC165 {
 /// @title A contract that allows you to work with collections.
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0xb3152af3
 =======
 /// @dev the ERC-165 identifier for this interface is 0x674be726
@@ -79,6 +80,9 @@ interface TokenProperties is Dummy, ERC165 {
 =======
 /// @dev the ERC-165 identifier for this interface is 0x943ee094
 >>>>>>> fix: after rebase
+=======
+/// @dev the ERC-165 identifier for this interface is 0xefe988e0
+>>>>>>> misk: update stubs
 interface Collection is Dummy, ERC165 {
 	/// Set collection property.
 	///
@@ -91,7 +95,7 @@ interface Collection is Dummy, ERC165 {
 	/// Set collection properties.
 	///
 	/// @param properties Vector of properties key/value pair.
-	/// @dev EVM selector for this function is: 0xf90c1ce9,
+	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
 	function setCollectionProperties(Tuple21[] memory properties) external;
 
@@ -105,7 +109,7 @@ interface Collection is Dummy, ERC165 {
 	/// Delete collection properties.
 	///
 	/// @param keys Properties keys.
-	/// @dev EVM selector for this function is: 0x56d4684a,
+	/// @dev EVM selector for this function is: 0xee206ee3,
 	///  or in textual repr: deleteCollectionProperties(string[])
 	function deleteCollectionProperties(string[] memory keys) external;
 
@@ -123,7 +127,7 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	/// @dev EVM selector for this function is: 0x5cad7311,
+	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
 	function collectionProperties(string[] memory keys) external view returns (Tuple21[] memory);
 
@@ -141,9 +145,16 @@ interface Collection is Dummy, ERC165 {
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
 	///
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0x403e96a7,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
 	function setCollectionSponsorCross(Tuple6 memory sponsor) external;
+=======
+	/// @dev EVM selector for this function is: 0x84a1d5a8,
+	///  or in textual repr: setCollectionSponsorCross(EthCrossAccount)
+	///  or in the expanded repr: setCollectionSponsorCross((address,uint256))
+	function setCollectionSponsorCross(EthCrossAccount memory sponsor) external;
+>>>>>>> misk: update stubs
 
 	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
@@ -167,7 +178,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple8 memory);
+	function collectionSponsor() external view returns (Tuple24 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -201,6 +212,7 @@ interface Collection is Dummy, ERC165 {
 
 	/// Add collection admin.
 	/// @param newAdmin Cross account administrator address.
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0x62e3c7c2,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
 	function addCollectionAdminCross(Tuple6 memory newAdmin) external;
@@ -210,6 +222,19 @@ interface Collection is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x810d1503,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
 	function removeCollectionAdminCross(Tuple6 memory admin) external;
+=======
+	/// @dev EVM selector for this function is: 0x859aa7d6,
+	///  or in textual repr: addCollectionAdminCross(EthCrossAccount)
+	///  or in the expanded repr: addCollectionAdminCross((address,uint256))
+	function addCollectionAdminCross(EthCrossAccount memory newAdmin) external;
+
+	/// Remove collection admin.
+	/// @param admin Cross account administrator address.
+	/// @dev EVM selector for this function is: 0x6c0cd173,
+	///  or in textual repr: removeCollectionAdminCross(EthCrossAccount)
+	///  or in the expanded repr: removeCollectionAdminCross((address,uint256))
+	function removeCollectionAdminCross(EthCrossAccount memory admin) external;
+>>>>>>> misk: update stubs
 
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
@@ -235,7 +260,7 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
 	/// @param collections Addresses of collections that will be available for nesting.
-	/// @dev EVM selector for this function is: 0x112d4586,
+	/// @dev EVM selector for this function is: 0x64872396,
 	///  or in textual repr: setCollectionNesting(bool,address[])
 	function setCollectionNesting(bool enable, address[] memory collections) external;
 
@@ -264,9 +289,16 @@ interface Collection is Dummy, ERC165 {
 	/// Add user to allowed list.
 	///
 	/// @param user User cross account address.
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0xf074da88,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
 	function addToCollectionAllowListCross(Tuple6 memory user) external;
+=======
+	/// @dev EVM selector for this function is: 0xa0184a3a,
+	///  or in textual repr: addToCollectionAllowListCross(EthCrossAccount)
+	///  or in the expanded repr: addToCollectionAllowListCross((address,uint256))
+	function addToCollectionAllowListCross(EthCrossAccount memory user) external;
+>>>>>>> misk: update stubs
 
 	/// Remove the user from the allowed list.
 	///
@@ -278,9 +310,16 @@ interface Collection is Dummy, ERC165 {
 	/// Remove user from allowed list.
 	///
 	/// @param user User cross account address.
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0xc00df45c,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
 	function removeFromCollectionAllowListCross(Tuple6 memory user) external;
+=======
+	/// @dev EVM selector for this function is: 0x09ba452a,
+	///  or in textual repr: removeFromCollectionAllowListCross(EthCrossAccount)
+	///  or in the expanded repr: removeFromCollectionAllowListCross((address,uint256))
+	function removeFromCollectionAllowListCross(EthCrossAccount memory user) external;
+>>>>>>> misk: update stubs
 
 	/// Switch permission for minting.
 	///
@@ -301,9 +340,16 @@ interface Collection is Dummy, ERC165 {
 	///
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0x5aba3351,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
 	function isOwnerOrAdminCross(Tuple6 memory user) external view returns (bool);
+=======
+	/// @dev EVM selector for this function is: 0x3e75a905,
+	///  or in textual repr: isOwnerOrAdminCross(EthCrossAccount)
+	///  or in the expanded repr: isOwnerOrAdminCross((address,uint256))
+	function isOwnerOrAdminCross(EthCrossAccount memory user) external view returns (bool);
+>>>>>>> misk: update stubs
 
 	/// Returns collection type
 	///
@@ -318,7 +364,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() external view returns (Tuple8 memory);
+	function collectionOwner() external view returns (EthCrossAccount memory);
 
 	/// Changes collection owner to another account
 	///
@@ -334,15 +380,38 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
+<<<<<<< HEAD
 	function collectionAdmins() external view returns (Tuple6[] memory);
+=======
+	function collectionAdmins() external view returns (EthCrossAccount[] memory);
+>>>>>>> misk: update stubs
 
 	/// Changes collection owner to another account
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0xbdff793d,
 	///  or in textual repr: setOwnerCross((address,uint256))
 	function setOwnerCross(Tuple6 memory newOwner) external;
+=======
+	/// @dev EVM selector for this function is: 0xe5c9913f,
+	///  or in textual repr: setOwnerCross(EthCrossAccount)
+	///  or in the expanded repr: setOwnerCross((address,uint256))
+	function setOwnerCross(EthCrossAccount memory newOwner) external;
+}
+
+/// @dev Cross account struct
+struct EthCrossAccount {
+	address eth;
+	uint256 sub;
+}
+
+/// @dev anonymous struct
+struct Tuple24 {
+	address field_0;
+	uint256 field_1;
+>>>>>>> misk: update stubs
 }
 
 <<<<<<< HEAD
@@ -459,10 +528,14 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 
 /// @title Unique extensions for ERC721.
 <<<<<<< HEAD
+<<<<<<< HEAD
 /// @dev the ERC-165 identifier for this interface is 0x244543ee
 =======
 /// @dev the ERC-165 identifier for this interface is 0xcc97cb35
 >>>>>>> feat: Add custum signature with unlimited nesting.
+=======
+/// @dev the ERC-165 identifier for this interface is 0xb76006ac
+>>>>>>> misk: update stubs
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -480,9 +553,16 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	///  operator of the current owner.
 	/// @param approved The new substrate address approved NFT controller
 	/// @param tokenId The NFT to approve
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0x106fdb59,
 	///  or in textual repr: approveCross((address,uint256),uint256)
 	function approveCross(Tuple6 memory approved, uint256 tokenId) external;
+=======
+	/// @dev EVM selector for this function is: 0x0ecd0ab0,
+	///  or in textual repr: approveCross(EthCrossAccount,uint256)
+	///  or in the expanded repr: approveCross((address,uint256),uint256)
+	function approveCross(EthCrossAccount memory approved, uint256 tokenId) external;
+>>>>>>> misk: update stubs
 
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -501,6 +581,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId The NFT to transfer
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross(EthCrossAccount,EthCrossAccount,uint256)
+	///  or in the expanded repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
 <<<<<<< HEAD
 		Tuple6 memory from,
@@ -528,9 +609,16 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param from The current owner of the NFT
 	/// @param tokenId The NFT to transfer
+<<<<<<< HEAD
 	/// @dev EVM selector for this function is: 0xa8106d4a,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
 	function burnFromCross(Tuple6 memory from, uint256 tokenId) external;
+=======
+	/// @dev EVM selector for this function is: 0xbb2f5a58,
+	///  or in textual repr: burnFromCross(EthCrossAccount,uint256)
+	///  or in the expanded repr: burnFromCross((address,uint256),uint256)
+	function burnFromCross(EthCrossAccount memory from, uint256 tokenId) external;
+>>>>>>> misk: update stubs
 
 	/// @notice Returns next free NFT ID.
 	/// @dev EVM selector for this function is: 0x75794a3c,
@@ -565,7 +653,7 @@ struct Tuple8 {
 	///  should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokenIds IDs of the minted NFTs
-	/// @dev EVM selector for this function is: 0xf9d9a5a3,
+	/// @dev EVM selector for this function is: 0x44a9945e,
 	///  or in textual repr: mintBulk(address,uint256[])
 	function mintBulk(address to, uint256[] memory tokenIds) external returns (bool);
 
@@ -574,7 +662,7 @@ struct Tuple8 {
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
-	/// @dev EVM selector for this function is: 0xfd4e2a99,
+	/// @dev EVM selector for this function is: 0x36543006,
 	///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
 	function mintBulkWithTokenURI(address to, Tuple12[] memory tokens) external returns (bool);
 }
@@ -586,6 +674,7 @@ struct Tuple12 {
 	string field_1;
 }
 
+<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple8 {
 	address field_0;
@@ -598,6 +687,8 @@ struct Tuple8 {
 	uint256 field_1;
 }
 
+=======
+>>>>>>> misk: update stubs
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 /// @dev the ERC-165 identifier for this interface is 0x780e9d63
