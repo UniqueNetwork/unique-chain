@@ -46,15 +46,19 @@ use frame_support::{
 #[test]
 fn basic_scheduling_works() {
 	new_test_ext().execute_with(|| {
-		let call =
-			RuntimeCall::Logger(LoggerCall::log { i: 42, weight: Weight::from_ref_time(10) });
-		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(&call));
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: Weight::from_ref_time(10),
+		});
+		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(
+			&call
+		));
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
 			127,
 			root(),
-            <ScheduledCall<Test>>::new(call).unwrap(),
+			<ScheduledCall<Test>>::new(call).unwrap(),
 		));
 		run_to_block(3);
 		assert!(logger::log().is_empty());
@@ -69,9 +73,13 @@ fn basic_scheduling_works() {
 fn schedule_after_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(2);
-		let call =
-			RuntimeCall::Logger(LoggerCall::log { i: 42, weight: Weight::from_ref_time(10) });
-		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(&call));
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: Weight::from_ref_time(10),
+		});
+		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(
+			&call
+		));
 		// This will schedule the call 3 blocks after the next block... so block 3 + 3 = 6
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::After(3),
@@ -93,9 +101,13 @@ fn schedule_after_works() {
 fn schedule_after_zero_works() {
 	new_test_ext().execute_with(|| {
 		run_to_block(2);
-		let call =
-			RuntimeCall::Logger(LoggerCall::log { i: 42, weight: Weight::from_ref_time(10) });
-		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(&call));
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: Weight::from_ref_time(10),
+		});
+		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(
+			&call
+		));
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::After(0),
 			None,
@@ -120,7 +132,7 @@ fn periodic_scheduling_works() {
 			Some((3, 3)),
 			127,
 			root(),
-            <ScheduledCall<Test>>::new(RuntimeCall::Logger(logger::Call::log {
+			<ScheduledCall<Test>>::new(RuntimeCall::Logger(logger::Call::log {
 				i: 42,
 				weight: Weight::from_ref_time(10)
 			}))
@@ -137,9 +149,15 @@ fn periodic_scheduling_works() {
 		run_to_block(9);
 		assert_eq!(logger::log(), vec![(root(), 42u32), (root(), 42u32)]);
 		run_to_block(10);
-		assert_eq!(logger::log(), vec![(root(), 42u32), (root(), 42u32), (root(), 42u32)]);
+		assert_eq!(
+			logger::log(),
+			vec![(root(), 42u32), (root(), 42u32), (root(), 42u32)]
+		);
 		run_to_block(100);
-		assert_eq!(logger::log(), vec![(root(), 42u32), (root(), 42u32), (root(), 42u32)]);
+		assert_eq!(
+			logger::log(),
+			vec![(root(), 42u32), (root(), 42u32), (root(), 42u32)]
+		);
 	});
 }
 
@@ -241,7 +259,10 @@ fn cancel_named_periodic_scheduling_works() {
 fn scheduler_respects_weight_limits() {
 	let max_weight: Weight = <Test as Config>::MaximumWeight::get();
 	new_test_ext().execute_with(|| {
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 42, weight: max_weight / 3 * 2 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: max_weight / 3 * 2,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -249,7 +270,10 @@ fn scheduler_respects_weight_limits() {
 			root(),
 			<ScheduledCall<Test>>::new(call).unwrap(),
 		));
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 69, weight: max_weight / 3 * 2 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 69,
+			weight: max_weight / 3 * 2,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -270,7 +294,10 @@ fn scheduler_respects_weight_limits() {
 fn scheduler_does_not_delete_permanently_overweight_call() {
 	let max_weight: Weight = <Test as Config>::MaximumWeight::get();
 	new_test_ext().execute_with(|| {
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 42, weight: max_weight });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: max_weight,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -285,7 +312,11 @@ fn scheduler_does_not_delete_permanently_overweight_call() {
 		// Assert the `PermanentlyOverweight` event.
 		assert_eq!(
 			System::events().last().unwrap().event,
-			crate::Event::PermanentlyOverweight { task: (4, 0), id: None }.into(),
+			crate::Event::PermanentlyOverweight {
+				task: (4, 0),
+				id: None
+			}
+			.into(),
 		);
 		// The call is still in the agenda.
 		assert!(Agenda::<Test>::get(4)[0].is_some());
@@ -298,7 +329,10 @@ fn scheduler_handles_periodic_failure() {
 	let max_per_block = <Test as Config>::MaxScheduledPerBlock::get();
 
 	new_test_ext().execute_with(|| {
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 42, weight: (max_weight / 3) * 2 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: (max_weight / 3) * 2,
+		});
 		let call = <ScheduledCall<Test>>::new(call).unwrap();
 
 		assert_ok!(Scheduler::do_schedule(
@@ -329,7 +363,11 @@ fn scheduler_handles_periodic_failure() {
 
 		assert_eq!(
 			System::events().last().unwrap().event,
-			crate::Event::PeriodicFailed { task: (24, 0), id: None }.into(),
+			crate::Event::PeriodicFailed {
+				task: (24, 0),
+				id: None
+			}
+			.into(),
 		);
 	});
 }
@@ -338,7 +376,10 @@ fn scheduler_handles_periodic_failure() {
 fn scheduler_respects_priority_ordering() {
 	let max_weight: Weight = <Test as Config>::MaximumWeight::get();
 	new_test_ext().execute_with(|| {
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 42, weight: max_weight / 3 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: max_weight / 3,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -346,7 +387,10 @@ fn scheduler_respects_priority_ordering() {
 			root(),
 			<ScheduledCall<Test>>::new(call).unwrap(),
 		));
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 69, weight: max_weight / 3 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 69,
+			weight: max_weight / 3,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -363,7 +407,10 @@ fn scheduler_respects_priority_ordering() {
 fn scheduler_respects_priority_ordering_with_soft_deadlines() {
 	new_test_ext().execute_with(|| {
 		let max_weight: Weight = <Test as Config>::MaximumWeight::get();
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 42, weight: max_weight / 5 * 2 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: max_weight / 5 * 2,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -371,7 +418,10 @@ fn scheduler_respects_priority_ordering_with_soft_deadlines() {
 			root(),
 			<ScheduledCall<Test>>::new(call).unwrap(),
 		));
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 69, weight: max_weight / 5 * 2 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 69,
+			weight: max_weight / 5 * 2,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -379,7 +429,10 @@ fn scheduler_respects_priority_ordering_with_soft_deadlines() {
 			root(),
 			<ScheduledCall<Test>>::new(call).unwrap(),
 		));
-		let call = RuntimeCall::Logger(LoggerCall::log { i: 2600, weight: max_weight / 5 * 4 });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 2600,
+			weight: max_weight / 5 * 4,
+		});
 		assert_ok!(Scheduler::do_schedule(
 			DispatchTime::At(4),
 			None,
@@ -393,7 +446,10 @@ fn scheduler_respects_priority_ordering_with_soft_deadlines() {
 		assert_eq!(logger::log(), vec![(root(), 2600u32)]);
 		// 69 and 42 fit together
 		run_to_block(5);
-		assert_eq!(logger::log(), vec![(root(), 2600u32), (root(), 69u32), (root(), 42u32)]);
+		assert_eq!(
+			logger::log(),
+			vec![(root(), 2600u32), (root(), 69u32), (root(), 42u32)]
+		);
 	});
 }
 
@@ -456,11 +512,11 @@ fn on_initialize_weight_is_correct() {
 		// Will include the named periodic only
 		assert_eq!(
 			Scheduler::on_initialize(1),
-			TestWeightInfo::service_agendas_base() +
-				TestWeightInfo::service_agenda_base(1) +
-				<TestWeightInfo as MarginalWeightInfo>::service_task(None, true, true) +
-				TestWeightInfo::execute_dispatch_unsigned() +
-				call_weight + Weight::from_ref_time(4)
+			TestWeightInfo::service_agendas_base()
+				+ TestWeightInfo::service_agenda_base(1)
+				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, true, true)
+				+ TestWeightInfo::execute_dispatch_unsigned()
+				+ call_weight + Weight::from_ref_time(4)
 		);
 		assert_eq!(IncompleteSince::<Test>::get(), None);
 		assert_eq!(logger::log(), vec![(root(), 2600u32)]);
@@ -468,31 +524,39 @@ fn on_initialize_weight_is_correct() {
 		// Will include anon and anon periodic
 		assert_eq!(
 			Scheduler::on_initialize(2),
-			TestWeightInfo::service_agendas_base() +
-				TestWeightInfo::service_agenda_base(2) +
-				<TestWeightInfo as MarginalWeightInfo>::service_task(None, false, true) +
-				TestWeightInfo::execute_dispatch_unsigned() +
-				call_weight + Weight::from_ref_time(3) +
-				<TestWeightInfo as MarginalWeightInfo>::service_task(None, false, false) +
-				TestWeightInfo::execute_dispatch_unsigned() +
-				call_weight + Weight::from_ref_time(2)
-		);
-		assert_eq!(IncompleteSince::<Test>::get(), None);
-		assert_eq!(logger::log(), vec![(root(), 2600u32), (root(), 69u32), (root(), 42u32)]);
-
-		// Will include named only
-		assert_eq!(
-			Scheduler::on_initialize(3),
-			TestWeightInfo::service_agendas_base() +
-				TestWeightInfo::service_agenda_base(1) +
-				<TestWeightInfo as MarginalWeightInfo>::service_task(None, true, false) +
-				TestWeightInfo::execute_dispatch_unsigned() +
-				call_weight + Weight::from_ref_time(1)
+			TestWeightInfo::service_agendas_base()
+				+ TestWeightInfo::service_agenda_base(2)
+				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, false, true)
+				+ TestWeightInfo::execute_dispatch_unsigned()
+				+ call_weight + Weight::from_ref_time(3)
+				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, false, false)
+				+ TestWeightInfo::execute_dispatch_unsigned()
+				+ call_weight + Weight::from_ref_time(2)
 		);
 		assert_eq!(IncompleteSince::<Test>::get(), None);
 		assert_eq!(
 			logger::log(),
-			vec![(root(), 2600u32), (root(), 69u32), (root(), 42u32), (root(), 3u32)]
+			vec![(root(), 2600u32), (root(), 69u32), (root(), 42u32)]
+		);
+
+		// Will include named only
+		assert_eq!(
+			Scheduler::on_initialize(3),
+			TestWeightInfo::service_agendas_base()
+				+ TestWeightInfo::service_agenda_base(1)
+				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, true, false)
+				+ TestWeightInfo::execute_dispatch_unsigned()
+				+ call_weight + Weight::from_ref_time(1)
+		);
+		assert_eq!(IncompleteSince::<Test>::get(), None);
+		assert_eq!(
+			logger::log(),
+			vec![
+				(root(), 2600u32),
+				(root(), 69u32),
+				(root(), 42u32),
+				(root(), 3u32)
+			]
 		);
 
 		// Will contain none
@@ -515,10 +579,21 @@ fn root_calls_works() {
 			i: 42,
 			weight: Weight::from_ref_time(10),
 		}));
-		assert_ok!(
-			Scheduler::schedule_named(RuntimeOrigin::root(), [1u8; 32], 4, None, Some(127), call,)
-		);
-		assert_ok!(Scheduler::schedule(RuntimeOrigin::root(), 4, None, Some(127), call2));
+		assert_ok!(Scheduler::schedule_named(
+			RuntimeOrigin::root(),
+			[1u8; 32],
+			4,
+			None,
+			Some(127),
+			call,
+		));
+		assert_ok!(Scheduler::schedule(
+			RuntimeOrigin::root(),
+			4,
+			None,
+			Some(127),
+			call2
+		));
 		run_to_block(3);
 		// Scheduled calls are in the agenda.
 		assert_eq!(Agenda::<Test>::get(4).len(), 2);
@@ -585,12 +660,21 @@ fn should_use_origin() {
 			None,
 			call,
 		));
-		assert_ok!(Scheduler::schedule(system::RawOrigin::Signed(1).into(), 4, None, None, call2,));
+		assert_ok!(Scheduler::schedule(
+			system::RawOrigin::Signed(1).into(),
+			4,
+			None,
+			None,
+			call2,
+		));
 		run_to_block(3);
 		// Scheduled calls are in the agenda.
 		assert_eq!(Agenda::<Test>::get(4).len(), 2);
 		assert!(logger::log().is_empty());
-		assert_ok!(Scheduler::cancel_named(system::RawOrigin::Signed(1).into(), [1u8; 32]));
+		assert_ok!(Scheduler::cancel_named(
+			system::RawOrigin::Signed(1).into(),
+			[1u8; 32]
+		));
 		assert_ok!(Scheduler::cancel(system::RawOrigin::Signed(1).into(), 4, 1));
 		// Scheduled calls are made NONE, so should not effect state
 		run_to_block(100);
@@ -646,7 +730,13 @@ fn should_check_origin_for_cancel() {
 			None,
 			call,
 		));
-		assert_ok!(Scheduler::schedule(system::RawOrigin::Signed(1).into(), 4, None, None, call2,));
+		assert_ok!(Scheduler::schedule(
+			system::RawOrigin::Signed(1).into(),
+			4,
+			None,
+			None,
+			call2,
+		));
 		run_to_block(3);
 		// Scheduled calls are in the agenda.
 		assert_eq!(Agenda::<Test>::get(4).len(), 2);
@@ -655,9 +745,18 @@ fn should_check_origin_for_cancel() {
 			Scheduler::cancel_named(system::RawOrigin::Signed(2).into(), [1u8; 32]),
 			BadOrigin
 		);
-		assert_noop!(Scheduler::cancel(system::RawOrigin::Signed(2).into(), 4, 1), BadOrigin);
-		assert_noop!(Scheduler::cancel_named(system::RawOrigin::Root.into(), [1u8; 32]), BadOrigin);
-		assert_noop!(Scheduler::cancel(system::RawOrigin::Root.into(), 4, 1), BadOrigin);
+		assert_noop!(
+			Scheduler::cancel(system::RawOrigin::Signed(2).into(), 4, 1),
+			BadOrigin
+		);
+		assert_noop!(
+			Scheduler::cancel_named(system::RawOrigin::Root.into(), [1u8; 32]),
+			BadOrigin
+		);
+		assert_noop!(
+			Scheduler::cancel(system::RawOrigin::Root.into(), 4, 1),
+			BadOrigin
+		);
 		run_to_block(5);
 		assert_eq!(
 			logger::log(),
@@ -674,8 +773,10 @@ fn should_check_origin_for_cancel() {
 #[test]
 fn schedule_does_not_resuse_addr() {
 	new_test_ext().execute_with(|| {
-		let call =
-			RuntimeCall::Logger(LoggerCall::log { i: 42, weight: Weight::from_ref_time(10) });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: Weight::from_ref_time(10),
+		});
 
 		// Schedule both calls.
 		let addr_1 = Scheduler::do_schedule(
@@ -707,20 +808,15 @@ fn schedule_agenda_overflows() {
 	let max: u32 = <Test as Config>::MaxScheduledPerBlock::get();
 
 	new_test_ext().execute_with(|| {
-		let call =
-			RuntimeCall::Logger(LoggerCall::log { i: 42, weight: Weight::from_ref_time(10) });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: Weight::from_ref_time(10),
+		});
 		let call = <ScheduledCall<Test>>::new(call).unwrap();
 
 		// Schedule the maximal number allowed per block.
 		for _ in 0..max {
-			Scheduler::do_schedule(
-				DispatchTime::At(4),
-				None,
-				127,
-				root(),
-				call.clone(),
-			)
-			.unwrap();
+			Scheduler::do_schedule(DispatchTime::At(4), None, 127, root(), call.clone()).unwrap();
 		}
 
 		// One more time and it errors.
@@ -739,25 +835,24 @@ fn schedule_agenda_overflows() {
 #[test]
 fn cancel_and_schedule_fills_holes() {
 	let max: u32 = <Test as Config>::MaxScheduledPerBlock::get();
-	assert!(max > 3, "This test only makes sense for MaxScheduledPerBlock > 3");
+	assert!(
+		max > 3,
+		"This test only makes sense for MaxScheduledPerBlock > 3"
+	);
 
 	new_test_ext().execute_with(|| {
-		let call =
-			RuntimeCall::Logger(LoggerCall::log { i: 42, weight: Weight::from_ref_time(10) });
+		let call = RuntimeCall::Logger(LoggerCall::log {
+			i: 42,
+			weight: Weight::from_ref_time(10),
+		});
 		let call = <ScheduledCall<Test>>::new(call).unwrap();
 		let mut addrs = Vec::<_>::default();
 
 		// Schedule the maximal number allowed per block.
 		for _ in 0..max {
 			addrs.push(
-				Scheduler::do_schedule(
-					DispatchTime::At(4),
-					None,
-					127,
-					root(),
-					call.clone(),
-				)
-				.unwrap(),
+				Scheduler::do_schedule(DispatchTime::At(4), None, 127, root(), call.clone())
+					.unwrap(),
 			);
 		}
 		// Cancel three of them.
@@ -766,14 +861,9 @@ fn cancel_and_schedule_fills_holes() {
 		}
 		// Schedule three new ones.
 		for i in 0..3 {
-			let (_block, index) = Scheduler::do_schedule(
-				DispatchTime::At(4),
-				None,
-				127,
-				root(),
-				call.clone(),
-			)
-			.unwrap();
+			let (_block, index) =
+				Scheduler::do_schedule(DispatchTime::At(4), None, 127, root(), call.clone())
+					.unwrap();
 			assert_eq!(i, index);
 		}
 

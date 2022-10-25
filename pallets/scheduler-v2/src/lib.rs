@@ -77,13 +77,16 @@ pub mod weights;
 
 use codec::{Codec, Decode, Encode, MaxEncodedLen};
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, GetDispatchInfo, Parameter, PostDispatchInfo},
+	dispatch::{
+		DispatchError, DispatchResult, Dispatchable, GetDispatchInfo, Parameter, PostDispatchInfo,
+	},
 	traits::{
 		schedule::{self, DispatchTime, LOWEST_PRIORITY},
 		EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp, StorageVersion, PreimageRecipient,
 		ConstU32, UnfilteredDispatchable,
 	},
-	weights::Weight, unsigned::TransactionValidityError,
+	weights::Weight,
+	unsigned::TransactionValidityError,
 };
 
 use frame_system::{self as system};
@@ -318,8 +321,10 @@ pub mod pallet {
 
 		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
-			+ UnfilteredDispatchable<RuntimeOrigin = <Self as system::Config>::RuntimeOrigin>
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + UnfilteredDispatchable<RuntimeOrigin = <Self as system::Config>::RuntimeOrigin>
 			+ GetDispatchInfo
 			+ From<system::Call<Self>>;
 
@@ -940,7 +945,7 @@ impl<T: Config> Pallet<T> {
 				}
 
 				return Err((Unavailable, Some(task)));
-			},
+			}
 		};
 
 		weight.check_accrue(T::WeightInfo::service_task(
@@ -979,7 +984,7 @@ impl<T: Config> Pallet<T> {
 			Err(Overweight) => {
 				// Preserve Lookup -- the task will be postponed.
 				Err((Overweight, Some(task)))
-			},
+			}
 			Ok(result) => {
 				Self::deposit_event(Event::Dispatched {
 					task: (when, agenda_index),
@@ -987,7 +992,9 @@ impl<T: Config> Pallet<T> {
 					result,
 				});
 
-				let is_canceled = task.maybe_id.as_ref()
+				let is_canceled = task
+					.maybe_id
+					.as_ref()
 					.map(|id| !Lookup::<T>::contains_key(id))
 					.unwrap_or(false);
 
@@ -1011,14 +1018,14 @@ impl<T: Config> Pallet<T> {
 								});
 							}
 						}
-					},
+					}
 					_ => {
 						if let Some(ref id) = task.maybe_id {
 							Lookup::<T>::remove(id);
 						}
 
 						T::Preimages::drop(&task.call)
-					},
+					}
 				}
 				Ok(())
 			}
@@ -1056,12 +1063,12 @@ impl<T: Config> Pallet<T> {
 		let r = match ensured_origin {
 			Ok(ScheduledEnsureOriginSuccess::Root) => {
 				Ok(call.dispatch_bypass_filter(frame_system::RawOrigin::Root.into()))
-			},
+			}
 			Ok(ScheduledEnsureOriginSuccess::Signed(sender)) => {
 				// Execute transaction via chain default pipeline
 				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 				T::CallExecutor::dispatch_call(Some(sender), call.clone())
-			},
+			}
 			Ok(ScheduledEnsureOriginSuccess::Unsigned) => {
 				// Unsigned version of the above
 				T::CallExecutor::dispatch_call(None, call.clone())
