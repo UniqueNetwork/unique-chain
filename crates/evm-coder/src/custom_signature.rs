@@ -13,9 +13,7 @@ pub struct SignaturePreferences {
 
 #[derive(Debug)]
 pub struct FunctionSignature {
-	pub data: [u8; SIGNATURE_SIZE_LIMIT],
-	pub len: usize,
-
+	pub unit: SignatureUnit,
 	preferences: SignaturePreferences,
 }
 
@@ -30,8 +28,10 @@ impl FunctionSignature {
 			crate::make_signature!(@copy(delimiter.data, dst, delimiter.len, dst_offset));
 		}
 		FunctionSignature {
-			data: dst,
-			len: dst_offset,
+			unit: SignatureUnit {
+				data: dst,
+				len: dst_offset,
+			},
 			preferences,
 		}
 	}
@@ -40,22 +40,24 @@ impl FunctionSignature {
 		signature: FunctionSignature,
 		param: SignatureUnit,
 	) -> FunctionSignature {
-		let mut dst = signature.data;
-		let mut dst_offset = signature.len;
+		let mut dst = signature.unit.data;
+		let mut dst_offset = signature.unit.len;
 		crate::make_signature!(@copy(param.data, dst, param.len, dst_offset));
 		if let Some(ref delimiter) = signature.preferences.param_delimiter {
 			crate::make_signature!(@copy(delimiter.data, dst, delimiter.len, dst_offset));
 		}
 		FunctionSignature {
-			data: dst,
-			len: dst_offset,
+			unit: SignatureUnit {
+				data: dst,
+				len: dst_offset,
+			},
 			..signature
 		}
 	}
 
 	pub const fn done(signature: FunctionSignature, owerride: bool) -> FunctionSignature {
-		let mut dst = signature.data;
-		let mut dst_offset = signature.len - if owerride { 1 } else { 0 };
+		let mut dst = signature.unit.data;
+		let mut dst_offset = signature.unit.len - if owerride { 1 } else { 0 };
 		if let Some(ref delimiter) = signature.preferences.close_delimiter {
 			crate::make_signature!(@copy(delimiter.data, dst, delimiter.len, dst_offset));
 		}
@@ -63,14 +65,16 @@ impl FunctionSignature {
 			crate::make_signature!(@copy(name.data, dst, name.len, dst_offset));
 		}
 		FunctionSignature {
-			data: dst,
-			len: dst_offset,
+			unit: SignatureUnit {
+				data: dst,
+				len: dst_offset,
+			},
 			..signature
 		}
 	}
 
 	pub fn as_str(&self) -> &str {
-		from_utf8(&self.data[..self.len]).expect("bad utf-8")
+		from_utf8(&self.unit.data[..self.unit.len]).expect("bad utf-8")
 	}
 }
 
@@ -335,11 +339,11 @@ mod test {
 			(<u32>::SIGNATURE),
 			(<Vec<u32>>::SIGNATURE),
 		);
-		const NAME: [u8; SIG.len] = {
-			let mut name: [u8; SIG.len] = [0; SIG.len];
+		const NAME: [u8; SIG.unit.len] = {
+			let mut name: [u8; SIG.unit.len] = [0; SIG.unit.len];
 			let mut i = 0;
-			while i < SIG.len {
-				name[i] = SIG.data[i];
+			while i < SIG.unit.len {
+				name[i] = SIG.unit.data[i];
 				i += 1;
 			}
 			name

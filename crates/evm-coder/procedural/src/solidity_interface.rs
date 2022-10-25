@@ -734,8 +734,14 @@ impl Method {
 			const #screaming_name_signature: ::evm_coder::custom_signature::FunctionSignature = #custom_signature;
 			#[doc = #selector_str]
 			const #screaming_name: ::evm_coder::types::bytes4 = {
+				let mut data = [0_u8; Self::#screaming_name_signature.unit.len];
+				let mut pos = 0;
+				while pos < Self::#screaming_name_signature.unit.len {
+					data[pos] = Self::#screaming_name_signature.unit.data[pos];
+					pos += 1;
+				}
 				let a = ::evm_coder::sha3_const::Keccak256::new()
-				.update_with_size(&Self::#screaming_name_signature.data, Self::#screaming_name_signature.len)
+				.update(&data)
 				.finalize();
 				[a[0], a[1], a[2], a[3]]
 			};
@@ -953,9 +959,9 @@ impl Method {
 				cs
 			}
 		);
-		// println!("!!!!! {}", custom_signature);
 		let is_payable = self.has_value_args;
-		let out = quote! {
+
+		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
 				selector_str: #selector_str,
@@ -972,9 +978,7 @@ impl Method {
 				),
 				result: <UnnamedArgument<#result>>::default(),
 			}
-		};
-		// println!("@@@ {}", out);
-		out
+		}
 	}
 }
 
