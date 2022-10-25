@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import { evmToAddress } from '@polkadot/util-crypto';
+import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 
@@ -27,7 +27,7 @@ describe('Create FT collection from EVM', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
-      donor = await privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 
@@ -181,7 +181,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
-      donor = await privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
       nominal = helper.balance.getOneTokenNominal();
     });
   });

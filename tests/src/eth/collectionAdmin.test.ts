@@ -14,7 +14,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {IEthCrossAccountId} from '../util/playgrounds/types';
 import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {

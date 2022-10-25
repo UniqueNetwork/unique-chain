@@ -25,7 +25,7 @@ describe('Destroy Collection from EVM', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible, Pallets.NFT]);
-      donor = await privateKey('//Alice');
+      donor = await privateKey({filename: __filename});
     });
   });
 

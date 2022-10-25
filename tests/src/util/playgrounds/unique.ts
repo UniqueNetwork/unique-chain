@@ -7,7 +7,7 @@
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
-import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
+import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {
   IApiListeners,
@@ -33,15 +33,12 @@ import {
   TEthereumAccount,
   TSigner,
   TSubstrateAccount,
-  IEthCrossAccountId,
   TNetworks,
   IForeignAssetMetadata,
   AcalaAssetMetadata,
   MoonbeamAssetInfo,
   DemocracyStandardAccountVote,
 } from './types';
-import {hexToU8a} from '@polkadot/util/hex';
-import {u8aConcat} from '@polkadot/util/u8a';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
