@@ -58,7 +58,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
   }
 };
   
-export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
   (opts.only ? it.only : 
     opts.skip ? it.skip : it)(name, async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
@@ -71,7 +71,7 @@ export async function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, 
   });
 }
 
-export async function itEthIfWithPallet(name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itEthIfWithPallet(name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
   return itEth(name, cb, {requiredPallets: required, ...opts});
 }
 
