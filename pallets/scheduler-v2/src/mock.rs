@@ -39,9 +39,7 @@ use super::*;
 use crate as scheduler;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{
-		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, OnFinalize, OnInitialize,
-	},
+	traits::{ConstU32, ConstU64, Contains, EqualPrivilegeOnly, OnFinalize, OnInitialize},
 	weights::constants::RocksDbWeight,
 };
 use frame_system::{EnsureRoot, RawOrigin};
@@ -136,7 +134,7 @@ parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(
 			Weight::from_ref_time(2_000_000_000_000)
-            // .set_proof_size(u64::MAX),
+			// .set_proof_size(u64::MAX),
 		);
 }
 impl system::Config for Test {
@@ -210,9 +208,9 @@ impl WeightInfo for TestWeightInfo {
 	fn cancel_named(_s: u32) -> Weight {
 		Weight::from_ref_time(50)
 	}
-    fn change_named_priority(_s: u32, ) -> Weight {
-        Weight::from_ref_time(50)
-    }
+	fn change_named_priority(_s: u32) -> Weight {
+		Weight::from_ref_time(50)
+	}
 }
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
@@ -220,8 +218,8 @@ parameter_types! {
 }
 
 pub struct EnsureSignedOneOrRoot;
-impl<O: Into<Result<RawOrigin<u64>, O>> + From<RawOrigin<u64>>>
-	EnsureOrigin<O> for EnsureSignedOneOrRoot
+impl<O: Into<Result<RawOrigin<u64>, O>> + From<RawOrigin<u64>>> EnsureOrigin<O>
+	for EnsureSignedOneOrRoot
 {
 	type Success = ScheduledEnsureOriginSuccess<u64>;
 	fn try_origin(o: O) -> Result<Self::Success, O> {
@@ -235,19 +233,19 @@ impl<O: Into<Result<RawOrigin<u64>, O>> + From<RawOrigin<u64>>>
 
 pub struct Executor;
 impl DispatchCall<Test, sp_core::H160> for Executor {
-    fn dispatch_call(
-        signer: Option<u64>,
-        function: RuntimeCall,
-    ) -> Result<
-        Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
-        TransactionValidityError,
-    > {
-        let origin = match signer {
-            Some(who) => RuntimeOrigin::signed(who),
-            None => RuntimeOrigin::none(),
-        };
-        Ok(function.dispatch(origin))
-    }
+	fn dispatch_call(
+		signer: Option<u64>,
+		function: RuntimeCall,
+	) -> Result<
+		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
+		TransactionValidityError,
+	> {
+		let origin = match signer {
+			Some(who) => RuntimeOrigin::signed(who),
+			None => RuntimeOrigin::none(),
+		};
+		Ok(function.dispatch(origin))
+	}
 }
 
 impl Config for Test {
@@ -261,14 +259,16 @@ impl Config for Test {
 	type WeightInfo = TestWeightInfo;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type Preimages = ();
-    type PrioritySetOrigin = EnsureRoot<u64>;
-    type CallExecutor = Executor;
+	type PrioritySetOrigin = EnsureRoot<u64>;
+	type CallExecutor = Executor;
 }
 
 pub type LoggerCall = logger::Call<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let t = system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 	t.into()
 }
 
