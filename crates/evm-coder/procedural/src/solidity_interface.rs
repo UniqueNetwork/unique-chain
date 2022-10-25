@@ -20,7 +20,7 @@
 // about Procedural Macros in Rust book:
 // https://doc.rust-lang.org/reference/procedural-macros.html
 
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, token_stream};
 use quote::{quote, ToTokens, format_ident};
 use inflector::cases;
 use std::fmt::Write;
@@ -847,27 +847,50 @@ impl Method {
 		read_signature: bool,
 	) {
 		match ty {
-			AbiType::Plain(ref ident) => token_stream.extend(if read_signature {
-				quote! {
-					(<#ident>::SIGNATURE),
-				}
-			} else {
-				quote! {
-					#ident,
-				}
-			}),
+			AbiType::Plain(ref ident) => {
+				let plain_token = if read_signature {
+					quote! {
+						(<#ident>::SIGNATURE)
+					}
+				} else {
+					quote! {
+						#ident
+					}
+				};
+
+				token_stream.extend(plain_token);
+			}
 
 			AbiType::Tuple(ref tuple_type) => {
 				let mut tuple_types = proc_macro2::TokenStream::new();
+				let mut is_first = true;
+
 				for ty in tuple_type {
+					if is_first {
+						is_first = false
+					} else {
+						tuple_types.extend(quote!(,));
+					}
 					Self::expand_type(ty, &mut tuple_types, false);
 				}
-				tuple_types = quote! { (<(#tuple_types)>::SIGNATURE), };
-				// println!("{}", tuple_types);
+				tuple_types = if read_signature {
+					quote! { (<(#tuple_types)>::SIGNATURE) }
+				} else {
+					quote! { (#tuple_types) }
+				};
 				token_stream.extend(tuple_types);
 			}
 
-			AbiType::Vec(ref _vec_type) => {}
+			AbiType::Vec(ref vec_type) => {
+				let mut vec_token = proc_macro2::TokenStream::new();
+				Self::expand_type(vec_type.as_ref(), &mut vec_token, false);
+				vec_token = if read_signature {
+					quote! { (<Vec<#vec_token>>::SIGNATURE) }
+				} else {
+					quote! { <Vec<#vec_token>> }
+				};
+				token_stream.extend(vec_token);
+			}
 
 			AbiType::Array(_, _) => todo!("Array eth signature"),
 		};
@@ -876,14 +899,23 @@ impl Method {
 	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
 		let mut token_stream = TokenStream::new();
 
+		let mut is_first = true;
 		for arg in &self.args {
 			if arg.is_special() {
 				continue;
 			}
 
+			if is_first {
+				is_first = false;
+			} else {
+				token_stream.extend(quote!(,));
+			}
 			Self::expand_type(&arg.ty, &mut token_stream, true);
 		}
-		// println!("!!!!! {}", token_stream);
+
+		if !is_first {
+			token_stream.extend(quote!(,));
+		}
 
 		let func_name = self.camel_name.clone();
 		let func_name = quote!(SignaturePreferences {
@@ -893,8 +925,7 @@ impl Method {
 			close_delimiter: Some(SignatureUnit::new(")")),
 			close_name: None,
 		});
-		token_stream = quote!({ ::evm_coder::make_signature!(new fn(#func_name),#token_stream) });
-		token_stream
+		quote!({ ::evm_coder::make_signature!(new fn(#func_name), #token_stream) })
 	}
 
 	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
