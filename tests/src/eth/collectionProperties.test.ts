@@ -196,7 +196,7 @@ describe('EVM collection property', () => {
   itEth('Set/read properties ft', async ({helper}) => {
     await testSetReadProperties(helper, 'ft');
   });
-  itEth('Set/read properties rft', async ({helper}) => {
+  itEth.ifWithPallets('Set/read properties rft', [Pallets.ReFungible], async ({helper}) => {
     await testSetReadProperties(helper, 'rft');
   });
   itEth('Set/read properties nft', async ({helper}) => {
@@ -242,7 +242,7 @@ describe('EVM collection property', () => {
   itEth('Delete properties ft', async ({helper}) => {
     await testDeleteProperties(helper, 'ft');
   });
-  itEth('Delete properties rft', async ({helper}) => {
+  itEth.ifWithPallets('Delete properties rft', [Pallets.ReFungible], async ({helper}) => {
     await testDeleteProperties(helper, 'rft');
   });
   itEth('Delete properties nft', async ({helper}) => {

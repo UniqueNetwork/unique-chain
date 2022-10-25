@@ -17,6 +17,7 @@
 import {itEth, usingEthPlaygrounds, expect} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {Pallets} from '../util';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
@@ -99,7 +100,7 @@ describe('EVM token properties', () => {
     expect(values).to.be.deep.equal(properties.map(p => { return {key: p.field_0, value: p.field_1.toString()}; }));
   });
   
-  itEth('Can be multiple set for RFT ', async({helper}) => {
+  itEth.ifWithPallets('Can be multiple set for RFT ', [Pallets.ReFungible], async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     
     const properties = Array(5).fill(0).map((_, i) => { return {field_0: `key_${i}`, field_1: Buffer.from(`value_${i}`)}; });
