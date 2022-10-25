@@ -27,7 +27,7 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
-	SponsoringRateLimit, SponsorshipState, PropertyKey,
+	SponsoringRateLimit, SponsorshipState,
 };
 use alloc::format;
 
@@ -106,7 +106,6 @@ where
 		caller: caller,
 		properties: Vec<(string, bytes)>,
 	) -> Result<void> {
-		
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let properties = properties

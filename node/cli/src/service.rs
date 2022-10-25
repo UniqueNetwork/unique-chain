@@ -46,7 +46,6 @@ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use cumulus_relay_chain_rpc_interface::{RelayChainRpcInterface, create_client_and_start_worker};
 
 // Substrate Imports
-use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
 use sc_network::{NetworkService, NetworkBlock};
@@ -83,15 +82,6 @@ pub struct QuartzRuntimeExecutor;
 
 /// Opal native executor instance.
 pub struct OpalRuntimeExecutor;
-
-#[cfg(feature = "unique-runtime")]
-pub type DefaultRuntimeExecutor = UniqueRuntimeExecutor;
-
-#[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
-pub type DefaultRuntimeExecutor = QuartzRuntimeExecutor;
-
-#[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
-pub type DefaultRuntimeExecutor = OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
 impl NativeExecutionDispatch for UniqueRuntimeExecutor {

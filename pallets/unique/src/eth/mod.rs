@@ -26,19 +26,15 @@ use crate::Pallet;
 use pallet_common::{
 	CollectionById,
 	dispatch::CollectionDispatch,
-	erc::{
-		static_property::key,
-		CollectionHelpersEvents,
-	},
+	erc::{static_property::key, CollectionHelpersEvents},
 	Pallet as PalletCommon,
-	
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use sp_std::vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
-	CreateCollectionData, PropertyValue,
+	CreateCollectionData,
 };
 
 use crate::{weights::WeightInfo, Config, SelfWeightOf};
@@ -86,23 +82,6 @@ fn convert_data<T: Config>(
 		error_field_too_long(stringify!(token_prefix), CollectionTokenPrefix::bound())
 	})?;
 	Ok((caller, name, description, token_prefix))
-}
-
-fn create_refungible_collection_internal<T: Config>(
-	caller: caller,
-	value: value,
-	name: string,
-	description: string,
-	token_prefix: string,
-) -> Result<address> {
-	self::create_collection_internal::<T>(
-		caller,
-		value,
-		name,
-		CollectionMode::ReFungible,
-		description,
-		token_prefix
-	)
 }
 
 #[inline(always)]
@@ -233,27 +212,6 @@ where
 		name: string,
 		description: string,
 		token_prefix: string,
-	) -> Result<address> {
-		create_collection_internal::<T>(
-			caller,
-			value,
-			name,
-			CollectionMode::ReFungible,
-			description,
-			token_prefix,
-		)
-	}
-
-	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
-	fn create_refungible_collection_with_properties(
-		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-		base_uri: string,
 	) -> Result<address> {
 		create_collection_internal::<T>(
 			caller,

@@ -33,9 +33,7 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{
-		self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification, default_runtime,
-	},
+	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, start_node, start_dev_node},
 };
@@ -46,7 +44,7 @@ use crate::service::UniqueRuntimeExecutor;
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
 
-use crate::service::{OpalRuntimeExecutor, DefaultRuntimeExecutor};
+use crate::service::OpalRuntimeExecutor;
 
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
