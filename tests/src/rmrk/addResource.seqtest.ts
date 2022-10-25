@@ -112,7 +112,7 @@ describe('integration test: add NFT resource', () => {
     const resourcesInfo = [];
     const resourceNum = 4;
 
-    const checkResource = async (resource: ResourceInfo, resType: string, expectedId: number, expected: {
+    const checkResource = (resource: ResourceInfo, resType: string, expectedId: number, expected: {
       src: string,
       metadata: string,
       license: string,

@@ -116,20 +116,20 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
   });
 
   itSub('(!negative test!) create new NFT collection whith incorrect data (collection_name)', async ({helper}) => {
-    const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'A'.repeat(65), description: 'descr', tokenPrefix: 'COL'});
+    const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'A'.repeat(65), description: 'descr', tokenPrefix: 'COL'});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
   itSub('(!negative test!) create new NFT collection whith incorrect data (collection_description)', async ({helper}) => {
-    const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'A'.repeat(257), tokenPrefix: 'COL'});
+    const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'A'.repeat(257), tokenPrefix: 'COL'});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
   itSub('(!negative test!) create new NFT collection whith incorrect data (token_prefix)', async ({helper}) => {
-    const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(17)});
+    const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(17)});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
   
   itSub('(!negative test!) fails when bad limits are set', async ({helper}) => {
-    const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', limits: {tokenLimit: 0}});
+    const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', limits: {tokenLimit: 0}});
     await expect(mintCollectionTx()).to.be.rejectedWith(/common\.CollectionTokenLimitExceeded/);
   });
 
@@ -139,7 +139,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
     for (let i = 0; i < 65; i++) {
       props.push({key: `key${i}`, value: `value${i}`});
     }
-    const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', properties: props});
+    const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', properties: props});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
 
@@ -150,7 +150,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
       props.push({key: `key${i}`.repeat(80), value: `value${i}`.repeat(80)});
     }
 
-    const mintCollectionTx = async () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', properties: props});
+    const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', properties: props});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
 });

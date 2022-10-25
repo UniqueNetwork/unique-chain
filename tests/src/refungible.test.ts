@@ -19,7 +19,7 @@ import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './
 
 const MAX_REFUNGIBLE_PIECES = 1_000_000_000_000_000_000_000n;
 
-describe('integration test: Refungible functionality:', async () => {
+describe('integration test: Refungible functionality:', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;

@@ -271,7 +271,7 @@ class ArrangeGroup {
     }
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
-    const findCreationDate = async (block: any) => {
+    const findCreationDate = (block: any) => {
       const humanBlock = block.toHuman();
       let date;
       humanBlock.block.extrinsics.forEach((ext: any) => {
@@ -418,7 +418,7 @@ class WaitGroup {
     return promise;
   }
 
-  async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+  event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<EventRecord | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
