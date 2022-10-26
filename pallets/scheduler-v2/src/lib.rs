@@ -794,7 +794,7 @@ impl<T: Config> Pallet<T> {
 			Self::deposit_event(Event::Canceled { when, index });
 			Ok(())
 		} else {
-			return Err(Error::<T>::NotFound.into());
+			Err(Error::<T>::NotFound.into())
 		}
 	}
 
@@ -856,7 +856,7 @@ impl<T: Config> Pallet<T> {
 				Self::deposit_event(Event::Canceled { when, index });
 				Ok(())
 			} else {
-				return Err(Error::<T>::NotFound.into());
+				Err(Error::<T>::NotFound.into())
 			}
 		})
 	}
@@ -1148,7 +1148,7 @@ impl<T: Config> Pallet<T> {
 			Ok(ScheduledEnsureOriginSuccess::Signed(sender)) => {
 				// Execute transaction via chain default pipeline
 				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
-				T::CallExecutor::dispatch_call(Some(sender), call.clone())
+				T::CallExecutor::dispatch_call(Some(sender), call)
 			}
 			Err(e) => Ok(Err(e.into())),
 		};
