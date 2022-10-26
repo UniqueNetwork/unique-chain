@@ -213,7 +213,6 @@ impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
 pub enum ScheduledEnsureOriginSuccess<AccountId> {
 	Root,
 	Signed(AccountId),
-	Unsigned,
 }
 
 pub type TaskName = [u8; 32];
@@ -1075,10 +1074,6 @@ impl<T: Config> Pallet<T> {
 				// Execute transaction via chain default pipeline
 				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 				T::CallExecutor::dispatch_call(Some(sender), call.clone())
-			}
-			Ok(ScheduledEnsureOriginSuccess::Unsigned) => {
-				// Unsigned version of the above
-				T::CallExecutor::dispatch_call(None, call.clone())
 			}
 			Err(e) => Ok(Err(e.into())),
 		};
