@@ -18,29 +18,29 @@
 
 use core::marker::PhantomData;
 use ethereum as _;
-use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
+use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::traits::Get;
+
+use crate::Pallet;
+
 use pallet_common::{
 	CollectionById,
 	dispatch::CollectionDispatch,
-	erc::{
-		CollectionHelpersEvents,
-		static_property::{key},
-	},
+	erc::{static_property::key, CollectionHelpersEvents},
 	Pallet as PalletCommon,
 };
-use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
+use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use sp_std::vec;
 use up_data_structs::{
-	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyValue, CollectionFlags,
+	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
+	CreateCollectionData,
 };
 
-use crate::{Config, SelfWeightOf, weights::WeightInfo};
+use crate::{weights::WeightInfo, Config, SelfWeightOf};
 
-use sp_std::vec::Vec;
 use alloc::format;
+use sp_std::vec::Vec;
 
 /// See [`CollectionHelpersCall`]
 pub struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
@@ -84,12 +84,12 @@ fn convert_data<T: Config>(
 	Ok((caller, name, description, token_prefix))
 }
 
-fn create_refungible_collection_internal<
-	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
->(
+#[inline(always)]
+fn create_collection_internal<T: Config>(
 	caller: caller,
 	value: value,
 	name: string,
+	collection_mode: CollectionMode,
 	description: string,
 	token_prefix: string,
 ) -> Result<address> {
@@ -97,7 +97,7 @@ fn create_refungible_collection_internal<
 		convert_data::<T>(caller, name, description, token_prefix)?;
 	let data = CreateCollectionData {
 		name,
-		mode: CollectionMode::ReFungible,
+		mode: collection_mode,
 		description,
 		token_prefix,
 		..Default::default()
@@ -193,7 +193,14 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		self.create_nft_collection(caller, value, name, description, token_prefix)
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::NFT,
+			description,
+			token_prefix,
+		)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -206,7 +213,35 @@ where
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		create_refungible_collection_internal::<T>(caller, value, name, description, token_prefix)
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::ReFungible,
+			description,
+			token_prefix,
+		)
+	}
+
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createFTCollection")]
+	fn create_fungible_collection(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		decimals: uint8,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		create_collection_internal::<T>(
+			caller,
+			value,
+			name,
+			CollectionMode::Fungible(decimals),
+			description,
+			token_prefix,
+		)
 	}
 
 	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
@@ -294,6 +329,16 @@ where
 		collection.save().map_err(dispatch_to_evm::<T>)?;
 
 		Ok(())
+	}
+
+	#[weight(<SelfWeightOf<T>>::destroy_collection())]
+	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
+			.ok_or("Invalid collection address format")?;
+		<Pallet<T>>::destroy_collection_internal(caller, collection_id)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)
 	}
 
 	/// Check if a collection exists

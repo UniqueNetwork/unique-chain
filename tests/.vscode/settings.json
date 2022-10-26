@@ -1,5 +1,12 @@
 {
-    "mocha.enabled": true,
-    "mochaExplorer.files": "**/*.test.ts",
-    "mochaExplorer.require": "ts-node/register"
+	"mocha.enabled": true,
+	"mochaExplorer.files": "**/*.test.ts",
+	"mochaExplorer.require": "ts-node/register",
+	"eslint.format.enable": true,
+	"[javascript]": {
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
+	}
 }

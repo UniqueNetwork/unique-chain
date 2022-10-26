@@ -13,3 +13,12 @@ export type NormalizedEvent = {
   event: string,
   args: { [key: string]: string }
 };
+export interface TEthCrossAccount {
+  readonly 0: string,
+  readonly 1: string | Uint8Array,
+  readonly field_0: string,
+  readonly field_1: string | Uint8Array,
+}
+
+export type EthProperty = string[];
+

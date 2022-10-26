@@ -14,18 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
+import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 
+const DECIMALS = 18;
 
-describe('Create RFT collection from EVM', () => {
+describe('Create FT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
       donor = await privateKey({filename: __filename});
     });
   });
@@ -37,55 +38,24 @@ describe('Create RFT collection from EVM', () => {
     const description = 'Some description';
     const prefix = 'token prefix';
   
-    const {collectionId} = await helper.eth.createRFTCollection(owner, name, description, prefix);
-    const data = (await helper.rft.getData(collectionId))!;
-    const collection = helper.rft.getCollectionObject(collectionId);
+    // todo:playgrounds this might fail when in async environment.
+    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
-    expect(data.name).to.be.eq(name);
-    expect(data.description).to.be.eq(description);
-    expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.eq('ReFungible');
-
-    const options = await collection.getOptions();
-
-    expect(options.tokenPropertyPermissions).to.be.empty;
-  });
-
-  
-
-  itEth('Create collection with properties', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-
-    const name = 'CollectionEVM';
-    const description = 'Some description';
-    const prefix = 'token prefix';
-    const baseUri = 'BaseURI';
-
-    const {collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
-
-    const collection = helper.rft.getCollectionObject(collectionId);
-    const data = (await collection.getData())!;
+    const {collectionId} = await helper.eth.createFungibleCollection(owner, name, DECIMALS, description, prefix);
     
+    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
+    const data = (await helper.ft.getData(collectionId))!;
+
+    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
+    expect(collectionId).to.be.eq(collectionCountAfter);
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.eq('ReFungible');
-
-    const options = await collection.getOptions();
-    expect(options.tokenPropertyPermissions).to.be.deep.equal([
-      {
-        key: 'URI',
-        permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
-      },
-      {
-        key: 'URISuffix',
-        permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
-      },
-    ]);
+    expect(data.raw.mode).to.be.deep.eq({Fungible: DECIMALS.toString()});
   });
-  
-  // this test will occasionally fail when in async environment.
-  itEth.skip('Check collection address exist', async ({helper}) => {
+
+  // todo:playgrounds this test will fail when in async environment.
+  itEth('Check collection address exist', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
@@ -96,9 +66,9 @@ describe('Create RFT collection from EVM', () => {
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.false;
 
-    await collectionHelpers.methods
-      .createRFTCollection('A', 'A', 'A')
-      .send({value: Number(2n * helper.balance.getOneTokenNominal())});
+    
+    await helper.eth.createFungibleCollection(owner, 'A', DECIMALS, 'A', 'A');
+
     
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
@@ -109,7 +79,7 @@ describe('Create RFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ENVY');
+    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, 'absolutely anything', 'ENVY');
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     await collection.methods.setCollectionSponsor(sponsor).send();
@@ -128,7 +98,7 @@ describe('Create RFT collection from EVM', () => {
 
   itEth('Set limits', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'INSI');
+    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Limits', DECIMALS, 'absolutely anything', 'INSI');
     const limits = {
       accountTokenOwnershipLimit: 1000,
       sponsoredDataSize: 1024,
@@ -141,7 +111,7 @@ describe('Create RFT collection from EVM', () => {
       transfersEnabled: false,
     };
 
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const collection = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
     await collection.methods['setCollectionLimit(string,uint32)']('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
     await collection.methods['setCollectionLimit(string,uint32)']('sponsoredDataSize', limits.sponsoredDataSize).send();
     await collection.methods['setCollectionLimit(string,uint32)']('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
@@ -171,20 +141,46 @@ describe('Create RFT collection from EVM', () => {
       .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
-    const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Exister', 'absolutely anything', 'WIWT');
+    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
     expect(await helper.ethNativeContract.collectionHelpers(collectionAddress)
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
   });
+  
+  itEth('destroyCollection', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+
+    const result = await collectionHelper.methods
+      .destroyCollection(collectionAddress)
+      .send({from: owner});
+
+    const events = helper.eth.normalizeEvents(result.events);
+    
+    expect(events).to.be.deep.equal([
+      {
+        address: collectionHelper.options.address,
+        event: 'CollectionDestroyed',
+        args: {
+          collectionId: collectionAddress,
+        },
+      },
+    ]);
+
+    expect(await collectionHelper.methods
+      .isCollectionExist(collectionAddress)
+      .call()).to.be.false;
+  });
 });
 
-describe('(!negative tests!) Create RFT collection from EVM', () => {
+describe('(!negative tests!) Create FT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
       donor = await privateKey({filename: __filename});
       nominal = helper.balance.getOneTokenNominal();
     });
@@ -200,7 +196,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const tokenPrefix = 'A';
 
       await expect(collectionHelper.methods
-        .createRFTCollection(collectionName, description, tokenPrefix)
+        .createFTCollection(collectionName, DECIMALS, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
     {
@@ -209,7 +205,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
       await expect(collectionHelper.methods
-        .createRFTCollection(collectionName, description, tokenPrefix)
+        .createFTCollection(collectionName, DECIMALS, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
     {
@@ -218,7 +214,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
       await expect(collectionHelper.methods
-        .createRFTCollection(collectionName, description, tokenPrefix)
+        .createFTCollection(collectionName, DECIMALS, description, tokenPrefix)
         .call({value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
@@ -227,15 +223,15 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     await expect(collectionHelper.methods
-      .createRFTCollection('Peasantry', 'absolutely anything', 'TWIW')
+      .createFTCollection('Peasantry', DECIMALS, 'absolutely anything', 'TWIW')
       .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   itEth('(!negative test!) Check owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const peasant = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Transgressed', 'absolutely anything', 'YVNE');
-    const peasantCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', peasant);
+    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Transgressed', DECIMALS, 'absolutely anything', 'YVNE');
+    const peasantCollection = helper.ethNativeContract.collection(collectionAddress, 'ft', peasant);
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
@@ -243,7 +239,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
         .setCollectionSponsor(sponsor)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
       
-      const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
+      const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'ft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
         .call()).to.be.rejectedWith('caller is not set as sponsor');
@@ -257,24 +253,10 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
 
   itEth('(!negative test!) Set limits', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'ISNI');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Limits', DECIMALS, 'absolutely anything', 'ISNI');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
     await expect(collectionEvm.methods
       .setCollectionLimit('badLimit', 'true')
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');
-  });
-  
-  itEth('destroyCollection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    
-    await expect(collectionHelper.methods
-      .destroyCollection(collectionAddress)
-      .send({from: owner})).to.be.fulfilled;
-    
-    expect(await collectionHelper.methods
-      .isCollectionExist(collectionAddress)
-      .call()).to.be.false;  
   });
 });

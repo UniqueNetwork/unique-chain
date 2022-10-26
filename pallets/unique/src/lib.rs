@@ -362,25 +362,8 @@ decl_module! {
 		#[weight = <SelfWeightOf<T>>::destroy_collection()]
 		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
 
-			// =========
-
-			T::CollectionDispatch::destroy(sender, collection)?;
-
-			// TODO: basket cleanup should be moved elsewhere
-			// Maybe runtime dispatch.rs should perform it?
-
-			let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-			let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-			let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
-
-			let _ = <NftApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-			let _ = <FungibleApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-			let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
-
-			Ok(())
+			Self::destroy_collection_internal(sender, collection_id)
 		}
 
 		/// Add an address to allow list.
@@ -1150,5 +1133,29 @@ impl<T: Config> Pallet<T> {
 		Self::deposit_event(Event::<T>::CollectionSponsorRemoved(collection_id));
 
 		target_collection.save()
+	}
+
+	#[inline(always)]
+	pub(crate) fn destroy_collection_internal(
+		sender: T::CrossAccountId,
+		collection_id: CollectionId,
+	) -> DispatchResult {
+		let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		collection.check_is_internal()?;
+
+		T::CollectionDispatch::destroy(sender, collection)?;
+
+		// TODO: basket cleanup should be moved elsewhere
+		// Maybe runtime dispatch.rs should perform it?
+
+		let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+		let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+		let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
+
+		let _ = <NftApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+		let _ = <FungibleApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+		let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
+
+		Ok(())
 	}
 }

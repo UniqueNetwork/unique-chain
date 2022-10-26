@@ -49,18 +49,38 @@ describe('Add collection admins', () => {
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
 
-  itEth.skip('Add substrate admin by owner', async ({helper}) => {
+  itEth('Add cross account admin by owner', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
+        
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    
+    const newAdmin = await privateKey('//Bob');
+    const newAdminCross = helper.ethCrossAccount.fromKeyringPair(newAdmin);
+    await collectionEvm.methods.addCollectionAdminCross(newAdminCross).send();
 
-    const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
-    await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
-
-    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
-    expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
-      .to.be.eq(newAdmin.address.toLocaleLowerCase());
+    const adminList = await helper.collection.getAdmins(collectionId);
+    expect(adminList).to.be.like([{Substrate: newAdmin.address}]);
   });
+
+  // itEth('Check adminlist', async ({helper, privateKey}) => {
+  //   const owner = await helper.eth.createAccountWithBalance(donor);
+        
+  //   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+  //   const admin1 = helper.eth.createAccount();
+  //   const admin2 = await privateKey('admin');
+  //   await collectionEvm.methods.addCollectionAdmin(admin1).send();
+  //   await collectionEvm.methods.addCollectionAdminCross(helper.ethCrossAccount.fromKeyringPair(admin2)).send();
+
+  //   const adminListRpc = await helper.collection.getAdmins(collectionId);
+  //   let adminListEth = await collectionEvm.methods.collectionAdmins().call();
+  //   adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
+  //     return helper.address.convertCrossAccountFromEthCrossAcoount(element);
+  //   });
+  //   expect(adminListRpc).to.be.like(adminListEth);
+  // });
 
   itEth('Verify owner or admin', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
@@ -68,11 +88,31 @@ describe('Add collection admins', () => {
 
     const newAdmin = helper.eth.createAccount();
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+  
     expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.false;
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
     expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.true;
   });
 
+  // itEth.skip('Check adminlist', async ({helper, privateKey}) => {
+  //   const owner = await helper.eth.createAccountWithBalance(donor);
+        
+  //   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+  //   const admin1 = helper.eth.createAccount();
+  //   const admin2 = await privateKey('admin');
+  //   await collectionEvm.methods.addCollectionAdmin(admin1).send();
+  //   await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
+
+  //   const adminListRpc = await helper.collection.getAdmins(collectionId);
+  //   let adminListEth = await collectionEvm.methods.collectionAdmins().call();
+  //   adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
+  //     return helper.address.convertCrossAccountFromEthCrossAcoount(element);
+  //   });
+  //   expect(adminListRpc).to.be.like(adminListEth);
+  // });
+    
   itEth('(!negative tests!) Add admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');

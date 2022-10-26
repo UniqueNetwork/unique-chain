@@ -9,7 +9,36 @@ import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, IForeignAssetMetadata, TNetworks, MoonbeamAssetInfo, DemocracyStandardAccountVote, AcalaAssetMetadata} from './types';
+import {
+  IApiListeners,
+  IBlock,
+  IEvent,
+  IChainProperties,
+  ICollectionCreationOptions,
+  ICollectionLimits,
+  ICollectionPermissions,
+  ICrossAccountId,
+  ICrossAccountIdLower,
+  ILogger,
+  INestingPermissions,
+  IProperty,
+  IStakingInfo,
+  ISchedulerOptions,
+  ISubstrateBalance,
+  IToken,
+  ITokenPropertyPermission,
+  ITransactionResult,
+  IUniqueHelperLog,
+  TApiAllowedListeners,
+  TEthereumAccount,
+  TSigner,
+  TSubstrateAccount,
+  TNetworks,
+  IForeignAssetMetadata,
+  AcalaAssetMetadata,
+  MoonbeamAssetInfo,
+  DemocracyStandardAccountVote,
+} from './types';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;

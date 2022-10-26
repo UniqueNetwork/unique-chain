@@ -84,7 +84,11 @@ contract Fractionalizer {
 	) external payable onlyOwner {
 		require(rftCollection == address(0), "RFT collection is already set");
 		address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-		rftCollection = CollectionHelpers(collectionHelpers).createRFTCollection{value: msg.value}(_name, _description, _tokenPrefix);
+		rftCollection = CollectionHelpers(collectionHelpers).createRFTCollection{value: msg.value}(
+			_name,
+			_description,
+			_tokenPrefix
+		);
 		emit RFTCollectionSet(rftCollection);
 	}
 
