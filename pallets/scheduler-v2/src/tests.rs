@@ -319,12 +319,12 @@ fn scheduler_does_not_delete_permanently_overweight_call() {
 			.into(),
 		);
 		// The call is still in the agenda.
-		assert!(Agenda::<Test>::get(4)[0].is_some());
+		assert!(Agenda::<Test>::get(4).agenda[0].is_some());
 	});
 }
 
 #[test]
-fn scheduler_handles_periodic_failure() {
+fn scheduler_periodic_tasks_always_find_place() {
 	let max_weight: Weight = <Test as Config>::MaximumWeight::get();
 	let max_per_block = <Test as Config>::MaxScheduledPerBlock::get();
 
@@ -357,18 +357,17 @@ fn scheduler_handles_periodic_failure() {
 			));
 		}
 
-		// Going to block 24 will emit a `PeriodicFailed` event.
 		run_to_block(24);
 		assert_eq!(logger::log().len(), 6);
 
-		assert_eq!(
-			System::events().last().unwrap().event,
-			crate::Event::PeriodicFailed {
-				task: (24, 0),
-				id: None
-			}
-			.into(),
-		);
+		// The periodic task should be postponed
+		assert_eq!(<Agenda<Test>>::get(29).agenda.len(), 1);
+
+		run_to_block(27); // will call on_initialize(28)
+		assert_eq!(logger::log().len(), 6);
+
+		run_to_block(28); // will call on_initialize(29)
+		assert_eq!(logger::log().len(), 7);
 	});
 }
 
@@ -596,7 +595,7 @@ fn root_calls_works() {
 		));
 		run_to_block(3);
 		// Scheduled calls are in the agenda.
-		assert_eq!(Agenda::<Test>::get(4).len(), 2);
+		assert_eq!(Agenda::<Test>::get(4).agenda.len(), 2);
 		assert!(logger::log().is_empty());
 		assert_ok!(Scheduler::cancel_named(RuntimeOrigin::root(), [1u8; 32]));
 		assert_ok!(Scheduler::cancel(RuntimeOrigin::root(), 4, 1));
@@ -669,7 +668,7 @@ fn should_use_origin() {
 		));
 		run_to_block(3);
 		// Scheduled calls are in the agenda.
-		assert_eq!(Agenda::<Test>::get(4).len(), 2);
+		assert_eq!(Agenda::<Test>::get(4).agenda.len(), 2);
 		assert!(logger::log().is_empty());
 		assert_ok!(Scheduler::cancel_named(
 			system::RawOrigin::Signed(1).into(),
@@ -739,7 +738,7 @@ fn should_check_origin_for_cancel() {
 		));
 		run_to_block(3);
 		// Scheduled calls are in the agenda.
-		assert_eq!(Agenda::<Test>::get(4).len(), 2);
+		assert_eq!(Agenda::<Test>::get(4).agenda.len(), 2);
 		assert!(logger::log().is_empty());
 		assert_noop!(
 			Scheduler::cancel_named(system::RawOrigin::Signed(2).into(), [1u8; 32]),

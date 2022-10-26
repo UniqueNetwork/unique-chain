@@ -96,7 +96,7 @@ use sp_runtime::{
 	BoundedVec, RuntimeDebug, DispatchErrorWithPostInfo,
 };
 use sp_core::H160;
-use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
+use sp_std::{cmp::Ordering, marker::PhantomData, prelude::*};
 pub use weights::WeightInfo;
 
 pub use pallet::*;
@@ -254,9 +254,9 @@ pub struct BlockAgenda<T: Config> {
 }
 
 impl<T: Config> BlockAgenda<T> {
-	fn try_push(&mut self, scheduled: ScheduledOf<T>) -> Option<u32> {
+	fn try_push(&mut self, scheduled: ScheduledOf<T>) -> Result<u32, ScheduledOf<T>> {
 		if self.free_places == 0 {
-			return None;
+			return Err(scheduled);
 		}
 
 		self.free_places = self.free_places.saturating_sub(1);
@@ -264,14 +264,14 @@ impl<T: Config> BlockAgenda<T> {
 		if (self.agenda.len() as u32) < T::MaxScheduledPerBlock::get() {
 			// will always succeed due to the above check.
 			let _ = self.agenda.try_push(Some(scheduled));
-			Some((self.agenda.len() - 1) as u32)
+			Ok((self.agenda.len() - 1) as u32)
 		} else {
 			match self.agenda.iter().position(|i| i.is_none()) {
 				Some(hole_index) => {
 					self.agenda[hole_index] = Some(scheduled);
-					Some(hole_index as u32)
+					Ok(hole_index as u32)
 				}
-				None => unreachable!("free_places > 0; qed"),
+				None => unreachable!("free_places was greater than 0; qed"),
 			}
 		}
 	}
@@ -473,11 +473,6 @@ pub mod pallet {
 		},
 		/// The call for the provided hash was not found so the task has been aborted.
 		CallUnavailable {
-			task: TaskAddress<T::BlockNumber>,
-			id: Option<[u8; 32]>,
-		},
-		/// The given task was unable to be renewed since the agenda is full at that block.
-		PeriodicFailed {
 			task: TaskAddress<T::BlockNumber>,
 			id: Option<[u8; 32]>,
 		},
@@ -688,12 +683,24 @@ impl<T: Config> Pallet<T> {
 		Ok(when)
 	}
 
-	fn place_task(
+	fn mandatory_place_task(when: T::BlockNumber, what: ScheduledOf<T>) {
+		Self::place_task(when, what, true).expect("mandatory place task always succeeds; qed");
+	}
+
+	fn try_place_task(
 		when: T::BlockNumber,
 		what: ScheduledOf<T>,
-	) -> Result<TaskAddress<T::BlockNumber>, (DispatchError, ScheduledOf<T>)> {
+	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
+		Self::place_task(when, what, false)
+	}
+
+	fn place_task(
+		mut when: T::BlockNumber,
+		what: ScheduledOf<T>,
+		is_mandatory: bool,
+	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
 		let maybe_name = what.maybe_id;
-		let index = Self::push_to_agenda(when, what)?;
+		let index = Self::push_to_agenda(&mut when, what, is_mandatory)?;
 		let address = (when, index);
 		if let Some(name) = maybe_name {
 			Lookup::<T>::insert(name, address)
@@ -706,13 +713,24 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn push_to_agenda(
-		when: T::BlockNumber,
-		what: ScheduledOf<T>,
-	) -> Result<u32, (DispatchError, ScheduledOf<T>)> {
-		let mut agenda = Agenda::<T>::get(when);
-		let index = agenda
-			.try_push(what.clone())
-			.ok_or((<Error<T>>::AgendaIsExhausted.into(), what))?;
+		when: &mut T::BlockNumber,
+		mut what: ScheduledOf<T>,
+		is_mandatory: bool,
+	) -> Result<u32, DispatchError> {
+		let mut agenda;
+
+		let index = loop {
+			agenda = Agenda::<T>::get(*when);
+
+			match agenda.try_push(what) {
+				Ok(index) => break index,
+				Err(returned_what) if is_mandatory => {
+					what = returned_what;
+					when.saturating_inc();
+				}
+				Err(_) => return Err(<Error<T>>::AgendaIsExhausted.into()),
+			}
+		};
 
 		Agenda::<T>::insert(when, agenda);
 		Ok(index)
@@ -740,7 +758,7 @@ impl<T: Config> Pallet<T> {
 			origin,
 			_phantom: PhantomData,
 		};
-		Self::place_task(when, task).map_err(|x| x.0)
+		Self::try_place_task(when, task)
 	}
 
 	fn do_cancel(
@@ -809,7 +827,7 @@ impl<T: Config> Pallet<T> {
 			origin,
 			_phantom: Default::default(),
 		};
-		Self::place_task(when, task).map_err(|x| x.0)
+		Self::try_place_task(when, task)
 	}
 
 	fn do_cancel_named(origin: Option<T::PalletsOrigin>, id: TaskName) -> DispatchResult {
@@ -1075,18 +1093,7 @@ impl<T: Config> Pallet<T> {
 							task.maybe_periodic = None;
 						}
 						let wake = now.saturating_add(period);
-						match Self::place_task(wake, task) {
-							Ok(_) => {}
-							Err((_, task)) => {
-								// TODO: Leave task in storage somewhere for it to be rescheduled
-								// manually.
-								T::Preimages::drop(&task.call);
-								Self::deposit_event(Event::PeriodicFailed {
-									task: (when, agenda_index),
-									id: task.maybe_id,
-								});
-							}
-						}
+						Self::mandatory_place_task(wake, task);
 					}
 					_ => {
 						if let Some(ref id) = task.maybe_id {
