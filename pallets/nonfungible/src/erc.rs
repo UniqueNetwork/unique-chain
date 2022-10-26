@@ -118,6 +118,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
 	/// @param properties settable properties
+	#[weight(<SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
 	fn set_properties(
 		&mut self,
 		caller: caller,
