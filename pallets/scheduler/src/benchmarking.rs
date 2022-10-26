@@ -50,6 +50,13 @@ use frame_support::traits::Currency;
 
 const BLOCK_NUMBER: u32 = 2;
 
+fn make_scheduled_id(src: u32) -> ScheduledId {
+	let slice_id: [u8; 4] = src.encode().try_into().unwrap();
+	let mut id: [u8; 16] = [0; 16];
+	id[..4].clone_from_slice(&slice_id);
+	id
+}
+
 /// Add `n` named items to the schedule.
 ///
 /// For `resolved`:
@@ -79,10 +86,7 @@ fn fill_schedule<T: Config>(
 			false => None,
 		};
 
-		let slice_id: [u8; 4] = i.encode().try_into().unwrap();
-		let mut id: [u8; 16] = [0; 16];
-		id[..4].clone_from_slice(&slice_id);
-
+		let id = make_scheduled_id(i);
 		let origin = frame_system::RawOrigin::Signed(caller.clone()).into();
 		Scheduler::<T>::do_schedule_named(id, t, period, 0, origin, call_or_hash)?;
 	}
@@ -202,7 +206,7 @@ benchmarks! {
 		id[..4].clone_from_slice(&slice_id);
 		let when = BLOCK_NUMBER.into();
 		let periodic = Some((T::BlockNumber::one(), 100));
-		let priority = 0;
+		let priority = None;
 		// Essentially a no-op call.
 		let inner_call = frame_system::Call::set_storage { items: vec![] }.into();
 		let call = Box::new(CallOrHashOf::<T>::Value(inner_call));
@@ -220,7 +224,8 @@ benchmarks! {
 		let origin: RawOrigin<T::AccountId> = frame_system::RawOrigin::Signed(caller.clone());
 		let s in 1 .. T::MaxScheduledPerBlock::get();
 		let when = BLOCK_NUMBER.into();
-		let id = 0.encode().try_into().unwrap_or([0; MAX_TASK_ID_LENGTH_IN_BYTES as usize]);
+		let idx = s - 1;
+		let id = make_scheduled_id(idx);
 		fill_schedule::<T>(when, s, true, Some(false))?;
 	}: _(origin, id)
 	verify {
@@ -230,8 +235,24 @@ benchmarks! {
 		);
 		// Removed schedule is NONE
 		ensure!(
-			Agenda::<T>::get(when)[0].is_none(),
+			Agenda::<T>::get(when)[idx as usize].is_none(),
 			"didn't remove from schedule"
+		);
+	}
+
+	change_named_priority {
+		let origin: RawOrigin<T::AccountId> = frame_system::RawOrigin::Root;
+		let s in 1 .. T::MaxScheduledPerBlock::get();
+		let when = BLOCK_NUMBER.into();
+		let idx = s - 1;
+		let id = make_scheduled_id(idx);
+		let priority = 42;
+		fill_schedule::<T>(when, s, true, Some(false))?;
+	}: _(origin, id, priority)
+	verify {
+		ensure!(
+			Agenda::<T>::get(when)[idx as usize].clone().unwrap().priority == priority,
+			"didn't change the priority"
 		);
 	}
 

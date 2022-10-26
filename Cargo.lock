@@ -5378,12 +5378,14 @@ dependencies = [
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
+ "pallet-test-utils",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
  "pallet-unique-scheduler",
+ "pallet-unique-scheduler-v2",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec 3.2.1",
@@ -6702,6 +6704,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-test-utils"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-unique-scheduler-v2",
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-timestamp"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
@@ -6838,6 +6851,24 @@ dependencies = [
  "sp-std",
  "substrate-test-utils",
  "up-sponsorship",
+]
+
+[[package]]
+name = "pallet-unique-scheduler-v2"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-preimage",
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-test-utils",
 ]
 
 [[package]]

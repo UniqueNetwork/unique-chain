@@ -14,13 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-pub mod ethereum;
-pub mod orml;
-pub mod pallets;
-pub mod parachain;
-pub mod sponsoring;
-pub mod substrate;
-pub mod xcm;
+use crate::{Runtime, RuntimeEvent};
 
-#[cfg(feature = "pallet-test-utils")]
-pub mod test_pallets;
+impl pallet_test_utils::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
