@@ -37,6 +37,8 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, start_node, start_dev_node},
 };
+#[cfg(feature = "runtime-benchmarks")]
+use crate::chain_spec::default_runtime;
 
 #[cfg(feature = "unique-runtime")]
 use crate::service::UniqueRuntimeExecutor;
@@ -45,6 +47,9 @@ use crate::service::UniqueRuntimeExecutor;
 use crate::service::QuartzRuntimeExecutor;
 
 use crate::service::OpalRuntimeExecutor;
+
+#[cfg(feature = "runtime-benchmarks")]
+use crate::service::DefaultRuntimeExecutor;
 
 use codec::Encode;
 use cumulus_primitives_core::ParaId;

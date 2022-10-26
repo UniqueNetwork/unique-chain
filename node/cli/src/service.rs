@@ -83,6 +83,23 @@ pub struct QuartzRuntimeExecutor;
 /// Opal native executor instance.
 pub struct OpalRuntimeExecutor;
 
+#[cfg(all(feature = "unique-runtime", feature = "runtime-benchmarks"))]
+pub type DefaultRuntimeExecutor = UniqueRuntimeExecutor;
+
+#[cfg(all(
+	not(feature = "unique-runtime"),
+	feature = "quartz-runtime",
+	feature = "runtime-benchmarks"
+))]
+pub type DefaultRuntimeExecutor = QuartzRuntimeExecutor;
+
+#[cfg(all(
+	not(feature = "unique-runtime"),
+	not(feature = "quartz-runtime"),
+	feature = "runtime-benchmarks"
+))]
+pub type DefaultRuntimeExecutor = OpalRuntimeExecutor;
+
 #[cfg(feature = "unique-runtime")]
 impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
