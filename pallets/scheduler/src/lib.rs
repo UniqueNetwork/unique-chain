@@ -86,7 +86,10 @@ use sp_runtime::{
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, UnfilteredDispatchable, Parameter, GetDispatchInfo},
+	dispatch::{
+		DispatchError, DispatchResult, Dispatchable, UnfilteredDispatchable, Parameter,
+		GetDispatchInfo,
+	},
 	traits::{
 		schedule::{self, DispatchTime, MaybeHashed},
 		NamedReservableCurrency, EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp,
@@ -231,8 +234,10 @@ pub mod pallet {
 
 		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
-			+ UnfilteredDispatchable<RuntimeOrigin = <Self as system::Config>::RuntimeOrigin>
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + UnfilteredDispatchable<RuntimeOrigin = <Self as system::Config>::RuntimeOrigin>
 			+ GetDispatchInfo
 			+ From<system::Call<Self>>;
 
@@ -455,7 +460,9 @@ pub mod pallet {
 				}
 
 				let scheduled_origin =
-					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(s.origin.clone());
+					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(
+						s.origin.clone(),
+					);
 				let ensured_origin = T::ScheduleOrigin::ensure_origin(scheduled_origin.into());
 
 				let r = match ensured_origin {
