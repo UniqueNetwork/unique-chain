@@ -351,6 +351,14 @@ class EthAddressGroup extends EthGroupBase {
     return '0x' + address.substring(address.length - 40);
   }
 }
+export class EthPropertyGroup extends EthGroupBase {
+  property(key: string, value: string): EthProperty {
+    return [
+      key,
+      '0x'+Buffer.from(value).toString('hex'),
+    ];
+  }
+}
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthCrossAccountGroup extends EthGroupBase {
