@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {EthUniqueHelper, itEth} from './util/playgrounds';
-import {Pallets, usingPlaygrounds} from '../util/playgrounds';
+import {EthUniqueHelper, itEth} from './util';
+import {Pallets, usingPlaygrounds} from '../util';
 
 describe('Scheduing EVM smart contracts', () => {
 
@@ -27,7 +27,7 @@ describe('Scheduing EVM smart contracts', () => {
   });
 
   itEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
+    const alice = await privateKey('//Alice');
 
     const scheduledId = await helper.arrange.makeScheduledId();
 
