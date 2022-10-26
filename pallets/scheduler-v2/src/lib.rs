@@ -246,6 +246,81 @@ pub type ScheduledOf<T> = Scheduled<
 	<T as frame_system::Config>::AccountId,
 >;
 
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+pub struct BlockAgenda<T: Config> {
+	agenda: BoundedVec<Option<ScheduledOf<T>>, T::MaxScheduledPerBlock>,
+	free_places: u32,
+}
+
+impl<T: Config> BlockAgenda<T> {
+	fn try_push(&mut self, scheduled: ScheduledOf<T>) -> Option<u32> {
+		if self.free_places == 0 {
+			return None;
+		}
+
+		self.free_places = self.free_places.saturating_sub(1);
+
+		if (self.agenda.len() as u32) < T::MaxScheduledPerBlock::get() {
+			// will always succeed due to the above check.
+			let _ = self.agenda.try_push(Some(scheduled));
+			Some((self.agenda.len() - 1) as u32)
+		} else {
+			match self.agenda.iter().position(|i| i.is_none()) {
+				Some(hole_index) => {
+					self.agenda[hole_index] = Some(scheduled);
+					Some(hole_index as u32)
+				}
+				None => unreachable!("free_places > 0; qed"),
+			}
+		}
+	}
+
+	fn set_slot(&mut self, index: u32, slot: Option<ScheduledOf<T>>) {
+		self.agenda[index as usize] = slot;
+	}
+
+	fn iter(&self) -> impl Iterator<Item = &'_ Option<ScheduledOf<T>>> + '_ {
+		self.agenda.iter()
+	}
+
+	fn get(&self, index: u32) -> Option<&ScheduledOf<T>> {
+		match self.agenda.get(index as usize) {
+			Some(Some(scheduled)) => Some(scheduled),
+			_ => None,
+		}
+	}
+
+	fn get_mut(&mut self, index: u32) -> Option<&mut ScheduledOf<T>> {
+		match self.agenda.get_mut(index as usize) {
+			Some(Some(scheduled)) => Some(scheduled),
+			_ => None,
+		}
+	}
+
+	fn take(&mut self, index: u32) -> Option<ScheduledOf<T>> {
+		let removed = self.agenda.get_mut(index as usize)?.take();
+
+		if removed.is_some() {
+			self.free_places = self.free_places.saturating_add(1);
+		}
+
+		removed
+	}
+}
+
+impl<T: Config> Default for BlockAgenda<T> {
+	fn default() -> Self {
+		let agenda = Default::default();
+		let free_places = T::MaxScheduledPerBlock::get();
+
+		Self {
+			agenda,
+			free_places,
+		}
+	}
+}
+
 struct WeightCounter {
 	used: Weight,
 	limit: Weight,
@@ -368,13 +443,8 @@ pub mod pallet {
 
 	/// Items to be executed, indexed by the block number that they should be executed on.
 	#[pallet::storage]
-	pub type Agenda<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::BlockNumber,
-		BoundedVec<Option<ScheduledOf<T>>, T::MaxScheduledPerBlock>,
-		ValueQuery,
-	>;
+	pub type Agenda<T: Config> =
+		StorageMap<_, Twox64Concat, T::BlockNumber, BlockAgenda<T>, ValueQuery>;
 
 	/// Lookup from a name to the block number and index of the task.
 	#[pallet::storage]
@@ -640,18 +710,10 @@ impl<T: Config> Pallet<T> {
 		what: ScheduledOf<T>,
 	) -> Result<u32, (DispatchError, ScheduledOf<T>)> {
 		let mut agenda = Agenda::<T>::get(when);
-		let index = if (agenda.len() as u32) < T::MaxScheduledPerBlock::get() {
-			// will always succeed due to the above check.
-			let _ = agenda.try_push(Some(what));
-			agenda.len() as u32 - 1
-		} else {
-			if let Some(hole_index) = agenda.iter().position(|i| i.is_none()) {
-				agenda[hole_index] = Some(what);
-				hole_index as u32
-			} else {
-				return Err((<Error<T>>::AgendaIsExhausted.into(), what));
-			}
-		};
+		let index = agenda
+			.try_push(what.clone())
+			.ok_or((<Error<T>>::AgendaIsExhausted.into(), what))?;
+
 		Agenda::<T>::insert(when, agenda);
 		Ok(index)
 	}
@@ -685,22 +747,26 @@ impl<T: Config> Pallet<T> {
 		origin: Option<T::PalletsOrigin>,
 		(when, index): TaskAddress<T::BlockNumber>,
 	) -> Result<(), DispatchError> {
-		let scheduled = Agenda::<T>::try_mutate(when, |agenda| {
-			agenda.get_mut(index as usize).map_or(
-				Ok(None),
-				|s| -> Result<Option<Scheduled<_, _, _, _, _>>, DispatchError> {
-					if let (Some(ref o), Some(ref s)) = (origin, s.borrow()) {
-						if matches!(
-							T::OriginPrivilegeCmp::cmp_privilege(o, &s.origin),
-							Some(Ordering::Less) | None
-						) {
-							return Err(BadOrigin.into());
-						}
-					};
-					Ok(s.take())
-				},
-			)
-		})?;
+		let scheduled = Agenda::<T>::try_mutate(
+			when,
+			|agenda| -> Result<Option<Scheduled<_, _, _, _, _>>, DispatchError> {
+				let scheduled = match agenda.get(index) {
+					Some(scheduled) => scheduled,
+					None => return Ok(None),
+				};
+
+				if let Some(ref o) = origin {
+					if matches!(
+						T::OriginPrivilegeCmp::cmp_privilege(o, &scheduled.origin),
+						Some(Ordering::Less) | None
+					) {
+						return Err(BadOrigin.into());
+					}
+				}
+
+				Ok(agenda.take(index))
+			},
+		)?;
 		if let Some(s) = scheduled {
 			T::Preimages::drop(&s.call);
 
@@ -749,20 +815,24 @@ impl<T: Config> Pallet<T> {
 	fn do_cancel_named(origin: Option<T::PalletsOrigin>, id: TaskName) -> DispatchResult {
 		Lookup::<T>::try_mutate_exists(id, |lookup| -> DispatchResult {
 			if let Some((when, index)) = lookup.take() {
-				let i = index as usize;
 				Agenda::<T>::try_mutate(when, |agenda| -> DispatchResult {
-					if let Some(s) = agenda.get_mut(i) {
-						if let (Some(ref o), Some(ref s)) = (origin, s.borrow()) {
-							if matches!(
-								T::OriginPrivilegeCmp::cmp_privilege(o, &s.origin),
-								Some(Ordering::Less) | None
-							) {
-								return Err(BadOrigin.into());
-							}
-							T::Preimages::drop(&s.call);
+					let scheduled = match agenda.get(index) {
+						Some(scheduled) => scheduled,
+						None => return Ok(()),
+					};
+
+					if let Some(ref o) = origin {
+						if matches!(
+							T::OriginPrivilegeCmp::cmp_privilege(o, &scheduled.origin),
+							Some(Ordering::Less) | None
+						) {
+							return Err(BadOrigin.into());
 						}
-						*s = None;
+						T::Preimages::drop(&scheduled.call);
 					}
+
+					agenda.take(index);
+
 					Ok(())
 				})?;
 				Self::deposit_event(Event::Canceled { when, index });
@@ -779,27 +849,28 @@ impl<T: Config> Pallet<T> {
 		priority: schedule::Priority,
 	) -> DispatchResult {
 		match Lookup::<T>::get(id) {
-			Some((when, index)) => {
-				let i = index as usize;
-				Agenda::<T>::try_mutate(when, |agenda| {
-					if let Some(Some(s)) = agenda.get_mut(i) {
-						if matches!(
-							T::OriginPrivilegeCmp::cmp_privilege(&origin, &s.origin),
-							Some(Ordering::Less) | None
-						) {
-							return Err(BadOrigin.into());
-						}
+			Some((when, index)) => Agenda::<T>::try_mutate(when, |agenda| {
+				let scheduled = match agenda.get_mut(index) {
+					Some(scheduled) => scheduled,
+					None => return Ok(()),
+				};
 
-						s.priority = priority;
-						Self::deposit_event(Event::PriorityChanged {
-							when,
-							index,
-							priority,
-						});
-					}
-					Ok(())
-				})
-			}
+				if matches!(
+					T::OriginPrivilegeCmp::cmp_privilege(&origin, &scheduled.origin),
+					Some(Ordering::Less) | None
+				) {
+					return Err(BadOrigin.into());
+				}
+
+				scheduled.priority = priority;
+				Self::deposit_event(Event::PriorityChanged {
+					when,
+					index,
+					priority,
+				});
+
+				Ok(())
+			}),
 			None => Err(Error::<T>::NotFound.into()),
 		}
 	}
@@ -885,7 +956,7 @@ impl<T: Config> Pallet<T> {
 		let mut dropped = 0;
 
 		for (agenda_index, _) in ordered.into_iter().take(max as usize) {
-			let task = match agenda[agenda_index as usize].take() {
+			let task = match agenda.take(agenda_index).take() {
 				None => continue,
 				Some(t) => t,
 			};
@@ -899,18 +970,17 @@ impl<T: Config> Pallet<T> {
 				break;
 			}
 			let result = Self::service_task(weight, now, when, agenda_index, *executed == 0, task);
-			agenda[agenda_index as usize] = match result {
+			match result {
 				Err((Unavailable, slot)) => {
 					dropped += 1;
-					slot
+					agenda.set_slot(agenda_index, slot);
 				}
 				Err((Overweight, slot)) => {
 					postponed += 1;
-					slot
+					agenda.set_slot(agenda_index, slot);
 				}
 				Ok(()) => {
 					*executed += 1;
-					None
 				}
 			};
 		}
@@ -1062,8 +1132,6 @@ impl<T: Config> Pallet<T> {
 			return Err(Overweight);
 		}
 
-		// let scheduled_origin =
-		// 	<<T as Config>::Origin as From<T::PalletsOrigin>>::from(origin.clone());
 		let ensured_origin = T::ScheduleOrigin::ensure_origin(dispatch_origin.into());
 
 		let r = match ensured_origin {
