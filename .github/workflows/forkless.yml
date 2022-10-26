@@ -9,12 +9,12 @@ jobs:
     
   forkless-update-data:
     name: with data
-    uses: ./.github/workflows/forkless-update-data_v2.yml
+    uses: ./.github/workflows/forkless-update-data.yml
 
   forkless-update-no-data:
     name: no data
-    uses: ./.github/workflows/forkless-update-nodata_v2.yml
+    uses: ./.github/workflows/forkless-update-nodata.yml
 
   try-runtime:
     name: try-runtime
-    uses: ./.github/workflows/try-runtime_v2.yml
+    uses: ./.github/workflows/try-runtime.yml

@@ -17,10 +17,10 @@ concurrency:
 jobs:
 
   unit-test:
-    uses: ./.github/workflows/unit-test_v2.yml
+    uses: ./.github/workflows/unit-test.yml
 
   node-only-update:
-    uses: ./.github/workflows/node-only-update_v2.yml
+    uses: ./.github/workflows/node-only-update.yml
 
   forkless:
     uses: ./.github/workflows/forkless.yml
@@ -34,4 +34,4 @@ jobs:
     secrets: inherit # pass all secrets from initial workflow to nested
 
   codestyle:
-    uses: ./.github/workflows/codestyle_v2.yml
+    uses: ./.github/workflows/codestyle.yml
