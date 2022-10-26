@@ -47,6 +47,7 @@ const requiredPallets = [
   'configuration',
   'tokens',
   'xtokens',
+  'scheduler',
 ];
 
 // Pallets that depend on consensus and governance configuration
