@@ -1,4 +1,11 @@
 use evm_coder::{types::*, solidity_interface, execution::Result};
+use evm_coder::{
+	make_signature,
+	custom_signature::{
+		SIGNATURE_SIZE_LIMIT, SignatureUnit, SignaturePreferences, FunctionSignature,
+	},
+	types::Signature,
+};
 
 pub struct Contract(bool);
 

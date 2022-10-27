@@ -1,23 +1,140 @@
+//! # A module for custom signature support.
+//!
+//! ## Overview
+//! This module allows you to create arbitrary signatures for types and functions in compile time.
+//!
+//! ### Type signatures
+//! To create the desired type signature, you need to create your own trait with the `SIGNATURE` constant.
+//! Then in the implementation, for the required type, use the macro [`make_signature`]
+//! #### Example
+//! ```
+//! use std::str::from_utf8;
+//! use evm_coder::make_signature;
+//! use evm_coder::custom_signature::{
+//! 	SignatureUnit,
+//! 	SIGNATURE_SIZE_LIMIT
+//! };
+//!
+//! // Create trait for our signature
+//! trait SoliditySignature {
+//!		const SIGNATURE: SignatureUnit;
+//!
+//!		fn name() -> &'static str {
+//!			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
+//!		}
+//!	}
+//!
+//! // Make signatures for some types
+//!	impl SoliditySignature for u8 {
+//!		make_signature!(new fixed("uint8"));
+//!	}
+//!	impl SoliditySignature for u32 {
+//!		make_signature!(new fixed("uint32"));
+//!	}
+//!	impl<T: SoliditySignature> SoliditySignature for Vec<T> {
+//!		make_signature!(new nameof(T) fixed("[]"));
+//!	}
+//!	impl<A: SoliditySignature, B: SoliditySignature> SoliditySignature for (A, B) {
+//!		make_signature!(new fixed("(") nameof(A) fixed(",") nameof(B) fixed(")"));
+//!	}
+//!	impl<A: SoliditySignature> SoliditySignature for (A,) {
+//!		make_signature!(new fixed("(") nameof(A) fixed(",") shift_left(1) fixed(")"));
+//!	}
+//!
+//! assert_eq!(u8::name(), "uint8");
+//! assert_eq!(<Vec<u8>>::name(), "uint8[]");
+//! assert_eq!(<(u32, u8)>::name(), "(uint32,uint8)");
+//! ```
+//!
+//! ### Function signatures
+//! To create a function signature, the macro [`make_signature`] is also used, which accepts
+//! settings for the function format [`SignaturePreferences`] and function parameters [`SignatureUnit`]
+//! #### Example
+//! ```
+//! use core::str::from_utf8;
+//! use evm_coder::{
+//!		make_signature,
+//!		custom_signature::{
+//!			SIGNATURE_SIZE_LIMIT, SignatureUnit, SignaturePreferences, FunctionSignature,
+//!		},
+//!	};
+//! // Trait for our signature
+//! trait SoliditySignature {
+//!		const SIGNATURE: SignatureUnit;
+//!
+//!		fn name() -> &'static str {
+//!			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
+//!		}
+//!	}
+//!
+//! // Make signatures for some types
+//!	impl SoliditySignature for u8 {
+//!		make_signature!(new fixed("uint8"));
+//!	}
+//!	impl<T: SoliditySignature> SoliditySignature for Vec<T> {
+//!		make_signature!(new nameof(T) fixed("[]"));
+//!	}
+//!
+//! // Function signature settings
+//! const SIGNATURE_PREFERENCES: SignaturePreferences = SignaturePreferences {
+//!		open_name: Some(SignatureUnit::new("some_funk")),
+//!		open_delimiter: Some(SignatureUnit::new("(")),
+//!		param_delimiter: Some(SignatureUnit::new(",")),
+//!		close_delimiter: Some(SignatureUnit::new(")")),
+//!		close_name: None,
+//!	};
+//!
+//! // Create functions signatures
+//! fn make_func_without_args() {
+//!		const SIG: FunctionSignature = make_signature!(
+//!			new fn(SIGNATURE_PREFERENCES),
+//!		);
+//!		let name = SIG.as_str();
+//!		similar_asserts::assert_eq!(name, "some_funk()");
+//!	}
+//!
+//! fn make_func_with_3_args() {
+//!		const SIG: FunctionSignature = make_signature!(
+//!			new fn(SIGNATURE_PREFERENCES),
+//!			(<u8>::SIGNATURE),
+//!			(<u8>::SIGNATURE),
+//!			(<Vec<u8>>::SIGNATURE),
+//!		);
+//!		let name = SIG.as_str();
+//!		similar_asserts::assert_eq!(name, "some_funk(uint8,uint8,uint8[])");
+//!	}
+//! ```
 use core::str::from_utf8;
 
+/// The maximum length of the signature.
 pub const SIGNATURE_SIZE_LIMIT: usize = 256;
 
+/// Function signature formatting preferences.
 #[derive(Debug)]
 pub struct SignaturePreferences {
+	/// The name of the function before the list of parameters: `*some*(param1,param2)func`
 	pub open_name: Option<SignatureUnit>,
+	/// Opening separator: `some*(*param1,param2)func`
 	pub open_delimiter: Option<SignatureUnit>,
+	/// Parameters separator: `some(param1*,*param2)func`
 	pub param_delimiter: Option<SignatureUnit>,
+	/// Closinging separator: `some(param1,param2*)*func`
 	pub close_delimiter: Option<SignatureUnit>,
+	/// The name of the function after the list of parameters: `some(param1,param2)*func*`
 	pub close_name: Option<SignatureUnit>,
 }
 
+/// Constructs and stores the signature of the function.
 #[derive(Debug)]
 pub struct FunctionSignature {
+	/// Storage for function signature.
 	pub unit: SignatureUnit,
 	preferences: SignaturePreferences,
 }
 
 impl FunctionSignature {
+	/// Start constructing the signature. It is written to the storage
+	/// [`SignaturePreferences::open_name`] and [`SignaturePreferences::open_delimiter`].
 	pub const fn new(preferences: SignaturePreferences) -> FunctionSignature {
 		let mut dst = [0_u8; SIGNATURE_SIZE_LIMIT];
 		let mut dst_offset = 0;
@@ -36,6 +153,8 @@ impl FunctionSignature {
 		}
 	}
 
+	/// Add a function parameter to the signature. It is written to the storage
+	/// `param` [`SignatureUnit`] and [`SignaturePreferences::param_delimiter`].
 	pub const fn add_param(
 		signature: FunctionSignature,
 		param: SignatureUnit,
@@ -55,6 +174,8 @@ impl FunctionSignature {
 		}
 	}
 
+	/// Complete signature construction. It is written to the storage
+	/// [`SignaturePreferences::close_delimiter`] and [`SignaturePreferences::close_name`].
 	pub const fn done(signature: FunctionSignature, owerride: bool) -> FunctionSignature {
 		let mut dst = signature.unit.data;
 		let mut dst_offset = signature.unit.len - if owerride { 1 } else { 0 };
@@ -73,18 +194,23 @@ impl FunctionSignature {
 		}
 	}
 
+	/// Represent the signature as `&str'.
 	pub fn as_str(&self) -> &str {
 		from_utf8(&self.unit.data[..self.unit.len]).expect("bad utf-8")
 	}
 }
 
+/// Storage for the signature or its elements.
 #[derive(Debug)]
 pub struct SignatureUnit {
+	/// Signature data.
 	pub data: [u8; SIGNATURE_SIZE_LIMIT],
+	/// The actual size of the data.
 	pub len: usize,
 }
 
 impl SignatureUnit {
+	/// Create a signature from `&str'.
 	pub const fn new(name: &'static str) -> SignatureUnit {
 		let mut signature = [0_u8; SIGNATURE_SIZE_LIMIT];
 		let name = name.as_bytes();
@@ -98,9 +224,23 @@ impl SignatureUnit {
 	}
 }
 
+/// ### Macro to create signatures of types and functions.
+///
+/// Format for creating a type of signature:
+/// ```ignore
+/// make_signature!(new fixed("uint8")); // Simple type
+/// make_signature!(new fixed("(") nameof(u8) fixed(",") nameof(u8) fixed(")")); // Composite type
+/// ```
+/// Format for creating a function of the function:
+/// ```ignore
+/// const SIG: FunctionSignature = make_signature!(
+///		new fn(SIGNATURE_PREFERENCES),
+///		(u8::SIGNATURE),
+///		(<(u8,u8)>::SIGNATURE),
+///	);
+/// ```
 #[macro_export]
-#[allow(missing_docs)]
-macro_rules! make_signature { // May be "define_signature"?
+macro_rules! make_signature {
 	(new fn($func:expr)$(,)+) => {
 		{
 			let fs = FunctionSignature::new($func);
@@ -283,10 +423,13 @@ mod test {
 		assert_eq!(<MaxSize>::name(), "!".repeat(SIGNATURE_SIZE_LIMIT));
 	}
 
-	// This test must NOT compile!
+	// This test must NOT compile with "index out of bounds"!
 	// #[test]
 	// fn over_max_size() {
-	// 	assert_eq!(<Vec<MaxSize>>::name(), "!".repeat(SIZE_LIMIT) + "[]");
+	// 	assert_eq!(
+	// 		<Vec<MaxSize>>::name(),
+	// 		"!".repeat(SIGNATURE_SIZE_LIMIT) + "[]"
+	// 	);
 	// }
 
 	#[test]

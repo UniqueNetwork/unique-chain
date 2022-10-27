@@ -15,8 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #![doc = include_str!("../README.md")]
-// #![deny(missing_docs)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 #![macro_use]
 #![cfg_attr(not(feature = "std"), no_std)]
 #[cfg(not(feature = "std"))]
@@ -94,7 +93,6 @@ pub use evm_coder_procedural::solidity_interface;
 pub use evm_coder_procedural::solidity;
 /// See [`solidity_interface`]
 pub use evm_coder_procedural::weight;
-pub use const_format;
 pub use sha3_const;
 
 /// Derives [`ToLog`] for enum
@@ -384,18 +382,6 @@ mod tests {
 	fn function_selector_generation() {
 		assert_eq!(fn_selector!(transfer(address, uint256)), 0xa9059cbb);
 	}
-
-	// #[test]
-	// fn function_selector_generation_1() {
-	// 	assert_eq!(
-	// 		fn_selector!(transferFromCrossAccountToCrossAccount(
-	// 			EthCrossAccount,
-	// 			EthCrossAccount,
-	// 			uint256
-	// 		)),
-	// 		2543295963
-	// 	);
-	// }
 
 	#[test]
 	fn event_topic_generation() {

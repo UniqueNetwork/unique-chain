@@ -5,7 +5,6 @@ license = "GPLv3"
 edition = "2021"
 
 [dependencies]
-const_format = { version = "0.2.26", default-features = false }
 sha3-const = { version = "0.1.1", default-features = false }
 # Ethereum uses keccak (=sha3) for selectors
 # sha3 = "0.10.1"

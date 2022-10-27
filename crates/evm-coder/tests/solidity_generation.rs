@@ -15,6 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use evm_coder::{execution::Result, generate_stubgen, solidity_interface, types::*};
+use evm_coder::{
+	make_signature,
+	custom_signature::{
+		SIGNATURE_SIZE_LIMIT, SignatureUnit, SignaturePreferences, FunctionSignature,
+	},
+	types::Signature,
+};
 
 pub struct ERC20;
 

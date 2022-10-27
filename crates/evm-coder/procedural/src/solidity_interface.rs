@@ -20,7 +20,7 @@
 // about Procedural Macros in Rust book:
 // https://doc.rust-lang.org/reference/procedural-macros.html
 
-use proc_macro2::{TokenStream, token_stream};
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens, format_ident};
 use inflector::cases;
 use std::fmt::Write;
