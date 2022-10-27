@@ -33,5 +33,9 @@ jobs:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested
 
+  # testnet:
+  #   uses: ./.github/workflows/testnet-build.yml
+  #   secrets: inherit # pass all secrets from initial workflow to nested
+
   codestyle:
     uses: ./.github/workflows/codestyle.yml

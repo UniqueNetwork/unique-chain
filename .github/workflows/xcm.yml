@@ -40,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
-            network {unique}, runtime {unique}, features {unique-runtime}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
+            network {opal}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
+            network {quartz}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
+            network {unique}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
 
   xcm-build:
     
@@ -229,9 +229,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}           
             BRANCH=${{ github.head_ref }}
             ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
             MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
