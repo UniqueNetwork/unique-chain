@@ -69,7 +69,7 @@ describe('Contract calls', () => {
   });
 });
 
-describe('ERC165 tests', async () => {
+describe('ERC165 tests', () => {
   // https://eips.ethereum.org/EIPS/eip-165
 
   let erc721MetadataCompatibleNftCollectionId: number;

@@ -273,7 +273,7 @@ class ArrangeGroup {
     }
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
-    const findCreationDate = async (block: any) => {
+    const findCreationDate = (block: any) => {
       const humanBlock = block.toHuman();
       let date;
       humanBlock.block.extrinsics.forEach((ext: any) => {
@@ -388,7 +388,7 @@ class WaitGroup {
    * @param blocksCount number of blocks to wait
    * @returns 
    */
-  async newBlocks(blocksCount = 1): Promise<void> {
+  newBlocks(blocksCount = 1): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
@@ -403,10 +403,10 @@ class WaitGroup {
     return promise;
   }
 
-  async forParachainBlockNumber(blockNumber: bigint) {
+  forParachainBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
         if (data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
@@ -415,10 +415,10 @@ class WaitGroup {
     });
   }
   
-  async forRelayBlockNumber(blockNumber: bigint) {
+  forRelayBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();
@@ -428,7 +428,7 @@ class WaitGroup {
     });
   }
 
-  async noScheduledTasks() {
+  noScheduledTasks() {
     const api = this.helper.getApi();
     
     // eslint-disable-next-line no-async-promise-executor
@@ -446,7 +446,7 @@ class WaitGroup {
     return promise;
   }
 
-  async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+  event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<EventRecord | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {

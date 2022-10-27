@@ -81,7 +81,7 @@ describe('EVM nesting tests group', () => {
     });
   });
 
-  describe('Negative Test: EVM Nesting', async() => {
+  describe('Negative Test: EVM Nesting', () => {
     itEth('NFT: disallows to nest token if nesting is disabled', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 

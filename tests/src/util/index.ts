@@ -59,27 +59,27 @@ export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (se
   return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
 };
 
-export const usingWestmintPlaygrounds = async (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 };
 
-export const usingRelayPlaygrounds = async (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
 };
 
-export const usingAcalaPlaygrounds = async (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+export const usingAcalaPlaygrounds = (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
 };
 
-export const usingKaruraPlaygrounds = async (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+export const usingKaruraPlaygrounds = (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
 };
 
-export const usingMoonbeamPlaygrounds = async (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+export const usingMoonbeamPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
 };
 
-export const usingMoonriverPlaygrounds = async (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
 };
 
@@ -108,7 +108,7 @@ export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, req
   }
 }
 
-export async function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
   (opts.only ? it.only : 
     opts.skip ? it.skip : it)(name, async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -120,7 +120,7 @@ export async function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, 
     });
   });
 }
-export async function itSubIfWithPallet(name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itSubIfWithPallet(name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
   return itSub(name, cb, {requiredPallets: required, ...opts});
 }
 itSub.only = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {only: true});
@@ -130,7 +130,7 @@ itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper:
 itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
 
-export async function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
+export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
   (process.env.RUN_XCM_TESTS && !opts.skip
     ? describe
     : describe.skip)(title, fn);

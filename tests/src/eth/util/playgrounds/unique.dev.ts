@@ -188,7 +188,7 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress, events};
   }
 
-  async createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     return this.createCollecion('createNFTCollection', signer, name, description, tokenPrefix);
   }
 
@@ -202,7 +202,7 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress, events};
   }
 
-  async createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+  createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
     return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
   }
 
@@ -409,7 +409,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
     return this.web3;
   }
 
-  async connectWeb3(wsEndpoint: string) {
+  connectWeb3(wsEndpoint: string) {
     if(this.web3 !== null) return;
     this.web3Provider = new Web3.providers.WebsocketProvider(wsEndpoint);
     this.web3 = new Web3(this.web3Provider);
