@@ -43,38 +43,38 @@ No migration changes.
 * Removed the previous migration:
     * bump of the storage version to 1
 * Added:
-    * cleaning all storage of now-redundant **TokenData** if the storage version is below 2
+    * if the storage version is below 2, cleaning of all storage of now-redundant **TokenData** 
     * bump of the storage version to 2
 
 # **924012 < 924011**
 
 ### **pallet-unique:**
 
-* Removed the previous migration:
-    * forceful cleaning all storage of **VariableMetaDataBasket**, cache for sponosoring setting deprecated variable metadata
+* Removed the previous migration of:
+    * unconditional cleaning of all storage of **VariableMetaDataBasket** (cache for sponosoring setting deprecated variable metadata)
 
 # **924011 < 924010**
 
 ### **pallet-common:**
 
-* Removed the previous migration:
-    * all collections from **Collection** version 1 to version 2, if the storage version is below 1:
+* Removed the previous migration of:
+    * if the storage version is below 1, all collections from storage **CollectionById** of struct **Collection** version 1 to version 2, consisting of:
         * displacing _offchain_schema, variable_on_chain_schema, const_on_chain_schema, schema_version_ into _properties_
         * displacing _acccess, mint_mode_ into _permissions.access, permissions.mint_mode_
         * adding _external_collection_ flag
-* Added forceful bump of the storage version to 1
+* Added unconditional bump of the storage version to 1
 
 ### **pallet-nonfungible:**
 
-* Removed the previous migration:
-    * all items from nonfungible **ItemData** version 1 to version 2, if the storage version is below 1:
+* Removed the previous migration of:
+    * if the storage version is below 1, all items from storage **TokenData** of struct **ItemData** version 1 to version 2, consisting of:
         * displacing _const_data, variable_data_ into _properties_
         * adding permission for the collection admin to set the immutable __old_constData_ property
-* Added forceful bump of the storage version to 1
+* Added unconditional bump of the storage version to 1
 
 ### **pallet-refungible:**
 
-* Removed the previous migration:
-    * all items from refungible **ItemData** version 1 to version 2, if the storage version is below 1:
+* Removed the previous migration of:
+    * if the storage version is below 1, all items from storage **TokenData** of struct **ItemData** version 1 to version 2, consisting of:
         * removing _variable_data_
-* Added forceful bump of the storage version to 1
+* Added unconditional bump of the storage version to 1
