@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {ApiPromise} from '@polkadot/api';
-import {IKeyringPair} from '@polkadot/types/types';
-import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
-import waitNewBlocks from './substrate/wait-new-blocks';
-import * as cluster from 'cluster';
 import os from 'os';
+import {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds} from './util';
+import {UniqueHelper} from './util/playgrounds/unique';
+import * as notReallyCluster from 'cluster'; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346
+const cluster = notReallyCluster as unknown as notReallyCluster.Cluster;
 
-async function findUnusedAddress(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, seedAddition = ''): Promise<IKeyringPair> {
+async function findUnusedAddress(helper: UniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>, seedAddition = ''): Promise<IKeyringPair> {
   let bal = 0n;
   let unused;
   do {
     const randomSeed = 'seed' + Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
-    unused = privateKeyWrapper(`//${randomSeed}`);
-    bal = (await api.query.system.account(unused.address)).data.free.toBigInt();
+    unused = await privateKey(`//${randomSeed}`);
+    bal = await helper.balance.getSubstrate(unused.address);
   } while (bal !== 0n);
   return unused;
 }
 
-function findUnusedAddresses(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, amount: number): Promise<IKeyringPair[]> {
-  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, privateKeyWrapper, '_' + Date.now())));
+function findUnusedAddresses(helper: UniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(helper, privateKey, '_' + Date.now())));
 }
 
 // Innacurate transfer fee
@@ -54,13 +54,13 @@ function flushCounterToMaster() {
     counters = {};
 }
 
-async function distributeBalance(source: IKeyringPair, api: ApiPromise, totalAmount: bigint, stages: number) {
+async function distributeBalance(source: IKeyringPair, helper: UniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>, totalAmount: bigint, stages: number) {
   const accounts = [source];
   // we don't need source in output array
   const failedAccounts = [0];
 
   const finalUserAmount = 2 ** stages - 1;
-  accounts.push(...await findUnusedAddresses(api, finalUserAmount));
+  accounts.push(...await findUnusedAddresses(helper, privateKey, finalUserAmount));
   // findUnusedAddresses produces at least 1 request per user
   increaseCounter('requests', finalUserAmount);
 
@@ -72,8 +72,8 @@ async function distributeBalance(source: IKeyringPair, api: ApiPromise, totalAmo
     for (let i = 0; i < usersWithBalance; i++) {
       const newUser = accounts[i + usersWithBalance];
       // console.log(`${accounts[i].address} => ${newUser.address} = ${amountToSplit}`);
-      const tx = api.tx.balances.transfer(newUser.address, amount);
-      txs.push(submitTransactionAsync(accounts[i], tx).catch(() => {
+      const tx = helper.balance.transferToSubstrate(accounts[i], newUser.address, amount);
+      txs.push(tx.catch(() => {
         failedAccounts.push(i + usersWithBalance);
         increaseCounter('txFailed', 1);
       }));
@@ -90,7 +90,7 @@ async function distributeBalance(source: IKeyringPair, api: ApiPromise, totalAmo
 
 if (cluster.isMaster) {
   let testDone = false;
-  usingApi(async (api) => {
+  usingPlaygrounds(async (helper) => {
     const prevCounters: { [key: string]: number } = {};
     while (!testDone) {
       for (const name in counters) {
@@ -103,18 +103,17 @@ if (cluster.isMaster) {
         console.log(`${name.padEnd(15)} = ${counters[name] - prevCounters[name]}`);
         prevCounters[name] = counters[name];
       }
-      await waitNewBlocks(api, 1);
+      await helper.wait.newBlocks(1);
     }
   });
   const waiting: Promise<void>[] = [];
   console.log(`Starting ${os.cpus().length} workers`);
-  usingApi(async (api, privateKeyWrapper) => {
-    const alice = privateKeyWrapper('//Alice');
+  usingPlaygrounds(async (helper, privateKey) => {
+    const alice = await privateKey('//Alice');
     for (const id in os.cpus()) {
       const WORKER_NAME = `//LoadWorker${id}_${Date.now()}`;
-      const workerAccount = privateKeyWrapper(WORKER_NAME);
-      const tx = api.tx.balances.transfer(workerAccount.address, 400n * 10n ** 23n);
-      await submitTransactionAsync(alice, tx);
+      const workerAccount = await privateKey(WORKER_NAME);
+      await helper.balance.transferToSubstrate(alice, workerAccount.address, 400n * 10n ** 23n);
 
       const worker = cluster.fork({
         WORKER_NAME,
@@ -132,8 +131,8 @@ if (cluster.isMaster) {
   });
 } else {
   increaseCounter('startedWorkers', 1);
-  usingApi(async (api, privateKeyWrapper) => {
-    await distributeBalance(privateKeyWrapper(process.env.WORKER_NAME as string), api, 400n * 10n ** 22n, 10);
+  usingPlaygrounds(async (helper, privateKey) => {
+    await distributeBalance(await privateKey(process.env.WORKER_NAME as string), helper, privateKey, 400n * 10n ** 22n, 10);
   });
   const interval = setInterval(() => {
     flushCounterToMaster();
