@@ -58,7 +58,7 @@ async function createRmrkNft(helper: UniqueHelper, sender: IKeyringPair, collect
   return rmrkNftId;
 }
 
-describe('RMRK External Integration Test', async () => {
+describe('RMRK External Integration Test', () => {
   before(async function() {
     await usingPlaygrounds(async (_helper, privateKey) => {
       alice = await privateKey('//Alice');
@@ -78,7 +78,7 @@ describe('RMRK External Integration Test', async () => {
   });
 });
 
-describe('Negative Integration Test: External Collections, Internal Ops', async () => {
+describe('Negative Integration Test: External Collections, Internal Ops', () => {
   let uniqueCollectionId: number;
   let rmrkCollectionId: number;
   let rmrkNftId: number;
@@ -196,7 +196,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', async 
   });
 });
 
-describe('Negative Integration Test: Internal Collections, External Ops', async () => {
+describe('Negative Integration Test: Internal Collections, External Ops', () => {
   let collectionId: number;
   let nftId: number;
 

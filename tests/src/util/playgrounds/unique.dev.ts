@@ -8,8 +8,10 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId} from './types';
+import {ICrossAccountId, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {VoidFn} from '@polkadot/api/types';
+import {Pallets} from '..';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -63,6 +65,7 @@ export class DevUniqueHelper extends UniqueHelper {
   arrange: ArrangeGroup;
   wait: WaitGroup;
   admin: AdminGroup;
+  testUtils: TestUtilGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
@@ -71,6 +74,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
+    this.testUtils = new TestUtilGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -153,6 +157,8 @@ export class DevKaruraHelper extends DevAcalaHelper {}
 
 class ArrangeGroup {
   helper: DevUniqueHelper;
+
+  scheduledIdSlider = 0;
 
   constructor(helper: DevUniqueHelper) {
     this.helper = helper;
@@ -267,7 +273,7 @@ class ArrangeGroup {
     }
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
-    const findCreationDate = async (block: any) => {
+    const findCreationDate = (block: any) => {
       const humanBlock = block.toHuman();
       let date;
       humanBlock.block.extrinsics.forEach((ext: any) => {
@@ -296,6 +302,39 @@ class ArrangeGroup {
   calculatePalletAddress(palletId: any) {
     const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
     return encodeAddress(address);
+  }
+
+  async makeScheduledIds(num: number): Promise<string[]> {
+    await this.helper.wait.noScheduledTasks();
+
+    function makeId(slider: number) {
+      const scheduledIdSize = 64;
+      const hexId = slider.toString(16);
+      const prefixSize = scheduledIdSize - hexId.length;
+
+      const scheduledId = '0x' + '0'.repeat(prefixSize) + hexId;
+
+      return scheduledId;  
+    }
+
+    const ids = [];
+    for (let i = 0; i < num; i++) {
+      ids.push(makeId(this.scheduledIdSlider));
+      this.scheduledIdSlider += 1;
+    }
+
+    return ids;
+  }
+
+  async makeScheduledId(): Promise<string> {
+    return (await this.makeScheduledIds(1))[0];
+  }
+
+  async captureEvents(eventSection: string, eventMethod: string): Promise<EventCapture> {
+    const capture = new EventCapture(this.helper, eventSection, eventMethod);
+    await capture.startCapture();
+
+    return capture;
   }
 }
 
@@ -349,7 +388,7 @@ class WaitGroup {
    * @param blocksCount number of blocks to wait
    * @returns 
    */
-  async newBlocks(blocksCount = 1): Promise<void> {
+  newBlocks(blocksCount = 1): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
@@ -364,10 +403,10 @@ class WaitGroup {
     return promise;
   }
 
-  async forParachainBlockNumber(blockNumber: bigint) {
+  forParachainBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
         if (data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
@@ -376,10 +415,10 @@ class WaitGroup {
     });
   }
   
-  async forRelayBlockNumber(blockNumber: bigint) {
+  forRelayBlockNumber(blockNumber: bigint) {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData(async (data: any) => {
+      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();
@@ -389,7 +428,25 @@ class WaitGroup {
     });
   }
 
-  async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+  noScheduledTasks() {
+    const api = this.helper.getApi();
+    
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<void>(async resolve => {
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
+        const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
+
+        if(areThereScheduledTasks.length == 0) {
+          unsubscribe();
+          resolve();
+        }
+      }); 
+    });
+
+    return promise;
+  }
+
+  event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<EventRecord | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
@@ -414,13 +471,92 @@ class WaitGroup {
           maxBlocksToWait--;
         } else {
           this.helper.logger.log(`Event \`${eventIdStr}\` is NOT found`);
-  
           unsubscribe();
           resolve(null);
         }
       });
     });
     return promise;
+  }
+}
+
+class TestUtilGroup {
+  helper: DevUniqueHelper;
+
+  constructor(helper: DevUniqueHelper) {
+    this.helper = helper;
+  }
+
+  async enable() {
+    if (this.helper.fetchMissingPalletNames([Pallets.TestUtils]).length != 0) {
+      return;
+    }
+
+    const signer = this.helper.util.fromSeed('//Alice');
+    await this.helper.getSudo<DevUniqueHelper>().executeExtrinsic(signer, 'api.tx.testUtils.enable', [], true);
+  }
+
+  async setTestValue(signer: TSigner, testVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValue', [testVal], true);
+  }
+
+  async incTestValue(signer: TSigner) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.incTestValue', [], true);
+  }
+
+  async setTestValueAndRollback(signer: TSigner, testVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
+  }
+
+  async testValue() {
+    return (await this.helper.callRpc('api.query.testUtils.testValue', [])).toNumber();
+  }
+
+  async justTakeFee(signer: TSigner) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.justTakeFee', [], true);
+  }
+
+  async selfCancelingInc(signer: TSigner, scheduledId: string, maxTestVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.selfCancelingInc', [scheduledId, maxTestVal], true);
+  }
+}
+
+class EventCapture {
+  helper: DevUniqueHelper;
+  eventSection: string;
+  eventMethod: string;
+  events: EventRecord[] = [];
+  unsubscribe: VoidFn | null = null;
+
+  constructor(
+    helper: DevUniqueHelper,
+    eventSection: string,
+    eventMethod: string,
+  ) {
+    this.helper = helper;
+    this.eventSection = eventSection;
+    this.eventMethod = eventMethod;
+  }
+
+  async startCapture() {
+    this.stopCapture();
+    this.unsubscribe = (await this.helper.getApi().query.system.events((eventRecords: FrameSystemEventRecord[]) => {
+      const newEvents = eventRecords.filter(r => {
+        return r.event.section == this.eventSection && r.event.method == this.eventMethod;
+      });
+
+      this.events.push(...newEvents);
+    })) as any;
+  }
+
+  stopCapture() {
+    if (this.unsubscribe !== null) {
+      this.unsubscribe();
+    }
+  }
+
+  extractCapturedEvents() {
+    return this.events;
   }
 }
 

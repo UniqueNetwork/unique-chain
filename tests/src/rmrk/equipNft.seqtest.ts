@@ -30,7 +30,7 @@ const slotThumb = 'test-slot-thumb';
 
 const slotId = 1;
 
-async function createTestCollection(api: ApiPromise): Promise<number> {
+function createTestCollection(api: ApiPromise): Promise<number> {
   return createCollection(
     api,
     alice,
@@ -60,7 +60,7 @@ async function mintChildNft(api: ApiPromise, collectionId: number, parentNftId: 
   return nftChildId;
 }
 
-async function createTestBase(api: ApiPromise): Promise<number> {
+function createTestBase(api: ApiPromise): Promise<number> {
   return createBase(api, alice, 'test-base', 'DTBase', [
     {
       SlotPart: {

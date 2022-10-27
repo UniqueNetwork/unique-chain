@@ -34,8 +34,8 @@ use alloc::format;
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
-		convert_cross_account_to_uint256, convert_uint256_to_cross_account,
-		convert_cross_account_to_tuple,
+		convert_cross_account_to_uint256, convert_cross_account_to_tuple,
+		convert_tuple_to_cross_account,
 	},
 	weights::WeightInfo,
 };
@@ -49,6 +49,12 @@ pub enum CollectionHelpersEvents {
 		#[indexed]
 		owner: address,
 
+		/// Collection ID.
+		#[indexed]
+		collection_id: address,
+	},
+	/// The collection has been destroyed.
+	CollectionDestroyed {
 		/// Collection ID.
 		#[indexed]
 		collection_id: address,
@@ -85,9 +91,37 @@ where
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;
-		let value = value.try_into().map_err(|_| "value too large")?;
+		let value = value.0.try_into().map_err(|_| "value too large")?;
 
 		<Pallet<T>>::set_collection_property(self, &caller, Property { key, value })
+			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Set collection properties.
+	///
+	/// @param properties Vector of properties key/value pair.
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(properties.len() as u32))]
+	fn set_collection_properties(
+		&mut self,
+		caller: caller,
+		properties: Vec<(string, bytes)>,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let properties = properties
+			.into_iter()
+			.map(|(key, value)| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::set_collection_properties(self, &caller, properties)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -96,14 +130,30 @@ where
 	/// @param key Property key.
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
-		self.consume_store_reads_and_writes(1, 1)?;
-
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;
 
 		<Pallet<T>>::delete_collection_property(self, &caller, key).map_err(dispatch_to_evm::<T>)
+	}
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	#[weight(<SelfWeightOf<T>>::delete_collection_properties(keys.len() as u32))]
+	fn delete_collection_properties(&mut self, caller: caller, keys: Vec<string>) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::delete_collection_properties(self, &caller, keys).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get collection property.
@@ -117,10 +167,42 @@ where
 			.try_into()
 			.map_err(|_| "key too large")?;
 
-		let props = <CollectionProperties<T>>::get(self.id);
+		let props = CollectionProperties::<T>::get(self.id);
 		let prop = props.get(&key).ok_or("key not found")?;
 
-		Ok(prop.to_vec())
+		Ok(bytes(prop.to_vec()))
+	}
+
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<(string, bytes)>> {
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		let properties = Pallet::<T>::filter_collection_properties(
+			self.id,
+			if keys.is_empty() { None } else { Some(keys) },
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		let properties = properties
+			.into_iter()
+			.map(|p| {
+				let key =
+					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
+				let value = bytes(p.value.to_vec());
+				Ok((key, value))
+			})
+			.collect::<Result<Vec<_>>>()?;
+		Ok(properties)
 	}
 
 	/// Set the sponsor of the collection.
@@ -139,26 +221,25 @@ where
 		save(self)
 	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Set the substrate sponsor of the collection.
-	// ///
-	// /// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	// ///
-	// /// @param sponsor Substrate address of the sponsor from whose account funds will be debited for operations with the contract.
-	// fn set_collection_sponsor_substrate(
-	// 	&mut self,
-	// 	caller: caller,
-	// 	sponsor: uint256,
-	// ) -> Result<void> {
-	// 	self.consume_store_reads_and_writes(1, 1)?;
+	/// Set the sponsor of the collection.
+	///
+	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	///
+	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
+	fn set_collection_sponsor_cross(
+		&mut self,
+		caller: caller,
+		sponsor: (address, uint256),
+	) -> Result<void> {
+		self.consume_store_reads_and_writes(1, 1)?;
 
-	// 	check_is_owner_or_admin(caller, self)?;
+		check_is_owner_or_admin(caller, self)?;
 
-	// 	let sponsor = convert_uint256_to_cross_account::<T>(sponsor);
-	// 	self.set_sponsor(sponsor.as_sub().clone())
-	// 		.map_err(dispatch_to_evm::<T>)?;
-	// 	save(self)
-	// }
+		let sponsor = convert_tuple_to_cross_account::<T>(sponsor)?;
+		self.set_sponsor(sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)?;
+		save(self)
+	}
 
 	/// Whether there is a pending sponsor.
 	fn has_collection_pending_sponsor(&self) -> Result<bool> {
@@ -300,37 +381,35 @@ where
 		Ok(crate::eth::collection_id_to_address(self.id))
 	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Add collection admin by substrate address.
-	// /// @param newAdmin Substrate administrator address.
-	// fn add_collection_admin_substrate(
-	// 	&mut self,
-	// 	caller: caller,
-	// 	new_admin: uint256,
-	// ) -> Result<void> {
-	// 	self.consume_store_writes(2)?;
+	/// Add collection admin.
+	/// @param newAdmin Cross account administrator address.
+	fn add_collection_admin_cross(
+		&mut self,
+		caller: caller,
+		new_admin: (address, uint256),
+	) -> Result<void> {
+		self.consume_store_writes(2)?;
 
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let new_admin = convert_uint256_to_cross_account::<T>(new_admin);
-	// 	<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
-	// 	Ok(())
-	// }
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_admin = convert_tuple_to_cross_account::<T>(new_admin)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Remove collection admin by substrate address.
-	// /// @param admin Substrate administrator address.
-	// fn remove_collection_admin_substrate(
-	// 	&mut self,
-	// 	caller: caller,
-	// 	admin: uint256,
-	// ) -> Result<void> {
-	// 	self.consume_store_writes(2)?;
+	/// Remove collection admin.
+	/// @param admin Cross account administrator address.
+	fn remove_collection_admin_cross(
+		&mut self,
+		caller: caller,
+		admin: (address, uint256),
+	) -> Result<void> {
+		self.consume_store_writes(2)?;
 
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let admin = convert_uint256_to_cross_account::<T>(admin);
-	// 	<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
-	// 	Ok(())
-	// }
+		let caller = T::CrossAccountId::from_eth(caller);
+		let admin = convert_tuple_to_cross_account::<T>(admin)?;
+		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
 
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
@@ -479,22 +558,21 @@ where
 		Ok(())
 	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Add substrate user to allowed list.
-	// ///
-	// /// @param user User substrate address.
-	// fn add_to_collection_allow_list_substrate(
-	// 	&mut self,
-	// 	caller: caller,
-	// 	user: uint256,
-	// ) -> Result<void> {
-	// 	self.consume_store_writes(1)?;
+	/// Add user to allowed list.
+	///
+	/// @param user User cross account address.
+	fn add_to_collection_allow_list_cross(
+		&mut self,
+		caller: caller,
+		user: (address, uint256),
+	) -> Result<void> {
+		self.consume_store_writes(1)?;
 
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let user = convert_uint256_to_cross_account::<T>(user);
-	// 	Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
-	// 	Ok(())
-	// }
+		let caller = T::CrossAccountId::from_eth(caller);
+		let user = convert_tuple_to_cross_account::<T>(user)?;
+		Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
 
 	/// Remove the user from the allowed list.
 	///
@@ -508,22 +586,21 @@ where
 		Ok(())
 	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Remove substrate user from allowed list.
-	// ///
-	// /// @param user User substrate address.
-	// fn remove_from_collection_allow_list_substrate(
-	// 	&mut self,
-	// 	caller: caller,
-	// 	user: uint256,
-	// ) -> Result<void> {
-	// 	self.consume_store_writes(1)?;
+	/// Remove user from allowed list.
+	///
+	/// @param user User cross account address.
+	fn remove_from_collection_allow_list_cross(
+		&mut self,
+		caller: caller,
+		user: (address, uint256),
+	) -> Result<void> {
+		self.consume_store_writes(1)?;
 
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let user = convert_uint256_to_cross_account::<T>(user);
-	// 	Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
-	// 	Ok(())
-	// }
+		let caller = T::CrossAccountId::from_eth(caller);
+		let user = convert_tuple_to_cross_account::<T>(user)?;
+		Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
 
 	/// Switch permission for minting.
 	///
@@ -556,15 +633,14 @@ where
 		Ok(self.is_owner_or_admin(&user))
 	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Check that substrate account is the owner or admin of the collection
-	// ///
-	// /// @param user account to verify
-	// /// @return "true" if account is the owner or admin
-	// fn is_owner_or_admin_substrate(&self, user: uint256) -> Result<bool> {
-	// 	let user = convert_uint256_to_cross_account::<T>(user);
-	// 	Ok(self.is_owner_or_admin(&user))
-	// }
+	/// Check that account is the owner or admin of the collection
+	///
+	/// @param user User cross account to verify
+	/// @return "true" if account is the owner or admin
+	fn is_owner_or_admin_cross(&self, user: (address, uint256)) -> Result<bool> {
+		let user = convert_tuple_to_cross_account::<T>(user)?;
+		Ok(self.is_owner_or_admin(&user))
+	}
 
 	/// Returns collection type
 	///
@@ -580,7 +656,7 @@ where
 
 	/// Get collection owner.
 	///
-	/// @return Tuble with sponsor address and his substrate mirror.
+	/// @return Tuple with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	fn collection_owner(&self) -> Result<(address, uint256)> {
 		Ok(convert_cross_account_to_tuple::<T>(
@@ -602,27 +678,29 @@ where
 			.map_err(dispatch_to_evm::<T>)
 	}
 
-	// TODO: Temprorary off. Need refactor
-	// /// Changes collection owner to another substrate account
-	// ///
-	// /// @dev Owner can be changed only by current owner
-	// /// @param newOwner new owner substrate account
-	// fn set_owner_substrate(&mut self, caller: caller, new_owner: uint256) -> Result<void> {
-	// 	self.consume_store_writes(1)?;
+	/// Get collection administrators
+	///
+	/// @return Vector of tuples with admins address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
+		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
+			.map(|(admin, _)| crate::eth::convert_cross_account_to_tuple::<T>(&admin))
+			.collect();
+		Ok(result)
+	}
 
-	// 	let caller = T::CrossAccountId::from_eth(caller);
-	// 	let new_owner = convert_uint256_to_cross_account::<T>(new_owner);
-	// 	self.set_owner_internal(caller, new_owner)
-	// 		.map_err(dispatch_to_evm::<T>)
-	// }
+	/// Changes collection owner to another account
+	///
+	/// @dev Owner can be changed only by current owner
+	/// @param newOwner new owner cross account
+	fn set_owner_cross(&mut self, caller: caller, new_owner: (address, uint256)) -> Result<void> {
+		self.consume_store_writes(1)?;
 
-	// TODO: need implement AbiWriter for &Vec<T>
-	// fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
-	// 	let result = pallet_common::IsAdmin::<T>::iter_prefix((self.id,))
-	// 		.map(|(admin, _)| pallet_common::eth::convert_cross_account_to_tuple::<T>(&admin))
-	// 		.collect();
-	// 	Ok(result)
-	// }
+		let caller = T::CrossAccountId::from_eth(caller);
+		let new_owner = convert_tuple_to_cross_account::<T>(new_owner)?;
+		self.set_owner_internal(caller, new_owner)
+			.map_err(dispatch_to_evm::<T>)
+	}
 }
 
 /// ### Note

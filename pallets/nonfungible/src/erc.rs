@@ -35,6 +35,7 @@ use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions,
+	eth::convert_tuple_to_cross_account,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -97,7 +98,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too long")?;
-		let value = value.try_into().map_err(|_| "value too long")?;
+		let value = value.0.try_into().map_err(|_| "value too long")?;
 
 		let nesting_budget = self
 			.recorder
@@ -108,6 +109,48 @@ impl<T: Config> NonfungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			Property { key, value },
+			&nesting_budget,
+		)
+		.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Set token properties value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param properties settable properties
+	#[weight(<SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
+	fn set_properties(
+		&mut self,
+		caller: caller,
+		token_id: uint256,
+		properties: Vec<(string, bytes)>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let properties = properties
+			.into_iter()
+			.map(|(key, value)| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::set_token_properties(
+			self,
+			&caller,
+			TokenId(token_id),
+			properties.into_iter(),
+			<Pallet<T>>::token_exists(&self, TokenId(token_id)),
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)
@@ -146,7 +189,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let props = <TokenProperties<T>>::get((self.id, token_id));
 		let prop = props.get(&key).ok_or("key not found")?;
 
-		Ok(prop.to_vec())
+		Ok(prop.to_vec().into())
 	}
 }
 
@@ -198,7 +241,10 @@ pub enum ERC721UniqueMintableEvents {
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 #[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
-impl<T: Config> NonfungibleHandle<T> {
+impl<T: Config> NonfungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
 	#[solidity(hide, rename_selector = "name")]
@@ -603,7 +649,10 @@ fn get_token_permission<T: Config>(
 
 /// @title Unique extensions for ERC721.
 #[solidity_interface(name = ERC721UniqueExtensions)]
-impl<T: Config> NonfungibleHandle<T> {
+impl<T: Config> NonfungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	fn name(&self) -> Result<string> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -614,6 +663,28 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @notice An abbreviated name for NFTs in this contract
 	fn symbol(&self) -> Result<string> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	}
+
+	/// @notice Set or reaffirm the approved address for an NFT
+	/// @dev The zero address indicates there is no approved address.
+	/// @dev Throws unless `msg.sender` is the current NFT owner, or an authorized
+	///  operator of the current owner.
+	/// @param approved The new substrate address approved NFT controller
+	/// @param tokenId The NFT to approve
+	#[weight(<SelfWeightOf<T>>::approve())]
+	fn approve_cross(
+		&mut self,
+		caller: caller,
+		approved: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let approved = convert_tuple_to_cross_account::<T>(approved)?;
+		let token = token_id.try_into()?;
+
+		<Pallet<T>>::set_allowance(self, &caller, token, Some(&approved))
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	/// @notice Transfer ownership of an NFT
@@ -634,6 +705,32 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(())
 	}
 
+	/// @notice Transfer ownership of an NFT from cross account address to cross account address
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid NFT.
+	/// @param from Cross acccount address of current owner
+	/// @param to Cross acccount address of new owner
+	/// @param tokenId The NFT to transfer
+	#[weight(<SelfWeightOf<T>>::transfer())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		to: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let token_id = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current owner or an authorized
 	///  operator for this NFT. Throws if `from` is not the current owner. Throws
@@ -644,6 +741,31 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::burn_from(self, &caller, &from, token, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Burns a specific ERC721 token.
+	/// @dev Throws unless `msg.sender` is the current owner or an authorized
+	///  operator for this NFT. Throws if `from` is not the current owner. Throws
+	///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
+	/// @param from The current owner of the NFT
+	/// @param tokenId The NFT to transfer
+	#[weight(<SelfWeightOf<T>>::burn_from())]
+	fn burn_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
 		let token = token_id.try_into()?;
 		let budget = self
 			.recorder

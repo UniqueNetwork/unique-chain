@@ -133,7 +133,9 @@ pub mod types {
 	pub type string = ::alloc::string::String;
 	#[cfg(feature = "std")]
 	pub type string = ::std::string::String;
-	pub type bytes = Vec<u8>;
+
+	#[derive(Default, Debug)]
+	pub struct bytes(pub Vec<u8>);
 
 	/// Solidity doesn't have `void` type, however we have special implementation
 	/// for empty tuple return type
@@ -156,6 +158,30 @@ pub mod types {
 		/// Contract should reject payment, if target call is not payable,
 		/// and there is no `receiver()` function defined.
 		pub value: U256,
+	}
+
+	impl From<Vec<u8>> for bytes {
+		fn from(src: Vec<u8>) -> Self {
+			Self(src)
+		}
+	}
+
+	impl Into<Vec<u8>> for bytes {
+		fn into(self) -> Vec<u8> {
+			self.0
+		}
+	}
+
+	impl bytes {
+		#[must_use]
+		pub fn len(&self) -> usize {
+			self.0.len()
+		}
+
+		#[must_use]
+		pub fn is_empty(&self) -> bool {
+			self.len() == 0
+		}
 	}
 }
 

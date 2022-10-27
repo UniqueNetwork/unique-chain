@@ -18,6 +18,7 @@ import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {Pallets} from '../util';
 import {IProperty, ITokenPropertyPermission} from '../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
+import {TCollectionMode} from '../util/playgrounds/types';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;
@@ -160,4 +161,92 @@ describe('Supports ERC721Metadata', () => {
   itEth.ifWithPallets('ERC721Metadata property can be set for RFT collection', [Pallets.ReFungible], async({helper}) => {
     await checkERC721Metadata(helper, 'rft');
   });
+});
+
+describe('EVM collection property', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+    });
+  });
+
+  async function testSetReadProperties(helper: EthUniqueHelper, mode: TCollectionMode) {
+    const collection = await helper[mode].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    await collection.addAdmin(donor, {Ethereum: sender});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, mode, sender);
+
+    const keys = ['key0', 'key1'];
+
+    const writeProperties = [
+      helper.ethProperty.property(keys[0], 'value0'),
+      helper.ethProperty.property(keys[1], 'value1'),
+    ];
+
+    await contract.methods.setCollectionProperties(writeProperties).send();
+    const readProperties = await contract.methods.collectionProperties([keys[0], keys[1]]).call();
+    expect(readProperties).to.be.like(writeProperties);
+  }
+
+  itEth('Set/read properties ft', async ({helper}) => {
+    await testSetReadProperties(helper, 'ft');
+  });
+  itEth.ifWithPallets('Set/read properties rft', [Pallets.ReFungible], async ({helper}) => {
+    await testSetReadProperties(helper, 'rft');
+  });
+  itEth('Set/read properties nft', async ({helper}) => {
+    await testSetReadProperties(helper, 'nft');
+  });
+
+  async function testDeleteProperties(helper: EthUniqueHelper, mode: TCollectionMode) {
+    const collection = await helper[mode].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    await collection.addAdmin(donor, {Ethereum: sender});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, mode, sender);
+
+    const keys = ['key0', 'key1', 'key2', 'key3'];
+
+    {
+      const writeProperties = [
+        helper.ethProperty.property(keys[0], 'value0'),
+        helper.ethProperty.property(keys[1], 'value1'),
+        helper.ethProperty.property(keys[2], 'value2'),
+        helper.ethProperty.property(keys[3], 'value3'),
+      ];
+
+      await contract.methods.setCollectionProperties(writeProperties).send();
+      const readProperties = await contract.methods.collectionProperties([keys[0], keys[1], keys[2], keys[3]]).call();
+      expect(readProperties).to.be.like(writeProperties);
+    }
+
+    {
+      const expectProperties = [
+        helper.ethProperty.property(keys[0], 'value0'),
+        helper.ethProperty.property(keys[1], 'value1'),
+      ];
+
+      await contract.methods.deleteCollectionProperties([keys[2], keys[3]]).send();
+      const readProperties = await contract.methods.collectionProperties([]).call();
+      expect(readProperties).to.be.like(expectProperties);
+    }
+  }
+  
+  itEth('Delete properties ft', async ({helper}) => {
+    await testDeleteProperties(helper, 'ft');
+  });
+  itEth.ifWithPallets('Delete properties rft', [Pallets.ReFungible], async ({helper}) => {
+    await testDeleteProperties(helper, 'rft');
+  });
+  itEth('Delete properties nft', async ({helper}) => {
+    await testDeleteProperties(helper, 'nft');
+  });
+    
 });

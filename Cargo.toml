@@ -14,6 +14,7 @@ members = [
     'runtime/tests',
 ]
 default-members = ['node/*', 'runtime/opal']
+
 [profile.release]
 panic = 'unwind'
 

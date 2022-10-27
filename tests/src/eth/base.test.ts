@@ -69,7 +69,7 @@ describe('Contract calls', () => {
   });
 });
 
-describe('ERC165 tests', async () => {
+describe('ERC165 tests', () => {
   // https://eips.ethereum.org/EIPS/eip-165
 
   let erc721MetadataCompatibleNftCollectionId: number;
@@ -116,8 +116,8 @@ describe('ERC165 tests', async () => {
     await checkInterface(helper, '0x780e9d63', true, true);
   });
 
-  itEth('ERC721UniqueExtensions - 0x4468500d - support', async ({helper}) => {
-    await checkInterface(helper, '0x4468500d', true, true);
+  itEth('ERC721UniqueExtensions - 0x244543ee - support', async ({helper}) => {
+    await checkInterface(helper, '0x244543ee', true, true);
   });
 
   itEth('ERC721Burnable - 0x42966c68 - support', async ({helper}) => {
