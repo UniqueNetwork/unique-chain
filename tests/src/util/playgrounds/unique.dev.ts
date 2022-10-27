@@ -428,7 +428,7 @@ class WaitGroup {
     });
   }
 
-  async noScheduledTasks() {
+  noScheduledTasks() {
     const api = this.helper.getApi();
     
     // eslint-disable-next-line no-async-promise-executor
@@ -446,7 +446,7 @@ class WaitGroup {
     return promise;
   }
 
-  async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+  event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<EventRecord | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {

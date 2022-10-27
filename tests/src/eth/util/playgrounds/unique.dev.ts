@@ -188,7 +188,7 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress, events};
   }
 
-  async createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     return this.createCollecion('createNFTCollection', signer, name, description, tokenPrefix);
   }
 
@@ -202,7 +202,7 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress, events};
   }
 
-  async createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+  createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
     return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
   }
 
