@@ -447,6 +447,7 @@ pub struct RpcCollectionFlags {
 }
 
 /// Collection parameters, used in RPC calls (see [`Collection`] for the storage version).
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct RpcCollection<AccountId> {
@@ -484,6 +485,7 @@ pub struct RpcCollection<AccountId> {
 	pub read_only: bool,
 
 	/// Extra collection flags
+	#[version(2.., upper(RpcCollectionFlags {foreign: false, erc721metadata: false}))]
 	pub flags: RpcCollectionFlags,
 }
 

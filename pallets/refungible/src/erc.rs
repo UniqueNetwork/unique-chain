@@ -30,6 +30,7 @@ use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
+	eth::convert_tuple_to_cross_account,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
@@ -100,7 +101,7 @@ impl<T: Config> RefungibleHandle<T> {
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too long")?;
-		let value = value.try_into().map_err(|_| "value too long")?;
+		let value = value.0.try_into().map_err(|_| "value too long")?;
 
 		let nesting_budget = self
 			.recorder
@@ -111,6 +112,47 @@ impl<T: Config> RefungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			Property { key, value },
+			&nesting_budget,
+		)
+		.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Set token properties value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param properties settable properties
+	fn set_properties(
+		&mut self,
+		caller: caller,
+		token_id: uint256,
+		properties: Vec<(string, bytes)>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let properties = properties
+			.into_iter()
+			.map(|(key, value)| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Pallet<T>>::set_token_properties(
+			self,
+			&caller,
+			TokenId(token_id),
+			properties.into_iter(),
+			<Pallet<T>>::token_exists(&self, TokenId(token_id)),
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)
@@ -149,7 +191,7 @@ impl<T: Config> RefungibleHandle<T> {
 		let props = <TokenProperties<T>>::get((self.id, token_id));
 		let prop = props.get(&key).ok_or("key not found")?;
 
-		Ok(prop.to_vec())
+		Ok(prop.to_vec().into())
 	}
 }
 
@@ -194,7 +236,10 @@ pub enum ERC721UniqueMintableEvents {
 }
 
 #[solidity_interface(name = ERC721Metadata)]
-impl<T: Config> RefungibleHandle<T> {
+impl<T: Config> RefungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
 	#[solidity(hide, rename_selector = "name")]
@@ -631,7 +676,10 @@ fn get_token_permission<T: Config>(
 
 /// @title Unique extensions for ERC721.
 #[solidity_interface(name = ERC721UniqueExtensions)]
-impl<T: Config> RefungibleHandle<T> {
+impl<T: Config> RefungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	fn name(&self) -> Result<string> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -659,10 +707,40 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		to: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let token_id = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(self, token_id, &from)?;
+		ensure_single_owner(self, token_id, balance)?;
+
+		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -683,8 +761,37 @@ impl<T: Config> RefungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		let balance = balance(&self, token, &caller)?;
-		ensure_single_owner(&self, token, balance)?;
+		let balance = balance(self, token, &from)?;
+		ensure_single_owner(self, token, balance)?;
+
+		<Pallet<T>>::burn_from(self, &caller, &from, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Burns a specific ERC721 token.
+	/// @dev Throws unless `msg.sender` is the current owner or an authorized
+	///  operator for this RFT. Throws if `from` is not the current owner. Throws
+	///  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param from The current owner of the RFT
+	/// @param tokenId The RFT to transfer
+	#[weight(<SelfWeightOf<T>>::burn_from())]
+	fn burn_from_cross(
+		&mut self,
+		caller: caller,
+		from: (address, uint256),
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(self, token, &from)?;
+		ensure_single_owner(self, token, balance)?;
 
 		<Pallet<T>>::burn_from(self, &caller, &from, token, balance, &budget)
 			.map_err(dispatch_to_evm::<T>)?;

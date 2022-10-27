@@ -557,7 +557,10 @@ where
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool, unique_api);
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId, unique_api);
-	pass_method!(collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api);
+	pass_method!(
+		collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api;
+		changed_in 3, collection_by_id_before_version_3(collection) => |value| value.map(|coll| coll.into())
+	);
 	pass_method!(collection_stats() -> CollectionStats, unique_api);
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);

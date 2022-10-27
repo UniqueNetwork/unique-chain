@@ -85,3 +85,27 @@ where
 		(eth, Default::default())
 	}
 }
+
+/// Convert tuple `(address, uint256)` to `CrossAccountId`.
+///
+/// If `address` in the tuple has *default* value, then the canonical form is substrate,
+/// if `uint256` has *default* value, then the ethereum form is canonical,
+/// if both values are *default* or *non default*, then this is considered an invalid address and `Error` is returned.
+pub fn convert_tuple_to_cross_account<T: Config>(
+	eth_cross_account_id: (address, uint256),
+) -> evm_coder::execution::Result<T::CrossAccountId>
+where
+	T::AccountId: From<[u8; 32]>,
+{
+	if eth_cross_account_id == Default::default() {
+		Err("All fields of cross account is zeroed".into())
+	} else if eth_cross_account_id.0 == Default::default() {
+		Ok(convert_uint256_to_cross_account::<T>(
+			eth_cross_account_id.1,
+		))
+	} else if eth_cross_account_id.1 == Default::default() {
+		Ok(T::CrossAccountId::from_eth(eth_cross_account_id.0))
+	} else {
+		Err("All fields of cross account is non zeroed".into())
+	}
+}
