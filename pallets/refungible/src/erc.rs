@@ -21,7 +21,6 @@
 
 extern crate alloc;
 
-use alloc::string::ToString;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
@@ -39,7 +38,6 @@ use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	eth::convert_tuple_to_cross_account,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};

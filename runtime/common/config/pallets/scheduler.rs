@@ -25,7 +25,7 @@ use core::cmp::Ordering;
 use codec::Decode;
 use crate::{
 	runtime_common::{scheduler::SchedulerPaymentExecutor, config::substrate::RuntimeBlockWeights},
-	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, OriginCaller, Balances,
+	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, OriginCaller,
 };
 use pallet_unique_scheduler_v2::ScheduledEnsureOriginSuccess;
 use up_common::types::AccountId;

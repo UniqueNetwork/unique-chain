@@ -28,7 +28,6 @@ use evm_coder::{
 	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
 	make_signature,
 };
-use pallet_common::eth::convert_tuple_to_cross_account;
 use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
 use sp_std::vec::Vec;

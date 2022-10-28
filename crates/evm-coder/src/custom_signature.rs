@@ -423,15 +423,6 @@ mod test {
 		assert_eq!(<MaxSize>::name(), "!".repeat(SIGNATURE_SIZE_LIMIT));
 	}
 
-	// This test must NOT compile with "index out of bounds"!
-	// #[test]
-	// fn over_max_size() {
-	// 	assert_eq!(
-	// 		<Vec<MaxSize>>::name(),
-	// 		"!".repeat(SIGNATURE_SIZE_LIMIT) + "[]"
-	// 	);
-	// }
-
 	#[test]
 	fn make_func_without_args() {
 		const SIG: FunctionSignature = make_signature!(
@@ -497,5 +488,11 @@ mod test {
 	#[test]
 	fn shift() {
 		assert_eq!(<(u32,)>::name(), "(uint32)");
+	}
+
+	#[test]
+	fn over_max_size() {
+		let t = trybuild::TestCases::new();
+		t.compile_fail("tests/build_failed/custom_signature_over_max_size.rs");
 	}
 }

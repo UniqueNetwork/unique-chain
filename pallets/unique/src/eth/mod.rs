@@ -42,10 +42,7 @@ use up_data_structs::{
 	CreateCollectionData,
 };
 
-use crate::{
-	weights::WeightInfo, Config, SelfWeightOf, NftTransferBasket, FungibleTransferBasket,
-	ReFungibleTransferBasket, NftApproveBasket, FungibleApproveBasket, RefungibleApproveBasket,
-};
+use crate::{weights::WeightInfo, Config, SelfWeightOf};
 
 use alloc::format;
 use sp_std::vec::Vec;

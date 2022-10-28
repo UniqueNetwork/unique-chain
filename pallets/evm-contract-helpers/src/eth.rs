@@ -17,7 +17,6 @@
 //! Implementation of magic contract
 
 extern crate alloc;
-use alloc::string::ToString;
 use core::marker::PhantomData;
 use evm_coder::{
 	abi::AbiWriter,

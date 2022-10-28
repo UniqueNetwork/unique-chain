@@ -35,10 +35,7 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{
-		convert_cross_account_to_uint256, convert_cross_account_to_tuple,
-		convert_tuple_to_cross_account,
-	},
+	eth::{convert_cross_account_to_uint256, convert_tuple_to_cross_account},
 	weights::WeightInfo,
 };
 
