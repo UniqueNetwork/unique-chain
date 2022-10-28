@@ -347,7 +347,11 @@ pub(crate) trait MarginalWeightInfo: WeightInfo {
 		let base = Self::service_task_base();
 		let mut total = match maybe_lookup_len {
 			None => base,
-			Some(l) => Self::service_task_fetched(l as u32),
+			Some(_l) => {
+				// TODO uncomment if we will use the Preimages
+				// Self::service_task_fetched(l as u32)
+				base
+			},
 		};
 		if named {
 			total.saturating_accrue(Self::service_task_named().saturating_sub(base));

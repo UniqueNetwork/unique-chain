@@ -51,7 +51,7 @@ const SEED: u32 = 0;
 
 const BLOCK_NUMBER: u32 = 2;
 
-type SystemOrigin<T> = <T as frame_system::Config>::Origin;
+type SystemOrigin<T> = <T as frame_system::Config>::RuntimeOrigin;
 
 /// Add `n` items to the schedule.
 ///
@@ -70,7 +70,7 @@ fn fill_schedule<T: Config>(when: T::BlockNumber, n: u32) -> Result<(), &'static
 		Scheduler::<T>::do_schedule_named(name, t, period, 0, origin.clone(), call)?;
 	}
 	ensure!(
-		Agenda::<T>::get(when).len() == n as usize,
+		Agenda::<T>::get(when).agenda.len() == n as usize,
 		"didn't fill schedule"
 	);
 	Ok(())
@@ -108,7 +108,7 @@ fn make_task<T: Config>(
 }
 
 fn bounded<T: Config>(len: u32) -> Option<ScheduledCall<T>> {
-	let call = <<T as Config>::Call>::from(SystemCall::remark {
+	let call = <<T as Config>::RuntimeCall>::from(SystemCall::remark {
 		remark: vec![0; len as usize],
 	});
 	ScheduledCall::new(call).ok()
@@ -197,18 +197,19 @@ benchmarks! {
 		//assert_eq!(result, Ok(()));
 	}
 
-	// `service_task` when the task is a non-periodic, non-named, fetched call (with a known
-	// preimage length) and which is not dispatched (e.g. due to being overweight).
-	service_task_fetched {
-		let s in (EncodedCall::bound() as u32) .. (<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get());
-		let now = BLOCK_NUMBER.into();
-		let task = make_task::<T>(false, false, false, Some(s), 0);
-		// prevent any tasks from actually being executed as we only want the surrounding weight.
-		let mut counter = WeightCounter { used: Weight::zero(), limit: Weight::zero() };
-	}: {
-		let result = Scheduler::<T>::service_task(&mut counter, now, now, 0, true, task);
-	} verify {
-	}
+	// TODO uncomment if we will use the Preimages
+	// // `service_task` when the task is a non-periodic, non-named, fetched call (with a known
+	// // preimage length) and which is not dispatched (e.g. due to being overweight).
+	// service_task_fetched {
+	// 	let s in (EncodedCall::bound() as u32) .. (<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get());
+	// 	let now = BLOCK_NUMBER.into();
+	// 	let task = make_task::<T>(false, false, false, Some(s), 0);
+	// 	// prevent any tasks from actually being executed as we only want the surrounding weight.
+	// 	let mut counter = WeightCounter { used: Weight::zero(), limit: Weight::zero() };
+	// }: {
+	// 	let result = Scheduler::<T>::service_task(&mut counter, now, now, 0, true, task);
+	// } verify {
+	// }
 
 	// `service_task` when the task is a non-periodic, named, non-fetched call which is not
 	// dispatched (e.g. due to being overweight).
@@ -268,7 +269,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, when, periodic, priority, call)
 	verify {
 		ensure!(
-			Agenda::<T>::get(when).len() == (s + 1) as usize,
+			Agenda::<T>::get(when).agenda.len() == (s + 1) as usize,
 			"didn't add to schedule"
 		);
 	}
@@ -278,7 +279,7 @@ benchmarks! {
 		let when = BLOCK_NUMBER.into();
 
 		fill_schedule::<T>(when, s)?;
-		assert_eq!(Agenda::<T>::get(when).len(), s as usize);
+		assert_eq!(Agenda::<T>::get(when).agenda.len(), s as usize);
 		let schedule_origin = T::ScheduleOrigin::successful_origin();
 	}: _<SystemOrigin<T>>(schedule_origin, when, 0)
 	verify {
@@ -288,7 +289,7 @@ benchmarks! {
 		);
 		// Removed schedule is NONE
 		ensure!(
-			Agenda::<T>::get(when)[0].is_none(),
+			Agenda::<T>::get(when).agenda[0].is_none(),
 			"didn't remove from schedule"
 		);
 	}
@@ -306,7 +307,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, id, when, periodic, priority, call)
 	verify {
 		ensure!(
-			Agenda::<T>::get(when).len() == (s + 1) as usize,
+			Agenda::<T>::get(when).agenda.len() == (s + 1) as usize,
 			"didn't add to schedule"
 		);
 	}
@@ -324,7 +325,7 @@ benchmarks! {
 		);
 		// Removed schedule is NONE
 		ensure!(
-			Agenda::<T>::get(when)[0].is_none(),
+			Agenda::<T>::get(when).agenda[0].is_none(),
 			"didn't remove from schedule"
 		);
 	}
@@ -340,7 +341,7 @@ benchmarks! {
 	}: _(origin, id, priority)
 	verify {
 		ensure!(
-			Agenda::<T>::get(when)[idx as usize].clone().unwrap().priority == priority,
+			Agenda::<T>::get(when).agenda[idx as usize].clone().unwrap().priority == priority,
 			"didn't change the priority"
 		);
 	}
