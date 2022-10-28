@@ -79,7 +79,7 @@ describe('EVM collection allowlist', () => {
     const user = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.nftCollection(collectionAddress, owner);
 
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
@@ -98,10 +98,10 @@ describe('EVM collection allowlist', () => {
   //  const userCross = helper.ethCrossAccount.fromKeyringPair(user);
   //  
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
-  //  await collectionEvm.methods.addToCollectionAllowListCross(userCross).send({from: owner});
+  //  await collectionEvm.methods.addToCollectionAllowListCross(new BN(userCross)).send({from: owner});
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
   //  
-  //  await collectionEvm.methods.removeFromCollectionAllowListCross(userCross).send({from: owner});
+  //  await collectionEvm.methods.removeFromCollectionAllowListCross(new BN(userCross)).send({from: owner});
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
   //});
 
@@ -111,7 +111,7 @@ describe('EVM collection allowlist', () => {
     const user = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.nftCollection(collectionAddress, owner);
 
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
@@ -132,12 +132,12 @@ describe('EVM collection allowlist', () => {
   //  
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
   //  const userCross = helper.ethCrossAccount.fromKeyringPair(user);
-  //  await expect(collectionEvm.methods.addToCollectionAllowListCross(userCross).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+  //  await expect(collectionEvm.methods.addToCollectionAllowListCross(new BN(userCross)).call({from: notOwner})).to.be.rejectedWith('NoPermission');
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
-  //  await collectionEvm.methods.addToCollectionAllowListCross(userCross).send({from: owner});
+  //  await collectionEvm.methods.addToCollectionAllowListCross(new BN(userCross)).send({from: owner});
   //  
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
-  //  await expect(collectionEvm.methods.removeFromCollectionAllowListCross(userCross).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+  //  await expect(collectionEvm.methods.removeFromCollectionAllowListCross(new BN(userCross)).call({from: notOwner})).to.be.rejectedWith('NoPermission');
   //  expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
   //});
 });
