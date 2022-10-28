@@ -51,8 +51,6 @@ const SEED: u32 = 0;
 
 const BLOCK_NUMBER: u32 = 2;
 
-type SystemOrigin<T> = <T as frame_system::Config>::RuntimeOrigin;
-
 /// Add `n` items to the schedule.
 ///
 /// For `resolved`:
@@ -280,8 +278,7 @@ benchmarks! {
 
 		fill_schedule::<T>(when, s)?;
 		assert_eq!(Agenda::<T>::get(when).agenda.len(), s as usize);
-		let schedule_origin = T::ScheduleOrigin::successful_origin();
-	}: _<SystemOrigin<T>>(schedule_origin, when, 0)
+	}: _(RawOrigin::Root, when, 0)
 	verify {
 		ensure!(
 			Lookup::<T>::get(u32_to_name(0)).is_none(),
