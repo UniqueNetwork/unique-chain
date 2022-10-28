@@ -221,6 +221,7 @@ impl TryFrom<U256> for TokenId {
 }
 
 /// Token data.
+#[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct TokenData<CrossAccountId> {
@@ -231,6 +232,7 @@ pub struct TokenData<CrossAccountId> {
 	pub owner: Option<CrossAccountId>,
 
 	/// Token pieces.
+	#[version(2.., upper(0))]
 	pub pieces: u128,
 }
 

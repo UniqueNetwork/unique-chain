@@ -20,7 +20,7 @@ extern crate alloc;
 
 use up_data_structs::{
 	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData, TokenChild, RpcCollectionVersion1,
+	PropertyKeyPermission, TokenData, TokenChild, RpcCollectionVersion1, TokenDataVersion1,
 };
 
 use sp_std::vec::Vec;
@@ -76,6 +76,13 @@ sp_api::decl_runtime_apis! {
 			token_id: TokenId,
 			keys: Option<Vec<Vec<u8>>>
 		) -> Result<TokenData<CrossAccountId>>;
+
+		#[changed_in(3)]
+		fn token_data(
+			collection: CollectionId,
+			token_id: TokenId,
+			keys: Option<Vec<Vec<u8>>>
+		) -> Result<TokenDataVersion1<CrossAccountId>>;
 
 		/// Total number of tokens in collection.
 		fn total_supply(collection: CollectionId) -> Result<u32>;
