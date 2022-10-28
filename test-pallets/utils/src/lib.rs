@@ -24,10 +24,10 @@ use frame_system::pallet_prelude::*;
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
+	use pallet_unique_scheduler::{ScheduledId, Pallet as SchedulerPallet};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_unique_scheduler_v2::Config {
+	pub trait Config: frame_system::Config + pallet_unique_scheduler::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 
@@ -94,13 +94,14 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn self_canceling_inc(
 			origin: OriginFor<T>,
-			id: TaskName,
+			id: ScheduledId,
 			max_test_value: u32,
 		) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin.clone())?;
-			Self::inc_test_value(origin.clone())?;
 
-			if <TestValue<T>>::get() == max_test_value {
+			if <TestValue<T>>::get() < max_test_value {
+				Self::inc_test_value(origin)?;
+			} else {
 				SchedulerPallet::<T>::cancel_named(origin, id)?;
 			}
 
