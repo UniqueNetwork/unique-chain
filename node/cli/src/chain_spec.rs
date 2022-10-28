@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
 use up_common::types::opaque::*;
-use up_common::constants::CANDIDACY_BOND;
+use up_common::constants::GENESIS_CANDIDACY_BOND;
 
 #[cfg(feature = "unique-runtime")]
 pub use unique_runtime as default_runtime;
@@ -192,7 +192,7 @@ macro_rules! testnet_genesis {
 					.cloned()
 					.map(|(acc, _)| acc)
 					.collect(),
-				candidacy_bond: CANDIDACY_BOND,
+				candidacy_bond: GENESIS_CANDIDACY_BOND,
 				..Default::default()
 			},
 			session: SessionConfig {

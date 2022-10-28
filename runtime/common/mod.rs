@@ -188,7 +188,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 				RuntimeAppPublic,
 			};
 			use pallet_session::SessionManager;
-			use up_common::constants::CANDIDACY_BOND;
+			use up_common::constants::GENESIS_CANDIDACY_BOND;
 			use crate::config::pallets::collator_selection::MaxInvulnerables;
 
 			let mut weight = <Runtime as frame_system::Config>::DbWeight::get().reads(1);
@@ -239,7 +239,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 
 				<pallet_collator_selection::Invulnerables<Runtime>>::put(bounded_invulnerables);
 				<pallet_collator_selection::DesiredCandidates<Runtime>>::put(0);
-				<pallet_collator_selection::CandidacyBond<Runtime>>::put(CANDIDACY_BOND);
+				<pallet_collator_selection::CandidacyBond<Runtime>>::put(GENESIS_CANDIDACY_BOND);
 
 				let keys = invulnerables
 					.into_iter()

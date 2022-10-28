@@ -29,7 +29,6 @@ runtime-benchmarks = [
     'pallet-evm-migration/runtime-benchmarks',
     'pallet-evm-coder-substrate/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
-	"pallet-collator-selection/runtime-benchmarks",
     'pallet-timestamp/runtime-benchmarks',
     'pallet-common/runtime-benchmarks',
     'pallet-structure/runtime-benchmarks',
@@ -68,6 +67,9 @@ try-runtime = [
     'pallet-xcm/try-runtime',
     'cumulus-pallet-xcm/try-runtime',
     'cumulus-pallet-dmp-queue/try-runtime',
+	"pallet-authorship/try-runtime",
+	"pallet-collator-selection/try-runtime",
+	"pallet-session/try-runtime",
     'pallet-inflation/try-runtime',
     'pallet-unique/try-runtime',
     'pallet-unique-scheduler/try-runtime',
@@ -240,11 +242,6 @@ version = '1.0.130'
 default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.30"
-
-[dependencies.pallet-collator-selection]
-default-features = false
-git = 'https://github.com/paritytech/cumulus'
-branch = 'polkadot-v0.9.30'
 
 [dependencies.pallet-authorship]
 default-features = false
@@ -484,6 +481,7 @@ fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenet
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
+pallet-collator-selection = { default-features = false, path = "../../pallets/collator-selection" }
 pallet-configuration = { default-features = false, path = "../../pallets/configuration" }
 pallet-common = { default-features = false, path = "../../pallets/common" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }

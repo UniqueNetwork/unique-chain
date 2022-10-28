@@ -44,7 +44,7 @@ pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 /// Minimum balance required to create or keep an account open.
 pub const EXISTENTIAL_DEPOSIT: u128 = 0;
 /// Amount of Balance reserved for candidate registration.
-pub const CANDIDACY_BOND: u128 = EXISTENTIAL_DEPOSIT;
+pub const GENESIS_CANDIDACY_BOND: u128 = EXISTENTIAL_DEPOSIT;
 
 // Targeting 0.1 UNQ per transfer
 pub const WEIGHT_TO_FEE_COEFF: u32 = /*<weight2fee>*/207_163_598/*</weight2fee>*/;
