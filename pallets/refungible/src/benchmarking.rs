@@ -62,7 +62,9 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::ReFungible,
-		<Pallet<T>>::init_collection,
+		|owner: T::CrossAccountId, data| {
+			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
+		},
 		RefungibleHandle::cast,
 	)
 }
@@ -280,15 +282,6 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
 	}: {<Pallet<T>>::repartition(&collection, &owner, item, 200)?}
-
-	set_parent_nft_unchecked {
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			sender: cross_from_sub(owner); owner: cross_sub;
-		};
-		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
-
-	}: {<Pallet<T>>::set_parent_nft_unchecked(&collection, item, owner,  T::CrossAccountId::from_eth(H160::default()))?}
 
 	token_owner {
 		bench_init!{

@@ -15,94 +15,92 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import privateKey from './substrate/privateKey';
-import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
-import waitNewBlocks from './substrate/wait-new-blocks';
-import {expect} from 'chai';
-import {getBlockNumber, getGenericResult} from './util/helpers';
+import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from './util';
 
-let alice: IKeyringPair;
-let bob: IKeyringPair;
-let charlie: IKeyringPair;
-let dave: IKeyringPair;
-//let eve: IKeyringPair;
-
-// todo Most preferable to launch this test in parallel somehow -- or change the session period (6 hrs) for Opal specifically.
+// todo Most preferable to launch this test in parallel somehow -- or change the session period (1 hr).
 describe('Integration Test: Dynamic shuffling of collators', () => {
-  before(async () => {    
-    await usingApi(async api => {
-      alice = privateKey('//Alice');
-      bob = privateKey('//Bob');
-      charlie = privateKey('//Charlie');
-      dave = privateKey('//Dave');
-      //eve = privateKey('//Eve');
+  let superuser: IKeyringPair;
 
-      const txC = api.tx.session.setKeys(
+  // These are the default invulnerables, and should return to be invulnerables after this suite.
+  let aliceAddress: string;
+  let bobAddress: string;
+
+  let charlie: IKeyringPair;
+  let dave: IKeyringPair;
+  //let eve: IKeyringPair;
+
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
+
+      //const donor = await privateKey({filename: __filename});
+      //[charlie, dave] = await helper.arrange.createAccounts([100n, 100n], donor);
+      charlie = await privateKey('//Charlie');
+      dave = await privateKey('//Dave');
+
+      superuser = await privateKey('//Alice');
+      aliceAddress = (await privateKey('//Alice')).address;
+      bobAddress = (await privateKey('//Bob')).address;
+
+      expect((await helper.executeExtrinsic(charlie, 'api.tx.session.setKeys', [
         '0x' + Buffer.from(charlie.addressRaw).toString('hex'),
         '0x0',
-      );
-      const eventsC = await submitTransactionAsync(charlie, txC);
-      const resultC = getGenericResult(eventsC);
-      expect(resultC.success).to.be.true;
+      ])).status.toLowerCase()).to.be.equal('success');
 
-      const txD = api.tx.session.setKeys(
+      expect((await helper.executeExtrinsic(dave, 'api.tx.session.setKeys', [
         '0x' + Buffer.from(dave.addressRaw).toString('hex'),
         '0x0',
-      );
-      const eventsD = await submitTransactionAsync(dave, txD);
-      const resultD = getGenericResult(eventsD);
-      expect(resultD.success).to.be.true;
+      ])).status.toLowerCase()).to.be.equal('success');
 
-      const validators = (await api.query.session.validators()).toJSON();
-      expect(validators).to.contain(alice.address).and.contain(bob.address).and.be.length(2);
+      const validators = await helper.callRpc('api.query.session.validators');
+      expect(validators).to.not.contain(charlie.address).and.not.contain(dave.address);
     });
   });
 
-  it('Change invulnerables and make sure they start producing blocks', async () => {
-    await usingApi(async (api) => {
-      const tx = api.tx.collatorSelection.setInvulnerables([
-        charlie.address,
-        dave.address,
-      ]);
-      const sudoTx = api.tx.sudo.sudo(tx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+  itSub('Change invulnerables and make sure they start producing blocks', async ({helper}) => {
 
-      const newInvulnerables = (await api.query.collatorSelection.invulnerables()).toJSON();
-      expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
+    const tx = helper.constructApiCall('api.tx.collatorSelection.setInvulnerables', [[
+      charlie.address,
+      dave.address,
+    ]]);
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [tx])).to.be.fulfilled;
 
-      const expectedSessionIndex = (await api.query.session.currentIndex() as any).toNumber() + 2;
-      let currentSessionIndex = -1;
-      console.log('Waiting for the session after the next.' 
-        + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
-      while (currentSessionIndex < expectedSessionIndex) {
-        await waitNewBlocks(api, 1);
-        currentSessionIndex = (await api.query.session.currentIndex() as any).toNumber();
-        // todo implement a timeout in case new blocks are not being produced? session length needed
-      }
+    const newInvulnerables = await helper.callRpc('api.query.collatorSelection.invulnerables');
+    expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
 
-      const newValidators = (await api.query.session.validators()).toJSON();
-      expect(newValidators).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
+    const expectedSessionIndex = (await helper.callRpc('api.query.session.currentIndex')).toNumber() + 2;
+    let currentSessionIndex = -1;
+    console.log('Waiting for the session after the next.' 
+      + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
 
-      const lastBlockNumber = await getBlockNumber(api);
-      await waitNewBlocks(api, 1);
-      const lastCharlieBlock = (await api.query.collatorSelection.lastAuthoredBlock(charlie.address) as any).toNumber();
-      const lastDaveBlock = (await api.query.collatorSelection.lastAuthoredBlock(dave.address) as any).toNumber();
-      expect(lastCharlieBlock >= lastBlockNumber || lastDaveBlock >= lastBlockNumber).to.be.true;
-    });
+    while (currentSessionIndex < expectedSessionIndex) {
+      // eslint-disable-next-line no-async-promise-executor
+      currentSessionIndex = await expect(helper.wait.withTimeout(new Promise(async (resolve) => {
+        await helper.wait.newBlocks(1);
+        const res = (await helper.callRpc('api.query.session.currentIndex')).toNumber();
+        resolve(res);
+      }), 24000, 'The chain has stopped producing blocks!')).to.be.fulfilled;
+    }
+
+    const newValidators = await helper.callRpc('api.query.session.validators');
+    expect(newValidators).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
+
+    const lastBlockNumber = await helper.chain.getLatestBlockNumber();
+    await helper.wait.newBlocks(1);
+    const lastCharlieBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [charlie.address])).toNumber();
+    const lastDaveBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [dave.address])).toNumber();
+    expect(lastCharlieBlock >= lastBlockNumber || lastDaveBlock >= lastBlockNumber).to.be.true;
   });
 
   after(async () => {
-    await usingApi(async (api) => {
-      const tx = api.tx.collatorSelection.setInvulnerables([
-        alice.address,
-        bob.address,
-      ]);
-      const sudoTx = api.tx.sudo.sudo(tx as any);
-      const events = await submitTransactionAsync(alice, sudoTx);
-      const result = getGenericResult(events);
-      expect(result.success).to.be.true;
+    await usingPlaygrounds(async (helper) => {
+      if (helper.fetchMissingPalletNames([Pallets.AppPromotion]).length != 0) return;
+
+      const tx = helper.constructApiCall('api.tx.collatorSelection.setInvulnerables', [[
+        aliceAddress,
+        bobAddress,
+      ]]);
+      await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [tx])).to.be.fulfilled;
     });
   });
 });

@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{Runtime, Event};
+use crate::{Runtime, RuntimeEvent};
 
 impl pallet_proxy_rmrk_core::Config for Runtime {
 	type WeightInfo = pallet_proxy_rmrk_core::weights::SubstrateWeight<Self>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 impl pallet_proxy_rmrk_equip::Config for Runtime {
 	type WeightInfo = pallet_proxy_rmrk_equip::weights::SubstrateWeight<Self>;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 }

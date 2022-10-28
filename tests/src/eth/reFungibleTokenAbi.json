@@ -127,16 +127,6 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "collection", "type": "address" },
-      { "internalType": "uint256", "name": "nftId", "type": "uint256" }
-    ],
-    "name": "setParentNFT",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
       { "internalType": "bytes4", "name": "interfaceID", "type": "bytes4" }
     ],
     "name": "supportsInterface",

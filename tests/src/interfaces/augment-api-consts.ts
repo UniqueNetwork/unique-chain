@@ -8,13 +8,39 @@ import '@polkadot/api-base/types/consts';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion } from '@polkadot/types/lookup';
+import type { Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
 declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * Rate of return for interval in blocks defined in `RecalculationInterval`.
+       **/
+      intervalIncome: Perbill & AugmentedConst<ApiType>;
+      /**
+       * Decimals for the `Currency`.
+       **/
+      nominal: u128 & AugmentedConst<ApiType>;
+      /**
+       * The app's pallet id, used for deriving its sovereign account address.
+       **/
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * In parachain blocks.
+       **/
+      pendingInterval: u32 & AugmentedConst<ApiType>;
+      /**
+       * In relay blocks.
+       **/
+      recalculationInterval: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     balances: {
       /**
        * The minimum amount required to keep an account open.
@@ -66,22 +92,6 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
-    scheduler: {
-      /**
-       * The maximum weight that may be scheduled per block for any dispatchables of less
-       * priority than `schedule::HARD_DEADLINE`.
-       **/
-      maximumWeight: u64 & AugmentedConst<ApiType>;
-      /**
-       * The maximum number of scheduled calls in the queue for a single block.
-       * Not strictly enforced, but used for weight estimation.
-       **/
-      maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
     system: {
       /**
        * Maximum number of block number to block hash mappings to keep (oldest pruned first).
@@ -98,9 +108,9 @@ declare module '@polkadot/api-base/types/consts' {
       /**
        * The weight of runtime database operations the runtime can invoke.
        **/
-      dbWeight: FrameSupportWeightsRuntimeDbWeight & AugmentedConst<ApiType>;
+      dbWeight: SpWeightsRuntimeDbWeight & AugmentedConst<ApiType>;
       /**
-       * The designated SS85 prefix of this chain.
+       * The designated SS58 prefix of this chain.
        * 
        * This replaces the "ss58Format" property declared in the chain spec. Reason is
        * that the runtime should know about the prefix in order to make use of it as
@@ -124,6 +134,17 @@ declare module '@polkadot/api-base/types/consts' {
        * double this period on default settings.
        **/
       minimumPeriod: u64 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    tokens: {
+      maxLocks: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of named reserves that can exist on an account.
+       **/
+      maxReserves: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -201,6 +222,23 @@ declare module '@polkadot/api-base/types/consts' {
        * The minimum amount transferred to call `vested_transfer`.
        **/
       minVestedTransfer: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    xTokens: {
+      /**
+       * Base XCM weight.
+       * 
+       * The actually weight for an XCM message is `T::BaseXcmWeight +
+       * T::Weigher::weight(&msg)`.
+       **/
+      baseXcmWeight: u64 & AugmentedConst<ApiType>;
+      /**
+       * Self chain location.
+       **/
+      selfLocation: XcmV1MultiLocation & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

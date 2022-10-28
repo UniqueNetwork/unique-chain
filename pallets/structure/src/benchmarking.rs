@@ -19,7 +19,8 @@ use super::*;
 use frame_benchmarking::{benchmarks, account};
 use frame_support::traits::{Currency, Get};
 use up_data_structs::{
-	CreateCollectionData, CollectionMode, CreateItemData, CreateNftData, budget::Unlimited,
+	CreateCollectionData, CollectionMode, CreateItemData, CollectionFlags, CreateNftData,
+	budget::Unlimited,
 };
 use pallet_common::Config as CommonConfig;
 use pallet_evm::account::CrossAccountId;
@@ -32,10 +33,15 @@ benchmarks! {
 		let caller_cross = T::CrossAccountId::from_sub(caller.clone());
 
 		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
-		T::CollectionDispatch::create(caller_cross.clone(), CreateCollectionData {
-			mode: CollectionMode::NFT,
-			..Default::default()
-		})?;
+		T::CollectionDispatch::create(
+			caller_cross.clone(),
+			caller_cross.clone(),
+			CreateCollectionData {
+				mode: CollectionMode::NFT,
+				..Default::default()
+			},
+			CollectionFlags::default(),
+		)?;
 		let dispatch = T::CollectionDispatch::dispatch(CollectionHandle::try_get(CollectionId(1))?);
 		let dispatch = dispatch.as_dyn();
 

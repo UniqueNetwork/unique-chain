@@ -25,6 +25,8 @@ import * as defs from '../interfaces/definitions';
 import privateKey from './privateKey';
 import promisifySubstrate from './promisify-substrate';
 
+import {SilentConsole} from '../util/playgrounds/unique.dev';
+
 
 
 function defaultApiOptions(): ApiOptions {
@@ -42,6 +44,7 @@ function defaultApiOptions(): ApiOptions {
     },
     rpc: {
       unique: defs.unique.rpc,
+      appPromotion: defs.appPromotion.rpc,
       rmrk: defs.rmrk.rpc,
       eth: {
         feeHistory: {
@@ -75,25 +78,8 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
   const api: ApiPromise = new ApiPromise(settings);
   let result: T = null as unknown as T;
 
-  // TODO: Remove, this is temporary: Filter unneeded API output
-  // (Jaco promised it will be removed in the next version)
-  const consoleErr = console.error;
-  const consoleLog = console.log;
-  const consoleWarn = console.warn;
-
-  const outFn = (printer: any) => (...args: any[]) => {
-    for (const arg of args) {
-      if (typeof arg !== 'string')
-        continue;
-      if (arg.includes('1000:: Normal connection closure' || arg === 'Normal connection closure'))
-        return;
-    }
-    printer(...args);
-  };
-
-  console.error = outFn(consoleErr.bind(console));
-  console.log = outFn(consoleLog.bind(console));
-  console.warn = outFn(consoleWarn.bind(console));
+  const silentConsole = new SilentConsole();
+  silentConsole.enable();
 
   try {
     await promisifySubstrate(api, async () => {
@@ -106,9 +92,7 @@ export default async function usingApi<T = void>(action: (api: ApiPromise, priva
     })();
   } finally {
     await api.disconnect();
-    console.error = consoleErr;
-    console.log = consoleLog;
-    console.warn = consoleWarn;
+    silentConsole.disable();
   }
   return result as T;
 }
@@ -124,6 +108,9 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
     return TransactionStatus.NotReady;
   }
   if (status.isBroadcast) {
+    return TransactionStatus.NotReady;
+  }
+  if (status.isRetracted) {
     return TransactionStatus.NotReady;
   }
   if (status.isInBlock || status.isFinalized) {
@@ -164,18 +151,32 @@ export function executeTransaction(api: ApiPromise, sender: IKeyringPair, transa
   });
 }
 
+/**
+ * @deprecated use `executeTransaction` instead
+ */
 export function
 submitTransactionAsync(sender: IKeyringPair, transaction: SubmittableExtrinsic<ApiTypes>): Promise<EventRecord[]> {
   /* eslint no-async-promise-executor: "off" */
   return new Promise(async (resolve, reject) => {
     try {
-      await transaction.signAndSend(sender, ({events = [], status}) => {
+      await transaction.signAndSend(sender, ({events = [], status, dispatchError}) => {
         const transactionStatus = getTransactionStatus(events, status);
 
         if (transactionStatus === TransactionStatus.Success) {
           resolve(events);
         } else if (transactionStatus === TransactionStatus.Fail) {
-          console.log(`Something went wrong with transaction. Status: ${status}`);
+          let moduleError = null;
+
+          if (dispatchError) {
+            if (dispatchError.isModule) {
+              const modErr = dispatchError.asModule;
+              const errorMeta = dispatchError.registry.findMetaError(modErr);
+
+              moduleError = JSON.stringify(errorMeta, null, 4);
+            }
+          }
+
+          console.log(`Something went wrong with transaction. Status: ${status}\nModule error: ${moduleError}`);
           reject(events);
         }
       });

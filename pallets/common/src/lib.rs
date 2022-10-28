@@ -62,7 +62,7 @@ use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure,
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
-	weights::Pays,
+	dispatch::Pays,
 	transactional,
 };
 use pallet_evm::GasWeightMapping;
@@ -70,6 +70,8 @@ use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT,
 	Collection,
 	RpcCollection,
+	CollectionFlags,
+	RpcCollectionFlags,
 	CollectionId,
 	CreateItemData,
 	MAX_TOKEN_PREFIX_LENGTH,
@@ -112,7 +114,6 @@ use up_data_structs::{
 	RmrkBoundedTheme,
 	RmrkNftChild,
 	CollectionPermissions,
-	SchemaVersion,
 };
 
 pub use pallet::*;
@@ -185,26 +186,41 @@ impl<T: Config> CollectionHandle<T> {
 	/// Consume gas for reading.
 	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
 					.read
 					.saturating_mul(reads),
-			))
+			)))
 	}
 
 	/// Consume gas for writing.
 	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
 					.write
 					.saturating_mul(writes),
-			))
+			)))
+	}
+
+	/// Consume gas for reading and writing.
+	pub fn consume_store_reads_and_writes(
+		&self,
+		reads: u64,
+		writes: u64,
+	) -> evm_coder::execution::Result<()> {
+		let weight = <T as frame_system::Config>::DbWeight::get();
+		let reads = weight.read.saturating_mul(reads);
+		let writes = weight.read.saturating_mul(writes);
+		self.recorder
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+				reads.saturating_add(writes),
+			)))
 	}
 
 	/// Save collection to storage.
-	pub fn save(self) -> DispatchResult {
-		<CollectionById<T>>::insert(self.id, self.collection);
+	pub fn save(&self) -> DispatchResult {
+		<CollectionById<T>>::insert(self.id, &self.collection);
 		Ok(())
 	}
 
@@ -231,10 +247,16 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(true)
 	}
 
+	/// Remove collection sponsor.
+	pub fn remove_sponsor(&mut self) -> DispatchResult {
+		self.collection.sponsorship = SponsorshipState::Disabled;
+		Ok(())
+	}
+
 	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
-	/// Now check only the `external_collection` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
+	/// Now check only the `external` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
 	pub fn check_is_internal(&self) -> DispatchResult {
-		if self.external_collection {
+		if self.flags.external {
 			return Err(<Error<T>>::CollectionIsExternal)?;
 		}
 
@@ -242,9 +264,9 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
-	/// Now check only the `external_collection` flag and if it's **false**, then return [`Error::CollectionIsInternal`] error.
+	/// Now check only the `external` flag and if it's **false**, then return [`Error::CollectionIsInternal`] error.
 	pub fn check_is_external(&self) -> DispatchResult {
-		if !self.external_collection {
+		if !self.flags.external {
 			return Err(<Error<T>>::CollectionIsInternal)?;
 		}
 
@@ -302,6 +324,19 @@ impl<T: Config> CollectionHandle<T> {
 		);
 		Ok(())
 	}
+
+	/// Changes collection owner to another account
+	/// #### Store read/writes
+	/// 1 writes
+	fn set_owner_internal(
+		&mut self,
+		caller: T::CrossAccountId,
+		new_owner: T::CrossAccountId,
+	) -> DispatchResult {
+		self.check_is_owner(&caller)?;
+		self.collection.owner = new_owner.as_sub().clone();
+		self.save()
+	}
 }
 
 #[frame_support::pallet]
@@ -328,7 +363,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// Events compatible with [`frame_system::Config::Event`].
-		type Event: IsType<<Self as frame_system::Config>::Event> + From<Event<Self>>;
+		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Handler of accounts and payment.
 		type Currency: Currency<Self::AccountId>;
@@ -672,7 +707,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			StorageVersion::new(1).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -721,12 +756,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get the effective limits for the collection.
 	pub fn effective_collection_limits(collection: CollectionId) -> Option<CollectionLimits> {
-		let collection = <CollectionById<T>>::get(collection);
-		if collection.is_none() {
-			return None;
-		}
-
-		let collection = collection.unwrap();
+		let collection = <CollectionById<T>>::get(collection)?;
 		let limits = collection.limits;
 		let effective_limits = CollectionLimits {
 			account_token_ownership_limit: Some(limits.account_token_ownership_limit()),
@@ -764,7 +794,7 @@ impl<T: Config> Pallet<T> {
 			sponsorship,
 			limits,
 			permissions,
-			external_collection,
+			flags,
 		} = <CollectionById<T>>::get(collection)?;
 
 		let token_property_permissions = <CollectionPropertyPermissions<T>>::get(collection)
@@ -794,7 +824,12 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
-			read_only: external_collection,
+			read_only: flags.external,
+
+			flags: RpcCollectionFlags {
+				foreign: flags.foreign,
+				erc721metadata: flags.erc721metadata,
+			},
 		})
 	}
 }
@@ -833,11 +868,12 @@ impl<T: Config> Pallet<T> {
 	///
 	/// * `owner` - The owner of the collection.
 	/// * `data` - Description of the created collection.
-	/// * `is_external` - Marks that collection managet by not "Unique network".
+	/// * `flags` - Extra flags to store.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
-		is_external: bool,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -881,7 +917,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
-			external_collection: is_external,
+			flags,
 		};
 
 		let mut collection_properties = up_data_structs::CollectionProperties::get();
@@ -909,7 +945,7 @@ impl<T: Config> Pallet<T> {
 				),
 			);
 			<T as Config>::Currency::settle(
-				owner.as_sub(),
+				payer.as_sub(),
 				imbalance,
 				WithdrawReasons::TRANSFER,
 				ExistenceRequirement::KeepAlive,
@@ -1280,6 +1316,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Toggle `user` participation in the `collection`'s allow list.
+	/// #### Store read/writes
+	/// 1 writes
 	pub fn toggle_allowlist(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1300,6 +1338,8 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Toggle `user` participation in the `collection`'s admin list.
+	/// #### Store read/writes
+	/// 2 writes
 	pub fn toggle_admin(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,

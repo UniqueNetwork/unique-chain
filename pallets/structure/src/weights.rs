@@ -42,8 +42,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Nonfungible TokenData (r:1 w:0)
 	fn find_parent() -> Weight {
-		(7_180_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+		Weight::from_ref_time(7_180_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
 }
 
@@ -52,7 +52,7 @@ impl WeightInfo for () {
 	// Storage: Common CollectionById (r:1 w:0)
 	// Storage: Nonfungible TokenData (r:1 w:0)
 	fn find_parent() -> Weight {
-		(7_180_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
+		Weight::from_ref_time(7_180_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 	}
 }

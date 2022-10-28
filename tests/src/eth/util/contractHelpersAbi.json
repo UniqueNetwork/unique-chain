@@ -1,5 +1,56 @@
 [
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "ContractSponsorRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sponsor",
+        "type": "address"
+      }
+    ],
+    "name": "ContractSponsorSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sponsor",
+        "type": "address"
+      }
+    ],
+    "name": "ContractSponsorshipConfirmed",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -34,6 +85,19 @@
         "type": "address"
       }
     ],
+    "name": "confirmSponsorship",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
     "name": "contractOwner",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
@@ -47,9 +111,76 @@
         "type": "address"
       }
     ],
-    "name": "getSponsoringRateLimit",
-    "outputs": [{ "internalType": "uint32", "name": "", "type": "uint32" }],
+    "name": "hasPendingSponsor",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "hasSponsor",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "removeSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "selfSponsoredEnable",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      { "internalType": "address", "name": "sponsor", "type": "address" }
+    ],
+    "name": "setSponsor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      },
+      { "internalType": "uint256", "name": "feeLimit", "type": "uint256" }
+    ],
+    "name": "setSponsoringFeeLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -88,6 +219,29 @@
         "type": "address"
       }
     ],
+    "name": "sponsor",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "field_0", "type": "address" },
+          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple0",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
     "name": "sponsoringEnabled",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
@@ -101,8 +255,21 @@
         "type": "address"
       }
     ],
-    "name": "sponsoringMode",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "name": "sponsoringFeeLimit",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "sponsoringRateLimit",
+    "outputs": [{ "internalType": "uint32", "name": "", "type": "uint32" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -123,7 +290,7 @@
         "type": "address"
       },
       { "internalType": "address", "name": "user", "type": "address" },
-      { "internalType": "bool", "name": "allowed", "type": "bool" }
+      { "internalType": "bool", "name": "isAllowed", "type": "bool" }
     ],
     "name": "toggleAllowed",
     "outputs": [],
@@ -140,20 +307,6 @@
       { "internalType": "bool", "name": "enabled", "type": "bool" }
     ],
     "name": "toggleAllowlist",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "contractAddress",
-        "type": "address"
-      },
-      { "internalType": "bool", "name": "enabled", "type": "bool" }
-    ],
-    "name": "toggleSponsoring",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

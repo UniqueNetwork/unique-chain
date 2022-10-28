@@ -83,7 +83,7 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed};
-use sp_runtime::{sp_std::prelude::Vec};
+use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
 	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
@@ -98,7 +98,7 @@ use pallet_common::{
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+pub mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
@@ -122,7 +122,7 @@ decl_error! {
 /// Configuration trait of this pallet.
 pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 	/// Overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+	type RuntimeEvent: From<Event<Self>> + Into<<Self as frame_system::Config>::RuntimeEvent>;
 
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
@@ -273,18 +273,18 @@ decl_module! {
 	/// Type alias to Pallet, to be used by construct_runtime.
 	pub struct Module<T: Config> for enum Call
 	where
-		origin: T::Origin
+		origin: T::RuntimeOrigin
 	{
 		type Error = Error<T>;
 
-		fn deposit_event() = default;
+		pub fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
-			0
+			Weight::zero()
 		}
 
 		fn on_runtime_upgrade() -> Weight {
-			0
+			Weight::zero()
 		}
 
 		/// Create a collection of tokens.
@@ -344,8 +344,8 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 
 			// =========
-
-			let _id = T::CollectionDispatch::create(T::CrossAccountId::from_sub(sender), data)?;
+			let sender = T::CrossAccountId::from_sub(sender);
+			let _id = T::CollectionDispatch::create(sender.clone(), sender, data, Default::default())?;
 
 			Ok(())
 		}
@@ -1101,5 +1101,54 @@ decl_module! {
 				}
 			})
 		}
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	/// Force set `sponsor` for `collection`.
+	///
+	/// Differs from [`set_collection_sponsor`][`Pallet::set_collection_sponsor`] in that confirmation
+	/// from the `sponsor` is not required.
+	///
+	/// # Arguments
+	///
+	/// * `sponsor`: ID of the account of the sponsor-to-be.
+	/// * `collection_id`: ID of the modified collection.
+	pub fn force_set_sponsor(sponsor: T::AccountId, collection_id: CollectionId) -> DispatchResult {
+		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		target_collection.check_is_internal()?;
+		target_collection.set_sponsor(sponsor.clone())?;
+
+		Self::deposit_event(Event::<T>::CollectionSponsorSet(
+			collection_id,
+			sponsor.clone(),
+		));
+
+		ensure!(
+			target_collection.confirm_sponsorship(&sponsor)?,
+			Error::<T>::ConfirmUnsetSponsorFail
+		);
+
+		Self::deposit_event(Event::<T>::SponsorshipConfirmed(collection_id, sponsor));
+
+		target_collection.save()
+	}
+
+	/// Force remove `sponsor` for `collection`.
+	///
+	/// Differs from `remove_sponsor` in that
+	/// it doesn't require consent from the `owner` of the collection.
+	///
+	/// # Arguments
+	///
+	/// * `collection_id`: ID of the modified collection.
+	pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
+		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		target_collection.check_is_internal()?;
+		target_collection.sponsorship = SponsorshipState::Disabled;
+
+		Self::deposit_event(Event::<T>::CollectionSponsorRemoved(collection_id));
+
+		target_collection.save()
 	}
 }

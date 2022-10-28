@@ -10,7 +10,7 @@ use crate::{
 		dispatch::CollectionDispatchT, ethereum::sponsoring::EvmSponsorshipHandler,
 		config::sponsoring::DefaultSponsoringRateLimit, DealWithFees,
 	},
-	Runtime, Aura, Balances, Event, ChainId,
+	Runtime, Aura, Balances, RuntimeEvent, ChainId,
 };
 use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
 use up_common::constants::*;
@@ -27,9 +27,9 @@ impl pallet_evm::account::Config for Runtime {
 // (contract, which only writes a lot of data),
 // approximating on top of our real store write weight
 parameter_types! {
-	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
+	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND.ref_time() / <Runtime as frame_system::Config>::DbWeight::get().write;
 	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
-	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND / GasPerSecond::get();
+	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND.ref_time() / GasPerSecond::get();
 }
 
 /// Limiting EVM execution to 50% of block for substrate users and management tasks
@@ -37,16 +37,16 @@ parameter_types! {
 /// scheduled fairly
 const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
 parameter_types! {
-	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get());
+	pub BlockGasLimit: U256 = U256::from((NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get()).ref_time());
 }
 
 pub enum FixedGasWeightMapping {}
 impl pallet_evm::GasWeightMapping for FixedGasWeightMapping {
 	fn gas_to_weight(gas: u64) -> Weight {
-		gas.saturating_mul(WeightPerGas::get())
+		Weight::from_ref_time(gas).saturating_mul(WeightPerGas::get())
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight / WeightPerGas::get()
+		(weight / WeightPerGas::get()).ref_time()
 	}
 }
 
@@ -75,7 +75,7 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesType = ();
 	type PrecompilesValue = ();
 	type Currency = Balances;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type OnMethodCall = (
 		pallet_evm_migration::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
@@ -95,7 +95,7 @@ impl pallet_evm_migration::Config for Runtime {
 }
 
 impl pallet_ethereum::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 }
 
@@ -112,6 +112,7 @@ parameter_types! {
 }
 
 impl pallet_evm_contract_helpers::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
 	type ContractAddress = HelpersContractAddress;
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
@@ -120,5 +121,4 @@ impl pallet_evm_coder_substrate::Config for Runtime {}
 
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
-	type Currency = Balances;
 }

@@ -33,16 +33,12 @@ use up_data_structs::{
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{
-		CommonEvmHandler, PrecompileResult, CollectionCall,
-		static_property::{key, value as property_value},
-	},
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use alloc::string::ToString;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -50,14 +46,14 @@ use crate::{
 };
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-#[solidity_interface(name = "TokenProperties")]
+#[solidity_interface(name = TokenProperties)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
 	/// @param key Property key.
-	/// @param is_mutable Permission to mutate property.
-	/// @param collection_admin Permission to mutate property by collection admin if property is mutable.
-	/// @param token_owner Permission to mutate property by token owner if property is mutable.
+	/// @param isMutable Permission to mutate property.
+	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
+	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
@@ -194,25 +190,27 @@ pub enum ERC721Events {
 }
 
 #[derive(ToLog)]
-pub enum ERC721MintableEvents {
+pub enum ERC721UniqueMintableEvents {
 	#[allow(dead_code)]
 	MintingFinished {},
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = "ERC721Metadata")]
+#[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice A descriptive name for a collection of NFTs in this contract
-	fn name(&self) -> Result<string> {
-		Ok(decode_utf16(self.name.iter().copied())
-			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	#[solidity(hide, rename_selector = "name")]
+	fn name_proxy(&self) -> Result<string> {
+		self.name()
 	}
 
 	/// @notice An abbreviated name for NFTs in this contract
-	fn symbol(&self) -> Result<string> {
-		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
+	#[solidity(hide, rename_selector = "symbol")]
+	fn symbol_proxy(&self) -> Result<string> {
+		self.symbol()
 	}
 
 	/// @notice A distinct Uniform Resource Identifier (URI) for a given asset.
@@ -228,41 +226,44 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn token_uri(&self, token_id: uint256) -> Result<string> {
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
-		if let Ok(url) = get_token_property(self, token_id_u32, &key::url()) {
-			if !url.is_empty() {
-				return Ok(url);
+		match get_token_property(self, token_id_u32, &key::url()).as_deref() {
+			Err(_) | Ok("") => (),
+			Ok(url) => {
+				return Ok(url.into());
 			}
-		} else if !is_erc721_metadata_compatible::<T>(self.id) {
-			return Err("tokenURI not set".into());
-		}
+		};
 
-		if let Some(base_uri) =
+		let base_uri =
 			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::base_uri())
-		{
-			if !base_uri.is_empty() {
-				let base_uri = string::from_utf8(base_uri.into_inner()).map_err(|e| {
+				.map(BoundedVec::into_inner)
+				.map(string::from_utf8)
+				.transpose()
+				.map_err(|e| {
 					Error::Revert(alloc::format!(
 						"Can not convert value \"baseURI\" to string with error \"{}\"",
 						e
 					))
 				})?;
-				if let Ok(suffix) = get_token_property(self, token_id_u32, &key::suffix()) {
-					if !suffix.is_empty() {
-						return Ok(base_uri + suffix.as_str());
-					}
-				}
 
-				return Ok(base_uri + token_id.to_string().as_str());
+		let base_uri = match base_uri.as_deref() {
+			None | Some("") => {
+				return Ok("".into());
 			}
-		}
+			Some(base_uri) => base_uri.into(),
+		};
 
-		Ok("".into())
+		Ok(
+			match get_token_property(self, token_id_u32, &key::suffix()).as_deref() {
+				Err(_) | Ok("") => base_uri,
+				Ok(suffix) => base_uri + suffix,
+			},
+		)
 	}
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = "ERC721Enumerable")]
+#[solidity_interface(name = ERC721Enumerable, expect_selector = 0x780e9d63)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Enumerate valid NFTs
 	/// @param index A counter less than `totalSupply()`
@@ -289,7 +290,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-#[solidity_interface(name = "ERC721", events(ERC721Events))]
+#[solidity_interface(name = ERC721, events(ERC721Events), expect_selector = 0x80ac58cd)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -316,13 +317,13 @@ impl<T: Config> NonfungibleHandle<T> {
 			.as_eth())
 	}
 	/// @dev Not implemented
+	#[solidity(rename_selector = "safeTransferFrom")]
 	fn safe_transfer_from_with_data(
 		&mut self,
 		_from: address,
 		_to: address,
 		_token_id: uint256,
 		_data: bytes,
-		_value: value,
 	) -> Result<void> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
@@ -333,7 +334,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		_from: address,
 		_to: address,
 		_token_id: uint256,
-		_value: value,
 	) -> Result<void> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
@@ -348,7 +348,6 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param from The current owner of the NFT
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	/// @param _value Not used for an NFT
 	#[weight(<SelfWeightOf<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
@@ -356,7 +355,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		from: address,
 		to: address,
 		token_id: uint256,
-		_value: value,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
@@ -378,13 +376,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param approved The new approved NFT controller
 	/// @param tokenId The NFT to approve
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(
-		&mut self,
-		caller: caller,
-		approved: address,
-		token_id: uint256,
-		_value: value,
-	) -> Result<void> {
+	fn approve(&mut self, caller: caller, approved: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let approved = T::CrossAccountId::from_eth(approved);
 		let token = token_id.try_into()?;
@@ -419,7 +411,7 @@ impl<T: Config> NonfungibleHandle<T> {
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
-#[solidity_interface(name = "ERC721Burnable")]
+#[solidity_interface(name = ERC721Burnable)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current NFT owner, or an authorized
@@ -436,10 +428,23 @@ impl<T: Config> NonfungibleHandle<T> {
 }
 
 /// @title ERC721 minting logic.
-#[solidity_interface(name = "ERC721Mintable", events(ERC721MintableEvents))]
+#[solidity_interface(name = ERC721UniqueMintable, events(ERC721UniqueMintableEvents))]
 impl<T: Config> NonfungibleHandle<T> {
 	fn minting_finished(&self) -> Result<bool> {
 		Ok(false)
+	}
+
+	/// @notice Function to mint token.
+	/// @param to The new owner
+	/// @return uint256 The id of the newly minted token
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint(&mut self, caller: caller, to: address) -> Result<uint256> {
+		let token_id: uint256 = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			.into();
+		self.mint_check_id(caller, to, token_id)?;
+		Ok(token_id)
 	}
 
 	/// @notice Function to mint token.
@@ -447,8 +452,9 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
 	/// @param tokenId ID of the minted NFT
+	#[solidity(hide, rename_selector = "mint")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
+	fn mint_check_id(&mut self, caller: caller, to: address, token_id: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
@@ -479,14 +485,34 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @notice Function to mint token with the given tokenUri.
+	/// @param to The new owner
+	/// @param tokenUri Token URI that would be stored in the NFT properties
+	/// @return uint256 The id of the newly minted token
+	#[solidity(rename_selector = "mintWithTokenURI")]
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint_with_token_uri(
+		&mut self,
+		caller: caller,
+		to: address,
+		token_uri: string,
+	) -> Result<uint256> {
+		let token_id: uint256 = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?
+			.into();
+		self.mint_with_token_uri_check_id(caller, to, token_id, token_uri)?;
+		Ok(token_id)
+	}
+
+	/// @notice Function to mint token with the given tokenUri.
 	/// @dev `tokenId` should be obtained with `nextTokenId` method,
 	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
 	/// @param tokenId ID of the minted NFT
 	/// @param tokenUri Token URI that would be stored in the NFT properties
-	#[solidity(rename_selector = "mintWithTokenURI")]
+	#[solidity(hide, rename_selector = "mintWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint_with_token_uri(
+	fn mint_with_token_uri_check_id(
 		&mut self,
 		caller: caller,
 		to: address,
@@ -559,17 +585,6 @@ fn get_token_property<T: Config>(
 	Err("Property tokenURI not found".into())
 }
 
-fn is_erc721_metadata_compatible<T: Config>(collection_id: CollectionId) -> bool {
-	if let Some(shema_name) =
-		pallet_common::Pallet::<T>::get_collection_property(collection_id, &key::schema_name())
-	{
-		let shema_name = shema_name.into_inner();
-		shema_name == property_value::ERC721_METADATA
-	} else {
-		false
-	}
-}
-
 fn get_token_permission<T: Config>(
 	collection_id: CollectionId,
 	key: &PropertyKey,
@@ -586,33 +601,28 @@ fn get_token_permission<T: Config>(
 	Ok(a)
 }
 
-fn has_token_permission<T: Config>(collection_id: CollectionId, key: &PropertyKey) -> bool {
-	if let Ok(token_property_permissions) =
-		CollectionPropertyPermissions::<T>::try_get(collection_id)
-	{
-		return token_property_permissions.contains_key(key);
+/// @title Unique extensions for ERC721.
+#[solidity_interface(name = ERC721UniqueExtensions)]
+impl<T: Config> NonfungibleHandle<T> {
+	/// @notice A descriptive name for a collection of NFTs in this contract
+	fn name(&self) -> Result<string> {
+		Ok(decode_utf16(self.name.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
 	}
 
-	false
-}
+	/// @notice An abbreviated name for NFTs in this contract
+	fn symbol(&self) -> Result<string> {
+		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	}
 
-/// @title Unique extensions for ERC721.
-#[solidity_interface(name = "ERC721UniqueExtensions")]
-impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	/// @param _value Not used for an NFT
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer(
-		&mut self,
-		caller: caller,
-		to: address,
-		token_id: uint256,
-		_value: value,
-	) -> Result<void> {
+	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
@@ -630,15 +640,8 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param from The current owner of the NFT
 	/// @param tokenId The NFT to transfer
-	/// @param _value Not used for an NFT
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(
-		&mut self,
-		caller: caller,
-		from: address,
-		token_id: uint256,
-		_value: value,
-	) -> Result<void> {
+	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
@@ -665,6 +668,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokenIds IDs of the minted NFTs
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<uint256>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -701,7 +705,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
-	#[solidity(rename_selector = "mintBulkWithTokenURI")]
+	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
@@ -751,19 +755,19 @@ impl<T: Config> NonfungibleHandle<T> {
 }
 
 #[solidity_interface(
-	name = "UniqueNFT",
+	name = UniqueNFT,
 	is(
 		ERC721,
-		ERC721Metadata,
 		ERC721Enumerable,
 		ERC721UniqueExtensions,
-		ERC721Mintable,
+		ERC721UniqueMintable,
 		ERC721Burnable,
-		via("CollectionHandle<T>", common_mut, Collection),
+		ERC721Metadata(if(this.flags.erc721metadata)),
+		Collection(via(common_mut returns CollectionHandle<T>)),
 		TokenProperties,
 	)
 )]
-impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> {}
+impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 
 // Not a tests, but code generators
 generate_stubgen!(gen_impl, UniqueNFTCall<()>, true);
@@ -771,7 +775,7 @@ generate_stubgen!(gen_iface, UniqueNFTCall<()>, false);
 
 impl<T: Config> CommonEvmHandler for NonfungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	const CODE: &'static [u8] = include_bytes!("./stubs/UniqueNFT.raw");
 

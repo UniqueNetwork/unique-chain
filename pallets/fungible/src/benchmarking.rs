@@ -31,7 +31,9 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::Fungible(0),
-		<Pallet<T>>::init_collection,
+		|owner: T::CrossAccountId, data| {
+			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
+		},
 		FungibleHandle::cast,
 	)
 }

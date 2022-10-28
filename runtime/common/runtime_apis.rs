@@ -189,6 +189,44 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
+            impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
+                #[allow(unused_variables)]
+                fn total_staked(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked(staker).unwrap_or_default());
+                }
+
+                #[allow(unused_variables)]
+                fn total_staked_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_total_staked_per_block(staker));
+                }
+
+                #[allow(unused_variables)]
+                fn pending_unstake(staker: Option<CrossAccountId>) -> Result<u128, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake(staker));
+                }
+
+                #[allow(unused_variables)]
+                fn pending_unstake_per_block(staker: CrossAccountId) -> Result<Vec<(BlockNumber, u128)>, DispatchError> {
+                    #[cfg(not(feature = "app-promotion"))]
+                    return unsupported!();
+
+                    #[cfg(feature = "app-promotion")]
+                    return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
+                }
+            }
+
             impl rmrk_rpc::RmrkApi<
                 Block,
                 AccountId,
@@ -520,7 +558,7 @@ macro_rules! impl_common_runtime_apis {
 
                 fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
                     xts.into_iter().filter_map(|xt| match xt.0.function {
-                        Call::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
+                        RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
                         _ => None
                     }).collect()
                 }
@@ -638,20 +676,25 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
+                    list_benchmark!(list, extra, pallet_app_promotion, AppPromotion);
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
-                    list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
+                    // #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    // list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
+
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    list_benchmark!(list, extra, pallet_foreign_assets, ForeignAssets);
+
 
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
@@ -693,20 +736,24 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
+                    add_benchmark!(params, batches, pallet_app_promotion, AppPromotion);
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
-                    add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
+                    // #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    // add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
+
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    add_benchmark!(params, batches, pallet_foreign_assets, ForeignAssets);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
@@ -723,8 +770,20 @@ macro_rules! impl_common_runtime_apis {
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
                 }
 
-                fn execute_block_no_check(block: Block) -> frame_support::pallet_prelude::Weight {
-                    Executive::execute_block_no_check(block)
+                fn execute_block(
+                    block: Block,
+                    state_root_check: bool,
+                    select: frame_try_runtime::TryStateSelect
+                ) -> frame_support::pallet_prelude::Weight {
+                    log::info!(
+                        target: "node-runtime",
+                        "try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",
+                        block.header.hash(),
+                        state_root_check,
+                        select,
+                    );
+
+                    Executive::try_execute_block(block, state_root_check, select).unwrap()
                 }
             }
         }

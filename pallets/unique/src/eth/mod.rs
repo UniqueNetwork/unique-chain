@@ -21,25 +21,25 @@ use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity_interface, solidity, weight, types::*};
 use frame_support::traits::Get;
 use pallet_common::{
-	CollectionById, CollectionHandle,
+	CollectionById,
 	dispatch::CollectionDispatch,
 	erc::{
 		CollectionHelpersEvents,
-		static_property::{key, value as property_value},
+		static_property::{key},
 	},
 	Pallet as PalletCommon,
 };
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
-use pallet_evm_coder_substrate::dispatch_to_evm;
+use sp_std::vec;
 use up_data_structs::{
 	CollectionName, CollectionDescription, CollectionTokenPrefix, CreateCollectionData,
-	CollectionMode, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	CollectionMode, PropertyValue, CollectionFlags,
 };
 
 use crate::{Config, SelfWeightOf, weights::WeightInfo};
 
-use sp_std::{vec, vec::Vec};
+use sp_std::vec::Vec;
 use alloc::format;
 
 /// See [`CollectionHelpersCall`]
@@ -59,13 +59,11 @@ fn convert_data<T: Config>(
 	name: string,
 	description: string,
 	token_prefix: string,
-	base_uri: string,
 ) -> Result<(
 	T::CrossAccountId,
 	CollectionName,
 	CollectionDescription,
 	CollectionTokenPrefix,
-	PropertyValue,
 )> {
 	let caller = T::CrossAccountId::from_eth(caller);
 	let name = name
@@ -83,228 +81,223 @@ fn convert_data<T: Config>(
 	let token_prefix = token_prefix.into_bytes().try_into().map_err(|_| {
 		error_field_too_long(stringify!(token_prefix), CollectionTokenPrefix::bound())
 	})?;
-	let base_uri_value = base_uri
-		.into_bytes()
-		.try_into()
-		.map_err(|_| error_field_too_long(stringify!(token_prefix), PropertyValue::bound()))?;
-	Ok((caller, name, description, token_prefix, base_uri_value))
-}
-
-fn make_data<T: Config>(
-	name: CollectionName,
-	mode: CollectionMode,
-	description: CollectionDescription,
-	token_prefix: CollectionTokenPrefix,
-	base_uri_value: PropertyValue,
-	add_properties: bool,
-) -> Result<CreateCollectionData<T::AccountId>> {
-	let mut properties = up_data_structs::CollectionPropertiesVec::default();
-	let mut token_property_permissions =
-		up_data_structs::CollectionPropertiesPermissionsVec::default();
-
-	token_property_permissions
-		.try_push(up_data_structs::PropertyKeyPermission {
-			key: key::url(),
-			permission: up_data_structs::PropertyPermission {
-				mutable: false,
-				collection_admin: true,
-				token_owner: false,
-			},
-		})
-		.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-	if add_properties {
-		token_property_permissions
-			.try_push(up_data_structs::PropertyKeyPermission {
-				key: key::suffix(),
-				permission: up_data_structs::PropertyPermission {
-					mutable: false,
-					collection_admin: true,
-					token_owner: false,
-				},
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		properties
-			.try_push(up_data_structs::Property {
-				key: key::schema_name(),
-				value: property_value::erc721(),
-			})
-			.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-
-		if !base_uri_value.is_empty() {
-			properties
-				.try_push(up_data_structs::Property {
-					key: key::base_uri(),
-					value: base_uri_value,
-				})
-				.map_err(|e| Error::Revert(format!("{:?}", e)))?;
-		}
-	}
-
-	let data = CreateCollectionData {
-		name,
-		mode,
-		description,
-		token_prefix,
-		token_property_permissions,
-		properties,
-		..Default::default()
-	};
-	Ok(data)
-}
-
-fn parent_nft_property_permissions() -> PropertyKeyPermission {
-	PropertyKeyPermission {
-		key: key::parent_nft(),
-		permission: PropertyPermission {
-			mutable: false,
-			collection_admin: false,
-			token_owner: true,
-		},
-	}
+	Ok((caller, name, description, token_prefix))
 }
 
 fn create_refungible_collection_internal<
 	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
 >(
 	caller: caller,
+	value: value,
 	name: string,
 	description: string,
 	token_prefix: string,
-	base_uri: string,
-	add_properties: bool,
 ) -> Result<address> {
-	let (caller, name, description, token_prefix, base_uri_value) =
-		convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-	let data = make_data::<T>(
+	let (caller, name, description, token_prefix) =
+		convert_data::<T>(caller, name, description, token_prefix)?;
+	let data = CreateCollectionData {
 		name,
-		CollectionMode::ReFungible,
+		mode: CollectionMode::ReFungible,
 		description,
 		token_prefix,
-		base_uri_value,
-		add_properties,
-	)?;
+		..Default::default()
+	};
+	check_sent_amount_equals_collection_creation_price::<T>(value)?;
+	let collection_helpers_address =
+		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-	let collection_id = T::CollectionDispatch::create(caller.clone(), data)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-	let handle = <CollectionHandle<T>>::try_get(collection_id).map_err(dispatch_to_evm::<T>)?;
-	<PalletCommon<T>>::set_scoped_token_property_permissions(
-		&handle,
-		&caller,
-		PropertyScope::Eth,
-		vec![parent_nft_property_permissions()],
+	let collection_id = T::CollectionDispatch::create(
+		caller.clone(),
+		collection_helpers_address,
+		data,
+		Default::default(),
 	)
-	.map_err(dispatch_to_evm::<T>)?;
-
+	.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
 }
 
+fn check_sent_amount_equals_collection_creation_price<T: Config>(value: value) -> Result<()> {
+	let value = value.as_u128();
+	let creation_price: u128 = T::CollectionCreationPrice::get()
+		.try_into()
+		.map_err(|_| ()) // workaround for `expect` requiring `Debug` trait
+		.expect("Collection creation price should be convertible to u128");
+	if value != creation_price {
+		return Err(format!(
+			"Sent amount not equals to collection creation price ({0})",
+			creation_price
+		)
+		.into());
+	}
+	Ok(())
+}
+
 /// @title Contract, which allows users to operate with collections
-#[solidity_interface(name = "CollectionHelpers", events(CollectionHelpersEvents))]
+#[solidity_interface(name = CollectionHelpers, events(CollectionHelpersEvents))]
 impl<T> EvmCollectionHelpers<T>
 where
-	T: Config + pallet_nonfungible::Config + pallet_refungible::Config,
+	T: Config + pallet_common::Config + pallet_nonfungible::Config + pallet_refungible::Config,
 {
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
-	/// @param token_prefix Token prefix to represent the collection tokens in UI and user applications
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[solidity(rename_selector = "createNFTCollection")]
+	fn create_nft_collection(
+		&mut self,
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+		let (caller, name, description, token_prefix) =
+			convert_data::<T>(caller, name, description, token_prefix)?;
+		let data = CreateCollectionData {
+			name,
+			mode: CollectionMode::NFT,
+			description,
+			token_prefix,
+			..Default::default()
+		};
+		check_sent_amount_equals_collection_creation_price::<T>(value)?;
+		let collection_helpers_address =
+			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
+		let collection_id = T::CollectionDispatch::create(
+			caller,
+			collection_helpers_address,
+			data,
+			Default::default(),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		let address = pallet_common::eth::collection_id_to_address(collection_id);
+		Ok(address)
+	}
+	/// Create an NFT collection
+	/// @param name Name of the collection
+	/// @param description Informative description of the collection
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	/// @return address Address of the newly created collection
+	#[weight(<SelfWeightOf<T>>::create_collection())]
+	#[deprecated(note = "mathod was renamed to `create_nft_collection`, prefer it instead")]
+	#[solidity(hide)]
 	fn create_nonfungible_collection(
 		&mut self,
 		caller: caller,
+		value: value,
 		name: string,
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
-		let (caller, name, description, token_prefix, _base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, "".into())?;
-		let data = make_data::<T>(
-			name,
-			CollectionMode::NFT,
-			description,
-			token_prefix,
-			Default::default(),
-			false,
-		)?;
-		let collection_id = T::CollectionDispatch::create(caller, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
-
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
+		self.create_nft_collection(caller, value, name, description, token_prefix)
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleCollection")]
-	fn create_nonfungible_collection_with_properties(
+	#[solidity(rename_selector = "createRFTCollection")]
+	fn create_rft_collection(
 		&mut self,
 		caller: caller,
+		value: value,
 		name: string,
 		description: string,
 		token_prefix: string,
+	) -> Result<address> {
+		create_refungible_collection_internal::<T>(caller, value, name, description, token_prefix)
+	}
+
+	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
+	fn make_collection_metadata_compatible(
+		&mut self,
+		caller: caller,
+		collection: address,
 		base_uri: string,
-	) -> Result<address> {
-		let (caller, name, description, token_prefix, base_uri_value) =
-			convert_data::<T>(caller, name, description, token_prefix, base_uri)?;
-		let data = make_data::<T>(
-			name,
-			CollectionMode::NFT,
-			description,
-			token_prefix,
-			base_uri_value,
-			true,
-		)?;
-		let collection_id = T::CollectionDispatch::create(caller, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let collection =
+			pallet_common::eth::map_eth_to_id(&collection).ok_or("not a collection address")?;
+		let mut collection =
+			<crate::CollectionHandle<T>>::new(collection).ok_or("collection not found")?;
 
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
-	}
+		if !matches!(
+			collection.mode,
+			CollectionMode::NFT | CollectionMode::ReFungible
+		) {
+			return Err("target collection should be either NFT or Refungible".into());
+		}
 
-	#[weight(<SelfWeightOf<T>>::create_collection())]
-	fn create_refungible_collection(
-		&mut self,
-		caller: caller,
-		name: string,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
-			caller,
-			name,
-			description,
-			token_prefix,
-			Default::default(),
-			false,
-		)
-	}
+		self.recorder().consume_sstore()?;
+		collection
+			.check_is_owner_or_admin(&caller)
+			.map_err(dispatch_to_evm::<T>)?;
 
-	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createERC721MetadataCompatibleRFTCollection")]
-	fn create_refungible_collection_with_properties(
-		&mut self,
-		caller: caller,
-		name: string,
-		description: string,
-		token_prefix: string,
-		base_uri: string,
-	) -> Result<address> {
-		create_refungible_collection_internal::<T>(
-			caller,
-			name,
-			description,
-			token_prefix,
-			base_uri,
-			true,
-		)
+		if collection.flags.erc721metadata {
+			return Err("target collection is already Erc721Metadata compatible".into());
+		}
+		collection.flags.erc721metadata = true;
+
+		let all_permissions = <pallet_common::CollectionPropertyPermissions<T>>::get(collection.id);
+		if all_permissions.get(&key::url()).is_none() {
+			self.recorder().consume_sstore()?;
+			<PalletCommon<T>>::set_property_permission(
+				&collection,
+				&caller,
+				up_data_structs::PropertyKeyPermission {
+					key: key::url(),
+					permission: up_data_structs::PropertyPermission {
+						mutable: true,
+						collection_admin: true,
+						token_owner: false,
+					},
+				},
+			)
+			.map_err(dispatch_to_evm::<T>)?;
+		}
+		if all_permissions.get(&key::suffix()).is_none() {
+			self.recorder().consume_sstore()?;
+			<PalletCommon<T>>::set_property_permission(
+				&collection,
+				&caller,
+				up_data_structs::PropertyKeyPermission {
+					key: key::suffix(),
+					permission: up_data_structs::PropertyPermission {
+						mutable: true,
+						collection_admin: true,
+						token_owner: false,
+					},
+				},
+			)
+			.map_err(dispatch_to_evm::<T>)?;
+		}
+
+		let all_properties = <pallet_common::CollectionProperties<T>>::get(collection.id);
+		if all_properties.get(&key::base_uri()).is_none() && !base_uri.is_empty() {
+			self.recorder().consume_sstore()?;
+			<PalletCommon<T>>::set_collection_properties(
+				&collection,
+				&caller,
+				vec![up_data_structs::Property {
+					key: key::base_uri(),
+					value: base_uri
+						.into_bytes()
+						.try_into()
+						.map_err(|_| "base uri is too large")?,
+				}],
+			)
+			.map_err(dispatch_to_evm::<T>)?;
+		}
+
+		self.recorder().consume_sstore()?;
+		collection.save().map_err(dispatch_to_evm::<T>)?;
+
+		Ok(())
 	}
 
 	/// Check if a collection exists
-	/// @param collection_address Address of the collection in question
+	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
 	fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
@@ -313,6 +306,14 @@ where
 		}
 
 		Ok(false)
+	}
+
+	fn collection_creation_fee(&self) -> Result<value> {
+		let price: u128 = T::CollectionCreationPrice::get()
+			.try_into()
+			.map_err(|_| ()) // workaround for `expect` requiring `Debug` trait
+			.expect("Collection creation price should be convertible to u128");
+		Ok(price.into())
 	}
 }
 

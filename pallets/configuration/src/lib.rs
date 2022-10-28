@@ -20,7 +20,7 @@ use core::marker::PhantomData;
 
 use frame_support::{
 	pallet,
-	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient},
+	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
 };
 use sp_arithmetic::traits::{BaseArithmetic, Unsigned};
@@ -115,7 +115,7 @@ where
 
 pub struct FeeCalculator<T>(PhantomData<T>);
 impl<T: Config> fp_evm::FeeCalculator for FeeCalculator<T> {
-	fn min_gas_price() -> (U256, u64) {
+	fn min_gas_price() -> (U256, Weight) {
 		(
 			<MinGasPriceOverride<T>>::get().into(),
 			T::DbWeight::get().reads(1),

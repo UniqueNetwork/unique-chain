@@ -3,7 +3,7 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-// Common stubs holder
+/// @dev common stubs holder
 interface Dummy {
 
 }
@@ -12,59 +12,56 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-// Inline
+/// @dev inlined interface
 interface CollectionHelpersEvents {
-	event CollectionCreated(
-		address indexed owner,
-		address indexed collectionId
-	);
+	event CollectionCreated(address indexed owner, address indexed collectionId);
 }
 
-// Selector: 675f3074
+/// @title Contract, which allows users to operate with collections
+/// @dev the ERC-165 identifier for this interface is 0x58918631
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
-	// Create an NFT collection
-	// @param name Name of the collection
-	// @param description Informative description of the collection
-	// @param token_prefix Token prefix to represent the collection tokens in UI and user applications
-	// @return address Address of the newly created collection
-	//
-	// Selector: createNonfungibleCollection(string,string,string) e34a6844
-	function createNonfungibleCollection(
+	/// Create an NFT collection
+	/// @param name Name of the collection
+	/// @param description Informative description of the collection
+	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	/// @return address Address of the newly created collection
+	/// @dev EVM selector for this function is: 0x844af658,
+	///  or in textual repr: createNFTCollection(string,string,string)
+	function createNFTCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external returns (address);
+	) external payable returns (address);
 
-	// Selector: createERC721MetadataCompatibleCollection(string,string,string,string) a634a5f9
-	function createERC721MetadataCompatibleCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix,
-		string memory baseUri
-	) external returns (address);
+	// /// Create an NFT collection
+	// /// @param name Name of the collection
+	// /// @param description Informative description of the collection
+	// /// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
+	// /// @return address Address of the newly created collection
+	// /// @dev EVM selector for this function is: 0xe34a6844,
+	// ///  or in textual repr: createNonfungibleCollection(string,string,string)
+	// function createNonfungibleCollection(string memory name, string memory description, string memory tokenPrefix) external payable returns (address);
 
-	// Selector: createRefungibleCollection(string,string,string) 44a68ad5
-	function createRefungibleCollection(
+	/// @dev EVM selector for this function is: 0xab173450,
+	///  or in textual repr: createRFTCollection(string,string,string)
+	function createRFTCollection(
 		string memory name,
 		string memory description,
 		string memory tokenPrefix
-	) external returns (address);
+	) external payable returns (address);
 
-	// Selector: createERC721MetadataCompatibleRFTCollection(string,string,string,string) a5596388
-	function createERC721MetadataCompatibleRFTCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix,
-		string memory baseUri
-	) external returns (address);
+	/// @dev EVM selector for this function is: 0x85624258,
+	///  or in textual repr: makeCollectionERC721MetadataCompatible(address,string)
+	function makeCollectionERC721MetadataCompatible(address collection, string memory baseUri) external;
 
-	// Check if a collection exists
-	// @param collection_address Address of the collection in question
-	// @return bool Does the collection exist?
-	//
-	// Selector: isCollectionExist(address) c3de1494
-	function isCollectionExist(address collectionAddress)
-		external
-		view
-		returns (bool);
+	/// Check if a collection exists
+	/// @param collectionAddress Address of the collection in question
+	/// @return bool Does the collection exist?
+	/// @dev EVM selector for this function is: 0xc3de1494,
+	///  or in textual repr: isCollectionExist(address)
+	function isCollectionExist(address collectionAddress) external view returns (bool);
+
+	/// @dev EVM selector for this function is: 0xd23a7ab1,
+	///  or in textual repr: collectionCreationFee()
+	function collectionCreationFee() external view returns (uint256);
 }

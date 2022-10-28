@@ -1,10 +1,7 @@
-import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import Web3 from 'web3';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, GAS_ARGS, recordEthFee, usingWeb3} from './eth/util/helpers';
-import usingApi, {executeTransaction} from './substrate/substrate-api';
-import {createCollectionExpectSuccess, createItemExpectSuccess, transferExpectSuccess, UNIQUE, waitNewBlocks} from './util/helpers';
-import nonFungibleAbi from './eth/nonFungibleAbi.json';
+
+import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util';
+
 
 function linearRegression(points: { x: bigint, y: bigint }[]) {
   let sumxy = 0n;
@@ -59,32 +56,33 @@ function _error(points: { x: bigint, y: bigint }[], hypothesis: (a: bigint) => b
   }).reduce((a, b) => a + b, 0n) / BigInt(points.length));
 }
 
-async function calibrateWeightToFee(api: ApiPromise, privateKey: (account: string) => IKeyringPair) {
-  const alice = privateKey('//Alice');
-  const bob = privateKey('//Bob');
+async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
+  const alice = await privateKey('//Alice');
+  const bob = await privateKey('//Bob');
   const dataPoints = [];
 
   {
-    const collectionId = await createCollectionExpectSuccess();
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-    const aliceBalanceBefore = (await api.query.system.account(alice.address)).data.free.toBigInt();
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
-    const aliceBalanceAfter = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    await token.transfer(alice, {Substrate: bob.address});
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    console.log(`Original price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE)} UNQ`);
+    console.log(`Original price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 
+  const api = helper.getApi();
   const defaultCoeff = (api.consts.configuration.defaultWeightToFeeCoefficient as any).toBigInt();
   for (let i = -5; i < 5; i++) {
-    await executeTransaction(api, alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(defaultCoeff + defaultCoeff / 1000n * BigInt(i))));
+    await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(defaultCoeff + defaultCoeff / 1000n * BigInt(i))));
 
     const coefficient = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt();
-    const collectionId = await createCollectionExpectSuccess();
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
+    const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
 
-    const aliceBalanceBefore = (await api.query.system.account(alice.address)).data.free.toBigInt();
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
-    const aliceBalanceAfter = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    await token.transfer(alice, {Substrate: bob.address});
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
     const transferPrice = aliceBalanceBefore - aliceBalanceAfter;
 
@@ -94,52 +92,53 @@ async function calibrateWeightToFee(api: ApiPromise, privateKey: (account: strin
 
   // console.log(`Error: ${error(dataPoints, x => a*x+b)}`);
 
-  const perfectValue = a * UNIQUE / 10n + b;
-  await executeTransaction(api, alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(perfectValue.toString())));
+  const perfectValue = a * helper.balance.getOneTokenNominal() / 10n + b;
+  await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(perfectValue.toString())));
 
   {
-    const collectionId = await createCollectionExpectSuccess();
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-    const aliceBalanceBefore = (await api.query.system.account(alice.address)).data.free.toBigInt();
-    await transferExpectSuccess(collectionId, tokenId, alice, bob, 1, 'NFT');
-    const aliceBalanceAfter = (await api.query.system.account(alice.address)).data.free.toBigInt();
+    const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
+    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    await token.transfer(alice, {Substrate: bob.address});
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    console.log(`Calibrated price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(UNIQUE)} UNQ`);
+    console.log(`Calibrated price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 }
 
-async function calibrateMinGasPrice(api: ApiPromise, web3: Web3, privateKey: (account: string) => IKeyringPair) {
-  const alice = privateKey('//Alice');
-  const caller = await createEthAccountWithBalance(api, web3, privateKey);
-  const receiver = createEthAccount(web3);
+async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
+  const alice = await privateKey('//Alice');
+  const caller = await helper.eth.createAccountWithBalance(alice);
+  const receiver = helper.eth.createAccount();
   const dataPoints = [];
 
   {
-    const collectionId = await createCollectionExpectSuccess();
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', {Ethereum: caller});
+    const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
+    const token = await collection.mintToken(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collectionId);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await recordEthFee(api, caller, () => contract.methods.transfer(receiver, tokenId).send(caller));
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
 
-    console.log(`Original price: ${Number(cost) / Number(UNIQUE)} UNQ`);
+    console.log(`Original price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 
+  const api = helper.getApi();
   const defaultCoeff = (api.consts.configuration.defaultMinGasPrice as any).toBigInt();
   for (let i = -8; i < 8; i++) {
     const gasPrice = defaultCoeff + defaultCoeff / 100000n * BigInt(i);
     const gasPriceStr = '0x' + gasPrice.toString(16);
-    await executeTransaction(api, alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(gasPrice)));
+    await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(gasPrice)));
 
     const coefficient = (await api.query.configuration.minGasPriceOverride() as any).toBigInt();
-    const collectionId = await createCollectionExpectSuccess();
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', {Ethereum: caller});
+    const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
+    const token = await collection.mintToken(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collectionId);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, gasPrice: gasPriceStr, ...GAS_ARGS});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const transferPrice = await recordEthFee(api, caller, () => contract.methods.transfer(receiver, tokenId).send(caller));
+    const transferPrice = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS}));
 
     dataPoints.push({x: transferPrice, y: coefficient});
   }
@@ -149,34 +148,30 @@ async function calibrateMinGasPrice(api: ApiPromise, web3: Web3, privateKey: (ac
   // console.log(`Error: ${error(dataPoints, x => a*x+b)}`);
 
   // * 0.15 = * 10000 / 66666
-  const perfectValue = a * UNIQUE * 1000000n / 6666666n + b;
-  await executeTransaction(api, alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(perfectValue.toString())));
+  const perfectValue = a * helper.balance.getOneTokenNominal() * 1000000n / 6666666n + b;
+  await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(perfectValue.toString())));
 
   {
-    const collectionId = await createCollectionExpectSuccess();
-    const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT', {Ethereum: caller});
+    const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
+    const token = await collection.mintToken(alice, {Ethereum: caller});
 
-    const address = collectionIdToAddress(collectionId);
-    const contract = new web3.eth.Contract(nonFungibleAbi as any, address, {from: caller, ...GAS_ARGS});
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await recordEthFee(api, caller, () => contract.methods.transfer(receiver, tokenId).send(caller));
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
 
-    console.log(`Calibrated price: ${Number(cost) / Number(UNIQUE)} UNQ`);
+    console.log(`Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 }
 
 (async () => {
-  await usingApi(async (api, privateKey) => {
+  await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
     // Second run slightly reduces error sometimes, as price line is not actually straight, this is a curve
 
-    await calibrateWeightToFee(api, privateKey);
-    await calibrateWeightToFee(api, privateKey);
+    await calibrateWeightToFee(helper, privateKey);
+    await calibrateWeightToFee(helper, privateKey);
 
-    await usingWeb3(async web3 => {
-      await calibrateMinGasPrice(api, web3, privateKey);
-      await calibrateMinGasPrice(api, web3, privateKey);
-    });
-
-    await api.disconnect();
+    await calibrateMinGasPrice(helper, privateKey);
+    await calibrateMinGasPrice(helper, privateKey);
   });
 })();

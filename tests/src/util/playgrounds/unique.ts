@@ -6,18 +6,68 @@
 /* eslint-disable no-prototype-builtins */
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
-import {ApiInterfaceEvents} from '@polkadot/api/types';
-import {IKeyringPair} from '@polkadot/types/types';
+import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
+import {IKeyringPair} from '@polkadot/types/types';
+import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, IForeignAssetMetadata, TNetworks, MoonbeamAssetInfo, DemocracyStandardAccountVote, AcalaAssetMetadata} from './types';
 
+export class CrossAccountId implements ICrossAccountId {
+  Substrate?: TSubstrateAccount;
+  Ethereum?: TEthereumAccount;
 
-const crossAccountIdFromLower = (lowerAddress: ICrossAccountIdLower): ICrossAccountId => {
-  const address = {} as ICrossAccountId;
-  if(lowerAddress.substrate) address.Substrate = lowerAddress.substrate;
-  if(lowerAddress.ethereum) address.Ethereum = lowerAddress.ethereum;
-  return address;
-};
+  constructor(account: ICrossAccountId) {
+    if (account.Substrate) this.Substrate = account.Substrate;
+    if (account.Ethereum) this.Ethereum = account.Ethereum;
+  }
 
+  static fromKeyring(account: IKeyringPair, domain: 'Substrate' | 'Ethereum' = 'Substrate') {
+    switch (domain) {
+      case 'Substrate': return new CrossAccountId({Substrate: account.address});
+      case 'Ethereum': return new CrossAccountId({Substrate: account.address}).toEthereum();
+    }
+  }
+
+  static fromLowerCaseKeys(address: ICrossAccountIdLower): CrossAccountId {
+    return new CrossAccountId({Substrate: address.substrate, Ethereum: address.ethereum});
+  }
+
+  static normalizeSubstrateAddress(address: TSubstrateAccount, ss58Format = 42): TSubstrateAccount {
+    return encodeAddress(decodeAddress(address), ss58Format);
+  }
+
+  static withNormalizedSubstrate(address: TSubstrateAccount, ss58Format = 42): CrossAccountId {
+    return new CrossAccountId({Substrate: CrossAccountId.normalizeSubstrateAddress(address, ss58Format)});
+  }
+  
+  withNormalizedSubstrate(ss58Format = 42): CrossAccountId {
+    if (this.Substrate) return CrossAccountId.withNormalizedSubstrate(this.Substrate, ss58Format);
+    return this;
+  }
+
+  static translateSubToEth(address: TSubstrateAccount): TEthereumAccount {
+    return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(address), i => i.toString(16).padStart(2, '0')).join(''));
+  }
+
+  toEthereum(): CrossAccountId {
+    if (this.Substrate) return new CrossAccountId({Ethereum: CrossAccountId.translateSubToEth(this.Substrate)});
+    return this;
+  }
+
+  static translateEthToSub(address: TEthereumAccount, ss58Format?: number): TSubstrateAccount {
+    return evmToAddress(address, ss58Format);
+  }
+
+  toSubstrate(ss58Format?: number): CrossAccountId {
+    if (this.Ethereum) return new CrossAccountId({Substrate: CrossAccountId.translateEthToSub(this.Ethereum, ss58Format)});
+    return this;
+  }
+  
+  toLowerCase(): CrossAccountId {
+    if (this.Substrate) this.Substrate = this.Substrate.toLowerCase();
+    if (this.Ethereum) this.Ethereum = this.Ethereum.toLowerCase();
+    return this;
+  }
+}
 
 const nesting = {
   toChecksumAddress(address: string): string {
@@ -44,133 +94,6 @@ const nesting = {
   },
 };
 
-
-interface IChainEvent {
-  data: any;
-  method: string;
-  section: string;
-}
-
-interface ITransactionResult {
-    status: 'Fail' | 'Success';
-    result: {
-        events: {
-          event: IChainEvent
-        }[];
-    },
-    moduleError?: string;
-}
-
-interface ILogger {
-  log: (msg: any, level?: string) => void;
-  level: {
-    ERROR: 'ERROR';
-    WARNING: 'WARNING';
-    INFO: 'INFO';
-    [key: string]: string;
-  }
-}
-
-interface IUniqueHelperLog {
-  executedAt: number;
-  executionTime: number;
-  type: 'extrinsic' | 'rpc';
-  status: 'Fail' | 'Success';
-  call: string;
-  params: any[];
-  moduleError?: string;
-  events?: any;
-}
-
-interface IApiListeners {
-  connected?: (...args: any[]) => any;
-  disconnected?: (...args: any[]) => any;
-  error?: (...args: any[]) => any;
-  ready?: (...args: any[]) => any; 
-  decorated?: (...args: any[]) => any;
-}
-
-interface ICrossAccountId {
-  Substrate?: TSubstrateAccount;
-  Ethereum?: TEthereumAccount;
-}
-
-interface ICrossAccountIdLower {
-  substrate?: TSubstrateAccount;
-  ethereum?: TEthereumAccount;
-}
-
-interface ICollectionLimits {
-  accountTokenOwnershipLimit?: number | null;
-  sponsoredDataSize?: number | null;
-  sponsoredDataRateLimit?: {blocks: number} | {sponsoringDisabled: null} | null;
-  tokenLimit?: number | null;
-  sponsorTransferTimeout?: number | null;
-  sponsorApproveTimeout?: number | null;
-  ownerCanTransfer?: boolean | null;
-  ownerCanDestroy?: boolean | null;
-  transfersEnabled?: boolean | null;
-}
-
-interface INestingPermissions {
-  tokenOwner?: boolean;
-  collectionAdmin?: boolean;
-  restricted?: number[] | null;
-}
-
-interface ICollectionPermissions {
-  access?: 'Normal' | 'AllowList';
-  mintMode?: boolean;
-  nesting?: INestingPermissions;
-}
-
-interface IProperty {
-  key: string;
-  value: string;
-}
-
-interface ITokenPropertyPermission {
-  key: string;
-  permission: {
-    mutable: boolean;
-    tokenOwner: boolean;
-    collectionAdmin: boolean;
-  }
-}
-
-interface IToken {
-  collectionId: number;
-  tokenId: number;
-}
-
-interface ICollectionCreationOptions {
-  name: string | number[];
-  description: string | number[];
-  tokenPrefix: string | number[];
-  mode?: {
-    nft?: null;
-    refungible?: null;
-    fungible?: number;
-  }
-  permissions?: ICollectionPermissions;
-  properties?: IProperty[];
-  tokenPropertyPermissions?: ITokenPropertyPermission[];
-  limits?: ICollectionLimits;
-  pendingSponsor?: TSubstrateAccount;
-}
-
-interface IChainProperties {
-  ss58Format: number;
-  tokenDecimals: number[];
-  tokenSymbol: string[]
-}
-
-type TSubstrateAccount = string;
-type TEthereumAccount = string;
-type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
-type TUniqueNetworks = 'opal' | 'quartz' | 'unique';
-type TSigner = IKeyringPair; // | 'string'
-
 class UniqueUtil {
   static transactionStatus = {
     NOT_READY: 'NotReady',
@@ -183,8 +106,12 @@ class UniqueUtil {
     RPC: 'rpc',
   };
 
-  static getNestingTokenAddress(collectionId: number, tokenId: number) {
-    return nesting.tokenIdToAddress(collectionId, tokenId);
+  static getTokenAccount(token: IToken): CrossAccountId {
+    return new CrossAccountId({Ethereum: this.getTokenAddress(token)});
+  }
+
+  static getTokenAddress(token: IToken): string {
+    return nesting.tokenIdToAddress(token.collectionId, token.tokenId);
   }
 
   static getDefaultLogger(): ILogger {
@@ -214,13 +141,9 @@ class UniqueUtil {
     return keyring.addFromUri(seed);
   }
 
-  static normalizeSubstrateAddress(address: string, ss58Format = 42) {
-    return encodeAddress(decodeAddress(address), ss58Format);
-  }
-
-  static extractCollectionIdFromCreationResult(creationResult: ITransactionResult, label = 'new collection') {
+  static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
     if (creationResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to create collection for ${label}`);
+      throw Error('Unable to create collection!');
     }
 
     let collectionId = null;
@@ -231,18 +154,21 @@ class UniqueUtil {
     });
 
     if (collectionId === null) {
-      throw Error(`No CollectionCreated event for ${label}`);
+      throw Error('No CollectionCreated event was found!');
     }
 
     return collectionId;
   }
 
-  static extractTokensFromCreationResult(creationResult: ITransactionResult, label = 'new tokens') {
+  static extractTokensFromCreationResult(creationResult: ITransactionResult): {
+    success: boolean, 
+    tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
+  } {
     if (creationResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to create tokens for ${label}`);
+      throw Error('Unable to create tokens!');
     }
     let success = false;
-    const tokens = [] as any;
+    const tokens = [] as {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[];
     creationResult.result.events.forEach(({event: {data, method, section}}) => {
       if (method === 'ExtrinsicSuccess') {
         success = true;
@@ -250,19 +176,23 @@ class UniqueUtil {
         tokens.push({
           collectionId: parseInt(data[0].toString(), 10),
           tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toJSON(),
+          owner: data[2].toHuman(),
+          amount: data[3].toBigInt(),
         });
       }
     });
     return {success, tokens};
   }
 
-  static extractTokensFromBurnResult(burnResult: ITransactionResult, label = 'burned tokens') {
+  static extractTokensFromBurnResult(burnResult: ITransactionResult): {
+    success: boolean, 
+    tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
+  } {
     if (burnResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to burn tokens for ${label}`);
+      throw Error('Unable to burn tokens!');
     }
     let success = false;
-    const tokens = [] as any;
+    const tokens = [] as {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[];
     burnResult.result.events.forEach(({event: {data, method, section}}) => {
       if (method === 'ExtrinsicSuccess') {
         success = true;
@@ -270,14 +200,15 @@ class UniqueUtil {
         tokens.push({
           collectionId: parseInt(data[0].toString(), 10),
           tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toJSON(),
+          owner: data[2].toHuman(),
+          amount: data[3].toBigInt(),
         });
       }
     });
     return {success, tokens};
   }
 
-  static findCollectionInEvents(events: {event: IChainEvent}[], collectionId: number, expectedSection: string, expectedMethod: string, label?: string) {
+  static findCollectionInEvents(events: {event: IEvent}[], collectionId: number, expectedSection: string, expectedMethod: string): boolean {
     let eventId = null;
     events.forEach(({event: {data, method, section}}) => {
       if ((section === expectedSection) && (method === expectedMethod)) {
@@ -286,20 +217,20 @@ class UniqueUtil {
     });
 
     if (eventId === null) {
-      throw Error(`No ${expectedMethod} event for ${label}`);
+      throw Error(`No ${expectedMethod} event was found!`);
     }
     return eventId === collectionId;
   }
 
-  static isTokenTransferSuccess(events: {event: IChainEvent}[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
+  static isTokenTransferSuccess(events: {event: IEvent}[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
     const normalizeAddress = (address: string | ICrossAccountId) => {
       if(typeof address === 'string') return address;
       const obj = {} as any;
       Object.keys(address).forEach(k => {
         obj[k.toLocaleLowerCase()] = address[k as 'Substrate' | 'Ethereum'];
       });
-      if(obj.substrate) return {Substrate: this.normalizeSubstrateAddress(obj.substrate)};
-      if(obj.ethereum) return {Ethereum: obj.ethereum.toLocaleLowerCase()};
+      if(obj.substrate) return CrossAccountId.withNormalizedSubstrate(obj.substrate);
+      if(obj.ethereum) return CrossAccountId.fromLowerCaseKeys(obj).toLowerCase();
       return address;
     };
     let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1} as any;
@@ -321,34 +252,130 @@ class UniqueUtil {
     isSuccess = isSuccess && amount === transfer.amount;
     return isSuccess;
   }
+
+  static bigIntToDecimals(number: bigint, decimals = 18) {
+    const numberStr = number.toString();
+    const dotPos = numberStr.length - decimals;
+  
+    if (dotPos <= 0) {
+      return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
+    } else {
+      const intPart = numberStr.substring(0, dotPos);
+      const fractPart = numberStr.substring(dotPos);
+      return intPart + '.' + fractPart;
+    }
+  }
 }
 
+class UniqueEventHelper {
+  private static extractIndex(index: any): [number, number] | string {
+    if(index.toRawType() === '[u8;2]') return [index[0], index[1]];
+    return index.toJSON();
+  }
 
-class ChainHelperBase {
+  private static extractSub(data: any, subTypes: any): {[key: string]: any} {
+    let obj: any = {};
+    let index = 0;
+
+    if (data.entries) {
+      for(const [key, value] of data.entries()) {
+        obj[key] = this.extractData(value, subTypes[index]);
+        index++;
+      }
+    } else obj = data.toJSON();
+
+    return obj;
+  }
+  
+  private static extractData(data: any, type: any): any {
+    if(!type) return data.toHuman();
+    if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
+    if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
+    if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
+    return data.toHuman();
+  }
+
+  public static extractEvents(events: {event: any, phase: any}[]): IEvent[] {
+    const parsedEvents: IEvent[] = [];
+
+    events.forEach((record) => {
+      const {event, phase} = record;
+      const types = event.typeDef;
+
+      const eventData: IEvent = {
+        section: event.section.toString(),
+        method: event.method.toString(),
+        index: this.extractIndex(event.index),
+        data: [],
+        phase: phase.toJSON(),
+      };
+
+      event.data.forEach((val: any, index: number) => {
+        eventData.data.push(this.extractData(val, types[index]));
+      });
+
+      parsedEvents.push(eventData);
+    });
+
+    return parsedEvents;
+  }
+}
+
+export class ChainHelperBase {
+  helperBase: any;
+
   transactionStatus = UniqueUtil.transactionStatus;
   chainLogType = UniqueUtil.chainLogType;
   util: typeof UniqueUtil;
+  eventHelper: typeof UniqueEventHelper;
   logger: ILogger;
   api: ApiPromise | null;
-  forcedNetwork: TUniqueNetworks | null;
-  network: TUniqueNetworks | null;
+  forcedNetwork: TNetworks | null;
+  network: TNetworks | null;
   chainLog: IUniqueHelperLog[];
+  children: ChainHelperBase[];
+  address: AddressGroup;
+  chain: ChainGroup;
 
-  constructor(logger?: ILogger) {
+  constructor(logger?: ILogger, helperBase?: any) {
+    this.helperBase = helperBase;
+
     this.util = UniqueUtil;
+    this.eventHelper = UniqueEventHelper;
     if (typeof logger == 'undefined') logger = this.util.getDefaultLogger();
     this.logger = logger;
     this.api = null;
     this.forcedNetwork = null;
     this.network = null;
     this.chainLog = [];
+    this.children = [];
+    this.address = new AddressGroup(this);
+    this.chain = new ChainGroup(this);
+  }
+
+  clone(helperCls: ChainHelperBaseConstructor, options: {[key: string]: any} = {}) {
+    Object.setPrototypeOf(helperCls.prototype, this);
+    const newHelper = new helperCls(this.logger, options);
+
+    newHelper.api = this.api;
+    newHelper.network = this.network;
+    newHelper.forceNetwork = this.forceNetwork;
+
+    this.children.push(newHelper);
+
+    return newHelper;
+  }
+
+  getApi(): ApiPromise {
+    if(this.api === null) throw Error('API not initialized');
+    return this.api;
   }
 
   clearChainLog(): void {
     this.chainLog = [];
   }
 
-  forceNetwork(value: TUniqueNetworks): void {
+  forceNetwork(value: TNetworks): void {
     this.forcedNetwork = value;
   }
 
@@ -360,19 +387,31 @@ class ChainHelperBase {
   }
 
   async disconnect() {
+    for (const child of this.children) {
+      child.clearApi();
+    }
+
     if (this.api === null) return;
     await this.api.disconnect();
+    this.clearApi();
+  }
+
+  clearApi() {
     this.api = null;
     this.network = null;
   }
 
-  static async detectNetwork(api: ApiPromise): Promise<TUniqueNetworks> {
+  static async detectNetwork(api: ApiPromise): Promise<TNetworks> {
     const spec = (await api.query.system.lastRuntimeUpgrade()).toJSON() as any;
+    const xcmChains = ['rococo', 'westend', 'westmint', 'acala', 'karura', 'moonbeam', 'moonriver'];
+
+    if(xcmChains.indexOf(spec.specName) > -1) return spec.specName;
+
     if(['quartz', 'unique'].indexOf(spec.specName) > -1) return spec.specName;
     return 'opal';
   }
 
-  static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TUniqueNetworks> {
+  static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TNetworks> {
     const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
     await api.isReady;
 
@@ -383,9 +422,9 @@ class ChainHelperBase {
     return network;
   }
 
-  static async createConnection(wsEndpoint: string, listeners?: IApiListeners, network?: TUniqueNetworks | null): Promise<{ 
-    api: ApiPromise; 
-    network: TUniqueNetworks; 
+  static async createConnection(wsEndpoint: string, listeners?: IApiListeners, network?: TNetworks | null): Promise<{
+    api: ApiPromise;
+    network: TNetworks;
   }> {
     if(typeof network === 'undefined' || network === null) network = 'opal';
     const supportedRPC = {
@@ -398,6 +437,13 @@ class ChainHelperBase {
       unique: {
         unique: require('@unique-nft/unique-mainnet-types/definitions').unique.rpc,
       },
+      rococo: {},
+      westend: {},
+      moonbeam: {},
+      moonriver: {},
+      acala: {},
+      karura: {},
+      westmint: {},
     };
     if(!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
     const rpc = supportedRPC[network];
@@ -418,7 +464,7 @@ class ChainHelperBase {
     return {api, network};
   }
 
-  getTransactionStatus(data: {events: {event: IChainEvent}[], status: any}) {
+  getTransactionStatus(data: {events: {event: IEvent}[], status: any}) {
     const {events, status} = data;
     if (status.isReady) {
       return this.transactionStatus.NOT_READY;
@@ -427,11 +473,11 @@ class ChainHelperBase {
       return this.transactionStatus.NOT_READY;
     }
     if (status.isInBlock || status.isFinalized) {
-      const errors = events.filter(e => e.event.data.method === 'ExtrinsicFailed');
+      const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
       if (errors.length > 0) {
         return this.transactionStatus.FAIL;
       }
-      if (events.filter(e => e.event.data.method === 'ExtrinsicSuccess').length > 0) {
+      if (events.filter(e => e.event.method === 'ExtrinsicSuccess').length > 0) {
         return this.transactionStatus.SUCCESS;
       }
     }
@@ -439,11 +485,12 @@ class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender: TSigner, transaction: any, label = 'transaction', options = null) {
+  signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       try {
         const unsub = await sign((result: any) => {
@@ -459,13 +506,16 @@ class ChainHelperBase {
             if (result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
 
-              if (dispatchError && dispatchError.isModule) {
-                const modErr = dispatchError.asModule;
-                const errorMeta = dispatchError.registry.findMetaError(modErr);
+              if (dispatchError) {
+                if (dispatchError.isModule) {
+                  const modErr = dispatchError.asModule;
+                  const errorMeta = dispatchError.registry.findMetaError(modErr);
 
-                moduleError = `${errorMeta.section}.${errorMeta.name}`;
-              }
-              else {
+                  moduleError = `${errorMeta.section}.${errorMeta.name}`;
+                } else {
+                  moduleError = dispatchError.toHuman();
+                }
+              } else {
                 this.logger.log(result, this.logger.level.ERROR);
               }
             }
@@ -484,23 +534,23 @@ class ChainHelperBase {
 
   constructApiCall(apiCall: string, params: any[]) {
     if(!apiCall.startsWith('api.')) throw Error(`Invalid api call: ${apiCall}`);
-    let call = this.api as any;
+    let call = this.getApi() as any;
     for(const part of apiCall.slice(4).split('.')) {
       call = call[part];
     }
     return call(...params);
   }
 
-  async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=false, failureMessage='expected success') {
+  async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=true, options: Partial<SignerOptions>|null = null/*, failureMessage='expected success'*/) {
     if(this.api === null) throw Error('API not initialized');
     if(!extrinsic.startsWith('api.tx.')) throw Error(`${extrinsic} is not transaction`);
 
     const startTime = (new Date()).getTime();
     let result: ITransactionResult;
-    let events = [];
+    let events: IEvent[] = [];
     try {
-      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), extrinsic) as ITransactionResult;
-      events = result.result.events.map((x: any) => x.toHuman());
+      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
+      events = this.eventHelper.extractEvents(result.result.events);
     }
     catch(e) {
       if(!(e as object).hasOwnProperty('status')) throw e;
@@ -515,15 +565,22 @@ class ChainHelperBase {
       type: this.chainLogType.EXTRINSIC,
       status: result.status,
       call: extrinsic,
+      signer: this.getSignerAddress(sender),
       params,
     } as IUniqueHelperLog;
 
-    if(result.status !== this.transactionStatus.SUCCESS && result.moduleError) log.moduleError = result.moduleError;
+    if(result.status !== this.transactionStatus.SUCCESS) {
+      if (result.moduleError) log.moduleError = result.moduleError;
+      else if (result.result.dispatchError) log.dispatchError = result.result.dispatchError;
+    }
     if(events.length > 0) log.events = events;
 
     this.chainLog.push(log);
 
-    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) throw Error(failureMessage);
+    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
+      if (result.moduleError) throw Error(`${result.moduleError}`);
+      else if (result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
+    }
     return result;
   }
 
@@ -565,19 +622,29 @@ class ChainHelperBase {
     if(typeof signer === 'string') return signer;
     return signer.address;
   }
+
+  fetchAllPalletNames(): string[] {
+    if(this.api === null) throw Error('API not initialized');
+    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+  }
+
+  fetchMissingPalletNames(requiredPallets: string[]): string[] {
+    const palletNames = this.fetchAllPalletNames();
+    return requiredPallets.filter(p => !palletNames.includes(p));
+  }
 }
 
 
-class HelperGroup {
-  helper: UniqueHelper;
+class HelperGroup<T extends ChainHelperBase> {
+  helper: T;
 
-  constructor(uniqueHelper: UniqueHelper) {
+  constructor(uniqueHelper: T) {
     this.helper = uniqueHelper;
   }
 }
 
 
-class CollectionGroup extends HelperGroup {
+class CollectionGroup extends HelperGroup<UniqueHelper> {
   /**
  * Get number of blocks when sponsored transaction is available.
  *
@@ -593,7 +660,7 @@ class CollectionGroup extends HelperGroup {
 
   /**
    * Get the number of created collections.
-   * 
+   *
    * @returns number of created collections
    */
   async getTotalCount(): Promise<number> {
@@ -601,8 +668,10 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * Get information about the collection with additional data, including the number of tokens it contains, its administrators, the normalized address of the collection's owner, and decoded name and description.
-   * 
+   * Get information about the collection with additional data,
+   * including the number of tokens it contains, its administrators,
+   * the normalized address of the collection's owner, and decoded name and description.
+   *
    * @param collectionId ID of collection
    * @example await getData(2)
    * @returns collection information object
@@ -612,7 +681,7 @@ class CollectionGroup extends HelperGroup {
     name: string;
     description: string;
     tokensCount: number;
-    admins: ICrossAccountId[];
+    admins: CrossAccountId[];
     normalizedOwner: TSubstrateAccount;
     raw: any
   } | null> {
@@ -629,31 +698,47 @@ class CollectionGroup extends HelperGroup {
       collectionData[key] = this.helper.util.vec2str(humanCollection[key]);
     }
 
-    collectionData.tokensCount = (['RFT', 'NFT'].includes(humanCollection.mode)) ? await this.helper[humanCollection.mode.toLocaleLowerCase() as 'nft' | 'rft'].getLastTokenId(collectionId) : 0;
+    collectionData.tokensCount = (['RFT', 'NFT'].includes(humanCollection.mode))
+      ? await this.helper[humanCollection.mode.toLocaleLowerCase() as 'nft' | 'rft'].getLastTokenId(collectionId)
+      : 0;
     collectionData.admins = await this.getAdmins(collectionId);
 
     return collectionData;
   }
 
   /**
-   * Get the normalized addresses of the collection's administrators.
-   * 
+   * Get the addresses of the collection's administrators, optionally normalized.
+   *
    * @param collectionId ID of collection
+   * @param normalize whether to normalize the addresses to the default ss58 format
    * @example await getAdmins(1)
    * @returns array of administrators
    */
-  async getAdmins(collectionId: number): Promise<ICrossAccountId[]> {
-    const normalized = [];
-    for(const admin of (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])).toHuman()) {
-      if(admin.Substrate) normalized.push({Substrate: this.helper.address.normalizeSubstrate(admin.Substrate)});
-      else normalized.push(admin);
-    }
-    return normalized;
+  async getAdmins(collectionId: number, normalize = false): Promise<CrossAccountId[]> {
+    const admins = (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])).toHuman();
+
+    return normalize
+      ? admins.map((address: CrossAccountId) => address.withNormalizedSubstrate())
+      : admins;
+  }
+
+  /**
+   * Get the addresses added to the collection allow-list, optionally normalized.
+   * @param collectionId ID of collection
+   * @param normalize whether to normalize the addresses to the default ss58 format
+   * @example await getAllowList(1)
+   * @returns array of allow-listed addresses
+   */
+  async getAllowList(collectionId: number, normalize = false): Promise<CrossAccountId[]> {
+    const allowListed = (await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId])).toHuman();
+    return normalize
+      ? allowListed.map((address: CrossAccountId) => address.withNormalizedSubstrate())
+      : allowListed;
   }
 
   /**
    * Get the effective limits of the collection instead of null for default values
-   * 
+   *
    * @param collectionId ID of collection
    * @example await getEffectiveLimits(2)
    * @returns object of collection limits
@@ -664,72 +749,83 @@ class CollectionGroup extends HelperGroup {
 
   /**
    * Burns the collection if the signer has sufficient permissions and collection is empty.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param label extra label for log
    * @example await helper.collection.burn(aliceKeyring, 3);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async burn(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async burn(signer: TSigner, collectionId: number): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.destroyCollection', [collectionId],
-      true, `Unable to burn collection for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionDestroyed', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionDestroyed');
   }
 
   /**
-   * Sets the sponsor for the collection (Requires the Substrate address).
-   * 
+   * Sets the sponsor for the collection (Requires the Substrate address). Needs confirmation by the sponsor.
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param sponsorAddress Sponsor substrate address
-   * @param label extra label for log
    * @example setSponsor(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...")
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setSponsor(signer: TSigner, collectionId: number, sponsorAddress: TSubstrateAccount, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async setSponsor(signer: TSigner, collectionId: number, sponsorAddress: TSubstrateAccount): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setCollectionSponsor', [collectionId, sponsorAddress],
-      true, `Unable to set collection sponsor for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorSet', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorSet');
   }
 
   /**
    * Confirms consent to sponsor the collection on behalf of the signer.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param label extra label for log
    * @example confirmSponsorship(aliceKeyring, 10)
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async confirmSponsorship(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async confirmSponsorship(signer: TSigner, collectionId: number): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.confirmSponsorship', [collectionId],
-      true, `Unable to confirm collection sponsorship for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed');
+  }
+
+  /**
+   * Removes the sponsor of a collection, regardless if it consented or not.
+   *
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @example removeSponsor(aliceKeyring, 10)
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async removeSponsor(signer: TSigner, collectionId: number): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.removeCollectionSponsor', [collectionId],
+      true,
+    );
+
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorRemoved');
   }
 
   /**
    * Sets the limits of the collection. At least one limit must be specified for a correct call.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param limits collection limits object
-   * @param label extra label for log
    * @example
    * await setLimits(
    *   aliceKeyring,
@@ -741,173 +837,221 @@ class CollectionGroup extends HelperGroup {
    * )
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setLimits(signer: TSigner, collectionId: number, limits: ICollectionLimits, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async setLimits(signer: TSigner, collectionId: number, limits: ICollectionLimits): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setCollectionLimits', [collectionId, limits],
-      true, `Unable to set collection limits for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet');
   }
 
   /**
    * Changes the owner of the collection to the new Substrate address.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param ownerAddress substrate address of new owner
-   * @param label extra label for log
    * @example changeOwner(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...")
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async changeOwner(signer: TSigner, collectionId: number, ownerAddress: TSubstrateAccount, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async changeOwner(signer: TSigner, collectionId: number, ownerAddress: TSubstrateAccount): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.changeCollectionOwner', [collectionId, ownerAddress],
-      true, `Unable to change collection owner for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged');
   }
 
   /**
-   * Adds a collection administrator. 
-   * 
+   * Adds a collection administrator.
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param adminAddressObj Administrator address (substrate or ethereum)
-   * @param label extra label for log
    * @example addAdmin(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async addAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async addAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.addCollectionAdmin', [collectionId, adminAddressObj],
-      true, `Unable to add collection admin for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded');
   }
 
   /**
    * Removes a collection administrator.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param adminAddressObj Administrator address (substrate or ethereum)
-   * @param label extra label for log
    * @example removeAdmin(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async removeAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async removeAdmin(signer: TSigner, collectionId: number, adminAddressObj: ICrossAccountId): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.removeCollectionAdmin', [collectionId, adminAddressObj],
-      true, `Unable to remove collection admin for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminRemoved', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminRemoved');
+  }
+
+  /**
+   * Check if user is in allow list.
+   * 
+   * @param collectionId ID of collection
+   * @param user Account to check
+   * @example await getAdmins(1)
+   * @returns is user in allow list
+   */
+  async allowed(collectionId: number, user: ICrossAccountId): Promise<boolean> {
+    return (await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user])).toJSON();
+  }
+
+  /**
+   * Adds an address to allow list
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param addressObj address to add to the allow list
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async addToAllowList(signer: TSigner, collectionId: number, addressObj: ICrossAccountId): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.addToAllowList', [collectionId, addressObj],
+      true,
+    );
+
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressAdded');
+  }
+
+  /**
+   * Removes an address from allow list
+   *
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param addressObj address to remove from the allow list
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async removeFromAllowList(signer: TSigner, collectionId: number, addressObj: ICrossAccountId): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.removeFromAllowList', [collectionId, addressObj],
+      true,
+    );
+
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressRemoved');
   }
 
   /**
    * Sets onchain permissions for selected collection.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param permissions collection permissions object
-   * @param label extra label for log
    * @example setPermissions(aliceKeyring, 10, {access:'AllowList', mintMode: true, nesting: {collectionAdmin: true, tokenOwner: true}});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setPermissions(signer: TSigner, collectionId: number, permissions: ICollectionPermissions, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async setPermissions(signer: TSigner, collectionId: number, permissions: ICollectionPermissions): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setCollectionPermissions', [collectionId, permissions],
-      true, `Unable to set collection permissions for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet');
   }
 
   /**
    * Enables nesting for selected collection. If `restricted` set, you can nest only tokens from specified collections.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param permissions nesting permissions object
-   * @param label extra label for log
    * @example enableNesting(aliceKeyring, 10, {collectionAdmin: true, tokenOwner: true});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async enableNesting(signer: TSigner, collectionId: number, permissions: INestingPermissions, label?: string): Promise<boolean> {
-    return await this.setPermissions(signer, collectionId, {nesting: permissions}, label);
+  async enableNesting(signer: TSigner, collectionId: number, permissions: INestingPermissions): Promise<boolean> {
+    return await this.setPermissions(signer, collectionId, {nesting: permissions});
   }
 
   /**
    * Disables nesting for selected collection.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param label extra label for log
    * @example disableNesting(aliceKeyring, 10);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async disableNesting(signer: TSigner, collectionId: number, label?: string): Promise<boolean> {
-    return await this.setPermissions(signer, collectionId, {nesting: {tokenOwner: false, collectionAdmin: false}}, label);
+  async disableNesting(signer: TSigner, collectionId: number): Promise<boolean> {
+    return await this.setPermissions(signer, collectionId, {nesting: {tokenOwner: false, collectionAdmin: false}});
   }
 
   /**
    * Sets onchain properties to the collection.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param properties array of property objects
-   * @param label extra label for log
    * @example setProperties(aliceKeyring, 10, [{key: "gender", value: "male"}]);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setProperties(signer: TSigner, collectionId: number, properties: IProperty[], label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async setProperties(signer: TSigner, collectionId: number, properties: IProperty[]): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setCollectionProperties', [collectionId, properties],
-      true, `Unable to set collection properties for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertySet', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertySet');
+  }
+
+  /**
+   * Get collection properties.
+   * 
+   * @param collectionId ID of collection
+   * @param propertyKeys optionally filter the returned properties to only these keys
+   * @example getProperties(1219, ['location', 'date', 'time', 'isParadise']);
+   * @returns array of key-value pairs
+   */
+  async getProperties(collectionId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
+    return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
+  }
+
+  async getCollectionOptions(collectionId: number) {
+    return (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
   }
 
   /**
    * Deletes onchain properties from the collection.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param propertyKeys array of property keys to delete
-   * @param label
    * @example deleteProperties(aliceKeyring, 10, ["gender", "age"]);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async deleteProperties(signer: TSigner, collectionId: number, propertyKeys: string[], label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async deleteProperties(signer: TSigner, collectionId: number, propertyKeys: string[]): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.deleteCollectionProperties', [collectionId, propertyKeys],
-      true, `Unable to delete collection properties for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertyDeleted', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertyDeleted');
   }
 
   /**
    * Changes the owner of the token.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
@@ -920,16 +1064,16 @@ class CollectionGroup extends HelperGroup {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.transfer', [addressObj, collectionId, tokenId, amount],
-      true, `Unable to transfer token #${tokenId} from collection #${collectionId}`,
+      true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
 
     return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
   }
 
   /**
-   * 
-   * Change ownership of a token(s) on behalf of the owner. 
-   * 
+   *
+   * Change ownership of a token(s) on behalf of the owner.
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
@@ -943,89 +1087,81 @@ class CollectionGroup extends HelperGroup {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.transferFrom', [fromAddressObj, toAddressObj, collectionId, tokenId, amount],
-      true, `Unable to transfer token #${tokenId} from collection #${collectionId}`,
+      true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
     return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
   /**
-   * 
+   *
    * Destroys a concrete instance of NFT/RFT or burns a specified amount of fungible tokens.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param label 
    * @param amount amount of tokens to be burned. For NFT must be set to 1n
    * @example burnToken(aliceKeyring, 10, 5);
-   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
+   * @returns ```true``` if the extrinsic is successful, otherwise ```false```
    */
-  async burnToken(signer: TSigner, collectionId: number, tokenId: number, label?: string, amount=1n): Promise<{
-    success: boolean,
-    token: number | null
-  }> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async burnToken(signer: TSigner, collectionId: number, tokenId: number, amount=1n): Promise<boolean> {
     const burnResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.burnItem', [collectionId, tokenId, amount],
-      true, `Unable to burn token for ${label}`,
+      true, // `Unable to burn token for ${label}`,
     );
-    const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult, label);
+    const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult);
     if (burnedTokens.tokens.length > 1) throw Error('Burned multiple tokens');
-    return {success: burnedTokens.success, token: burnedTokens.tokens.length > 0 ? burnedTokens.tokens[0] : null};
+    return burnedTokens.success;
   }
 
   /**
    * Destroys a concrete instance of NFT on behalf of the owner
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param fromAddressObj address on behalf of which the token will be burnt
    * @param tokenId ID of token
-   * @param label 
+   * @param fromAddressObj address on behalf of which the token will be burnt
    * @param amount amount of tokens to be burned. For NFT must be set to 1n
    * @example burnTokenFrom(aliceKeyring, 10, {Substrate: "5DyN4Y92vZCjv38fg..."}, 5, {Ethereum: "0x9F0583DbB85..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async burnTokenFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, tokenId: number, label?: string, amount=1n): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async burnTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, amount=1n): Promise<boolean> {
     const burnResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.burnFrom', [collectionId, fromAddressObj, tokenId, amount],
-      true, `Unable to burn token from for ${label}`,
+      true, // `Unable to burn token from for ${label}`,
     );
-    const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult, label);
+    const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult);
     return burnedTokens.success && burnedTokens.tokens.length > 0;
   }
 
   /**
    * Set, change, or remove approved address to transfer the ownership of the NFT.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param toAddressObj 
-   * @param label 
+   * @param toAddressObj Substrate or Ethereum address which gets approved use of the signer's tokens
    * @param amount amount of token to be approved. For NFT must be set to 1n
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string, amount=1n) {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
     const approveResult = await this.helper.executeExtrinsic(
-      signer, 
+      signer,
       'api.tx.unique.approve', [toAddressObj, collectionId, tokenId, amount],
-      true, `Unable to approve token for ${label}`,
+      true, // `Unable to approve token for ${label}`,
     );
 
-    return this.helper.util.findCollectionInEvents(approveResult.result.events, collectionId, 'common', 'Approved', label);
+    return this.helper.util.findCollectionInEvents(approveResult.result.events, collectionId, 'common', 'Approved');
   }
 
   /**
-   * Get the amount of token pieces approved to transfer
+   * Get the amount of token pieces approved to transfer or burn. Normally 0.
+   *
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param toAccountObj 
-   * @param fromAccountObj
+   * @param toAccountObj address which is approved to use token pieces
+   * @param fromAccountObj address which may have allowed the use of its owned tokens
    * @example getTokenApprovedPieces(10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Substrate: "5ERZNF88Mm7UGfPP3mdG..."})
    * @returns number of approved to transfer pieces
    */
@@ -1034,7 +1170,8 @@ class CollectionGroup extends HelperGroup {
   }
 
   /**
-   * Get the last created token id
+   * Get the last created token ID in a collection
+   *
    * @param collectionId ID of collection
    * @example getLastTokenId(10);
    * @returns id of the last created token
@@ -1045,12 +1182,13 @@ class CollectionGroup extends HelperGroup {
 
   /**
    * Check if token exists
+   *
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @example isTokenExists(10, 20);
+   * @example doesTokenExist(10, 20);
    * @returns true if the token exists, otherwise false
    */
-  async isTokenExists(collectionId: number, tokenId: number): Promise<boolean> {
+  async doesTokenExist(collectionId: number, tokenId: number): Promise<boolean> {
     return (await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId])).toJSON();
   }
 }
@@ -1058,7 +1196,7 @@ class CollectionGroup extends HelperGroup {
 class NFTnRFT extends CollectionGroup {
   /**
    * Get tokens owned by account
-   * 
+   *
    * @param collectionId ID of collection
    * @param addressObj tokens owner
    * @example getTokensByAddress(10, {Substrate: "5DyN4Y92vZCjv38fg..."})
@@ -1070,24 +1208,25 @@ class NFTnRFT extends CollectionGroup {
 
   /**
    * Get token data
+   *
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
-   * @param propertyKeys
+   * @param propertyKeys optionally filter the token properties to only these keys
+   * @param blockHashAt optionally query the data at some block with this hash
    * @example getToken(10, 5);
-   * @returns human readable token data 
+   * @returns human readable token data
    */
-  async getToken(collectionId: number, tokenId: number, blockHashAt?: string, propertyKeys?: string[]): Promise<{
+  async getToken(collectionId: number, tokenId: number, propertyKeys: string[] = [], blockHashAt?: string): Promise<{
     properties: IProperty[];
-    owner: ICrossAccountId;
-    normalizedOwner: ICrossAccountId;
+    owner: CrossAccountId;
+    normalizedOwner: CrossAccountId;
   }| null> {
     let tokenData;
     if(typeof blockHashAt === 'undefined') {
       tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', [collectionId, tokenId]);
     }
     else {
-      if(typeof propertyKeys === 'undefined') {
+      if(propertyKeys.length == 0) {
         const collection = (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
         if(!collection) return null;
         propertyKeys = collection.tokenPropertyPermissions.map((x: ITokenPropertyPermission) => x.key);
@@ -1098,53 +1237,78 @@ class NFTnRFT extends CollectionGroup {
     if (tokenData === null || tokenData.owner === null) return null;
     const owner = {} as any;
     for (const key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() === 'substrate' ? this.helper.address.normalizeSubstrate(tokenData.owner[key]) : tokenData.owner[key];
+      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate' 
+        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key]) 
+        : tokenData.owner[key];
     }
-    tokenData.normalizedOwner = crossAccountIdFromLower(owner);
+    tokenData.normalizedOwner = CrossAccountId.fromLowerCaseKeys(owner);
     return tokenData;
   }
 
   /**
    * Set permissions to change token properties
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param permissions permissions to change a property by the collection owner or admin
-   * @param label 
+   * @param permissions permissions to change a property by the collection admin or token owner
    * @example setTokenPropertyPermissions(
    *   aliceKeyring, 10, [{key: "gender", permission: {tokenOwner: true, mutable: true, collectionAdmin: true}}]
    * )
    * @returns true if extrinsic success otherwise false
    */
-  async setTokenPropertyPermissions(signer: TSigner, collectionId: number, permissions: ITokenPropertyPermission[], label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async setTokenPropertyPermissions(signer: TSigner, collectionId: number, permissions: ITokenPropertyPermission[]): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setTokenPropertyPermissions', [collectionId, permissions],
-      true, `Unable to set token property permissions for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'PropertyPermissionSet', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'PropertyPermissionSet');
+  }
+
+  /**
+   * Get token property permissions.
+   * 
+   * @param collectionId ID of collection
+   * @param propertyKeys optionally filter the returned property permissions to only these keys
+   * @example getPropertyPermissions(1219, ['location', 'date', 'time', 'isParadise']);
+   * @returns array of key-permission pairs
+   */
+  async getPropertyPermissions(collectionId: number, propertyKeys: string[] | null = null): Promise<ITokenPropertyPermission[]> {
+    return (await this.helper.callRpc('api.rpc.unique.propertyPermissions', [collectionId, ...(propertyKeys === null ? [] : [propertyKeys])])).toHuman();
   }
 
   /**
    * Set token properties
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param properties 
-   * @param label 
+   * @param properties key-value pairs of metadata which to add to a token. Keys must be permitted in the collection
    * @example setTokenProperties(aliceKeyring, 10, 5, [{key: "gender", value: "female"}, {key: "age", value: "23"}])
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setTokenProperties(signer: TSigner, collectionId: number, tokenId: number, properties: IProperty[], label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `token #${tokenId} from collection #${collectionId}`;
+  async setTokenProperties(signer: TSigner, collectionId: number, tokenId: number, properties: IProperty[]): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setTokenProperties', [collectionId, tokenId, properties],
-      true, `Unable to set token properties for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet');
+  }
+
+  /**
+   * Get properties, metadata assigned to a token.
+   * 
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param propertyKeys optionally filter the returned properties to only these keys
+   * @example getTokenProperties(1219, ['location', 'date', 'time', 'isParadise']);
+   * @returns array of key-value pairs
+   */
+  async getTokenProperties(collectionId: number, tokenId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
+    return (await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, propertyKeys])).toHuman();
   }
 
   /**
@@ -1152,32 +1316,30 @@ class NFTnRFT extends CollectionGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param propertyKeys property keys to be deleted 
-   * @param label 
+   * @param propertyKeys property keys to be deleted
    * @example deleteTokenProperties(aliceKeyring, 10, 5, ["gender", "age"])
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async deleteTokenProperties(signer: TSigner, collectionId: number, tokenId: number, propertyKeys: string[], label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `token #${tokenId} from collection #${collectionId}`;
+  async deleteTokenProperties(signer: TSigner, collectionId: number, tokenId: number, propertyKeys: string[]): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.deleteTokenProperties', [collectionId, tokenId, propertyKeys],
-      true, `Unable to delete token properties for ${label}`,
+      true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertyDeleted', label);
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertyDeleted');
   }
 
   /**
    * Mint new collection
+   *
    * @param signer keyring of signer
-   * @param collectionOptions basic collection options and properties 
+   * @param collectionOptions basic collection options and properties
    * @param mode NFT or RFT type of a collection
-   * @param errorLabel 
    * @example mintCollection(aliceKeyring, {name: 'New', description: "New collection", tokenPrefix: "NEW"}, "NFT")
    * @returns object of the created collection
    */
-  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT', errorLabel = 'Unable to mint collection'): Promise<UniqueCollectionBase> {
+  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT'): Promise<UniqueBaseCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
     collectionOptions.mode = (mode === 'NFT') ? {nft: null} : {refungible: null};
     for (const key of ['name', 'description', 'tokenPrefix']) {
@@ -1186,16 +1348,16 @@ class NFTnRFT extends CollectionGroup {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createCollectionEx', [collectionOptions],
-      true, errorLabel,
+      true, // errorLabel,
     );
-    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult, errorLabel));
+    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
   }
 
-  getCollectionObject(collectionId: number): any {
+  getCollectionObject(_collectionId: number): any {
     return null;
   }
 
-  getTokenObject(collectionId: number, tokenId: number): any {
+  getTokenObject(_collectionId: number, _tokenId: number): any {
     return null;
   }
 }
@@ -1219,26 +1381,26 @@ class NFTGroup extends NFTnRFT {
    * @example getTokenObject(10, 5);
    * @returns instance of UniqueNFTToken
    */
-  getTokenObject(collectionId: number, tokenId: number): UniqueNFTToken {
-    return new UniqueNFTToken(tokenId, this.getCollectionObject(collectionId));
+  getTokenObject(collectionId: number, tokenId: number): UniqueNFToken {
+    return new UniqueNFToken(tokenId, this.getCollectionObject(collectionId));
   }
 
   /**
    * Get token's owner
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
+   * @param blockHashAt optionally query the data at the block with this hash
    * @example getTokenOwner(10, 5);
    * @returns Address in CrossAccountId format, e.g. {Substrate: "5DnSF6RRjwteE3BrCj..."}
    */
-  async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<ICrossAccountId> {
+  async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId> {
     let owner;
     if (typeof blockHashAt === 'undefined') {
       owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId]);
     } else {
       owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId, blockHashAt]);
     }
-    return crossAccountIdFromLower(owner.toJSON());
+    return CrossAccountId.fromLowerCaseKeys(owner.toJSON());
   }
 
   /**
@@ -1254,7 +1416,7 @@ class NFTGroup extends NFTnRFT {
 
   /**
    * Changes the owner of the token.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
@@ -1267,9 +1429,9 @@ class NFTGroup extends NFTnRFT {
   }
 
   /**
-   * 
-   * Change ownership of a NFT on behalf of the owner. 
-   * 
+   *
+   * Change ownership of a NFT on behalf of the owner.
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
@@ -1286,11 +1448,11 @@ class NFTGroup extends NFTnRFT {
    * Recursively find the address that owns the token
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
+   * @param blockHashAt
    * @example getTokenTopmostOwner(10, 5);
    * @returns address in CrossAccountId format, e.g. {Substrate: "5DyN4Y92vZCjv38fg..."}
    */
-  async getTokenTopmostOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<ICrossAccountId | null> {
+  async getTokenTopmostOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId | null> {
     let owner;
     if (typeof blockHashAt === 'undefined') {
       owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', [collectionId, tokenId]);
@@ -1300,18 +1462,16 @@ class NFTGroup extends NFTnRFT {
 
     if (owner === null) return null;
 
-    owner = owner.toHuman();
-
-    return owner.Substrate ? {Substrate: this.helper.address.normalizeSubstrate(owner.Substrate)} : owner;
+    return owner.toHuman();
   }
 
   /**
    * Get tokens nested in the provided token
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param blockHashAt 
+   * @param blockHashAt optionally query the data at the block with this hash
    * @example getTokenChildren(10, 5);
-   * @returns tokens whose depth of nesting is <= 5 
+   * @returns tokens whose depth of nesting is <= 5
    */
   async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<IToken[]> {
     let children;
@@ -1331,15 +1491,14 @@ class NFTGroup extends NFTnRFT {
    * @param signer keyring of signer
    * @param tokenObj token to be nested
    * @param rootTokenObj token to be parent
-   * @param label 
    * @example nestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, label='nest token'): Promise<boolean> {
-    const rootTokenAddress = {Ethereum: this.helper.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
+  async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken): Promise<boolean> {
+    const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferToken(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress);
     if(!result) {
-      throw Error(`Unable to nest token for ${label}`);
+      throw Error('Unable to nest token!');
     }
     return result;
   }
@@ -1349,16 +1508,15 @@ class NFTGroup extends NFTnRFT {
    * @param signer keyring of signer
    * @param tokenObj token to unnest
    * @param rootTokenObj parent of a token
-   * @param toAddressObj address of a new token owner 
-   * @param label 
+   * @param toAddressObj address of a new token owner
    * @example unnestToken(aliceKeyring, {collectionId: 10, tokenId: 5}, {collectionId: 10, tokenId: 4}, {Substrate: "5DyN4Y92vZCjv38fg..."});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId, label='unnest token'): Promise<boolean> {
-    const rootTokenAddress = {Ethereum: this.helper.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
+  async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId): Promise<boolean> {
+    const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferTokenFrom(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, toAddressObj);
     if(!result) {
-      throw Error(`Unable to unnest token for ${label}`);
+      throw Error('Unable to unnest token!');
     }
     return result;
   }
@@ -1367,8 +1525,7 @@ class NFTGroup extends NFTnRFT {
    * Mint new collection
    * @param signer keyring of signer
    * @param collectionOptions Collection options
-   * @param label 
-   * @example 
+   * @example
    * mintCollection(aliceKeyring, {
    *   name: 'New',
    *   description: 'New collection',
@@ -1376,19 +1533,17 @@ class NFTGroup extends NFTnRFT {
    * })
    * @returns object of the created collection
    */
-  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, label = 'new collection'): Promise<UniqueNFTCollection> {
-    return await super.mintCollection(signer, collectionOptions, 'NFT', `Unable to mint NFT collection for ${label}`) as UniqueNFTCollection;
+  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}): Promise<UniqueNFTCollection> {
+    return await super.mintCollection(signer, collectionOptions, 'NFT') as UniqueNFTCollection;
   }
 
   /**
    * Mint new token
    * @param signer keyring of signer
    * @param data token data
-   * @param label 
    * @returns created token object
    */
-  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }, label?: string): Promise<UniqueNFTToken> {
-    if(typeof label === 'undefined') label = `collection #${data.collectionId}`;
+  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }): Promise<UniqueNFToken> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
@@ -1396,9 +1551,9 @@ class NFTGroup extends NFTnRFT {
           properties: data.properties,
         },
       }],
-      true, `Unable to mint NFT token for ${label}`,
+      true,
     );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult, label);
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
     if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
     if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
@@ -1409,8 +1564,7 @@ class NFTGroup extends NFTnRFT {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokens array of tokens with owner and properties
-   * @param label 
-   * @example 
+   * @example
    * mintMultipleTokens(aliceKeyring, 10, [{
    *     owner: {Substrate: "5DyN4Y92vZCjv38fg..."},
    *     properties: [{key: "gender", value: "male"},{key: "age", value: "45"}],
@@ -1420,15 +1574,14 @@ class NFTGroup extends NFTnRFT {
    * }]);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[], label?: string): Promise<UniqueNFTToken[]> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[]): Promise<UniqueNFToken[]> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItemsEx', [collectionId, {NFT: tokens}],
-      true, `Unable to mint NFT tokens for ${label}`,
+      true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1437,7 +1590,6 @@ class NFTGroup extends NFTnRFT {
    * @param collectionId ID of collection
    * @param owner tokens owner
    * @param tokens array of tokens with owner and properties
-   * @param label 
    * @example
    * mintMultipleTokensWithOneOwner(aliceKeyring, 10, "5DyN4Y92vZCjv38fg...", [{
    *   properties: [{
@@ -1450,8 +1602,7 @@ class NFTGroup extends NFTnRFT {
    * }]);
    * @returns array of newly created tokens
    */
-  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {properties?: IProperty[]}[], label?: string): Promise<UniqueNFTToken[]> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {properties?: IProperty[]}[]): Promise<UniqueNFToken[]> {
     const rawTokens = [];
     for (const token of tokens) {
       const raw = {NFT: {properties: token.properties}};
@@ -1460,38 +1611,24 @@ class NFTGroup extends NFTnRFT {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItems', [collectionId, owner, rawTokens],
-      true, `Unable to mint NFT tokens for ${label}`,
+      true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
-  }
-
-  /**
-   * Destroys a concrete instance of NFT.
-   * @param signer keyring of signer
-   * @param collectionId ID of collection
-   * @param tokenId ID of token
-   * @param label 
-   * @example burnToken(aliceKeyring, 10, 5);
-   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
-   */
-  async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, label?: string): Promise<{ success: boolean; token: number | null; }> {
-    return await super.burnToken(signer, collectionId, tokenId, label, 1n);
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
    * Set, change, or remove approved address to transfer the ownership of the NFT.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param toAddressObj address to approve
-   * @param label 
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string) {
-    return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, 1n);
+  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId) {
+    return super.approveToken(signer, collectionId, tokenId, toAddressObj, 1n);
   }
 }
 
@@ -1514,19 +1651,19 @@ class RFTGroup extends NFTnRFT {
    * @example getTokenObject(10, 5);
    * @returns instance of UniqueNFTToken
    */
-  getTokenObject(collectionId: number, tokenId: number): UniqueRFTToken {
-    return new UniqueRFTToken(tokenId, this.getCollectionObject(collectionId));
+  getTokenObject(collectionId: number, tokenId: number): UniqueRFToken {
+    return new UniqueRFToken(tokenId, this.getCollectionObject(collectionId));
   }
 
   /**
-   * Get top 10 token owners with the largest number of pieces 
+   * Get top 10 token owners with the largest number of pieces
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @example getTokenTop10Owners(10, 5);
    * @returns array of top 10 owners
    */
-  async getTokenTop10Owners(collectionId: number, tokenId: number): Promise<ICrossAccountId[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).toJSON().map(crossAccountIdFromLower);
+  async getTokenTop10Owners(collectionId: number, tokenId: number): Promise<CrossAccountId[]> {
+    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).toJSON().map(CrossAccountId.fromLowerCaseKeys);
   }
 
   /**
@@ -1551,12 +1688,12 @@ class RFTGroup extends NFTnRFT {
    * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, 2000n)
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId, amount=100n): Promise<boolean> {
+  async transferToken(signer: TSigner, collectionId: number, tokenId: number, addressObj: ICrossAccountId, amount=1n): Promise<boolean> {
     return await super.transferToken(signer, collectionId, tokenId, addressObj, amount);
   }
 
   /**
-   * Change ownership of some pieces of RFT on behalf of the owner. 
+   * Change ownership of some pieces of RFT on behalf of the owner.
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
@@ -1566,7 +1703,7 @@ class RFTGroup extends NFTnRFT {
    * @example transferTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, {Substrate: "5DfhbVfww7ThF8q6f3i..."}, 2000n)
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=100n): Promise<boolean> {
+  async transferTokenFrom(signer: TSigner, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n): Promise<boolean> {
     return await super.transferTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
@@ -1574,7 +1711,6 @@ class RFTGroup extends NFTnRFT {
    * Mint new collection
    * @param signer keyring of signer
    * @param collectionOptions Collection options
-   * @param label 
    * @example
    * mintCollection(aliceKeyring, {
    *   name: 'New',
@@ -1583,20 +1719,18 @@ class RFTGroup extends NFTnRFT {
    * })
    * @returns object of the created collection
    */
-  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, label = 'new collection'): Promise<UniqueRFTCollection> {
-    return await super.mintCollection(signer, collectionOptions, 'RFT', `Unable to mint RFT collection for ${label}`) as UniqueRFTCollection;
+  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}): Promise<UniqueRFTCollection> {
+    return await super.mintCollection(signer, collectionOptions, 'RFT') as UniqueRFTCollection;
   }
 
   /**
    * Mint new token
    * @param signer keyring of signer
    * @param data token data
-   * @param label 
    * @example mintToken(aliceKeyring, {collectionId: 10, owner: {Substrate: '5GHoZe9c73RYbVzq...'}, pieces: 10000n});
    * @returns created token object
    */
-  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }, label?: string): Promise<UniqueRFTToken> {
-    if(typeof label === 'undefined') label = `collection #${data.collectionId}`;
+  async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }): Promise<UniqueRFToken> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
@@ -1605,24 +1739,23 @@ class RFTGroup extends NFTnRFT {
           properties: data.properties,
         },
       }],
-      true, `Unable to mint RFT token for ${label}`,
+      true,
     );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult, label);
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
     if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
     if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
   }
 
-  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[], label?: string): Promise<UniqueRFTToken[]> {
+  async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFToken[]> {
     throw Error('Not implemented');
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItemsEx', [collectionId, {RefungibleMultipleOwners: tokens}],
-      true, `Unable to mint RFT tokens for ${label}`,
+      true, // `Unable to mint RFT tokens for ${label}`,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1631,12 +1764,10 @@ class RFTGroup extends NFTnRFT {
    * @param collectionId ID of collection
    * @param owner tokens owner
    * @param tokens array of tokens with properties and pieces
-   * @param label 
    * @example mintMultipleTokensWithOneOwner(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, [{pieces: 100000n, properties: [{key: "gender", value: "male"}]}]);
    * @returns array of newly created RFT tokens
    */
-  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {pieces: bigint, properties?: IProperty[]}[], label?: string): Promise<UniqueRFTToken[]> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFToken[]> {
     const rawTokens = [];
     for (const token of tokens) {
       const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
@@ -1645,10 +1776,10 @@ class RFTGroup extends NFTnRFT {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItems', [collectionId, owner, rawTokens],
-      true, `Unable to mint RFT tokens for ${label}`,
+      true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1656,29 +1787,41 @@ class RFTGroup extends NFTnRFT {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
-   * @param label 
    * @param amount number of pieces to be burnt
    * @example burnToken(aliceKeyring, 10, 5);
-   * @returns ```true``` and burnt token number is extrinsic success. Otherwise ```false``` and ```null```
+   * @returns ```true``` if the extrinsic is successful, otherwise ```false```
    */
-  async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, label?: string, amount=100n): Promise<{ success: boolean; token: number | null; }> {
-    return await super.burnToken(signer, collectionId, tokenId, label, amount);
+  async burnToken(signer: IKeyringPair, collectionId: number, tokenId: number, amount=1n): Promise<boolean> {
+    return await super.burnToken(signer, collectionId, tokenId, amount);
+  }
+
+  /**
+   * Destroys a concrete instance of RFT on behalf of the owner.
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param fromAddressObj address on behalf of which the token will be burnt
+   * @param amount number of pieces to be burnt
+   * @example burnTokenFrom(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."}, 2n)
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async burnTokenFrom(signer: IKeyringPair, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, amount=1n): Promise<boolean> {
+    return await super.burnTokenFrom(signer, collectionId, tokenId, fromAddressObj, amount);
   }
 
   /**
    * Set, change, or remove approved address to transfer the ownership of the RFT.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param toAddressObj address to approve
-   * @param label 
    * @param amount number of pieces to be approved
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5GHoZe9c73RYbVzq..."}, "", 10000n);
    * @returns true if the token success, otherwise false
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, label?: string, amount=100n) {
-    return super.approveToken(signer, collectionId, tokenId, toAddressObj, label, amount);
+  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
+    return super.approveToken(signer, collectionId, tokenId, toAddressObj, amount);
   }
 
   /**
@@ -1698,20 +1841,18 @@ class RFTGroup extends NFTnRFT {
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param amount new number of pieces
-   * @param label 
    * @example repartitionToken(aliceKeyring, 10, 5, 12345n);
    * @returns true if the repartion was success, otherwise false
    */
-  async repartitionToken(signer: TSigner, collectionId: number, tokenId: number, amount: bigint, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async repartitionToken(signer: TSigner, collectionId: number, tokenId: number, amount: bigint): Promise<boolean> {
     const currentAmount = await this.getTokenTotalPieces(collectionId, tokenId);
     const repartitionResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.repartition', [collectionId, tokenId, amount],
-      true, `Unable to repartition RFT token for ${label}`,
+      true,
     );
-    if(currentAmount < amount) return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemCreated', label);
-    return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemDestroyed', label);
+    if(currentAmount < amount) return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemCreated');
+    return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemDestroyed');
   }
 }
 
@@ -1731,8 +1872,7 @@ class FTGroup extends CollectionGroup {
    * Mint new fungible collection
    * @param signer keyring of signer
    * @param collectionOptions Collection options
-   * @param decimalPoints number of token decimals 
-   * @param errorLabel 
+   * @param decimalPoints number of token decimals
    * @example
    * mintCollection(aliceKeyring, {
    *   name: 'New',
@@ -1741,7 +1881,7 @@ class FTGroup extends CollectionGroup {
    * }, 18)
    * @returns newly created fungible collection
    */
-  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, decimalPoints = 0, errorLabel = 'Unable to mint collection'): Promise<UniqueFTCollection> {
+  async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}, decimalPoints = 0): Promise<UniqueFTCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
     if(collectionOptions.tokenPropertyPermissions) throw Error('Fungible collections has no tokenPropertyPermissions');
     collectionOptions.mode = {fungible: decimalPoints};
@@ -1751,9 +1891,9 @@ class FTGroup extends CollectionGroup {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createCollectionEx', [collectionOptions],
-      true, errorLabel,
+      true,
     );
-    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult, errorLabel));
+    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
   }
 
   /**
@@ -1762,12 +1902,10 @@ class FTGroup extends CollectionGroup {
    * @param collectionId ID of collection
    * @param owner address owner of new tokens
    * @param amount amount of tokens to be meanted
-   * @param label 
    * @example mintTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq"}, 1000n);
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintTokens(signer: TSigner, collectionId: number, owner: ICrossAccountId | string, amount: bigint, label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async mintTokens(signer: TSigner, collectionId: number, amount: bigint, owner: ICrossAccountId | string): Promise<boolean> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createItem', [collectionId, (typeof owner === 'string') ? {Substrate: owner} : owner, {
@@ -1775,9 +1913,9 @@ class FTGroup extends CollectionGroup {
           value: amount,
         },
       }],
-      true, `Unable to mint fungible tokens for ${label}`,
+      true, // `Unable to mint fungible tokens for ${label}`,
     );
-    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated', label);
+    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated');
   }
 
   /**
@@ -1786,11 +1924,9 @@ class FTGroup extends CollectionGroup {
    * @param collectionId ID of collection
    * @param owner tokens owner
    * @param tokens array of tokens with properties and pieces
-   * @param label 
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: {value: bigint}[], label?: string): Promise<boolean> {
-    if(typeof label === 'undefined') label = `collection #${collectionId}`;
+  async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: {value: bigint}[], owner: ICrossAccountId): Promise<boolean> {
     const rawTokens = [];
     for (const token of tokens) {
       const raw = {Fungible: {Value: token.value}};
@@ -1799,19 +1935,19 @@ class FTGroup extends CollectionGroup {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItems', [collectionId, owner, rawTokens],
-      true, `Unable to mint RFT tokens for ${label}`,
+      true,
     );
-    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated', label);
+    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated');
   }
 
   /**
-   * Get the top 10 owners with the largest balance for the Fungible collection 
+   * Get the top 10 owners with the largest balance for the Fungible collection
    * @param collectionId ID of collection
    * @example getTop10Owners(10);
    * @returns array of ```ICrossAccountId```
    */
-  async getTop10Owners(collectionId: number): Promise<ICrossAccountId[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).toJSON().map(crossAccountIdFromLower);
+  async getTop10Owners(collectionId: number): Promise<CrossAccountId[]> {
+    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).toJSON().map(CrossAccountId.fromLowerCaseKeys);
   }
 
   /**
@@ -1829,12 +1965,12 @@ class FTGroup extends CollectionGroup {
    * Transfer tokens to address
    * @param signer keyring of signer
    * @param collectionId ID of collection
-   * @param toAddressObj address recepient
+   * @param toAddressObj address recipient
    * @param amount amount of tokens to be sent
    * @example transfer(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transfer(signer: TSigner, collectionId: number, toAddressObj: ICrossAccountId, amount: bigint) {
+  async transfer(signer: TSigner, collectionId: number, toAddressObj: ICrossAccountId, amount=1n) {
     return await super.transferToken(signer, collectionId, 0, toAddressObj, amount);
   }
 
@@ -1846,9 +1982,9 @@ class FTGroup extends CollectionGroup {
    * @param toAddressObj address where token to be sent
    * @param amount number of tokens to be sent
    * @example transferFrom(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, {Substrate: "5DfhbVfww7ThF8q6f3ij..."}, 10000n);
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transferFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount: bigint) {
+  async transferFrom(signer: TSigner, collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
     return await super.transferTokenFrom(signer, collectionId, 0, fromAddressObj, toAddressObj, amount);
   }
 
@@ -1857,12 +1993,11 @@ class FTGroup extends CollectionGroup {
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param amount amount of tokens to be destroyed
-   * @param label 
    * @example burnTokens(aliceKeyring, 10, 1000n);
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async burnTokens(signer: IKeyringPair, collectionId: number, amount=100n, label?: string): Promise<boolean> {
-    return (await super.burnToken(signer, collectionId, 0, label, amount)).success;
+  async burnTokens(signer: IKeyringPair, collectionId: number, amount=1n): Promise<boolean> {
+    return await super.burnToken(signer, collectionId, 0, amount);
   }
 
   /**
@@ -1871,18 +2006,17 @@ class FTGroup extends CollectionGroup {
    * @param collectionId ID of collection
    * @param fromAddressObj address on behalf of which tokens will be burnt
    * @param amount amount of tokens to be burnt
-   * @param label 
    * @example burnTokensFrom(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n);
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async burnTokensFrom(signer: IKeyringPair, collectionId: number, fromAddressObj: ICrossAccountId, amount=100n, label?: string): Promise<boolean> {
-    return await super.burnTokenFrom(signer, collectionId, fromAddressObj, 0, label, amount);
+  async burnTokensFrom(signer: IKeyringPair, collectionId: number, fromAddressObj: ICrossAccountId, amount=1n): Promise<boolean> {
+    return await super.burnTokenFrom(signer, collectionId, 0, fromAddressObj, amount);
   }
 
   /**
    * Get total collection supply
-   * @param collectionId 
-   * @returns 
+   * @param collectionId
+   * @returns
    */
   async getTotalPieces(collectionId: number): Promise<bigint> {
     return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, 0])).unwrap().toBigInt();
@@ -1890,17 +2024,16 @@ class FTGroup extends CollectionGroup {
 
   /**
    * Set, change, or remove approved address to transfer tokens.
-   * 
+   *
    * @param signer keyring of signer
    * @param collectionId ID of collection
    * @param toAddressObj address to be approved
    * @param amount amount of tokens to be approved
-   * @param label 
    * @example approveTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n)
-   * @returns ```true``` if extrinsic success, otherwise ```false``` 
+   * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=100n, label?: string) {
-    return super.approveToken(signer, collectionId, 0, toAddressObj, label, amount);
+  async approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=1n) {
+    return super.approveToken(signer, collectionId, 0, toAddressObj, amount);
   }
 
   /**
@@ -1916,14 +2049,14 @@ class FTGroup extends CollectionGroup {
 }
 
 
-class ChainGroup extends HelperGroup {
+class ChainGroup extends HelperGroup<ChainHelperBase> {
   /**
    * Get system properties of a chain
    * @example getChainProperties();
    * @returns ss58Format, token decimals, and token symbol
    */
   getChainProperties(): IChainProperties {
-    const properties = (this.helper.api as any).registry.getChainProperties().toJSON();
+    const properties = (this.helper.getApi() as any).registry.getChainProperties().toJSON();
     return {
       ss58Format: properties.ss58Format.toJSON(),
       tokenDecimals: properties.tokenDecimals.toJSON(),
@@ -1952,6 +2085,13 @@ class ChainGroup extends HelperGroup {
     return blockHash;
   }
 
+  // TODO add docs
+  async getBlock(blockHashOrNumber: string | number): Promise<IBlock | null> {
+    const blockHash = typeof blockHashOrNumber === 'string' ? blockHashOrNumber : await this.getBlockHashByNumber(blockHashOrNumber);
+    if (!blockHash) return null;
+    return (await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash])).toHuman().block;
+  }
+
   /**
    * Get account nonce
    * @param address substrate address
@@ -1959,14 +2099,113 @@ class ChainGroup extends HelperGroup {
    * @returns number, account's nonce
    */
   async getNonce(address: TSubstrateAccount): Promise<number> {
-    return (await (this.helper.api as any).query.system.account(address)).nonce.toNumber();
+    return (await this.helper.callRpc('api.query.system.account', [address])).nonce.toNumber();
   }
 }
 
-
-class BalanceGroup extends HelperGroup {
+class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   /**
-   * Representation of the native token in the smallest unit
+ * Get substrate address balance
+ * @param address substrate address
+ * @example getSubstrate("5GrwvaEF5zXb26Fz...")
+ * @returns amount of tokens on address
+ */
+  async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
+  }
+
+  /**
+   * Transfer tokens to substrate address
+   * @param signer keyring of signer
+   * @param address substrate address of a recipient
+   * @param amount amount of tokens to be transfered
+   * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
+
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'balances') && (method === 'Transfer')) {
+        transfer = {
+          from: this.helper.address.normalizeSubstrate(data[0]),
+          to: this.helper.address.normalizeSubstrate(data[1]),
+          amount: BigInt(data[2]),
+        };
+      }
+    });
+    const isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from 
+      && this.helper.address.normalizeSubstrate(address) === transfer.to 
+      && BigInt(amount) === transfer.amount;
+    return isSuccess;
+  }
+
+  /**
+   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
+   * @param address substrate address
+   * @returns
+   */
+  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
+    return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
+  }
+}
+
+class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  /**
+   * Get ethereum address balance
+   * @param address ethereum address
+   * @example getEthereum("0x9F0583DbB855d...")
+   * @returns amount of tokens on address
+   */
+  async getEthereum(address: TEthereumAccount): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
+  }
+
+  /**
+   * Transfer tokens to address
+   * @param signer keyring of signer
+   * @param address Ethereum address of a recipient
+   * @param amount amount of tokens to be transfered
+   * @example transferToEthereum(alithKeyring, "0x9F0583DbB855d...", 100_000_000_000n);
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async transferToEthereum(signer: TSigner, address: TEthereumAccount, amount: bigint | string): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true);
+
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'balances') && (method === 'Transfer')) {
+        transfer = {
+          from: data[0].toString(),
+          to: data[1].toString(),
+          amount: BigInt(data[2]),
+        };
+      }
+    });
+    const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from 
+      && address === transfer.to 
+      && BigInt(amount) === transfer.amount;
+    return isSuccess;
+  }
+}
+
+class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  subBalanceGroup: SubstrateBalanceGroup<T>;
+  ethBalanceGroup: EthereumBalanceGroup<T>;
+
+  constructor(helper: T) {
+    super(helper);
+    this.subBalanceGroup = new SubstrateBalanceGroup(helper);
+    this.ethBalanceGroup = new EthereumBalanceGroup(helper);
+  }
+
+  getCollectionCreationPrice(): bigint {
+    return 2n * this.getOneTokenNominal();
+  }
+  /**
+   * Representation of the native token in the smallest unit - one OPAL (OPL), QUARTZ (QTZ), or UNIQUE (UNQ).
    * @example getOneTokenNominal()
    * @returns ```BigInt``` representation of the native token in the smallest unit, e.g. ```1_000_000_000_000_000_000n``` for QTZ.
    */
@@ -1982,7 +2221,16 @@ class BalanceGroup extends HelperGroup {
    * @returns amount of tokens on address
    */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
+    return this.subBalanceGroup.getSubstrate(address);
+  }
+
+  /**
+   * Get full substrate balance including free, miscFrozen, feeFrozen, and reserved
+   * @param address substrate address
+   * @returns
+   */
+  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+    return this.subBalanceGroup.getSubstrateFull(address);
   }
 
   /**
@@ -1992,39 +2240,23 @@ class BalanceGroup extends HelperGroup {
    * @returns amount of tokens on address
    */
   async getEthereum(address: TEthereumAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
+    return this.ethBalanceGroup.getEthereum(address);
   }
 
   /**
    * Transfer tokens to substrate address
    * @param signer keyring of signer
-   * @param address substrate address of a recepient
+   * @param address substrate address of a recipient
    * @param amount amount of tokens to be transfered
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
-    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`);
-
-    let transfer = {from: null, to: null, amount: 0n} as any;
-    result.result.events.forEach(({event: {data, method, section}}) => {
-      if ((section === 'balances') && (method === 'Transfer')) {
-        transfer = {
-          from: this.helper.address.normalizeSubstrate(data[0]),
-          to: this.helper.address.normalizeSubstrate(data[1]),
-          amount: BigInt(data[2]),
-        };
-      }
-    });
-    let isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from;
-    isSuccess = isSuccess && this.helper.address.normalizeSubstrate(address) === transfer.to;
-    isSuccess = isSuccess && BigInt(amount) === transfer.amount;
-    return isSuccess;
+    return this.subBalanceGroup.transferToSubstrate(signer, address, amount);
   }
 }
 
-
-class AddressGroup extends HelperGroup {
+class AddressGroup extends HelperGroup<ChainHelperBase> {
   /**
    * Normalizes the address to the specified ss58 format, by default ```42```.
    * @param address substrate address
@@ -2033,7 +2265,7 @@ class AddressGroup extends HelperGroup {
    * @returns substrate address converted to normalized (i.e., starting with 5) or specified explicitly representation
    */
   normalizeSubstrate(address: TSubstrateAccount, ss58Format = 42): TSubstrateAccount {
-    return this.helper.util.normalizeSubstrateAddress(address, ss58Format);
+    return CrossAccountId.normalizeSubstrateAddress(address, ss58Format);
   }
 
   /**
@@ -2042,9 +2274,8 @@ class AddressGroup extends HelperGroup {
    * @example normalizeSubstrateToChainFormat("5GrwvaEF5zXb26Fz...") // returns unjKJQJrRd238pkUZZ... for Unique Network
    * @returns address in chain format
    */
-  async normalizeSubstrateToChainFormat(address: TSubstrateAccount): Promise<TSubstrateAccount> {
-    const info = this.helper.chain.getChainProperties();
-    return encodeAddress(decodeAddress(address), info.ss58Format);
+  normalizeSubstrateToChainFormat(address: TSubstrateAccount): TSubstrateAccount {
+    return this.normalizeSubstrate(address, this.helper.chain.getChainProperties().ss58Format);
   }
 
   /**
@@ -2054,10 +2285,8 @@ class AddressGroup extends HelperGroup {
    * @example ethToSubstrate('0x9F0583DbB855d...')
    * @returns substrate mirror of a provided ethereum address
    */
-  async ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat=false): Promise<TSubstrateAccount> {
-    if(!toChainFormat) return evmToAddress(ethAddress);
-    const info = this.helper.chain.getChainProperties();
-    return evmToAddress(ethAddress, info.ss58Format);
+  ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat=false): TSubstrateAccount {
+    return CrossAccountId.translateEthToSub(ethAddress, toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined);
   }
 
   /**
@@ -2067,34 +2296,513 @@ class AddressGroup extends HelperGroup {
    * @returns ethereum mirror of a provided substrate address
    */
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
-    return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(subAddress), i => i.toString(16).padStart(2, '0')).join(''));
+    return CrossAccountId.translateSubToEth(subAddress);
+  }
+
+  paraSiblingSovereignAccount(paraid: number) {
+    // We are getting a *sibling* parachain sovereign account,
+    // so we need a sibling prefix: encoded(b"sibl") == 0x7369626c
+    const siblingPrefix = '0x7369626c';
+
+    const encodedParaId = this.helper.getApi().createType('u32', paraid).toHex(true).substring(2);
+    const suffix = '000000000000000000000000000000000000000000000000';
+
+    return siblingPrefix + encodedParaId + suffix;
   }
 }
 
+class StakingGroup extends HelperGroup<UniqueHelper> {
+  /**
+   * Stake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToStake amount of tokens to stake
+   * @param label extra label for log
+   * @returns
+   */
+  async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
+    const _stakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.stake',
+      [amountToStake], true,
+    );
+    // TODO extract info from stakeResult
+    return true;
+  }
+
+  /**
+   * Unstake tokens for App Promotion
+   * @param signer keyring of signer
+   * @param amountToUnstake amount of tokens to unstake
+   * @param label extra label for log
+   * @returns block number where balances will be unlocked
+   */
+  async unstake(signer: TSigner, label?: string): Promise<number> {
+    if(typeof label === 'undefined') label = `${signer.address}`;
+    const _unstakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.unstake',
+      [], true,
+    );
+    // TODO extract block number fron events
+    return 1;
+  }
+
+  /**
+   * Get total staked amount for address
+   * @param address substrate or ethereum address
+   * @returns total staked amount
+   */
+  async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
+    if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
+    return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
+  }
+
+  /**
+   * Get total staked per block
+   * @param address substrate or ethereum address
+   * @returns array of stakes. `block` – the number of the block in which the stake was made. `amount` - the number of tokens staked in the block
+   */
+  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+    const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
+    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => {
+      return { 
+        block: block.toBigInt(),
+        amount: amount.toBigInt(),
+      };
+    });
+  }
+
+  /**
+   * Get total pending unstake amount for address
+   * @param address substrate or ethereum address
+   * @returns total pending unstake amount
+   */
+  async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
+    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
+  }
+
+  /**
+   * Get pending unstake amount per block for address
+   * @param address substrate or ethereum address
+   * @returns array of pending stakes. `block` – the number of the block in which the unstake was made. `amount` - the number of tokens unstaked in the block
+   */
+  async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+    const rawUnstakedPerBlock = await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address]);
+    const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => {
+      return {
+        block: block.toBigInt(),
+        amount: amount.toBigInt(),
+      };
+    });
+    return result;
+  }
+}
+
+class SchedulerGroup extends HelperGroup<UniqueHelper> {
+  constructor(helper: UniqueHelper) {
+    super(helper);
+  }
+
+  async cancelScheduled(signer: TSigner, scheduledId: string) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.scheduler.cancelNamed',
+      [scheduledId],
+      true,
+    );
+  }
+
+  async changePriority(signer: TSigner, scheduledId: string, priority: number) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.scheduler.changeNamedPriority',
+      [scheduledId, priority],
+      true,
+    );
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    return this.schedule<T>('scheduleNamed', scheduledId, executionBlockNumber, options);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    return this.schedule<T>('scheduleNamedAfter', scheduledId, blocksBeforeExecution, options);
+  }
+
+  schedule<T extends UniqueHelper>(
+    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
+    scheduledId: string,
+    blocksNum: number,
+    options: ISchedulerOptions = {},
+  ) {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const ScheduledHelperType = ScheduledUniqueHelper(this.helper.helperBase);
+    return this.helper.clone(ScheduledHelperType, {
+      scheduleFn,
+      scheduledId,
+      blocksNum,
+      options,
+    }) as T;
+  }
+}
+
+class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
+  async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.registerForeignAsset',
+      [ownerAddress, location, metadata],
+      true,
+    );
+  }
+
+  async update(signer: TSigner, foreignAssetId: number, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.updateForeignAsset',
+      [foreignAssetId, location, metadata],
+      true,
+    );
+  }
+}
+
+class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  palletName: string;
+
+  constructor(helper: T, palletName: string) {
+    super(helper);
+
+    this.palletName = palletName;
+  }
+
+  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, {Limited: weightLimit}], true);
+  }
+}
+
+class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transfer', [currencyId, amount, destination, destWeight], true);
+  }
+
+  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
+  }
+
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
+  }
+}
+
+class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async accounts(address: string, currencyId: any) {
+    const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
+    return BigInt(free);
+  }
+}
+
+class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async create(signer: TSigner, assetId: number, admin: string, minimalBalance: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
+  }
+
+  async setMetadata(signer: TSigner, assetId: number, name: string, symbol: string, decimals: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
+  }
+
+  async mint(signer: TSigner, assetId: number, beneficiary: string, amount: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
+  }
+
+  async account(assetId: string | number, address: string) {
+    const accountAsset = (
+      await this.helper.callRpc('api.query.assets.account', [assetId, address])
+    ).toJSON()! as any;
+
+    if (accountAsset !== null) {
+      return BigInt(accountAsset['balance']);
+    } else {
+      return null;
+    }
+  }
+}
+
+class AcalaAssetRegistryGroup extends HelperGroup<AcalaHelper> {
+  async registerForeignAsset(signer: TSigner, destination: any, metadata: AcalaAssetMetadata) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assetRegistry.registerForeignAsset', [destination, metadata], true);
+  }
+}
+
+class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
+  makeRegisterForeignAssetProposal(assetInfo: MoonbeamAssetInfo) {
+    const apiPrefix = 'api.tx.assetManager.';
+
+    const registerTx = this.helper.constructApiCall(
+      apiPrefix + 'registerForeignAsset',
+      [assetInfo.location, assetInfo.metadata, assetInfo.existentialDeposit, assetInfo.isSufficient],
+    );
+
+    const setUnitsTx = this.helper.constructApiCall(
+      apiPrefix + 'setAssetUnitsPerSecond',
+      [assetInfo.location, assetInfo.unitsPerSecond, assetInfo.numAssetsWeightHint],
+    );
+
+    const batchCall = this.helper.getApi().tx.utility.batchAll([registerTx, setUnitsTx]);
+    const encodedProposal = batchCall?.method.toHex() || '';
+    return encodedProposal;
+  }
+
+  async assetTypeId(location: any) {
+    return await this.helper.callRpc('api.query.assetManager.assetTypeId', [location]);
+  }
+}
+
+class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
+  async notePreimage(signer: TSigner, encodedProposal: string) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.notePreimage', [encodedProposal], true);
+  }
+
+  externalProposeMajority(proposalHash: string) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposalHash]);
+  }
+
+  fastTrack(proposalHash: string, votingPeriod: number, delayPeriod: number) {
+    return this.helper.constructApiCall('api.tx.democracy.fastTrack', [proposalHash, votingPeriod, delayPeriod]);
+  }
+
+  async referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
+  }
+}
+
+class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
+  collective: string;
+
+  constructor(helper: MoonbeamHelper, collective: string) {
+    super(helper);
+
+    this.collective = collective;
+  }
+
+  async propose(signer: TSigner, threshold: number, proposalHash: string, lengthBound: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [threshold, proposalHash, lengthBound], true);
+  }
+
+  async vote(signer: TSigner, proposalHash: string, proposalIndex: number, approve: boolean) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
+  }
+
+  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: number, lengthBound: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
+  }
+
+  async proposalCount() {
+    return Number(await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, []));
+  }
+}
+
+export type ChainHelperBaseConstructor = new(...args: any[]) => ChainHelperBase;
+export type UniqueHelperConstructor = new(...args: any[]) => UniqueHelper;
 
 export class UniqueHelper extends ChainHelperBase {
-  chain: ChainGroup;
-  balance: BalanceGroup;
-  address: AddressGroup;
+  balance: BalanceGroup<UniqueHelper>;
   collection: CollectionGroup;
   nft: NFTGroup;
   rft: RFTGroup;
   ft: FTGroup;
+  staking: StakingGroup;
+  scheduler: SchedulerGroup;
+  foreignAssets: ForeignAssetsGroup;
+  xcm: XcmGroup<UniqueHelper>;
+  xTokens: XTokensGroup<UniqueHelper>;
+  tokens: TokensGroup<UniqueHelper>;
 
-  constructor(logger?: ILogger) {
-    super(logger);
-    this.chain = new ChainGroup(this);
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? UniqueHelper);
+
     this.balance = new BalanceGroup(this);
-    this.address = new AddressGroup(this);
     this.collection = new CollectionGroup(this);
     this.nft = new NFTGroup(this);
     this.rft = new RFTGroup(this);
     this.ft = new FTGroup(this);
-  }  
+    this.staking = new StakingGroup(this);
+    this.scheduler = new SchedulerGroup(this);
+    this.foreignAssets = new ForeignAssetsGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.xTokens = new XTokensGroup(this);
+    this.tokens = new TokensGroup(this);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
 }
 
+export class XcmChainHelper extends ChainHelperBase {
+  async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
+    const wsProvider = new WsProvider(wsEndpoint);
+    this.api = new ApiPromise({
+      provider: wsProvider,
+    });
+    await this.api.isReadyOrError;
+    this.network = await UniqueHelper.detectNetwork(this.api);
+  }
+}
 
-class UniqueCollectionBase {
+export class RelayHelper extends XcmChainHelper {
+  xcm: XcmGroup<RelayHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? RelayHelper);
+
+    this.xcm = new XcmGroup(this, 'xcmPallet');
+  }
+}
+
+export class WestmintHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<WestmintHelper>;
+  xcm: XcmGroup<WestmintHelper>;
+  assets: AssetsGroup<WestmintHelper>;
+  xTokens: XTokensGroup<WestmintHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? WestmintHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.assets = new AssetsGroup(this);
+    this.xTokens = new XTokensGroup(this);
+  }
+}
+
+export class MoonbeamHelper extends XcmChainHelper {
+  balance: EthereumBalanceGroup<MoonbeamHelper>;
+  assetManager: MoonbeamAssetManagerGroup;
+  assets: AssetsGroup<MoonbeamHelper>;
+  xTokens: XTokensGroup<MoonbeamHelper>;
+  democracy: MoonbeamDemocracyGroup;
+  collective: {
+    council: MoonbeamCollectiveGroup,
+    techCommittee: MoonbeamCollectiveGroup,
+  };
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? MoonbeamHelper);
+
+    this.balance = new EthereumBalanceGroup(this);
+    this.assetManager = new MoonbeamAssetManagerGroup(this);
+    this.assets = new AssetsGroup(this);
+    this.xTokens = new XTokensGroup(this);
+    this.democracy = new MoonbeamDemocracyGroup(this);
+    this.collective = {
+      council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
+      techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),
+    };
+  }
+}
+
+export class AcalaHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<AcalaHelper>;
+  assetRegistry: AcalaAssetRegistryGroup;
+  xTokens: XTokensGroup<AcalaHelper>;
+  tokens: TokensGroup<AcalaHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? AcalaHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.assetRegistry = new AcalaAssetRegistryGroup(this);
+    this.xTokens = new XTokensGroup(this);
+    this.tokens = new TokensGroup(this);
+  }
+
+  getSudo<T extends AcalaHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
+  return class extends Base {
+    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter';
+    scheduledId: string;
+    blocksNum: number;
+    options: ISchedulerOptions;
+
+    constructor(...args: any[]) {
+      const logger = args[0] as ILogger;
+      const options = args[1] as {
+        scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
+        scheduledId: string,
+        blocksNum: number,
+        options: ISchedulerOptions
+      };
+
+      super(logger);
+
+      this.scheduleFn = options.scheduleFn;
+      this.scheduledId = options.scheduledId;
+      this.blocksNum = options.blocksNum;
+      this.options = options.options;
+    }
+
+    executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
+      const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
+      const extrinsic = 'api.tx.scheduler.' +  this.scheduleFn;
+
+      return super.executeExtrinsic(
+        sender,
+        extrinsic,
+        [
+          this.scheduledId,
+          this.blocksNum,
+          this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
+          this.options.priority ?? null,
+          {Value: scheduledTx},
+        ],
+        expectSuccess,
+      );
+    }
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
+  return class extends Base {
+    constructor(...args: any[]) {
+      super(...args);
+    }
+
+    executeExtrinsic (
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+
+      return super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudo',
+        [call],
+        expectSuccess,
+      );
+    }
+  };
+}
+
+export class UniqueBaseCollection {
   helper: UniqueHelper;
   collectionId: number;
 
@@ -2111,75 +2819,121 @@ class UniqueCollectionBase {
     return await this.helper.collection.getLastTokenId(this.collectionId);
   }
 
-  async isTokenExists(tokenId: number) {
-    return await this.helper.collection.isTokenExists(this.collectionId, tokenId);
+  async doesTokenExist(tokenId: number) {
+    return await this.helper.collection.doesTokenExist(this.collectionId, tokenId);
   }
 
   async getAdmins() {
     return await this.helper.collection.getAdmins(this.collectionId);
   }
 
+  async getAllowList() {
+    return await this.helper.collection.getAllowList(this.collectionId);
+  }
+
   async getEffectiveLimits() {
     return await this.helper.collection.getEffectiveLimits(this.collectionId);
   }
 
-  async setSponsor(signer: TSigner, sponsorAddress: TSubstrateAccount, label?: string) {
-    return await this.helper.collection.setSponsor(signer, this.collectionId, sponsorAddress, label);
-  }
-
-  async confirmSponsorship(signer: TSigner, label?: string) {
-    return await this.helper.collection.confirmSponsorship(signer, this.collectionId, label);
-  }
-
-  async setLimits(signer: TSigner, limits: ICollectionLimits, label?: string) {
-    return await this.helper.collection.setLimits(signer, this.collectionId, limits, label);
-  }
-
-  async changeOwner(signer: TSigner, ownerAddress: TSubstrateAccount, label?: string) {
-    return await this.helper.collection.changeOwner(signer, this.collectionId, ownerAddress, label);
-  }
-
-  async addAdmin(signer: TSigner, adminAddressObj: ICrossAccountId, label?: string) {
-    return await this.helper.collection.addAdmin(signer, this.collectionId, adminAddressObj, label);
-  }
-
-  async removeAdmin(signer: TSigner, adminAddressObj: ICrossAccountId, label?: string) {
-    return await this.helper.collection.removeAdmin(signer, this.collectionId, adminAddressObj, label);
-  }
-
-  async setProperties(signer: TSigner, properties: IProperty[], label?: string) {
-    return await this.helper.collection.setProperties(signer, this.collectionId, properties, label);
-  }
-
-  async deleteProperties(signer: TSigner, propertyKeys: string[], label?: string) {
-    return await this.helper.collection.deleteProperties(signer, this.collectionId, propertyKeys, label);
+  async getProperties(propertyKeys?: string[] | null) {
+    return await this.helper.collection.getProperties(this.collectionId, propertyKeys);
   }
 
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.collection.getTokenNextSponsored(this.collectionId, tokenId, addressObj);
   }
 
-  async setPermissions(signer: TSigner, permissions: ICollectionPermissions, label?: string) {
-    return await this.helper.collection.setPermissions(signer, this.collectionId, permissions, label);
+  async getOptions() {
+    return await this.helper.collection.getCollectionOptions(this.collectionId);
   }
 
-  async enableNesting(signer: TSigner, permissions: INestingPermissions, label?: string) {
-    return await this.helper.collection.enableNesting(signer, this.collectionId, permissions, label);
+  async setSponsor(signer: TSigner, sponsorAddress: TSubstrateAccount) {
+    return await this.helper.collection.setSponsor(signer, this.collectionId, sponsorAddress);
   }
 
-  async disableNesting(signer: TSigner, label?: string) {
-    return await this.helper.collection.disableNesting(signer, this.collectionId, label);
+  async confirmSponsorship(signer: TSigner) {
+    return await this.helper.collection.confirmSponsorship(signer, this.collectionId);
   }
 
-  async burn(signer: TSigner, label?: string) {
-    return await this.helper.collection.burn(signer, this.collectionId, label);
+  async removeSponsor(signer: TSigner) {
+    return await this.helper.collection.removeSponsor(signer, this.collectionId);
+  }
+
+  async setLimits(signer: TSigner, limits: ICollectionLimits) {
+    return await this.helper.collection.setLimits(signer, this.collectionId, limits);
+  }
+
+  async changeOwner(signer: TSigner, ownerAddress: TSubstrateAccount) {
+    return await this.helper.collection.changeOwner(signer, this.collectionId, ownerAddress);
+  }
+
+  async addAdmin(signer: TSigner, adminAddressObj: ICrossAccountId) {
+    return await this.helper.collection.addAdmin(signer, this.collectionId, adminAddressObj);
+  }
+
+  async addToAllowList(signer: TSigner, addressObj: ICrossAccountId) {
+    return await this.helper.collection.addToAllowList(signer, this.collectionId, addressObj);
+  }
+
+  async removeFromAllowList(signer: TSigner, addressObj: ICrossAccountId) {
+    return await this.helper.collection.removeFromAllowList(signer, this.collectionId, addressObj);
+  }
+
+  async removeAdmin(signer: TSigner, adminAddressObj: ICrossAccountId) {
+    return await this.helper.collection.removeAdmin(signer, this.collectionId, adminAddressObj);
+  }
+
+  async setProperties(signer: TSigner, properties: IProperty[]) {
+    return await this.helper.collection.setProperties(signer, this.collectionId, properties);
+  }
+
+  async deleteProperties(signer: TSigner, propertyKeys: string[]) {
+    return await this.helper.collection.deleteProperties(signer, this.collectionId, propertyKeys);
+  }
+
+  async setPermissions(signer: TSigner, permissions: ICollectionPermissions) {
+    return await this.helper.collection.setPermissions(signer, this.collectionId, permissions);
+  }
+
+  async enableNesting(signer: TSigner, permissions: INestingPermissions) {
+    return await this.helper.collection.enableNesting(signer, this.collectionId, permissions);
+  }
+
+  async disableNesting(signer: TSigner) {
+    return await this.helper.collection.disableNesting(signer, this.collectionId);
+  }
+
+  async burn(signer: TSigner) {
+    return await this.helper.collection.burn(signer, this.collectionId);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueBaseCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueBaseCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueBaseCollection(this.collectionId, this.helper.getSudo<T>());
   }
 }
 
 
-class UniqueNFTCollection extends UniqueCollectionBase {
+export class UniqueNFTCollection extends UniqueBaseCollection {
   getTokenObject(tokenId: number) {
-    return new UniqueNFTToken(tokenId, this);
+    return new UniqueNFToken(tokenId, this);
   }
 
   async getTokensByAddress(addressObj: ICrossAccountId) {
@@ -2187,7 +2941,7 @@ class UniqueNFTCollection extends UniqueCollectionBase {
   }
 
   async getToken(tokenId: number, blockHashAt?: string) {
-    return await this.helper.nft.getToken(this.collectionId, tokenId, blockHashAt);
+    return await this.helper.nft.getToken(this.collectionId, tokenId, [], blockHashAt);
   }
 
   async getTokenOwner(tokenId: number, blockHashAt?: string) {
@@ -2202,6 +2956,14 @@ class UniqueNFTCollection extends UniqueCollectionBase {
     return await this.helper.nft.getTokenChildren(this.collectionId, tokenId, blockHashAt);
   }
 
+  async getPropertyPermissions(propertyKeys: string[] | null = null) {
+    return await this.helper.nft.getPropertyPermissions(this.collectionId, propertyKeys);
+  }
+
+  async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
+    return await this.helper.nft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
+  }
+
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.nft.transferToken(signer, this.collectionId, tokenId, addressObj);
   }
@@ -2210,51 +2972,81 @@ class UniqueNFTCollection extends UniqueCollectionBase {
     return await this.helper.nft.transferTokenFrom(signer, this.collectionId, tokenId, fromAddressObj, toAddressObj);
   }
 
-  async approveToken(signer: TSigner, tokenId: number, toAddressObj: ICrossAccountId, label?: string) {
-    return await this.helper.nft.approveToken(signer, this.collectionId, tokenId, toAddressObj, label);
+  async approveToken(signer: TSigner, tokenId: number, toAddressObj: ICrossAccountId) {
+    return await this.helper.nft.approveToken(signer, this.collectionId, tokenId, toAddressObj);
   }
 
   async isTokenApproved(tokenId: number, toAddressObj: ICrossAccountId) {
     return await this.helper.nft.isTokenApproved(this.collectionId, tokenId, toAddressObj);
   }
 
-  async mintToken(signer: TSigner, owner: ICrossAccountId, properties?: IProperty[], label?: string) {
-    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties}, label);
+  async mintToken(signer: TSigner, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
+    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties});
   }
 
-  async mintMultipleTokens(signer: TSigner, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[], label?: string) {
-    return await this.helper.nft.mintMultipleTokens(signer, this.collectionId, tokens, label);
+  async mintMultipleTokens(signer: TSigner, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[]) {
+    return await this.helper.nft.mintMultipleTokens(signer, this.collectionId, tokens);
   }
 
-  async burnToken(signer: TSigner, tokenId: number, label?: string) {
-    return await this.helper.nft.burnToken(signer, this.collectionId, tokenId, label);
+  async burnToken(signer: TSigner, tokenId: number) {
+    return await this.helper.nft.burnToken(signer, this.collectionId, tokenId);
   }
 
-  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[], label?: string) {
-    return await this.helper.nft.setTokenProperties(signer, this.collectionId, tokenId, properties, label);
+  async burnTokenFrom(signer: TSigner, tokenId: number, fromAddressObj: ICrossAccountId) {
+    return await this.helper.nft.burnTokenFrom(signer, this.collectionId, tokenId, fromAddressObj);
   }
 
-  async deleteTokenProperties(signer: TSigner, tokenId: number, propertyKeys: string[], label?: string) {
-    return await this.helper.nft.deleteTokenProperties(signer, this.collectionId, tokenId, propertyKeys, label);
+  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[]) {
+    return await this.helper.nft.setTokenProperties(signer, this.collectionId, tokenId, properties);
   }
 
-  async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[], label?: string) {
-    return await this.helper.nft.setTokenPropertyPermissions(signer, this.collectionId, permissions, label);
+  async deleteTokenProperties(signer: TSigner, tokenId: number, propertyKeys: string[]) {
+    return await this.helper.nft.deleteTokenProperties(signer, this.collectionId, tokenId, propertyKeys);
   }
 
-  async nestToken(signer: TSigner, tokenId: number, toTokenObj: IToken, label?: string) {
-    return await this.helper.nft.nestToken(signer, {collectionId: this.collectionId, tokenId}, toTokenObj, label);
+  async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[]) {
+    return await this.helper.nft.setTokenPropertyPermissions(signer, this.collectionId, permissions);
   }
 
-  async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: IToken, toAddressObj: ICrossAccountId, label?: string) {
-    return await this.helper.nft.unnestToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj, label);
+  async nestToken(signer: TSigner, tokenId: number, toTokenObj: IToken) {
+    return await this.helper.nft.nestToken(signer, {collectionId: this.collectionId, tokenId}, toTokenObj);
+  }
+
+  async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
+    return await this.helper.nft.unnestToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueNFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueNFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueNFTCollection(this.collectionId, this.helper.getSudo<T>());
   }
 }
 
 
-class UniqueRFTCollection extends UniqueCollectionBase {
+export class UniqueRFTCollection extends UniqueBaseCollection {
   getTokenObject(tokenId: number) {
-    return new UniqueRFTToken(tokenId, this);
+    return new UniqueRFToken(tokenId, this);
+  }
+
+  async getToken(tokenId: number, blockHashAt?: string) {
+    return await this.helper.rft.getToken(this.collectionId, tokenId, [], blockHashAt);
   }
 
   async getTokensByAddress(addressObj: ICrossAccountId) {
@@ -2273,100 +3065,156 @@ class UniqueRFTCollection extends UniqueCollectionBase {
     return await this.helper.rft.getTokenTotalPieces(this.collectionId, tokenId);
   }
 
-  async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount=100n) {
-    return await this.helper.rft.transferToken(signer, this.collectionId, tokenId, addressObj, amount);
-  }
-
-  async transferTokenFrom(signer: TSigner, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=100n) {
-    return await this.helper.rft.transferTokenFrom(signer, this.collectionId, tokenId, fromAddressObj, toAddressObj, amount);
-  }
-
-  async approveToken(signer: TSigner, tokenId: number, toAddressObj: ICrossAccountId, amount=100n, label?: string) {
-    return await this.helper.rft.approveToken(signer, this.collectionId, tokenId, toAddressObj, label, amount);
-  }
-
   async getTokenApprovedPieces(tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
     return await this.helper.rft.getTokenApprovedPieces(this.collectionId, tokenId, toAddressObj, fromAddressObj);
   }
 
-  async repartitionToken(signer: TSigner, tokenId: number, amount: bigint, label?: string) {
-    return await this.helper.rft.repartitionToken(signer, this.collectionId, tokenId, amount, label);
+  async getPropertyPermissions(propertyKeys: string[] | null = null) {
+    return await this.helper.rft.getPropertyPermissions(this.collectionId, propertyKeys);
   }
 
-  async mintToken(signer: TSigner, owner: ICrossAccountId, pieces=100n, properties?: IProperty[], label?: string) {
-    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties}, label);
+  async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
+    return await this.helper.rft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
   }
 
-  async mintMultipleTokens(signer: TSigner, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[], label?: string) {
-    return await this.helper.rft.mintMultipleTokens(signer, this.collectionId, tokens, label);
+  async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.rft.transferToken(signer, this.collectionId, tokenId, addressObj, amount);
   }
 
-  async burnToken(signer: TSigner, tokenId: number, amount=100n, label?: string) {
-    return await this.helper.rft.burnToken(signer, this.collectionId, tokenId, label, amount);
+  async transferTokenFrom(signer: TSigner, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.rft.transferTokenFrom(signer, this.collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
-  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[], label?: string) {
-    return await this.helper.rft.setTokenProperties(signer, this.collectionId, tokenId, properties, label);
+  async approveToken(signer: TSigner, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.rft.approveToken(signer, this.collectionId, tokenId, toAddressObj, amount);
   }
 
-  async deleteTokenProperties(signer: TSigner, tokenId: number, propertyKeys: string[], label?: string) {
-    return await this.helper.rft.deleteTokenProperties(signer, this.collectionId, tokenId, propertyKeys, label);
+  async repartitionToken(signer: TSigner, tokenId: number, amount: bigint) {
+    return await this.helper.rft.repartitionToken(signer, this.collectionId, tokenId, amount);
   }
 
-  async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[], label?: string) {
-    return await this.helper.rft.setTokenPropertyPermissions(signer, this.collectionId, permissions, label);
+  async mintToken(signer: TSigner, pieces=1n, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
+    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties});
+  }
+
+  async mintMultipleTokens(signer: TSigner, tokens: {pieces: bigint, owner: ICrossAccountId, properties?: IProperty[]}[]) {
+    return await this.helper.rft.mintMultipleTokens(signer, this.collectionId, tokens);
+  }
+
+  async burnToken(signer: TSigner, tokenId: number, amount=1n) {
+    return await this.helper.rft.burnToken(signer, this.collectionId, tokenId, amount);
+  }
+
+  async burnTokenFrom(signer: TSigner, tokenId: number, fromAddressObj: ICrossAccountId,  amount=1n) {
+    return await this.helper.rft.burnTokenFrom(signer, this.collectionId, tokenId, fromAddressObj, amount);
+  }
+
+  async setTokenProperties(signer: TSigner, tokenId: number, properties: IProperty[]) {
+    return await this.helper.rft.setTokenProperties(signer, this.collectionId, tokenId, properties);
+  }
+
+  async deleteTokenProperties(signer: TSigner, tokenId: number, propertyKeys: string[]) {
+    return await this.helper.rft.deleteTokenProperties(signer, this.collectionId, tokenId, propertyKeys);
+  }
+
+  async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[]) {
+    return await this.helper.rft.setTokenPropertyPermissions(signer, this.collectionId, permissions);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueRFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueRFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueRFTCollection(this.collectionId, this.helper.getSudo<T>());
   }
 }
 
 
-class UniqueFTCollection extends UniqueCollectionBase {
-  async mint(signer: TSigner, owner: ICrossAccountId, amount: bigint, label?: string) {
-    return await this.helper.ft.mintTokens(signer, this.collectionId, owner, amount, label);
-  }
-
-  async mintWithOneOwner(signer: TSigner, owner: ICrossAccountId, tokens: {value: bigint}[], label?: string) {
-    return await this.helper.ft.mintMultipleTokensWithOneOwner(signer, this.collectionId, owner, tokens, label);
-  }
-
+export class UniqueFTCollection extends UniqueBaseCollection {
   async getBalance(addressObj: ICrossAccountId) {
     return await this.helper.ft.getBalance(this.collectionId, addressObj);
-  }
-
-  async getTop10Owners() {
-    return await this.helper.ft.getTop10Owners(this.collectionId);
-  }
-
-  async transfer(signer: TSigner, toAddressObj: ICrossAccountId, amount: bigint) {
-    return await this.helper.ft.transfer(signer, this.collectionId, toAddressObj, amount);
-  }
-
-  async transferFrom(signer: TSigner, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount: bigint) {
-    return await this.helper.ft.transferFrom(signer, this.collectionId, fromAddressObj, toAddressObj, amount);
-  }
-
-  async burnTokens(signer: TSigner, amount: bigint, label?: string) {
-    return await this.helper.ft.burnTokens(signer, this.collectionId, amount, label);
-  }
-
-  async burnTokensFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount: bigint, label?: string) {
-    return await this.helper.ft.burnTokensFrom(signer, this.collectionId, fromAddressObj, amount, label);
   }
 
   async getTotalPieces() {
     return await this.helper.ft.getTotalPieces(this.collectionId);
   }
 
-  async approveTokens(signer: TSigner, toAddressObj: ICrossAccountId, amount=100n, label?: string) {
-    return await this.helper.ft.approveTokens(signer, this.collectionId, toAddressObj, amount, label);
-  }
-
   async getApprovedTokens(fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
     return await this.helper.ft.getApprovedTokens(this.collectionId, fromAddressObj, toAddressObj);
+  }
+
+  async getTop10Owners() {
+    return await this.helper.ft.getTop10Owners(this.collectionId);
+  }
+
+  async mint(signer: TSigner, amount=1n, owner: ICrossAccountId = {Substrate: signer.address}) {
+    return await this.helper.ft.mintTokens(signer, this.collectionId, amount, owner);
+  }
+
+  async mintWithOneOwner(signer: TSigner, tokens: {value: bigint}[], owner: ICrossAccountId = {Substrate: signer.address}) {
+    return await this.helper.ft.mintMultipleTokensWithOneOwner(signer, this.collectionId, tokens, owner);
+  }
+
+  async transfer(signer: TSigner, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.ft.transfer(signer, this.collectionId, toAddressObj, amount);
+  }
+
+  async transferFrom(signer: TSigner, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.ft.transferFrom(signer, this.collectionId, fromAddressObj, toAddressObj, amount);
+  }
+
+  async burnTokens(signer: TSigner, amount=1n) {
+    return await this.helper.ft.burnTokens(signer, this.collectionId, amount);
+  }
+
+  async burnTokensFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.ft.burnTokensFrom(signer, this.collectionId, fromAddressObj, amount);
+  }
+
+  async approveTokens(signer: TSigner, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.helper.ft.approveTokens(signer, this.collectionId, toAddressObj, amount);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueFTCollection(this.collectionId, scheduledHelper);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueFTCollection(this.collectionId, this.helper.getSudo<T>());
   }
 }
 
 
-class UniqueTokenBase implements IToken {
+export class UniqueBaseToken {
   collection: UniqueNFTCollection | UniqueRFTCollection;
   collectionId: number;
   tokenId: number;
@@ -2381,17 +3229,51 @@ class UniqueTokenBase implements IToken {
     return await this.collection.getTokenNextSponsored(this.tokenId, addressObj);
   }
 
-  async setProperties(signer: TSigner, properties: IProperty[], label?: string) {
-    return await this.collection.setTokenProperties(signer, this.tokenId, properties, label);
+  async getProperties(propertyKeys?: string[] | null) {
+    return await this.collection.getTokenProperties(this.tokenId, propertyKeys);
   }
 
-  async deleteProperties(signer: TSigner, propertyKeys: string[], label?: string) {
-    return await this.collection.deleteTokenProperties(signer, this.tokenId, propertyKeys, label);
+  async setProperties(signer: TSigner, properties: IProperty[]) {
+    return await this.collection.setTokenProperties(signer, this.tokenId, properties);
+  }
+
+  async deleteProperties(signer: TSigner, propertyKeys: string[]) {
+    return await this.collection.deleteTokenProperties(signer, this.tokenId, propertyKeys);
+  }
+
+  async doesExist() {
+    return await this.collection.doesTokenExist(this.tokenId);
+  }
+
+  nestingAccount() {
+    return this.collection.helper.util.getTokenAccount(this);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueBaseToken(this.tokenId, scheduledCollection);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueBaseToken(this.tokenId, scheduledCollection);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueBaseToken(this.tokenId, this.collection.getSudo<T>());
   }
 }
 
 
-class UniqueNFTToken extends UniqueTokenBase {
+export class UniqueNFToken extends UniqueBaseToken {
   collection: UniqueNFTCollection;
 
   constructor(tokenId: number, collection: UniqueNFTCollection) {
@@ -2415,12 +3297,12 @@ class UniqueNFTToken extends UniqueTokenBase {
     return await this.collection.getTokenChildren(this.tokenId, blockHashAt);
   }
 
-  async nest(signer: TSigner, toTokenObj: IToken, label?: string) {
-    return await this.collection.nestToken(signer, this.tokenId, toTokenObj, label);
+  async nest(signer: TSigner, toTokenObj: IToken) {
+    return await this.collection.nestToken(signer, this.tokenId, toTokenObj);
   }
 
-  async unnest(signer: TSigner, fromTokenObj: IToken, toAddressObj: ICrossAccountId, label?: string) {
-    return await this.collection.unnestToken(signer, this.tokenId, fromTokenObj, toAddressObj, label);
+  async unnest(signer: TSigner, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
+    return await this.collection.unnestToken(signer, this.tokenId, fromTokenObj, toAddressObj);
   }
 
   async transfer(signer: TSigner, addressObj: ICrossAccountId) {
@@ -2431,25 +3313,55 @@ class UniqueNFTToken extends UniqueTokenBase {
     return await this.collection.transferTokenFrom(signer, this.tokenId, fromAddressObj, toAddressObj);
   }
 
-  async approve(signer: TSigner, toAddressObj: ICrossAccountId, label?: string) {
-    return await this.collection.approveToken(signer, this.tokenId, toAddressObj, label);
+  async approve(signer: TSigner, toAddressObj: ICrossAccountId) {
+    return await this.collection.approveToken(signer, this.tokenId, toAddressObj);
   }
 
   async isApproved(toAddressObj: ICrossAccountId) {
     return await this.collection.isTokenApproved(this.tokenId, toAddressObj);
   }
 
-  async burn(signer: TSigner, label?: string) {
-    return await this.collection.burnToken(signer, this.tokenId, label);
+  async burn(signer: TSigner) {
+    return await this.collection.burnToken(signer, this.tokenId);
+  }
+
+  async burnFrom(signer: TSigner, fromAddressObj: ICrossAccountId) {
+    return await this.collection.burnTokenFrom(signer, this.tokenId, fromAddressObj);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueNFToken(this.tokenId, scheduledCollection);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueNFToken(this.tokenId, scheduledCollection);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueNFToken(this.tokenId, this.collection.getSudo<T>());
   }
 }
 
-class UniqueRFTToken extends UniqueTokenBase {
+export class UniqueRFToken extends UniqueBaseToken {
   collection: UniqueRFTCollection;
 
   constructor(tokenId: number, collection: UniqueRFTCollection) {
     super(tokenId, collection);
     this.collection = collection;
+  }
+
+  async getData(blockHashAt?: string) {
+    return await this.collection.getToken(this.tokenId, blockHashAt);
   }
 
   async getTop10Owners() {
@@ -2464,27 +3376,53 @@ class UniqueRFTToken extends UniqueTokenBase {
     return await this.collection.getTokenTotalPieces(this.tokenId);
   }
 
-  async transfer(signer: TSigner, addressObj: ICrossAccountId, amount=100n) {
-    return await this.collection.transferToken(signer, this.tokenId, addressObj, amount);
-  }
-
-  async transferFrom(signer: TSigner, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=100n) {
-    return await this.collection.transferTokenFrom(signer, this.tokenId, fromAddressObj, toAddressObj, amount);
-  }
-
-  async approve(signer: TSigner, toAddressObj: ICrossAccountId, amount=100n, label?: string) {
-    return await this.collection.approveToken(signer, this.tokenId, toAddressObj, amount, label);
-  }
-
   async getApprovedPieces(fromAddressObj: ICrossAccountId, toAccountObj: ICrossAccountId) {
     return await this.collection.getTokenApprovedPieces(this.tokenId, fromAddressObj, toAccountObj);
   }
 
-  async repartition(signer: TSigner, amount: bigint, label?: string) {
-    return await this.collection.repartitionToken(signer, this.tokenId, amount, label);
+  async transfer(signer: TSigner, addressObj: ICrossAccountId, amount=1n) {
+    return await this.collection.transferToken(signer, this.tokenId, addressObj, amount);
   }
 
-  async burn(signer: TSigner, amount=100n, label?: string) {
-    return await this.collection.burnToken(signer, this.tokenId, amount, label);
+  async transferFrom(signer: TSigner, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.collection.transferTokenFrom(signer, this.tokenId, fromAddressObj, toAddressObj, amount);
+  }
+
+  async approve(signer: TSigner, toAddressObj: ICrossAccountId, amount=1n) {
+    return await this.collection.approveToken(signer, this.tokenId, toAddressObj, amount);
+  }
+
+  async repartition(signer: TSigner, amount: bigint) {
+    return await this.collection.repartitionToken(signer, this.tokenId, amount);
+  }
+
+  async burn(signer: TSigner, amount=1n) {
+    return await this.collection.burnToken(signer, this.tokenId, amount);
+  }
+
+  async burnFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount=1n) {
+    return await this.collection.burnTokenFrom(signer, this.tokenId, fromAddressObj, amount);
+  }
+
+  scheduleAt<T extends UniqueHelper>(
+    scheduledId: string,
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    return new UniqueRFToken(this.tokenId, scheduledCollection);
+  }
+
+  scheduleAfter<T extends UniqueHelper>(
+    scheduledId: string,
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    return new UniqueRFToken(this.tokenId, scheduledCollection);
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    return new UniqueRFToken(this.tokenId, this.collection.getSudo<T>());
   }
 }

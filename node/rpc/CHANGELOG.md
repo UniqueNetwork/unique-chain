@@ -1,4 +1,9 @@
 <!-- bureaucrate goes here -->
+## [v0.1.2] 2022-09-08
+
+### Added
+-  Support RPC for `AppPromotion` pallet. 
+
 ## [v0.1.1] 2022-08-16
 
 ### Other changes

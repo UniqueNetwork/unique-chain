@@ -9,7 +9,7 @@ import type { PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsBaseBaseInfo, R
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u128, u32, u64 } from '@polkadot/types-codec';
-import type { AnyNumber, Codec } from '@polkadot/types-codec/types';
+import type { AnyNumber, Codec, ITuple } from '@polkadot/types-codec/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
 import type { BeefySignedCommitment } from '@polkadot/types/interfaces/beefy';
@@ -35,6 +35,24 @@ export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
 declare module '@polkadot/rpc-core/types/jsonrpc' {
   interface RpcInterface {
+    appPromotion: {
+      /**
+       * Returns the total amount of unstaked tokens
+       **/
+      pendingUnstake: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Returns the total amount of unstaked tokens per block
+       **/
+      pendingUnstakePerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
+      /**
+       * Returns the total amount of staked tokens
+       **/
+      totalStaked: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
+      /**
+       * Returns the total amount of staked tokens per block when staked
+       **/
+      totalStakedPerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
+    };
     author: {
       /**
        * Returns true if the keystore has private keys for the given public key and key type.
@@ -143,22 +161,27 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
     };
     contracts: {
       /**
+       * @deprecated Use the runtime interface `api.call.contractsApi.call` instead
        * Executes a call to a contract
        **/
       call: AugmentedRpc<(callRequest: ContractCallRequest | { origin?: any; dest?: any; value?: any; gasLimit?: any; storageDepositLimit?: any; inputData?: any } | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<ContractExecResult>>;
       /**
+       * @deprecated Use the runtime interface `api.call.contractsApi.getStorage` instead
        * Returns the value under a specified storage key in a contract
        **/
       getStorage: AugmentedRpc<(address: AccountId | string | Uint8Array, key: H256 | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<Option<Bytes>>>;
       /**
+       * @deprecated Use the runtime interface `api.call.contractsApi.instantiate` instead
        * Instantiate a new contract
        **/
       instantiate: AugmentedRpc<(request: InstantiateRequest | { origin?: any; value?: any; gasLimit?: any; storageDepositLimit?: any; code?: any; data?: any; salt?: any } | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<ContractInstantiateResult>>;
       /**
+       * @deprecated Not available in newer versions of the contracts interfaces
        * Returns the projected time a given contract will be able to sustain paying its rent
        **/
       rentProjection: AugmentedRpc<(address: AccountId | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<Option<BlockNumber>>>;
       /**
+       * @deprecated Use the runtime interface `api.call.contractsApi.uploadCode` instead
        * Upload new code without instantiating a contract from it
        **/
       uploadCode: AugmentedRpc<(uploadRequest: CodeUploadRequest | { origin?: any; code?: any; storageDepositLimit?: any } | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<CodeUploadResult>>;
@@ -497,6 +520,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       getChildStorageSize: AugmentedRpc<(childStorageKey: StorageKey | string | Uint8Array | any, childDefinition: StorageKey | string | Uint8Array | any, childType: u32 | AnyNumber | Uint8Array, key: StorageKey | string | Uint8Array | any, at?: BlockHash | string | Uint8Array) => Observable<u64>>;
       /**
+       * @deprecated Use `api.rpc.state.getKeysPaged` to retrieve keys
        * Retrieves the keys with a certain prefix
        **/
       getKeys: AugmentedRpc<(key: StorageKey | string | Uint8Array | any, at?: BlockHash | string | Uint8Array) => Observable<Vec<StorageKey>>>;
@@ -509,6 +533,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       getMetadata: AugmentedRpc<(at?: BlockHash | string | Uint8Array) => Observable<Metadata>>;
       /**
+       * @deprecated Use `api.rpc.state.getKeysPaged` to retrieve keys
        * Returns the keys with prefix, leave empty to get all the keys (deprecated: Use getKeysPaged)
        **/
       getPairs: AugmentedRpc<(prefix: StorageKey | string | Uint8Array | any, at?: BlockHash | string | Uint8Array) => Observable<Vec<KeyValue>>>;
@@ -677,7 +702,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get collection properties, optionally limited to the provided keys
        **/
-      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get chain stats about collections
        **/
@@ -705,7 +730,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get property permissions, optionally limited to the provided keys
        **/
-      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
+      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
       /**
        * Get tokens nested directly into the token
        **/
@@ -713,7 +738,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get token data, including properties, optionally limited to the provided keys, and total pieces for an RFT
        **/
-      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
+      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
       /**
        * Check if the token exists
        **/
@@ -729,7 +754,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Get token properties, optionally limited to the provided keys
        **/
-      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
+      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
       /**
        * Get the topmost token owner in the hierarchy of a possibly nested token
        **/

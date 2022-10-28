@@ -5,11 +5,11 @@ use frame_support::{
 		DispatchResultWithPostInfo, PostDispatchInfo, Weight, DispatchErrorWithPostInfo,
 		DispatchResult,
 	},
-	weights::Pays,
+	dispatch::Pays,
 	traits::Get,
 };
 use sp_runtime::DispatchError;
-use up_data_structs::{CollectionId, CreateCollectionData};
+use up_data_structs::{CollectionId, CreateCollectionData, CollectionFlags};
 
 use crate::{pallet::Config, CommonCollectionOperations, CollectionHandle};
 
@@ -19,7 +19,7 @@ pub fn dispatch_weight<T: Config>() -> Weight {
 	// Read collection
 	<T as frame_system::Config>::DbWeight::get().reads(1)
 	// Dynamic dispatch?
-	+ 6_000_000
+	+ Weight::from_ref_time(6_000_000)
 	// submit_logs is measured as part of collection pallets
 }
 
@@ -78,7 +78,9 @@ pub trait CollectionDispatch<T: Config> {
 	/// * `data` - Description of the created collection.
 	fn create(
 		sender: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError>;
 
 	/// Delete the collection.

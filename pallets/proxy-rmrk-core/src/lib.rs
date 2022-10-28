@@ -197,7 +197,7 @@ pub mod pallet {
 		frame_system::Config + pallet_common::Config + pallet_nonfungible::Config + account::Config
 	{
 		/// Overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
@@ -1448,7 +1448,15 @@ impl<T: Config> Pallet<T> {
 		data: CreateCollectionData<T::AccountId>,
 		properties: impl Iterator<Item = Property>,
 	) -> Result<CollectionId, DispatchError> {
-		let collection_id = <PalletNft<T>>::init_collection(sender, data, true);
+		let collection_id = <PalletNft<T>>::init_collection(
+			sender.clone(),
+			sender,
+			data,
+			up_data_structs::CollectionFlags {
+				external: true,
+				..Default::default()
+			},
+		);
 
 		if let Err(DispatchError::Arithmetic(_)) = &collection_id {
 			return Err(<Error<T>>::NoAvailableCollectionId.into());

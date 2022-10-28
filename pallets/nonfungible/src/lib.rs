@@ -97,13 +97,13 @@ use frame_support::{
 	storage::with_transaction,
 	pallet_prelude::DispatchResultWithPostInfo,
 	pallet_prelude::Weight,
-	weights::{PostDispatchInfo, Pays},
+	dispatch::{PostDispatchInfo, Pays},
 };
 use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission, PropertyKey,
-	PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
-	AuxPropertyValue,
+	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,
+	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission,
+	PropertyKey, PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
+	TokenChild, AuxPropertyValue,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -114,7 +114,7 @@ use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap, collections::btree_set::BTreeSet};
+use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
 use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -278,7 +278,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			StorageVersion::new(1).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -295,6 +295,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self.0
 	}
 }
+
 impl<T: Config> WithRecorder<T> for NonfungibleHandle<T> {
 	fn recorder(&self) -> &SubstrateRecorder<T> {
 		self.0.recorder()
@@ -405,10 +406,11 @@ impl<T: Config> Pallet<T> {
 	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
-		is_external: bool,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, is_external)
+		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
 	}
 
 	/// Destroy NFT collection
@@ -536,7 +538,7 @@ impl<T: Config> Pallet<T> {
 		let current_token_account =
 			T::CrossTokenAddressMapping::token_to_address(collection.id, token);
 
-		let mut weight = 0 as Weight;
+		let mut weight = Weight::zero();
 
 		// This method is transactional, if user in fact doesn't have permissions to remove token -
 		// tokens removed here will be restored after rejected transaction

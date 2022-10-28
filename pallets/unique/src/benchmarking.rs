@@ -46,7 +46,9 @@ fn create_collection_helper<T: Config>(
 	)?;
 	Ok(<pallet_common::CreatedCollectionCount<T>>::get())
 }
-fn create_nft_collection<T: Config>(owner: T::AccountId) -> Result<CollectionId, DispatchError> {
+pub fn create_nft_collection<T: Config>(
+	owner: T::AccountId,
+) -> Result<CollectionId, DispatchError> {
 	create_collection_helper::<T>(owner, CollectionMode::NFT)
 }
 

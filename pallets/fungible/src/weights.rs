@@ -48,55 +48,55 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
 	fn create_item() -> Weight {
-		(18_195_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(18_195_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:4 w:4)
 	fn create_multiple_items_ex(b: u32, ) -> Weight {
-		(19_218_000 as Weight)
+		Weight::from_ref_time(19_218_000)
 			// Standard Error: 3_000
-			.saturating_add((4_516_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(4_516_000).saturating_mul(b as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(b as u64)))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
 	fn burn_item() -> Weight {
-		(18_719_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(18_719_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer() -> Weight {
-		(20_563_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(20_563_000)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: Fungible Balance (r:1 w:0)
 	// Storage: Fungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
-		(17_583_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(17_583_000)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Fungible Allowance (r:1 w:1)
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer_from() -> Weight {
-		(29_845_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(29_845_000)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Fungible Allowance (r:1 w:1)
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
 	fn burn_from() -> Weight {
-		(28_248_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(28_248_000)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 }
 
@@ -105,54 +105,54 @@ impl WeightInfo for () {
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
 	fn create_item() -> Weight {
-		(18_195_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(18_195_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:4 w:4)
 	fn create_multiple_items_ex(b: u32, ) -> Weight {
-		(19_218_000 as Weight)
+		Weight::from_ref_time(19_218_000)
 			// Standard Error: 3_000
-			.saturating_add((4_516_000 as Weight).saturating_mul(b as Weight))
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(Weight::from_ref_time(4_516_000).saturating_mul(b as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(b as u64)))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(b as u64)))
 	}
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
 	fn burn_item() -> Weight {
-		(18_719_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(18_719_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer() -> Weight {
-		(20_563_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(20_563_000)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	// Storage: Fungible Balance (r:1 w:0)
 	// Storage: Fungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
-		(17_583_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(17_583_000)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Fungible Allowance (r:1 w:1)
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer_from() -> Weight {
-		(29_845_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(29_845_000)
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: Fungible Allowance (r:1 w:1)
 	// Storage: Fungible TotalSupply (r:1 w:1)
 	// Storage: Fungible Balance (r:1 w:1)
 	fn burn_from() -> Weight {
-		(28_248_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(28_248_000)
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 }

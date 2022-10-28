@@ -11,6 +11,36 @@ export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>
 
 declare module '@polkadot/api-base/types/errors' {
   interface AugmentedErrors<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * Error due to action requiring admin to be set.
+       **/
+      AdminNotSet: AugmentedError<ApiType>;
+      /**
+       * Errors caused by incorrect actions with a locked balance.
+       **/
+      IncorrectLockedBalanceOperation: AugmentedError<ApiType>;
+      /**
+       * No permission to perform an action.
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Insufficient funds to perform an action.
+       **/
+      NotSufficientFunds: AugmentedError<ApiType>;
+      /**
+       * Occurs when a pending unstake cannot be added in this block. PENDING_LIMIT_PER_BLOCK` limits exceeded.
+       **/
+      PendingForBlockOverflow: AugmentedError<ApiType>;
+      /**
+       * The error is due to the fact that the collection/contract must already be sponsored in order to perform the action.
+       **/
+      SponsorNotSet: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -265,17 +295,54 @@ declare module '@polkadot/api-base/types/errors' {
     };
     evmContractHelpers: {
       /**
-       * This method is only executable by owner
+       * No pending sponsor for contract.
+       **/
+      NoPendingSponsor: AugmentedError<ApiType>;
+      /**
+       * This method is only executable by contract owner
        **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * Number of methods that sponsored limit is defined for exceeds maximum.
+       **/
+      TooManyMethodsHaveSponsoredLimit: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
     evmMigration: {
+      /**
+       * Migration of this account is not yet started, or already finished.
+       **/
       AccountIsNotMigrating: AugmentedError<ApiType>;
+      /**
+       * Can only migrate to empty address.
+       **/
       AccountNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    foreignAssets: {
+      /**
+       * AssetId exists
+       **/
+      AssetIdExisted: AugmentedError<ApiType>;
+      /**
+       * AssetId not exists
+       **/
+      AssetIdNotExists: AugmentedError<ApiType>;
+      /**
+       * The given location could not be used (e.g. because it cannot be expressed in the
+       * desired version of XCM).
+       **/
+      BadLocation: AugmentedError<ApiType>;
+      /**
+       * MultiLocation existed
+       **/
+      MultiLocationExisted: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -569,28 +636,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    scheduler: {
-      /**
-       * Failed to schedule a call
-       **/
-      FailedToSchedule: AugmentedError<ApiType>;
-      /**
-       * Cannot find the scheduled call.
-       **/
-      NotFound: AugmentedError<ApiType>;
-      /**
-       * Reschedule failed because it does not change scheduled time.
-       **/
-      RescheduleNoChange: AugmentedError<ApiType>;
-      /**
-       * Given target block number is in the past.
-       **/
-      TargetBlockNumberInPast: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     structure: {
       /**
        * While nesting, reached the breadth limit of nesting, exceeding the provided budget.
@@ -652,6 +697,41 @@ declare module '@polkadot/api-base/types/errors' {
        * and the new runtime.
        **/
       SpecVersionNeedsToIncrease: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    tokens: {
+      /**
+       * Cannot convert Amount into Balance type
+       **/
+      AmountIntoBalanceFailed: AugmentedError<ApiType>;
+      /**
+       * The balance is too low
+       **/
+      BalanceTooLow: AugmentedError<ApiType>;
+      /**
+       * Beneficiary account must pre-exist
+       **/
+      DeadAccount: AugmentedError<ApiType>;
+      /**
+       * Value too low to create account due to existential deposit
+       **/
+      ExistentialDeposit: AugmentedError<ApiType>;
+      /**
+       * Transfer/payment would kill account
+       **/
+      KeepAlive: AugmentedError<ApiType>;
+      /**
+       * Failed because liquidity restrictions due to locking
+       **/
+      LiquidityRestrictions: AugmentedError<ApiType>;
+      /**
+       * Failed because the maximum locks was exceeded
+       **/
+      MaxLocksExceeded: AugmentedError<ApiType>;
+      TooManyReserves: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -757,6 +837,91 @@ declare module '@polkadot/api-base/types/errors' {
        * Provided weight is possibly not enough to execute the message.
        **/
       WeightOverLimit: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    xTokens: {
+      /**
+       * Asset has no reserve location.
+       **/
+      AssetHasNoReserve: AugmentedError<ApiType>;
+      /**
+       * The specified index does not exist in a MultiAssets struct.
+       **/
+      AssetIndexNonExistent: AugmentedError<ApiType>;
+      /**
+       * The version of the `Versioned` value used is not able to be
+       * interpreted.
+       **/
+      BadVersion: AugmentedError<ApiType>;
+      /**
+       * Could not re-anchor the assets to declare the fees for the
+       * destination chain.
+       **/
+      CannotReanchor: AugmentedError<ApiType>;
+      /**
+       * The destination `MultiLocation` provided cannot be inverted.
+       **/
+      DestinationNotInvertible: AugmentedError<ApiType>;
+      /**
+       * We tried sending distinct asset and fee but they have different
+       * reserve chains.
+       **/
+      DistinctReserveForAssetAndFee: AugmentedError<ApiType>;
+      /**
+       * Fee is not enough.
+       **/
+      FeeNotEnough: AugmentedError<ApiType>;
+      /**
+       * Could not get ancestry of asset reserve location.
+       **/
+      InvalidAncestry: AugmentedError<ApiType>;
+      /**
+       * The MultiAsset is invalid.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
+      /**
+       * Invalid transfer destination.
+       **/
+      InvalidDest: AugmentedError<ApiType>;
+      /**
+       * MinXcmFee not registered for certain reserve location
+       **/
+      MinXcmFeeNotDefined: AugmentedError<ApiType>;
+      /**
+       * Not cross-chain transfer.
+       **/
+      NotCrossChainTransfer: AugmentedError<ApiType>;
+      /**
+       * Currency is not cross-chain transferable.
+       **/
+      NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
+      /**
+       * Not supported MultiLocation
+       **/
+      NotSupportedMultiLocation: AugmentedError<ApiType>;
+      /**
+       * The number of assets to be sent is over the maximum.
+       **/
+      TooManyAssetsBeingSent: AugmentedError<ApiType>;
+      /**
+       * The message's weight could not be determined.
+       **/
+      UnweighableMessage: AugmentedError<ApiType>;
+      /**
+       * XCM execution failed.
+       **/
+      XcmExecutionFailed: AugmentedError<ApiType>;
+      /**
+       * The transfering asset amount is zero.
+       **/
+      ZeroAmount: AugmentedError<ApiType>;
+      /**
+       * The fee is zero.
+       **/
+      ZeroFee: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

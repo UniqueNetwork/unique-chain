@@ -1,0 +1,19 @@
+[package]
+name = "evm-coder-procedural"
+version = "0.2.0"
+license = "GPLv3"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+# Ethereum uses keccak (=sha3) for selectors
+sha3 = "0.10.1"
+# Value formatting
+hex = "0.4.3"
+Inflector = "0.11.4"
+# General proc-macro utilities
+quote = "1.0"
+proc-macro2 = "1.0"
+syn = { version = "1.0", features = ["full"] }

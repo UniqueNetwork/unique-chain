@@ -3,7 +3,7 @@
 
 import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill, Weight } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
 /** @name CumulusPalletDmpQueueCall */
@@ -11,14 +11,14 @@ export interface CumulusPalletDmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
   readonly asServiceOverweight: {
     readonly index: u64;
-    readonly weightLimit: u64;
+    readonly weightLimit: Weight;
   } & Struct;
   readonly type: 'ServiceOverweight';
 }
 
 /** @name CumulusPalletDmpQueueConfigData */
 export interface CumulusPalletDmpQueueConfigData extends Struct {
-  readonly maxIndividual: u64;
+  readonly maxIndividual: Weight;
 }
 
 /** @name CumulusPalletDmpQueueError */
@@ -46,19 +46,19 @@ export interface CumulusPalletDmpQueueEvent extends Enum {
   readonly isWeightExhausted: boolean;
   readonly asWeightExhausted: {
     readonly messageId: U8aFixed;
-    readonly remainingWeight: u64;
-    readonly requiredWeight: u64;
+    readonly remainingWeight: Weight;
+    readonly requiredWeight: Weight;
   } & Struct;
   readonly isOverweightEnqueued: boolean;
   readonly asOverweightEnqueued: {
     readonly messageId: U8aFixed;
     readonly overweightIndex: u64;
-    readonly requiredWeight: u64;
+    readonly requiredWeight: Weight;
   } & Struct;
   readonly isOverweightServiced: boolean;
   readonly asOverweightServiced: {
     readonly overweightIndex: u64;
-    readonly weightUsed: u64;
+    readonly weightUsed: Weight;
   } & Struct;
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward' | 'WeightExhausted' | 'OverweightEnqueued' | 'OverweightServiced';
 }
@@ -122,7 +122,7 @@ export interface CumulusPalletParachainSystemEvent extends Enum {
   } & Struct;
   readonly isDownwardMessagesProcessed: boolean;
   readonly asDownwardMessagesProcessed: {
-    readonly weightUsed: u64;
+    readonly weightUsed: Weight;
     readonly dmqHead: H256;
   } & Struct;
   readonly type: 'ValidationFunctionStored' | 'ValidationFunctionApplied' | 'ValidationFunctionDiscarded' | 'UpgradeAuthorized' | 'DownwardMessagesReceived' | 'DownwardMessagesProcessed';
@@ -153,20 +153,12 @@ export interface CumulusPalletXcmEvent extends Enum {
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward';
 }
 
-/** @name CumulusPalletXcmOrigin */
-export interface CumulusPalletXcmOrigin extends Enum {
-  readonly isRelay: boolean;
-  readonly isSiblingParachain: boolean;
-  readonly asSiblingParachain: u32;
-  readonly type: 'Relay' | 'SiblingParachain';
-}
-
 /** @name CumulusPalletXcmpQueueCall */
 export interface CumulusPalletXcmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
   readonly asServiceOverweight: {
     readonly index: u64;
-    readonly weightLimit: u64;
+    readonly weightLimit: Weight;
   } & Struct;
   readonly isSuspendXcmExecution: boolean;
   readonly isResumeXcmExecution: boolean;
@@ -184,15 +176,15 @@ export interface CumulusPalletXcmpQueueCall extends Enum {
   } & Struct;
   readonly isUpdateThresholdWeight: boolean;
   readonly asUpdateThresholdWeight: {
-    readonly new_: u64;
+    readonly new_: Weight;
   } & Struct;
   readonly isUpdateWeightRestrictDecay: boolean;
   readonly asUpdateWeightRestrictDecay: {
-    readonly new_: u64;
+    readonly new_: Weight;
   } & Struct;
   readonly isUpdateXcmpMaxIndividualWeight: boolean;
   readonly asUpdateXcmpMaxIndividualWeight: {
-    readonly new_: u64;
+    readonly new_: Weight;
   } & Struct;
   readonly type: 'ServiceOverweight' | 'SuspendXcmExecution' | 'ResumeXcmExecution' | 'UpdateSuspendThreshold' | 'UpdateDropThreshold' | 'UpdateResumeThreshold' | 'UpdateThresholdWeight' | 'UpdateWeightRestrictDecay' | 'UpdateXcmpMaxIndividualWeight';
 }
@@ -212,13 +204,13 @@ export interface CumulusPalletXcmpQueueEvent extends Enum {
   readonly isSuccess: boolean;
   readonly asSuccess: {
     readonly messageHash: Option<H256>;
-    readonly weight: u64;
+    readonly weight: Weight;
   } & Struct;
   readonly isFail: boolean;
   readonly asFail: {
     readonly messageHash: Option<H256>;
     readonly error: XcmV2TraitsError;
-    readonly weight: u64;
+    readonly weight: Weight;
   } & Struct;
   readonly isBadVersion: boolean;
   readonly asBadVersion: {
@@ -241,12 +233,12 @@ export interface CumulusPalletXcmpQueueEvent extends Enum {
     readonly sender: u32;
     readonly sentAt: u32;
     readonly index: u64;
-    readonly required: u64;
+    readonly required: Weight;
   } & Struct;
   readonly isOverweightServiced: boolean;
   readonly asOverweightServiced: {
     readonly index: u64;
-    readonly used: u64;
+    readonly used: Weight;
   } & Struct;
   readonly type: 'Success' | 'Fail' | 'BadVersion' | 'BadFormat' | 'UpwardMessageSent' | 'XcmpMessageSent' | 'OverweightEnqueued' | 'OverweightServiced';
 }
@@ -286,9 +278,9 @@ export interface CumulusPalletXcmpQueueQueueConfigData extends Struct {
   readonly suspendThreshold: u32;
   readonly dropThreshold: u32;
   readonly resumeThreshold: u32;
-  readonly thresholdWeight: u64;
-  readonly weightRestrictDecay: u64;
-  readonly xcmpMaxIndividualWeight: u64;
+  readonly thresholdWeight: Weight;
+  readonly weightRestrictDecay: Weight;
+  readonly xcmpMaxIndividualWeight: Weight;
 }
 
 /** @name CumulusPrimitivesParachainInherentParachainInherentData */
@@ -501,88 +493,57 @@ export interface FpRpcTransactionStatus extends Struct {
   readonly logsBloom: EthbloomBloom;
 }
 
-/** @name FrameSupportDispatchRawOrigin */
-export interface FrameSupportDispatchRawOrigin extends Enum {
-  readonly isRoot: boolean;
-  readonly isSigned: boolean;
-  readonly asSigned: AccountId32;
-  readonly isNone: boolean;
-  readonly type: 'Root' | 'Signed' | 'None';
-}
-
-/** @name FrameSupportPalletId */
-export interface FrameSupportPalletId extends U8aFixed {}
-
-/** @name FrameSupportScheduleLookupError */
-export interface FrameSupportScheduleLookupError extends Enum {
-  readonly isUnknown: boolean;
-  readonly isBadFormat: boolean;
-  readonly type: 'Unknown' | 'BadFormat';
-}
-
-/** @name FrameSupportScheduleMaybeHashed */
-export interface FrameSupportScheduleMaybeHashed extends Enum {
-  readonly isValue: boolean;
-  readonly asValue: Call;
-  readonly isHash: boolean;
-  readonly asHash: H256;
-  readonly type: 'Value' | 'Hash';
-}
-
-/** @name FrameSupportTokensMiscBalanceStatus */
-export interface FrameSupportTokensMiscBalanceStatus extends Enum {
-  readonly isFree: boolean;
-  readonly isReserved: boolean;
-  readonly type: 'Free' | 'Reserved';
-}
-
-/** @name FrameSupportWeightsDispatchClass */
-export interface FrameSupportWeightsDispatchClass extends Enum {
+/** @name FrameSupportDispatchDispatchClass */
+export interface FrameSupportDispatchDispatchClass extends Enum {
   readonly isNormal: boolean;
   readonly isOperational: boolean;
   readonly isMandatory: boolean;
   readonly type: 'Normal' | 'Operational' | 'Mandatory';
 }
 
-/** @name FrameSupportWeightsDispatchInfo */
-export interface FrameSupportWeightsDispatchInfo extends Struct {
-  readonly weight: u64;
-  readonly class: FrameSupportWeightsDispatchClass;
-  readonly paysFee: FrameSupportWeightsPays;
+/** @name FrameSupportDispatchDispatchInfo */
+export interface FrameSupportDispatchDispatchInfo extends Struct {
+  readonly weight: Weight;
+  readonly class: FrameSupportDispatchDispatchClass;
+  readonly paysFee: FrameSupportDispatchPays;
 }
 
-/** @name FrameSupportWeightsPays */
-export interface FrameSupportWeightsPays extends Enum {
+/** @name FrameSupportDispatchPays */
+export interface FrameSupportDispatchPays extends Enum {
   readonly isYes: boolean;
   readonly isNo: boolean;
   readonly type: 'Yes' | 'No';
 }
 
-/** @name FrameSupportWeightsPerDispatchClassU32 */
-export interface FrameSupportWeightsPerDispatchClassU32 extends Struct {
+/** @name FrameSupportDispatchPerDispatchClassU32 */
+export interface FrameSupportDispatchPerDispatchClassU32 extends Struct {
   readonly normal: u32;
   readonly operational: u32;
   readonly mandatory: u32;
 }
 
-/** @name FrameSupportWeightsPerDispatchClassU64 */
-export interface FrameSupportWeightsPerDispatchClassU64 extends Struct {
-  readonly normal: u64;
-  readonly operational: u64;
-  readonly mandatory: u64;
+/** @name FrameSupportDispatchPerDispatchClassWeight */
+export interface FrameSupportDispatchPerDispatchClassWeight extends Struct {
+  readonly normal: Weight;
+  readonly operational: Weight;
+  readonly mandatory: Weight;
 }
 
-/** @name FrameSupportWeightsPerDispatchClassWeightsPerClass */
-export interface FrameSupportWeightsPerDispatchClassWeightsPerClass extends Struct {
+/** @name FrameSupportDispatchPerDispatchClassWeightsPerClass */
+export interface FrameSupportDispatchPerDispatchClassWeightsPerClass extends Struct {
   readonly normal: FrameSystemLimitsWeightsPerClass;
   readonly operational: FrameSystemLimitsWeightsPerClass;
   readonly mandatory: FrameSystemLimitsWeightsPerClass;
 }
 
-/** @name FrameSupportWeightsRuntimeDbWeight */
-export interface FrameSupportWeightsRuntimeDbWeight extends Struct {
-  readonly read: u64;
-  readonly write: u64;
+/** @name FrameSupportPalletId */
+export interface FrameSupportPalletId extends U8aFixed {}
+
+/** @name FrameSupportTokensMiscBalanceStatus */
+export interface FrameSupportTokensMiscBalanceStatus extends Enum {
+  readonly isFree: boolean;
+  readonly isReserved: boolean;
+  readonly type: 'Free' | 'Reserved';
 }
 
 /** @name FrameSystemAccountInfo */
@@ -651,12 +612,12 @@ export interface FrameSystemError extends Enum {
 export interface FrameSystemEvent extends Enum {
   readonly isExtrinsicSuccess: boolean;
   readonly asExtrinsicSuccess: {
-    readonly dispatchInfo: FrameSupportWeightsDispatchInfo;
+    readonly dispatchInfo: FrameSupportDispatchDispatchInfo;
   } & Struct;
   readonly isExtrinsicFailed: boolean;
   readonly asExtrinsicFailed: {
     readonly dispatchError: SpRuntimeDispatchError;
-    readonly dispatchInfo: FrameSupportWeightsDispatchInfo;
+    readonly dispatchInfo: FrameSupportDispatchDispatchInfo;
   } & Struct;
   readonly isCodeUpdated: boolean;
   readonly isNewAccount: boolean;
@@ -691,6 +652,9 @@ export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 /** @name FrameSystemExtensionsCheckSpecVersion */
 export interface FrameSystemExtensionsCheckSpecVersion extends Null {}
 
+/** @name FrameSystemExtensionsCheckTxVersion */
+export interface FrameSystemExtensionsCheckTxVersion extends Null {}
+
 /** @name FrameSystemExtensionsCheckWeight */
 export interface FrameSystemExtensionsCheckWeight extends Null {}
 
@@ -702,22 +666,22 @@ export interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
 
 /** @name FrameSystemLimitsBlockLength */
 export interface FrameSystemLimitsBlockLength extends Struct {
-  readonly max: FrameSupportWeightsPerDispatchClassU32;
+  readonly max: FrameSupportDispatchPerDispatchClassU32;
 }
 
 /** @name FrameSystemLimitsBlockWeights */
 export interface FrameSystemLimitsBlockWeights extends Struct {
-  readonly baseBlock: u64;
-  readonly maxBlock: u64;
-  readonly perClass: FrameSupportWeightsPerDispatchClassWeightsPerClass;
+  readonly baseBlock: Weight;
+  readonly maxBlock: Weight;
+  readonly perClass: FrameSupportDispatchPerDispatchClassWeightsPerClass;
 }
 
 /** @name FrameSystemLimitsWeightsPerClass */
 export interface FrameSystemLimitsWeightsPerClass extends Struct {
-  readonly baseExtrinsic: u64;
-  readonly maxExtrinsic: Option<u64>;
-  readonly maxTotal: Option<u64>;
-  readonly reserved: Option<u64>;
+  readonly baseExtrinsic: Weight;
+  readonly maxExtrinsic: Option<Weight>;
+  readonly maxTotal: Option<Weight>;
+  readonly reserved: Option<Weight>;
 }
 
 /** @name FrameSystemPhase */
@@ -729,23 +693,165 @@ export interface FrameSystemPhase extends Enum {
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
 }
 
-/** @name OpalRuntimeOriginCaller */
-export interface OpalRuntimeOriginCaller extends Enum {
-  readonly isSystem: boolean;
-  readonly asSystem: FrameSupportDispatchRawOrigin;
-  readonly isVoid: boolean;
-  readonly asVoid: SpCoreVoid;
-  readonly isPolkadotXcm: boolean;
-  readonly asPolkadotXcm: PalletXcmOrigin;
-  readonly isCumulusXcm: boolean;
-  readonly asCumulusXcm: CumulusPalletXcmOrigin;
-  readonly isEthereum: boolean;
-  readonly asEthereum: PalletEthereumRawOrigin;
-  readonly type: 'System' | 'Void' | 'PolkadotXcm' | 'CumulusXcm' | 'Ethereum';
-}
-
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
+
+/** @name OrmlTokensAccountData */
+export interface OrmlTokensAccountData extends Struct {
+  readonly free: u128;
+  readonly reserved: u128;
+  readonly frozen: u128;
+}
+
+/** @name OrmlTokensBalanceLock */
+export interface OrmlTokensBalanceLock extends Struct {
+  readonly id: U8aFixed;
+  readonly amount: u128;
+}
+
+/** @name OrmlTokensModuleCall */
+export interface OrmlTokensModuleCall extends Enum {
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: Compact<u128>;
+  } & Struct;
+  readonly isTransferAll: boolean;
+  readonly asTransferAll: {
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly keepAlive: bool;
+  } & Struct;
+  readonly isTransferKeepAlive: boolean;
+  readonly asTransferKeepAlive: {
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: Compact<u128>;
+  } & Struct;
+  readonly isForceTransfer: boolean;
+  readonly asForceTransfer: {
+    readonly source: MultiAddress;
+    readonly dest: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: Compact<u128>;
+  } & Struct;
+  readonly isSetBalance: boolean;
+  readonly asSetBalance: {
+    readonly who: MultiAddress;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly newFree: Compact<u128>;
+    readonly newReserved: Compact<u128>;
+  } & Struct;
+  readonly type: 'Transfer' | 'TransferAll' | 'TransferKeepAlive' | 'ForceTransfer' | 'SetBalance';
+}
+
+/** @name OrmlTokensModuleError */
+export interface OrmlTokensModuleError extends Enum {
+  readonly isBalanceTooLow: boolean;
+  readonly isAmountIntoBalanceFailed: boolean;
+  readonly isLiquidityRestrictions: boolean;
+  readonly isMaxLocksExceeded: boolean;
+  readonly isKeepAlive: boolean;
+  readonly isExistentialDeposit: boolean;
+  readonly isDeadAccount: boolean;
+  readonly isTooManyReserves: boolean;
+  readonly type: 'BalanceTooLow' | 'AmountIntoBalanceFailed' | 'LiquidityRestrictions' | 'MaxLocksExceeded' | 'KeepAlive' | 'ExistentialDeposit' | 'DeadAccount' | 'TooManyReserves';
+}
+
+/** @name OrmlTokensModuleEvent */
+export interface OrmlTokensModuleEvent extends Enum {
+  readonly isEndowed: boolean;
+  readonly asEndowed: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isDustLost: boolean;
+  readonly asDustLost: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly from: AccountId32;
+    readonly to: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isReserved: boolean;
+  readonly asReserved: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnreserved: boolean;
+  readonly asUnreserved: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isReserveRepatriated: boolean;
+  readonly asReserveRepatriated: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly from: AccountId32;
+    readonly to: AccountId32;
+    readonly amount: u128;
+    readonly status: FrameSupportTokensMiscBalanceStatus;
+  } & Struct;
+  readonly isBalanceSet: boolean;
+  readonly asBalanceSet: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly free: u128;
+    readonly reserved: u128;
+  } & Struct;
+  readonly isTotalIssuanceSet: boolean;
+  readonly asTotalIssuanceSet: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: u128;
+  } & Struct;
+  readonly isWithdrawn: boolean;
+  readonly asWithdrawn: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isSlashed: boolean;
+  readonly asSlashed: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly freeAmount: u128;
+    readonly reservedAmount: u128;
+  } & Struct;
+  readonly isDeposited: boolean;
+  readonly asDeposited: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isLockSet: boolean;
+  readonly asLockSet: {
+    readonly lockId: U8aFixed;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isLockRemoved: boolean;
+  readonly asLockRemoved: {
+    readonly lockId: U8aFixed;
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly who: AccountId32;
+  } & Struct;
+  readonly type: 'Endowed' | 'DustLost' | 'Transfer' | 'Reserved' | 'Unreserved' | 'ReserveRepatriated' | 'BalanceSet' | 'TotalIssuanceSet' | 'Withdrawn' | 'Slashed' | 'Deposited' | 'LockSet' | 'LockRemoved';
+}
+
+/** @name OrmlTokensReserveData */
+export interface OrmlTokensReserveData extends Struct {
+  readonly id: Null;
+  readonly amount: u128;
+}
 
 /** @name OrmlVestingModuleCall */
 export interface OrmlVestingModuleCall extends Enum {
@@ -804,6 +910,147 @@ export interface OrmlVestingVestingSchedule extends Struct {
   readonly period: u32;
   readonly periodCount: u32;
   readonly perPeriod: Compact<u128>;
+}
+
+/** @name OrmlXtokensModuleCall */
+export interface OrmlXtokensModuleCall extends Enum {
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: u128;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMultiasset: boolean;
+  readonly asTransferMultiasset: {
+    readonly asset: XcmVersionedMultiAsset;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferWithFee: boolean;
+  readonly asTransferWithFee: {
+    readonly currencyId: PalletForeignAssetsAssetIds;
+    readonly amount: u128;
+    readonly fee: u128;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMultiassetWithFee: boolean;
+  readonly asTransferMultiassetWithFee: {
+    readonly asset: XcmVersionedMultiAsset;
+    readonly fee: XcmVersionedMultiAsset;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMulticurrencies: boolean;
+  readonly asTransferMulticurrencies: {
+    readonly currencies: Vec<ITuple<[PalletForeignAssetsAssetIds, u128]>>;
+    readonly feeItem: u32;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly isTransferMultiassets: boolean;
+  readonly asTransferMultiassets: {
+    readonly assets: XcmVersionedMultiAssets;
+    readonly feeItem: u32;
+    readonly dest: XcmVersionedMultiLocation;
+    readonly destWeight: u64;
+  } & Struct;
+  readonly type: 'Transfer' | 'TransferMultiasset' | 'TransferWithFee' | 'TransferMultiassetWithFee' | 'TransferMulticurrencies' | 'TransferMultiassets';
+}
+
+/** @name OrmlXtokensModuleError */
+export interface OrmlXtokensModuleError extends Enum {
+  readonly isAssetHasNoReserve: boolean;
+  readonly isNotCrossChainTransfer: boolean;
+  readonly isInvalidDest: boolean;
+  readonly isNotCrossChainTransferableCurrency: boolean;
+  readonly isUnweighableMessage: boolean;
+  readonly isXcmExecutionFailed: boolean;
+  readonly isCannotReanchor: boolean;
+  readonly isInvalidAncestry: boolean;
+  readonly isInvalidAsset: boolean;
+  readonly isDestinationNotInvertible: boolean;
+  readonly isBadVersion: boolean;
+  readonly isDistinctReserveForAssetAndFee: boolean;
+  readonly isZeroFee: boolean;
+  readonly isZeroAmount: boolean;
+  readonly isTooManyAssetsBeingSent: boolean;
+  readonly isAssetIndexNonExistent: boolean;
+  readonly isFeeNotEnough: boolean;
+  readonly isNotSupportedMultiLocation: boolean;
+  readonly isMinXcmFeeNotDefined: boolean;
+  readonly type: 'AssetHasNoReserve' | 'NotCrossChainTransfer' | 'InvalidDest' | 'NotCrossChainTransferableCurrency' | 'UnweighableMessage' | 'XcmExecutionFailed' | 'CannotReanchor' | 'InvalidAncestry' | 'InvalidAsset' | 'DestinationNotInvertible' | 'BadVersion' | 'DistinctReserveForAssetAndFee' | 'ZeroFee' | 'ZeroAmount' | 'TooManyAssetsBeingSent' | 'AssetIndexNonExistent' | 'FeeNotEnough' | 'NotSupportedMultiLocation' | 'MinXcmFeeNotDefined';
+}
+
+/** @name OrmlXtokensModuleEvent */
+export interface OrmlXtokensModuleEvent extends Enum {
+  readonly isTransferredMultiAssets: boolean;
+  readonly asTransferredMultiAssets: {
+    readonly sender: AccountId32;
+    readonly assets: XcmV1MultiassetMultiAssets;
+    readonly fee: XcmV1MultiAsset;
+    readonly dest: XcmV1MultiLocation;
+  } & Struct;
+  readonly type: 'TransferredMultiAssets';
+}
+
+/** @name PalletAppPromotionCall */
+export interface PalletAppPromotionCall extends Enum {
+  readonly isSetAdminAddress: boolean;
+  readonly asSetAdminAddress: {
+    readonly admin: PalletEvmAccountBasicCrossAccountIdRepr;
+  } & Struct;
+  readonly isStake: boolean;
+  readonly asStake: {
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnstake: boolean;
+  readonly isSponsorCollection: boolean;
+  readonly asSponsorCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isStopSponsoringCollection: boolean;
+  readonly asStopSponsoringCollection: {
+    readonly collectionId: u32;
+  } & Struct;
+  readonly isSponsorContract: boolean;
+  readonly asSponsorContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isStopSponsoringContract: boolean;
+  readonly asStopSponsoringContract: {
+    readonly contractId: H160;
+  } & Struct;
+  readonly isPayoutStakers: boolean;
+  readonly asPayoutStakers: {
+    readonly stakersNumber: Option<u8>;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorContract' | 'StopSponsoringContract' | 'PayoutStakers';
+}
+
+/** @name PalletAppPromotionError */
+export interface PalletAppPromotionError extends Enum {
+  readonly isAdminNotSet: boolean;
+  readonly isNoPermission: boolean;
+  readonly isNotSufficientFunds: boolean;
+  readonly isPendingForBlockOverflow: boolean;
+  readonly isSponsorNotSet: boolean;
+  readonly isIncorrectLockedBalanceOperation: boolean;
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation';
+}
+
+/** @name PalletAppPromotionEvent */
+export interface PalletAppPromotionEvent extends Enum {
+  readonly isStakingRecalculation: boolean;
+  readonly asStakingRecalculation: ITuple<[AccountId32, u128, u128]>;
+  readonly isStake: boolean;
+  readonly asStake: ITuple<[AccountId32, u128]>;
+  readonly isUnstake: boolean;
+  readonly asUnstake: ITuple<[AccountId32, u128]>;
+  readonly isSetAdmin: boolean;
+  readonly asSetAdmin: AccountId32;
+  readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
 }
 
 /** @name PalletBalancesAccountData */
@@ -1056,13 +1303,6 @@ export interface PalletEthereumEvent extends Enum {
 /** @name PalletEthereumFakeTransactionFinalizer */
 export interface PalletEthereumFakeTransactionFinalizer extends Null {}
 
-/** @name PalletEthereumRawOrigin */
-export interface PalletEthereumRawOrigin extends Enum {
-  readonly isEthereumTransaction: boolean;
-  readonly asEthereumTransaction: H160;
-  readonly type: 'EthereumTransaction';
-}
-
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
   readonly isSubstrate: boolean;
@@ -1127,7 +1367,20 @@ export interface PalletEvmCoderSubstrateError extends Enum {
 /** @name PalletEvmContractHelpersError */
 export interface PalletEvmContractHelpersError extends Enum {
   readonly isNoPermission: boolean;
-  readonly type: 'NoPermission';
+  readonly isNoPendingSponsor: boolean;
+  readonly isTooManyMethodsHaveSponsoredLimit: boolean;
+  readonly type: 'NoPermission' | 'NoPendingSponsor' | 'TooManyMethodsHaveSponsoredLimit';
+}
+
+/** @name PalletEvmContractHelpersEvent */
+export interface PalletEvmContractHelpersEvent extends Enum {
+  readonly isContractSponsorSet: boolean;
+  readonly asContractSponsorSet: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorshipConfirmed: boolean;
+  readonly asContractSponsorshipConfirmed: ITuple<[H160, AccountId32]>;
+  readonly isContractSponsorRemoved: boolean;
+  readonly asContractSponsorRemoved: H160;
+  readonly type: 'ContractSponsorSet' | 'ContractSponsorshipConfirmed' | 'ContractSponsorRemoved';
 }
 
 /** @name PalletEvmContractHelpersSponsoringModeT */
@@ -1192,6 +1445,83 @@ export interface PalletEvmMigrationError extends Enum {
   readonly isAccountNotEmpty: boolean;
   readonly isAccountIsNotMigrating: boolean;
   readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
+}
+
+/** @name PalletForeignAssetsAssetIds */
+export interface PalletForeignAssetsAssetIds extends Enum {
+  readonly isForeignAssetId: boolean;
+  readonly asForeignAssetId: u32;
+  readonly isNativeAssetId: boolean;
+  readonly asNativeAssetId: PalletForeignAssetsNativeCurrency;
+  readonly type: 'ForeignAssetId' | 'NativeAssetId';
+}
+
+/** @name PalletForeignAssetsModuleAssetMetadata */
+export interface PalletForeignAssetsModuleAssetMetadata extends Struct {
+  readonly name: Bytes;
+  readonly symbol: Bytes;
+  readonly decimals: u8;
+  readonly minimalBalance: u128;
+}
+
+/** @name PalletForeignAssetsModuleCall */
+export interface PalletForeignAssetsModuleCall extends Enum {
+  readonly isRegisterForeignAsset: boolean;
+  readonly asRegisterForeignAsset: {
+    readonly owner: AccountId32;
+    readonly location: XcmVersionedMultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isUpdateForeignAsset: boolean;
+  readonly asUpdateForeignAsset: {
+    readonly foreignAssetId: u32;
+    readonly location: XcmVersionedMultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly type: 'RegisterForeignAsset' | 'UpdateForeignAsset';
+}
+
+/** @name PalletForeignAssetsModuleError */
+export interface PalletForeignAssetsModuleError extends Enum {
+  readonly isBadLocation: boolean;
+  readonly isMultiLocationExisted: boolean;
+  readonly isAssetIdNotExists: boolean;
+  readonly isAssetIdExisted: boolean;
+  readonly type: 'BadLocation' | 'MultiLocationExisted' | 'AssetIdNotExists' | 'AssetIdExisted';
+}
+
+/** @name PalletForeignAssetsModuleEvent */
+export interface PalletForeignAssetsModuleEvent extends Enum {
+  readonly isForeignAssetRegistered: boolean;
+  readonly asForeignAssetRegistered: {
+    readonly assetId: u32;
+    readonly assetAddress: XcmV1MultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isForeignAssetUpdated: boolean;
+  readonly asForeignAssetUpdated: {
+    readonly assetId: u32;
+    readonly assetAddress: XcmV1MultiLocation;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isAssetRegistered: boolean;
+  readonly asAssetRegistered: {
+    readonly assetId: PalletForeignAssetsAssetIds;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly isAssetUpdated: boolean;
+  readonly asAssetUpdated: {
+    readonly assetId: PalletForeignAssetsAssetIds;
+    readonly metadata: PalletForeignAssetsModuleAssetMetadata;
+  } & Struct;
+  readonly type: 'ForeignAssetRegistered' | 'ForeignAssetUpdated' | 'AssetRegistered' | 'AssetUpdated';
+}
+
+/** @name PalletForeignAssetsNativeCurrency */
+export interface PalletForeignAssetsNativeCurrency extends Enum {
+  readonly isHere: boolean;
+  readonly isParent: boolean;
+  readonly type: 'Here' | 'Parent';
 }
 
 /** @name PalletFungibleError */
@@ -1538,7 +1868,7 @@ export interface PalletSudoCall extends Enum {
   readonly isSudoUncheckedWeight: boolean;
   readonly asSudoUncheckedWeight: {
     readonly call: Call;
-    readonly weight: u64;
+    readonly weight: Weight;
   } & Struct;
   readonly isSetKey: boolean;
   readonly asSetKey: {
@@ -1887,76 +2217,6 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
 }
 
-/** @name PalletUniqueSchedulerCall */
-export interface PalletUniqueSchedulerCall extends Enum {
-  readonly isScheduleNamed: boolean;
-  readonly asScheduleNamed: {
-    readonly id: U8aFixed;
-    readonly when: u32;
-    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-    readonly priority: u8;
-    readonly call: FrameSupportScheduleMaybeHashed;
-  } & Struct;
-  readonly isCancelNamed: boolean;
-  readonly asCancelNamed: {
-    readonly id: U8aFixed;
-  } & Struct;
-  readonly isScheduleNamedAfter: boolean;
-  readonly asScheduleNamedAfter: {
-    readonly id: U8aFixed;
-    readonly after: u32;
-    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-    readonly priority: u8;
-    readonly call: FrameSupportScheduleMaybeHashed;
-  } & Struct;
-  readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter';
-}
-
-/** @name PalletUniqueSchedulerError */
-export interface PalletUniqueSchedulerError extends Enum {
-  readonly isFailedToSchedule: boolean;
-  readonly isNotFound: boolean;
-  readonly isTargetBlockNumberInPast: boolean;
-  readonly isRescheduleNoChange: boolean;
-  readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
-}
-
-/** @name PalletUniqueSchedulerEvent */
-export interface PalletUniqueSchedulerEvent extends Enum {
-  readonly isScheduled: boolean;
-  readonly asScheduled: {
-    readonly when: u32;
-    readonly index: u32;
-  } & Struct;
-  readonly isCanceled: boolean;
-  readonly asCanceled: {
-    readonly when: u32;
-    readonly index: u32;
-  } & Struct;
-  readonly isDispatched: boolean;
-  readonly asDispatched: {
-    readonly task: ITuple<[u32, u32]>;
-    readonly id: Option<U8aFixed>;
-    readonly result: Result<Null, SpRuntimeDispatchError>;
-  } & Struct;
-  readonly isCallLookupFailed: boolean;
-  readonly asCallLookupFailed: {
-    readonly task: ITuple<[u32, u32]>;
-    readonly id: Option<U8aFixed>;
-    readonly error: FrameSupportScheduleLookupError;
-  } & Struct;
-  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'CallLookupFailed';
-}
-
-/** @name PalletUniqueSchedulerScheduledV3 */
-export interface PalletUniqueSchedulerScheduledV3 extends Struct {
-  readonly maybeId: Option<U8aFixed>;
-  readonly priority: u8;
-  readonly call: FrameSupportScheduleMaybeHashed;
-  readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-  readonly origin: OpalRuntimeOriginCaller;
-}
-
 /** @name PalletXcmCall */
 export interface PalletXcmCall extends Enum {
   readonly isSend: boolean;
@@ -1981,7 +2241,7 @@ export interface PalletXcmCall extends Enum {
   readonly isExecute: boolean;
   readonly asExecute: {
     readonly message: XcmVersionedXcm;
-    readonly maxWeight: u64;
+    readonly maxWeight: Weight;
   } & Struct;
   readonly isForceXcmVersion: boolean;
   readonly asForceXcmVersion: {
@@ -2050,7 +2310,7 @@ export interface PalletXcmEvent extends Enum {
   readonly isNotified: boolean;
   readonly asNotified: ITuple<[u64, u8, u8]>;
   readonly isNotifyOverweight: boolean;
-  readonly asNotifyOverweight: ITuple<[u64, u8, u8, u64, u64]>;
+  readonly asNotifyOverweight: ITuple<[u64, u8, u8, Weight, Weight]>;
   readonly isNotifyDispatchError: boolean;
   readonly asNotifyDispatchError: ITuple<[u64, u8, u8]>;
   readonly isNotifyDecodeFailed: boolean;
@@ -2072,15 +2332,6 @@ export interface PalletXcmEvent extends Enum {
   readonly isNotifyTargetMigrationFail: boolean;
   readonly asNotifyTargetMigrationFail: ITuple<[XcmVersionedMultiLocation, u64]>;
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
-}
-
-/** @name PalletXcmOrigin */
-export interface PalletXcmOrigin extends Enum {
-  readonly isXcm: boolean;
-  readonly asXcm: XcmV1MultiLocation;
-  readonly isResponse: boolean;
-  readonly asResponse: XcmV1MultiLocation;
-  readonly type: 'Xcm' | 'Response';
 }
 
 /** @name PhantomTypeUpDataStructs */
@@ -2303,9 +2554,6 @@ export interface SpCoreEd25519Signature extends U8aFixed {}
 /** @name SpCoreSr25519Signature */
 export interface SpCoreSr25519Signature extends U8aFixed {}
 
-/** @name SpCoreVoid */
-export interface SpCoreVoid extends Null {}
-
 /** @name SpRuntimeArithmeticError */
 export interface SpRuntimeArithmeticError extends Enum {
   readonly isUnderflow: boolean;
@@ -2405,6 +2653,12 @@ export interface SpVersionRuntimeVersion extends Struct {
   readonly stateVersion: u8;
 }
 
+/** @name SpWeightsRuntimeDbWeight */
+export interface SpWeightsRuntimeDbWeight extends Struct {
+  readonly read: u64;
+  readonly write: u64;
+}
+
 /** @name UpDataStructsAccessMode */
 export interface UpDataStructsAccessMode extends Enum {
   readonly isNormal: boolean;
@@ -2419,10 +2673,10 @@ export interface UpDataStructsCollection extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
-  readonly externalCollection: bool;
+  readonly flags: U8aFixed;
 }
 
 /** @name UpDataStructsCollectionLimits */
@@ -2580,8 +2834,7 @@ export interface UpDataStructsPropertyPermission extends Struct {
 export interface UpDataStructsPropertyScope extends Enum {
   readonly isNone: boolean;
   readonly isRmrk: boolean;
-  readonly isEth: boolean;
-  readonly type: 'None' | 'Rmrk' | 'Eth';
+  readonly type: 'None' | 'Rmrk';
 }
 
 /** @name UpDataStructsRpcCollection */
@@ -2591,12 +2844,19 @@ export interface UpDataStructsRpcCollection extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly sponsorship: UpDataStructsSponsorshipState;
+  readonly sponsorship: UpDataStructsSponsorshipStateAccountId32;
   readonly limits: UpDataStructsCollectionLimits;
   readonly permissions: UpDataStructsCollectionPermissions;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
   readonly readOnly: bool;
+  readonly flags: UpDataStructsRpcCollectionFlags;
+}
+
+/** @name UpDataStructsRpcCollectionFlags */
+export interface UpDataStructsRpcCollectionFlags extends Struct {
+  readonly foreign: bool;
+  readonly erc721metadata: bool;
 }
 
 /** @name UpDataStructsSponsoringRateLimit */
@@ -2607,13 +2867,23 @@ export interface UpDataStructsSponsoringRateLimit extends Enum {
   readonly type: 'SponsoringDisabled' | 'Blocks';
 }
 
-/** @name UpDataStructsSponsorshipState */
-export interface UpDataStructsSponsorshipState extends Enum {
+/** @name UpDataStructsSponsorshipStateAccountId32 */
+export interface UpDataStructsSponsorshipStateAccountId32 extends Enum {
   readonly isDisabled: boolean;
   readonly isUnconfirmed: boolean;
   readonly asUnconfirmed: AccountId32;
   readonly isConfirmed: boolean;
   readonly asConfirmed: AccountId32;
+  readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
+}
+
+/** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr */
+export interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
+  readonly isDisabled: boolean;
+  readonly isUnconfirmed: boolean;
+  readonly asUnconfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
+  readonly isConfirmed: boolean;
+  readonly asConfirmed: PalletEvmAccountBasicCrossAccountIdRepr;
   readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
 }
 
@@ -3361,6 +3631,15 @@ export interface XcmV2WeightLimit extends Enum {
 
 /** @name XcmV2Xcm */
 export interface XcmV2Xcm extends Vec<XcmV2Instruction> {}
+
+/** @name XcmVersionedMultiAsset */
+export interface XcmVersionedMultiAsset extends Enum {
+  readonly isV0: boolean;
+  readonly asV0: XcmV0MultiAsset;
+  readonly isV1: boolean;
+  readonly asV1: XcmV1MultiAsset;
+  readonly type: 'V0' | 'V1';
+}
 
 /** @name XcmVersionedMultiAssets */
 export interface XcmVersionedMultiAssets extends Enum {

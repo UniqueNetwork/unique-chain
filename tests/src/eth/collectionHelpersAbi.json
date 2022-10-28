@@ -19,27 +19,10 @@
     "type": "event"
   },
   {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
-      { "internalType": "string", "name": "baseUri", "type": "string" }
-    ],
-    "name": "createERC721MetadataCompatibleCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "string", "name": "tokenPrefix", "type": "string" },
-      { "internalType": "string", "name": "baseUri", "type": "string" }
-    ],
-    "name": "createERC721MetadataCompatibleRFTCollection",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "nonpayable",
+    "inputs": [],
+    "name": "collectionCreationFee",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -48,9 +31,9 @@
       { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
-    "name": "createNonfungibleCollection",
+    "name": "createNFTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -59,9 +42,9 @@
       { "internalType": "string", "name": "description", "type": "string" },
       { "internalType": "string", "name": "tokenPrefix", "type": "string" }
     ],
-    "name": "createRefungibleCollection",
+    "name": "createRFTCollection",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -75,6 +58,16 @@
     "name": "isCollectionExist",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "collection", "type": "address" },
+      { "internalType": "string", "name": "baseUri", "type": "string" }
+    ],
+    "name": "makeCollectionERC721MetadataCompatible",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

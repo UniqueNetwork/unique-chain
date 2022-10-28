@@ -36,6 +36,7 @@ use serde::{Serialize, Deserialize};
 use sp_core::U256;
 use sp_runtime::{ArithmeticError, sp_std::prelude::Vec, Permill};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
+use bondrewd::Bitfields;
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
@@ -54,6 +55,7 @@ pub use rmrk_traits::{
 	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart,
 };
 
+mod bondrewd_codec;
 mod bounded;
 pub mod budget;
 pub mod mapping;
@@ -357,6 +359,24 @@ pub type CollectionName = BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>;
 pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>;
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
+#[derive(Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[bondrewd(enforce_bytes = 1)]
+pub struct CollectionFlags {
+	/// Tokens in foreign collections can be transferred, but not burnt
+	#[bondrewd(bits = "0..1")]
+	pub foreign: bool,
+	/// Supports ERC721Metadata
+	#[bondrewd(bits = "1..2")]
+	pub erc721metadata: bool,
+	/// External collections can't be managed using `unique` api
+	#[bondrewd(bits = "7..8")]
+	pub external: bool,
+
+	#[bondrewd(reserve, bits = "2..7")]
+	pub reserved: u8,
+}
+bondrewd_codec!(CollectionFlags);
+
 /// Base structure for represent collection.
 ///
 /// Used to provide basic functionality for all types of collections.
@@ -404,9 +424,8 @@ pub struct Collection<AccountId> {
 	#[version(2.., upper(Default::default()))]
 	pub permissions: CollectionPermissions,
 
-	/// Marks that this collection is not "unique", and managed from external.
-	#[version(2.., upper(false))]
-	pub external_collection: bool,
+	#[version(2.., upper(Default::default()))]
+	pub flags: CollectionFlags,
 
 	#[version(..2)]
 	pub variable_on_chain_schema: BoundedVec<u8, ConstU32<VARIABLE_ON_CHAIN_SCHEMA_LIMIT>>,
@@ -416,6 +435,15 @@ pub struct Collection<AccountId> {
 
 	#[version(..2)]
 	pub meta_update_permission: MetaUpdatePermission,
+}
+
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+pub struct RpcCollectionFlags {
+	/// Is collection is foreign.
+	pub foreign: bool,
+	/// Collection supports ERC721Metadata.
+	pub erc721metadata: bool,
 }
 
 /// Collection parameters, used in RPC calls (see [`Collection`] for the storage version).
@@ -454,6 +482,9 @@ pub struct RpcCollection<AccountId> {
 
 	/// Is collection read only.
 	pub read_only: bool,
+
+	/// Extra collection flags
+	pub flags: RpcCollectionFlags,
 }
 
 /// Data used for create collection.
@@ -1050,7 +1081,6 @@ pub enum PropertiesError {
 pub enum PropertyScope {
 	None,
 	Rmrk,
-	Eth,
 }
 
 impl PropertyScope {
@@ -1059,7 +1089,6 @@ impl PropertyScope {
 		let scope_str: &[u8] = match self {
 			Self::None => return Ok(key),
 			Self::Rmrk => b"rmrk",
-			Self::Eth => b"eth",
 		};
 
 		[scope_str, b":", key.as_slice()]

@@ -92,18 +92,16 @@ use crate::erc::ERC721Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
+use derivative::Derivative;
 use evm_coder::ToLog;
 use frame_support::{
-	BoundedVec, ensure, fail, storage::with_transaction, transactional, pallet_prelude::ConstU32,
+	BoundedBTreeMap, BoundedVec, ensure, fail, storage::with_transaction, transactional,
+	pallet_prelude::ConstU32,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CollectionHandle, CommonCollectionOperations,
-	dispatch::CollectionDispatch,
-	erc::static_property::{key, property_value_from_bytes},
-	Error as CommonError,
-	eth::collection_id_to_address,
+	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
 	Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
@@ -112,13 +110,11 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionMode, CollectionPropertiesVec,
+	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
 	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
 	PropertyScope, PropertyValue, TokenId, TrySetProperty,
 };
-use frame_support::BoundedBTreeMap;
-use derivative::Derivative;
 
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
@@ -287,7 +283,7 @@ pub mod pallet {
 			}
 			StorageVersion::new(2).put::<Pallet<T>>();
 
-			0
+			Weight::zero()
 		}
 	}
 }
@@ -373,9 +369,11 @@ impl<T: Config> Pallet<T> {
 	/// - `data`: Contains settings for collection limits and permissions.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
+		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::AccountId>,
+		flags: CollectionFlags,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, data, false)
+		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
 	}
 
 	/// Destroy RFT collection
@@ -1378,69 +1376,5 @@ impl<T: Config> Pallet<T> {
 		} else {
 			Some(res)
 		}
-	}
-
-	/// Sets the NFT token as a parent for the RFT token
-	///
-	/// Throws if `sender` is not the owner of the NFT token.
-	/// Throws if `sender` is not the owner of all of the RFT token pieces.
-	pub fn set_parent_nft(
-		collection: &RefungibleHandle<T>,
-		rft_token_id: TokenId,
-		sender: T::CrossAccountId,
-		nft_collection: CollectionId,
-		nft_token: TokenId,
-	) -> DispatchResult {
-		let handle = <CollectionHandle<T>>::try_get(nft_collection)?;
-		if handle.mode != CollectionMode::NFT {
-			return Err("Only NFT token could be parent to RFT".into());
-		}
-		let dispatch = T::CollectionDispatch::dispatch(handle);
-		let dispatch = dispatch.as_dyn();
-
-		let owner = dispatch.token_owner(nft_token).ok_or("owner not found")?;
-		if owner != sender {
-			return Err("Only owned token could be set as parent".into());
-		}
-
-		let nft_token_address =
-			T::CrossTokenAddressMapping::token_to_address(nft_collection, nft_token);
-
-		Self::set_parent_nft_unchecked(collection, rft_token_id, sender, nft_token_address)
-	}
-
-	/// Sets the NFT token as a parent for the RFT token
-	///
-	/// `sender` should be the owner of the NFT token.
-	/// Throws if `sender` is not the owner of all of the RFT token pieces.
-	pub fn set_parent_nft_unchecked(
-		collection: &RefungibleHandle<T>,
-		rft_token_id: TokenId,
-		sender: T::CrossAccountId,
-		nft_token_address: T::CrossAccountId,
-	) -> DispatchResult {
-		let owner_balance = <Balance<T>>::get((collection.id, rft_token_id, &sender));
-		let total_supply = <TotalSupply<T>>::get((collection.id, rft_token_id));
-		if total_supply != owner_balance {
-			return Err("token has multiple owners".into());
-		}
-
-		let parent_nft_property_key = key::parent_nft();
-
-		let parent_nft_property_value =
-			property_value_from_bytes(&nft_token_address.as_eth().to_fixed_bytes())
-				.expect("address should fit in value length limit");
-
-		<Pallet<T>>::set_scoped_token_property(
-			collection.id,
-			rft_token_id,
-			PropertyScope::Eth,
-			Property {
-				key: parent_nft_property_key,
-				value: parent_nft_property_value,
-			},
-		)?;
-
-		Ok(())
 	}
 }

@@ -42,13 +42,13 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
-sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake protobuf-compiler
 curl https://sh.rustup.rs -sSf | sh
 ```
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install toolchain nightly-2022-05-11 and make it default:
+3. Install toolchain nightly-2022-07-24 and make it default:
 
 ```bash
 rustup toolchain install nightly-2022-07-24
@@ -92,7 +92,7 @@ git checkout feature/runtime-upgrade-testing
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.27
+git checkout release-v0.9.30
 cargo build --release
 ```
 
@@ -195,7 +195,7 @@ tokens -> accounts
 xtokens -> transfer
 
 currencyId:
-	ForeingAsset
+	ForeignAsset
 		<TOKEN_ID>
 
 amount:

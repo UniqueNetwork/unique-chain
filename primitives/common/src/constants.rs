@@ -22,6 +22,7 @@ use frame_support::{
 use crate::types::{BlockNumber, Balance};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const MILLISECS_PER_RELAY_BLOCK: u64 = 6000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -29,6 +30,11 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+
+// These time units are defined in number of relay blocks.
+pub const RELAY_MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_RELAY_BLOCK as BlockNumber);
+pub const RELAY_HOURS: BlockNumber = RELAY_MINUTES * 60;
+pub const RELAY_DAYS: BlockNumber = RELAY_HOURS * 24;
 
 pub const MICROUNIQUE: Balance = 1_000_000_000_000;
 pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
@@ -50,7 +56,7 @@ pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// by  Operational  extrinsics.
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2);
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE;

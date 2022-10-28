@@ -45,7 +45,9 @@ macro_rules! construct_runtime {
                 Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 34,
                 Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
                 Vesting: orml_vesting::{Pallet, Storage, Call, Event<T>, Config<T>} = 37,
-                // Vesting: pallet_vesting::{Pallet, Call, Config<T>, Storage, Event<T>} = 37,
+
+                XTokens: orml_xtokens = 38,
+                Tokens: orml_tokens = 39,
                 // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
                 // XCM helpers.
@@ -58,8 +60,8 @@ macro_rules! construct_runtime {
                 Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
                 Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
 
-                #[runtimes(opal)]
-                Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+                // #[runtimes(opal)]
+                // Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
 
                 Configuration: pallet_configuration::{Pallet, Call, Storage} = 63,
 
@@ -68,7 +70,7 @@ macro_rules! construct_runtime {
                 Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
                 Fungible: pallet_fungible::{Pallet, Storage} = 67,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 Refungible: pallet_refungible::{Pallet, Storage} = 68,
 
                 Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
@@ -80,12 +82,18 @@ macro_rules! construct_runtime {
                 #[runtimes(opal)]
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
+                #[runtimes(opal)]
+                AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
+
+                #[runtimes(opal)]
+                ForeignAssets: pallet_foreign_assets::{Pallet, Call, Storage, Event<T>} = 80,
+
                 // Frontier
                 EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>} = 100,
                 Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin} = 101,
 
                 EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
-                EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
+                EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
                 EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
             }

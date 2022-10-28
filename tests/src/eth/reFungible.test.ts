@@ -14,80 +14,66 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {createCollectionExpectSuccess, UNIQUE, requirePallets, Pallets} from '../util/helpers';
-import {collectionIdToAddress, createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3, normalizeEvents, recordEthFee, recordEvents, tokenIdToAddress, uniqueRefungibleToken} from './util/helpers';
-import {expect} from 'chai';
+import {Pallets, requirePalletsOrSkip} from '../util';
+import {expect, itEth, usingEthPlaygrounds} from './util';
+import {IKeyringPair} from '@polkadot/types/types';
 
 describe('Refungible: Information getting', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = await privateKey({filename: __filename});
+    });
   });
 
-  itWeb3('totalSupply', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, nextTokenId).send();
+  itEth('totalSupply', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'TotalSupply', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+
+    await contract.methods.mint(caller).send();
+
     const totalSupply = await contract.methods.totalSupply().call();
     expect(totalSupply).to.equal('1');
   });
 
-  itWeb3('balanceOf', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('balanceOf', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'BalanceOf', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    {
-      const nextTokenId = await contract.methods.nextTokenId().call();
-      await contract.methods.mint(caller, nextTokenId).send();
-    }
-    {
-      const nextTokenId = await contract.methods.nextTokenId().call();
-      await contract.methods.mint(caller, nextTokenId).send();
-    }
-    {
-      const nextTokenId = await contract.methods.nextTokenId().call();
-      await contract.methods.mint(caller, nextTokenId).send();
-    }
+    await contract.methods.mint(caller).send();
+    await contract.methods.mint(caller).send();
+    await contract.methods.mint(caller).send();
 
     const balance = await contract.methods.balanceOf(caller).call();
-
     expect(balance).to.equal('3');
   });
 
-  itWeb3('ownerOf', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('ownerOf', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
     const owner = await contract.methods.ownerOf(tokenId).call();
-
     expect(owner).to.equal(caller);
   });
 
-  itWeb3('ownerOf after burn', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('ownerOf after burn', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf-AfterBurn', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
-
-    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    const tokenContract = helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
@@ -95,79 +81,61 @@ describe('Refungible: Information getting', () => {
     await tokenContract.methods.burnFrom(caller, 1).send();
 
     const owner = await contract.methods.ownerOf(tokenId).call();
-
     expect(owner).to.equal(receiver);
   });
 
-  itWeb3('ownerOf for partial ownership', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('ownerOf for partial ownership', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
-
-    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    const tokenContract = helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
 
     const owner = await contract.methods.ownerOf(tokenId).call();
-
     expect(owner).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
   });
 });
 
 describe('Refungible: Plain calls', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = await privateKey({filename: __filename});
+    });
   });
 
-  itWeb3('Can perform mint()', async ({web3, api, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, owner);
-    let result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const receiver = createEthAccount(web3);
-    const contract = evmCollection(web3, owner, collectionIdAddress, {type: 'ReFungible'});
-    const nextTokenId = await contract.methods.nextTokenId().call();
+  itEth('Can perform mint()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Minty', '6', '6', '');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
-    expect(nextTokenId).to.be.equal('1');
-    result = await contract.methods.mintWithTokenURI(
-      receiver,
-      nextTokenId,
-      'Test URI',
-    ).send();
+    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
 
-    const events = normalizeEvents(result.events);
+    const event = result.events.Transfer;
+    expect(event.address).to.equal(collectionAddress);
+    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.equal(receiver);
+    const tokenId = event.returnValues.tokenId;
+    expect(tokenId).to.be.equal('1');
 
-    expect(events).to.include.deep.members([
-      {
-        address: collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: '0x0000000000000000000000000000000000000000',
-          to: receiver,
-          tokenId: nextTokenId,
-        },
-      },
-    ]);
-
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
   });
 
-  itWeb3('Can perform mintBulk()', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
-
-    const receiver = createEthAccount(web3);
+  itEth.skip('Can perform mintBulk()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'MintBulky', '6', '6', '');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     {
       const nextTokenId = await contract.methods.nextTokenId().call();
@@ -180,37 +148,15 @@ describe('Refungible: Plain calls', () => {
           [+nextTokenId + 2, 'Test URI 2'],
         ],
       ).send();
-      const events = normalizeEvents(result.events);
 
-      expect(events).to.include.deep.members([
-        {
-          address: collectionIdAddress,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId: nextTokenId,
-          },
-        },
-        {
-          address: collectionIdAddress,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId: String(+nextTokenId + 1),
-          },
-        },
-        {
-          address: collectionIdAddress,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId: String(+nextTokenId + 2),
-          },
-        },
-      ]);
+      const events = result.events.Transfer;
+      for (let i = 0; i < 2; i++) {
+        const event = events[i];
+        expect(event.address).to.equal(collectionAddress);
+        expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+        expect(event.returnValues.to).to.equal(receiver);
+        expect(event.returnValues.tokenId).to.equal(String(+nextTokenId + i));
+      }
 
       expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI 0');
       expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
@@ -218,76 +164,56 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform burn()', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('Can perform burn()', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Burny', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
     {
       const result = await contract.methods.burn(tokenId).send();
-      const events = normalizeEvents(result.events);
-      expect(events).to.include.deep.members([
-        {
-          address: collectionIdAddress,
-          event: 'Transfer',
-          args: {
-            from: caller,
-            to: '0x0000000000000000000000000000000000000000',
-            tokenId: tokenId.toString(),
-          },
-        },
-      ]);
+      const event = result.events.Transfer;
+      expect(event.address).to.equal(collectionAddress);
+      expect(event.returnValues.from).to.equal(caller);
+      expect(event.returnValues.to).to.equal('0x0000000000000000000000000000000000000000');
+      expect(event.returnValues.tokenId).to.equal(tokenId.toString());
     }
   });
 
-  itWeb3('Can perform transferFrom()', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('Can perform transferFrom()', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'TransferFromy', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const receiver = createEthAccount(web3);
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
 
-    const address = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = uniqueRefungibleToken(web3, address, caller);
+    const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, caller);
     await tokenContract.methods.repartition(15).send();
 
     {
-      const erc20Events = await recordEvents(tokenContract, async () => {
-        const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();
-        const events = normalizeEvents(result.events);
-        expect(events).to.include.deep.members([
-          {
-            address: collectionIdAddress,
-            event: 'Transfer',
-            args: {
-              from: caller,
-              to: receiver,
-              tokenId: tokenId.toString(),
-            },
-          },
-        ]);
+      const tokenEvents: any = [];
+      tokenContract.events.allEvents((_: any, event: any) => {
+        tokenEvents.push(event);
       });
+      const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();
+      if (tokenEvents.length == 0) await helper.wait.newBlocks(1);
 
-      expect(erc20Events).to.include.deep.members([
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: caller,
-            to: receiver,
-            value: '15',
-          },
-        },
-      ]);
+      let event = result.events.Transfer;
+      expect(event.address).to.equal(collectionAddress);
+      expect(event.returnValues.from).to.equal(caller);
+      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.returnValues.tokenId).to.equal(tokenId.toString());
+
+      event = tokenEvents[0];
+      expect(event.address).to.equal(tokenAddress);
+      expect(event.returnValues.from).to.equal(caller);
+      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.returnValues.value).to.equal('15');
     }
 
     {
@@ -301,32 +227,23 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itWeb3('Can perform transfer()', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('Can perform transfer()', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const receiver = createEthAccount(web3);
-
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
     {
       const result = await contract.methods.transfer(receiver, tokenId).send();
-      const events = normalizeEvents(result.events);
-      expect(events).to.include.deep.members([
-        {
-          address: collectionIdAddress,
-          event: 'Transfer',
-          args: {
-            from: caller,
-            to: receiver,
-            tokenId: tokenId.toString(),
-          },
-        },
-      ]);
+
+      const event = result.events.Transfer;
+      expect(event.address).to.equal(collectionAddress);
+      expect(event.returnValues.from).to.equal(caller);
+      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.returnValues.tokenId).to.equal(tokenId.toString());
     }
 
     {
@@ -340,141 +257,164 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itWeb3('transfer event on transfer from partial ownership to full ownership', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry-Partial-to-Full', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
-    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
+    const tokenContract = helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
 
-    const events =  await recordEvents(contract, async () =>
-      await tokenContract.methods.transfer(receiver, 1).send());
-    expect(events).to.deep.equal([
-      {
-        address: collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
-          to: receiver,
-          tokenId: tokenId.toString(),
-        },
-      },
-    ]);
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
+    });
+
+    await tokenContract.methods.transfer(receiver, 1).send();
+    if (events.length == 0) await helper.wait.newBlocks(1);
+    const event = events[0];
+
+    expect(event.address).to.equal(collectionAddress);
+    expect(event.returnValues.from).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
+    expect(event.returnValues.to).to.equal(receiver);
+    expect(event.returnValues.tokenId).to.equal(tokenId.toString());
   });
 
-  itWeb3('transfer event on transfer from full ownership to partial ownership', async ({api, web3, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const receiver = createEthAccount(web3);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('transfer event on transfer from full ownership to partial ownership', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry-Full-to-Partial', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
-    const tokenAddress = tokenIdToAddress(collectionId, tokenId);
-    const tokenContract = uniqueRefungibleToken(web3, tokenAddress, caller);
+    const tokenContract = helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
     await tokenContract.methods.repartition(2).send();
 
-    const events =  await recordEvents(contract, async () =>
-      await tokenContract.methods.transfer(receiver, 1).send());
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
+    });
 
-    expect(events).to.deep.equal([
-      {
-        address: collectionIdAddress,
-        event: 'Transfer',
-        args: {
-          from: caller,
-          to: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
-          tokenId: tokenId.toString(),
-        },
-      },
-    ]);
+    await tokenContract.methods.transfer(receiver, 1).send();
+    if (events.length == 0) await helper.wait.newBlocks(1);
+    const event = events[0];
+
+    expect(event.address).to.equal(collectionAddress);
+    expect(event.returnValues.from).to.equal(caller);
+    expect(event.returnValues.to).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
+    expect(event.returnValues.tokenId).to.equal(tokenId.toString());
   });
 });
 
 describe('RFT: Fees', () => {
+  let donor: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = await privateKey({filename: __filename});
+    });
   });
 
-  itWeb3('transferFrom() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('transferFrom() call fee is less than 0.2UNQ', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Feeful-Transfer-From', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const receiver = createEthAccount(web3);
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
-
-    const cost = await recordEthFee(api, caller, () => contract.methods.transferFrom(caller, receiver, tokenId).send());
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await helper.eth.recordCallFee(caller, () => contract.methods.transferFrom(caller, receiver, tokenId).send());
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0n);
   });
 
-  itWeb3('transfer() call fee is less than 0.2UNQ', async ({web3, api, privateKeyWrapper}) => {
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const helper = evmCollectionHelpers(web3, caller);
-    const result = await helper.methods.createRefungibleCollection('Mint collection', '6', '6').send();
-    const {collectionIdAddress} = await getCollectionAddressFromResult(api, result);
-    const contract = evmCollection(web3, caller, collectionIdAddress, {type: 'ReFungible'});
+  itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Feeful-Transfer', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const receiver = createEthAccount(web3);
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
 
-    const tokenId = await contract.methods.nextTokenId().call();
-    await contract.methods.mint(caller, tokenId).send();
-
-    const cost = await recordEthFee(api, caller, () => contract.methods.transfer(receiver, tokenId).send());
-    expect(cost < BigInt(0.2 * Number(UNIQUE)));
+    const cost = await helper.eth.recordCallFee(caller, () => contract.methods.transfer(receiver, tokenId).send());
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0n);
   });
 });
 
 describe('Common metadata', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+
   before(async function() {
-    await requirePallets(this, [Pallets.ReFungible]);
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = await privateKey({filename: __filename});
+      [alice] = await helper.arrange.createAccounts([20n], donor);
+    });
   });
 
-  itWeb3('Returns collection name', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      name: 'token name',
-      mode: {type: 'ReFungible'},
-    });
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Returns collection name', async ({helper}) => {
+    const caller = helper.eth.createAccount();
+    const tokenPropertyPermissions = [{
+      key: 'URI',
+      permission: {
+        mutable: true,
+        collectionAdmin: true,
+        tokenOwner: false,
+      },
+    }];
+    const collection = await helper.rft.mintCollection(
+      alice,
+      {
+        name: 'Leviathan',
+        tokenPrefix: '11',
+        properties: [{key: 'ERC721Metadata', value: '1'}],
+        tokenPropertyPermissions,
+      },
+    );
 
-    const address = collectionIdToAddress(collection);
-    const contract = evmCollection(web3, caller, address, {type: 'ReFungible'});
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'rft', caller);
     const name = await contract.methods.name().call();
-
-    expect(name).to.equal('token name');
+    expect(name).to.equal('Leviathan');
   });
 
-  itWeb3('Returns symbol name', async ({api, web3, privateKeyWrapper}) => {
-    const collection = await createCollectionExpectSuccess({
-      tokenPrefix: 'TOK',
-      mode: {type: 'ReFungible'},
-    });
-    const caller = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+  itEth('Returns symbol name', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const tokenPropertyPermissions = [{
+      key: 'URI',
+      permission: {
+        mutable: true,
+        collectionAdmin: true,
+        tokenOwner: false,
+      },
+    }];
+    const {collectionId} = await helper.rft.mintCollection(
+      alice,
+      {
+        name: 'Leviathan',
+        tokenPrefix: '12',
+        properties: [{key: 'ERC721Metadata', value: '1'}],
+        tokenPropertyPermissions,
+      },
+    );
 
-    const address = collectionIdToAddress(collection);
-    const contract = evmCollection(web3, caller, address, {type: 'ReFungible'});
+    const contract = helper.ethNativeContract.collectionById(collectionId, 'rft', caller);
     const symbol = await contract.methods.symbol().call();
-
-    expect(symbol).to.equal('TOK');
+    expect(symbol).to.equal('12');
   });
 });

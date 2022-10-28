@@ -21,6 +21,7 @@ use crate as pallet_inflation;
 use frame_support::{
 	assert_ok, parameter_types,
 	traits::{Currency, OnInitialize, Everything, ConstU32},
+	weights::Weight,
 };
 use frame_system::RawOrigin;
 use sp_core::H256;
@@ -46,7 +47,7 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type Balance = u64;
 	type DustRemoval = ();
-	type Event = ();
+	type RuntimeEvent = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
@@ -69,7 +70,7 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(1024);
+		frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
 	pub const SS58Prefix: u8 = 42;
 }
 
@@ -78,8 +79,8 @@ impl frame_system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -87,7 +88,7 @@ impl frame_system::Config for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type RuntimeEvent = ();
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;

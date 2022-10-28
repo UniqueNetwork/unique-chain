@@ -7,14 +7,51 @@ import '@polkadot/api-base/types/events';
 
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U256, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
-import type { ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { AccountId32, H160, H256, Weight } from '@polkadot/types/interfaces/runtime';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportDispatchDispatchInfo, FrameSupportTokensMiscBalanceStatus, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
 declare module '@polkadot/api-base/types/events' {
   interface AugmentedEvents<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * The admin was set
+       * 
+       * # Arguments
+       * * AccountId: account address of the admin
+       **/
+      SetAdmin: AugmentedEvent<ApiType, [AccountId32]>;
+      /**
+       * Staking was performed
+       * 
+       * # Arguments
+       * * AccountId: account of the staker
+       * * Balance : staking amount
+       **/
+      Stake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Staking recalculation was performed
+       * 
+       * # Arguments
+       * * AccountId: account of the staker.
+       * * Balance : recalculation base
+       * * Balance : total income
+       **/
+      StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Unstaking was performed
+       * 
+       * # Arguments
+       * * AccountId: account of the staker
+       * * Balance : unstaking amount
+       **/
+      Unstake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     balances: {
       /**
        * A balance was set by root.
@@ -146,11 +183,11 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Downward message is overweight and was placed in the overweight queue.
        **/
-      OverweightEnqueued: AugmentedEvent<ApiType, [messageId: U8aFixed, overweightIndex: u64, requiredWeight: u64], { messageId: U8aFixed, overweightIndex: u64, requiredWeight: u64 }>;
+      OverweightEnqueued: AugmentedEvent<ApiType, [messageId: U8aFixed, overweightIndex: u64, requiredWeight: Weight], { messageId: U8aFixed, overweightIndex: u64, requiredWeight: Weight }>;
       /**
        * Downward message from the overweight queue was executed.
        **/
-      OverweightServiced: AugmentedEvent<ApiType, [overweightIndex: u64, weightUsed: u64], { overweightIndex: u64, weightUsed: u64 }>;
+      OverweightServiced: AugmentedEvent<ApiType, [overweightIndex: u64, weightUsed: Weight], { overweightIndex: u64, weightUsed: Weight }>;
       /**
        * Downward message is unsupported version of XCM.
        **/
@@ -158,7 +195,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * The weight limit for handling downward messages was reached.
        **/
-      WeightExhausted: AugmentedEvent<ApiType, [messageId: U8aFixed, remainingWeight: u64, requiredWeight: u64], { messageId: U8aFixed, remainingWeight: u64, requiredWeight: u64 }>;
+      WeightExhausted: AugmentedEvent<ApiType, [messageId: U8aFixed, remainingWeight: Weight, requiredWeight: Weight], { messageId: U8aFixed, remainingWeight: Weight, requiredWeight: Weight }>;
       /**
        * Generic event
        **/
@@ -208,11 +245,51 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    evmContractHelpers: {
+      /**
+       * Collection sponsor was removed.
+       **/
+      ContractSponsorRemoved: AugmentedEvent<ApiType, [H160]>;
+      /**
+       * Contract sponsor was set.
+       **/
+      ContractSponsorSet: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * New sponsor was confirm.
+       **/
+      ContractSponsorshipConfirmed: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    foreignAssets: {
+      /**
+       * The asset registered.
+       **/
+      AssetRegistered: AugmentedEvent<ApiType, [assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * The asset updated.
+       **/
+      AssetUpdated: AugmentedEvent<ApiType, [assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * The foreign asset registered.
+       **/
+      ForeignAssetRegistered: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * The foreign asset updated.
+       **/
+      ForeignAssetUpdated: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     parachainSystem: {
       /**
        * Downward messages were processed using the given weight.
        **/
-      DownwardMessagesProcessed: AugmentedEvent<ApiType, [weightUsed: u64, dmqHead: H256], { weightUsed: u64, dmqHead: H256 }>;
+      DownwardMessagesProcessed: AugmentedEvent<ApiType, [weightUsed: Weight, dmqHead: H256], { weightUsed: Weight, dmqHead: H256 }>;
       /**
        * Some downward messages have been received and will be processed.
        **/
@@ -300,7 +377,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ id, pallet index, call index, actual weight, max budgeted weight \]
        **/
-      NotifyOverweight: AugmentedEvent<ApiType, [u64, u8, u8, u64, u64]>;
+      NotifyOverweight: AugmentedEvent<ApiType, [u64, u8, u8, Weight, Weight]>;
       /**
        * A given location which had a version change subscription was dropped owing to an error
        * migrating the location to our new XCM format.
@@ -389,28 +466,6 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    scheduler: {
-      /**
-       * The call for the provided hash was not found so the task has been aborted.
-       **/
-      CallLookupFailed: AugmentedEvent<ApiType, [task: ITuple<[u32, u32]>, id: Option<U8aFixed>, error: FrameSupportScheduleLookupError], { task: ITuple<[u32, u32]>, id: Option<U8aFixed>, error: FrameSupportScheduleLookupError }>;
-      /**
-       * Canceled some task.
-       **/
-      Canceled: AugmentedEvent<ApiType, [when: u32, index: u32], { when: u32, index: u32 }>;
-      /**
-       * Dispatched some task.
-       **/
-      Dispatched: AugmentedEvent<ApiType, [task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError>], { task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError> }>;
-      /**
-       * Scheduled some task.
-       **/
-      Scheduled: AugmentedEvent<ApiType, [when: u32, index: u32], { when: u32, index: u32 }>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
     structure: {
       /**
        * Executed call on behalf of the token.
@@ -447,11 +502,11 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * An extrinsic failed.
        **/
-      ExtrinsicFailed: AugmentedEvent<ApiType, [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportWeightsDispatchInfo], { dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportWeightsDispatchInfo }>;
+      ExtrinsicFailed: AugmentedEvent<ApiType, [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo], { dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo }>;
       /**
        * An extrinsic completed successfully.
        **/
-      ExtrinsicSuccess: AugmentedEvent<ApiType, [dispatchInfo: FrameSupportWeightsDispatchInfo], { dispatchInfo: FrameSupportWeightsDispatchInfo }>;
+      ExtrinsicSuccess: AugmentedEvent<ApiType, [dispatchInfo: FrameSupportDispatchDispatchInfo], { dispatchInfo: FrameSupportDispatchDispatchInfo }>;
       /**
        * An account was reaped.
        **/
@@ -464,6 +519,66 @@ declare module '@polkadot/api-base/types/events' {
        * On on-chain remark happened.
        **/
       Remarked: AugmentedEvent<ApiType, [sender: AccountId32, hash_: H256], { sender: AccountId32, hash_: H256 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    tokens: {
+      /**
+       * A balance was set by root.
+       **/
+      BalanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, free: u128, reserved: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, free: u128, reserved: u128 }>;
+      /**
+       * Deposited some balance into an account
+       **/
+      Deposited: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * An account was removed whose balance was non-zero but below
+       * ExistentialDeposit, resulting in an outright loss.
+       **/
+      DustLost: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * An account was created with some free balance.
+       **/
+      Endowed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some locked funds were unlocked
+       **/
+      LockRemoved: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32 }>;
+      /**
+       * Some funds are locked
+       **/
+      LockSet: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some balance was reserved (moved from free to reserved).
+       **/
+      Reserved: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some reserved balance was repatriated (moved from reserved to
+       * another account).
+       **/
+      ReserveRepatriated: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus }>;
+      /**
+       * Some balances were slashed (e.g. due to mis-behavior)
+       **/
+      Slashed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128 }>;
+      /**
+       * The total issuance of an currency has been set
+       **/
+      TotalIssuanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, amount: u128], { currencyId: PalletForeignAssetsAssetIds, amount: u128 }>;
+      /**
+       * Transfer succeeded.
+       **/
+      Transfer: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128 }>;
+      /**
+       * Some balance was unreserved (moved from reserved to free).
+       **/
+      Unreserved: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some balances were withdrawn (e.g. pay for transaction fee)
+       **/
+      Withdrawn: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Generic event
        **/
@@ -631,19 +746,19 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Some XCM failed.
        **/
-      Fail: AugmentedEvent<ApiType, [messageHash: Option<H256>, error: XcmV2TraitsError, weight: u64], { messageHash: Option<H256>, error: XcmV2TraitsError, weight: u64 }>;
+      Fail: AugmentedEvent<ApiType, [messageHash: Option<H256>, error: XcmV2TraitsError, weight: Weight], { messageHash: Option<H256>, error: XcmV2TraitsError, weight: Weight }>;
       /**
        * An XCM exceeded the individual message weight budget.
        **/
-      OverweightEnqueued: AugmentedEvent<ApiType, [sender: u32, sentAt: u32, index: u64, required: u64], { sender: u32, sentAt: u32, index: u64, required: u64 }>;
+      OverweightEnqueued: AugmentedEvent<ApiType, [sender: u32, sentAt: u32, index: u64, required: Weight], { sender: u32, sentAt: u32, index: u64, required: Weight }>;
       /**
        * An XCM from the overweight queue was executed with the given actual weight used.
        **/
-      OverweightServiced: AugmentedEvent<ApiType, [index: u64, used: u64], { index: u64, used: u64 }>;
+      OverweightServiced: AugmentedEvent<ApiType, [index: u64, used: Weight], { index: u64, used: Weight }>;
       /**
        * Some XCM was executed ok.
        **/
-      Success: AugmentedEvent<ApiType, [messageHash: Option<H256>, weight: u64], { messageHash: Option<H256>, weight: u64 }>;
+      Success: AugmentedEvent<ApiType, [messageHash: Option<H256>, weight: Weight], { messageHash: Option<H256>, weight: Weight }>;
       /**
        * An upward message was sent to the relay chain.
        **/
@@ -652,6 +767,16 @@ declare module '@polkadot/api-base/types/events' {
        * An HRMP message was sent to a sibling parachain.
        **/
       XcmpMessageSent: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    xTokens: {
+      /**
+       * Transferred `MultiAsset` with fee.
+       **/
+      TransferredMultiAssets: AugmentedEvent<ApiType, [sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation], { sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation }>;
       /**
        * Generic event
        **/

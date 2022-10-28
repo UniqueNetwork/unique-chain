@@ -20,9 +20,15 @@ pub mod dispatch;
 pub mod ethereum;
 pub mod instance;
 pub mod runtime_apis;
+
+#[cfg(feature = "scheduler")]
 pub mod scheduler;
+
 pub mod sponsoring;
 pub mod weights;
+
+#[cfg(test)]
+pub mod tests;
 
 use sp_core::H160;
 use frame_support::{
@@ -40,7 +46,7 @@ use sp_std::vec::Vec;
 use sp_version::NativeVersion;
 
 use crate::{
-	Runtime, Call, Balances, Treasury, Aura, Signature, AllPalletsReversedWithSystemFirst,
+	Runtime, RuntimeCall, Balances, Treasury, Aura, Signature, AllPalletsWithSystem,
 	InherentDataExt,
 };
 use up_common::types::{AccountId, BlockNumber};
@@ -82,7 +88,7 @@ pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransaction
 
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
-	// system::CheckTxVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
@@ -94,10 +100,11 @@ pub type SignedExtra = (
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = fp_self_contained::CheckedExtrinsic<AccountId, Call, SignedExtra, H160>;
+pub type CheckedExtrinsic =
+	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -105,7 +112,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPalletsReversedWithSystemFirst,
+	AllPalletsWithSystem,
 	AuraToCollatorSelection,
 >;
 
