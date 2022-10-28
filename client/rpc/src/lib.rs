@@ -545,13 +545,16 @@ where
 		keys: Option<Vec<String>>
 	) -> Vec<PropertyKeyPermission>, unique_api);
 
-	pass_method!(token_data(
-		collection: CollectionId,
-		token_id: TokenId,
+	pass_method!(
+		token_data(
+			collection: CollectionId,
+			token_id: TokenId,
 
-		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Option<Vec<String>>,
-	) -> TokenData<CrossAccountId>, unique_api);
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			keys: Option<Vec<String>>,
+		) -> TokenData<CrossAccountId>, unique_api;
+		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| value.into()
+	);
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
