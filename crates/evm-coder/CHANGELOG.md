@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
  - Implementation `AbiWrite` for tuples.
 
- ### Fixes 
+ ### Fixes
 
  - Tuple generation for solidity.
 

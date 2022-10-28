@@ -93,7 +93,7 @@ describe('EVM collection allowlist', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const user = donor;
     
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const userCross = helper.ethCrossAccount.fromKeyringPair(user);
     
@@ -127,7 +127,7 @@ describe('EVM collection allowlist', () => {
     const notOwner = await helper.eth.createAccountWithBalance(donor);
     const user = donor;
     
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
     expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;

@@ -62,13 +62,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "newAdmin",
@@ -93,13 +88,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "user",
@@ -144,13 +134,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "spender",
@@ -186,13 +171,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "from",
@@ -202,7 +182,6 @@
     ],
     "name": "burnFromCross",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-<<<<<<< HEAD
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -212,8 +191,6 @@
     ],
     "name": "changeCollectionOwner",
     "outputs": [],
-=======
->>>>>>> misk: update stubs
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -223,13 +200,8 @@
     "outputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount[]",
         "name": "",
@@ -245,13 +217,8 @@
     "outputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "",
@@ -361,13 +328,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "user",
@@ -426,13 +388,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "admin",
@@ -464,13 +421,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "user",
@@ -577,13 +529,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "sponsor",
@@ -597,26 +544,10 @@
   },
   {
     "inputs": [
-<<<<<<< HEAD
-      {
-        "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
-      { "internalType": "address", "name": "newOwner", "type": "address" }
-    ],
-    "name": "setOwner",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
       {
         "components": [
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "newOwner",
@@ -676,13 +607,8 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "from",
@@ -690,13 +616,8 @@
       },
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> misk: update stubs
         ],
         "internalType": "struct EthCrossAccount",
         "name": "to",

@@ -522,7 +522,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 				self.custom_signature.as_str()
 			)?;
 		}
-		write!(writer, "\tfunction {}(", self.name)?;
+		write!(writer, "\t{hide_comment}function {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;
 		if is_impl {

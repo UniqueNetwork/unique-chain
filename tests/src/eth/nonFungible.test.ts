@@ -247,13 +247,13 @@ describe('NFT: Plain calls', () => {
   });
 
   itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-    const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const minter = await privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = privateKey('//Bob');
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+    const owner = await privateKey('//Bob');
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
-    const token = await collection.mintToken(alice, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, {Substrate: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft');
@@ -277,13 +277,13 @@ describe('NFT: Plain calls', () => {
   });
 
   itEth('Can perform approveCross()', async ({helper, privateKey}) => {
-    const alice = privateKey('//Alice');
-    const collection = await helper.nft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const minter = await privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(alice, 100n);
-    const receiver = privateKey('//Charlie');
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await privateKey('//Charlie');
 
-    const token = await collection.mintToken(alice, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {Ethereum: owner});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft');
@@ -410,11 +410,12 @@ describe('NFT: Fees', () => {
   });
 
   itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
-    const collection = await helper.nft.mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const minter = await privateKey('//Alice');
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = privateKey('//Bob');
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
-    const receiver = privateKey('//Charlie');
+    const owner = await privateKey('//Bob');
+    const spender = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await privateKey('//Charlie');
 
     const token = await collection.mintToken(donor, {Substrate: owner.address});
 

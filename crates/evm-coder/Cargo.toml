@@ -21,7 +21,7 @@ evm-core = { default-features = false, git = "https://github.com/uniquenetwork/e
 # We have tuple-heavy code in solidity.rs
 impl-trait-for-tuples = "0.2.2"
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.29" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
 
 [dev-dependencies]
 # We want to assert some large binary blobs equality in tests

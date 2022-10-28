@@ -14,8 +14,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
+import {expect} from 'chai';
 import {IEthCrossAccountId} from '../util/playgrounds/types';
-import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util/playgrounds';
+import {usingEthPlaygrounds, itEth} from './util';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
@@ -53,10 +55,10 @@ describe('Add collection admins', () => {
   itEth('Add cross account admin by owner', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
         
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     
-    const newAdmin = privateKey('//Bob');
+    const newAdmin = await privateKey('//Bob');
     const newAdminCross = helper.ethCrossAccount.fromKeyringPair(newAdmin);
     await collectionEvm.methods.addCollectionAdminCross(newAdminCross).send();
 
@@ -67,11 +69,11 @@ describe('Add collection admins', () => {
   itEth('Check adminlist', async ({helper, privateKey}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
         
-    const {collectionAddress, collectionId} = await helper.eth.createNonfungibleCollection(owner, 'A', 'B', 'C');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const admin1 = helper.eth.createAccount();
-    const admin2 = privateKey('admin');
+    const admin2 = await privateKey('admin');
     await collectionEvm.methods.addCollectionAdmin(admin1).send();
     await collectionEvm.methods.addCollectionAdminSubstrate(admin2.addressRaw).send();
 

@@ -23,10 +23,9 @@ use evm_coder::{
 	generate_stubgen, solidity, solidity_interface,
 	types::*,
 	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
-	make_signature,
-, weight};
-use frame_support::{traits::Get, storage::StorageNMap};
-use crate::sp_api_hidden_includes_decl_storage::hidden_include::StorageDoubleMap;
+	make_signature, weight,
+};
+use frame_support::traits::Get;
 use crate::Pallet;
 
 use pallet_common::{

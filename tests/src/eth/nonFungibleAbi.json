@@ -96,11 +96,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "newAdmin",
         "type": "tuple"
       }
@@ -126,11 +122,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "user",
         "type": "tuple"
       }
@@ -166,11 +158,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "approved",
         "type": "tuple"
       },
@@ -216,11 +204,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "from",
         "type": "tuple"
       },
@@ -249,11 +233,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6[]",
-=======
         "internalType": "struct EthCrossAccount[]",
->>>>>>> misk: update stubs
         "name": "",
         "type": "tuple[]"
       }
@@ -270,19 +250,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
-        "internalType": "struct Tuple19",
->>>>>>> feat: add `EthCrossAccount` type
-=======
-        "internalType": "struct Tuple8",
->>>>>>> feat: Add custum signature with unlimited nesting.
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "",
         "type": "tuple"
       }
@@ -291,10 +259,6 @@
     "type": "function"
   },
   {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> fix: after rebase
     "inputs": [
       { "internalType": "string[]", "name": "keys", "type": "string[]" }
     ],
@@ -305,23 +269,11 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple19[]",
-=======
         "internalType": "struct Tuple21[]",
->>>>>>> fix: after rebase
         "name": "",
         "type": "tuple[]"
       }
     ],
-<<<<<<< HEAD
-=======
-    "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
-    "name": "collectionProperty",
-    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
->>>>>>> feat: Add custum signature with unlimited nesting.
-=======
->>>>>>> fix: after rebase
     "stateMutability": "view",
     "type": "function"
   },
@@ -341,19 +293,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
-        "internalType": "struct Tuple19",
->>>>>>> feat: add `EthCrossAccount` type
-=======
-        "internalType": "struct Tuple8",
->>>>>>> feat: Add custum signature with unlimited nesting.
-=======
         "internalType": "struct Tuple24",
->>>>>>> misk: update stubs
         "name": "",
         "type": "tuple"
       }
@@ -376,10 +316,6 @@
     "type": "function"
   },
   {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> fix: after rebase
     "inputs": [
       { "internalType": "string[]", "name": "keys", "type": "string[]" }
     ],
@@ -389,11 +325,6 @@
     "type": "function"
   },
   {
-<<<<<<< HEAD
-=======
->>>>>>> feat: Add custum signature with unlimited nesting.
-=======
->>>>>>> fix: after rebase
     "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
     "name": "deleteCollectionProperty",
     "outputs": [],
@@ -459,11 +390,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "user",
         "type": "tuple"
       }
@@ -474,64 +401,19 @@
     "type": "function"
   },
   {
-<<<<<<< HEAD
     "inputs": [{ "internalType": "address", "name": "to", "type": "address" }],
     "name": "mint",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-=======
-    "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-    ],
-    "name": "mint",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
->>>>>>> feat: Add custum signature with unlimited nesting.
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       { "internalType": "address", "name": "to", "type": "address" },
-<<<<<<< HEAD
       { "internalType": "string", "name": "tokenUri", "type": "string" }
     ],
     "name": "mintWithTokenURI",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-=======
-      { "internalType": "uint256[]", "name": "tokenIds", "type": "uint256[]" }
-    ],
-    "name": "mintBulk",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      {
-        "components": [
-          { "internalType": "uint256", "name": "field_0", "type": "uint256" },
-          { "internalType": "string", "name": "field_1", "type": "string" }
-        ],
-        "internalType": "struct Tuple12[]",
-        "name": "tokens",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "mintBulkWithTokenURI",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
-      { "internalType": "string", "name": "tokenUri", "type": "string" }
-    ],
-    "name": "mintWithTokenURI",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
->>>>>>> feat: Add custum signature with unlimited nesting.
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -591,11 +473,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "admin",
         "type": "tuple"
       }
@@ -628,11 +506,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "user",
         "type": "tuple"
       }
@@ -732,30 +606,15 @@
   },
   {
     "inputs": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> fix: after rebase
       {
         "components": [
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple19[]",
-        "name": "properties",
-        "type": "tuple[]"
-      }
-=======
-      { "internalType": "string", "name": "key", "type": "string" },
-      { "internalType": "bytes", "name": "value", "type": "bytes" }
->>>>>>> feat: Add custum signature with unlimited nesting.
-=======
         "internalType": "struct Tuple21[]",
         "name": "properties",
         "type": "tuple[]"
       }
->>>>>>> fix: after rebase
     ],
     "name": "setCollectionProperties",
     "outputs": [],
@@ -788,11 +647,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> misk: update stubs
         "name": "sponsor",
         "type": "tuple"
       }
@@ -804,19 +659,15 @@
   },
   {
     "inputs": [
-<<<<<<< HEAD
       {
         "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct Tuple6",
+        "internalType": "struct EthCrossAccount",
         "name": "newOwner",
         "type": "tuple"
       }
-=======
-      { "internalType": "address", "name": "newOwner", "type": "address" }
->>>>>>> feat: Add custum signature with unlimited nesting.
     ],
     "name": "setOwnerCross",
     "outputs": [],
@@ -828,26 +679,12 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       {
         "components": [
-<<<<<<< HEAD
-<<<<<<< HEAD
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
-=======
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
->>>>>>> feat: Add custum signature with unlimited nesting.
         ],
-        "internalType": "struct Tuple19[]",
+        "internalType": "struct Tuple21[]",
         "name": "properties",
         "type": "tuple[]"
-=======
-          { "internalType": "address", "name": "eth", "type": "address" },
-          { "internalType": "uint256", "name": "sub", "type": "uint256" }
-        ],
-        "internalType": "struct EthCrossAccount",
-        "name": "newOwner",
-        "type": "tuple"
->>>>>>> misk: update stubs
       }
     ],
     "name": "setProperties",
@@ -954,37 +791,19 @@
     "inputs": [
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> feat: Add custum signature with unlimited nesting.
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> feat: add `EthCrossAccount` type
         "name": "from",
         "type": "tuple"
       },
       {
         "components": [
-<<<<<<< HEAD
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-=======
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
->>>>>>> feat: Add custum signature with unlimited nesting.
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple6",
-=======
         "internalType": "struct EthCrossAccount",
->>>>>>> feat: add `EthCrossAccount` type
         "name": "to",
         "type": "tuple"
       },

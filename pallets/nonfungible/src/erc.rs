@@ -20,7 +20,6 @@
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
 extern crate alloc;
-use alloc::string::ToString;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
@@ -44,7 +43,6 @@ use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions,
-	eth::convert_tuple_to_cross_account,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
