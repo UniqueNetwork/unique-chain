@@ -265,7 +265,7 @@ impl Config for Test {
 
 pub type LoggerCall = logger::Call<Test>;
 
-pub  type SystemCall = frame_system::Call<Test>;
+pub type SystemCall = frame_system::Call<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default()

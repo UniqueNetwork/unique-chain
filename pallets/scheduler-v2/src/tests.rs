@@ -40,7 +40,8 @@ use crate::mock::{
 };
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Contains, OnInitialize}, assert_err,
+	traits::{Contains, OnInitialize},
+	assert_err,
 };
 
 #[test]
@@ -879,12 +880,21 @@ fn cannot_schedule_too_big_tasks() {
 			remark: vec![0; EncodedCall::bound() - 4],
 		}));
 
-		assert_ok!(Scheduler::schedule(RuntimeOrigin::root(), 4, None, Some(127), call));
+		assert_ok!(Scheduler::schedule(
+			RuntimeOrigin::root(),
+			4,
+			None,
+			Some(127),
+			call
+		));
 
 		let call = Box::new(<<Test as Config>::RuntimeCall>::from(SystemCall::remark {
 			remark: vec![0; EncodedCall::bound() - 3],
 		}));
 
-		assert_err!(Scheduler::schedule(RuntimeOrigin::root(), 4, None, Some(127), call), <Error<Test>>::TooBigScheduledCall);
+		assert_err!(
+			Scheduler::schedule(RuntimeOrigin::root(), 4, None, Some(127), call),
+			<Error<Test>>::TooBigScheduledCall
+		);
 	});
 }
