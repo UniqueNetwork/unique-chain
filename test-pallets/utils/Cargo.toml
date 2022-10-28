@@ -12,6 +12,7 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 # pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 pallet-unique-scheduler-v2 = { path = '../../pallets/scheduler-v2', default-features = false }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 
 [features]
 default = ["std"]
@@ -21,5 +22,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-unique-scheduler-v2/std",
+	"sp-std/std",
 ]
 try-runtime = ["frame-support/try-runtime", "pallet-unique-scheduler/try-runtime"]
