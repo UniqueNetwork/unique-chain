@@ -93,9 +93,8 @@
             "balance": "1000000000000000000000000",
             "chainRawInitializer": [
                 "chainql",
-                "--ext-str=REPLICA_FROM",
                 "--tla-code=rawSpec=import '${rawSpec}'",
-                "--tla-code=forkFrom=std.extVar('REPLICA_FROM')",
+                "--tla-str=forkFrom={{ REPLICA_FROM }}",
                 "fork.jsonnet"
             ],
             "nodes": [
