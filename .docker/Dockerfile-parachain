@@ -35,20 +35,20 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique
 
 ARG PROFILE=release
-ARG NETWORK
-ARG REPO_URL
-ARG BRANCH
+ARG NETWORK=
+ARG REPO_URL=
+ARG BRANCH=
 
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH . && \
-    cargo build --features="$NETWORK-runtime" --$PROFILE
+    cargo build --features="${NETWORK}-runtime" --$PROFILE
 
 # ===== RUN ======
 
 FROM ubuntu:20.04
 
-ARG POLKADOT_LAUNCH_BRANCH
+ARG POLKADOT_LAUNCH_BRANCH=
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \
