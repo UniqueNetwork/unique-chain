@@ -42,7 +42,6 @@ runtime-benchmarks = [
     'pallet-inflation/runtime-benchmarks',
     'pallet-app-promotion/runtime-benchmarks',
     'pallet-unique-scheduler/runtime-benchmarks',
-    'pallet-unique-scheduler-v2/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
@@ -141,7 +140,6 @@ std = [
     'pallet-proxy-rmrk-equip/std',
     'pallet-unique/std',
     'pallet-unique-scheduler/std',
-    'pallet-unique-scheduler-v2/std',
     'pallet-charge-transaction/std',
     'up-data-structs/std',
     'sp-api/std',
@@ -474,7 +472,6 @@ pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy
 pallet-proxy-rmrk-equip = { default-features = false, path = "../../pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
 pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.30", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
-pallet-unique-scheduler-v2 = { path = '../../pallets/scheduler-v2', default-features = false }
 pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
