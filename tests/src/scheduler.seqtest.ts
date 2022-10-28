@@ -409,6 +409,61 @@ describe('Scheduling token and balance transfers', () => {
     expect(secondExecuctionIds[0]).to.be.equal(scheduledFirstId);
     expect(secondExecuctionIds[1]).to.be.equal(scheduledSecondId);
   });
+
+  itSub.ifWithPallets('Periodic operations always can be rescheduled', [Pallets.Scheduler], async ({helper}) => {
+    const maxScheduledPerBlock = 50;
+    const numFilledBlocks = 3;
+    const ids = await helper.arrange.makeScheduledIds(numFilledBlocks * maxScheduledPerBlock + 1);
+    const periodicId = ids[0];
+    const fillIds = ids.slice(1);
+
+    const initTestVal = 0;
+    const firstExecTestVal = 1;
+    const secondExecTestVal = 2;
+    await helper.testUtils.setTestValue(alice, initTestVal);
+
+    const currentBlockNumber = await helper.chain.getLatestBlockNumber();
+    const blocksBeforeExecution = 8;
+    const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
+
+    const period = 5;
+
+    const periodic = {
+      period,
+      repetitions: 2,
+    };
+
+    // Fill `numFilledBlocks` blocks beginning from the block in which the second execution should occur
+    const txs = [];
+    for (let offset = 0; offset < numFilledBlocks; offset ++) {
+      for (let i = 0; i < maxScheduledPerBlock; i++) {
+
+        const scheduledTx = helper.constructApiCall('api.tx.balances.transfer', [bob.address, 1n]);
+
+        const when = firstExecutionBlockNumber + period + offset;
+        const tx = helper.constructApiCall('api.tx.scheduler.scheduleNamed', [fillIds[i + offset * maxScheduledPerBlock], when, null, null, scheduledTx]);
+
+        txs.push(tx);
+      }
+    }
+    await helper.executeExtrinsic(alice, 'api.tx.testUtils.batchAll', [txs], true);
+
+    await helper.scheduler.scheduleAt<DevUniqueHelper>(periodicId, firstExecutionBlockNumber, {periodic})
+      .testUtils.incTestValue(alice);
+
+    await helper.wait.newBlocks(blocksBeforeExecution);
+    expect(await helper.testUtils.testValue()).to.be.equal(firstExecTestVal);
+
+    await helper.wait.newBlocks(period + numFilledBlocks);
+
+    // The periodic operation should be postponed by `numFilledBlocks`
+    for (let i = 0; i < numFilledBlocks; i++) {
+      expect(await helper.testUtils.testValue(firstExecutionBlockNumber + period + i)).to.be.equal(firstExecTestVal);
+    }
+
+    // After the `numFilledBlocks` the periodic operation will eventually be executed
+    expect(await helper.testUtils.testValue()).to.be.equal(secondExecTestVal);
+  });
 });
 
 describe('Negative Test: Scheduling', () => {
