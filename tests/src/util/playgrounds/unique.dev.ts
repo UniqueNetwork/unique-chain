@@ -537,8 +537,12 @@ class TestUtilGroup {
     await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
   }
 
-  async testValue() {
-    return (await this.helper.callRpc('api.query.testUtils.testValue', [])).toNumber();
+  async testValue(blockIdx?: number) {
+    const api = blockIdx
+      ? await this.helper.getApi().at(await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockIdx]))
+      : this.helper.getApi();
+
+    return (await api.query.testUtils.testValue()).toJSON();
   }
 
   async justTakeFee(signer: TSigner) {
