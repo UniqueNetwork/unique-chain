@@ -24,7 +24,6 @@ jobs:
       matrix:
         include:
           - network: "opal"
-            features: "opal-runtime"
 
     steps:
       - name: Clean Workspace
@@ -61,7 +60,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            FEATURE=${{ matrix.features }}
+            NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
 
 

@@ -1,15 +1,15 @@
 FROM ubuntu:20.04
 
-ARG RUST_TOOLCHAIN=
-ARG FEATURE=
+ARG RUST_TOOLCHAIN
+ARG NETWORK
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-ENV FEATURE=$FEATURE
+ENV NETWORK=$NETWORK
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
-RUN echo "$FEATURE\n" && echo "$RUST_TOOLCHAIN\n"
+RUN echo "$NETWORK\n" && echo "$RUST_TOOLCHAIN\n"
 
 RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake protobuf-compiler
 
@@ -26,6 +26,6 @@ COPY . /dev_chain
 WORKDIR /dev_chain
 
 RUN cargo build --release
-RUN echo "$FEATURE"
+RUN echo "$NETWORK"
 
-CMD cargo run --release --features=$FEATURE -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+CMD cargo run --release --features=${NETWORK}-runtime -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external

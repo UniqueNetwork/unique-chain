@@ -40,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}
-            network {unique}, runtime {unique}, features {unique-runtime}
+            network {opal}
+            network {quartz}
+            network {unique}
 
   testnet-build:
     needs: prepare-execution-marix
@@ -85,8 +85,7 @@ jobs:
             NETWORK=${{ matrix.network }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration

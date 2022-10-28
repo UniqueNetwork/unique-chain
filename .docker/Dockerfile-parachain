@@ -35,14 +35,14 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique
 
 ARG PROFILE=release
-ARG FEATURE=
-ARG REPO_URL=
-ARG BRANCH=
+ARG NETWORK
+ARG REPO_URL
+ARG BRANCH
 
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH . && \
-    cargo build --features=$FEATURE --$PROFILE
+    cargo build --features=${NETWORK}-runtime --$PROFILE
 
 # ===== RUN ======
 

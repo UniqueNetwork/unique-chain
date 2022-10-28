@@ -33,7 +33,7 @@ WORKDIR /unique_parachain
 
 RUN git clone -b {{ BRANCH }} https://github.com/UniqueNetwork/unique-chain.git && \
     cd unique-chain && \
-    cargo build --features={{ FEATURE }} --$PROFILE
+    cargo build --features={{ NETWORK }}-runtime --$PROFILE
 
 # ===== RUN ======
 

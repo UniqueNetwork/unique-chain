@@ -34,9 +34,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
 
 
   forkless-update-nodata:
@@ -79,8 +79,7 @@ jobs:
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
@@ -92,8 +91,7 @@ jobs:
           template: .docker/forkless-config/launch-config-forkless-nodata.j2
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json

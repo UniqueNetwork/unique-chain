@@ -24,11 +24,8 @@ jobs:
       matrix:
         include:
           - network: "opal"
-            features: "opal-runtime"
           - network: "quartz"
-            features: "quartz-runtime"
           - network: "unique"
-            features: "unique-runtime"
 
     steps:
 
@@ -50,7 +47,7 @@ jobs:
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            FEATURE=${{ matrix.features }}
+            NETWORK=${{ matrix.network }}
     
 
       - name: Show build configuration

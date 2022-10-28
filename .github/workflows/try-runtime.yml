@@ -19,13 +19,10 @@ jobs:
       matrix:
         include:
           - network: opal
-            features: opal-runtime
             replica_from_address: wss://eu-ws-opal.unique.network:443
           - network: quartz
-            features: quartz-runtime
             replica_from_address: wss://eu-ws-quartz.unique.network:443
           - network: unique
-            features: unique-runtime
             replica_from_address: wss://eu-ws.unique.network:443
 
     steps:
@@ -48,7 +45,7 @@ jobs:
           output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            FEATURE=${{ matrix.features }}
+            NETWORK=${{ matrix.network }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration

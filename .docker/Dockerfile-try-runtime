@@ -33,17 +33,17 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique
 
 ARG PROFILE=release
-ARG FEATURE=
+ARG NETWORK
 ARG REPLICA_FROM=
-ENV FEATURE $FEATURE
+ENV NETWORK $NETWORK
 ENV REPLICA_FROM $REPLICA_FROM
 
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
 
-RUN echo "Requested features: $FEATURE\n" && \
+RUN echo "Requested features: ${NETWORK}-runtime\n" && \
     echo "Fork from: $REPLICA_FROM\n" && \
-    cargo build --features=$FEATURE --release
+    cargo build --features=${NETWORK}-runtime --release
 
-CMD cargo run --features=try-runtime,$FEATURE --release -- try-runtime --no-spec-check-panic on-runtime-upgrade live --uri $REPLICA_FROM
+CMD cargo run --features=try-runtime,${NETWORK}-runtime --release -- try-runtime --no-spec-check-panic on-runtime-upgrade live --uri $REPLICA_FROM
