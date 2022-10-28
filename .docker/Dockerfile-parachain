@@ -39,6 +39,8 @@ ARG NETWORK=
 ARG REPO_URL=
 ARG BRANCH=
 
+RUN echo ${NETWORK}
+
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $BRANCH . && \
