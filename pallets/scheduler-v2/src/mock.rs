@@ -187,9 +187,9 @@ impl WeightInfo for TestWeightInfo {
 	fn service_task_named() -> Weight {
 		Weight::from_ref_time(0b0001_0100)
 	}
-	fn service_task_fetched(s: u32) -> Weight {
-		Weight::from_ref_time((s << 8) as u64 + 0b0010_0100)
-	}
+	// fn service_task_fetched(s: u32) -> Weight {
+	// 	Weight::from_ref_time((s << 8) as u64 + 0b0010_0100)
+	// }
 	fn execute_dispatch_signed() -> Weight {
 		Weight::from_ref_time(0b0100_0000)
 	}
@@ -264,6 +264,8 @@ impl Config for Test {
 }
 
 pub type LoggerCall = logger::Call<Test>;
+
+pub  type SystemCall = frame_system::Call<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default()
