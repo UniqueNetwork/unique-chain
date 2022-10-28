@@ -22,7 +22,11 @@ use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{pallet_prelude::*, dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo}, traits::{UnfilteredDispatchable, IsSubType, OriginTrait}};
+	use frame_support::{
+		pallet_prelude::*,
+		dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+		traits::{UnfilteredDispatchable, IsSubType, OriginTrait},
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_std::vec::Vec;
 	use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
@@ -33,8 +37,10 @@ pub mod pallet {
 
 		/// The overarching call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
-			+ GetDispatchInfo
+			+ Dispatchable<
+				RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
 			+ From<frame_system::Call<Self>>
 			+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
 			+ IsSubType<Call<Self>>
