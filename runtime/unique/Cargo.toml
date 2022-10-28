@@ -178,6 +178,7 @@ refungible = []
 scheduler = []
 rmrk = []
 foreign-assets = []
+collator-selection = []
 
 ################################################################################
 # Substrate Dependencies

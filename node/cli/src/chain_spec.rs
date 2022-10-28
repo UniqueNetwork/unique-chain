@@ -24,7 +24,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
 use up_common::types::opaque::*;
-use up_common::constants::EXISTENTIAL_DEPOSIT;
+use up_common::constants::CANDIDACY_BOND;
 
 #[cfg(feature = "unique-runtime")]
 pub use unique_runtime as default_runtime;
@@ -151,6 +151,7 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
+#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
 macro_rules! testnet_genesis {
 	(
 		$runtime:path,
@@ -191,7 +192,7 @@ macro_rules! testnet_genesis {
 					.cloned()
 					.map(|(acc, _)| acc)
 					.collect(),
-				candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+				candidacy_bond: CANDIDACY_BOND,
 				..Default::default()
 			},
 			session: SessionConfig {
@@ -207,9 +208,56 @@ macro_rules! testnet_genesis {
 					.collect(),
 			},
 			aura: Default::default(),
-			/*aura: AuraConfig {
-				authorities: $initial_authorities,
-			},*/
+			aura_ext: Default::default(),
+			evm: EVMConfig {
+				accounts: BTreeMap::new(),
+			},
+			ethereum: EthereumConfig {},
+		}
+	}};
+}
+
+#[cfg(any(feature = "unique-runtime", feature = "quartz-runtime"))]
+macro_rules! testnet_genesis {
+	(
+		$runtime:path,
+		$root_key:expr,
+		$initial_invulnerables:expr,
+		$endowed_accounts:expr,
+		$id:expr
+	) => {{
+		use $runtime::*;
+
+		GenesisConfig {
+			system: SystemConfig {
+				code: WASM_BINARY
+					.expect("WASM binary was not build, please build it!")
+					.to_vec(),
+			},
+			balances: BalancesConfig {
+				balances: $endowed_accounts
+					.iter()
+					.cloned()
+					// 1e13 UNQ
+					.map(|k| (k, 1 << 100))
+					.collect(),
+			},
+			treasury: Default::default(),
+			tokens: TokensConfig { balances: vec![] },
+			sudo: SudoConfig {
+				key: Some($root_key),
+			},
+			vesting: VestingConfig { vesting: vec![] },
+			parachain_info: ParachainInfoConfig {
+				parachain_id: $id.into(),
+			},
+			parachain_system: Default::default(),
+			aura: AuraConfig {
+				authorities: $initial_invulnerables
+					.into_iter()
+					.map(|(_, aura)| aura)
+					.collect(),
+			},
 			aura_ext: Default::default(),
 			evm: EVMConfig {
 				accounts: BTreeMap::new(),

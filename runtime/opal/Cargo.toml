@@ -173,13 +173,14 @@ std = [
     "pallet-foreign-assets/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'rmrk', 'app-promotion', 'foreign-assets']
+opal-runtime = ['refungible', 'rmrk', 'app-promotion', 'foreign-assets', 'collator-selection']
 
 refungible = []
 scheduler = []
 rmrk = []
 foreign-assets = []
 app-promotion = []
+collator-selection = []
 
 ################################################################################
 # Substrate Dependencies

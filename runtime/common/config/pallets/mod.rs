@@ -46,6 +46,9 @@ pub mod foreign_asset;
 #[cfg(feature = "app-promotion")]
 pub mod app_promotion;
 
+#[cfg(feature = "collator-selection")]
+pub mod collator_selection;
+
 parameter_types! {
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
