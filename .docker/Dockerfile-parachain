@@ -39,7 +39,7 @@ ARG NETWORK=
 ARG REPO_URL=
 ARG BRANCH=
 
-RUN echo ${NETWORK}
+RUN echo "NETWORK="$NETWORK
 
 WORKDIR /unique_parachain
 
