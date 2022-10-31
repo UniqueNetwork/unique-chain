@@ -344,12 +344,31 @@ class WaitGroup {
     this.helper = helper;
   }
 
+  sleep(milliseconds: number) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+  }
+
+  private async waitWithTimeout(promise: Promise<any>, timeout: number) {
+    let isBlock = false;
+    promise.then(() => isBlock = true).catch(() => isBlock = true);
+    let totalTime = 0;
+    const step = 100;
+    while(!isBlock) {
+      console.log('Waiting...');
+      await this.sleep(step);
+      totalTime += step;
+      if(totalTime >= timeout) throw Error('Blocks production failed');
+    }
+    return promise;
+  }
+
   /**
    * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
    * @returns 
    */
-  async newBlocks(blocksCount = 1): Promise<void> {
+  async newBlocks(blocksCount = 1, timeout?: number): Promise<void> {
+    timeout = timeout ?? blocksCount * 60_000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
@@ -361,25 +380,30 @@ class WaitGroup {
         }
       });
     });
+    await this.waitWithTimeout(promise, timeout);
     return promise;
   }
 
-  async forParachainBlockNumber(blockNumber: bigint) {
+  async forParachainBlockNumber(blockNumber: bigint, timeout?: number) {
+    timeout = timeout ?? 300_000;
     // eslint-disable-next-line no-async-promise-executor
-    return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async (data: any) => {
+    const promise = new Promise<void>(async (resolve) => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
         if (data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
         }
       });
     });
+    await this.waitWithTimeout(promise, timeout);
+    return promise;
   }
   
-  async forRelayBlockNumber(blockNumber: bigint) {
+  async forRelayBlockNumber(blockNumber: bigint, timeout?: number) {
+    timeout = timeout ?? 300_000;
     // eslint-disable-next-line no-async-promise-executor
-    return new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData(async (data: any) => {
+    const promise = new Promise<void>(async (resolve) => {
+      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
         if (data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();
@@ -387,6 +411,8 @@ class WaitGroup {
         }
       });
     });
+    await this.waitWithTimeout(promise, timeout);
+    return promise;
   }
 
   async event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
