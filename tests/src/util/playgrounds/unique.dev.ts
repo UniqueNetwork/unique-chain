@@ -384,7 +384,7 @@ class WaitGroup {
   }
 
   async forParachainBlockNumber(blockNumber: bigint, timeout?: number) {
-    timeout = timeout ?? 300_000;
+    timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
@@ -399,7 +399,7 @@ class WaitGroup {
   }
   
   async forRelayBlockNumber(blockNumber: bigint, timeout?: number) {
-    timeout = timeout ?? 300_000;
+    timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
