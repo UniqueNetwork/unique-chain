@@ -5389,7 +5389,6 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
- "pallet-unique-scheduler",
  "pallet-unique-scheduler-v2",
  "pallet-xcm",
  "parachain-info",
@@ -6850,25 +6849,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
-]
-
-[[package]]
-name = "pallet-unique-scheduler"
-version = "0.1.1"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec 3.2.1",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "substrate-test-utils",
- "up-sponsorship",
 ]
 
 [[package]]
@@ -8881,7 +8861,6 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
- "pallet-unique-scheduler",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec 3.2.1",
@@ -13012,7 +12991,6 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-unique",
- "pallet-unique-scheduler",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec 3.2.1",

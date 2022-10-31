@@ -25,7 +25,7 @@ use core::cmp::Ordering;
 use codec::Decode;
 use crate::{
 	runtime_common::{scheduler::SchedulerPaymentExecutor, config::substrate::RuntimeBlockWeights},
-	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, OriginCaller, Balances,
+	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, OriginCaller,
 };
 use pallet_unique_scheduler_v2::ScheduledEnsureOriginSuccess;
 use up_common::types::AccountId;
@@ -69,23 +69,6 @@ impl PrivilegeCmp<OriginCaller> for EqualOrRootOnly {
 		}
 	}
 }
-
-// impl pallet_unique_scheduler::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type RuntimeOrigin = RuntimeOrigin;
-// 	type Currency = Balances;
-// 	type PalletsOrigin = OriginCaller;
-// 	type RuntimeCall = RuntimeCall;
-// 	type MaximumWeight = MaximumSchedulerWeight;
-// 	type ScheduleOrigin = EnsureSignedOrRoot<AccountId>;
-// 	type PrioritySetOrigin = EnsureRoot<AccountId>;
-// 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-// 	type WeightInfo = ();
-// 	type CallExecutor = SchedulerPaymentExecutor;
-// 	type OriginPrivilegeCmp = EqualOrRootOnly;
-// 	type PreimageProvider = ();
-// 	type NoPreimagePostponement = NoPreimagePostponement;
-// }
 
 impl pallet_unique_scheduler_v2::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

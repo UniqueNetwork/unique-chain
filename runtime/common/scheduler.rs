@@ -15,24 +15,20 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::NamedReservableCurrency,
 	dispatch::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
 };
 use sp_runtime::{
 	traits::{Dispatchable, Applyable, Member},
 	generic::Era,
 	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, DispatchError,
+	DispatchErrorWithPostInfo,
 };
 use codec::Encode;
-use crate::{Runtime, RuntimeCall, RuntimeOrigin, Balances, maintenance};
-use up_common::types::{AccountId, Balance};
+use crate::{Runtime, RuntimeCall, RuntimeOrigin, maintenance};
+use up_common::types::AccountId;
 use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler_v2::DispatchCall;
 use pallet_transaction_payment::ChargeTransactionPayment;
-
-// type SponsorshipChargeTransactionPayment =
-// 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtraScheduler = (
@@ -106,97 +102,3 @@ where
 		extrinsic.apply::<Runtime>(&dispatch_info, len)
 	}
 }
-
-// impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
-// 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
-// where
-// 	<T as frame_system::Config>::Call: Member
-// 		+ Dispatchable<Origin = Origin, Info = DispatchInfo>
-// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>
-// 		+ GetDispatchInfo
-// 		+ From<frame_system::Call<Runtime>>,
-// 	SelfContainedSignedInfo: Send + Sync + 'static,
-// 	Call: From<<T as frame_system::Config>::Call>
-// 		+ From<<T as pallet_unique_scheduler::Config>::Call>
-// 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
-// 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
-// {
-// 	fn dispatch_call(
-// 		signer: Option<<T as frame_system::Config>::AccountId>,
-// 		call: <T as pallet_unique_scheduler::Config>::Call,
-// 	) -> Result<
-// 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
-// 		TransactionValidityError,
-// 	> {
-// 		let dispatch_info = call.get_dispatch_info();
-// 		let len = call.encoded_size();
-
-// 		let signed = match signer {
-// 			Some(signer) => fp_self_contained::CheckedSignature::Signed(
-// 				signer.clone().into(),
-// 				get_signed_extras(signer.into()),
-// 			),
-// 			None => fp_self_contained::CheckedSignature::Unsigned,
-// 		};
-
-// 		let extrinsic = fp_self_contained::CheckedExtrinsic::<
-// 			AccountId,
-// 			Call,
-// 			SignedExtraScheduler,
-// 			SelfContainedSignedInfo,
-// 		> {
-// 			signed,
-// 			function: call.into(),
-// 		};
-
-// 		extrinsic.apply::<Runtime>(&dispatch_info, len)
-// 	}
-
-// 	fn reserve_balance(
-// 		id: [u8; 16],
-// 		sponsor: <T as frame_system::Config>::AccountId,
-// 		call: <T as pallet_unique_scheduler::Config>::Call,
-// 		count: u32,
-// 	) -> Result<(), DispatchError> {
-// 		let dispatch_info = call.get_dispatch_info();
-// 		let weight: Balance =
-// 			SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
-// 				.saturating_mul(count.into());
-
-// 		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
-// 			&id,
-// 			&(sponsor.into()),
-// 			weight,
-// 		)
-// 	}
-
-// 	fn pay_for_call(
-// 		id: [u8; 16],
-// 		sponsor: <T as frame_system::Config>::AccountId,
-// 		call: <T as pallet_unique_scheduler::Config>::Call,
-// 	) -> Result<u128, DispatchError> {
-// 		let dispatch_info = call.get_dispatch_info();
-// 		let weight: Balance =
-// 			SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
-// 		Ok(
-// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-// 				&id,
-// 				&(sponsor.into()),
-// 				weight,
-// 			),
-// 		)
-// 	}
-
-// 	fn cancel_reserve(
-// 		id: [u8; 16],
-// 		sponsor: <T as frame_system::Config>::AccountId,
-// 	) -> Result<u128, DispatchError> {
-// 		Ok(
-// 			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-// 				&id,
-// 				&(sponsor.into()),
-// 				u128::MAX,
-// 			),
-// 		)
-// 	}
-// }
