@@ -9,13 +9,16 @@ import {promises as fs} from 'fs';
 const globalSetup = async (): Promise<void> => {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
-      // 1. Create donors for test files
+      // 1. Wait node producing blocks
+      await helper.wait.newBlocks(1);
+
+      // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
           if (!result) Promise.reject();
         });
 
-      // 2. Set up App Promotion admin 
+      // 3. Set up App Promotion admin 
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
