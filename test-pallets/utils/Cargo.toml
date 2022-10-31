@@ -21,3 +21,4 @@ std = [
 	"frame-system/std",
 	"pallet-unique-scheduler/std",
 ]
+try-runtime = ["frame-support/try-runtime", "pallet-unique-scheduler/try-runtime"]
