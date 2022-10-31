@@ -88,6 +88,7 @@ try-runtime = [
     'pallet-evm-contract-helpers/try-runtime',
     'pallet-evm-transaction-payment/try-runtime',
     'pallet-evm-migration/try-runtime',
+    'pallet-test-utils?/try-runtime',
 ]
 std = [
     'codec/std',
