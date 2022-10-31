@@ -44,6 +44,6 @@ WORKDIR /unique_parachain
 
 RUN echo "Requested features: ${NETWORK}-runtime\n" && \
     echo "Fork from: $REPLICA_FROM\n" && \
-    cargo build --features=${NETWORK}-runtime --release
+    cargo build --features=try-runtime,${NETWORK}-runtime --release
 
 CMD cargo run --features=try-runtime,${NETWORK}-runtime --release -- try-runtime --no-spec-check-panic on-runtime-upgrade live --uri $REPLICA_FROM
