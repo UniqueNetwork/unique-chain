@@ -393,7 +393,6 @@ class WaitGroup {
     let totalTime = 0;
     const step = 100;
     while(!isBlock) {
-      console.log('Waiting...');
       await this.sleep(step);
       totalTime += step;
       if(totalTime >= timeout) throw Error('Blocks production failed');
