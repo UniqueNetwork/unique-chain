@@ -241,7 +241,7 @@ impl SignatureUnit {
 /// ```
 #[macro_export]
 macro_rules! make_signature {
-	(new fn($func:expr)$(,)+) => {
+	(new fn($func:expr)$(,)*) => {
 		{
 			let fs = FunctionSignature::new($func);
 			let fs = FunctionSignature::done(fs, false);
@@ -426,7 +426,7 @@ mod test {
 	#[test]
 	fn make_func_without_args() {
 		const SIG: FunctionSignature = make_signature!(
-			new fn(SIGNATURE_PREFERENCES),
+			new fn(SIGNATURE_PREFERENCES)
 		);
 		let name = SIG.as_str();
 		similar_asserts::assert_eq!(name, "some_funk()");

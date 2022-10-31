@@ -731,18 +731,16 @@ impl Method {
 		let selector_str = &self.selector_str;
 		let custom_signature = self.expand_custom_signature();
 		quote! {
-			const #screaming_name_signature: ::evm_coder::custom_signature::FunctionSignature = #custom_signature;
 			#[doc = #selector_str]
+			const #screaming_name_signature: ::evm_coder::custom_signature::FunctionSignature = #custom_signature;
 			const #screaming_name: ::evm_coder::types::bytes4 = {
-				let mut data = [0_u8; Self::#screaming_name_signature.unit.len];
+				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
 				let mut pos = 0;
 				while pos < Self::#screaming_name_signature.unit.len {
-					data[pos] = Self::#screaming_name_signature.unit.data[pos];
+					sum = sum.update(&[Self::#screaming_name_signature.unit.data[pos]; 1]);
 					pos += 1;
 				}
-				let a = ::evm_coder::sha3_const::Keccak256::new()
-				.update(&data)
-				.finalize();
+				let a = sum.finalize();
 				[a[0], a[1], a[2], a[3]]
 			};
 		}
@@ -1133,30 +1131,6 @@ impl SolidityInterface {
 		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
 
 		let docs = &self.docs;
-
-		if let Some(expect_selector) = &self.info.expect_selector {
-			if !self.info.inline_is.0.is_empty() {
-				return syn::Error::new(
-					name.span(),
-					"expect_selector is not compatible with inline_is",
-				)
-				.to_compile_error();
-			}
-			let selector = self
-				.methods
-				.iter()
-				.map(|m| m.selector)
-				.fold(0, |a, b| a ^ b);
-
-			if *expect_selector != selector {
-				let mut methods = String::new();
-				for meth in self.methods.iter() {
-					write!(methods, "\n- {}", meth.selector_str).expect("write to string");
-				}
-				return syn::Error::new(name.span(), format!("expected selector mismatch, expected {expect_selector:0>8x}, but implementation has {selector:0>8x}{methods}")).to_compile_error();
-			}
-		}
-		// let methods = self.methods.iter().map(Method::solidity_def);
 
 		quote! {
 			#[derive(Debug)]
