@@ -52,7 +52,7 @@ jobs:
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from try-runtime
+        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from try-runtime
  
       - name: Collect Docker Logs
         if: success() || failure()
@@ -66,7 +66,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-try-runtime.yml" -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
         
       - name: Remove builder cache
         if: always()                   # run this step always
