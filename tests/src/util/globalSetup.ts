@@ -10,7 +10,7 @@ const globalSetup = async (): Promise<void> => {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
       // 1. Wait node producing blocks
-      await helper.wait.newBlocks(1);
+      await helper.wait.newBlocks(1, 600_000);
 
       // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
