@@ -8,6 +8,8 @@ services:
         - "NETWORK={{ NETWORK }}"
       context: ../
       dockerfile: .docker/Dockerfile-chain-dev
+    image: node-dev
+    container_name: node-dev
     expose:
       - 9944
       - 9933
