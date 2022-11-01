@@ -41,11 +41,14 @@ runtime-benchmarks = [
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
+    'pallet-maintenance/runtime-benchmarks',
 ]
 try-runtime = [
     'frame-try-runtime',
     'frame-executive/try-runtime',
     'frame-system/try-runtime',
+    'unique-runtime-common/try-runtime',
+    'pallet-maintenance/try-runtime',
 ]
 std = [
     'codec/std',
@@ -117,6 +120,8 @@ std = [
     'rmrk-rpc/std',
 
     "orml-vesting/std",
+
+    'pallet-maintenance/std',
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 
@@ -426,6 +431,7 @@ pallet-ethereum = { default-features = false, git = "https://github.com/uniquene
 pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.24" }
+pallet-maintenance = { default-features = false, path = "../../pallets/maintenance" }
 
 ################################################################################
 # Build Dependencies
