@@ -279,7 +279,7 @@ pub mod pallet {
 			let storage_version = StorageVersion::get::<Pallet<T>>();
 			if storage_version < StorageVersion::new(2) {
 				#[allow(deprecated)]
-				<TokenData<T>>::clear(u32::MAX, None).maybe_cursor;
+				let _ = <TokenData<T>>::clear(u32::MAX, None);
 			}
 			StorageVersion::new(2).put::<Pallet<T>>();
 
