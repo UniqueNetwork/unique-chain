@@ -1130,6 +1130,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 
 impl pallet_maintenance::Config for Runtime {
 	type Event = Event;
+	type WeightInfo = pallet_maintenance::weights::SubstrateWeight<Self>;
 }
 
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]

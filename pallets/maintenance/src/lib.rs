@@ -21,14 +21,18 @@ pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 
+pub mod weights;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -51,7 +55,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::enable())]
 		pub fn enable(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -62,7 +66,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::disable())]
 		pub fn disable(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
 
