@@ -484,7 +484,6 @@ pub enum SolidityMutability {
 }
 pub struct SolidityFunction<A, R> {
 	pub docs: &'static [&'static str],
-	pub selector_str: &'static str,
 	pub selector: u32,
 	pub hide: bool,
 	pub custom_signature: FunctionSignature,
@@ -513,15 +512,8 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writeln!(
 			writer,
 			"\t{hide_comment}///  or in textual repr: {}",
-			self.selector_str
+			self.custom_signature.as_str()
 		)?;
-		if self.selector_str != self.custom_signature.as_str() {
-			writeln!(
-				writer,
-				"\t{hide_comment}///  or in the expanded repr: {}",
-				self.custom_signature.as_str()
-			)?;
-		}
 		write!(writer, "\t{hide_comment}function {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		write!(writer, ")")?;

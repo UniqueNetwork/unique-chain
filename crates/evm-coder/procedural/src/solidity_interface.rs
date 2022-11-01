@@ -329,149 +329,39 @@ impl Parse for MethodInfo {
 	}
 }
 
-#[derive(Debug)]
-enum AbiType {
-	// type
-	Plain(Ident),
-	// (type1,type2)
-	Tuple(Vec<AbiType>),
-	// type[]
-	Vec(Box<AbiType>),
-	// type[20]
-	Array(Box<AbiType>, usize),
+trait AbiType {
+	fn plain(&self) -> syn::Result<&Ident>;
+	fn is_value(&self) -> bool;
+	fn is_caller(&self) -> bool;
+	fn is_special(&self) -> bool;
 }
-impl AbiType {
-	fn try_from(value: &Type) -> syn::Result<Self> {
-		let value = Self::try_maybe_special_from(value)?;
-		if value.is_special() {
-			return Err(syn::Error::new(value.span(), "unexpected special type"));
-		}
-		Ok(value)
-	}
-	fn try_maybe_special_from(value: &Type) -> syn::Result<Self> {
-		match value {
-			Type::Array(arr) => {
-				let wrapped = AbiType::try_from(&arr.elem)?;
-				match &arr.len {
-					Expr::Lit(l) => match &l.lit {
-						Lit::Int(i) => {
-							let num = i.base10_parse::<usize>()?;
-							Ok(AbiType::Array(Box::new(wrapped), num as usize))
-						}
-						_ => Err(syn::Error::new(arr.len.span(), "should be int literal")),
-					},
-					_ => Err(syn::Error::new(arr.len.span(), "should be literal")),
-				}
-			}
-			Type::Path(_) => {
-				let path = parse_path(value)?;
-				let segment = parse_path_segment(path)?;
-				if segment.ident == "Vec" {
-					let args = match &segment.arguments {
-						PathArguments::AngleBracketed(e) => e,
-						_ => {
-							return Err(syn::Error::new(
-								segment.arguments.span(),
-								"missing Vec generic",
-							))
-						}
-					};
-					let args = &args.args;
-					if args.len() != 1 {
-						return Err(syn::Error::new(
-							args.span(),
-							"expected only one generic for vec",
-						));
-					}
-					let arg = args.first().expect("first arg");
 
-					let ty = match arg {
-						GenericArgument::Type(ty) => ty,
-						_ => {
-							return Err(syn::Error::new(
-								arg.span(),
-								"expected first generic to be type",
-							))
-						}
-					};
-
-					let wrapped = AbiType::try_from(ty)?;
-					Ok(Self::Vec(Box::new(wrapped)))
-				} else {
-					if !segment.arguments.is_empty() {
-						return Err(syn::Error::new(
-							segment.arguments.span(),
-							"unexpected generic arguments for non-vec type",
-						));
-					}
-					Ok(Self::Plain(segment.ident.clone()))
-				}
-			}
-			Type::Tuple(t) => {
-				let mut out = Vec::with_capacity(t.elems.len());
-				for el in t.elems.iter() {
-					out.push(AbiType::try_from(el)?)
-				}
-				Ok(Self::Tuple(out))
-			}
-			_ => Err(syn::Error::new(
-				value.span(),
-				"unexpected type, only arrays, plain types and tuples are supported",
-			)),
+impl AbiType for Type {
+	fn plain(&self) -> syn::Result<&Ident> {
+		let path = parse_path(self)?;
+		let segment = parse_path_segment(path)?;
+		if !segment.arguments.is_empty() {
+			return Err(syn::Error::new(self.span(), "Not plain type"));
 		}
+		Ok(&segment.ident)
 	}
+
 	fn is_value(&self) -> bool {
-		matches!(self, Self::Plain(v) if v == "value")
+		if let Ok(ident) = self.plain() {
+			return ident == "value";
+		}
+		false
 	}
+
 	fn is_caller(&self) -> bool {
-		matches!(self, Self::Plain(v) if v == "caller")
+		if let Ok(ident) = self.plain() {
+			return ident == "caller";
+		}
+		false
 	}
+
 	fn is_special(&self) -> bool {
 		self.is_caller() || self.is_value()
-	}
-	fn selector_ty_buf(&self, buf: &mut String) -> std::fmt::Result {
-		match self {
-			AbiType::Plain(t) => {
-				write!(buf, "{}", t)
-			}
-			AbiType::Tuple(t) => {
-				write!(buf, "(")?;
-				for (i, t) in t.iter().enumerate() {
-					if i != 0 {
-						write!(buf, ",")?;
-					}
-					t.selector_ty_buf(buf)?;
-				}
-				write!(buf, ")")
-			}
-			AbiType::Vec(v) => {
-				v.selector_ty_buf(buf)?;
-				write!(buf, "[]")
-			}
-			AbiType::Array(v, len) => {
-				v.selector_ty_buf(buf)?;
-				write!(buf, "[{}]", len)
-			}
-		}
-	}
-	fn selector_ty(&self) -> String {
-		let mut out = String::new();
-		self.selector_ty_buf(&mut out).expect("no fmt error");
-		out
-	}
-}
-impl ToTokens for AbiType {
-	fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-		match self {
-			AbiType::Plain(t) => tokens.extend(quote! {#t}),
-			AbiType::Tuple(t) => {
-				tokens.extend(quote! {(
-					#(#t),*
-				)});
-			}
-			AbiType::Vec(v) => tokens.extend(quote! {Vec<#v>}),
-			AbiType::Array(v, l) => tokens.extend(quote! {[#v; #l]}),
-		}
 	}
 }
 
@@ -479,7 +369,7 @@ impl ToTokens for AbiType {
 struct MethodArg {
 	name: Ident,
 	camel_name: String,
-	ty: AbiType,
+	ty: Type,
 }
 impl MethodArg {
 	fn try_from(value: &PatType) -> syn::Result<Self> {
@@ -487,7 +377,7 @@ impl MethodArg {
 		Ok(Self {
 			camel_name: cases::camelcase::to_camel_case(&name.to_string()),
 			name,
-			ty: AbiType::try_maybe_special_from(&value.ty)?,
+			ty: value.ty.as_ref().clone(),
 		})
 	}
 	fn is_value(&self) -> bool {
@@ -498,10 +388,6 @@ impl MethodArg {
 	}
 	fn is_special(&self) -> bool {
 		self.ty.is_special()
-	}
-	fn selector_ty(&self) -> String {
-		assert!(!self.is_special());
-		self.ty.selector_ty()
 	}
 
 	fn expand_call_def(&self) -> proc_macro2::TokenStream {
@@ -578,8 +464,6 @@ struct Method {
 	camel_name: String,
 	pascal_name: Ident,
 	screaming_name: Ident,
-	selector_str: String,
-	selector: u32,
 	hide: bool,
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
@@ -670,27 +554,14 @@ impl Method {
 		let camel_name = info
 			.rename_selector
 			.unwrap_or_else(|| cases::camelcase::to_camel_case(&ident.to_string()));
-		let mut selector_str = camel_name.clone();
-		selector_str.push('(');
-		let mut has_normal_args = false;
-		for (i, arg) in args.iter().filter(|arg| !arg.is_special()).enumerate() {
-			if i != 0 {
-				selector_str.push(',');
-			}
-			write!(selector_str, "{}", arg.selector_ty()).unwrap();
-			has_normal_args = true;
-		}
+		let has_normal_args = args.iter().filter(|arg| !arg.is_special()).count() != 0;
 		let has_value_args = args.iter().any(|a| a.is_value());
-		selector_str.push(')');
-		let selector = fn_selector_str(&selector_str);
 
 		Ok(Self {
 			name: ident.clone(),
 			camel_name,
 			pascal_name: snake_ident_to_pascal(ident),
 			screaming_name: snake_ident_to_screaming(ident),
-			selector_str,
-			selector,
 			hide: info.hide,
 			args,
 			has_normal_args,
@@ -728,10 +599,8 @@ impl Method {
 	fn expand_const(&self) -> proc_macro2::TokenStream {
 		let screaming_name = &self.screaming_name;
 		let screaming_name_signature = format_ident!("{}_SIGNATURE", &self.screaming_name);
-		let selector_str = &self.selector_str;
 		let custom_signature = self.expand_custom_signature();
 		quote! {
-			#[doc = #selector_str]
 			const #screaming_name_signature: ::evm_coder::custom_signature::FunctionSignature = #custom_signature;
 			const #screaming_name: ::evm_coder::types::bytes4 = {
 				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
@@ -845,31 +714,78 @@ impl Method {
 		}
 	}
 
-	fn expand_type(
-		ty: &AbiType,
-		token_stream: &mut proc_macro2::TokenStream,
-		read_signature: bool,
-	) {
+	fn expand_type(ty: &Type, token_stream: &mut proc_macro2::TokenStream, read_signature: bool) {
 		match ty {
-			AbiType::Plain(ref ident) => {
-				let plain_token = if read_signature {
-					quote! {
-						(<#ident>::SIGNATURE)
-					}
-				} else {
-					quote! {
-						#ident
-					}
-				};
+			Type::Path(tp) => {
+				if let Some(qself) = &tp.qself {
+					panic!("no receiver expected {:?}", qself.ty.span());
+				}
+				let path = &tp.path;
+				if path.segments.len() != 1 {
+					panic!("expected path to have only one segment {:?}", path.span());
+				}
+				let last_segment = path.segments.last().unwrap();
 
-				token_stream.extend(plain_token);
+				if last_segment.ident == "Vec" {
+					let args = match &last_segment.arguments {
+						PathArguments::AngleBracketed(e) => e,
+						_ => {
+							panic!("missing Vec generic {:?}", last_segment.arguments.span());
+						}
+					};
+					let args = &args.args;
+					if args.len() != 1 {
+						panic!("expected only one generic for vec {:?}", args.span());
+					}
+					let arg = args.first().expect("first arg");
+
+					let ty = match arg {
+						GenericArgument::Type(ty) => ty,
+						_ => {
+							panic!("expected first generic to be type {:?}", arg.span());
+						}
+					};
+
+					let mut vec_token = proc_macro2::TokenStream::new();
+					Self::expand_type(ty, &mut vec_token, false);
+					vec_token = if read_signature {
+						quote! { (<Vec<#vec_token>>::SIGNATURE) }
+					} else {
+						quote! { <Vec<#vec_token>> }
+					};
+					token_stream.extend(vec_token);
+				} else {
+					if !last_segment.arguments.is_empty() {
+						panic!(
+							"unexpected generic arguments for non-vec type {:?}",
+							last_segment.arguments.span()
+						);
+					}
+
+					let ident = &last_segment.ident;
+					let plain_token = if read_signature {
+						quote! {
+							(<#ident>::SIGNATURE)
+						}
+					} else {
+						quote! {
+							#ident
+						}
+					};
+
+					token_stream.extend(plain_token);
+				}
 			}
 
-			AbiType::Tuple(ref tuple_type) => {
+			Type::Tuple(tt) => {
+				// for ty in tt.elems.iter() {
+				// 	out.push(AbiType::try_from(ty)?)
+				// }
+
 				let mut tuple_types = proc_macro2::TokenStream::new();
 				let mut is_first = true;
 
-				for ty in tuple_type {
+				for ty in tt.elems.iter() {
 					if is_first {
 						is_first = false
 					} else {
@@ -885,19 +801,69 @@ impl Method {
 				token_stream.extend(tuple_types);
 			}
 
-			AbiType::Vec(ref vec_type) => {
-				let mut vec_token = proc_macro2::TokenStream::new();
-				Self::expand_type(vec_type.as_ref(), &mut vec_token, false);
-				vec_token = if read_signature {
-					quote! { (<Vec<#vec_token>>::SIGNATURE) }
-				} else {
-					quote! { <Vec<#vec_token>> }
-				};
-				token_stream.extend(vec_token);
-			}
+			// Type::Array(arr) => {
+			// 	let wrapped = AbiType::try_from(&arr.elem)?;
+			// 	match &arr.len {
+			// 		Expr::Lit(l) => match &l.lit {
+			// 			Lit::Int(i) => {
+			// 				let num = i.base10_parse::<usize>()?;
+			// 				Ok(AbiType::Array(Box::new(wrapped), num as usize))
+			// 			}
+			// 			_ => Err(syn::Error::new(arr.len.span(), "should be int literal")),
+			// 		},
+			// 		_ => Err(syn::Error::new(arr.len.span(), "should be literal")),
+			// 	}
+			// }
+			_ => panic!("Unexpected type {ty:?}"),
+		}
+		// match ty {
+		// 	AbiType::Plain(ref ident) => {
+		// 		let plain_token = if read_signature {
+		// 			quote! {
+		// 				(<#ident>::SIGNATURE)
+		// 			}
+		// 		} else {
+		// 			quote! {
+		// 				#ident
+		// 			}
+		// 		};
 
-			AbiType::Array(_, _) => todo!("Array eth signature"),
-		};
+		// 		token_stream.extend(plain_token);
+		// 	}
+
+		// 	AbiType::Tuple(ref tuple_type) => {
+		// 		let mut tuple_types = proc_macro2::TokenStream::new();
+		// 		let mut is_first = true;
+
+		// 		for ty in tuple_type {
+		// 			if is_first {
+		// 				is_first = false
+		// 			} else {
+		// 				tuple_types.extend(quote!(,));
+		// 			}
+		// 			Self::expand_type(ty, &mut tuple_types, false);
+		// 		}
+		// 		tuple_types = if read_signature {
+		// 			quote! { (<(#tuple_types)>::SIGNATURE) }
+		// 		} else {
+		// 			quote! { (#tuple_types) }
+		// 		};
+		// 		token_stream.extend(tuple_types);
+		// 	}
+
+		// 	AbiType::Vec(ref vec_type) => {
+		// 		let mut vec_token = proc_macro2::TokenStream::new();
+		// 		Self::expand_type(vec_type.as_ref(), &mut vec_token, false);
+		// 		vec_token = if read_signature {
+		// 			quote! { (<Vec<#vec_token>>::SIGNATURE) }
+		// 		} else {
+		// 			quote! { <Vec<#vec_token>> }
+		// 		};
+		// 		token_stream.extend(vec_token);
+		// 	}
+
+		// 	AbiType::Array(_, _) => todo!("Array eth signature"),
+		// };
 	}
 
 	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
@@ -947,7 +913,6 @@ impl Method {
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
 		let docs = &self.docs;
-		let selector_str = &self.selector_str;
 		let screaming_name = &self.screaming_name;
 		let hide = self.hide;
 		let custom_signature = self.expand_custom_signature();
@@ -962,7 +927,6 @@ impl Method {
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
-				selector_str: #selector_str,
 				hide: #hide,
 				selector: u32::from_be_bytes(Self::#screaming_name),
 				custom_signature: #custom_signature,
