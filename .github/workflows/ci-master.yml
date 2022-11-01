@@ -1,0 +1,22 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2587656193/CI+Master
+# Workflow which controls starts nested workflows.
+name: master
+
+# Triger: PR at 'master' branch with following types of events.
+on:
+  pull_request:
+    branches: [ 'master' ]
+    types: [ opened, reopened, synchronize, ready_for_review ]
+
+#Concurency group for control execution queue over github runners.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+# List of a jobs included into Workflow.
+jobs:
+  forkless:
+    uses: ./.github/workflows/forkless.yml
+
+  # codestyle:
+  #  uses: ./.github/workflows/codestyle.yml
