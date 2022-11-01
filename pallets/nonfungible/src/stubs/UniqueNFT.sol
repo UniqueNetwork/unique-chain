@@ -199,8 +199,7 @@ contract Collection is Dummy, ERC165 {
 	///
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
-	///  or in textual repr: setCollectionSponsorCross(EthCrossAccount)
-	///  or in the expanded repr: setCollectionSponsorCross((address,uint256))
+	///  or in textual repr: setCollectionSponsorCross((address,uint256))
 	function setCollectionSponsorCross(EthCrossAccount memory sponsor) public {
 		require(false, stub_error);
 		sponsor;
@@ -292,8 +291,7 @@ contract Collection is Dummy, ERC165 {
 	/// Add collection admin.
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
-	///  or in textual repr: addCollectionAdminCross(EthCrossAccount)
-	///  or in the expanded repr: addCollectionAdminCross((address,uint256))
+	///  or in textual repr: addCollectionAdminCross((address,uint256))
 	function addCollectionAdminCross(EthCrossAccount memory newAdmin) public {
 		require(false, stub_error);
 		newAdmin;
@@ -303,8 +301,7 @@ contract Collection is Dummy, ERC165 {
 	/// Remove collection admin.
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
-	///  or in textual repr: removeCollectionAdminCross(EthCrossAccount)
-	///  or in the expanded repr: removeCollectionAdminCross((address,uint256))
+	///  or in textual repr: removeCollectionAdminCross((address,uint256))
 	function removeCollectionAdminCross(EthCrossAccount memory admin) public {
 		require(false, stub_error);
 		admin;
@@ -395,8 +392,7 @@ contract Collection is Dummy, ERC165 {
 	///
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
-	///  or in textual repr: addToCollectionAllowListCross(EthCrossAccount)
-	///  or in the expanded repr: addToCollectionAllowListCross((address,uint256))
+	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
 	function addToCollectionAllowListCross(EthCrossAccount memory user) public {
 		require(false, stub_error);
 		user;
@@ -418,8 +414,7 @@ contract Collection is Dummy, ERC165 {
 	///
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
-	///  or in textual repr: removeFromCollectionAllowListCross(EthCrossAccount)
-	///  or in the expanded repr: removeFromCollectionAllowListCross((address,uint256))
+	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
 	function removeFromCollectionAllowListCross(EthCrossAccount memory user) public {
 		require(false, stub_error);
 		user;
@@ -455,8 +450,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
-	///  or in textual repr: isOwnerOrAdminCross(EthCrossAccount)
-	///  or in the expanded repr: isOwnerOrAdminCross((address,uint256))
+	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
 	function isOwnerOrAdminCross(EthCrossAccount memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
@@ -516,8 +510,7 @@ contract Collection is Dummy, ERC165 {
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0xe5c9913f,
-	///  or in textual repr: setOwnerCross(EthCrossAccount)
-	///  or in the expanded repr: setOwnerCross((address,uint256))
+	///  or in textual repr: setOwnerCross((address,uint256))
 	function setOwnerCross(EthCrossAccount memory newOwner) public {
 		require(false, stub_error);
 		newOwner;
@@ -714,8 +707,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param approved The new substrate address approved NFT controller
 	/// @param tokenId The NFT to approve
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
-	///  or in textual repr: approveCross(EthCrossAccount,uint256)
-	///  or in the expanded repr: approveCross((address,uint256),uint256)
+	///  or in textual repr: approveCross((address,uint256),uint256)
 	function approveCross(EthCrossAccount memory approved, uint256 tokenId) public {
 		require(false, stub_error);
 		approved;
@@ -744,8 +736,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param to Cross acccount address of new owner
 	/// @param tokenId The NFT to transfer
 	/// @dev EVM selector for this function is: 0xd5cf430b,
-	///  or in textual repr: transferFromCross(EthCrossAccount,EthCrossAccount,uint256)
-	///  or in the expanded repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
 		EthCrossAccount memory from,
 		EthCrossAccount memory to,
@@ -780,8 +771,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param from The current owner of the NFT
 	/// @param tokenId The NFT to transfer
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
-	///  or in textual repr: burnFromCross(EthCrossAccount,uint256)
-	///  or in the expanded repr: burnFromCross((address,uint256),uint256)
+	///  or in textual repr: burnFromCross((address,uint256),uint256)
 	function burnFromCross(EthCrossAccount memory from, uint256 tokenId) public {
 		require(false, stub_error);
 		from;
