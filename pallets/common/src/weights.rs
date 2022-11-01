@@ -33,7 +33,9 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_common.
 pub trait WeightInfo {
+	/// Weight for [`set_collection_properties`](pallet_common::set_collection_properties)
 	fn set_collection_properties(b: u32, ) -> Weight;
+	/// Weight for [`delete_collection_properties`](pallet_common::delete_collection_properties)
 	fn delete_collection_properties(b: u32, ) -> Weight;
 }
 

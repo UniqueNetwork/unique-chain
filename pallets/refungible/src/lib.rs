@@ -279,6 +279,7 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			let storage_version = StorageVersion::get::<Pallet<T>>();
 			if storage_version < StorageVersion::new(2) {
+				#[allow(deprecated)]
 				<TokenData<T>>::remove_all(None);
 			}
 			StorageVersion::new(2).put::<Pallet<T>>();
