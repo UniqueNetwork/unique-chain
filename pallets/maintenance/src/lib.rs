@@ -18,6 +18,9 @@
 
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::pallet_prelude::*;
