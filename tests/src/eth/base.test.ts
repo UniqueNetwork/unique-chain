@@ -117,7 +117,7 @@ describe('ERC165 tests', async () => {
   });
 
   itEth('ERC721UniqueExtensions support', async ({helper}) => {
-    await checkInterface(helper, '0xb76006ac', true, true);
+    await checkInterface(helper, '0x244543ee', true, true);
   });
 
   itEth('ERC721Burnable - 0x42966c68 - support', async ({helper}) => {
