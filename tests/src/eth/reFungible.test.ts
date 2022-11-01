@@ -104,12 +104,16 @@ describe('Refungible: Information getting', () => {
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
@@ -228,11 +232,10 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform burnFrom()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
     const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(alice, 100n);
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
     const token = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
@@ -262,11 +265,10 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
     const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
-
-    const owner = await privateKey('//Bob');
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+    
+    const owner = bob;
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
     const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
 
@@ -295,12 +297,11 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
     const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await privateKey('//Bob');
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
-    const receiver = await privateKey('//Charlie');
+    const owner = bob;
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const receiver = charlie;
 
     const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
 

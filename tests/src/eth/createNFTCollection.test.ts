@@ -28,45 +28,6 @@ describe('Create NFT collection from EVM', () => {
     });
   });
 
-  itEth('Create collection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-
-    const name = 'CollectionEVM';
-    const description = 'Some description';
-    const prefix = 'token prefix';
-
-    // todo:playgrounds this might fail when in async environment.
-    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-    const {collectionId, collectionAddress, events} = await helper.eth.createNFTCollection(owner, name, description, prefix);
-    
-    expect(events).to.be.deep.equal([
-      {
-        address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
-        event: 'CollectionCreated',
-        args: {
-          owner: owner,
-          collectionId: collectionAddress,
-        },
-      },
-    ]);
-    
-    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-
-    const collection = helper.nft.getCollectionObject(collectionId);
-    const data = (await collection.getData())!;
-
-    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-    expect(collectionId).to.be.eq(collectionCountAfter);
-    expect(data.name).to.be.eq(name);
-    expect(data.description).to.be.eq(description);
-    expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.eq('NFT');
-
-    const options = await collection.getOptions();
-
-    expect(options.tokenPropertyPermissions).to.be.empty;
-  });
-
   itEth('Create collection with properties', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
@@ -107,27 +68,6 @@ describe('Create NFT collection from EVM', () => {
         permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
       },
     ]);
-  });
-
-  // this test will occasionally fail when in async environment.
-  itEth.skip('Check collection address exist', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-
-    const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
-    const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
-
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.false;
-
-    await collectionHelpers.methods
-      .createNFTCollection('A', 'A', 'A')
-      .send({value: Number(2n * helper.balance.getOneTokenNominal())});
-
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.true;
   });
 
   itEth('Set sponsorship', async ({helper}) => {
