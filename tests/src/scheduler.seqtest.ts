@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itSub, Pallets, usingPlaygrounds} from './util';
+import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 
@@ -23,17 +23,19 @@ describe('Scheduling token and balance transfers', () => {
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
-  before(async () => {
+  before(async function() {
     await usingPlaygrounds(async (helper, privateKeyWrapper) => {
       alice = await privateKeyWrapper('//Alice');
       bob = await privateKeyWrapper('//Bob');
       charlie = await privateKeyWrapper('//Charlie');
 
+      requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+
       await helper.testUtils.enable();
     });
   });
 
-  itSub.ifWithPallets('Can delay a transfer of an owned token', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Can delay a transfer of an owned token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
     const schedulerId = await helper.arrange.makeScheduledId();
@@ -49,7 +51,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  itSub.ifWithPallets('Can transfer funds periodically', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Can transfer funds periodically', async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 1;
 
@@ -83,7 +85,7 @@ describe('Scheduling token and balance transfers', () => {
       );
   });
 
-  itSub.ifWithPallets('Can cancel a scheduled operation which has not yet taken effect', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Can cancel a scheduled operation which has not yet taken effect', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
@@ -102,7 +104,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 
-  itSub.ifWithPallets('Can cancel a periodic operation (transfer of funds)', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Can cancel a periodic operation (transfer of funds)', async ({helper}) => {
     const waitForBlocks = 1;
     const periodic = {
       period: 3,
@@ -139,7 +141,7 @@ describe('Scheduling token and balance transfers', () => {
       );
   });
 
-  itSub.ifWithPallets('Scheduled tasks are transactional', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+  itSub.ifWithPallets('Scheduled tasks are transactional', [Pallets.TestUtils], async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
@@ -158,7 +160,7 @@ describe('Scheduling token and balance transfers', () => {
       .to.be.equal(initTestVal);
   });
 
-  itSub.ifWithPallets('Scheduled tasks should take correct fees', [Pallets.Scheduler, Pallets.TestUtils], async function({helper}) {
+  itSub.ifWithPallets('Scheduled tasks should take correct fees', [Pallets.TestUtils], async function({helper}) {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
     const periodic = {
@@ -211,7 +213,7 @@ describe('Scheduling token and balance transfers', () => {
 
   // Check if we can cancel a scheduled periodic operation
   // in the same block in which it is running
-  itSub.ifWithPallets('Can cancel the periodic sheduled tx when the tx is running', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+  itSub.ifWithPallets('Can cancel the periodic sheduled tx when the tx is running', [Pallets.TestUtils], async ({helper}) => {
     const currentBlockNumber = await helper.chain.getLatestBlockNumber();
     const blocksBeforeExecution = 10;
     const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
@@ -261,7 +263,7 @@ describe('Scheduling token and balance transfers', () => {
     }
   });
 
-  itSub.ifWithPallets('A scheduled operation can cancel itself', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+  itSub.ifWithPallets('A scheduled operation can cancel itself', [Pallets.TestUtils], async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
     const periodic = {
@@ -296,7 +298,7 @@ describe('Scheduling token and balance transfers', () => {
       .to.be.equal(initTestVal + 2);
   });
 
-  itSub.ifWithPallets('Root can cancel any scheduled operation', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Root can cancel any scheduled operation', async ({helper}) => {
     const collection = await helper.nft.mintCollection(bob, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(bob);
 
@@ -313,7 +315,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  itSub.ifWithPallets('Root can set prioritized scheduled operation', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Root can set prioritized scheduled operation', async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
@@ -335,7 +337,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(diff).to.be.equal(amount);
   });
 
-  itSub.ifWithPallets("Root can change scheduled operation's priority", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Root can change scheduled operation's priority", async ({helper}) => {
     const collection = await helper.nft.mintCollection(bob, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(bob);
 
@@ -358,7 +360,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(priorityChanged!.event.data[2].toString()).to.be.equal(priority.toString());
   });
 
-  itSub.ifWithPallets('Prioritized operations executes in valid order', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Prioritized operations executes in valid order', async ({helper}) => {
     const [
       scheduledFirstId,
       scheduledSecondId,
@@ -410,7 +412,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(secondExecuctionIds[1]).to.be.equal(scheduledSecondId);
   });
 
-  itSub.ifWithPallets('Periodic operations always can be rescheduled', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Periodic operations always can be rescheduled', async ({helper}) => {
     const maxScheduledPerBlock = 50;
     const numFilledBlocks = 3;
     const ids = await helper.arrange.makeScheduledIds(numFilledBlocks * maxScheduledPerBlock + 1);
@@ -470,16 +472,18 @@ describe('Negative Test: Scheduling', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  before(async () => {
+  before(async function() {
     await usingPlaygrounds(async (helper, privateKeyWrapper) => {
       alice = await privateKeyWrapper('//Alice');
       bob = await privateKeyWrapper('//Bob');
+
+      requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
 
       await helper.testUtils.enable();
     });
   });
 
-  itSub.ifWithPallets("Can't overwrite a scheduled ID", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Can't overwrite a scheduled ID", async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
@@ -503,13 +507,13 @@ describe('Negative Test: Scheduling', () => {
     expect(bobsBalanceBefore).to.be.equal(bobsBalanceAfter);
   });
 
-  itSub.ifWithPallets("Can't cancel an operation which is not scheduled", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Can't cancel an operation which is not scheduled", async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     await expect(helper.scheduler.cancelScheduled(alice, scheduledId))
       .to.be.rejectedWith(/scheduler\.NotFound/);
   });
 
-  itSub.ifWithPallets("Can't cancel a non-owned scheduled operation", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Can't cancel a non-owned scheduled operation", async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
@@ -527,7 +531,7 @@ describe('Negative Test: Scheduling', () => {
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  itSub.ifWithPallets("Regular user can't set prioritized scheduled operation", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Regular user can't set prioritized scheduled operation", async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
@@ -547,7 +551,7 @@ describe('Negative Test: Scheduling', () => {
     expect(balanceAfter).to.be.equal(balanceBefore);
   });
 
-  itSub.ifWithPallets("Regular user can't change scheduled operation's priority", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Regular user can't change scheduled operation's priority", async ({helper}) => {
     const collection = await helper.nft.mintCollection(bob, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(bob);
 
