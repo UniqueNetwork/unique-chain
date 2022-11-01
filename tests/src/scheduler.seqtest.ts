@@ -19,17 +19,18 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 
 describe('Scheduling token and balance transfers', () => {
+  let superuser: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
   before(async function() {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      alice = await privateKeyWrapper('//Alice');
-      bob = await privateKeyWrapper('//Bob');
-      charlie = await privateKeyWrapper('//Charlie');
-
+    await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+
+      superuser = await privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
 
       await helper.testUtils.enable();
     });
@@ -308,7 +309,7 @@ describe('Scheduling token and balance transfers', () => {
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(bob, {Substrate: alice.address});
 
-    await helper.getSudo().scheduler.cancelScheduled(alice, scheduledId);
+    await helper.getSudo().scheduler.cancelScheduled(superuser, scheduledId);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
@@ -325,7 +326,7 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.getSudo()
       .scheduler.scheduleAfter(scheduledId, waitForBlocks, {priority: 42})
-      .balance.forceTransferToSubstrate(alice, bob.address, charlie.address, amount);
+      .balance.forceTransferToSubstrate(superuser, bob.address, charlie.address, amount);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
 
@@ -348,7 +349,7 @@ describe('Scheduling token and balance transfers', () => {
       .transfer(bob, {Substrate: alice.address});
 
     const priority = 112;
-    await helper.getSudo().scheduler.changePriority(alice, scheduledId, priority);
+    await helper.getSudo().scheduler.changePriority(superuser, scheduledId, priority);
 
     const priorityChanged = await helper.wait.event(
       waitForBlocks,
@@ -360,7 +361,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(priorityChanged!.event.data[2].toString()).to.be.equal(priority.toString());
   });
 
-  itSub('Prioritized operations executes in valid order', async ({helper}) => {
+  itSub('Prioritized operations execute in valid order', async ({helper}) => {
     const [
       scheduledFirstId,
       scheduledSecondId,
@@ -382,18 +383,18 @@ describe('Scheduling token and balance transfers', () => {
 
     // Scheduler a task with a lower priority first, then with a higher priority
     await helper.getSudo().scheduler.scheduleAt(scheduledFirstId, firstExecutionBlockNumber, {priority: prioLow, periodic})
-      .balance.forceTransferToSubstrate(alice, alice.address, bob.address, amount);
+      .balance.forceTransferToSubstrate(superuser, alice.address, bob.address, amount);
 
     await helper.getSudo().scheduler.scheduleAt(scheduledSecondId, firstExecutionBlockNumber, {priority: prioHigh, periodic})
-      .balance.forceTransferToSubstrate(alice, alice.address, bob.address, amount);
+      .balance.forceTransferToSubstrate(superuser, alice.address, bob.address, amount);
 
     const capture = await helper.arrange.captureEvents('scheduler', 'Dispatched');
 
     await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
 
     // Flip priorities
-    await helper.getSudo().scheduler.changePriority(alice, scheduledFirstId, prioHigh);
-    await helper.getSudo().scheduler.changePriority(alice, scheduledSecondId, prioLow);
+    await helper.getSudo().scheduler.changePriority(superuser, scheduledFirstId, prioHigh);
+    await helper.getSudo().scheduler.changePriority(superuser, scheduledSecondId, prioLow);
 
     await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + periodic.period);
 
@@ -473,11 +474,11 @@ describe('Negative Test: Scheduling', () => {
   let bob: IKeyringPair;
 
   before(async function() {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      alice = await privateKeyWrapper('//Alice');
-      bob = await privateKeyWrapper('//Bob');
-
+    await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+
+      const donor = await privateKey({filename: __filename});
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
 
       await helper.testUtils.enable();
     });
@@ -581,9 +582,9 @@ describe.skip('Sponsoring scheduling', () => {
   // let bob: IKeyringPair;
 
   // before(async() => {
-  //   await usingApi(async (_, privateKeyWrapper) => {
-  //     alice = privateKeyWrapper('//Alice');
-  //     bob = privateKeyWrapper('//Bob');
+  //   await usingApi(async (_, privateKey) => {
+  //     alice = privateKey('//Alice');
+  //     bob = privateKey('//Bob');
   //   });
   // });
 
@@ -609,9 +610,9 @@ describe.skip('Sponsoring scheduling', () => {
   });
 
   it('Schedules and dispatches a transaction even if the caller has no funds at the time of the dispatch', async () => {
-    // await usingApi(async (api, privateKeyWrapper) => {
+    // await usingApi(async (api, privateKey) => {
     //   // Find an empty, unused account
-    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    //   const zeroBalance = await findUnusedAddress(api, privateKey);
 
     //   const collectionId = await createCollectionExpectSuccess();
 
@@ -650,8 +651,8 @@ describe.skip('Sponsoring scheduling', () => {
   it('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
     // const collectionId = await createCollectionExpectSuccess();
 
-    // await usingApi(async (api, privateKeyWrapper) => {
-    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    // await usingApi(async (api, privateKey) => {
+    //   const zeroBalance = await findUnusedAddress(api, privateKey);
     //   const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
     //   await submitTransactionAsync(alice, balanceTx);
 
@@ -681,8 +682,8 @@ describe.skip('Sponsoring scheduling', () => {
     // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    // await usingApi(async (api, privateKeyWrapper) => {
-    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    // await usingApi(async (api, privateKey) => {
+    //   const zeroBalance = await findUnusedAddress(api, privateKey);
 
     //   await enablePublicMintingExpectSuccess(alice, collectionId);
     //   await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
