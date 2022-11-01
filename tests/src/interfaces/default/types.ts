@@ -706,6 +706,9 @@ export interface FrameSystemPhase extends Enum {
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
 }
 
+/** @name OpalRuntimeCheckMaintenance */
+export interface OpalRuntimeCheckMaintenance extends Null {}
+
 /** @name OpalRuntimeOriginCaller */
 export interface OpalRuntimeOriginCaller extends Enum {
   readonly isVoid: boolean;
@@ -1175,6 +1178,23 @@ export interface PalletInflationCall extends Enum {
     readonly inflationStartRelayBlock: u32;
   } & Struct;
   readonly type: 'StartInflation';
+}
+
+/** @name PalletMaintenanceCall */
+export interface PalletMaintenanceCall extends Enum {
+  readonly isEnable: boolean;
+  readonly isDisable: boolean;
+  readonly type: 'Enable' | 'Disable';
+}
+
+/** @name PalletMaintenanceError */
+export interface PalletMaintenanceError extends Null {}
+
+/** @name PalletMaintenanceEvent */
+export interface PalletMaintenanceEvent extends Enum {
+  readonly isMaintenanceEnabled: boolean;
+  readonly isMaintenanceDisabled: boolean;
+  readonly type: 'MaintenanceEnabled' | 'MaintenanceDisabled';
 }
 
 /** @name PalletNonfungibleError */
