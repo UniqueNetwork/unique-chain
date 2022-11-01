@@ -137,7 +137,6 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 /// for the convenience of database access. Notably contains the token metadata.
 #[struct_versioning::versioned(version = 2, upper)]
 #[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
-#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
 pub struct ItemData {
 	pub const_data: BoundedVec<u8, CustomDataLimit>,
 
