@@ -35,9 +35,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
  
   parallel-test:
     needs: nodes-execution-matrix
