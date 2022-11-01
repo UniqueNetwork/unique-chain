@@ -104,18 +104,16 @@ describe('Integration Test: Maintenance Mode', () => {
     expect(await maintenanceEnabled(api), 'MM is OFF when it should be ON').to.be.true;
 
     const contract = evmCollection(web3, owner, collectionIdAddress);
-    const nextTokenId = await contract.methods.nextTokenId().call();
-    // TODO:maintenance this probably shouldn't succeed
-    expect(nextTokenId).to.be.equal('1');
+    const tokenId = await contract.methods.nextTokenId().call();
+    expect(tokenId).to.be.equal('1');
 
-    // TODO:maintenance this shouldn't succeed
     await expect(contract.methods.mintWithTokenURI(
       receiver,
-      nextTokenId,
+      tokenId,
       'Test URI',
-    ).call({from: owner})).to.be.rejectedWith('');
+    ).call({from: owner}));
 
-    // TODO:maintenance can ethereum call sudo..?
+    await expect(contract.methods.ownerOf(tokenId).call()).rejectedWith(/token not found/);
 
     // Disable maintenance mode
     await submitTransactionAsync(superuser, api.tx.sudo.sudo(api.tx.maintenance.disable()));
