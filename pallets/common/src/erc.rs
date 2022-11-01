@@ -64,6 +64,7 @@ pub enum CollectionHelpersEvents {
 /// Does not always represent a full collection, for RFT it is either
 /// collection (Implementing ERC721), or specific collection token (Implementing ERC20).
 pub trait CommonEvmHandler {
+	/// Raw compiled binary code of the contract stub
 	const CODE: &'static [u8];
 
 	/// Call precompiled handle.

@@ -194,7 +194,7 @@ impl Events {
 				#(
 					#consts
 				)*
-
+				/// Generate solidity definitions for methods described in this interface
 				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
