@@ -718,7 +718,11 @@ impl Method {
 				}
 			}
 		} else {
-			quote! {#pascal_name}
+			quote! {
+				#(#[doc = #docs])*
+				#[allow(missing_docs)]
+				#pascal_name
+			}
 		}
 	}
 
@@ -788,6 +792,7 @@ impl Method {
 
 		quote! {
 			#call_name::#pascal_name #matcher => {
+				#[allow(deprecated)]
 				let result = #receiver #name(
 					#(
 						#args,
