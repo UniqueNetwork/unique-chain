@@ -1154,8 +1154,21 @@ impl SignedExtension for CheckMaintenance {
 	) -> TransactionValidity {
 		if Maintenance::is_enabled() {
 			match call {
-				Call::Sudo(_) => Ok(ValidTransaction::default()),
-				_ => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+				Call::EvmMigration(_)
+				| Call::EVM(_)
+				| Call::Ethereum(_)
+				| Call::Inflation(_)
+				| Call::Maintenance(_)
+				| Call::Scheduler(_)
+				| Call::Structure(_)
+				| Call::Unique(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+
+				#[cfg(any(feature = "opal-runtime", feature = "quartz-runtime"))]
+				Call::RmrkCore(_) | Call::RmrkEquip(_) => {
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+				}
+
+				_ => Ok(ValidTransaction::default()),
 			}
 		} else {
 			Ok(ValidTransaction::default())

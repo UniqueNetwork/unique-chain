@@ -321,7 +321,7 @@ unique-rpc = { default-features = false, path = "../rpc" }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
 
 [features]
-default = []
+default = ['opal-runtime/opal-runtime', 'quartz-runtime?/quartz-runtime']
 runtime-benchmarks = [
     'unique-runtime?/runtime-benchmarks',
     'quartz-runtime?/runtime-benchmarks',
