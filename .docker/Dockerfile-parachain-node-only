@@ -37,6 +37,7 @@ FROM rust-builder as builder-unique-current
 ARG PROFILE=release
 ARG NETWORK
 ARG MAINNET_BRANCH
+ARG REPO_URL
 
 WORKDIR /unique_parachain
 
