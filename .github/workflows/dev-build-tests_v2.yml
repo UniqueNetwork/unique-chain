@@ -84,6 +84,7 @@ jobs:
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.CORE_GITHUB_TOKEN }}
 
       - name: Read output variables
         run: |
@@ -98,6 +99,7 @@ jobs:
           path: tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.CORE_GITHUB_TOKEN }}
 
       - name: Stop running containers
         if: always()                   # run this step always
