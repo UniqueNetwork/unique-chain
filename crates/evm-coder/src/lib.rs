@@ -122,7 +122,7 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 	use core::str::from_utf8;
 
-	use crate::custom_signature::{SignatureUnit, SIGNATURE_SIZE_LIMIT};
+	use crate::custom_signature::SignatureUnit;
 
 	pub trait Signature {
 		const SIGNATURE: SignatureUnit;
@@ -133,14 +133,14 @@ pub mod types {
 	}
 
 	impl Signature for bool {
-		make_signature!(new fixed("bool"));
+		const SIGNATURE: SignatureUnit = make_signature!(new fixed("bool"));
 	}
 
 	macro_rules! define_simple_type {
 		(type $ident:ident = $ty:ty) => {
 			pub type $ident = $ty;
 			impl Signature for $ty {
-				make_signature!(new fixed(stringify!($ident)));
+				const SIGNATURE: SignatureUnit = make_signature!(new fixed(stringify!($ident)));
 			}
 		};
 	}
@@ -165,7 +165,7 @@ pub mod types {
 	#[derive(Default, Debug)]
 	pub struct bytes(pub Vec<u8>);
 	impl Signature for bytes {
-		make_signature!(new fixed("bytes"));
+		const SIGNATURE: SignatureUnit = make_signature!(new fixed("bytes"));
 	}
 
 	/// Solidity doesn't have `void` type, however we have special implementation
@@ -259,7 +259,7 @@ pub mod types {
 	}
 
 	impl Signature for EthCrossAccount {
-		make_signature!(new fixed("(address,uint256)"));
+		const SIGNATURE: SignatureUnit = make_signature!(new fixed("(address,uint256)"));
 	}
 
 	/// Convert `CrossAccountId` to `uint256`.

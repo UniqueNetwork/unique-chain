@@ -24,8 +24,8 @@ use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
 use inflector::cases;
 use syn::{
-	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
-	MetaNameValue, PatType, PathArguments, ReturnType, Type,
+	Expr, FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta, MetaNameValue,
+	PatType, ReturnType, Type,
 	spanned::Spanned,
 	parse::{Parse, ParseStream},
 	parenthesized, Token, LitInt, LitStr,
@@ -601,12 +601,12 @@ impl Method {
 		let screaming_name_signature = format_ident!("{}_SIGNATURE", &self.screaming_name);
 		let custom_signature = self.expand_custom_signature();
 		quote! {
-			const #screaming_name_signature: ::evm_coder::custom_signature::FunctionSignature = #custom_signature;
+			const #screaming_name_signature: ::evm_coder::custom_signature::SignatureUnit = #custom_signature;
 			const #screaming_name: ::evm_coder::types::bytes4 = {
 				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
 				let mut pos = 0;
-				while pos < Self::#screaming_name_signature.unit.len {
-					sum = sum.update(&[Self::#screaming_name_signature.unit.data[pos]; 1]);
+				while pos < Self::#screaming_name_signature.len {
+					sum = sum.update(&[Self::#screaming_name_signature.data[pos]; 1]);
 					pos += 1;
 				}
 				let a = sum.finalize();
@@ -714,188 +714,24 @@ impl Method {
 		}
 	}
 
-	fn expand_type(ty: &Type, token_stream: &mut proc_macro2::TokenStream, read_signature: bool) {
-		match ty {
-			Type::Path(tp) => {
-				if let Some(qself) = &tp.qself {
-					panic!("no receiver expected {:?}", qself.ty.span());
-				}
-				let path = &tp.path;
-				if path.segments.len() != 1 {
-					panic!("expected path to have only one segment {:?}", path.span());
-				}
-				let last_segment = path.segments.last().unwrap();
-
-				if last_segment.ident == "Vec" {
-					let args = match &last_segment.arguments {
-						PathArguments::AngleBracketed(e) => e,
-						_ => {
-							panic!("missing Vec generic {:?}", last_segment.arguments.span());
-						}
-					};
-					let args = &args.args;
-					if args.len() != 1 {
-						panic!("expected only one generic for vec {:?}", args.span());
-					}
-					let arg = args.first().expect("first arg");
-
-					let ty = match arg {
-						GenericArgument::Type(ty) => ty,
-						_ => {
-							panic!("expected first generic to be type {:?}", arg.span());
-						}
-					};
-
-					let mut vec_token = proc_macro2::TokenStream::new();
-					Self::expand_type(ty, &mut vec_token, false);
-					vec_token = if read_signature {
-						quote! { (<Vec<#vec_token>>::SIGNATURE) }
-					} else {
-						quote! { <Vec<#vec_token>> }
-					};
-					token_stream.extend(vec_token);
-				} else {
-					if !last_segment.arguments.is_empty() {
-						panic!(
-							"unexpected generic arguments for non-vec type {:?}",
-							last_segment.arguments.span()
-						);
-					}
-
-					let ident = &last_segment.ident;
-					let plain_token = if read_signature {
-						quote! {
-							(<#ident>::SIGNATURE)
-						}
-					} else {
-						quote! {
-							#ident
-						}
-					};
-
-					token_stream.extend(plain_token);
-				}
-			}
-
-			Type::Tuple(tt) => {
-				// for ty in tt.elems.iter() {
-				// 	out.push(AbiType::try_from(ty)?)
-				// }
-
-				let mut tuple_types = proc_macro2::TokenStream::new();
-				let mut is_first = true;
-
-				for ty in tt.elems.iter() {
-					if is_first {
-						is_first = false
-					} else {
-						tuple_types.extend(quote!(,));
-					}
-					Self::expand_type(ty, &mut tuple_types, false);
-				}
-				tuple_types = if read_signature {
-					quote! { (<(#tuple_types)>::SIGNATURE) }
-				} else {
-					quote! { (#tuple_types) }
-				};
-				token_stream.extend(tuple_types);
-			}
-
-			// Type::Array(arr) => {
-			// 	let wrapped = AbiType::try_from(&arr.elem)?;
-			// 	match &arr.len {
-			// 		Expr::Lit(l) => match &l.lit {
-			// 			Lit::Int(i) => {
-			// 				let num = i.base10_parse::<usize>()?;
-			// 				Ok(AbiType::Array(Box::new(wrapped), num as usize))
-			// 			}
-			// 			_ => Err(syn::Error::new(arr.len.span(), "should be int literal")),
-			// 		},
-			// 		_ => Err(syn::Error::new(arr.len.span(), "should be literal")),
-			// 	}
-			// }
-			_ => panic!("Unexpected type {ty:?}"),
-		}
-		// match ty {
-		// 	AbiType::Plain(ref ident) => {
-		// 		let plain_token = if read_signature {
-		// 			quote! {
-		// 				(<#ident>::SIGNATURE)
-		// 			}
-		// 		} else {
-		// 			quote! {
-		// 				#ident
-		// 			}
-		// 		};
-
-		// 		token_stream.extend(plain_token);
-		// 	}
-
-		// 	AbiType::Tuple(ref tuple_type) => {
-		// 		let mut tuple_types = proc_macro2::TokenStream::new();
-		// 		let mut is_first = true;
-
-		// 		for ty in tuple_type {
-		// 			if is_first {
-		// 				is_first = false
-		// 			} else {
-		// 				tuple_types.extend(quote!(,));
-		// 			}
-		// 			Self::expand_type(ty, &mut tuple_types, false);
-		// 		}
-		// 		tuple_types = if read_signature {
-		// 			quote! { (<(#tuple_types)>::SIGNATURE) }
-		// 		} else {
-		// 			quote! { (#tuple_types) }
-		// 		};
-		// 		token_stream.extend(tuple_types);
-		// 	}
-
-		// 	AbiType::Vec(ref vec_type) => {
-		// 		let mut vec_token = proc_macro2::TokenStream::new();
-		// 		Self::expand_type(vec_type.as_ref(), &mut vec_token, false);
-		// 		vec_token = if read_signature {
-		// 			quote! { (<Vec<#vec_token>>::SIGNATURE) }
-		// 		} else {
-		// 			quote! { <Vec<#vec_token>> }
-		// 		};
-		// 		token_stream.extend(vec_token);
-		// 	}
-
-		// 	AbiType::Array(_, _) => todo!("Array eth signature"),
-		// };
-	}
-
 	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
-		let mut token_stream = TokenStream::new();
+		let mut args = TokenStream::new();
 
 		let mut is_first = true;
-		for arg in &self.args {
-			if arg.is_special() {
-				continue;
-			}
-
-			if is_first {
-				is_first = false;
-			} else {
-				token_stream.extend(quote!(,));
-			}
-			Self::expand_type(&arg.ty, &mut token_stream, true);
+		for arg in self.args.iter().filter(|a| !a.is_special()) {
+			is_first = false;
+			let ty = &arg.ty;
+			args.extend(quote! {nameof(#ty)});
+			args.extend(quote! {fixed(",")})
 		}
 
+		// Remove trailing comma
 		if !is_first {
-			token_stream.extend(quote!(,));
+			args.extend(quote! {shift_left(1)})
 		}
 
 		let func_name = self.camel_name.clone();
-		let func_name = quote!(SignaturePreferences {
-			open_name: Some(SignatureUnit::new(#func_name)),
-			open_delimiter: Some(SignatureUnit::new("(")),
-			param_delimiter: Some(SignatureUnit::new(",")),
-			close_delimiter: Some(SignatureUnit::new(")")),
-			close_name: None,
-		});
-		quote!({ ::evm_coder::make_signature!(new fn(#func_name), #token_stream) })
+		quote! { ::evm_coder::make_signature!(new fixed(#func_name) fixed("(") #args fixed(")")) }
 	}
 
 	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
@@ -916,12 +752,6 @@ impl Method {
 		let screaming_name = &self.screaming_name;
 		let hide = self.hide;
 		let custom_signature = self.expand_custom_signature();
-		let custom_signature = quote!(
-			{
-				const cs: FunctionSignature = #custom_signature;
-				cs
-			}
-		);
 		let is_payable = self.has_value_args;
 
 		quote! {

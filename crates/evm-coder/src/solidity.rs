@@ -32,7 +32,7 @@ use core::{
 	cmp::Reverse,
 };
 use impl_trait_for_tuples::impl_for_tuples;
-use crate::{types::*, custom_signature::FunctionSignature};
+use crate::{types::*, custom_signature::SignatureUnit};
 
 #[derive(Default)]
 pub struct TypeCollector {
@@ -486,7 +486,7 @@ pub struct SolidityFunction<A, R> {
 	pub docs: &'static [&'static str],
 	pub selector: u32,
 	pub hide: bool,
-	pub custom_signature: FunctionSignature,
+	pub custom_signature: SignatureUnit,
 	pub name: &'static str,
 	pub args: A,
 	pub result: R,
@@ -512,7 +512,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writeln!(
 			writer,
 			"\t{hide_comment}///  or in textual repr: {}",
-			self.custom_signature.as_str()
+			self.custom_signature.as_str().expect("bad utf-8")
 		)?;
 		write!(writer, "\t{hide_comment}function {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;

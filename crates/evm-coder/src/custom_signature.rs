@@ -74,131 +74,10 @@
 //!	impl<T: SoliditySignature> SoliditySignature for Vec<T> {
 //!		make_signature!(new nameof(T) fixed("[]"));
 //!	}
-//!
-//! // Function signature settings
-//! const SIGNATURE_PREFERENCES: SignaturePreferences = SignaturePreferences {
-//!		open_name: Some(SignatureUnit::new("some_funk")),
-//!		open_delimiter: Some(SignatureUnit::new("(")),
-//!		param_delimiter: Some(SignatureUnit::new(",")),
-//!		close_delimiter: Some(SignatureUnit::new(")")),
-//!		close_name: None,
-//!	};
-//!
-//! // Create functions signatures
-//! fn make_func_without_args() {
-//!		const SIG: FunctionSignature = make_signature!(
-//!			new fn(SIGNATURE_PREFERENCES),
-//!		);
-//!		let name = SIG.as_str();
-//!		similar_asserts::assert_eq!(name, "some_funk()");
-//!	}
-//!
-//! fn make_func_with_3_args() {
-//!		const SIG: FunctionSignature = make_signature!(
-//!			new fn(SIGNATURE_PREFERENCES),
-//!			(<u8>::SIGNATURE),
-//!			(<u8>::SIGNATURE),
-//!			(<Vec<u8>>::SIGNATURE),
-//!		);
-//!		let name = SIG.as_str();
-//!		similar_asserts::assert_eq!(name, "some_funk(uint8,uint8,uint8[])");
-//!	}
 //! ```
-use core::str::from_utf8;
 
 /// The maximum length of the signature.
 pub const SIGNATURE_SIZE_LIMIT: usize = 256;
-
-/// Function signature formatting preferences.
-#[derive(Debug)]
-pub struct SignaturePreferences {
-	/// The name of the function before the list of parameters: `*some*(param1,param2)func`
-	pub open_name: Option<SignatureUnit>,
-	/// Opening separator: `some*(*param1,param2)func`
-	pub open_delimiter: Option<SignatureUnit>,
-	/// Parameters separator: `some(param1*,*param2)func`
-	pub param_delimiter: Option<SignatureUnit>,
-	/// Closinging separator: `some(param1,param2*)*func`
-	pub close_delimiter: Option<SignatureUnit>,
-	/// The name of the function after the list of parameters: `some(param1,param2)*func*`
-	pub close_name: Option<SignatureUnit>,
-}
-
-/// Constructs and stores the signature of the function.
-#[derive(Debug)]
-pub struct FunctionSignature {
-	/// Storage for function signature.
-	pub unit: SignatureUnit,
-	preferences: SignaturePreferences,
-}
-
-impl FunctionSignature {
-	/// Start constructing the signature. It is written to the storage
-	/// [`SignaturePreferences::open_name`] and [`SignaturePreferences::open_delimiter`].
-	pub const fn new(preferences: SignaturePreferences) -> FunctionSignature {
-		let mut dst = [0_u8; SIGNATURE_SIZE_LIMIT];
-		let mut dst_offset = 0;
-		if let Some(ref name) = preferences.open_name {
-			crate::make_signature!(@copy(name.data, dst, name.len, dst_offset));
-		}
-		if let Some(ref delimiter) = preferences.open_delimiter {
-			crate::make_signature!(@copy(delimiter.data, dst, delimiter.len, dst_offset));
-		}
-		FunctionSignature {
-			unit: SignatureUnit {
-				data: dst,
-				len: dst_offset,
-			},
-			preferences,
-		}
-	}
-
-	/// Add a function parameter to the signature. It is written to the storage
-	/// `param` [`SignatureUnit`] and [`SignaturePreferences::param_delimiter`].
-	pub const fn add_param(
-		signature: FunctionSignature,
-		param: SignatureUnit,
-	) -> FunctionSignature {
-		let mut dst = signature.unit.data;
-		let mut dst_offset = signature.unit.len;
-		crate::make_signature!(@copy(param.data, dst, param.len, dst_offset));
-		if let Some(ref delimiter) = signature.preferences.param_delimiter {
-			crate::make_signature!(@copy(delimiter.data, dst, delimiter.len, dst_offset));
-		}
-		FunctionSignature {
-			unit: SignatureUnit {
-				data: dst,
-				len: dst_offset,
-			},
-			..signature
-		}
-	}
-
-	/// Complete signature construction. It is written to the storage
-	/// [`SignaturePreferences::close_delimiter`] and [`SignaturePreferences::close_name`].
-	pub const fn done(signature: FunctionSignature, owerride: bool) -> FunctionSignature {
-		let mut dst = signature.unit.data;
-		let mut dst_offset = signature.unit.len - if owerride { 1 } else { 0 };
-		if let Some(ref delimiter) = signature.preferences.close_delimiter {
-			crate::make_signature!(@copy(delimiter.data, dst, delimiter.len, dst_offset));
-		}
-		if let Some(ref name) = signature.preferences.close_name {
-			crate::make_signature!(@copy(name.data, dst, name.len, dst_offset));
-		}
-		FunctionSignature {
-			unit: SignatureUnit {
-				data: dst,
-				len: dst_offset,
-			},
-			..signature
-		}
-	}
-
-	/// Represent the signature as `&str'.
-	pub fn as_str(&self) -> &str {
-		from_utf8(&self.unit.data[..self.unit.len]).expect("bad utf-8")
-	}
-}
 
 /// Storage for the signature or its elements.
 #[derive(Debug)]
@@ -222,6 +101,10 @@ impl SignatureUnit {
 			len: name_len,
 		}
 	}
+	/// String conversion
+	pub fn as_str(&self) -> Option<&str> {
+		core::str::from_utf8(&self.data[0..self.len]).ok()
+	}
 }
 
 /// ### Macro to create signatures of types and functions.
@@ -231,85 +114,52 @@ impl SignatureUnit {
 /// make_signature!(new fixed("uint8")); // Simple type
 /// make_signature!(new fixed("(") nameof(u8) fixed(",") nameof(u8) fixed(")")); // Composite type
 /// ```
-/// Format for creating a function of the function:
-/// ```ignore
-/// const SIG: FunctionSignature = make_signature!(
-///		new fn(SIGNATURE_PREFERENCES),
-///		(u8::SIGNATURE),
-///		(<(u8,u8)>::SIGNATURE),
-///	);
-/// ```
 #[macro_export]
 macro_rules! make_signature {
-	(new fn($func:expr)$(,)*) => {
-		{
-			let fs = FunctionSignature::new($func);
-			let fs = FunctionSignature::done(fs, false);
-			fs
-		}
-	};
-	(new fn($func:expr), $($tt:tt,)*) => {
-		{
-			let fs = FunctionSignature::new($func);
-			let fs = make_signature!(@param; fs, $($tt),*);
-			fs
-		}
-	};
-
-	(@param; $func:expr) => {
-		FunctionSignature::done($func, true)
-	};
-	(@param; $func:expr, $param:expr) => {
-		make_signature!(@param; FunctionSignature::add_param($func, $param))
-	};
-	(@param; $func:expr, $param:expr, $($tt:tt),*) => {
-		make_signature!(@param; FunctionSignature::add_param($func, $param), $($tt),*)
-	};
-
-    (new $($tt:tt)*) => {
-        const SIGNATURE: SignatureUnit = SignatureUnit {
+	(new $($tt:tt)*) => {
+		($crate::custom_signature::SignatureUnit {
 			data: {
-				let mut out = [0u8; SIGNATURE_SIZE_LIMIT];
+				let mut out = [0u8; $crate::custom_signature::SIGNATURE_SIZE_LIMIT];
 				let mut dst_offset = 0;
-				make_signature!(@data(out, dst_offset); $($tt)*);
+				$crate::make_signature!(@data(out, dst_offset); $($tt)*);
 				out
 			},
-			len: {0 + make_signature!(@size; $($tt)*)},
-        };
-    };
-
-    (@size;) => {
-        0
-    };
-    (@size; fixed($expr:expr) $($tt:tt)*) => {
-        $expr.len() + make_signature!(@size; $($tt)*)
-    };
-    (@size; nameof($expr:ty) $($tt:tt)*) => {
-		<$expr>::SIGNATURE.len + make_signature!(@size; $($tt)*)
-    };
-	(@size; shift_left($expr:expr) $($tt:tt)*) => {
-		make_signature!(@size; $($tt)*) - $expr
+			len: {0 + $crate::make_signature!(@size; $($tt)*)},
+		})
 	};
 
-    (@data($dst:ident, $dst_offset:ident);) => {};
-    (@data($dst:ident, $dst_offset:ident); fixed($expr:expr) $($tt:tt)*) => {
-        {
-            let data = $expr.as_bytes();
+	(@size;) => {
+		0
+	};
+	(@size; fixed($expr:expr) $($tt:tt)*) => {
+		$expr.len() + $crate::make_signature!(@size; $($tt)*)
+	};
+	(@size; nameof($expr:ty) $($tt:tt)*) => {
+		<$expr>::SIGNATURE.len + $crate::make_signature!(@size; $($tt)*)
+	};
+	(@size; shift_left($expr:expr) $($tt:tt)*) => {
+		$crate::make_signature!(@size; $($tt)*) - $expr
+	};
+
+	(@data($dst:ident, $dst_offset:ident);) => {};
+	(@data($dst:ident, $dst_offset:ident); fixed($expr:expr) $($tt:tt)*) => {
+		{
+			let data = $expr.as_bytes();
 			let data_len = data.len();
-			make_signature!(@copy(data, $dst, data_len, $dst_offset));
-        }
-        make_signature!(@data($dst, $dst_offset); $($tt)*)
-    };
-    (@data($dst:ident, $dst_offset:ident); nameof($expr:ty) $($tt:tt)*) => {
-        {
-            make_signature!(@copy(&<$expr>::SIGNATURE.data, $dst, <$expr>::SIGNATURE.len, $dst_offset));
-        }
-        make_signature!(@data($dst, $dst_offset); $($tt)*)
-    };
+			$crate::make_signature!(@copy(data, $dst, data_len, $dst_offset));
+		}
+		$crate::make_signature!(@data($dst, $dst_offset); $($tt)*)
+	};
+	(@data($dst:ident, $dst_offset:ident); nameof($expr:ty) $($tt:tt)*) => {
+		{
+			$crate::make_signature!(@copy(&<$expr>::SIGNATURE.data, $dst, <$expr>::SIGNATURE.len, $dst_offset));
+		}
+		$crate::make_signature!(@data($dst, $dst_offset); $($tt)*)
+	};
 	(@data($dst:ident, $dst_offset:ident); shift_left($expr:expr) $($tt:tt)*) => {
-        $dst_offset -= $expr;
-        make_signature!(@data($dst, $dst_offset); $($tt)*)
-    };
+		$dst_offset -= $expr;
+		$crate::make_signature!(@data($dst, $dst_offset); $($tt)*)
+	};
 
 	(@copy($src:expr, $dst:expr, $src_len:expr, $dst_offset:ident)) => {
 		{
@@ -328,7 +178,7 @@ macro_rules! make_signature {
 mod test {
 	use core::str::from_utf8;
 
-	use super::{SIGNATURE_SIZE_LIMIT, SignatureUnit, FunctionSignature, SignaturePreferences};
+	use super::{SIGNATURE_SIZE_LIMIT, SignatureUnit};
 
 	trait Name {
 		const SIGNATURE: SignatureUnit;
@@ -339,19 +189,21 @@ mod test {
 	}
 
 	impl Name for u8 {
-		make_signature!(new fixed("uint8"));
+		const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint8"));
 	}
 	impl Name for u32 {
-		make_signature!(new fixed("uint32"));
+		const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint32"));
 	}
 	impl<T: Name> Name for Vec<T> {
-		make_signature!(new nameof(T) fixed("[]"));
+		const SIGNATURE: SignatureUnit = make_signature!(new nameof(T) fixed("[]"));
 	}
 	impl<A: Name, B: Name> Name for (A, B) {
-		make_signature!(new fixed("(") nameof(A) fixed(",") nameof(B) fixed(")"));
+		const SIGNATURE: SignatureUnit =
+			make_signature!(new fixed("(") nameof(A) fixed(",") nameof(B) fixed(")"));
 	}
 	impl<A: Name> Name for (A,) {
-		make_signature!(new fixed("(") nameof(A) fixed(",") shift_left(1) fixed(")"));
+		const SIGNATURE: SignatureUnit =
+			make_signature!(new fixed("(") nameof(A) fixed(",") shift_left(1) fixed(")"));
 	}
 
 	struct MaxSize();
@@ -361,14 +213,6 @@ mod test {
 			len: SIGNATURE_SIZE_LIMIT,
 		};
 	}
-
-	const SIGNATURE_PREFERENCES: SignaturePreferences = SignaturePreferences {
-		open_name: Some(SignatureUnit::new("some_funk")),
-		open_delimiter: Some(SignatureUnit::new("(")),
-		param_delimiter: Some(SignatureUnit::new(",")),
-		close_delimiter: Some(SignatureUnit::new(")")),
-		close_name: None,
-	};
 
 	#[test]
 	fn simple() {
@@ -421,68 +265,6 @@ mod test {
 	#[test]
 	fn max_size() {
 		assert_eq!(<MaxSize>::name(), "!".repeat(SIGNATURE_SIZE_LIMIT));
-	}
-
-	#[test]
-	fn make_func_without_args() {
-		const SIG: FunctionSignature = make_signature!(
-			new fn(SIGNATURE_PREFERENCES)
-		);
-		let name = SIG.as_str();
-		similar_asserts::assert_eq!(name, "some_funk()");
-	}
-
-	#[test]
-	fn make_func_with_1_args() {
-		const SIG: FunctionSignature = make_signature!(
-			new fn(SIGNATURE_PREFERENCES),
-			(<u8>::SIGNATURE),
-		);
-		let name = SIG.as_str();
-		similar_asserts::assert_eq!(name, "some_funk(uint8)");
-	}
-
-	#[test]
-	fn make_func_with_2_args() {
-		const SIG: FunctionSignature = make_signature!(
-			new fn(SIGNATURE_PREFERENCES),
-			(u8::SIGNATURE),
-			(<Vec<u32>>::SIGNATURE),
-		);
-		let name = SIG.as_str();
-		similar_asserts::assert_eq!(name, "some_funk(uint8,uint32[])");
-	}
-
-	#[test]
-	fn make_func_with_3_args() {
-		const SIG: FunctionSignature = make_signature!(
-			new fn(SIGNATURE_PREFERENCES),
-			(<u8>::SIGNATURE),
-			(<u32>::SIGNATURE),
-			(<Vec<u32>>::SIGNATURE),
-		);
-		let name = SIG.as_str();
-		similar_asserts::assert_eq!(name, "some_funk(uint8,uint32,uint32[])");
-	}
-
-	#[test]
-	fn make_slice_from_signature() {
-		const SIG: FunctionSignature = make_signature!(
-			new fn(SIGNATURE_PREFERENCES),
-			(<u8>::SIGNATURE),
-			(<u32>::SIGNATURE),
-			(<Vec<u32>>::SIGNATURE),
-		);
-		const NAME: [u8; SIG.unit.len] = {
-			let mut name: [u8; SIG.unit.len] = [0; SIG.unit.len];
-			let mut i = 0;
-			while i < SIG.unit.len {
-				name[i] = SIG.unit.data[i];
-				i += 1;
-			}
-			name
-		};
-		similar_asserts::assert_eq!(&NAME, b"some_funk(uint8,uint32,uint32[])");
 	}
 
 	#[test]

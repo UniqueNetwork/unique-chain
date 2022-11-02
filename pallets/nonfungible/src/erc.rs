@@ -24,15 +24,7 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{
-	ToLog,
-	execution::*,
-	generate_stubgen, solidity, solidity_interface,
-	types::*,
-	weight,
-	custom_signature::{SignatureUnit, FunctionSignature, SignaturePreferences},
-	make_signature,
-};
+use evm_coder::{ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::BoundedVec;
 use up_data_structs::{
 	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,

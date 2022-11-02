@@ -27,7 +27,7 @@ use crate::{
 	execution::{Error, ResultWithPostInfo, WithPostDispatchInfo},
 	types::*,
 	make_signature,
-	custom_signature::{SignatureUnit, SIGNATURE_SIZE_LIMIT},
+	custom_signature::{SignatureUnit},
 };
 use crate::execution::Result;
 
@@ -428,7 +428,7 @@ impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
 }
 
 impl<R: Signature> Signature for Vec<R> {
-	make_signature!(new nameof(R) fixed("[]"));
+	const SIGNATURE: SignatureUnit = make_signature!(new nameof(R) fixed("[]"));
 }
 
 impl sealed::CanBePlacedInVec for EthCrossAccount {}
@@ -522,7 +522,7 @@ macro_rules! impl_tuples {
 		where
 		$($ident: Signature,)+
 		{
-			make_signature!(
+			const SIGNATURE: SignatureUnit = make_signature!(
 				new fixed("(")
 				$(nameof($ident) fixed(","))+
 				shift_left(1)
@@ -758,13 +758,13 @@ pub mod test {
 				1ACF2D55
 				0000000000000000000000000000000000000000000000000000000000000020 // offset of (address, uint256)[]
 				0000000000000000000000000000000000000000000000000000000000000003 // length of (address, uint256)[]
-	
+
 				0000000000000000000000002D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC // address
 				000000000000000000000000000000000000000000000000000000000000000A // uint256
-	
+
 				000000000000000000000000AB8E3D9134955566483B11E6825C9223B6737B10 // address
 				0000000000000000000000000000000000000000000000000000000000000014 // uint256
-	
+
 				0000000000000000000000008C582BDF2953046705FC56F189385255EFC1BE18 // address
 				000000000000000000000000000000000000000000000000000000000000001E // uint256
 			"
