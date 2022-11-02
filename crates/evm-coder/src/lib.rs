@@ -108,6 +108,7 @@ pub use evm_coder_procedural::ToLog;
 #[doc(hidden)]
 pub mod events;
 #[doc(hidden)]
+#[cfg(feature = "stubgen")]
 pub mod solidity;
 
 /// Solidity type definitions (aliases from solidity name to rust type)
@@ -354,6 +355,7 @@ impl Call for ERC165Call {
 #[macro_export]
 macro_rules! generate_stubgen {
 	($name:ident, $decl:ty, $is_impl:literal) => {
+		#[cfg(feature = "stubgen")]
 		#[test]
 		#[ignore]
 		fn $name() {

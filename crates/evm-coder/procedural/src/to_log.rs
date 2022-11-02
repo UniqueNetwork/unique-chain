@@ -195,6 +195,7 @@ impl Events {
 					#consts
 				)*
 
+				#[cfg(feature = "stubgen")]
 				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;

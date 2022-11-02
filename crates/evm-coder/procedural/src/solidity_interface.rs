@@ -951,6 +951,7 @@ impl SolidityInterface {
 					u32::to_be_bytes(interface_id)
 				}
 				/// Generate solidity definitions for methods described in this interface
+				#[cfg(feature = "stubgen")]
 				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;
