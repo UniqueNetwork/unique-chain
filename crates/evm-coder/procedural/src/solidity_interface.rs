@@ -717,16 +717,16 @@ impl Method {
 	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
 		let mut args = TokenStream::new();
 
-		let mut is_first = true;
+		let mut has_params = false;
 		for arg in self.args.iter().filter(|a| !a.is_special()) {
-			is_first = false;
+			has_params = true;
 			let ty = &arg.ty;
 			args.extend(quote! {nameof(#ty)});
 			args.extend(quote! {fixed(",")})
 		}
 
 		// Remove trailing comma
-		if !is_first {
+		if has_params {
 			args.extend(quote! {shift_left(1)})
 		}
 
