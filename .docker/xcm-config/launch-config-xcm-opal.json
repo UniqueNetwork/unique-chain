@@ -91,6 +91,7 @@
                     "name": "alice",
                     "flags": [
                        "--unsafe-rpc-external",
+                       "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
                        "--unsafe-ws-external"
 		    ]
                 }
