@@ -42,6 +42,7 @@ COPY . /unique_parachain
 WORKDIR /unique_parachain
 
 RUN echo "[BE CAREFUL] applying disable-ic patch\n" && \
+    ls -la . && \
     git apply .github/patch/disable-ic.patch
 
 RUN echo "Requested features: $FEATURE\n" && \
