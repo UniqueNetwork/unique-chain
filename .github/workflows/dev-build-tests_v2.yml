@@ -89,6 +89,16 @@ jobs:
         run: |
           echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
 
+      - name: Test Report 2
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-2
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: 2 int test results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
