@@ -116,7 +116,7 @@ describe('ERC165 tests', () => {
     await checkInterface(helper, '0x780e9d63', true, true);
   });
 
-  itEth('ERC721UniqueExtensions - 0x244543ee - support', async ({helper}) => {
+  itEth('ERC721UniqueExtensions support', async ({helper}) => {
     await checkInterface(helper, '0x244543ee', true, true);
   });
 

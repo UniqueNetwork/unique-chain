@@ -35,7 +35,6 @@ use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions,
-	eth::convert_tuple_to_cross_account,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -675,11 +674,11 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		approved: (address, uint256),
+		approved: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let approved = convert_tuple_to_cross_account::<T>(approved)?;
+		let approved = approved.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
 
 		<Pallet<T>>::set_allowance(self, &caller, token, Some(&approved))
@@ -715,13 +714,13 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
-		to: (address, uint256),
+		from: EthCrossAccount,
+		to: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
-		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
 		let token_id = token_id.try_into()?;
 		let budget = self
 			.recorder
@@ -761,11 +760,11 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
+		from: EthCrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let from = from.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
 		let budget = self
 			.recorder

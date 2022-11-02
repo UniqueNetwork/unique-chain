@@ -26,6 +26,8 @@ use primitive_types::{H160, U256};
 use crate::{
 	execution::{Error, ResultWithPostInfo, WithPostDispatchInfo},
 	types::*,
+	make_signature,
+	custom_signature::{SignatureUnit},
 };
 use crate::execution::Result;
 
@@ -340,18 +342,18 @@ impl AbiWriter {
 	}
 }
 
-/// [`AbiReader`] implements reading of many types, but it should
-/// be limited to types defined in spec
-///
-/// As this trait can't be made sealed,
-/// instead of having `impl AbiRead for T`, we have `impl AbiRead<T> for AbiReader`
-pub trait AbiRead<T> {
+/// [`AbiReader`] implements reading of many types.
+pub trait AbiRead {
 	/// Read item from current position, advanding decoder
-	fn abi_read(&mut self) -> Result<T>;
+	fn abi_read(reader: &mut AbiReader) -> Result<Self>
+	where
+		Self: Sized;
 }
 
 macro_rules! impl_abi_readable {
 	($ty:ty, $method:ident, $dynamic:literal) => {
+		impl sealed::CanBePlacedInVec for $ty {}
+
 		impl TypeHelper for $ty {
 			fn is_dynamic() -> bool {
 				$dynamic
@@ -361,16 +363,16 @@ macro_rules! impl_abi_readable {
 				ABI_ALIGNMENT
 			}
 		}
-		impl AbiRead<$ty> for AbiReader<'_> {
-			fn abi_read(&mut self) -> Result<$ty> {
-				self.$method()
+
+		impl AbiRead for $ty {
+			fn abi_read(reader: &mut AbiReader) -> Result<$ty> {
+				reader.$method()
 			}
 		}
 	};
 }
 
 impl_abi_readable!(bool, bool, false);
-impl_abi_readable!(uint8, uint8, false);
 impl_abi_readable!(uint32, uint32, false);
 impl_abi_readable!(uint64, uint64, false);
 impl_abi_readable!(uint128, uint128, false);
@@ -378,7 +380,20 @@ impl_abi_readable!(uint256, uint256, false);
 impl_abi_readable!(bytes4, bytes4, false);
 impl_abi_readable!(address, address, false);
 impl_abi_readable!(string, string, true);
-// impl_abi_readable!(bytes, bytes, true);
+
+impl TypeHelper for uint8 {
+	fn is_dynamic() -> bool {
+		false
+	}
+	fn size() -> usize {
+		ABI_ALIGNMENT
+	}
+}
+impl AbiRead for uint8 {
+	fn abi_read(reader: &mut AbiReader) -> Result<uint8> {
+		reader.uint8()
+	}
+}
 
 impl TypeHelper for bytes {
 	fn is_dynamic() -> bool {
@@ -388,9 +403,9 @@ impl TypeHelper for bytes {
 		ABI_ALIGNMENT
 	}
 }
-impl AbiRead<bytes> for AbiReader<'_> {
-	fn abi_read(&mut self) -> Result<bytes> {
-		Ok(bytes(self.bytes()?))
+impl AbiRead for bytes {
+	fn abi_read(reader: &mut AbiReader) -> Result<bytes> {
+		Ok(bytes(reader.bytes()?))
 	}
 }
 
@@ -399,23 +414,54 @@ mod sealed {
 	pub trait CanBePlacedInVec {}
 }
 
-impl sealed::CanBePlacedInVec for U256 {}
-impl sealed::CanBePlacedInVec for string {}
-impl sealed::CanBePlacedInVec for H160 {}
-
-impl<R: sealed::CanBePlacedInVec> AbiRead<Vec<R>> for AbiReader<'_>
-where
-	Self: AbiRead<R>,
-{
-	fn abi_read(&mut self) -> Result<Vec<R>> {
-		let mut sub = self.subresult(None)?;
+impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
+	fn abi_read(reader: &mut AbiReader) -> Result<Vec<R>> {
+		let mut sub = reader.subresult(None)?;
 		let size = sub.uint32()? as usize;
 		sub.subresult_offset = sub.offset;
 		let mut out = Vec::with_capacity(size);
 		for _ in 0..size {
-			out.push(<Self as AbiRead<R>>::abi_read(&mut sub)?);
+			out.push(<R>::abi_read(&mut sub)?);
 		}
 		Ok(out)
+	}
+}
+
+impl<R: Signature> Signature for Vec<R> {
+	const SIGNATURE: SignatureUnit = make_signature!(new nameof(R::SIGNATURE) fixed("[]"));
+}
+
+impl sealed::CanBePlacedInVec for EthCrossAccount {}
+
+impl TypeHelper for EthCrossAccount {
+	fn is_dynamic() -> bool {
+		address::is_dynamic() || uint256::is_dynamic()
+	}
+
+	fn size() -> usize {
+		<address as TypeHelper>::size() + <uint256 as TypeHelper>::size()
+	}
+}
+
+impl AbiRead for EthCrossAccount {
+	fn abi_read(reader: &mut AbiReader) -> Result<EthCrossAccount> {
+		let size = if !EthCrossAccount::is_dynamic() {
+			Some(<EthCrossAccount as TypeHelper>::size())
+		} else {
+			None
+		};
+		let mut subresult = reader.subresult(size)?;
+		let eth = <address>::abi_read(&mut subresult)?;
+		let sub = <uint256>::abi_read(&mut subresult)?;
+
+		Ok(EthCrossAccount { eth, sub })
+	}
+}
+
+impl AbiWrite for EthCrossAccount {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		self.eth.abi_write(writer);
+		self.sub.abi_write(writer);
 	}
 }
 
@@ -438,22 +484,23 @@ macro_rules! impl_tuples {
 				0 $(+ <$ident>::size())+
 			}
 		}
+
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
-		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
+
+		impl<$($ident),+> AbiRead for ($($ident,)+)
 		where
-			$(
-				Self: AbiRead<$ident>,
-			)+
+			$($ident: AbiRead,)+
 			($($ident,)+): TypeHelper,
 		{
-			fn abi_read(&mut self) -> Result<($($ident,)+)> {
+			fn abi_read(reader: &mut AbiReader) -> Result<($($ident,)+)> {
 				let size = if !<($($ident,)+)>::is_dynamic() { Some(<($($ident,)+)>::size()) } else { None };
-				let mut subresult = self.subresult(size)?;
+				let mut subresult = reader.subresult(size)?;
 				Ok((
-					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+
+					$(<$ident>::abi_read(&mut subresult)?,)+
 				))
 			}
 		}
+
 		#[allow(non_snake_case)]
 		impl<$($ident),+> AbiWrite for ($($ident,)+)
 		where
@@ -469,6 +516,18 @@ macro_rules! impl_tuples {
 					$($ident.abi_write(writer);)+
 				}
 			}
+		}
+
+		impl<$($ident),+> Signature for ($($ident,)+)
+		where
+		$($ident: Signature,)+
+		{
+			const SIGNATURE: SignatureUnit = make_signature!(
+				new fixed("(")
+				$(nameof(<$ident>::SIGNATURE) fixed(","))+
+				shift_left(1)
+				fixed(")")
+			);
 		}
 	};
 }
@@ -630,7 +689,7 @@ pub mod test {
 
 					let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 					assert_eq!(call, u32::to_be_bytes(function_identifier));
-					let data = <AbiReader<'_> as AbiRead<$type>>::abi_read(&mut decoder).unwrap();
+					let data = <$type>::abi_read(&mut decoder).unwrap();
 					assert_eq!(data, decoded_data);
 
 					let mut writer = AbiWriter::new_call(function_identifier);
@@ -699,13 +758,13 @@ pub mod test {
 				1ACF2D55
 				0000000000000000000000000000000000000000000000000000000000000020 // offset of (address, uint256)[]
 				0000000000000000000000000000000000000000000000000000000000000003 // length of (address, uint256)[]
-	
+
 				0000000000000000000000002D2FF76104B7BACB2E8F6731D5BFC184EBECDDBC // address
 				000000000000000000000000000000000000000000000000000000000000000A // uint256
-	
+
 				000000000000000000000000AB8E3D9134955566483B11E6825C9223B6737B10 // address
 				0000000000000000000000000000000000000000000000000000000000000014 // uint256
-	
+
 				0000000000000000000000008C582BDF2953046705FC56F189385255EFC1BE18 // address
 				000000000000000000000000000000000000000000000000000000000000001E // uint256
 			"
@@ -836,8 +895,7 @@ pub mod test {
 		let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 		assert_eq!(call, u32::to_be_bytes(decoded_data.0));
 		let address = decoder.address().unwrap();
-		let data =
-			<AbiReader<'_> as AbiRead<Vec<(uint256, string)>>>::abi_read(&mut decoder).unwrap();
+		let data = <Vec<(uint256, string)>>::abi_read(&mut decoder).unwrap();
 		assert_eq!(data, decoded_data.1);
 
 		let mut writer = AbiWriter::new_call(decoded_data.0);
