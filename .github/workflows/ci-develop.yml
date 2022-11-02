@@ -19,11 +19,12 @@ jobs:
   yarn-test-dev:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/dev-build-tests_v2.yml
-
+    secrets: inherit # pass all secrets from initial workflow to nested
 
   unit-test:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/unit-test_v2.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
 
   canary:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'canary')) }}    # Conditional check for draft & labels per job.
@@ -38,19 +39,24 @@ jobs:
   forkless:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'forkless')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/forkless.yml
-  
+    secrets: inherit # pass all secrets from initial workflow to nested
+
   node-only-update:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'node-only-update')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/node-only-update_v2.yml
-    
+    secrets: inherit # pass all secrets from initial workflow to nested
+
   parallel_and_sequential_tests:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'integration')) }}      # Conditional check for draft & labels per job.
     uses: ./.github/workflows/integration-tests.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
 
   codestyle:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/codestyle_v2.yml
-  
+    secrets: inherit # pass all secrets from initial workflow to nested
+
   yarn_eslint:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/test_codestyle_v2.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
