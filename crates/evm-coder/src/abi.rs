@@ -342,14 +342,12 @@ impl AbiWriter {
 	}
 }
 
-/// [`AbiReader`] implements reading of many types, but it should
-/// be limited to types defined in spec
-///
-/// As this trait can't be made sealed,
-/// instead of having `impl AbiRead for T`, we have `impl AbiRead<T> for AbiReader`
-pub trait AbiRead<T> {
+/// [`AbiReader`] implements reading of many types.
+pub trait AbiRead {
 	/// Read item from current position, advanding decoder
-	fn abi_read(&mut self) -> Result<T>;
+	fn abi_read(reader: &mut AbiReader) -> Result<Self>
+	where
+		Self: Sized;
 }
 
 macro_rules! impl_abi_readable {
@@ -363,9 +361,9 @@ macro_rules! impl_abi_readable {
 				ABI_ALIGNMENT
 			}
 		}
-		impl AbiRead<$ty> for AbiReader<'_> {
-			fn abi_read(&mut self) -> Result<$ty> {
-				self.$method()
+		impl AbiRead for $ty {
+			fn abi_read(reader: &mut AbiReader) -> Result<$ty> {
+				reader.$method()
 			}
 		}
 	};
@@ -389,9 +387,9 @@ impl TypeHelper for bytes {
 		ABI_ALIGNMENT
 	}
 }
-impl AbiRead<bytes> for AbiReader<'_> {
-	fn abi_read(&mut self) -> Result<bytes> {
-		Ok(bytes(self.bytes()?))
+impl AbiRead for bytes {
+	fn abi_read(reader: &mut AbiReader) -> Result<bytes> {
+		Ok(bytes(reader.bytes()?))
 	}
 }
 
@@ -405,17 +403,14 @@ impl sealed::CanBePlacedInVec for string {}
 impl sealed::CanBePlacedInVec for H160 {}
 impl sealed::CanBePlacedInVec for EthCrossAccount {}
 
-impl<R: sealed::CanBePlacedInVec> AbiRead<Vec<R>> for AbiReader<'_>
-where
-	Self: AbiRead<R>,
-{
-	fn abi_read(&mut self) -> Result<Vec<R>> {
-		let mut sub = self.subresult(None)?;
+impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
+	fn abi_read(reader: &mut AbiReader) -> Result<Vec<R>> {
+		let mut sub = reader.subresult(None)?;
 		let size = sub.uint32()? as usize;
 		sub.subresult_offset = sub.offset;
 		let mut out = Vec::with_capacity(size);
 		for _ in 0..size {
-			out.push(<Self as AbiRead<R>>::abi_read(&mut sub)?);
+			out.push(<R>::abi_read(&mut sub)?);
 		}
 		Ok(out)
 	}
@@ -435,16 +430,16 @@ impl TypeHelper for EthCrossAccount {
 	}
 }
 
-impl AbiRead<EthCrossAccount> for AbiReader<'_> {
-	fn abi_read(&mut self) -> Result<EthCrossAccount> {
+impl AbiRead for EthCrossAccount {
+	fn abi_read(reader: &mut AbiReader) -> Result<EthCrossAccount> {
 		let size = if !EthCrossAccount::is_dynamic() {
 			Some(<EthCrossAccount as TypeHelper>::size())
 		} else {
 			None
 		};
-		let mut subresult = self.subresult(size)?;
-		let eth = <Self as AbiRead<address>>::abi_read(&mut subresult)?;
-		let sub = <Self as AbiRead<uint256>>::abi_read(&mut subresult)?;
+		let mut subresult = reader.subresult(size)?;
+		let eth = <address>::abi_read(&mut subresult)?;
+		let sub = <uint256>::abi_read(&mut subresult)?;
 
 		Ok(EthCrossAccount { eth, sub })
 	}
@@ -479,18 +474,16 @@ macro_rules! impl_tuples {
 
 		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
 
-		impl<$($ident),+> AbiRead<($($ident,)+)> for AbiReader<'_>
+		impl<$($ident),+> AbiRead for ($($ident,)+)
 		where
-			$(
-				Self: AbiRead<$ident>,
-			)+
+			$($ident: AbiRead,)+
 			($($ident,)+): TypeHelper,
 		{
-			fn abi_read(&mut self) -> Result<($($ident,)+)> {
+			fn abi_read(reader: &mut AbiReader) -> Result<($($ident,)+)> {
 				let size = if !<($($ident,)+)>::is_dynamic() { Some(<($($ident,)+)>::size()) } else { None };
-				let mut subresult = self.subresult(size)?;
+				let mut subresult = reader.subresult(size)?;
 				Ok((
-					$(<Self as AbiRead<$ident>>::abi_read(&mut subresult)?,)+
+					$(<$ident>::abi_read(&mut subresult)?,)+
 				))
 			}
 		}
@@ -683,7 +676,7 @@ pub mod test {
 
 					let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 					assert_eq!(call, u32::to_be_bytes(function_identifier));
-					let data = <AbiReader<'_> as AbiRead<$type>>::abi_read(&mut decoder).unwrap();
+					let data = <$type>::abi_read(&mut decoder).unwrap();
 					assert_eq!(data, decoded_data);
 
 					let mut writer = AbiWriter::new_call(function_identifier);
@@ -889,8 +882,7 @@ pub mod test {
 		let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 		assert_eq!(call, u32::to_be_bytes(decoded_data.0));
 		let address = decoder.address().unwrap();
-		let data =
-			<AbiReader<'_> as AbiRead<Vec<(uint256, string)>>>::abi_read(&mut decoder).unwrap();
+		let data = <Vec<(uint256, string)>>::abi_read(&mut decoder).unwrap();
 		assert_eq!(data, decoded_data.1);
 
 		let mut writer = AbiWriter::new_call(decoded_data.0);

@@ -35,8 +35,7 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{convert_cross_account_to_uint256, convert_tuple_to_cross_account},
-	weights::WeightInfo,
+	eth::convert_cross_account_to_uint256, weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.

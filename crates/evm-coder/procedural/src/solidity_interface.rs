@@ -403,8 +403,9 @@ impl MethodArg {
 	fn expand_parse(&self) -> proc_macro2::TokenStream {
 		assert!(!self.is_special());
 		let name = &self.name;
+		let ty = &self.ty;
 		quote! {
-			#name: reader.abi_read()?
+			#name: <#ty>::abi_read(reader)?
 		}
 	}
 

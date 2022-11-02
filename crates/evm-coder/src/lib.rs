@@ -341,7 +341,7 @@ impl Call for ERC165Call {
 			return Ok(None);
 		}
 		Ok(Some(Self::SupportsInterface {
-			interface_id: input.abi_read()?,
+			interface_id: types::bytes4::abi_read(input)?,
 		}))
 	}
 }
