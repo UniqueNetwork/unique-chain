@@ -364,19 +364,15 @@ export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper
 export class EthCrossAccountGroup extends EthGroupBase {
   fromAddress(address: TEthereumAccount): TEthCrossAccount {
     return {
-      0: address,
-      1: '0',
-      field_0: address,
-      field_1: '0',
+      eth: address,
+      sub: '0',
     };
   }
 
   fromKeyringPair(keyring: IKeyringPair): TEthCrossAccount {
     return {
-      0: '0x0000000000000000000000000000000000000000',
-      1: keyring.addressRaw,
-      field_0: '0x0000000000000000000000000000000000000000',
-      field_1: keyring.addressRaw,
+      eth: '0x0000000000000000000000000000000000000000',
+      sub: keyring.addressRaw,
     };
   }
 }
@@ -387,9 +383,9 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   eth: EthGroup;
   ethAddress: EthAddressGroup;
+  ethCrossAccount: EthCrossAccountGroup;
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
-  ethCrossAccount: EthCrossAccountGroup;
   ethProperty: EthPropertyGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {

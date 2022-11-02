@@ -20,20 +20,20 @@
 // about Procedural Macros in Rust book:
 // https://doc.rust-lang.org/reference/procedural-macros.html
 
-use quote::{quote, ToTokens};
+use proc_macro2::TokenStream;
+use quote::{quote, format_ident};
 use inflector::cases;
-use std::fmt::Write;
 use syn::{
-	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
-	MetaNameValue, PatType, PathArguments, ReturnType, Type,
+	Expr, FnArg, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta, MetaNameValue,
+	PatType, ReturnType, Type,
 	spanned::Spanned,
 	parse::{Parse, ParseStream},
 	parenthesized, Token, LitInt, LitStr,
 };
 
 use crate::{
-	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_path, parse_path_segment,
-	parse_result_ok, pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
+	parse_ident_from_pat, parse_ident_from_path, parse_path, parse_path_segment, parse_result_ok,
+	pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
 	snake_ident_to_screaming,
 };
 
@@ -328,155 +328,47 @@ impl Parse for MethodInfo {
 	}
 }
 
-enum AbiType {
-	// type
-	Plain(Ident),
-	// (type1,type2)
-	Tuple(Vec<AbiType>),
-	// type[]
-	Vec(Box<AbiType>),
-	// type[20]
-	Array(Box<AbiType>, usize),
+trait AbiType {
+	fn plain(&self) -> syn::Result<&Ident>;
+	fn is_value(&self) -> bool;
+	fn is_caller(&self) -> bool;
+	fn is_special(&self) -> bool;
 }
-impl AbiType {
-	fn try_from(value: &Type) -> syn::Result<Self> {
-		let value = Self::try_maybe_special_from(value)?;
-		if value.is_special() {
-			return Err(syn::Error::new(value.span(), "unexpected special type"));
-		}
-		Ok(value)
-	}
-	fn try_maybe_special_from(value: &Type) -> syn::Result<Self> {
-		match value {
-			Type::Array(arr) => {
-				let wrapped = AbiType::try_from(&arr.elem)?;
-				match &arr.len {
-					Expr::Lit(l) => match &l.lit {
-						Lit::Int(i) => {
-							let num = i.base10_parse::<usize>()?;
-							Ok(AbiType::Array(Box::new(wrapped), num as usize))
-						}
-						_ => Err(syn::Error::new(arr.len.span(), "should be int literal")),
-					},
-					_ => Err(syn::Error::new(arr.len.span(), "should be literal")),
-				}
-			}
-			Type::Path(_) => {
-				let path = parse_path(value)?;
-				let segment = parse_path_segment(path)?;
-				if segment.ident == "Vec" {
-					let args = match &segment.arguments {
-						PathArguments::AngleBracketed(e) => e,
-						_ => {
-							return Err(syn::Error::new(
-								segment.arguments.span(),
-								"missing Vec generic",
-							))
-						}
-					};
-					let args = &args.args;
-					if args.len() != 1 {
-						return Err(syn::Error::new(
-							args.span(),
-							"expected only one generic for vec",
-						));
-					}
-					let arg = args.first().expect("first arg");
 
-					let ty = match arg {
-						GenericArgument::Type(ty) => ty,
-						_ => {
-							return Err(syn::Error::new(
-								arg.span(),
-								"expected first generic to be type",
-							))
-						}
-					};
-
-					let wrapped = AbiType::try_from(ty)?;
-					Ok(Self::Vec(Box::new(wrapped)))
-				} else {
-					if !segment.arguments.is_empty() {
-						return Err(syn::Error::new(
-							segment.arguments.span(),
-							"unexpected generic arguments for non-vec type",
-						));
-					}
-					Ok(Self::Plain(segment.ident.clone()))
-				}
-			}
-			Type::Tuple(t) => {
-				let mut out = Vec::with_capacity(t.elems.len());
-				for el in t.elems.iter() {
-					out.push(AbiType::try_from(el)?)
-				}
-				Ok(Self::Tuple(out))
-			}
-			_ => Err(syn::Error::new(
-				value.span(),
-				"unexpected type, only arrays, plain types and tuples are supported",
-			)),
+impl AbiType for Type {
+	fn plain(&self) -> syn::Result<&Ident> {
+		let path = parse_path(self)?;
+		let segment = parse_path_segment(path)?;
+		if !segment.arguments.is_empty() {
+			return Err(syn::Error::new(self.span(), "Not plain type"));
 		}
+		Ok(&segment.ident)
 	}
+
 	fn is_value(&self) -> bool {
-		matches!(self, Self::Plain(v) if v == "value")
+		if let Ok(ident) = self.plain() {
+			return ident == "value";
+		}
+		false
 	}
+
 	fn is_caller(&self) -> bool {
-		matches!(self, Self::Plain(v) if v == "caller")
+		if let Ok(ident) = self.plain() {
+			return ident == "caller";
+		}
+		false
 	}
+
 	fn is_special(&self) -> bool {
 		self.is_caller() || self.is_value()
 	}
-	fn selector_ty_buf(&self, buf: &mut String) -> std::fmt::Result {
-		match self {
-			AbiType::Plain(t) => {
-				write!(buf, "{}", t)
-			}
-			AbiType::Tuple(t) => {
-				write!(buf, "(")?;
-				for (i, t) in t.iter().enumerate() {
-					if i != 0 {
-						write!(buf, ",")?;
-					}
-					t.selector_ty_buf(buf)?;
-				}
-				write!(buf, ")")
-			}
-			AbiType::Vec(v) => {
-				v.selector_ty_buf(buf)?;
-				write!(buf, "[]")
-			}
-			AbiType::Array(v, len) => {
-				v.selector_ty_buf(buf)?;
-				write!(buf, "[{}]", len)
-			}
-		}
-	}
-	fn selector_ty(&self) -> String {
-		let mut out = String::new();
-		self.selector_ty_buf(&mut out).expect("no fmt error");
-		out
-	}
-}
-impl ToTokens for AbiType {
-	fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-		match self {
-			AbiType::Plain(t) => tokens.extend(quote! {#t}),
-			AbiType::Tuple(t) => {
-				tokens.extend(quote! {(
-					#(#t),*
-				)});
-			}
-			AbiType::Vec(v) => tokens.extend(quote! {Vec<#v>}),
-			AbiType::Array(v, l) => tokens.extend(quote! {[#v; #l]}),
-		}
-	}
 }
 
+#[derive(Debug)]
 struct MethodArg {
 	name: Ident,
 	camel_name: String,
-	ty: AbiType,
+	ty: Type,
 }
 impl MethodArg {
 	fn try_from(value: &PatType) -> syn::Result<Self> {
@@ -484,7 +376,7 @@ impl MethodArg {
 		Ok(Self {
 			camel_name: cases::camelcase::to_camel_case(&name.to_string()),
 			name,
-			ty: AbiType::try_maybe_special_from(&value.ty)?,
+			ty: value.ty.as_ref().clone(),
 		})
 	}
 	fn is_value(&self) -> bool {
@@ -495,10 +387,6 @@ impl MethodArg {
 	}
 	fn is_special(&self) -> bool {
 		self.ty.is_special()
-	}
-	fn selector_ty(&self) -> String {
-		assert!(!self.is_special());
-		self.ty.selector_ty()
 	}
 
 	fn expand_call_def(&self) -> proc_macro2::TokenStream {
@@ -514,8 +402,9 @@ impl MethodArg {
 	fn expand_parse(&self) -> proc_macro2::TokenStream {
 		assert!(!self.is_special());
 		let name = &self.name;
+		let ty = &self.ty;
 		quote! {
-			#name: reader.abi_read()?
+			#name: <#ty>::abi_read(reader)?
 		}
 	}
 
@@ -575,8 +464,6 @@ struct Method {
 	camel_name: String,
 	pascal_name: Ident,
 	screaming_name: Ident,
-	selector_str: String,
-	selector: u32,
 	hide: bool,
 	args: Vec<MethodArg>,
 	has_normal_args: bool,
@@ -667,27 +554,14 @@ impl Method {
 		let camel_name = info
 			.rename_selector
 			.unwrap_or_else(|| cases::camelcase::to_camel_case(&ident.to_string()));
-		let mut selector_str = camel_name.clone();
-		selector_str.push('(');
-		let mut has_normal_args = false;
-		for (i, arg) in args.iter().filter(|arg| !arg.is_special()).enumerate() {
-			if i != 0 {
-				selector_str.push(',');
-			}
-			write!(selector_str, "{}", arg.selector_ty()).unwrap();
-			has_normal_args = true;
-		}
+		let has_normal_args = args.iter().filter(|arg| !arg.is_special()).count() != 0;
 		let has_value_args = args.iter().any(|a| a.is_value());
-		selector_str.push(')');
-		let selector = fn_selector_str(&selector_str);
 
 		Ok(Self {
 			name: ident.clone(),
 			camel_name,
 			pascal_name: snake_ident_to_pascal(ident),
 			screaming_name: snake_ident_to_screaming(ident),
-			selector_str,
-			selector,
 			hide: info.hide,
 			args,
 			has_normal_args,
@@ -718,17 +592,30 @@ impl Method {
 				}
 			}
 		} else {
-			quote! {#pascal_name}
+			quote! {
+				#(#[doc = #docs])*
+				#[allow(missing_docs)]
+				#pascal_name
+			}
 		}
 	}
 
 	fn expand_const(&self) -> proc_macro2::TokenStream {
 		let screaming_name = &self.screaming_name;
-		let selector = u32::to_be_bytes(self.selector);
-		let selector_str = &self.selector_str;
+		let screaming_name_signature = format_ident!("{}_SIGNATURE", &self.screaming_name);
+		let custom_signature = self.expand_custom_signature();
 		quote! {
-			#[doc = #selector_str]
-			const #screaming_name: ::evm_coder::types::bytes4 = [#(#selector,)*];
+			const #screaming_name_signature: ::evm_coder::custom_signature::SignatureUnit = #custom_signature;
+			const #screaming_name: ::evm_coder::types::bytes4 = {
+				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
+				let mut pos = 0;
+				while pos < Self::#screaming_name_signature.len {
+					sum = sum.update(&[Self::#screaming_name_signature.data[pos]; 1]);
+					pos += 1;
+				}
+				let a = sum.finalize();
+				[a[0], a[1], a[2], a[3]]
+			};
 		}
 	}
 
@@ -788,6 +675,7 @@ impl Method {
 
 		quote! {
 			#call_name::#pascal_name #matcher => {
+				#[allow(deprecated)]
 				let result = #receiver #name(
 					#(
 						#args,
@@ -831,6 +719,26 @@ impl Method {
 		}
 	}
 
+	fn expand_custom_signature(&self) -> proc_macro2::TokenStream {
+		let mut args = TokenStream::new();
+
+		let mut has_params = false;
+		for arg in self.args.iter().filter(|a| !a.is_special()) {
+			has_params = true;
+			let ty = &arg.ty;
+			args.extend(quote! {nameof(<#ty>::SIGNATURE)});
+			args.extend(quote! {fixed(",")})
+		}
+
+		// Remove trailing comma
+		if has_params {
+			args.extend(quote! {shift_left(1)})
+		}
+
+		let func_name = self.camel_name.clone();
+		quote! { ::evm_coder::make_signature!(new fixed(#func_name) fixed("(") #args fixed(")")) }
+	}
+
 	fn expand_solidity_function(&self) -> proc_macro2::TokenStream {
 		let camel_name = &self.camel_name;
 		let mutability = match self.mutability {
@@ -846,16 +754,17 @@ impl Method {
 			.filter(|a| !a.is_special())
 			.map(MethodArg::expand_solidity_argument);
 		let docs = &self.docs;
-		let selector_str = &self.selector_str;
-		let selector = self.selector;
+		let screaming_name = &self.screaming_name;
 		let hide = self.hide;
+		let custom_signature = self.expand_custom_signature();
 		let is_payable = self.has_value_args;
+
 		quote! {
 			SolidityFunction {
 				docs: &[#(#docs),*],
-				selector_str: #selector_str,
-				selector: #selector,
 				hide: #hide,
+				selector: u32::from_be_bytes(Self::#screaming_name),
+				custom_signature: #custom_signature,
 				name: #camel_name,
 				mutability: #mutability,
 				is_payable: #is_payable,
@@ -1022,30 +931,6 @@ impl SolidityInterface {
 
 		let docs = &self.docs;
 
-		if let Some(expect_selector) = &self.info.expect_selector {
-			if !self.info.inline_is.0.is_empty() {
-				return syn::Error::new(
-					name.span(),
-					"expect_selector is not compatible with inline_is",
-				)
-				.to_compile_error();
-			}
-			let selector = self
-				.methods
-				.iter()
-				.map(|m| m.selector)
-				.fold(0, |a, b| a ^ b);
-
-			if *expect_selector != selector {
-				let mut methods = String::new();
-				for meth in self.methods.iter() {
-					write!(methods, "\n- {}", meth.selector_str).expect("write to string");
-				}
-				return syn::Error::new(name.span(), format!("expected selector mismatch, expected {expect_selector:0>8x}, but implementation has {selector:0>8x}{methods}")).to_compile_error();
-			}
-		}
-		// let methods = self.methods.iter().map(Method::solidity_def);
-
 		quote! {
 			#[derive(Debug)]
 			#(#[doc = #docs])*
@@ -1071,6 +956,7 @@ impl SolidityInterface {
 					u32::to_be_bytes(interface_id)
 				}
 				/// Generate solidity definitions for methods described in this interface
+				#[cfg(feature = "stubgen")]
 				pub fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector, is_impl: bool) {
 					use evm_coder::solidity::*;
 					use core::fmt::Write;

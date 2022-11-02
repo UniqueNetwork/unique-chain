@@ -4,7 +4,7 @@ set -eu
 PRETTIER_CONFIG="$(pwd)""/.prettierrc"
 
 tmp=$(mktemp)
-cargo test --package $PACKAGE -- $NAME --exact --nocapture --ignored | tee $tmp
+cargo test --package=$PACKAGE --features=stubgen -- $NAME --exact --nocapture --ignored | tee $tmp
 raw=$(mktemp --suffix .sol)
 sed -n '/=== SNIP START ===/, /=== SNIP END ===/{ /=== SNIP START ===/! { /=== SNIP END ===/! p } }' $tmp > $raw
 

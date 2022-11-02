@@ -14,19 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-	traits::NamedReservableCurrency,
-	dispatch::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
-};
+use frame_support::dispatch::{GetDispatchInfo, PostDispatchInfo, DispatchInfo};
 use sp_runtime::{
 	traits::{Dispatchable, Applyable, Member},
 	generic::Era,
 	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, DispatchError,
+	DispatchErrorWithPostInfo,
 };
 use codec::Encode;
-use crate::{Runtime, RuntimeCall, RuntimeOrigin, Balances};
-use up_common::types::{AccountId, Balance};
+use crate::{Runtime, RuntimeCall, RuntimeOrigin};
+use up_common::types::AccountId;
 use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler::DispatchCall;
 use pallet_transaction_payment::ChargeTransactionPayment;

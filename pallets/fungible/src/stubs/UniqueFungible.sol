@@ -38,7 +38,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param properties Vector of properties key/value pair.
 	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple10[] memory properties) public {
+	function setCollectionProperties(Tuple14[] memory properties) public {
 		require(false, stub_error);
 		properties;
 		dummy = 0;
@@ -87,11 +87,11 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple10[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Tuple14[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple10[](0);
+		return new Tuple14[](0);
 	}
 
 	/// Set the sponsor of the collection.
@@ -114,7 +114,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
-	function setCollectionSponsorCross(Tuple6 memory sponsor) public {
+	function setCollectionSponsorCross(EthCrossAccount memory sponsor) public {
 		require(false, stub_error);
 		sponsor;
 		dummy = 0;
@@ -152,10 +152,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple6 memory) {
+	function collectionSponsor() public view returns (Tuple8 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple6(0x0000000000000000000000000000000000000000, 0);
+		return Tuple8(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -206,7 +206,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
-	function addCollectionAdminCross(Tuple6 memory newAdmin) public {
+	function addCollectionAdminCross(EthCrossAccount memory newAdmin) public {
 		require(false, stub_error);
 		newAdmin;
 		dummy = 0;
@@ -216,7 +216,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
-	function removeCollectionAdminCross(Tuple6 memory admin) public {
+	function removeCollectionAdminCross(EthCrossAccount memory admin) public {
 		require(false, stub_error);
 		admin;
 		dummy = 0;
@@ -307,7 +307,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
-	function addToCollectionAllowListCross(Tuple6 memory user) public {
+	function addToCollectionAllowListCross(EthCrossAccount memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -329,7 +329,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
-	function removeFromCollectionAllowListCross(Tuple6 memory user) public {
+	function removeFromCollectionAllowListCross(EthCrossAccount memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -365,7 +365,7 @@ contract Collection is Dummy, ERC165 {
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
-	function isOwnerOrAdminCross(Tuple6 memory user) public view returns (bool) {
+	function isOwnerOrAdminCross(EthCrossAccount memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -385,14 +385,14 @@ contract Collection is Dummy, ERC165 {
 
 	/// Get collection owner.
 	///
-	/// @return Tuple with sponsor address and his substrate mirror.
+	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() public view returns (Tuple6 memory) {
+	function collectionOwner() public view returns (EthCrossAccount memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple6(0x0000000000000000000000000000000000000000, 0);
+		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Changes collection owner to another account
@@ -413,10 +413,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() public view returns (Tuple6[] memory) {
+	function collectionAdmins() public view returns (EthCrossAccount[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple6[](0);
+		return new EthCrossAccount[](0);
 	}
 
 	/// Changes collection owner to another account
@@ -425,15 +425,21 @@ contract Collection is Dummy, ERC165 {
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0xe5c9913f,
 	///  or in textual repr: setOwnerCross((address,uint256))
-	function setOwnerCross(Tuple6 memory newOwner) public {
+	function setOwnerCross(EthCrossAccount memory newOwner) public {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
 	}
 }
 
+/// @dev Cross account struct
+struct EthCrossAccount {
+	address eth;
+	uint256 sub;
+}
+
 /// @dev anonymous struct
-struct Tuple10 {
+struct Tuple14 {
 	string field_0;
 	bytes field_1;
 }
@@ -442,7 +448,7 @@ struct Tuple10 {
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(Tuple6 memory spender, uint256 amount) public returns (bool) {
+	function approveCross(EthCrossAccount memory spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
 		amount;
@@ -472,7 +478,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(Tuple6 memory from, uint256 amount) public returns (bool) {
+	function burnFromCross(EthCrossAccount memory from, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		amount;
@@ -484,7 +490,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple6[] memory amounts) public returns (bool) {
+	function mintBulk(Tuple8[] memory amounts) public returns (bool) {
 		require(false, stub_error);
 		amounts;
 		dummy = 0;
@@ -494,8 +500,8 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		Tuple6 memory from,
-		Tuple6 memory to,
+		EthCrossAccount memory from,
+		EthCrossAccount memory to,
 		uint256 amount
 	) public returns (bool) {
 		require(false, stub_error);
@@ -508,7 +514,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple6 {
+struct Tuple8 {
 	address field_0;
 	uint256 field_1;
 }

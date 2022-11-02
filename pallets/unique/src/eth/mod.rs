@@ -20,7 +20,6 @@ use core::marker::PhantomData;
 use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::traits::Get;
-
 use crate::Pallet;
 
 use pallet_common::{
