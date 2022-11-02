@@ -106,54 +106,54 @@ jobs:
         with:
           node-version: 16
 
-      - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
+      # - name: Build the stack
+      #   run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
 
-      #  🚀 POLKADOT LAUNCH COMPLETE 🚀
-      - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
-        if: success()
-        run: |
-          counter=160
-          function check_container_status {
-                docker inspect -f {{.State.Running}} node-parachain
-          }
-          function do_docker_logs {
-                docker logs --details node-parachain  2>&1
-          }
-          function is_started {
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: node-parachain RUNNING";
-                        echo "Check Docker logs"
-                        DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
-                                echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
-                                return 0
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
-                else
-                        echo "Container node-parachain NOT RUNNING"
-                        echo "Halting all future checks"
-                        exit 1
-                fi
-          echo "something goes wrong"
-          exit 1
-          }
-          while ! is_started; do
-                echo "Waiting for special message in log files "
-                sleep 30s
-                counter=$(( $counter - 1 ))
-                echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
-                         continue
-                else
-                         break
-                fi
-          done
-          echo "Halting script"
-          exit 0
-        shell: bash
+      # #  🚀 POLKADOT LAUNCH COMPLETE 🚀
+      # - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
+      #   if: success()
+      #   run: |
+      #     counter=160
+      #     function check_container_status {
+      #           docker inspect -f {{.State.Running}} node-parachain
+      #     }
+      #     function do_docker_logs {
+      #           docker logs --details node-parachain  2>&1
+      #     }
+      #     function is_started {
+      #           if [ "$(check_container_status)" == "true" ]; then
+      #                   echo "Container: node-parachain RUNNING";
+      #                   echo "Check Docker logs"
+      #                   DOCKER_LOGS=$(do_docker_logs)
+      #                   if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
+      #                           echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
+      #                           return 0
+      #                   else
+      #                           echo "Message not found in logs output, repeating..."
+      #                           return 1
+      #                   fi
+      #           else
+      #                   echo "Container node-parachain NOT RUNNING"
+      #                   echo "Halting all future checks"
+      #                   exit 1
+      #           fi
+      #     echo "something goes wrong"
+      #     exit 1
+      #     }
+      #     while ! is_started; do
+      #           echo "Waiting for special message in log files "
+      #           sleep 30s
+      #           counter=$(( $counter - 1 ))
+      #           echo "Counter: $counter"
+      #           if [ "$counter" -gt "0" ]; then
+      #                    continue
+      #           else
+      #                    break
+      #           fi
+      #     done
+      #     echo "Halting script"
+      #     exit 0
+      #   shell: bash
 
       - name: Checkout at '${{ matrix.mainnet_branch }}' branch
         uses: actions/checkout@master
@@ -163,10 +163,11 @@ jobs:
 
       - name: Run tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()    # run this step even if previous step failed
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          # node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-before-${NOW}
@@ -222,75 +223,75 @@ jobs:
       #     reporter: mochawesome-json
       #     fail-on-error: 'false'
      
-      - name: Send SIGUSR1 to polkadot-launch process
-        if: success() || failure()
-        run: |
-          #Get PID of polkadot-launch
-          ContainerID=$(docker ps -aqf "name=node-parachain")
-          PID=$(docker exec node-parachain pidof 'polkadot-launch')
-          sleep 30s
-          echo -e "Show logs of node-parachain container.\n"
-          docker logs ${ContainerID}
-          echo -e "\n"
-          echo -e "Restart polkadot-launch process: $PID\n"
-          docker exec node-parachain kill -SIGUSR1 ${PID}
-          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
-          docker logs ${ContainerID}
+      # - name: Send SIGUSR1 to polkadot-launch process
+      #   if: success() || failure()
+      #   run: |
+      #     #Get PID of polkadot-launch
+      #     ContainerID=$(docker ps -aqf "name=node-parachain")
+      #     PID=$(docker exec node-parachain pidof 'polkadot-launch')
+      #     sleep 30s
+      #     echo -e "Show logs of node-parachain container.\n"
+      #     docker logs ${ContainerID}
+      #     echo -e "\n"
+      #     echo -e "Restart polkadot-launch process: $PID\n"
+      #     docker exec node-parachain kill -SIGUSR1 ${PID}
+      #     echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
+      #     docker logs ${ContainerID}
       
-      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
-        if: failure()                   # run this step only at failure
-        run: |
-          docker exec node-parachain cat /polkadot-launch/9944.log
-          docker exec node-parachain cat /polkadot-launch/9945.log
-          docker exec node-parachain cat /polkadot-launch/alice.log
-          docker exec node-parachain cat /polkadot-launch/eve.log
-          docker exec node-parachain cat /polkadot-launch/dave.log
-          docker exec node-parachain cat /polkadot-launch/charlie.log             
+      # - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
+      #   if: failure()                   # run this step only at failure
+      #   run: |
+      #     docker exec node-parachain cat /polkadot-launch/9944.log
+      #     docker exec node-parachain cat /polkadot-launch/9945.log
+      #     docker exec node-parachain cat /polkadot-launch/alice.log
+      #     docker exec node-parachain cat /polkadot-launch/eve.log
+      #     docker exec node-parachain cat /polkadot-launch/dave.log
+      #     docker exec node-parachain cat /polkadot-launch/charlie.log             
 
-      - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
-        if: success()
-        run: |
-          counter=160
-          function check_container_status {
-                docker inspect -f {{.State.Running}} node-parachain
-          }
-          function do_docker_logs {
-                docker logs --details node-parachain  2>&1
-          }
-          function is_started {
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: node-parachain RUNNING";
-                        echo "Check Docker logs"
-                        DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"All parachain collators restarted with the new binaries."* ]];then
-                                echo "🌗 All parachain collators restarted with the new binaries."
-                                return 0
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
-                else
-                        echo "Container node-parachain NOT RUNNING"
-                        echo "Halting all future checks"
-                        exit 1
-                fi
-          echo "something goes wrong"
-          exit 1
-          }
-          while ! is_started; do
-                echo "Waiting for special message in log files "
-                sleep 30s
-                counter=$(( $counter - 1 ))
-                echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
-                         continue
-                else
-                         break
-                fi
-          done
-          echo "Halting script"
-          exit 0
-        shell: bash
+      # - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
+      #   if: success()
+      #   run: |
+      #     counter=160
+      #     function check_container_status {
+      #           docker inspect -f {{.State.Running}} node-parachain
+      #     }
+      #     function do_docker_logs {
+      #           docker logs --details node-parachain  2>&1
+      #     }
+      #     function is_started {
+      #           if [ "$(check_container_status)" == "true" ]; then
+      #                   echo "Container: node-parachain RUNNING";
+      #                   echo "Check Docker logs"
+      #                   DOCKER_LOGS=$(do_docker_logs)
+      #                   if [[ ${DOCKER_LOGS} = *"All parachain collators restarted with the new binaries."* ]];then
+      #                           echo "🌗 All parachain collators restarted with the new binaries."
+      #                           return 0
+      #                   else
+      #                           echo "Message not found in logs output, repeating..."
+      #                           return 1
+      #                   fi
+      #           else
+      #                   echo "Container node-parachain NOT RUNNING"
+      #                   echo "Halting all future checks"
+      #                   exit 1
+      #           fi
+      #     echo "something goes wrong"
+      #     exit 1
+      #     }
+      #     while ! is_started; do
+      #           echo "Waiting for special message in log files "
+      #           sleep 30s
+      #           counter=$(( $counter - 1 ))
+      #           echo "Counter: $counter"
+      #           if [ "$counter" -gt "0" ]; then
+      #                    continue
+      #           else
+      #                    break
+      #           fi
+      #     done
+      #     echo "Halting script"
+      #     exit 0
+      #   shell: bash
         
       ## TODO: Remove next two blocks before switch to Parrallel & Sequental tests. Uncoment commented blocks.
       - name: Run tests after Node Parachain upgrade
@@ -298,7 +299,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          # node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-after-${NOW}
