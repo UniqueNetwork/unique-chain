@@ -21,9 +21,8 @@
 // https://doc.rust-lang.org/reference/procedural-macros.html
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens, format_ident};
+use quote::{quote, format_ident};
 use inflector::cases;
-use std::fmt::Write;
 use syn::{
 	Expr, FnArg, GenericArgument, Generics, Ident, ImplItem, ImplItemMethod, ItemImpl, Lit, Meta,
 	MetaNameValue, PatType, PathArguments, ReturnType, Type,
@@ -33,8 +32,8 @@ use syn::{
 };
 
 use crate::{
-	fn_selector_str, parse_ident_from_pat, parse_ident_from_path, parse_path, parse_path_segment,
-	parse_result_ok, pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
+	parse_ident_from_pat, parse_ident_from_path, parse_path, parse_path_segment, parse_result_ok,
+	pascal_ident_to_call, pascal_ident_to_snake_call, snake_ident_to_pascal,
 	snake_ident_to_screaming,
 };
 

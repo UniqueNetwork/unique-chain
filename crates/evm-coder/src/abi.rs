@@ -352,6 +352,8 @@ pub trait AbiRead {
 
 macro_rules! impl_abi_readable {
 	($ty:ty, $method:ident, $dynamic:literal) => {
+		impl sealed::CanBePlacedInVec for $ty {}
+
 		impl TypeHelper for $ty {
 			fn is_dynamic() -> bool {
 				$dynamic
@@ -361,6 +363,7 @@ macro_rules! impl_abi_readable {
 				ABI_ALIGNMENT
 			}
 		}
+
 		impl AbiRead for $ty {
 			fn abi_read(reader: &mut AbiReader) -> Result<$ty> {
 				reader.$method()
@@ -370,7 +373,6 @@ macro_rules! impl_abi_readable {
 }
 
 impl_abi_readable!(bool, bool, false);
-impl_abi_readable!(uint8, uint8, false);
 impl_abi_readable!(uint32, uint32, false);
 impl_abi_readable!(uint64, uint64, false);
 impl_abi_readable!(uint128, uint128, false);
@@ -378,6 +380,20 @@ impl_abi_readable!(uint256, uint256, false);
 impl_abi_readable!(bytes4, bytes4, false);
 impl_abi_readable!(address, address, false);
 impl_abi_readable!(string, string, true);
+
+impl TypeHelper for uint8 {
+	fn is_dynamic() -> bool {
+		false
+	}
+	fn size() -> usize {
+		ABI_ALIGNMENT
+	}
+}
+impl AbiRead for uint8 {
+	fn abi_read(reader: &mut AbiReader) -> Result<uint8> {
+		reader.uint8()
+	}
+}
 
 impl TypeHelper for bytes {
 	fn is_dynamic() -> bool {
@@ -398,11 +414,6 @@ mod sealed {
 	pub trait CanBePlacedInVec {}
 }
 
-impl sealed::CanBePlacedInVec for U256 {}
-impl sealed::CanBePlacedInVec for string {}
-impl sealed::CanBePlacedInVec for H160 {}
-impl sealed::CanBePlacedInVec for EthCrossAccount {}
-
 impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
 	fn abi_read(reader: &mut AbiReader) -> Result<Vec<R>> {
 		let mut sub = reader.subresult(None)?;
@@ -419,6 +430,8 @@ impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
 impl<R: Signature> Signature for Vec<R> {
 	make_signature!(new nameof(R) fixed("[]"));
 }
+
+impl sealed::CanBePlacedInVec for EthCrossAccount {}
 
 impl TypeHelper for EthCrossAccount {
 	fn is_dynamic() -> bool {
