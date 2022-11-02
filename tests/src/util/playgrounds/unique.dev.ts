@@ -422,7 +422,7 @@ class WaitGroup {
     return promise;
   }
 
-  async forParachainBlockNumber(blockNumber: bigint, timeout?: number) {
+  async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
@@ -437,7 +437,7 @@ class WaitGroup {
     return promise;
   }
   
-  async forRelayBlockNumber(blockNumber: bigint, timeout?: number) {
+  async forRelayBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
