@@ -1,13 +1,11 @@
 [package]
 name = "evm-coder"
-version = "0.1.3"
+version = "0.1.4"
 license = "GPLv3"
 edition = "2021"
 
 [dependencies]
 sha3-const = { version = "0.1.1", default-features = false }
-# Ethereum uses keccak (=sha3) for selectors
-# sha3 = "0.10.1"
 # evm-coder reexports those proc-macro
 evm-coder-procedural = { path = "./procedural" }
 # Evm uses primitive-types for H160, H256 and others

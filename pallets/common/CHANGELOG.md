@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.10] - 2022-11-02
+### Changed
+ - Use named structure `EthCrossAccount` in eth functions.
+
 ## [0.1.9] - 2022-10-13
 
 ## Added
