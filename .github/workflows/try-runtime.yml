@@ -47,7 +47,7 @@ jobs:
     name: ${{ matrix.network }}-try-runtime
     strategy:
       matrix:
-        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
   
     steps:
 
