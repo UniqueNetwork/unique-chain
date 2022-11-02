@@ -17,7 +17,7 @@
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {createCollection} from './util/helpers';
+import {createCollection, createItemExpectSuccess, createItemExpectFailure, createCollectionWithPropsExpectSuccess} from './util/helpers';
 import {createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3} from './eth/util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
@@ -50,8 +50,6 @@ describe('Integration Test: Maintenance Mode', () => {
 
   it('Allows superuser to enable and disable maintenance mode - and disallows anyone else', async () => {
     await usingApi(async api => {
-      const stats = (await api.rpc.unique.collectionStats()).toJSON();
-
       // Make sure non-sudo can't enable maintenance mode
       const txEnable = api.tx.maintenance.enable();
       await expect(submitTransactionExpectFailAsync(bob, txEnable), 'on commoner enabling MM').to.be.rejected; //With(/NoPermission/);
@@ -60,26 +58,6 @@ describe('Integration Test: Maintenance Mode', () => {
       await submitTransactionAsync(superuser, api.tx.sudo.sudo(txEnable as any));
       expect(await maintenanceEnabled(api), 'MM is OFF when it should be ON').to.be.true;
 
-      // An ordinary user or a superuser without sudo can't do anything while maintenance mode is enabled
-      await expect(createCollection(api, bob), 'cudo forbidden stuff').to.be.rejected; //With(/NoPermission/);
-      await expect(submitTransactionExpectFailAsync(
-        superuser,
-        api.tx.unique.setTokenProperties(999999, 999999, []),
-      ), 'cudo forbidden stuff #2').to.be.rejectedWith('');
-      await expect(submitTransactionExpectFailAsync(
-        superuser, 
-        api.tx.balances.transfer(bob.address, 1n),
-      ), 'cudo forbidden stuff #3').to.be.rejectedWith('');
-
-      // A superuser with sudo can do anything
-      await expect(submitTransactionAsync(
-        superuser, 
-        api.tx.sudo.sudo(api.tx.balances.transfer(bob.address, 1n)),
-      ), 'sudo stuff').to.be.fulfilled;
-
-      // RPCs work while in maintenance
-      expect((await api.rpc.unique.collectionStats()).toJSON()).to.be.deep.equal(stats);
-
       // Make sure non-sudo can't disable maintenance mode
       const txDisable = api.tx.maintenance.disable();
       await expect(submitTransactionExpectFailAsync(bob, txDisable), 'on commoner disabling MM').to.be.rejected; //With(/NoPermission/);
@@ -87,6 +65,125 @@ describe('Integration Test: Maintenance Mode', () => {
       // Disable maintenance mode
       await submitTransactionAsync(superuser, api.tx.sudo.sudo(txDisable as any));
       expect(await maintenanceEnabled(api), 'MM is ON when it should be OFF').to.be.false;
+    });
+  });
+
+  it('MM blocks unique pallet calls', async () => {
+    await usingApi(async api => {
+      // Can create an NFT collection before enabling the MM
+      const nftCollectionId = await expect(createCollectionWithPropsExpectSuccess({
+        mode: {type: 'NFT'},
+        propPerm: [
+          {
+            key: 'test',
+            permission: {
+              collectionAdmin: true,
+              tokenOwner: true,
+              mutable: true, 
+            },
+          },
+        ],
+      })).to.be.fulfilled;
+
+      // Can mint an NFT before enabling the MM
+      const nftId = await createItemExpectSuccess(superuser, nftCollectionId, 'NFT');
+
+      // Can create an FT collection before enabling the MM
+      const ftCollectionResult = await expect(createCollection(api, superuser, {mode: {type: 'Fungible', decimalPoints: 18}})).to.be.fulfilled;
+      const ftCollectionId = ftCollectionResult.collectionId;
+
+      // Can mint an FT before enabling the MM
+      await createItemExpectSuccess(superuser, ftCollectionId, 'Fungible');
+
+      // Can create an RFT collection before enabling the MM
+      const rftCollectionResult = await expect(createCollection(api, superuser, {mode: {type: 'ReFungible'}})).to.be.fulfilled;
+      const rftCollectionId = rftCollectionResult.collectionId;
+
+      // Can mint an RFT before enabling the MM
+      await createItemExpectSuccess(superuser, rftCollectionId, 'ReFungible');
+
+      const txEnable = api.tx.maintenance.enable();
+      await submitTransactionAsync(superuser, api.tx.sudo.sudo(txEnable as any));
+      expect(await maintenanceEnabled(api), 'MM is OFF when it should be ON').to.be.true;
+
+      // Unable to create a collection when the MM is enabled
+      await expect(createCollection(api, superuser), 'cudo forbidden stuff').to.be.rejected;
+
+      // Unable to set token properties when the MM is enabled
+      await expect(submitTransactionExpectFailAsync(
+        superuser,
+        api.tx.unique.setTokenProperties(nftCollectionId, nftId, [{key: 'test', value: 'test-val'}]),
+      )).to.be.rejected;
+
+      // Unable to mint an NFT when the MM is enabled
+      await expect(createItemExpectFailure(superuser, nftCollectionId, 'NFT')).to.be.rejected;
+
+      // Unable to mint an FT when the MM is enabled
+      await expect(createItemExpectFailure(superuser, ftCollectionId, 'Fungible')).to.be.rejected;
+
+      // Unable to mint an RFT when the MM is enabled
+      await expect(createItemExpectFailure(superuser, rftCollectionId, 'ReFungible')).to.be.rejected;
+
+      const txDisable = api.tx.maintenance.disable();
+      await submitTransactionAsync(superuser, api.tx.sudo.sudo(txDisable as any));
+      expect(await maintenanceEnabled(api), 'MM is ON when it should be OFF').to.be.false;
+
+      // Can create a collection after disabling the MM
+      await expect(createCollection(api, superuser), 'MM is disabled, the collection should be created').to.be.fulfilled;
+
+      // Can set token properties after disabling the MM
+      await submitTransactionAsync(
+        superuser,
+        api.tx.unique.setTokenProperties(nftCollectionId, nftId, [{key: 'test', value: 'test-val'}]),
+      );
+
+      // Can mint an NFT after disabling the MM
+      await createItemExpectSuccess(superuser, nftCollectionId, 'NFT');
+
+      // Can mint an FT after disabling the MM
+      await createItemExpectSuccess(superuser, ftCollectionId, 'Fungible');
+
+      // Can mint an RFT after disabling the MM
+      await createItemExpectSuccess(superuser, rftCollectionId, 'ReFungible');
+    });
+  });
+
+  it('MM allows native token transfers and RPC calls', async () => {
+    await usingApi(async api => {
+      // We can use RPC before the MM is enabled
+      const stats = (await api.rpc.unique.collectionStats()).toJSON();
+
+      // We can transfer funds before the MM is enabled
+      await expect(submitTransactionAsync(
+        superuser, 
+        api.tx.balances.transfer(bob.address, 1n),
+      )).to.be.fulfilled;
+
+      const txEnable = api.tx.maintenance.enable();
+      await submitTransactionAsync(superuser, api.tx.sudo.sudo(txEnable as any));
+      expect(await maintenanceEnabled(api), 'MM is OFF when it should be ON').to.be.true;
+
+      // RPCs work while in maintenance
+      expect((await api.rpc.unique.collectionStats()).toJSON()).to.be.deep.equal(stats);
+
+      // We still able to transfer funds
+      await expect(submitTransactionAsync(
+        superuser, 
+        api.tx.balances.transfer(bob.address, 1n),
+      )).to.be.fulfilled;
+
+      const txDisable = api.tx.maintenance.disable();
+      await submitTransactionAsync(superuser, api.tx.sudo.sudo(txDisable as any));
+      expect(await maintenanceEnabled(api), 'MM is ON when it should be OFF').to.be.false;
+
+      // RPCs work after maintenance
+      expect((await api.rpc.unique.collectionStats()).toJSON()).to.be.deep.equal(stats);
+
+      // Transfers work after maintenance
+      await expect(submitTransactionAsync(
+        superuser, 
+        api.tx.balances.transfer(bob.address, 1n),
+      )).to.be.fulfilled;
     });
   });
 
