@@ -242,20 +242,20 @@ describe('Scheduling token and balance transfers', () => {
       firstExecutionBlockNumber + periodic.period,
     ).scheduler.cancelScheduled(alice, scheduledId);
 
-    await helper.wait.newBlocks(blocksBeforeExecution);
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
 
     // execution #0
     expect(await helper.testUtils.testValue())
       .to.be.equal(incTestVal);
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + periodic.period);
 
     // execution #1
     expect(await helper.testUtils.testValue())
       .to.be.equal(finalTestVal);
 
     for (let i = 1; i < periodic.repetitions; i++) {
-      await helper.wait.newBlocks(periodic.period);
+      await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + periodic.period * (i + 1));
       expect(await helper.testUtils.testValue())
         .to.be.equal(finalTestVal);
     }
@@ -365,7 +365,7 @@ describe('Scheduling token and balance transfers', () => {
     ] = await helper.arrange.makeScheduledIds(2);
 
     const currentBlockNumber = await helper.chain.getLatestBlockNumber();
-    const blocksBeforeExecution = 4;
+    const blocksBeforeExecution = 6;
     const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
 
     const prioHigh = 0;
@@ -387,13 +387,13 @@ describe('Scheduling token and balance transfers', () => {
 
     const capture = await helper.arrange.captureEvents('scheduler', 'Dispatched');
 
-    await helper.wait.newBlocks(blocksBeforeExecution);
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
 
     // Flip priorities
     await helper.getSudo().scheduler.changePriority(alice, scheduledFirstId, prioHigh);
     await helper.getSudo().scheduler.changePriority(alice, scheduledSecondId, prioLow);
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + periodic.period);
 
     const dispatchEvents = capture.extractCapturedEvents();
     expect(dispatchEvents.length).to.be.equal(4);
