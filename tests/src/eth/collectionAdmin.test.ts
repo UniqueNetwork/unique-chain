@@ -131,7 +131,7 @@ describe('Add collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itEth.skip('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({helper}) => {
+  itEth('(!negative tests!) Add [cross] admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
@@ -140,7 +140,8 @@ describe('Add collection admins', () => {
     await collectionEvm.methods.addCollectionAdmin(admin).send();
 
     const [notAdmin] = await helper.arrange.createAccounts([10n], donor);
-    await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin.addressRaw).call({from: admin}))
+    const notAdminCross = helper.ethCrossAccount.fromKeyringPair(notAdmin);
+    await expect(collectionEvm.methods.addCollectionAdminCross(notAdminCross).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -149,14 +150,15 @@ describe('Add collection admins', () => {
       .to.be.eq(admin.toLocaleLowerCase());
   });
 
-  itEth.skip('(!negative tests!) Add substrate admin by USER is not allowed', async ({helper}) => {
+  itEth('(!negative tests!) Add [cross] admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const notAdmin0 = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const [notAdmin1] = await helper.arrange.createAccounts([10n], donor);
-    await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin1.addressRaw).call({from: notAdmin0}))
+    const notAdmin1Cross = helper.ethCrossAccount.fromKeyringPair(notAdmin1);
+    await expect(collectionEvm.methods.addCollectionAdminCross(notAdmin1Cross).call({from: notAdmin0}))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -193,20 +195,21 @@ describe('Remove collection admins', () => {
     expect(adminList.length).to.be.eq(0);
   });
 
-  itEth.skip('Remove substrate admin by owner', async ({helper}) => {
+  itEth('Remove [cross] admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
+    const newAdminCross = helper.ethCrossAccount.fromKeyringPair(newAdmin);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
+    await collectionEvm.methods.addCollectionAdminCross(newAdminCross).send();
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
         .to.be.eq(newAdmin.address.toLocaleLowerCase());
     }
 
-    await collectionEvm.methods.removeCollectionAdminSubstrate(newAdmin.addressRaw).send();
+    await collectionEvm.methods.removeCollectionAdminCross(newAdminCross).send();
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
@@ -253,17 +256,18 @@ describe('Remove collection admins', () => {
     }
   });
 
-  itEth.skip('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({helper}) => {
+  itEth('(!negative tests!) Remove [cross] admin by ADMIN is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [adminSub] = await helper.arrange.createAccounts([10n], donor);
+    const adminSubCross = helper.ethCrossAccount.fromKeyringPair(adminSub);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
+    await collectionEvm.methods.addCollectionAdminCross(adminSubCross).send();
     const adminEth = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(adminEth).send();
 
-    await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: adminEth}))
+    await expect(collectionEvm.methods.removeCollectionAdminCross(adminSubCross).call({from: adminEth}))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -273,16 +277,17 @@ describe('Remove collection admins', () => {
       .to.be.deep.contains(adminEth.toLocaleLowerCase());
   });
 
-  itEth.skip('(!negative tests!) Remove substrate admin by USER is not allowed', async ({helper}) => {
+  itEth('(!negative tests!) Remove [cross] admin by USER is not allowed', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [adminSub] = await helper.arrange.createAccounts([10n], donor);
+    const adminSubCross = helper.ethCrossAccount.fromKeyringPair(adminSub);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
+    await collectionEvm.methods.addCollectionAdminCross(adminSubCross).send();
     const notAdminEth = await helper.eth.createAccountWithBalance(donor);
 
-    await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: notAdminEth}))
+    await expect(collectionEvm.methods.removeCollectionAdminCross(adminSubCross).call({from: notAdminEth}))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -343,19 +348,20 @@ describe('Change substrate owner tests', () => {
     });
   });
 
-  itEth.skip('Change owner', async ({helper}) => {
+  itEth('Change owner [cross]', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
+    const newOwnerCross = helper.ethCrossAccount.fromKeyringPair(newOwner);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.true;
-    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
+    expect(await collectionEvm.methods.isOwnerOrAdminCross(newOwnerCross).call()).to.be.false;
 
-    await collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send();
+    await collectionEvm.methods.setOwnerCross(newOwnerCross).send();
 
     expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.false;
-    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.true;
+    expect(await collectionEvm.methods.isOwnerOrAdminCross(newOwnerCross).call()).to.be.true;
   });
 
   itEth.skip('change owner call fee', async ({helper}) => {
@@ -369,14 +375,15 @@ describe('Change substrate owner tests', () => {
     expect(cost > 0);
   });
 
-  itEth.skip('(!negative tests!) call setOwner by non owner', async ({helper}) => {
+  itEth('(!negative tests!) call setOwner by non owner [cross]', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const otherReceiver = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
+    const newOwnerCross = helper.ethCrossAccount.fromKeyringPair(newOwner);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await expect(collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;
-    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
+    await expect(collectionEvm.methods.setOwnerCross(newOwnerCross).send({from: otherReceiver})).to.be.rejected;
+    expect(await collectionEvm.methods.isOwnerOrAdminCross(newOwnerCross).call()).to.be.false;
   });
 });
