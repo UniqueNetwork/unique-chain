@@ -9,37 +9,33 @@
 //! #### Example
 //! ```
 //! use std::str::from_utf8;
-//! use evm_coder::make_signature;
-//! use evm_coder::custom_signature::{
-//! 	SignatureUnit,
-//! 	SIGNATURE_SIZE_LIMIT
-//! };
+//! use evm_coder::{custom_signature::SignatureUnit, make_signature};
 //!
 //! // Create trait for our signature
 //! trait SoliditySignature {
-//!		const SIGNATURE: SignatureUnit;
+//!     const SIGNATURE: SignatureUnit;
 //!
-//!		fn name() -> &'static str {
-//!			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
-//!		}
-//!	}
+//!     fn name() -> &'static str {
+//!         from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
+//!     }
+//! }
 //!
 //! // Make signatures for some types
-//!	impl SoliditySignature for u8 {
-//!		make_signature!(new fixed("uint8"));
-//!	}
-//!	impl SoliditySignature for u32 {
-//!		make_signature!(new fixed("uint32"));
-//!	}
-//!	impl<T: SoliditySignature> SoliditySignature for Vec<T> {
-//!		make_signature!(new nameof(T) fixed("[]"));
-//!	}
-//!	impl<A: SoliditySignature, B: SoliditySignature> SoliditySignature for (A, B) {
-//!		make_signature!(new fixed("(") nameof(A) fixed(",") nameof(B) fixed(")"));
-//!	}
-//!	impl<A: SoliditySignature> SoliditySignature for (A,) {
-//!		make_signature!(new fixed("(") nameof(A) fixed(",") shift_left(1) fixed(")"));
-//!	}
+//! impl SoliditySignature for u8 {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint8"));
+//! }
+//! impl SoliditySignature for u32 {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint32"));
+//! }
+//! impl<T: SoliditySignature> SoliditySignature for Vec<T> {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
+//! }
+//! impl<A: SoliditySignature, B: SoliditySignature> SoliditySignature for (A, B) {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new fixed("(") nameof(A::SIGNATURE) fixed(",") nameof(B::SIGNATURE) fixed(")"));
+//! }
+//! impl<A: SoliditySignature> SoliditySignature for (A,) {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new fixed("(") nameof(A::SIGNATURE) fixed(",") shift_left(1) fixed(")"));
+//! }
 //!
 //! assert_eq!(u8::name(), "uint8");
 //! assert_eq!(<Vec<u8>>::name(), "uint8[]");
@@ -52,28 +48,23 @@
 //! #### Example
 //! ```
 //! use core::str::from_utf8;
-//! use evm_coder::{
-//!		make_signature,
-//!		custom_signature::{
-//!			SIGNATURE_SIZE_LIMIT, SignatureUnit, SignaturePreferences, FunctionSignature,
-//!		},
-//!	};
+//! use evm_coder::{custom_signature::SignatureUnit, make_signature};
 //! // Trait for our signature
 //! trait SoliditySignature {
-//!		const SIGNATURE: SignatureUnit;
+//!     const SIGNATURE: SignatureUnit;
 //!
-//!		fn name() -> &'static str {
-//!			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
-//!		}
-//!	}
+//!     fn name() -> &'static str {
+//!         from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
+//!     }
+//! }
 //!
 //! // Make signatures for some types
-//!	impl SoliditySignature for u8 {
-//!		make_signature!(new fixed("uint8"));
-//!	}
-//!	impl<T: SoliditySignature> SoliditySignature for Vec<T> {
-//!		make_signature!(new nameof(T) fixed("[]"));
-//!	}
+//! impl SoliditySignature for u8 {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint8"));
+//! }
+//! impl<T: SoliditySignature> SoliditySignature for Vec<T> {
+//!     const SIGNATURE: SignatureUnit = make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
+//! }
 //! ```
 
 /// The maximum length of the signature.
@@ -134,8 +125,23 @@ macro_rules! make_signature {
 	(@size; fixed($expr:expr) $($tt:tt)*) => {
 		$expr.len() + $crate::make_signature!(@size; $($tt)*)
 	};
-	(@size; nameof($expr:ty) $($tt:tt)*) => {
-		<$expr>::SIGNATURE.len + $crate::make_signature!(@size; $($tt)*)
+	(@size; nameof($expr:expr) $($tt:tt)*) => {
+		$expr.len + $crate::make_signature!(@size; $($tt)*)
+	};
+	(@size; numof($expr:expr) $($tt:tt)*) => {
+		{
+			let mut out = 0;
+			let mut v = $expr;
+			if v == 0 {
+				out = 1;
+			} else {
+				while v > 0 {
+					out += 1;
+					v /= 10;
+				}
+			}
+			out
+		} + $crate::make_signature!(@size; $($tt)*)
 	};
 	(@size; shift_left($expr:expr) $($tt:tt)*) => {
 		$crate::make_signature!(@size; $($tt)*) - $expr
@@ -150,9 +156,38 @@ macro_rules! make_signature {
 		}
 		$crate::make_signature!(@data($dst, $dst_offset); $($tt)*)
 	};
-	(@data($dst:ident, $dst_offset:ident); nameof($expr:ty) $($tt:tt)*) => {
+	(@data($dst:ident, $dst_offset:ident); nameof($expr:expr) $($tt:tt)*) => {
 		{
-			$crate::make_signature!(@copy(&<$expr>::SIGNATURE.data, $dst, <$expr>::SIGNATURE.len, $dst_offset));
+			$crate::make_signature!(@copy(&$expr.data, $dst, $expr.len, $dst_offset));
+		}
+		$crate::make_signature!(@data($dst, $dst_offset); $($tt)*)
+	};
+	(@data($dst:ident, $dst_offset:ident); numof($expr:expr) $($tt:tt)*) => {
+		{
+			let mut v = $expr;
+			let mut need_to_swap = 0;
+			if v == 0 {
+				$dst[$dst_offset] = b'0';
+				$dst_offset += 1;
+			} else {
+				while v > 0 {
+					let n = (v % 10) as u8;
+					$dst[$dst_offset] = b'0' + n;
+					v /= 10;
+					need_to_swap += 1;
+					$dst_offset += 1;
+				}
+			}
+			let mut i = 0;
+			#[allow(clippy::manual_swap)]
+			while i < need_to_swap / 2 {
+				let a = $dst_offset - i - 1;
+				let b = $dst_offset - need_to_swap + i;
+				let v = $dst[a];
+				$dst[a] = $dst[b];
+				$dst[b] = v;
+				i += 1;
+			}
 		}
 		$crate::make_signature!(@data($dst, $dst_offset); $($tt)*)
 	};
@@ -181,34 +216,38 @@ mod test {
 	use super::{SIGNATURE_SIZE_LIMIT, SignatureUnit};
 
 	trait Name {
-		const SIGNATURE: SignatureUnit;
+		const NAME: SignatureUnit;
 
 		fn name() -> &'static str {
-			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
+			from_utf8(&Self::NAME.data[..Self::NAME.len]).expect("bad utf-8")
 		}
 	}
 
 	impl Name for u8 {
-		const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint8"));
+		const NAME: SignatureUnit = make_signature!(new fixed("uint8"));
 	}
 	impl Name for u32 {
-		const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint32"));
+		const NAME: SignatureUnit = make_signature!(new fixed("uint32"));
 	}
 	impl<T: Name> Name for Vec<T> {
-		const SIGNATURE: SignatureUnit = make_signature!(new nameof(T) fixed("[]"));
+		const NAME: SignatureUnit = make_signature!(new nameof(T::NAME) fixed("[]"));
 	}
 	impl<A: Name, B: Name> Name for (A, B) {
-		const SIGNATURE: SignatureUnit =
-			make_signature!(new fixed("(") nameof(A) fixed(",") nameof(B) fixed(")"));
+		const NAME: SignatureUnit =
+			make_signature!(new fixed("(") nameof(A::NAME) fixed(",") nameof(B::NAME) fixed(")"));
 	}
 	impl<A: Name> Name for (A,) {
-		const SIGNATURE: SignatureUnit =
-			make_signature!(new fixed("(") nameof(A) fixed(",") shift_left(1) fixed(")"));
+		const NAME: SignatureUnit =
+			make_signature!(new fixed("(") nameof(A::NAME) fixed(",") shift_left(1) fixed(")"));
+	}
+	impl<A: Name, const SIZE: usize> Name for [A; SIZE] {
+		const NAME: SignatureUnit =
+			make_signature!(new nameof(A::NAME) fixed("[") numof(SIZE) fixed("]"));
 	}
 
 	struct MaxSize();
 	impl Name for MaxSize {
-		const SIGNATURE: SignatureUnit = SignatureUnit {
+		const NAME: SignatureUnit = SignatureUnit {
 			data: [b'!'; SIGNATURE_SIZE_LIMIT],
 			len: SIGNATURE_SIZE_LIMIT,
 		};
@@ -270,6 +309,13 @@ mod test {
 	#[test]
 	fn shift() {
 		assert_eq!(<(u32,)>::name(), "(uint32)");
+	}
+
+	#[test]
+	fn num() {
+		assert_eq!(<[u8; 0]>::name(), "uint8[0]");
+		assert_eq!(<[u8; 1234]>::name(), "uint8[1234]");
+		assert_eq!(<[u8; 12345]>::name(), "uint8[12345]");
 	}
 
 	#[test]

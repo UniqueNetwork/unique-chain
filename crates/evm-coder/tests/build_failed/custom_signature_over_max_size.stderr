@@ -1,18 +1,28 @@
+warning: unused import: `make_signature`
+ --> tests/build_failed/custom_signature_over_max_size.rs:5:2
+  |
+5 |     make_signature,
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
 error: any use of this value will cause an error
-  --> tests/build_failed/custom_signature_over_max_size.rs:18:2
+  --> tests/build_failed/custom_signature_over_max_size.rs:19:3
    |
-18 |     evm_coder::make_signature!(new nameof(T) fixed("[]"));
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ index out of bounds: the length is 256 but the index is 256
+18 |     const SIGNATURE: SignatureUnit =
+   |     ------------------------------
+19 |         evm_coder::make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ index out of bounds: the length is 256 but the index is 256
    |
    = note: `#[deny(const_err)]` on by default
    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
    = note: for more information, see issue #71800 <https://github.com/rust-lang/rust/issues/71800>
-   = note: this error originates in the macro `make_signature` which comes from the expansion of the macro `evm_coder::make_signature` (in Nightly builds, run with -Z macro-backtrace for more info)
+   = note: this error originates in the macro `$crate::make_signature` which comes from the expansion of the macro `evm_coder::make_signature` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error: any use of this value will cause an error
-  --> tests/build_failed/custom_signature_over_max_size.rs:29:29
+  --> tests/build_failed/custom_signature_over_max_size.rs:30:29
    |
-29 | const NAME: SignatureUnit = <Vec<MaxSize>>::SIGNATURE;
+30 | const NAME: SignatureUnit = <Vec<MaxSize>>::SIGNATURE;
    | -------------------------   ^^^^^^^^^^^^^^^^^^^^^^^^^ referenced constant has errors
    |
    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!

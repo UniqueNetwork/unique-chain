@@ -721,7 +721,7 @@ impl Method {
 		for arg in self.args.iter().filter(|a| !a.is_special()) {
 			has_params = true;
 			let ty = &arg.ty;
-			args.extend(quote! {nameof(#ty)});
+			args.extend(quote! {nameof(<#ty>::SIGNATURE)});
 			args.extend(quote! {fixed(",")})
 		}
 

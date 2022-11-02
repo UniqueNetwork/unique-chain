@@ -428,7 +428,7 @@ impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
 }
 
 impl<R: Signature> Signature for Vec<R> {
-	const SIGNATURE: SignatureUnit = make_signature!(new nameof(R) fixed("[]"));
+	const SIGNATURE: SignatureUnit = make_signature!(new nameof(R::SIGNATURE) fixed("[]"));
 }
 
 impl sealed::CanBePlacedInVec for EthCrossAccount {}
@@ -524,7 +524,7 @@ macro_rules! impl_tuples {
 		{
 			const SIGNATURE: SignatureUnit = make_signature!(
 				new fixed("(")
-				$(nameof($ident) fixed(","))+
+				$(nameof(<$ident>::SIGNATURE) fixed(","))+
 				shift_left(1)
 				fixed(")")
 			);

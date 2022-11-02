@@ -15,7 +15,8 @@ trait Name {
 }
 
 impl<T: Name> Name for Vec<T> {
-	evm_coder::make_signature!(new nameof(T) fixed("[]"));
+	const SIGNATURE: SignatureUnit =
+		evm_coder::make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
 }
 
 struct MaxSize();
