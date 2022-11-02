@@ -25,7 +25,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
 use sp_runtime::DispatchError;
@@ -35,13 +34,8 @@ use fp_self_contained::*;
 
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member,
-		SignedExtension,
-	},
-	transaction_validity::{
-		TransactionSource, TransactionValidity, ValidTransaction, InvalidTransaction,
-	},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member},
+	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, RuntimeAppPublic,
 };
 
@@ -964,7 +958,6 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 			from,
 		)),
 		frame_system::CheckWeight::<Runtime>::new(),
-		CheckMaintenance,
 		// sponsoring transaction logic
 		// pallet_charge_transaction::ChargeTransactionPayment::<Runtime>::new(0),
 	)
@@ -1253,8 +1246,6 @@ construct_runtime!(
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
 		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 		EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
-
-		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
 	}
 );
 
@@ -1300,7 +1291,6 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	CheckMaintenance,
 	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
@@ -1311,7 +1301,6 @@ pub type SignedExtraScheduler = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	CheckMaintenance,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
