@@ -173,6 +173,7 @@ jobs:
           path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.GITHUB_TOKEN }}
     
              
       - name: Stop running containers
@@ -322,6 +323,7 @@ jobs:
           path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.GITHUB_TOKEN }}
        
       - name: Stop running containers
         if: always()                   # run this step always
