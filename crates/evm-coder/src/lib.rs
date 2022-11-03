@@ -121,53 +121,24 @@ pub mod types {
 	use alloc::{vec::Vec};
 	use pallet_evm::account::CrossAccountId;
 	use primitive_types::{U256, H160, H256};
-	use core::str::from_utf8;
 
-	use crate::custom_signature::SignatureUnit;
-
-	pub trait Signature {
-		const SIGNATURE: SignatureUnit;
-
-		fn as_str() -> &'static str {
-			from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")
-		}
-	}
-
-	impl Signature for bool {
-		const SIGNATURE: SignatureUnit = make_signature!(new fixed("bool"));
-	}
-
-	macro_rules! define_simple_type {
-		(type $ident:ident = $ty:ty) => {
-			pub type $ident = $ty;
-			impl Signature for $ty {
-				const SIGNATURE: SignatureUnit = make_signature!(new fixed(stringify!($ident)));
-			}
-		};
-	}
-
-	define_simple_type!(type address = H160);
-
-	define_simple_type!(type uint8 = u8);
-	define_simple_type!(type uint16 = u16);
-	define_simple_type!(type uint32 = u32);
-	define_simple_type!(type uint64 = u64);
-	define_simple_type!(type uint128 = u128);
-	define_simple_type!(type uint256 = U256);
-	define_simple_type!(type bytes4 = [u8; 4]);
-
-	define_simple_type!(type topic = H256);
+	pub type address = H160;
+	pub type uint8 = u8;
+	pub type uint16 = u16;
+	pub type uint32 = u32;
+	pub type uint64 = u64;
+	pub type uint128 = u128;
+	pub type uint256 = U256;
+	pub type bytes4 = [u8; 4];
+	pub type topic = H256;
 
 	#[cfg(not(feature = "std"))]
-	define_simple_type!(type string = ::alloc::string::String);
+	pub type string = ::alloc::string::String;
 	#[cfg(feature = "std")]
-	define_simple_type!(type string = ::std::string::String);
+	pub type string = ::std::string::String;
 
 	#[derive(Default, Debug, PartialEq)]
 	pub struct bytes(pub Vec<u8>);
-	impl Signature for bytes {
-		const SIGNATURE: SignatureUnit = make_signature!(new fixed("bytes"));
-	}
 
 	/// Solidity doesn't have `void` type, however we have special implementation
 	/// for empty tuple return type
@@ -257,10 +228,6 @@ pub mod types {
 				Err("All fields of cross account is non zeroed".into())
 			}
 		}
-	}
-
-	impl Signature for EthCrossAccount {
-		const SIGNATURE: SignatureUnit = make_signature!(new fixed("(address,uint256)"));
 	}
 
 	/// Convert `CrossAccountId` to `uint256`.

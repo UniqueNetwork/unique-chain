@@ -17,6 +17,7 @@
 //! This module contains the implementation of pallet methods for evm.
 
 use evm_coder::{
+	abi::AbiType,
 	solidity_interface, solidity, ToLog,
 	types::*,
 	execution::{Result, Error},

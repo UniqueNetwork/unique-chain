@@ -29,7 +29,9 @@ use core::{
 	convert::TryInto,
 	ops::Deref,
 };
-use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
+use evm_coder::{
+	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight,
+};
 use pallet_common::{
 	CommonWeightInfo,
 	erc::{CommonEvmHandler, PrecompileResult},
