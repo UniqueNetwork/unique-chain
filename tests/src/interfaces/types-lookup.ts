@@ -1,18 +1,14 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-// import type lookup before we augment - in some environments
-// this is required to allow for ambient/previous definitions
-import '@polkadot/types/lookup';
-
-import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
-import type { ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { Event } from '@polkadot/types/interfaces/system';
-
 declare module '@polkadot/types/lookup' {
+  import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+  import type { ITuple } from '@polkadot/types-codec/types';
+  import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+  import type { Event } from '@polkadot/types/interfaces/system';
+
   /** @name PolkadotPrimitivesV2PersistedValidationData (2) */
-  interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
+  export interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
     readonly parentHead: Bytes;
     readonly relayParentNumber: u32;
     readonly relayParentStorageRoot: H256;
@@ -20,18 +16,18 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PolkadotPrimitivesV2UpgradeRestriction (9) */
-  interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
+  export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
     readonly isPresent: boolean;
     readonly type: 'Present';
   }
 
   /** @name SpTrieStorageProof (10) */
-  interface SpTrieStorageProof extends Struct {
+  export interface SpTrieStorageProof extends Struct {
     readonly trieNodes: BTreeSet<Bytes>;
   }
 
   /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (13) */
-  interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
+  export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
     readonly dmqMqcHead: H256;
     readonly relayDispatchQueueSize: ITuple<[u32, u32]>;
     readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
@@ -39,7 +35,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PolkadotPrimitivesV2AbridgedHrmpChannel (18) */
-  interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
+  export interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
     readonly maxCapacity: u32;
     readonly maxTotalSize: u32;
     readonly maxMessageSize: u32;
@@ -49,7 +45,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PolkadotPrimitivesV2AbridgedHostConfiguration (20) */
-  interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
+  export interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
     readonly maxCodeSize: u32;
     readonly maxHeadDataSize: u32;
     readonly maxUpwardQueueCount: u32;
@@ -62,13 +58,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PolkadotCorePrimitivesOutboundHrmpMessage (26) */
-  interface PolkadotCorePrimitivesOutboundHrmpMessage extends Struct {
+  export interface PolkadotCorePrimitivesOutboundHrmpMessage extends Struct {
     readonly recipient: u32;
     readonly data: Bytes;
   }
 
   /** @name CumulusPalletParachainSystemCall (28) */
-  interface CumulusPalletParachainSystemCall extends Enum {
+  export interface CumulusPalletParachainSystemCall extends Enum {
     readonly isSetValidationData: boolean;
     readonly asSetValidationData: {
       readonly data: CumulusPrimitivesParachainInherentParachainInherentData;
@@ -89,7 +85,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPrimitivesParachainInherentParachainInherentData (29) */
-  interface CumulusPrimitivesParachainInherentParachainInherentData extends Struct {
+  export interface CumulusPrimitivesParachainInherentParachainInherentData extends Struct {
     readonly validationData: PolkadotPrimitivesV2PersistedValidationData;
     readonly relayChainState: SpTrieStorageProof;
     readonly downwardMessages: Vec<PolkadotCorePrimitivesInboundDownwardMessage>;
@@ -97,19 +93,19 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PolkadotCorePrimitivesInboundDownwardMessage (31) */
-  interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
+  export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
     readonly sentAt: u32;
     readonly msg: Bytes;
   }
 
   /** @name PolkadotCorePrimitivesInboundHrmpMessage (34) */
-  interface PolkadotCorePrimitivesInboundHrmpMessage extends Struct {
+  export interface PolkadotCorePrimitivesInboundHrmpMessage extends Struct {
     readonly sentAt: u32;
     readonly data: Bytes;
   }
 
   /** @name CumulusPalletParachainSystemEvent (37) */
-  interface CumulusPalletParachainSystemEvent extends Enum {
+  export interface CumulusPalletParachainSystemEvent extends Enum {
     readonly isValidationFunctionStored: boolean;
     readonly isValidationFunctionApplied: boolean;
     readonly asValidationFunctionApplied: {
@@ -133,7 +129,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletParachainSystemError (38) */
-  interface CumulusPalletParachainSystemError extends Enum {
+  export interface CumulusPalletParachainSystemError extends Enum {
     readonly isOverlappingUpgrades: boolean;
     readonly isProhibitedByPolkadot: boolean;
     readonly isTooBig: boolean;
@@ -146,7 +142,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletBalancesAccountData (41) */
-  interface PalletBalancesAccountData extends Struct {
+  export interface PalletBalancesAccountData extends Struct {
     readonly free: u128;
     readonly reserved: u128;
     readonly miscFrozen: u128;
@@ -154,14 +150,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletBalancesBalanceLock (43) */
-  interface PalletBalancesBalanceLock extends Struct {
+  export interface PalletBalancesBalanceLock extends Struct {
     readonly id: U8aFixed;
     readonly amount: u128;
     readonly reasons: PalletBalancesReasons;
   }
 
   /** @name PalletBalancesReasons (45) */
-  interface PalletBalancesReasons extends Enum {
+  export interface PalletBalancesReasons extends Enum {
     readonly isFee: boolean;
     readonly isMisc: boolean;
     readonly isAll: boolean;
@@ -169,20 +165,20 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletBalancesReserveData (48) */
-  interface PalletBalancesReserveData extends Struct {
+  export interface PalletBalancesReserveData extends Struct {
     readonly id: U8aFixed;
     readonly amount: u128;
   }
 
   /** @name PalletBalancesReleases (51) */
-  interface PalletBalancesReleases extends Enum {
+  export interface PalletBalancesReleases extends Enum {
     readonly isV100: boolean;
     readonly isV200: boolean;
     readonly type: 'V100' | 'V200';
   }
 
   /** @name PalletBalancesCall (52) */
-  interface PalletBalancesCall extends Enum {
+  export interface PalletBalancesCall extends Enum {
     readonly isTransfer: boolean;
     readonly asTransfer: {
       readonly dest: MultiAddress;
@@ -219,7 +215,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletBalancesEvent (58) */
-  interface PalletBalancesEvent extends Enum {
+  export interface PalletBalancesEvent extends Enum {
     readonly isEndowed: boolean;
     readonly asEndowed: {
       readonly account: AccountId32;
@@ -278,14 +274,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportTokensMiscBalanceStatus (59) */
-  interface FrameSupportTokensMiscBalanceStatus extends Enum {
+  export interface FrameSupportTokensMiscBalanceStatus extends Enum {
     readonly isFree: boolean;
     readonly isReserved: boolean;
     readonly type: 'Free' | 'Reserved';
   }
 
   /** @name PalletBalancesError (60) */
-  interface PalletBalancesError extends Enum {
+  export interface PalletBalancesError extends Enum {
     readonly isVestingBalance: boolean;
     readonly isLiquidityRestrictions: boolean;
     readonly isInsufficientBalance: boolean;
@@ -298,7 +294,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletTimestampCall (63) */
-  interface PalletTimestampCall extends Enum {
+  export interface PalletTimestampCall extends Enum {
     readonly isSet: boolean;
     readonly asSet: {
       readonly now: Compact<u64>;
@@ -307,14 +303,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletTransactionPaymentReleases (66) */
-  interface PalletTransactionPaymentReleases extends Enum {
+  export interface PalletTransactionPaymentReleases extends Enum {
     readonly isV1Ancient: boolean;
     readonly isV2: boolean;
     readonly type: 'V1Ancient' | 'V2';
   }
 
   /** @name PalletTreasuryProposal (67) */
-  interface PalletTreasuryProposal extends Struct {
+  export interface PalletTreasuryProposal extends Struct {
     readonly proposer: AccountId32;
     readonly value: u128;
     readonly beneficiary: AccountId32;
@@ -322,7 +318,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletTreasuryCall (70) */
-  interface PalletTreasuryCall extends Enum {
+  export interface PalletTreasuryCall extends Enum {
     readonly isProposeSpend: boolean;
     readonly asProposeSpend: {
       readonly value: Compact<u128>;
@@ -344,7 +340,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletTreasuryEvent (72) */
-  interface PalletTreasuryEvent extends Enum {
+  export interface PalletTreasuryEvent extends Enum {
     readonly isProposed: boolean;
     readonly asProposed: {
       readonly proposalIndex: u32;
@@ -380,10 +376,10 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportPalletId (75) */
-  interface FrameSupportPalletId extends U8aFixed {}
+  export interface FrameSupportPalletId extends U8aFixed {}
 
   /** @name PalletTreasuryError (76) */
-  interface PalletTreasuryError extends Enum {
+  export interface PalletTreasuryError extends Enum {
     readonly isInsufficientProposersBalance: boolean;
     readonly isInvalidIndex: boolean;
     readonly isTooManyApprovals: boolean;
@@ -392,7 +388,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletSudoCall (77) */
-  interface PalletSudoCall extends Enum {
+  export interface PalletSudoCall extends Enum {
     readonly isSudo: boolean;
     readonly asSudo: {
       readonly call: Call;
@@ -415,7 +411,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSystemCall (79) */
-  interface FrameSystemCall extends Enum {
+  export interface FrameSystemCall extends Enum {
     readonly isFillBlock: boolean;
     readonly asFillBlock: {
       readonly ratio: Perbill;
@@ -457,7 +453,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name OrmlVestingModuleCall (83) */
-  interface OrmlVestingModuleCall extends Enum {
+  export interface OrmlVestingModuleCall extends Enum {
     readonly isClaim: boolean;
     readonly isVestedTransfer: boolean;
     readonly asVestedTransfer: {
@@ -477,7 +473,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name OrmlVestingVestingSchedule (84) */
-  interface OrmlVestingVestingSchedule extends Struct {
+  export interface OrmlVestingVestingSchedule extends Struct {
     readonly start: u32;
     readonly period: u32;
     readonly periodCount: u32;
@@ -485,7 +481,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmpQueueCall (86) */
-  interface CumulusPalletXcmpQueueCall extends Enum {
+  export interface CumulusPalletXcmpQueueCall extends Enum {
     readonly isServiceOverweight: boolean;
     readonly asServiceOverweight: {
       readonly index: u64;
@@ -521,7 +517,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletXcmCall (87) */
-  interface PalletXcmCall extends Enum {
+  export interface PalletXcmCall extends Enum {
     readonly isSend: boolean;
     readonly asSend: {
       readonly dest: XcmVersionedMultiLocation;
@@ -583,7 +579,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmVersionedMultiLocation (88) */
-  interface XcmVersionedMultiLocation extends Enum {
+  export interface XcmVersionedMultiLocation extends Enum {
     readonly isV0: boolean;
     readonly asV0: XcmV0MultiLocation;
     readonly isV1: boolean;
@@ -592,7 +588,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0MultiLocation (89) */
-  interface XcmV0MultiLocation extends Enum {
+  export interface XcmV0MultiLocation extends Enum {
     readonly isNull: boolean;
     readonly isX1: boolean;
     readonly asX1: XcmV0Junction;
@@ -614,7 +610,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0Junction (90) */
-  interface XcmV0Junction extends Enum {
+  export interface XcmV0Junction extends Enum {
     readonly isParent: boolean;
     readonly isParachain: boolean;
     readonly asParachain: Compact<u32>;
@@ -649,7 +645,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0JunctionNetworkId (91) */
-  interface XcmV0JunctionNetworkId extends Enum {
+  export interface XcmV0JunctionNetworkId extends Enum {
     readonly isAny: boolean;
     readonly isNamed: boolean;
     readonly asNamed: Bytes;
@@ -659,7 +655,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0JunctionBodyId (92) */
-  interface XcmV0JunctionBodyId extends Enum {
+  export interface XcmV0JunctionBodyId extends Enum {
     readonly isUnit: boolean;
     readonly isNamed: boolean;
     readonly asNamed: Bytes;
@@ -673,7 +669,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0JunctionBodyPart (93) */
-  interface XcmV0JunctionBodyPart extends Enum {
+  export interface XcmV0JunctionBodyPart extends Enum {
     readonly isVoice: boolean;
     readonly isMembers: boolean;
     readonly asMembers: {
@@ -698,13 +694,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiLocation (94) */
-  interface XcmV1MultiLocation extends Struct {
+  export interface XcmV1MultiLocation extends Struct {
     readonly parents: u8;
     readonly interior: XcmV1MultilocationJunctions;
   }
 
   /** @name XcmV1MultilocationJunctions (95) */
-  interface XcmV1MultilocationJunctions extends Enum {
+  export interface XcmV1MultilocationJunctions extends Enum {
     readonly isHere: boolean;
     readonly isX1: boolean;
     readonly asX1: XcmV1Junction;
@@ -726,7 +722,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1Junction (96) */
-  interface XcmV1Junction extends Enum {
+  export interface XcmV1Junction extends Enum {
     readonly isParachain: boolean;
     readonly asParachain: Compact<u32>;
     readonly isAccountId32: boolean;
@@ -760,7 +756,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmVersionedXcm (97) */
-  interface XcmVersionedXcm extends Enum {
+  export interface XcmVersionedXcm extends Enum {
     readonly isV0: boolean;
     readonly asV0: XcmV0Xcm;
     readonly isV1: boolean;
@@ -771,7 +767,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0Xcm (98) */
-  interface XcmV0Xcm extends Enum {
+  export interface XcmV0Xcm extends Enum {
     readonly isWithdrawAsset: boolean;
     readonly asWithdrawAsset: {
       readonly assets: Vec<XcmV0MultiAsset>;
@@ -834,7 +830,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0MultiAsset (100) */
-  interface XcmV0MultiAsset extends Enum {
+  export interface XcmV0MultiAsset extends Enum {
     readonly isNone: boolean;
     readonly isAll: boolean;
     readonly isAllFungible: boolean;
@@ -879,7 +875,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiassetAssetInstance (101) */
-  interface XcmV1MultiassetAssetInstance extends Enum {
+  export interface XcmV1MultiassetAssetInstance extends Enum {
     readonly isUndefined: boolean;
     readonly isIndex: boolean;
     readonly asIndex: Compact<u128>;
@@ -897,7 +893,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0Order (104) */
-  interface XcmV0Order extends Enum {
+  export interface XcmV0Order extends Enum {
     readonly isNull: boolean;
     readonly isDepositAsset: boolean;
     readonly asDepositAsset: {
@@ -945,14 +941,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV0Response (106) */
-  interface XcmV0Response extends Enum {
+  export interface XcmV0Response extends Enum {
     readonly isAssets: boolean;
     readonly asAssets: Vec<XcmV0MultiAsset>;
     readonly type: 'Assets';
   }
 
   /** @name XcmV0OriginKind (107) */
-  interface XcmV0OriginKind extends Enum {
+  export interface XcmV0OriginKind extends Enum {
     readonly isNative: boolean;
     readonly isSovereignAccount: boolean;
     readonly isSuperuser: boolean;
@@ -961,12 +957,12 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmDoubleEncoded (108) */
-  interface XcmDoubleEncoded extends Struct {
+  export interface XcmDoubleEncoded extends Struct {
     readonly encoded: Bytes;
   }
 
   /** @name XcmV1Xcm (109) */
-  interface XcmV1Xcm extends Enum {
+  export interface XcmV1Xcm extends Enum {
     readonly isWithdrawAsset: boolean;
     readonly asWithdrawAsset: {
       readonly assets: XcmV1MultiassetMultiAssets;
@@ -1035,16 +1031,16 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiassetMultiAssets (110) */
-  interface XcmV1MultiassetMultiAssets extends Vec<XcmV1MultiAsset> {}
+  export interface XcmV1MultiassetMultiAssets extends Vec<XcmV1MultiAsset> {}
 
   /** @name XcmV1MultiAsset (112) */
-  interface XcmV1MultiAsset extends Struct {
+  export interface XcmV1MultiAsset extends Struct {
     readonly id: XcmV1MultiassetAssetId;
     readonly fun: XcmV1MultiassetFungibility;
   }
 
   /** @name XcmV1MultiassetAssetId (113) */
-  interface XcmV1MultiassetAssetId extends Enum {
+  export interface XcmV1MultiassetAssetId extends Enum {
     readonly isConcrete: boolean;
     readonly asConcrete: XcmV1MultiLocation;
     readonly isAbstract: boolean;
@@ -1053,7 +1049,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiassetFungibility (114) */
-  interface XcmV1MultiassetFungibility extends Enum {
+  export interface XcmV1MultiassetFungibility extends Enum {
     readonly isFungible: boolean;
     readonly asFungible: Compact<u128>;
     readonly isNonFungible: boolean;
@@ -1062,7 +1058,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1Order (116) */
-  interface XcmV1Order extends Enum {
+  export interface XcmV1Order extends Enum {
     readonly isNoop: boolean;
     readonly isDepositAsset: boolean;
     readonly asDepositAsset: {
@@ -1112,7 +1108,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiassetMultiAssetFilter (117) */
-  interface XcmV1MultiassetMultiAssetFilter extends Enum {
+  export interface XcmV1MultiassetMultiAssetFilter extends Enum {
     readonly isDefinite: boolean;
     readonly asDefinite: XcmV1MultiassetMultiAssets;
     readonly isWild: boolean;
@@ -1121,7 +1117,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiassetWildMultiAsset (118) */
-  interface XcmV1MultiassetWildMultiAsset extends Enum {
+  export interface XcmV1MultiassetWildMultiAsset extends Enum {
     readonly isAll: boolean;
     readonly isAllOf: boolean;
     readonly asAllOf: {
@@ -1132,14 +1128,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV1MultiassetWildFungibility (119) */
-  interface XcmV1MultiassetWildFungibility extends Enum {
+  export interface XcmV1MultiassetWildFungibility extends Enum {
     readonly isFungible: boolean;
     readonly isNonFungible: boolean;
     readonly type: 'Fungible' | 'NonFungible';
   }
 
   /** @name XcmV1Response (121) */
-  interface XcmV1Response extends Enum {
+  export interface XcmV1Response extends Enum {
     readonly isAssets: boolean;
     readonly asAssets: XcmV1MultiassetMultiAssets;
     readonly isVersion: boolean;
@@ -1148,10 +1144,10 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV2Xcm (122) */
-  interface XcmV2Xcm extends Vec<XcmV2Instruction> {}
+  export interface XcmV2Xcm extends Vec<XcmV2Instruction> {}
 
   /** @name XcmV2Instruction (124) */
-  interface XcmV2Instruction extends Enum {
+  export interface XcmV2Instruction extends Enum {
     readonly isWithdrawAsset: boolean;
     readonly asWithdrawAsset: XcmV1MultiassetMultiAssets;
     readonly isReserveAssetDeposited: boolean;
@@ -1271,7 +1267,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV2Response (125) */
-  interface XcmV2Response extends Enum {
+  export interface XcmV2Response extends Enum {
     readonly isNull: boolean;
     readonly isAssets: boolean;
     readonly asAssets: XcmV1MultiassetMultiAssets;
@@ -1283,7 +1279,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV2TraitsError (128) */
-  interface XcmV2TraitsError extends Enum {
+  export interface XcmV2TraitsError extends Enum {
     readonly isOverflow: boolean;
     readonly isUnimplemented: boolean;
     readonly isUntrustedReserveLocation: boolean;
@@ -1316,7 +1312,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV2WeightLimit (129) */
-  interface XcmV2WeightLimit extends Enum {
+  export interface XcmV2WeightLimit extends Enum {
     readonly isUnlimited: boolean;
     readonly isLimited: boolean;
     readonly asLimited: Compact<u64>;
@@ -1324,7 +1320,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmVersionedMultiAssets (130) */
-  interface XcmVersionedMultiAssets extends Enum {
+  export interface XcmVersionedMultiAssets extends Enum {
     readonly isV0: boolean;
     readonly asV0: Vec<XcmV0MultiAsset>;
     readonly isV1: boolean;
@@ -1333,10 +1329,10 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmCall (145) */
-  type CumulusPalletXcmCall = Null;
+  export type CumulusPalletXcmCall = Null;
 
   /** @name CumulusPalletDmpQueueCall (146) */
-  interface CumulusPalletDmpQueueCall extends Enum {
+  export interface CumulusPalletDmpQueueCall extends Enum {
     readonly isServiceOverweight: boolean;
     readonly asServiceOverweight: {
       readonly index: u64;
@@ -1346,7 +1342,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletInflationCall (147) */
-  interface PalletInflationCall extends Enum {
+  export interface PalletInflationCall extends Enum {
     readonly isStartInflation: boolean;
     readonly asStartInflation: {
       readonly inflationStartRelayBlock: u32;
@@ -1355,7 +1351,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletUniqueCall (148) */
-  interface PalletUniqueCall extends Enum {
+  export interface PalletUniqueCall extends Enum {
     readonly isCreateCollection: boolean;
     readonly asCreateCollection: {
       readonly collectionName: Vec<u16>;
@@ -1513,7 +1509,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCollectionMode (154) */
-  interface UpDataStructsCollectionMode extends Enum {
+  export interface UpDataStructsCollectionMode extends Enum {
     readonly isNft: boolean;
     readonly isFungible: boolean;
     readonly asFungible: u8;
@@ -1522,7 +1518,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCreateCollectionData (155) */
-  interface UpDataStructsCreateCollectionData extends Struct {
+  export interface UpDataStructsCreateCollectionData extends Struct {
     readonly mode: UpDataStructsCollectionMode;
     readonly access: Option<UpDataStructsAccessMode>;
     readonly name: Vec<u16>;
@@ -1536,14 +1532,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsAccessMode (157) */
-  interface UpDataStructsAccessMode extends Enum {
+  export interface UpDataStructsAccessMode extends Enum {
     readonly isNormal: boolean;
     readonly isAllowList: boolean;
     readonly type: 'Normal' | 'AllowList';
   }
 
   /** @name UpDataStructsCollectionLimits (160) */
-  interface UpDataStructsCollectionLimits extends Struct {
+  export interface UpDataStructsCollectionLimits extends Struct {
     readonly accountTokenOwnershipLimit: Option<u32>;
     readonly sponsoredDataSize: Option<u32>;
     readonly sponsoredDataRateLimit: Option<UpDataStructsSponsoringRateLimit>;
@@ -1556,7 +1552,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsSponsoringRateLimit (162) */
-  interface UpDataStructsSponsoringRateLimit extends Enum {
+  export interface UpDataStructsSponsoringRateLimit extends Enum {
     readonly isSponsoringDisabled: boolean;
     readonly isBlocks: boolean;
     readonly asBlocks: u32;
@@ -1564,43 +1560,43 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCollectionPermissions (165) */
-  interface UpDataStructsCollectionPermissions extends Struct {
+  export interface UpDataStructsCollectionPermissions extends Struct {
     readonly access: Option<UpDataStructsAccessMode>;
     readonly mintMode: Option<bool>;
     readonly nesting: Option<UpDataStructsNestingPermissions>;
   }
 
   /** @name UpDataStructsNestingPermissions (167) */
-  interface UpDataStructsNestingPermissions extends Struct {
+  export interface UpDataStructsNestingPermissions extends Struct {
     readonly tokenOwner: bool;
     readonly collectionAdmin: bool;
     readonly restricted: Option<UpDataStructsOwnerRestrictedSet>;
   }
 
   /** @name UpDataStructsOwnerRestrictedSet (169) */
-  interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
+  export interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
 
   /** @name UpDataStructsPropertyKeyPermission (175) */
-  interface UpDataStructsPropertyKeyPermission extends Struct {
+  export interface UpDataStructsPropertyKeyPermission extends Struct {
     readonly key: Bytes;
     readonly permission: UpDataStructsPropertyPermission;
   }
 
   /** @name UpDataStructsPropertyPermission (177) */
-  interface UpDataStructsPropertyPermission extends Struct {
+  export interface UpDataStructsPropertyPermission extends Struct {
     readonly mutable: bool;
     readonly collectionAdmin: bool;
     readonly tokenOwner: bool;
   }
 
   /** @name UpDataStructsProperty (180) */
-  interface UpDataStructsProperty extends Struct {
+  export interface UpDataStructsProperty extends Struct {
     readonly key: Bytes;
     readonly value: Bytes;
   }
 
   /** @name PalletEvmAccountBasicCrossAccountIdRepr (183) */
-  interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
+  export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
     readonly isSubstrate: boolean;
     readonly asSubstrate: AccountId32;
     readonly isEthereum: boolean;
@@ -1609,7 +1605,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCreateItemData (185) */
-  interface UpDataStructsCreateItemData extends Enum {
+  export interface UpDataStructsCreateItemData extends Enum {
     readonly isNft: boolean;
     readonly asNft: UpDataStructsCreateNftData;
     readonly isFungible: boolean;
@@ -1620,23 +1616,23 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCreateNftData (186) */
-  interface UpDataStructsCreateNftData extends Struct {
+  export interface UpDataStructsCreateNftData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
   }
 
   /** @name UpDataStructsCreateFungibleData (187) */
-  interface UpDataStructsCreateFungibleData extends Struct {
+  export interface UpDataStructsCreateFungibleData extends Struct {
     readonly value: u128;
   }
 
   /** @name UpDataStructsCreateReFungibleData (188) */
-  interface UpDataStructsCreateReFungibleData extends Struct {
+  export interface UpDataStructsCreateReFungibleData extends Struct {
     readonly constData: Bytes;
     readonly pieces: u128;
   }
 
   /** @name UpDataStructsCreateItemExData (193) */
-  interface UpDataStructsCreateItemExData extends Enum {
+  export interface UpDataStructsCreateItemExData extends Enum {
     readonly isNft: boolean;
     readonly asNft: Vec<UpDataStructsCreateNftExData>;
     readonly isFungible: boolean;
@@ -1649,19 +1645,19 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCreateNftExData (195) */
-  interface UpDataStructsCreateNftExData extends Struct {
+  export interface UpDataStructsCreateNftExData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
   /** @name UpDataStructsCreateRefungibleExData (202) */
-  interface UpDataStructsCreateRefungibleExData extends Struct {
+  export interface UpDataStructsCreateRefungibleExData extends Struct {
     readonly constData: Bytes;
     readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
   }
 
   /** @name PalletUniqueSchedulerCall (204) */
-  interface PalletUniqueSchedulerCall extends Enum {
+  export interface PalletUniqueSchedulerCall extends Enum {
     readonly isScheduleNamed: boolean;
     readonly asScheduleNamed: {
       readonly id: U8aFixed;
@@ -1686,7 +1682,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportScheduleMaybeHashed (206) */
-  interface FrameSupportScheduleMaybeHashed extends Enum {
+  export interface FrameSupportScheduleMaybeHashed extends Enum {
     readonly isValue: boolean;
     readonly asValue: Call;
     readonly isHash: boolean;
@@ -1695,13 +1691,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletTemplateTransactionPaymentCall (207) */
-  type PalletTemplateTransactionPaymentCall = Null;
+  export type PalletTemplateTransactionPaymentCall = Null;
 
   /** @name PalletStructureCall (208) */
-  type PalletStructureCall = Null;
+  export type PalletStructureCall = Null;
 
   /** @name PalletRmrkCoreCall (209) */
-  interface PalletRmrkCoreCall extends Enum {
+  export interface PalletRmrkCoreCall extends Enum {
     readonly isCreateCollection: boolean;
     readonly asCreateCollection: {
       readonly metadata: Bytes;
@@ -1807,7 +1803,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsResourceResourceTypes (215) */
-  interface RmrkTraitsResourceResourceTypes extends Enum {
+  export interface RmrkTraitsResourceResourceTypes extends Enum {
     readonly isBasic: boolean;
     readonly asBasic: RmrkTraitsResourceBasicResource;
     readonly isComposable: boolean;
@@ -1818,7 +1814,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsResourceBasicResource (217) */
-  interface RmrkTraitsResourceBasicResource extends Struct {
+  export interface RmrkTraitsResourceBasicResource extends Struct {
     readonly src: Option<Bytes>;
     readonly metadata: Option<Bytes>;
     readonly license: Option<Bytes>;
@@ -1826,7 +1822,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsResourceComposableResource (219) */
-  interface RmrkTraitsResourceComposableResource extends Struct {
+  export interface RmrkTraitsResourceComposableResource extends Struct {
     readonly parts: Vec<u32>;
     readonly base: u32;
     readonly src: Option<Bytes>;
@@ -1836,7 +1832,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsResourceSlotResource (220) */
-  interface RmrkTraitsResourceSlotResource extends Struct {
+  export interface RmrkTraitsResourceSlotResource extends Struct {
     readonly base: u32;
     readonly src: Option<Bytes>;
     readonly metadata: Option<Bytes>;
@@ -1846,7 +1842,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsNftAccountIdOrCollectionNftTuple (222) */
-  interface RmrkTraitsNftAccountIdOrCollectionNftTuple extends Enum {
+  export interface RmrkTraitsNftAccountIdOrCollectionNftTuple extends Enum {
     readonly isAccountId: boolean;
     readonly asAccountId: AccountId32;
     readonly isCollectionAndNftTuple: boolean;
@@ -1855,7 +1851,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletRmrkEquipCall (226) */
-  interface PalletRmrkEquipCall extends Enum {
+  export interface PalletRmrkEquipCall extends Enum {
     readonly isCreateBase: boolean;
     readonly asCreateBase: {
       readonly baseType: Bytes;
@@ -1877,7 +1873,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsPartPartType (229) */
-  interface RmrkTraitsPartPartType extends Enum {
+  export interface RmrkTraitsPartPartType extends Enum {
     readonly isFixedPart: boolean;
     readonly asFixedPart: RmrkTraitsPartFixedPart;
     readonly isSlotPart: boolean;
@@ -1886,14 +1882,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsPartFixedPart (231) */
-  interface RmrkTraitsPartFixedPart extends Struct {
+  export interface RmrkTraitsPartFixedPart extends Struct {
     readonly id: u32;
     readonly z: u32;
     readonly src: Bytes;
   }
 
   /** @name RmrkTraitsPartSlotPart (232) */
-  interface RmrkTraitsPartSlotPart extends Struct {
+  export interface RmrkTraitsPartSlotPart extends Struct {
     readonly id: u32;
     readonly equippable: RmrkTraitsPartEquippableList;
     readonly src: Bytes;
@@ -1901,7 +1897,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsPartEquippableList (233) */
-  interface RmrkTraitsPartEquippableList extends Enum {
+  export interface RmrkTraitsPartEquippableList extends Enum {
     readonly isAll: boolean;
     readonly isEmpty: boolean;
     readonly isCustom: boolean;
@@ -1910,20 +1906,20 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsTheme (235) */
-  interface RmrkTraitsTheme extends Struct {
+  export interface RmrkTraitsTheme extends Struct {
     readonly name: Bytes;
     readonly properties: Vec<RmrkTraitsThemeThemeProperty>;
     readonly inherit: bool;
   }
 
   /** @name RmrkTraitsThemeThemeProperty (237) */
-  interface RmrkTraitsThemeThemeProperty extends Struct {
+  export interface RmrkTraitsThemeThemeProperty extends Struct {
     readonly key: Bytes;
     readonly value: Bytes;
   }
 
   /** @name PalletEvmCall (239) */
-  interface PalletEvmCall extends Enum {
+  export interface PalletEvmCall extends Enum {
     readonly isWithdraw: boolean;
     readonly asWithdraw: {
       readonly address: H160;
@@ -1968,7 +1964,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletEthereumCall (245) */
-  interface PalletEthereumCall extends Enum {
+  export interface PalletEthereumCall extends Enum {
     readonly isTransact: boolean;
     readonly asTransact: {
       readonly transaction: EthereumTransactionTransactionV2;
@@ -1977,7 +1973,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumTransactionTransactionV2 (246) */
-  interface EthereumTransactionTransactionV2 extends Enum {
+  export interface EthereumTransactionTransactionV2 extends Enum {
     readonly isLegacy: boolean;
     readonly asLegacy: EthereumTransactionLegacyTransaction;
     readonly isEip2930: boolean;
@@ -1988,7 +1984,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumTransactionLegacyTransaction (247) */
-  interface EthereumTransactionLegacyTransaction extends Struct {
+  export interface EthereumTransactionLegacyTransaction extends Struct {
     readonly nonce: U256;
     readonly gasPrice: U256;
     readonly gasLimit: U256;
@@ -1999,7 +1995,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumTransactionTransactionAction (248) */
-  interface EthereumTransactionTransactionAction extends Enum {
+  export interface EthereumTransactionTransactionAction extends Enum {
     readonly isCall: boolean;
     readonly asCall: H160;
     readonly isCreate: boolean;
@@ -2007,14 +2003,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumTransactionTransactionSignature (249) */
-  interface EthereumTransactionTransactionSignature extends Struct {
+  export interface EthereumTransactionTransactionSignature extends Struct {
     readonly v: u64;
     readonly r: H256;
     readonly s: H256;
   }
 
   /** @name EthereumTransactionEip2930Transaction (251) */
-  interface EthereumTransactionEip2930Transaction extends Struct {
+  export interface EthereumTransactionEip2930Transaction extends Struct {
     readonly chainId: u64;
     readonly nonce: U256;
     readonly gasPrice: U256;
@@ -2029,13 +2025,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumTransactionAccessListItem (253) */
-  interface EthereumTransactionAccessListItem extends Struct {
+  export interface EthereumTransactionAccessListItem extends Struct {
     readonly address: H160;
     readonly storageKeys: Vec<H256>;
   }
 
   /** @name EthereumTransactionEip1559Transaction (254) */
-  interface EthereumTransactionEip1559Transaction extends Struct {
+  export interface EthereumTransactionEip1559Transaction extends Struct {
     readonly chainId: u64;
     readonly nonce: U256;
     readonly maxPriorityFeePerGas: U256;
@@ -2051,7 +2047,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletEvmMigrationCall (255) */
-  interface PalletEvmMigrationCall extends Enum {
+  export interface PalletEvmMigrationCall extends Enum {
     readonly isBegin: boolean;
     readonly asBegin: {
       readonly address: H160;
@@ -2070,14 +2066,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletMaintenanceCall (258) */
-  interface PalletMaintenanceCall extends Enum {
+  export interface PalletMaintenanceCall extends Enum {
     readonly isEnable: boolean;
     readonly isDisable: boolean;
     readonly type: 'Enable' | 'Disable';
   }
 
   /** @name PalletSudoEvent (259) */
-  interface PalletSudoEvent extends Enum {
+  export interface PalletSudoEvent extends Enum {
     readonly isSudid: boolean;
     readonly asSudid: {
       readonly sudoResult: Result<Null, SpRuntimeDispatchError>;
@@ -2094,7 +2090,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name SpRuntimeDispatchError (261) */
-  interface SpRuntimeDispatchError extends Enum {
+  export interface SpRuntimeDispatchError extends Enum {
     readonly isOther: boolean;
     readonly isCannotLookup: boolean;
     readonly isBadOrigin: boolean;
@@ -2113,13 +2109,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name SpRuntimeModuleError (262) */
-  interface SpRuntimeModuleError extends Struct {
+  export interface SpRuntimeModuleError extends Struct {
     readonly index: u8;
     readonly error: U8aFixed;
   }
 
   /** @name SpRuntimeTokenError (263) */
-  interface SpRuntimeTokenError extends Enum {
+  export interface SpRuntimeTokenError extends Enum {
     readonly isNoFunds: boolean;
     readonly isWouldDie: boolean;
     readonly isBelowMinimum: boolean;
@@ -2131,7 +2127,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name SpRuntimeArithmeticError (264) */
-  interface SpRuntimeArithmeticError extends Enum {
+  export interface SpRuntimeArithmeticError extends Enum {
     readonly isUnderflow: boolean;
     readonly isOverflow: boolean;
     readonly isDivisionByZero: boolean;
@@ -2139,20 +2135,20 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name SpRuntimeTransactionalError (265) */
-  interface SpRuntimeTransactionalError extends Enum {
+  export interface SpRuntimeTransactionalError extends Enum {
     readonly isLimitReached: boolean;
     readonly isNoLayer: boolean;
     readonly type: 'LimitReached' | 'NoLayer';
   }
 
   /** @name PalletSudoError (266) */
-  interface PalletSudoError extends Enum {
+  export interface PalletSudoError extends Enum {
     readonly isRequireSudo: boolean;
     readonly type: 'RequireSudo';
   }
 
   /** @name FrameSystemAccountInfo (267) */
-  interface FrameSystemAccountInfo extends Struct {
+  export interface FrameSystemAccountInfo extends Struct {
     readonly nonce: u32;
     readonly consumers: u32;
     readonly providers: u32;
@@ -2161,19 +2157,19 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportWeightsPerDispatchClassU64 (268) */
-  interface FrameSupportWeightsPerDispatchClassU64 extends Struct {
+  export interface FrameSupportWeightsPerDispatchClassU64 extends Struct {
     readonly normal: u64;
     readonly operational: u64;
     readonly mandatory: u64;
   }
 
   /** @name SpRuntimeDigest (269) */
-  interface SpRuntimeDigest extends Struct {
+  export interface SpRuntimeDigest extends Struct {
     readonly logs: Vec<SpRuntimeDigestDigestItem>;
   }
 
   /** @name SpRuntimeDigestDigestItem (271) */
-  interface SpRuntimeDigestDigestItem extends Enum {
+  export interface SpRuntimeDigestDigestItem extends Enum {
     readonly isOther: boolean;
     readonly asOther: Bytes;
     readonly isConsensus: boolean;
@@ -2187,14 +2183,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSystemEventRecord (273) */
-  interface FrameSystemEventRecord extends Struct {
+  export interface FrameSystemEventRecord extends Struct {
     readonly phase: FrameSystemPhase;
     readonly event: Event;
     readonly topics: Vec<H256>;
   }
 
   /** @name FrameSystemEvent (275) */
-  interface FrameSystemEvent extends Enum {
+  export interface FrameSystemEvent extends Enum {
     readonly isExtrinsicSuccess: boolean;
     readonly asExtrinsicSuccess: {
       readonly dispatchInfo: FrameSupportWeightsDispatchInfo;
@@ -2222,14 +2218,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportWeightsDispatchInfo (276) */
-  interface FrameSupportWeightsDispatchInfo extends Struct {
+  export interface FrameSupportWeightsDispatchInfo extends Struct {
     readonly weight: u64;
     readonly class: FrameSupportWeightsDispatchClass;
     readonly paysFee: FrameSupportWeightsPays;
   }
 
   /** @name FrameSupportWeightsDispatchClass (277) */
-  interface FrameSupportWeightsDispatchClass extends Enum {
+  export interface FrameSupportWeightsDispatchClass extends Enum {
     readonly isNormal: boolean;
     readonly isOperational: boolean;
     readonly isMandatory: boolean;
@@ -2237,14 +2233,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportWeightsPays (278) */
-  interface FrameSupportWeightsPays extends Enum {
+  export interface FrameSupportWeightsPays extends Enum {
     readonly isYes: boolean;
     readonly isNo: boolean;
     readonly type: 'Yes' | 'No';
   }
 
   /** @name OrmlVestingModuleEvent (279) */
-  interface OrmlVestingModuleEvent extends Enum {
+  export interface OrmlVestingModuleEvent extends Enum {
     readonly isVestingScheduleAdded: boolean;
     readonly asVestingScheduleAdded: {
       readonly from: AccountId32;
@@ -2264,7 +2260,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmpQueueEvent (280) */
-  interface CumulusPalletXcmpQueueEvent extends Enum {
+  export interface CumulusPalletXcmpQueueEvent extends Enum {
     readonly isSuccess: boolean;
     readonly asSuccess: Option<H256>;
     readonly isFail: boolean;
@@ -2285,7 +2281,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletXcmEvent (281) */
-  interface PalletXcmEvent extends Enum {
+  export interface PalletXcmEvent extends Enum {
     readonly isAttempted: boolean;
     readonly asAttempted: XcmV2TraitsOutcome;
     readonly isSent: boolean;
@@ -2322,7 +2318,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name XcmV2TraitsOutcome (282) */
-  interface XcmV2TraitsOutcome extends Enum {
+  export interface XcmV2TraitsOutcome extends Enum {
     readonly isComplete: boolean;
     readonly asComplete: u64;
     readonly isIncomplete: boolean;
@@ -2333,7 +2329,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmEvent (284) */
-  interface CumulusPalletXcmEvent extends Enum {
+  export interface CumulusPalletXcmEvent extends Enum {
     readonly isInvalidFormat: boolean;
     readonly asInvalidFormat: U8aFixed;
     readonly isUnsupportedVersion: boolean;
@@ -2344,7 +2340,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletDmpQueueEvent (285) */
-  interface CumulusPalletDmpQueueEvent extends Enum {
+  export interface CumulusPalletDmpQueueEvent extends Enum {
     readonly isInvalidFormat: boolean;
     readonly asInvalidFormat: {
       readonly messageId: U8aFixed;
@@ -2379,7 +2375,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletUniqueRawEvent (286) */
-  interface PalletUniqueRawEvent extends Enum {
+  export interface PalletUniqueRawEvent extends Enum {
     readonly isCollectionSponsorRemoved: boolean;
     readonly asCollectionSponsorRemoved: u32;
     readonly isCollectionAdminAdded: boolean;
@@ -2404,7 +2400,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletUniqueSchedulerEvent (287) */
-  interface PalletUniqueSchedulerEvent extends Enum {
+  export interface PalletUniqueSchedulerEvent extends Enum {
     readonly isScheduled: boolean;
     readonly asScheduled: {
       readonly when: u32;
@@ -2431,14 +2427,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportScheduleLookupError (289) */
-  interface FrameSupportScheduleLookupError extends Enum {
+  export interface FrameSupportScheduleLookupError extends Enum {
     readonly isUnknown: boolean;
     readonly isBadFormat: boolean;
     readonly type: 'Unknown' | 'BadFormat';
   }
 
   /** @name PalletCommonEvent (290) */
-  interface PalletCommonEvent extends Enum {
+  export interface PalletCommonEvent extends Enum {
     readonly isCollectionCreated: boolean;
     readonly asCollectionCreated: ITuple<[u32, u8, AccountId32]>;
     readonly isCollectionDestroyed: boolean;
@@ -2465,14 +2461,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletStructureEvent (291) */
-  interface PalletStructureEvent extends Enum {
+  export interface PalletStructureEvent extends Enum {
     readonly isExecuted: boolean;
     readonly asExecuted: Result<Null, SpRuntimeDispatchError>;
     readonly type: 'Executed';
   }
 
   /** @name PalletRmrkCoreEvent (292) */
-  interface PalletRmrkCoreEvent extends Enum {
+  export interface PalletRmrkCoreEvent extends Enum {
     readonly isCollectionCreated: boolean;
     readonly asCollectionCreated: {
       readonly issuer: AccountId32;
@@ -2562,7 +2558,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletRmrkEquipEvent (293) */
-  interface PalletRmrkEquipEvent extends Enum {
+  export interface PalletRmrkEquipEvent extends Enum {
     readonly isBaseCreated: boolean;
     readonly asBaseCreated: {
       readonly issuer: AccountId32;
@@ -2577,7 +2573,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletEvmEvent (294) */
-  interface PalletEvmEvent extends Enum {
+  export interface PalletEvmEvent extends Enum {
     readonly isLog: boolean;
     readonly asLog: EthereumLog;
     readonly isCreated: boolean;
@@ -2596,21 +2592,21 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumLog (295) */
-  interface EthereumLog extends Struct {
+  export interface EthereumLog extends Struct {
     readonly address: H160;
     readonly topics: Vec<H256>;
     readonly data: Bytes;
   }
 
   /** @name PalletEthereumEvent (296) */
-  interface PalletEthereumEvent extends Enum {
+  export interface PalletEthereumEvent extends Enum {
     readonly isExecuted: boolean;
     readonly asExecuted: ITuple<[H160, H160, H256, EvmCoreErrorExitReason]>;
     readonly type: 'Executed';
   }
 
   /** @name EvmCoreErrorExitReason (297) */
-  interface EvmCoreErrorExitReason extends Enum {
+  export interface EvmCoreErrorExitReason extends Enum {
     readonly isSucceed: boolean;
     readonly asSucceed: EvmCoreErrorExitSucceed;
     readonly isError: boolean;
@@ -2623,7 +2619,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EvmCoreErrorExitSucceed (298) */
-  interface EvmCoreErrorExitSucceed extends Enum {
+  export interface EvmCoreErrorExitSucceed extends Enum {
     readonly isStopped: boolean;
     readonly isReturned: boolean;
     readonly isSuicided: boolean;
@@ -2631,7 +2627,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EvmCoreErrorExitError (299) */
-  interface EvmCoreErrorExitError extends Enum {
+  export interface EvmCoreErrorExitError extends Enum {
     readonly isStackUnderflow: boolean;
     readonly isStackOverflow: boolean;
     readonly isInvalidJump: boolean;
@@ -2652,13 +2648,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EvmCoreErrorExitRevert (302) */
-  interface EvmCoreErrorExitRevert extends Enum {
+  export interface EvmCoreErrorExitRevert extends Enum {
     readonly isReverted: boolean;
     readonly type: 'Reverted';
   }
 
   /** @name EvmCoreErrorExitFatal (303) */
-  interface EvmCoreErrorExitFatal extends Enum {
+  export interface EvmCoreErrorExitFatal extends Enum {
     readonly isNotSupported: boolean;
     readonly isUnhandledInterrupt: boolean;
     readonly isCallErrorAsFatal: boolean;
@@ -2669,14 +2665,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletMaintenanceEvent (304) */
-  interface PalletMaintenanceEvent extends Enum {
+  export interface PalletMaintenanceEvent extends Enum {
     readonly isMaintenanceEnabled: boolean;
     readonly isMaintenanceDisabled: boolean;
     readonly type: 'MaintenanceEnabled' | 'MaintenanceDisabled';
   }
 
   /** @name FrameSystemPhase (305) */
-  interface FrameSystemPhase extends Enum {
+  export interface FrameSystemPhase extends Enum {
     readonly isApplyExtrinsic: boolean;
     readonly asApplyExtrinsic: u32;
     readonly isFinalization: boolean;
@@ -2685,27 +2681,27 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSystemLastRuntimeUpgradeInfo (307) */
-  interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
+  export interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
     readonly specVersion: Compact<u32>;
     readonly specName: Text;
   }
 
   /** @name FrameSystemLimitsBlockWeights (308) */
-  interface FrameSystemLimitsBlockWeights extends Struct {
+  export interface FrameSystemLimitsBlockWeights extends Struct {
     readonly baseBlock: u64;
     readonly maxBlock: u64;
     readonly perClass: FrameSupportWeightsPerDispatchClassWeightsPerClass;
   }
 
   /** @name FrameSupportWeightsPerDispatchClassWeightsPerClass (309) */
-  interface FrameSupportWeightsPerDispatchClassWeightsPerClass extends Struct {
+  export interface FrameSupportWeightsPerDispatchClassWeightsPerClass extends Struct {
     readonly normal: FrameSystemLimitsWeightsPerClass;
     readonly operational: FrameSystemLimitsWeightsPerClass;
     readonly mandatory: FrameSystemLimitsWeightsPerClass;
   }
 
   /** @name FrameSystemLimitsWeightsPerClass (310) */
-  interface FrameSystemLimitsWeightsPerClass extends Struct {
+  export interface FrameSystemLimitsWeightsPerClass extends Struct {
     readonly baseExtrinsic: u64;
     readonly maxExtrinsic: Option<u64>;
     readonly maxTotal: Option<u64>;
@@ -2713,25 +2709,25 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSystemLimitsBlockLength (312) */
-  interface FrameSystemLimitsBlockLength extends Struct {
+  export interface FrameSystemLimitsBlockLength extends Struct {
     readonly max: FrameSupportWeightsPerDispatchClassU32;
   }
 
   /** @name FrameSupportWeightsPerDispatchClassU32 (313) */
-  interface FrameSupportWeightsPerDispatchClassU32 extends Struct {
+  export interface FrameSupportWeightsPerDispatchClassU32 extends Struct {
     readonly normal: u32;
     readonly operational: u32;
     readonly mandatory: u32;
   }
 
   /** @name FrameSupportWeightsRuntimeDbWeight (314) */
-  interface FrameSupportWeightsRuntimeDbWeight extends Struct {
+  export interface FrameSupportWeightsRuntimeDbWeight extends Struct {
     readonly read: u64;
     readonly write: u64;
   }
 
   /** @name SpVersionRuntimeVersion (315) */
-  interface SpVersionRuntimeVersion extends Struct {
+  export interface SpVersionRuntimeVersion extends Struct {
     readonly specName: Text;
     readonly implName: Text;
     readonly authoringVersion: u32;
@@ -2743,7 +2739,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSystemError (319) */
-  interface FrameSystemError extends Enum {
+  export interface FrameSystemError extends Enum {
     readonly isInvalidSpecName: boolean;
     readonly isSpecVersionNeedsToIncrease: boolean;
     readonly isFailedToExtractRuntimeVersion: boolean;
@@ -2754,7 +2750,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name OrmlVestingModuleError (321) */
-  interface OrmlVestingModuleError extends Enum {
+  export interface OrmlVestingModuleError extends Enum {
     readonly isZeroVestingPeriod: boolean;
     readonly isZeroVestingPeriodCount: boolean;
     readonly isInsufficientBalanceToLock: boolean;
@@ -2765,21 +2761,21 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmpQueueInboundChannelDetails (323) */
-  interface CumulusPalletXcmpQueueInboundChannelDetails extends Struct {
+  export interface CumulusPalletXcmpQueueInboundChannelDetails extends Struct {
     readonly sender: u32;
     readonly state: CumulusPalletXcmpQueueInboundState;
     readonly messageMetadata: Vec<ITuple<[u32, PolkadotParachainPrimitivesXcmpMessageFormat]>>;
   }
 
   /** @name CumulusPalletXcmpQueueInboundState (324) */
-  interface CumulusPalletXcmpQueueInboundState extends Enum {
+  export interface CumulusPalletXcmpQueueInboundState extends Enum {
     readonly isOk: boolean;
     readonly isSuspended: boolean;
     readonly type: 'Ok' | 'Suspended';
   }
 
   /** @name PolkadotParachainPrimitivesXcmpMessageFormat (327) */
-  interface PolkadotParachainPrimitivesXcmpMessageFormat extends Enum {
+  export interface PolkadotParachainPrimitivesXcmpMessageFormat extends Enum {
     readonly isConcatenatedVersionedXcm: boolean;
     readonly isConcatenatedEncodedBlob: boolean;
     readonly isSignals: boolean;
@@ -2787,7 +2783,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmpQueueOutboundChannelDetails (330) */
-  interface CumulusPalletXcmpQueueOutboundChannelDetails extends Struct {
+  export interface CumulusPalletXcmpQueueOutboundChannelDetails extends Struct {
     readonly recipient: u32;
     readonly state: CumulusPalletXcmpQueueOutboundState;
     readonly signalsExist: bool;
@@ -2796,14 +2792,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmpQueueOutboundState (331) */
-  interface CumulusPalletXcmpQueueOutboundState extends Enum {
+  export interface CumulusPalletXcmpQueueOutboundState extends Enum {
     readonly isOk: boolean;
     readonly isSuspended: boolean;
     readonly type: 'Ok' | 'Suspended';
   }
 
   /** @name CumulusPalletXcmpQueueQueueConfigData (333) */
-  interface CumulusPalletXcmpQueueQueueConfigData extends Struct {
+  export interface CumulusPalletXcmpQueueQueueConfigData extends Struct {
     readonly suspendThreshold: u32;
     readonly dropThreshold: u32;
     readonly resumeThreshold: u32;
@@ -2813,7 +2809,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmpQueueError (335) */
-  interface CumulusPalletXcmpQueueError extends Enum {
+  export interface CumulusPalletXcmpQueueError extends Enum {
     readonly isFailedToSend: boolean;
     readonly isBadXcmOrigin: boolean;
     readonly isBadXcm: boolean;
@@ -2823,7 +2819,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletXcmError (336) */
-  interface PalletXcmError extends Enum {
+  export interface PalletXcmError extends Enum {
     readonly isUnreachable: boolean;
     readonly isSendFailure: boolean;
     readonly isFiltered: boolean;
@@ -2841,29 +2837,29 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmError (337) */
-  type CumulusPalletXcmError = Null;
+  export type CumulusPalletXcmError = Null;
 
   /** @name CumulusPalletDmpQueueConfigData (338) */
-  interface CumulusPalletDmpQueueConfigData extends Struct {
+  export interface CumulusPalletDmpQueueConfigData extends Struct {
     readonly maxIndividual: u64;
   }
 
   /** @name CumulusPalletDmpQueuePageIndexData (339) */
-  interface CumulusPalletDmpQueuePageIndexData extends Struct {
+  export interface CumulusPalletDmpQueuePageIndexData extends Struct {
     readonly beginUsed: u32;
     readonly endUsed: u32;
     readonly overweightCount: u64;
   }
 
   /** @name CumulusPalletDmpQueueError (342) */
-  interface CumulusPalletDmpQueueError extends Enum {
+  export interface CumulusPalletDmpQueueError extends Enum {
     readonly isUnknown: boolean;
     readonly isOverLimit: boolean;
     readonly type: 'Unknown' | 'OverLimit';
   }
 
   /** @name PalletUniqueError (346) */
-  interface PalletUniqueError extends Enum {
+  export interface PalletUniqueError extends Enum {
     readonly isCollectionDecimalPointLimitExceeded: boolean;
     readonly isConfirmUnsetSponsorFail: boolean;
     readonly isEmptyArgument: boolean;
@@ -2872,7 +2868,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletUniqueSchedulerScheduledV3 (349) */
-  interface PalletUniqueSchedulerScheduledV3 extends Struct {
+  export interface PalletUniqueSchedulerScheduledV3 extends Struct {
     readonly maybeId: Option<U8aFixed>;
     readonly priority: u8;
     readonly call: FrameSupportScheduleMaybeHashed;
@@ -2881,7 +2877,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name OpalRuntimeOriginCaller (350) */
-  interface OpalRuntimeOriginCaller extends Enum {
+  export interface OpalRuntimeOriginCaller extends Enum {
     readonly isVoid: boolean;
     readonly isSystem: boolean;
     readonly asSystem: FrameSupportDispatchRawOrigin;
@@ -2895,7 +2891,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FrameSupportDispatchRawOrigin (351) */
-  interface FrameSupportDispatchRawOrigin extends Enum {
+  export interface FrameSupportDispatchRawOrigin extends Enum {
     readonly isRoot: boolean;
     readonly isSigned: boolean;
     readonly asSigned: AccountId32;
@@ -2904,7 +2900,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletXcmOrigin (352) */
-  interface PalletXcmOrigin extends Enum {
+  export interface PalletXcmOrigin extends Enum {
     readonly isXcm: boolean;
     readonly asXcm: XcmV1MultiLocation;
     readonly isResponse: boolean;
@@ -2913,7 +2909,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name CumulusPalletXcmOrigin (353) */
-  interface CumulusPalletXcmOrigin extends Enum {
+  export interface CumulusPalletXcmOrigin extends Enum {
     readonly isRelay: boolean;
     readonly isSiblingParachain: boolean;
     readonly asSiblingParachain: u32;
@@ -2921,17 +2917,17 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletEthereumRawOrigin (354) */
-  interface PalletEthereumRawOrigin extends Enum {
+  export interface PalletEthereumRawOrigin extends Enum {
     readonly isEthereumTransaction: boolean;
     readonly asEthereumTransaction: H160;
     readonly type: 'EthereumTransaction';
   }
 
   /** @name SpCoreVoid (355) */
-  type SpCoreVoid = Null;
+  export type SpCoreVoid = Null;
 
   /** @name PalletUniqueSchedulerError (356) */
-  interface PalletUniqueSchedulerError extends Enum {
+  export interface PalletUniqueSchedulerError extends Enum {
     readonly isFailedToSchedule: boolean;
     readonly isNotFound: boolean;
     readonly isTargetBlockNumberInPast: boolean;
@@ -2940,7 +2936,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsCollection (357) */
-  interface UpDataStructsCollection extends Struct {
+  export interface UpDataStructsCollection extends Struct {
     readonly owner: AccountId32;
     readonly mode: UpDataStructsCollectionMode;
     readonly name: Vec<u16>;
@@ -2953,7 +2949,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsSponsorshipState (358) */
-  interface UpDataStructsSponsorshipState extends Enum {
+  export interface UpDataStructsSponsorshipState extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
     readonly asUnconfirmed: AccountId32;
@@ -2963,42 +2959,42 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name UpDataStructsProperties (359) */
-  interface UpDataStructsProperties extends Struct {
+  export interface UpDataStructsProperties extends Struct {
     readonly map: UpDataStructsPropertiesMapBoundedVec;
     readonly consumedSpace: u32;
     readonly spaceLimit: u32;
   }
 
   /** @name UpDataStructsPropertiesMapBoundedVec (360) */
-  interface UpDataStructsPropertiesMapBoundedVec extends BTreeMap<Bytes, Bytes> {}
+  export interface UpDataStructsPropertiesMapBoundedVec extends BTreeMap<Bytes, Bytes> {}
 
   /** @name UpDataStructsPropertiesMapPropertyPermission (365) */
-  interface UpDataStructsPropertiesMapPropertyPermission extends BTreeMap<Bytes, UpDataStructsPropertyPermission> {}
+  export interface UpDataStructsPropertiesMapPropertyPermission extends BTreeMap<Bytes, UpDataStructsPropertyPermission> {}
 
   /** @name UpDataStructsCollectionStats (372) */
-  interface UpDataStructsCollectionStats extends Struct {
+  export interface UpDataStructsCollectionStats extends Struct {
     readonly created: u32;
     readonly destroyed: u32;
     readonly alive: u32;
   }
 
   /** @name UpDataStructsTokenChild (373) */
-  interface UpDataStructsTokenChild extends Struct {
+  export interface UpDataStructsTokenChild extends Struct {
     readonly token: u32;
     readonly collection: u32;
   }
 
   /** @name PhantomTypeUpDataStructs (374) */
-  interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
+  export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
 
   /** @name UpDataStructsTokenData (376) */
-  interface UpDataStructsTokenData extends Struct {
+  export interface UpDataStructsTokenData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
     readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
   }
 
   /** @name UpDataStructsRpcCollection (378) */
-  interface UpDataStructsRpcCollection extends Struct {
+  export interface UpDataStructsRpcCollection extends Struct {
     readonly owner: AccountId32;
     readonly mode: UpDataStructsCollectionMode;
     readonly name: Vec<u16>;
@@ -3013,7 +3009,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsCollectionCollectionInfo (379) */
-  interface RmrkTraitsCollectionCollectionInfo extends Struct {
+  export interface RmrkTraitsCollectionCollectionInfo extends Struct {
     readonly issuer: AccountId32;
     readonly metadata: Bytes;
     readonly max: Option<u32>;
@@ -3022,7 +3018,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsNftNftInfo (380) */
-  interface RmrkTraitsNftNftInfo extends Struct {
+  export interface RmrkTraitsNftNftInfo extends Struct {
     readonly owner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
     readonly royalty: Option<RmrkTraitsNftRoyaltyInfo>;
     readonly metadata: Bytes;
@@ -3031,13 +3027,13 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsNftRoyaltyInfo (382) */
-  interface RmrkTraitsNftRoyaltyInfo extends Struct {
+  export interface RmrkTraitsNftRoyaltyInfo extends Struct {
     readonly recipient: AccountId32;
     readonly amount: Permill;
   }
 
   /** @name RmrkTraitsResourceResourceInfo (383) */
-  interface RmrkTraitsResourceResourceInfo extends Struct {
+  export interface RmrkTraitsResourceResourceInfo extends Struct {
     readonly id: u32;
     readonly resource: RmrkTraitsResourceResourceTypes;
     readonly pending: bool;
@@ -3045,26 +3041,26 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name RmrkTraitsPropertyPropertyInfo (384) */
-  interface RmrkTraitsPropertyPropertyInfo extends Struct {
+  export interface RmrkTraitsPropertyPropertyInfo extends Struct {
     readonly key: Bytes;
     readonly value: Bytes;
   }
 
   /** @name RmrkTraitsBaseBaseInfo (385) */
-  interface RmrkTraitsBaseBaseInfo extends Struct {
+  export interface RmrkTraitsBaseBaseInfo extends Struct {
     readonly issuer: AccountId32;
     readonly baseType: Bytes;
     readonly symbol: Bytes;
   }
 
   /** @name RmrkTraitsNftNftChild (386) */
-  interface RmrkTraitsNftNftChild extends Struct {
+  export interface RmrkTraitsNftNftChild extends Struct {
     readonly collectionId: u32;
     readonly nftId: u32;
   }
 
   /** @name PalletCommonError (388) */
-  interface PalletCommonError extends Enum {
+  export interface PalletCommonError extends Enum {
     readonly isCollectionNotFound: boolean;
     readonly isMustBeTokenOwner: boolean;
     readonly isNoPermission: boolean;
@@ -3103,7 +3099,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletFungibleError (390) */
-  interface PalletFungibleError extends Enum {
+  export interface PalletFungibleError extends Enum {
     readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isFungibleItemsHaveNoId: boolean;
     readonly isFungibleItemsDontHaveData: boolean;
@@ -3113,12 +3109,12 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletRefungibleItemData (391) */
-  interface PalletRefungibleItemData extends Struct {
+  export interface PalletRefungibleItemData extends Struct {
     readonly constData: Bytes;
   }
 
   /** @name PalletRefungibleError (395) */
-  interface PalletRefungibleError extends Enum {
+  export interface PalletRefungibleError extends Enum {
     readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isWrongRefungiblePieces: boolean;
     readonly isRepartitionWhileNotOwningAllPieces: boolean;
@@ -3128,19 +3124,19 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletNonfungibleItemData (396) */
-  interface PalletNonfungibleItemData extends Struct {
+  export interface PalletNonfungibleItemData extends Struct {
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
   /** @name UpDataStructsPropertyScope (398) */
-  interface UpDataStructsPropertyScope extends Enum {
+  export interface UpDataStructsPropertyScope extends Enum {
     readonly isNone: boolean;
     readonly isRmrk: boolean;
     readonly type: 'None' | 'Rmrk';
   }
 
   /** @name PalletNonfungibleError (400) */
-  interface PalletNonfungibleError extends Enum {
+  export interface PalletNonfungibleError extends Enum {
     readonly isNotNonfungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isNonfungibleItemsHaveNoAmount: boolean;
     readonly isCantBurnNftWithChildren: boolean;
@@ -3148,7 +3144,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletStructureError (401) */
-  interface PalletStructureError extends Enum {
+  export interface PalletStructureError extends Enum {
     readonly isOuroborosDetected: boolean;
     readonly isDepthLimit: boolean;
     readonly isBreadthLimit: boolean;
@@ -3157,7 +3153,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletRmrkCoreError (402) */
-  interface PalletRmrkCoreError extends Enum {
+  export interface PalletRmrkCoreError extends Enum {
     readonly isCorruptedCollectionType: boolean;
     readonly isNftTypeEncodeError: boolean;
     readonly isRmrkPropertyKeyIsTooLong: boolean;
@@ -3182,7 +3178,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletRmrkEquipError (404) */
-  interface PalletRmrkEquipError extends Enum {
+  export interface PalletRmrkEquipError extends Enum {
     readonly isPermissionError: boolean;
     readonly isNoAvailableBaseId: boolean;
     readonly isNoAvailablePartId: boolean;
@@ -3194,7 +3190,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletEvmError (407) */
-  interface PalletEvmError extends Enum {
+  export interface PalletEvmError extends Enum {
     readonly isBalanceLow: boolean;
     readonly isFeeOverflow: boolean;
     readonly isPaymentOverflow: boolean;
@@ -3205,7 +3201,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name FpRpcTransactionStatus (410) */
-  interface FpRpcTransactionStatus extends Struct {
+  export interface FpRpcTransactionStatus extends Struct {
     readonly transactionHash: H256;
     readonly transactionIndex: u32;
     readonly from: H160;
@@ -3216,10 +3212,10 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthbloomBloom (412) */
-  interface EthbloomBloom extends U8aFixed {}
+  export interface EthbloomBloom extends U8aFixed {}
 
   /** @name EthereumReceiptReceiptV3 (414) */
-  interface EthereumReceiptReceiptV3 extends Enum {
+  export interface EthereumReceiptReceiptV3 extends Enum {
     readonly isLegacy: boolean;
     readonly asLegacy: EthereumReceiptEip658ReceiptData;
     readonly isEip2930: boolean;
@@ -3230,7 +3226,7 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumReceiptEip658ReceiptData (415) */
-  interface EthereumReceiptEip658ReceiptData extends Struct {
+  export interface EthereumReceiptEip658ReceiptData extends Struct {
     readonly statusCode: u8;
     readonly usedGas: U256;
     readonly logsBloom: EthbloomBloom;
@@ -3238,14 +3234,14 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumBlock (416) */
-  interface EthereumBlock extends Struct {
+  export interface EthereumBlock extends Struct {
     readonly header: EthereumHeader;
     readonly transactions: Vec<EthereumTransactionTransactionV2>;
     readonly ommers: Vec<EthereumHeader>;
   }
 
   /** @name EthereumHeader (417) */
-  interface EthereumHeader extends Struct {
+  export interface EthereumHeader extends Struct {
     readonly parentHash: H256;
     readonly ommersHash: H256;
     readonly beneficiary: H160;
@@ -3264,24 +3260,24 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name EthereumTypesHashH64 (418) */
-  interface EthereumTypesHashH64 extends U8aFixed {}
+  export interface EthereumTypesHashH64 extends U8aFixed {}
 
   /** @name PalletEthereumError (423) */
-  interface PalletEthereumError extends Enum {
+  export interface PalletEthereumError extends Enum {
     readonly isInvalidSignature: boolean;
     readonly isPreLogExists: boolean;
     readonly type: 'InvalidSignature' | 'PreLogExists';
   }
 
   /** @name PalletEvmCoderSubstrateError (424) */
-  interface PalletEvmCoderSubstrateError extends Enum {
+  export interface PalletEvmCoderSubstrateError extends Enum {
     readonly isOutOfGas: boolean;
     readonly isOutOfFund: boolean;
     readonly type: 'OutOfGas' | 'OutOfFund';
   }
 
   /** @name PalletEvmContractHelpersSponsoringModeT (425) */
-  interface PalletEvmContractHelpersSponsoringModeT extends Enum {
+  export interface PalletEvmContractHelpersSponsoringModeT extends Enum {
     readonly isDisabled: boolean;
     readonly isAllowlisted: boolean;
     readonly isGenerous: boolean;
@@ -3289,23 +3285,23 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name PalletEvmContractHelpersError (427) */
-  interface PalletEvmContractHelpersError extends Enum {
+  export interface PalletEvmContractHelpersError extends Enum {
     readonly isNoPermission: boolean;
     readonly type: 'NoPermission';
   }
 
   /** @name PalletEvmMigrationError (428) */
-  interface PalletEvmMigrationError extends Enum {
+  export interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
   }
 
   /** @name PalletMaintenanceError (429) */
-  type PalletMaintenanceError = Null;
+  export type PalletMaintenanceError = Null;
 
   /** @name SpRuntimeMultiSignature (431) */
-  interface SpRuntimeMultiSignature extends Enum {
+  export interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
     readonly isSr25519: boolean;
@@ -3316,36 +3312,36 @@ declare module '@polkadot/types/lookup' {
   }
 
   /** @name SpCoreEd25519Signature (432) */
-  interface SpCoreEd25519Signature extends U8aFixed {}
+  export interface SpCoreEd25519Signature extends U8aFixed {}
 
   /** @name SpCoreSr25519Signature (434) */
-  interface SpCoreSr25519Signature extends U8aFixed {}
+  export interface SpCoreSr25519Signature extends U8aFixed {}
 
   /** @name SpCoreEcdsaSignature (435) */
-  interface SpCoreEcdsaSignature extends U8aFixed {}
+  export interface SpCoreEcdsaSignature extends U8aFixed {}
 
   /** @name FrameSystemExtensionsCheckSpecVersion (438) */
-  type FrameSystemExtensionsCheckSpecVersion = Null;
+  export type FrameSystemExtensionsCheckSpecVersion = Null;
 
   /** @name FrameSystemExtensionsCheckGenesis (439) */
-  type FrameSystemExtensionsCheckGenesis = Null;
+  export type FrameSystemExtensionsCheckGenesis = Null;
 
   /** @name FrameSystemExtensionsCheckNonce (442) */
-  interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
+  export interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
   /** @name FrameSystemExtensionsCheckWeight (443) */
-  type FrameSystemExtensionsCheckWeight = Null;
+  export type FrameSystemExtensionsCheckWeight = Null;
 
   /** @name OpalRuntimeCheckMaintenance (444) */
-  type OpalRuntimeCheckMaintenance = Null;
+  export type OpalRuntimeCheckMaintenance = Null;
 
   /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (445) */
-  interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
+  export interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
   /** @name OpalRuntimeRuntime (446) */
-  type OpalRuntimeRuntime = Null;
+  export type OpalRuntimeRuntime = Null;
 
   /** @name PalletEthereumFakeTransactionFinalizer (447) */
-  type PalletEthereumFakeTransactionFinalizer = Null;
+  export type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module
