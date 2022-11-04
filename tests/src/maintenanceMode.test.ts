@@ -16,7 +16,7 @@
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
+import {default as usingApi, executeTransaction, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
 import {createCollection, createItemExpectSuccess, createItemExpectFailure, createCollectionWithPropsExpectSuccess, waitNewBlocks, getTokenOwner, scheduleTransferExpectSuccess} from './util/helpers';
 import {createEthAccount, createEthAccountWithBalance, evmCollection, evmCollectionHelpers, getCollectionAddressFromResult, itWeb3} from './eth/util/helpers';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -189,26 +189,26 @@ describe('Integration Test: Maintenance Mode', () => {
 
   it('MM blocks scheduled calls and the scheduler itself', async () => {
     await usingApi(async api => {
-      const collectionResult = await expect(createCollection(api, superuser)).to.be.fulfilled;
+      const collectionResult = await expect(createCollection(api, bob)).to.be.fulfilled;
       const collectionId = collectionResult.collectionId;
 
-      const nftBeforeMM = await createItemExpectSuccess(superuser, collectionId, 'NFT');
-      const nftDuringMM = await createItemExpectSuccess(superuser, collectionId, 'NFT');
-      const nftAfterMM = await createItemExpectSuccess(superuser, collectionId, 'NFT');
+      const nftBeforeMM = await createItemExpectSuccess(bob, collectionId, 'NFT');
+      const nftDuringMM = await createItemExpectSuccess(bob, collectionId, 'NFT');
+      const nftAfterMM = await createItemExpectSuccess(bob, collectionId, 'NFT');
 
       const scheduledIdBeforeMM = '0x' + '0'.repeat(31) + '0';
       const scheduledIdDuringMM = '0x' + '0'.repeat(31) + '1';
       const scheduledIdAttemptDuringMM = '0x' + '0'.repeat(31) + '2';
       const scheduledIdAfterMM = '0x' + '0'.repeat(31) + '3';
 
-      const blocksToWait = 4;
+      const blocksToWait = 6;
 
       // Scheduling works before the maintenance
       await scheduleTransferExpectSuccess(
         collectionId,
         nftBeforeMM,
-        superuser,
         bob,
+        superuser,
         1,
         blocksToWait,
         scheduledIdBeforeMM,
@@ -216,49 +216,49 @@ describe('Integration Test: Maintenance Mode', () => {
 
       await waitNewBlocks(blocksToWait + 1);
 
-      expect(await getTokenOwner(api, collectionId, nftBeforeMM)).to.be.deep.equal({Substrate: bob.address});
+      expect(await getTokenOwner(api, collectionId, nftBeforeMM)).to.be.deep.equal({Substrate: superuser.address});
 
       // Schedule a transaction that should occur *during* the maintenance
       await scheduleTransferExpectSuccess(
         collectionId,
         nftDuringMM,
-        superuser,
         bob,
+        superuser,
         1,
         blocksToWait,
         scheduledIdDuringMM,
       );
 
       const txEnable = api.tx.maintenance.enable();
-      await submitTransactionAsync(superuser, api.tx.sudo.sudo(txEnable as any));
+      await executeTransaction(api, superuser, api.tx.sudo.sudo(txEnable as any));
       expect(await maintenanceEnabled(api), 'MM is OFF when it should be ON').to.be.true;
 
       await waitNewBlocks(blocksToWait + 1);
 
       // The owner should NOT change since the scheduled transaction should be rejected
-      expect(await getTokenOwner(api, collectionId, nftDuringMM)).to.be.deep.equal({Substrate: superuser.address});
+      expect(await getTokenOwner(api, collectionId, nftDuringMM)).to.be.deep.equal({Substrate: bob.address});
 
       // Any attempts to schedule a tx during the MM should be rejected
       await expect(scheduleTransferExpectSuccess(
         collectionId,
         nftDuringMM,
-        superuser,
         bob,
+        superuser,
         1,
         blocksToWait,
         scheduledIdAttemptDuringMM,
       )).to.be.rejected;
 
       const txDisable = api.tx.maintenance.disable();
-      await submitTransactionAsync(superuser, api.tx.sudo.sudo(txDisable as any));
+      await executeTransaction(api, superuser, api.tx.sudo.sudo(txDisable as any));
       expect(await maintenanceEnabled(api), 'MM is ON when it should be OFF').to.be.false;
 
       // Scheduling works after the maintenance
       await scheduleTransferExpectSuccess(
         collectionId,
         nftAfterMM,
-        superuser,
         bob,
+        superuser,
         1,
         blocksToWait,
         scheduledIdAfterMM,
@@ -266,7 +266,7 @@ describe('Integration Test: Maintenance Mode', () => {
 
       await waitNewBlocks(blocksToWait + 1);
 
-      expect(await getTokenOwner(api, collectionId, nftAfterMM)).to.be.deep.equal({Substrate: bob.address});
+      expect(await getTokenOwner(api, collectionId, nftAfterMM)).to.be.deep.equal({Substrate: superuser.address});
     });
   });
 
