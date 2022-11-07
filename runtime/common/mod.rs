@@ -19,8 +19,8 @@ pub mod construct_runtime;
 pub mod dispatch;
 pub mod ethereum;
 pub mod instance;
-pub mod runtime_apis;
 pub mod maintenance;
+pub mod runtime_apis;
 
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
