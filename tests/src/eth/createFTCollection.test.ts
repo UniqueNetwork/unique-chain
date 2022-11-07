@@ -30,50 +30,6 @@ describe('Create FT collection from EVM', () => {
       donor = await privateKey({filename: __filename});
     });
   });
-
-  itEth('Create collection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    
-    const name = 'CollectionEVM';
-    const description = 'Some description';
-    const prefix = 'token prefix';
-  
-    // todo:playgrounds this might fail when in async environment.
-    const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-
-    const {collectionId} = await helper.eth.createFungibleCollection(owner, name, DECIMALS, description, prefix);
-    
-    const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
-    const data = (await helper.ft.getData(collectionId))!;
-
-    expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
-    expect(collectionId).to.be.eq(collectionCountAfter);
-    expect(data.name).to.be.eq(name);
-    expect(data.description).to.be.eq(description);
-    expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.deep.eq({Fungible: DECIMALS.toString()});
-  });
-
-  // todo:playgrounds this test will fail when in async environment.
-  itEth('Check collection address exist', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-
-    const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
-    const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
-
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.false;
-
-    
-    await helper.eth.createFungibleCollection(owner, 'A', DECIMALS, 'A', 'A');
-
-    
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.true;
-  });
   
   itEth('Set sponsorship', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);

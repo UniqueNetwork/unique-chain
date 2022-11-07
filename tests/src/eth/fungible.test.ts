@@ -52,11 +52,12 @@ describe('Fungible: Information getting', () => {
 describe('Fungible: Plain calls', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
+  let owner: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
+      [alice, owner] = await helper.arrange.createAccounts([20n, 20n], donor);
     });
   });
 
@@ -148,9 +149,8 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
-  itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
-    const owner = await privateKey('//Alice');
-    const sender = await helper.eth.createAccountWithBalance(donor);
+  itEth('Can perform burnFromCross()', async ({helper}) => {
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
@@ -261,8 +261,7 @@ describe('Fungible: Plain calls', () => {
   });
 
   itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
-    const owner = await privateKey('//Alice');
-    const sender = await helper.eth.createAccountWithBalance(donor);
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
@@ -365,11 +364,12 @@ describe('Fungible: Fees', () => {
 describe('Fungible: Substrate calls', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
+  let owner: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
+      [alice, owner] = await helper.arrange.createAccounts([20n, 20n], donor);
     });
   });
 
@@ -455,8 +455,7 @@ describe('Fungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transferFromCross()', async ({helper, privateKey}) => {
-    const owner = await privateKey('//Alice');
-    const sender = await helper.eth.createAccountWithBalance(donor);
+    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
