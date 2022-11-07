@@ -104,12 +104,16 @@ describe('Refungible: Information getting', () => {
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
+  let minter: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = await privateKey({filename: __filename});
+      [minter, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
 
@@ -227,14 +231,13 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth('Can perform burnFrom()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
-    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+  itEth('Can perform burnFrom()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(alice, 100n);
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(alice, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'rft');
@@ -261,14 +264,13 @@ describe('Refungible: Plain calls', () => {
     expect(await collection.getTokenBalance(token.tokenId, {Ethereum: owner})).to.be.eq(0n);
   });
 
-  itEth('Can perform burnFromCross()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
-    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+  itEth('Can perform burnFromCross()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    
+    const owner = bob;
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const owner = await privateKey('//Bob');
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
-
-    const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'rft');
@@ -294,15 +296,14 @@ describe('Refungible: Plain calls', () => {
     expect(await collection.getTokenBalance(token.tokenId, {Substrate: owner.address})).to.be.eq(0n);
   });
 
-  itEth('Can perform transferFromCross()', async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
-    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+  itEth('Can perform transferFromCross()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await privateKey('//Bob');
-    const spender = await helper.eth.createAccountWithBalance(alice, 100n);
-    const receiver = await privateKey('//Charlie');
+    const owner = bob;
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const receiver = charlie;
 
-    const token = await collection.mintToken(alice, 100n, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'rft');

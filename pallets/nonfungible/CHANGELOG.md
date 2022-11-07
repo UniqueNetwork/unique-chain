@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+## [v0.1.7] - 2022-11-02
+### Changed
+ - Use named structure `EthCrossAccount` in eth functions.
 
 ## [v0.1.6] - 2022-20-10
 

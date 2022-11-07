@@ -20,14 +20,10 @@ use core::marker::PhantomData;
 use ethereum as _;
 use evm_coder::{execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight};
 use frame_support::traits::Get;
-
 use crate::Pallet;
 
 use pallet_common::{
-	CollectionById,
-	dispatch::CollectionDispatch,
-	erc::{static_property::key, CollectionHelpersEvents},
-	Pallet as PalletCommon,
+	CollectionById, dispatch::CollectionDispatch, erc::static_property::key, Pallet as PalletCommon,
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};

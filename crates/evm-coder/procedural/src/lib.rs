@@ -107,7 +107,7 @@ fn parse_path_segment(path: &Path) -> syn::Result<&PathSegment> {
 	if path.segments.len() != 1 {
 		return Err(syn::Error::new(
 			path.span(),
-			"expected path to have only segment",
+			"expected path to have only one segment",
 		));
 	}
 	let last_segment = &path.segments.last().unwrap();

@@ -73,8 +73,8 @@ export interface ICrossAccountIdLower {
 export interface IEthCrossAccountId {
   0: TEthereumAccount;
   1: TSubstrateAccount;
-  field_0: TEthereumAccount;
-  field_1: TSubstrateAccount;
+  eth: TEthereumAccount;
+  sub: TSubstrateAccount;
 }
 
 export interface ICollectionLimits {

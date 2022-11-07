@@ -27,7 +27,8 @@ describe('Scheduing EVM smart contracts', () => {
   });
 
   itEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async ({helper, privateKey}) => {
-    const alice = await privateKey('//Alice');
+    const donor = await privateKey({filename: __filename});
+    const [alice] = await helper.arrange.createAccounts([1000n], donor);
 
     const scheduledId = await helper.arrange.makeScheduledId();
 

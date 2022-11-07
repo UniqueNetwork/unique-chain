@@ -16,10 +16,10 @@
 
 //! ERC-20 standart support implementation.
 
+extern crate alloc;
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::{ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight};
-use pallet_common::eth::convert_tuple_to_cross_account;
 use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
 use sp_std::vec::Vec;
@@ -158,11 +158,11 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		spender: (address, uint256),
+		spender: EthCrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let spender = convert_tuple_to_cross_account::<T>(spender)?;
+		let spender = spender.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
 		<Pallet<T>>::set_allowance(self, &caller, &spender, amount)
@@ -198,11 +198,11 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
+		from: EthCrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
+		let from = from.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 		let budget = self
 			.recorder
@@ -240,13 +240,13 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: (address, uint256),
-		to: (address, uint256),
+		from: EthCrossAccount,
+		to: EthCrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let from = convert_tuple_to_cross_account::<T>(from)?;
-		let to = convert_tuple_to_cross_account::<T>(to)?;
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 		let budget = self
 			.recorder

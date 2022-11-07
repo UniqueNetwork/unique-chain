@@ -33,11 +33,7 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{
-		convert_cross_account_to_uint256, convert_cross_account_to_tuple,
-		convert_tuple_to_cross_account,
-	},
-	weights::WeightInfo,
+	eth::convert_cross_account_to_uint256, weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.
@@ -230,13 +226,13 @@ where
 	fn set_collection_sponsor_cross(
 		&mut self,
 		caller: caller,
-		sponsor: (address, uint256),
+		sponsor: EthCrossAccount,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		check_is_owner_or_admin(caller, self)?;
 
-		let sponsor = convert_tuple_to_cross_account::<T>(sponsor)?;
+		let sponsor = sponsor.into_sub_cross_account::<T>()?;
 		self.set_sponsor(sponsor.as_sub().clone())
 			.map_err(dispatch_to_evm::<T>)?;
 		save(self)
@@ -387,12 +383,12 @@ where
 	fn add_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		new_admin: (address, uint256),
+		new_admin: EthCrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		let new_admin = convert_tuple_to_cross_account::<T>(new_admin)?;
+		let new_admin = new_admin.into_sub_cross_account::<T>()?;
 		<Pallet<T>>::toggle_admin(self, &caller, &new_admin, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -402,12 +398,12 @@ where
 	fn remove_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		admin: (address, uint256),
+		admin: EthCrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		let admin = convert_tuple_to_cross_account::<T>(admin)?;
+		let admin = admin.into_sub_cross_account::<T>()?;
 		<Pallet<T>>::toggle_admin(self, &caller, &admin, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -565,12 +561,12 @@ where
 	fn add_to_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: (address, uint256),
+		user: EthCrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		let user = convert_tuple_to_cross_account::<T>(user)?;
+		let user = user.into_sub_cross_account::<T>()?;
 		Pallet::<T>::toggle_allowlist(self, &caller, &user, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -593,12 +589,12 @@ where
 	fn remove_from_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: (address, uint256),
+		user: EthCrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		let user = convert_tuple_to_cross_account::<T>(user)?;
+		let user = user.into_sub_cross_account::<T>()?;
 		Pallet::<T>::toggle_allowlist(self, &caller, &user, false).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -638,8 +634,8 @@ where
 	///
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
-	fn is_owner_or_admin_cross(&self, user: (address, uint256)) -> Result<bool> {
-		let user = convert_tuple_to_cross_account::<T>(user)?;
+	fn is_owner_or_admin_cross(&self, user: EthCrossAccount) -> Result<bool> {
+		let user = user.into_sub_cross_account::<T>()?;
 		Ok(self.is_owner_or_admin(&user))
 	}
 
@@ -657,10 +653,10 @@ where
 
 	/// Get collection owner.
 	///
-	/// @return Tuple with sponsor address and his substrate mirror.
+	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_owner(&self) -> Result<(address, uint256)> {
-		Ok(convert_cross_account_to_tuple::<T>(
+	fn collection_owner(&self) -> Result<EthCrossAccount> {
+		Ok(EthCrossAccount::from_sub_cross_account::<T>(
 			&T::CrossAccountId::from_sub(self.owner.clone()),
 		))
 	}
@@ -683,9 +679,9 @@ where
 	///
 	/// @return Vector of tuples with admins address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_admins(&self) -> Result<Vec<(address, uint256)>> {
+	fn collection_admins(&self) -> Result<Vec<EthCrossAccount>> {
 		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
-			.map(|(admin, _)| crate::eth::convert_cross_account_to_tuple::<T>(&admin))
+			.map(|(admin, _)| EthCrossAccount::from_sub_cross_account::<T>(&admin))
 			.collect();
 		Ok(result)
 	}
@@ -694,11 +690,11 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
-	fn set_owner_cross(&mut self, caller: caller, new_owner: (address, uint256)) -> Result<void> {
+	fn set_owner_cross(&mut self, caller: caller, new_owner: EthCrossAccount) -> Result<void> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		let new_owner = convert_tuple_to_cross_account::<T>(new_owner)?;
+		let new_owner = new_owner.into_sub_cross_account::<T>()?;
 		self.set_owner_internal(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
