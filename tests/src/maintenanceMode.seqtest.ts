@@ -43,14 +43,16 @@ describe('Integration Test: Maintenance Mode', () => {
 
   itSub('Allows superuser to enable and disable maintenance mode - and disallows anyone else', async ({helper}) => {
     // Make sure non-sudo can't enable maintenance mode
-    await expect(helper.executeExtrinsic(superuser, 'api.tx.maintenance.enable', []), 'on commoner enabling MM').to.be.rejected; //With(/NoPermission/);
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.maintenance.enable', []), 'on commoner enabling MM')
+      .to.be.rejectedWith(/BadOrigin/);
 
     // Set maintenance mode
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.enable', []);
     expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
 
     // Make sure non-sudo can't disable maintenance mode
-    await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.disable', []), 'on commoner disabling MM').to.be.rejected; //With(/NoPermission/);
+    await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.disable', []), 'on commoner disabling MM')
+      .to.be.rejectedWith(/BadOrigin/);
 
     // Disable maintenance mode
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
@@ -80,19 +82,22 @@ describe('Integration Test: Maintenance Mode', () => {
     expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
 
     // Unable to create a collection when the MM is enabled
-    await expect(helper.nft.mintCollection(superuser), 'cudo forbidden stuff').to.be.rejected;
+    await expect(helper.nft.mintCollection(superuser), 'cudo forbidden stuff')
+      .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
     // Unable to set token properties when the MM is enabled
     await expect(nft.setProperties(
       bob,
       [{key: 'test', value: 'test-val'}],
-    )).to.be.rejected;
+    )).to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
     // Unable to mint an NFT when the MM is enabled
-    await expect(nftCollection.mintToken(superuser)).to.be.rejected;
+    await expect(nftCollection.mintToken(superuser))
+      .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
     // Unable to mint an FT when the MM is enabled
-    await expect(ftCollection.mint(superuser)).to.be.rejected;
+    await expect(ftCollection.mint(superuser))
+      .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
     expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
@@ -121,7 +126,8 @@ describe('Integration Test: Maintenance Mode', () => {
     expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
 
     // Unable to mint an RFT when the MM is enabled
-    await expect(rftCollection.mintToken(superuser)).to.be.rejected;
+    await expect(rftCollection.mintToken(superuser))
+      .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
     
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
     expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
@@ -195,7 +201,8 @@ describe('Integration Test: Maintenance Mode', () => {
 
     // Any attempts to schedule a tx during the MM should be rejected
     await expect(nftDuringMM.scheduleAfter(scheduledIdAttemptDuringMM, blocksToWait)
-      .transfer(bob, {Substrate: superuser.address})).to.be.rejected;
+      .transfer(bob, {Substrate: superuser.address}))
+      .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
     expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
@@ -225,13 +232,8 @@ describe('Integration Test: Maintenance Mode', () => {
     const tokenId = await contract.methods.nextTokenId().call();
     expect(tokenId).to.be.equal('1');
 
-    /*const result = */
-    await contract.methods.mintWithTokenURI(
-      receiver,
-      'Test URI',
-    ).send();
-    /*const expectedTokenId = result.events.Transfer.returnValues.tokenId;
-    expect(expectedTokenId).to.be.equal(tokenId);*/
+    await expect(contract.methods.mintWithTokenURI(receiver, 'Test URI').send())
+      .to.be.rejectedWith(/submit transaction to pool failed: Pool\(InvalidTransaction\(InvalidTransaction::Call\)\)/);
 
     await expect(contract.methods.ownerOf(tokenId).call()).rejectedWith(/token not found/);
 
