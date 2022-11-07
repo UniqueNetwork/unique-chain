@@ -25,9 +25,9 @@ jobs:
   forkless:
     uses: ./.github/workflows/forkless.yml
 
-  canary:
-    uses: ./.github/workflows/canary.yml
-    secrets: inherit # pass all secrets from initial workflow to nested
+  # canary:
+  #   uses: ./.github/workflows/canary.yml
+  #   secrets: inherit # pass all secrets from initial workflow to nested
 
   xcm:
     uses: ./.github/workflows/xcm.yml
