@@ -21,7 +21,7 @@ use crate::{RuntimeCall, Maintenance};
 
 use sp_runtime::{
 	traits::{DispatchInfoOf, SignedExtension},
-    transaction_validity::{
+	transaction_validity::{
 		TransactionValidity, ValidTransaction, InvalidTransaction, TransactionValidityError,
 	},
 };
@@ -68,22 +68,26 @@ impl SignedExtension for CheckMaintenance {
 				| RuntimeCall::Structure(_)
 				| RuntimeCall::Unique(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
-                #[cfg(feature = "scheduler")]
-                RuntimeCall::Scheduler(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+				#[cfg(feature = "scheduler")]
+				RuntimeCall::Scheduler(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
 				#[cfg(feature = "rmrk")]
 				RuntimeCall::RmrkCore(_) | RuntimeCall::RmrkEquip(_) => {
 					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
 				}
 
-                #[cfg(feature = "app-promotion")]
-                RuntimeCall::AppPromotion(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+				#[cfg(feature = "app-promotion")]
+				RuntimeCall::AppPromotion(_) => {
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+				}
 
-                #[cfg(feature = "foreign-assets")]
-                RuntimeCall::ForeignAssets(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+				#[cfg(feature = "foreign-assets")]
+				RuntimeCall::ForeignAssets(_) => {
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+				}
 
-                #[cfg(feature = "pallet-test-utils")]
-                RuntimeCall::TestUtils(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+				#[cfg(feature = "pallet-test-utils")]
+				RuntimeCall::TestUtils(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
 				_ => Ok(ValidTransaction::default()),
 			}
