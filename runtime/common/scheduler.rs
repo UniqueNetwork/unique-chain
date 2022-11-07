@@ -25,7 +25,7 @@ use sp_runtime::{
 	DispatchErrorWithPostInfo, DispatchError,
 };
 use codec::Encode;
-use crate::{Runtime, RuntimeCall, RuntimeOrigin, Balances};
+use crate::{Runtime, RuntimeCall, RuntimeOrigin, Balances, maintenance};
 use up_common::types::{AccountId, Balance};
 use fp_self_contained::SelfContainedCall;
 use pallet_unique_scheduler::DispatchCall;
@@ -41,6 +41,7 @@ pub type SignedExtraScheduler = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	maintenance::CheckMaintenance,
 	ChargeTransactionPayment<Runtime>,
 );
 
@@ -53,6 +54,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 			from,
 		)),
 		frame_system::CheckWeight::<Runtime>::new(),
+		maintenance::CheckMaintenance,
 		ChargeTransactionPayment::<Runtime>::from(0),
 	)
 }
