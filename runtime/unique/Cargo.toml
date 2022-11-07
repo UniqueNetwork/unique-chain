@@ -45,6 +45,7 @@ runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
     'up-data-structs/runtime-benchmarks',
+    'pallet-maintenance/runtime-benchmarks',
 ]
 try-runtime = [
     'frame-try-runtime',
@@ -88,6 +89,7 @@ try-runtime = [
     'pallet-evm-contract-helpers/try-runtime',
     'pallet-evm-transaction-payment/try-runtime',
     'pallet-evm-migration/try-runtime',
+    'pallet-maintenance/try-runtime',
 ]
 std = [
     'codec/std',
@@ -166,6 +168,7 @@ std = [
     "orml-xtokens/std",
     "orml-traits/std",
     "pallet-foreign-assets/std",
+    "pallet-maintenance/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 unique-runtime = []
@@ -481,6 +484,7 @@ fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenet
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.30' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
+pallet-maintenance = { default-features = false, path = "../../pallets/maintenance" }
 
 ################################################################################
 # Other Dependencies
