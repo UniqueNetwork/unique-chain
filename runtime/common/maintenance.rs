@@ -64,7 +64,6 @@ impl SignedExtension for CheckMaintenance {
 				| RuntimeCall::EVM(_)
 				| RuntimeCall::Ethereum(_)
 				| RuntimeCall::Inflation(_)
-				| RuntimeCall::Maintenance(_)
 				| RuntimeCall::Structure(_)
 				| RuntimeCall::Unique(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
