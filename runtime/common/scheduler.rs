@@ -19,7 +19,6 @@ use frame_support::{
 };
 use sp_runtime::{
 	traits::{Dispatchable, Applyable, Member},
-	generic::Era,
 	transaction_validity::TransactionValidityError,
 	DispatchErrorWithPostInfo,
 };
@@ -37,7 +36,7 @@ pub type SignedExtraScheduler = (
 	ChargeTransactionPayment<Runtime>,
 );
 
-fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
+fn get_signed_extras() -> SignedExtraScheduler {
 	(
 		frame_system::CheckWeight::<Runtime>::new(),
 		maintenance::CheckMaintenance,
@@ -74,7 +73,7 @@ where
 		let signed = match signer {
 			Some(signer) => fp_self_contained::CheckedSignature::Signed(
 				signer.clone().into(),
-				get_signed_extras(signer.into()),
+				get_signed_extras(),
 			),
 			None => fp_self_contained::CheckedSignature::Unsigned,
 		};
