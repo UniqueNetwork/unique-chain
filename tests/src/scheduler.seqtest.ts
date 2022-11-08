@@ -41,13 +41,14 @@ describe('Scheduling token and balance transfers', () => {
     const token = await collection.mintToken(alice);
     const schedulerId = await helper.arrange.makeScheduledId();
     const blocksBeforeExecution = 4;
-
+    
     await token.scheduleAfter(schedulerId, blocksBeforeExecution)
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + blocksBeforeExecution + 1;
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
 
-    await helper.wait.newBlocks(blocksBeforeExecution + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
@@ -66,8 +67,9 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
       .balance.transferToSubstrate(alice, bob.address, amount);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const bobsBalanceAfterFirst = await helper.balance.getSubstrate(bob.address);
     expect(bobsBalanceAfterFirst)
@@ -76,7 +78,7 @@ describe('Scheduling token and balance transfers', () => {
         '#1 Balance of the recipient should be increased by 1 * amount',
       );
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     const bobsBalanceAfterSecond = await helper.balance.getSubstrate(bob.address);
     expect(bobsBalanceAfterSecond)
@@ -97,10 +99,11 @@ describe('Scheduling token and balance transfers', () => {
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await helper.scheduler.cancelScheduled(alice, scheduledId);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
@@ -120,8 +123,9 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
       .balance.transferToSubstrate(alice, bob.address, amount);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const bobsBalanceAfterFirst = await helper.balance.getSubstrate(bob.address);
 
@@ -132,7 +136,7 @@ describe('Scheduling token and balance transfers', () => {
       );
 
     await helper.scheduler.cancelScheduled(alice, scheduledId);
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     const bobsBalanceAfterSecond = await helper.balance.getSubstrate(bob.address);
     expect(bobsBalanceAfterSecond)
@@ -153,8 +157,9 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks)
       .testUtils.setTestValueAndRollback(alice, changedTestVal);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const testVal = await helper.testUtils.testValue();
     expect(testVal, 'The test value should NOT be commited')
@@ -177,13 +182,12 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks, {periodic})
       .testUtils.justTakeFee(alice);
-
-    await helper.wait.newBlocks(1);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const aliceInitBalance = await helper.balance.getSubstrate(alice.address);
     let diff;
 
-    await helper.wait.newBlocks(waitForBlocks);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const aliceBalanceAfterFirst = await helper.balance.getSubstrate(alice.address);
     expect(
@@ -197,7 +201,7 @@ describe('Scheduling token and balance transfers', () => {
       'Scheduled task should take the right amount of fees',
     );
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     const aliceBalanceAfterSecond = await helper.balance.getSubstrate(alice.address);
     expect(
@@ -279,20 +283,21 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks, {periodic})
       .testUtils.selfCancelingInc(alice, scheduledId, maxTestVal);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     // execution #0
     expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 1);
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     // execution #1
     expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 2);
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + 2 * periodic.period);
 
     // <canceled>
     expect(await helper.testUtils.testValue())
@@ -308,10 +313,11 @@ describe('Scheduling token and balance transfers', () => {
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(bob, {Substrate: alice.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await helper.getSudo().scheduler.cancelScheduled(superuser, scheduledId);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
@@ -327,8 +333,9 @@ describe('Scheduling token and balance transfers', () => {
     await helper.getSudo()
       .scheduler.scheduleAfter(scheduledId, waitForBlocks, {priority: 42})
       .balance.forceTransferToSubstrate(superuser, bob.address, charlie.address, amount);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const balanceAfter = await helper.balance.getSubstrate(charlie.address);
 
@@ -454,10 +461,10 @@ describe('Scheduling token and balance transfers', () => {
     await helper.scheduler.scheduleAt<DevUniqueHelper>(periodicId, firstExecutionBlockNumber, {periodic})
       .testUtils.incTestValue(alice);
 
-    await helper.wait.newBlocks(blocksBeforeExecution);
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
     expect(await helper.testUtils.testValue()).to.be.equal(firstExecTestVal);
 
-    await helper.wait.newBlocks(period + numFilledBlocks);
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + period + numFilledBlocks);
 
     // The periodic operation should be postponed by `numFilledBlocks`
     for (let i = 0; i < numFilledBlocks; i++) {
@@ -475,10 +482,11 @@ describe('Scheduling token and balance transfers', () => {
     await helper.scheduler
       .scheduleAfter<DevUniqueHelper>(scheduledId, blocksBeforeExecution)
       .balance.transferToSubstrate(alice, bob.address, 1n);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + blocksBeforeExecution + 1;
 
     const initNonce = await helper.chain.getNonce(alice.address);
 
-    await helper.wait.newBlocks(blocksBeforeExecution + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const finalNonce = await helper.chain.getNonce(alice.address);
 
@@ -510,6 +518,7 @@ describe('Negative Test: Scheduling', () => {
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const scheduled = helper.scheduler.scheduleAfter(scheduledId, waitForBlocks);
     await expect(scheduled.balance.transferToSubstrate(alice, bob.address, 1n * helper.balance.getOneTokenNominal()))
@@ -517,7 +526,7 @@ describe('Negative Test: Scheduling', () => {
 
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const bobsBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -540,11 +549,12 @@ describe('Negative Test: Scheduling', () => {
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await expect(helper.scheduler.cancelScheduled(bob, scheduledId))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
@@ -562,7 +572,9 @@ describe('Negative Test: Scheduling', () => {
     await expect(scheduled.balance.transferToSubstrate(alice, bob.address, amount))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
+
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const balanceAfter = await helper.balance.getSubstrate(bob.address);
 
