@@ -24,4 +24,4 @@ std = [
 	"pallet-unique-scheduler-v2/std",
 	"sp-std/std",
 ]
-try-runtime = ["frame-support/try-runtime", "pallet-unique-scheduler/try-runtime"]
+try-runtime = ["frame-support/try-runtime", "pallet-unique-scheduler-v2/try-runtime"]
