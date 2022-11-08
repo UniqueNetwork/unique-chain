@@ -66,6 +66,7 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![deny(missing_docs)]
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -106,16 +107,31 @@ pub type PeriodicIndex = u32;
 /// The location of a scheduled task that can be used to remove it.
 pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 
+/// A an encoded bounded `Call`. Its encoding must be at most 128 bytes.
 pub type EncodedCall = BoundedVec<u8, ConstU32<128>>;
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
+/// A scheduled call is stored as is or as a preimage hash to lookup.
+/// This enum represents both variants.
 pub enum ScheduledCall<T: Config> {
+	/// A an encoded bounded `Call`. Its encoding must be at most 128 bytes.
 	Inline(EncodedCall),
-	PreimageLookup { hash: T::Hash, unbounded_len: u32 },
+
+	/// A Blake2-256 hash of the call together with an upper limit for its size.
+	PreimageLookup {
+		/// A call hash to lookup
+		hash: T::Hash,
+
+		/// The length of the decoded call
+		unbounded_len: u32,
+	},
 }
 
 impl<T: Config> ScheduledCall<T> {
+	/// Convert an otherwise unbounded or large value into a type ready for placing in storage.
+	///
+	/// NOTE: Once this API is used, you should use either `drop` or `realize`.
 	pub fn new(call: <T as Config>::RuntimeCall) -> Result<Self, DispatchError> {
 		let encoded = call.encode();
 		let len = encoded.len();
@@ -154,15 +170,24 @@ impl<T: Config> ScheduledCall<T> {
 		}
 	}
 
+	// Decodes a runtime call
 	fn decode(mut data: &[u8]) -> Result<<T as Config>::RuntimeCall, DispatchError> {
 		<T as Config>::RuntimeCall::decode(&mut data)
 			.map_err(|_| <Error<T>>::ScheduledCallCorrupted.into())
 	}
 }
 
+/// A scheduler's interface for managing preimages to hashes
+/// and looking up preimages from their hash on-chain.
 pub trait SchedulerPreimages<T: Config>: PreimageRecipient<T::Hash> {
+	/// No longer request that the data for decoding the given `call` is available.
 	fn drop(call: &ScheduledCall<T>);
 
+	/// Convert the given `call` instance back into its original instance, also returning the
+	/// exact size of its encoded form if it needed to be looked-up from a stored preimage.
+	///
+	/// NOTE: This does not remove any data needed for realization. If you will no longer use the
+	/// `call`, use `realize` instead or use `drop` afterwards.
 	fn peek(
 		call: &ScheduledCall<T>,
 	) -> Result<(<T as pallet::Config>::RuntimeCall, Option<u32>), DispatchError>;
@@ -210,11 +235,16 @@ impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
 	}
 }
 
+/// Scheduler's supported origins.
 pub enum ScheduledEnsureOriginSuccess<AccountId> {
+	/// A scheduled transaction has the Root origin.
 	Root,
+
+	/// A specific account has signed a scheduled transaction.
 	Signed(AccountId),
 }
 
+/// An identifier of a scheduled task.
 pub type TaskName = [u8; 32];
 
 /// Information regarding an item to be executed in the future.
@@ -238,6 +268,7 @@ pub struct Scheduled<Name, Call, BlockNumber, PalletsOrigin, AccountId> {
 	_phantom: PhantomData<AccountId>,
 }
 
+/// Information regarding an item to be executed in the future.
 pub type ScheduledOf<T> = Scheduled<
 	TaskName,
 	ScheduledCall<T>,
@@ -248,12 +279,24 @@ pub type ScheduledOf<T> = Scheduled<
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
+/// A structure for storing scheduled tasks in a block.
+/// The `BlockAgenda` tracks the available free space for a new task in a block.4
+///
+/// The agenda's maximum amount of tasks is `T::MaxScheduledPerBlock`.
 pub struct BlockAgenda<T: Config> {
 	agenda: BoundedVec<Option<ScheduledOf<T>>, T::MaxScheduledPerBlock>,
 	free_places: u32,
 }
 
 impl<T: Config> BlockAgenda<T> {
+	/// Tries to push a new scheduled task into the block's agenda.
+	/// If there is a free place, the new task will take it,
+	/// and the `BlockAgenda` will record that the number of free places has decreased.
+	///
+	/// An error containing the scheduled task will be returned if there are no free places.
+	///
+	/// The complexity of the check for the *existence* of a free place is O(1).
+	/// The complexity of *finding* the free slot is O(n).
 	fn try_push(&mut self, scheduled: ScheduledOf<T>) -> Result<u32, ScheduledOf<T>> {
 		if self.free_places == 0 {
 			return Err(scheduled);
@@ -276,14 +319,24 @@ impl<T: Config> BlockAgenda<T> {
 		}
 	}
 
+	/// Sets a slot by the given index and the slot value.
+	///
+	/// ### Panics
+	/// If the index is out of range, the function will panic.
 	fn set_slot(&mut self, index: u32, slot: Option<ScheduledOf<T>>) {
 		self.agenda[index as usize] = slot;
 	}
 
+	/// Returns an iterator containing references to the agenda's slots.
 	fn iter(&self) -> impl Iterator<Item = &'_ Option<ScheduledOf<T>>> + '_ {
 		self.agenda.iter()
 	}
 
+	/// Returns an immutable reference to a scheduled task if there is one under the given index.
+	///
+	///  The function returns `None` if:
+	/// * The `index` is out of range
+	/// * No scheduled task occupies the agenda slot under the given index.
 	fn get(&self, index: u32) -> Option<&ScheduledOf<T>> {
 		match self.agenda.get(index as usize) {
 			Some(Some(scheduled)) => Some(scheduled),
@@ -291,6 +344,11 @@ impl<T: Config> BlockAgenda<T> {
 		}
 	}
 
+	/// Returns a mutable reference to a scheduled task if there is one under the given index.
+	///
+	///  The function returns `None` if:
+	/// * The `index` is out of range
+	/// * No scheduled task occupies the agenda slot under the given index.
 	fn get_mut(&mut self, index: u32) -> Option<&mut ScheduledOf<T>> {
 		match self.agenda.get_mut(index as usize) {
 			Some(Some(scheduled)) => Some(scheduled),
@@ -298,6 +356,14 @@ impl<T: Config> BlockAgenda<T> {
 		}
 	}
 
+	/// Take a scheduled task by the given index.
+	///
+	/// If there is a task under the index, the function will:
+	/// * Free the corresponding agenda slot.
+	/// * Decrease the number of free places.
+	/// * Return the scheduled task.
+	///
+	/// The function returns `None` if there is no task under the index.
 	fn take(&mut self, index: u32) -> Option<ScheduledOf<T>> {
 		let removed = self.agenda.get_mut(index as usize)?.take();
 
@@ -320,13 +386,18 @@ impl<T: Config> Default for BlockAgenda<T> {
 		}
 	}
 }
-
+/// A structure for tracking the used weight
+/// and checking if it does not exceed the weight limit.
 struct WeightCounter {
 	used: Weight,
 	limit: Weight,
 }
 
 impl WeightCounter {
+	/// Checks if the weight `w` can be accommodated by the counter.
+	///
+	/// If there is room for the additional weight `w`,
+	/// the function will update the used weight and return true.
 	fn check_accrue(&mut self, w: Weight) -> bool {
 		let test = self.used.saturating_add(w);
 		if test.any_gt(self.limit) {
@@ -337,12 +408,14 @@ impl WeightCounter {
 		}
 	}
 
+	/// Checks if the weight `w` can be accommodated by the counter.
 	fn can_accrue(&mut self, w: Weight) -> bool {
 		self.used.saturating_add(w).all_lte(self.limit)
 	}
 }
 
 pub(crate) trait MarginalWeightInfo: WeightInfo {
+	/// Return the weight of servicing a single task.
 	fn service_task(maybe_lookup_len: Option<usize>, named: bool, periodic: bool) -> Weight {
 		let base = Self::service_task_base();
 		let mut total = match maybe_lookup_len {
@@ -381,6 +454,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The aggregated origin which the dispatch will take.
@@ -442,6 +516,8 @@ pub mod pallet {
 		type PrioritySetOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
 	}
 
+	/// It contains the block number from which we should service tasks.
+	/// It's used for delaying the servicing of future blocks' agendas if we had overweight tasks.
 	#[pallet::storage]
 	pub type IncompleteSince<T: Config> = StorageValue<_, T::BlockNumber>;
 
@@ -460,29 +536,54 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Scheduled some task.
-		Scheduled { when: T::BlockNumber, index: u32 },
+		Scheduled {
+			/// The block number in which the scheduled task should be executed.
+			when: T::BlockNumber,
+
+			/// The index of the block's agenda slot.
+			index: u32,
+		},
 		/// Canceled some task.
-		Canceled { when: T::BlockNumber, index: u32 },
+		Canceled {
+			/// The block number in which the canceled task has been.
+			when: T::BlockNumber,
+
+			/// The index of the block's agenda slot that had become available.
+			index: u32,
+		},
 		/// Dispatched some task.
 		Dispatched {
+			/// The task's address - the block number and the block's agenda index.
 			task: TaskAddress<T::BlockNumber>,
+
+			/// The task's name if it is not anonymous.
 			id: Option<[u8; 32]>,
+
+			/// The task's execution result.
 			result: DispatchResult,
 		},
 		/// Scheduled task's priority has changed
 		PriorityChanged {
-			when: T::BlockNumber,
-			index: u32,
+			/// The task's address - the block number and the block's agenda index.
+			task: TaskAddress<T::BlockNumber>,
+
+			/// The new priority of the task.
 			priority: schedule::Priority,
 		},
 		/// The call for the provided hash was not found so the task has been aborted.
 		CallUnavailable {
+			/// The task's address - the block number and the block's agenda index.
 			task: TaskAddress<T::BlockNumber>,
+
+			/// The task's name if it is not anonymous.
 			id: Option<[u8; 32]>,
 		},
 		/// The given task can never be executed since it is overweight.
 		PermanentlyOverweight {
+			/// The task's address - the block number and the block's agenda index.
 			task: TaskAddress<T::BlockNumber>,
+
+			/// The task's name if it is not anonymous.
 			id: Option<[u8; 32]>,
 		},
 	}
@@ -523,6 +624,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Anonymously schedule a task.
+		///
+		/// Only `T::ScheduleOrigin` is allowed to schedule a task.
+		/// Only `T::PrioritySetOrigin` is allowed to set the task's priority.
 		#[pallet::weight(<T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule(
 			origin: OriginFor<T>,
@@ -549,6 +653,8 @@ pub mod pallet {
 		}
 
 		/// Cancel an anonymously scheduled task.
+		///
+		/// The `T::OriginPrivilegeCmp` decides whether the given origin is allowed to cancel the task or not.
 		#[pallet::weight(<T as Config>::WeightInfo::cancel(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel(origin: OriginFor<T>, when: T::BlockNumber, index: u32) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
@@ -558,6 +664,9 @@ pub mod pallet {
 		}
 
 		/// Schedule a named task.
+		///
+		/// Only `T::ScheduleOrigin` is allowed to schedule a task.
+		/// Only `T::PrioritySetOrigin` is allowed to set the task's priority.
 		#[pallet::weight(<T as Config>::WeightInfo::schedule_named(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule_named(
 			origin: OriginFor<T>,
@@ -586,6 +695,8 @@ pub mod pallet {
 		}
 
 		/// Cancel a named scheduled task.
+		///
+		/// The `T::OriginPrivilegeCmp` decides whether the given origin is allowed to cancel the task or not.
 		#[pallet::weight(<T as Config>::WeightInfo::cancel_named(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel_named(origin: OriginFor<T>, id: TaskName) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
@@ -626,6 +737,9 @@ pub mod pallet {
 
 		/// Schedule a named task after a delay.
 		///
+		/// Only `T::ScheduleOrigin` is allowed to schedule a task.
+		/// Only `T::PrioritySetOrigin` is allowed to set the task's priority.
+		///
 		/// # <weight>
 		/// Same as [`schedule_named`](Self::schedule_named).
 		/// # </weight>
@@ -656,6 +770,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Change a named task's priority.
+		///
+		/// Only the `T::PrioritySetOrigin` is allowed to change the task's priority.
 		#[pallet::weight(<T as Config>::WeightInfo::change_named_priority(T::MaxScheduledPerBlock::get()))]
 		pub fn change_named_priority(
 			origin: OriginFor<T>,
@@ -670,6 +787,9 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Converts the `DispatchTime` to the `BlockNumber`.
+	///
+	/// Returns an error if the block number is in the past.
 	fn resolve_time(when: DispatchTime<T::BlockNumber>) -> Result<T::BlockNumber, DispatchError> {
 		let now = frame_system::Pallet::<T>::block_number();
 
@@ -687,10 +807,19 @@ impl<T: Config> Pallet<T> {
 		Ok(when)
 	}
 
+	/// Places the mandatory task.
+	///
+	/// It will try to place the task into the block pointed by the `when` parameter.
+	///
+	/// If the block has no room for a task,
+	/// the function will search for a future block that can accommodate the task.
 	fn mandatory_place_task(when: T::BlockNumber, what: ScheduledOf<T>) {
 		Self::place_task(when, what, true).expect("mandatory place task always succeeds; qed");
 	}
 
+	/// Tries to place a task `what` into the given block `when`.
+	///
+	/// Returns an error if the block has no room for the task.
 	fn try_place_task(
 		when: T::BlockNumber,
 		what: ScheduledOf<T>,
@@ -698,6 +827,10 @@ impl<T: Config> Pallet<T> {
 		Self::place_task(when, what, false)
 	}
 
+	/// If `is_mandatory` is true, the function behaves like [`mandatory_place_task`](Self::mandatory_place_task);
+	/// otherwise it acts like [`try_place_task`](Self::try_place_task).
+	///
+	/// The function also updates the `Lookup` storage.
 	fn place_task(
 		mut when: T::BlockNumber,
 		what: ScheduledOf<T>,
@@ -716,6 +849,11 @@ impl<T: Config> Pallet<T> {
 		Ok(address)
 	}
 
+	/// Pushes the scheduled task into the block's agenda.
+	///
+	/// If `is_mandatory` is true, it searches for a block with a free slot for the given task.
+	///
+	/// If `is_mandatory` is false and there is no free slot, the function returns an error.
 	fn push_to_agenda(
 		when: &mut T::BlockNumber,
 		mut what: ScheduledOf<T>,
@@ -886,8 +1024,7 @@ impl<T: Config> Pallet<T> {
 
 				scheduled.priority = priority;
 				Self::deposit_event(Event::PriorityChanged {
-					when,
-					index,
+					task: (when, index),
 					priority,
 				});
 
