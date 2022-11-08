@@ -354,6 +354,7 @@ describe('Scheduling token and balance transfers', () => {
 
     await token.scheduleAfter(scheduledId, waitForBlocks)
       .transfer(bob, {Substrate: alice.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const priority = 112;
     await helper.getSudo().scheduler.changePriority(superuser, scheduledId, priority);
@@ -365,7 +366,12 @@ describe('Scheduling token and balance transfers', () => {
     );
 
     expect(priorityChanged !== null).to.be.true;
-    expect(priorityChanged!.event.data[2].toString()).to.be.equal(priority.toString());
+
+    const [blockNumber, index] = priorityChanged!.event.data[0].toJSON() as any[];
+    expect(blockNumber).to.be.equal(executionBlock);
+    expect(index).to.be.equal(0);
+
+    expect(priorityChanged!.event.data[1].toString()).to.be.equal(priority.toString());
   });
 
   itSub('Prioritized operations execute in valid order', async ({helper}) => {
