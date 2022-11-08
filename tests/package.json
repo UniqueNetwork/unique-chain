@@ -80,7 +80,7 @@
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
     "testMaintenance": "mocha --timeout 9999999 -r ts-node/register ./**/maintenanceMode.seqtest.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.seqtest.ts",
-    "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.seqtest.ts",
+    "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.test.ts",
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
