@@ -169,11 +169,13 @@ describe('Integration Test: Maintenance Mode', () => {
     const nftDuringMM = await collection.mintToken(bob);
     const nftAfterMM = await collection.mintToken(bob);
 
-    const scheduledIdBeforeMM = '0x' + '0'.repeat(31) + '0';
-    const scheduledIdDuringMM = '0x' + '0'.repeat(31) + '1';
-    const scheduledIdBunkerThroughMM = '0x' + '0'.repeat(31) + '2';
-    const scheduledIdAttemptDuringMM = '0x' + '0'.repeat(31) + '3';
-    const scheduledIdAfterMM = '0x' + '0'.repeat(31) + '4';
+    const [
+      scheduledIdBeforeMM,
+      scheduledIdDuringMM,
+      scheduledIdBunkerThroughMM,
+      scheduledIdAttemptDuringMM,
+      scheduledIdAfterMM,
+    ] = await helper.arrange.makeScheduledIds(5);
 
     const blocksToWait = 6;
 
