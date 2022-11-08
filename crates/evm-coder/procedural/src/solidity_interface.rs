@@ -928,10 +928,13 @@ impl SolidityInterface {
 			.chain(self.info.inline_is.0.iter())
 			.map(|is| Is::expand_generator(is, &gen_ref));
 		let solidity_event_generators = self.info.events.0.iter().map(Is::expand_event_generator);
-
+		let solidity_events_idents = self.info.events.0.iter().map(|is| is.name.clone());
 		let docs = &self.docs;
 
 		quote! {
+			#(
+				const _: ::core::marker::PhantomData<#solidity_events_idents> = ::core::marker::PhantomData;
+			)*
 			#[derive(Debug)]
 			#(#[doc = #docs])*
 			pub enum #call_name #gen_ref {

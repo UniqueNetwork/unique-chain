@@ -3,25 +3,28 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+
 ## [v0.1.4] - 2022-11-02
+
 ### Added
- - Named structures support.
+
+- Named structures support.
 
 ## [v0.1.3] - 2022-08-29
 
 ### Fixed
 
- - Parsing simple values.
+- Parsing simple values.
 
 ## [v0.1.2] 2022-08-19
 
 ### Added
 
- - Implementation `AbiWrite` for tuples.
+- Implementation `AbiWrite` for tuples.
 
- ### Fixes
+### Fixes
 
- - Tuple generation for solidity.
+- Tuple generation for solidity.
 
 ## [v0.1.1] 2022-08-16
 
