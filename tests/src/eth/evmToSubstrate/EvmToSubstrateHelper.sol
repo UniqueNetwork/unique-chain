@@ -68,7 +68,7 @@ contract EvmToSubstrate {
 
 		if (collectionType == REFUNGIBLE_COLLECTION_TYPE) {
 			UniqueRefungible rftCollection = UniqueRefungible(_collection);
-			
+
 			tokenId = rftCollection.mint(address(this));
 
 			rftCollection.transferFromCross(
@@ -175,5 +175,28 @@ contract EvmToSubstrate {
 		}
 
 		emit MintToSub(address(0), _substrateReceiver, _collection, tokenId);
+	}
+
+	function proxyProperties(
+		address _collection,
+		uint256 _tokenId,
+		NftProperty[] calldata _properties
+	) external checkRestrictions(_collection) {
+		uint256 propertiesLength = _properties.length;
+		require(propertiesLength > 0, "Properies is empty");
+
+		Collection commonContract = Collection(_collection);
+		bytes32 collectionType = keccak256(bytes(commonContract.uniqueCollectionType()));
+	
+		if (collectionType == REFUNGIBLE_COLLECTION_TYPE) {
+			revert("Wrong collection type. Works only with NFT or RFT");
+		} else if (collectionType == NONFUNGIBLE_COLLECTION_TYPE) {
+			UniqueNFT nftCollection = UniqueNFT(_collection);
+			
+
+			nftCollection.setProperties(_tokenId, _properties);
+		} else {
+			revert("Wrong collection type. Works only with NFT or RFT");
+		}
 	}
 }
