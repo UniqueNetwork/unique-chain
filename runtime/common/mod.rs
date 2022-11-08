@@ -19,6 +19,7 @@ pub mod construct_runtime;
 pub mod dispatch;
 pub mod ethereum;
 pub mod instance;
+pub mod maintenance;
 pub mod runtime_apis;
 
 #[cfg(feature = "scheduler")]
@@ -90,6 +91,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	maintenance::CheckMaintenance,
 	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,

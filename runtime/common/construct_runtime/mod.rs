@@ -94,6 +94,8 @@ macro_rules! construct_runtime {
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
                 EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
 
+                Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
+
                 #[runtimes(opal)]
                 TestUtils: pallet_test_utils = 255,
             }
