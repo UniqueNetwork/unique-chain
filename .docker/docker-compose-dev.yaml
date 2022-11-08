@@ -1,9 +1,0 @@
-version: "3.5"
-
-services:
-  node-dev:
-    build:
-      context: ../
-      dockerfile: .docker/Dockerfile-chain-dev
-    image: node-dev
-    container_name: node-dev

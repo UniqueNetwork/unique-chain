@@ -88,14 +88,13 @@
         {
             "bin": "/unique-chain/current/release/unique-collator",
             "upgradeBin": "/unique-chain/target/release/unique-collator",
-            "upgradeWasm": "/unique-chain/target/release/wbuild/{{ FEATURE }}/{{ RUNTIME }}_runtime.compact.compressed.wasm",
+            "upgradeWasm": "/unique-chain/target/release/wbuild/{{ NETWORK }}-runtime/{{ NETWORK }}_runtime.compact.compressed.wasm",
             "id": "1000",
             "balance": "1000000000000000000000000",
             "chainRawInitializer": [
                 "chainql",
-                "--ext-str=REPLICA_FROM",
                 "--tla-code=rawSpec=import '${rawSpec}'",
-                "--tla-code=forkFrom=std.extVar('REPLICA_FROM')",
+                "--tla-str=forkFrom={{ REPLICA_FROM }}",
                 "fork.jsonnet"
             ],
             "nodes": [

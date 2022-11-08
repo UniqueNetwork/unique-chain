@@ -1,27 +1,15 @@
-name: testnet-build
+name: testnet-image-build
 
 # Controls when the action will run.
 on:
- # Triggers the workflow on push or pull request events but only for the master branch
-  pull_request:
-    branches:
-      - master
-    types:
-      - opened
-      - reopened
-      - synchronize   #commit(s) pushed to the pull request
-      - ready_for_review
-
+  workflow_call:
+  
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 #Define Workflow variables
 env:
   REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -52,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}
-            network {unique}, runtime {unique}, features {unique-runtime}
+            network {opal}
+            network {quartz}
+            network {unique}
 
   testnet-build:
     needs: prepare-execution-marix
@@ -97,8 +85,7 @@ jobs:
             NETWORK=${{ matrix.network }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration

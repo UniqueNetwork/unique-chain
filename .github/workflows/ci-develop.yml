@@ -16,14 +16,13 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
-  yarn-test-dev:
+  yarn-dev:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
-    uses: ./.github/workflows/dev-build-tests_v2.yml
-
+    uses: ./.github/workflows/yarn-dev.yml
 
   unit-test:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
-    uses: ./.github/workflows/unit-test_v2.yml
+    uses: ./.github/workflows/unit-test.yml
 
   canary:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'canary')) }}    # Conditional check for draft & labels per job.
@@ -41,16 +40,12 @@ jobs:
   
   node-only-update:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'node-only-update')) }}  # Conditional check for draft & labels per job.
-    uses: ./.github/workflows/node-only-update_v2.yml
+    uses: ./.github/workflows/node-only-update.yml
     
-  parallel_and_sequential_tests:
+  integration:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'integration')) }}      # Conditional check for draft & labels per job.
     uses: ./.github/workflows/integration-tests.yml
 
   codestyle:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
-    uses: ./.github/workflows/codestyle_v2.yml
-  
-  yarn_eslint:
-    if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
-    uses: ./.github/workflows/test_codestyle_v2.yml
+    uses: ./.github/workflows/codestyle.yml
