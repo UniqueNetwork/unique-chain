@@ -467,6 +467,23 @@ describe('Scheduling token and balance transfers', () => {
     // After the `numFilledBlocks` the periodic operation will eventually be executed
     expect(await helper.testUtils.testValue()).to.be.equal(secondExecTestVal);
   });
+
+  itSub('scheduled operations does not change nonce', async ({helper}) => {
+    const scheduledId = await helper.arrange.makeScheduledId();
+    const blocksBeforeExecution = 4;
+
+    await helper.scheduler
+      .scheduleAfter<DevUniqueHelper>(scheduledId, blocksBeforeExecution)
+      .balance.transferToSubstrate(alice, bob.address, 1n);
+
+    const initNonce = await helper.chain.getNonce(alice.address);
+
+    await helper.wait.newBlocks(blocksBeforeExecution + 1);
+
+    const finalNonce = await helper.chain.getNonce(alice.address);
+
+    expect(initNonce).to.be.equal(finalNonce);
+  });
 });
 
 describe('Negative Test: Scheduling', () => {

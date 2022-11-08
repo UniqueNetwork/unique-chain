@@ -32,10 +32,6 @@ use pallet_transaction_payment::ChargeTransactionPayment;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtraScheduler = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
 	ChargeTransactionPayment<Runtime>,
@@ -43,12 +39,6 @@ pub type SignedExtraScheduler = (
 
 fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
 	(
-		frame_system::CheckSpecVersion::<Runtime>::new(),
-		frame_system::CheckGenesis::<Runtime>::new(),
-		frame_system::CheckEra::<Runtime>::from(Era::Immortal),
-		frame_system::CheckNonce::<Runtime>::from(frame_system::Pallet::<Runtime>::account_nonce(
-			from,
-		)),
 		frame_system::CheckWeight::<Runtime>::new(),
 		maintenance::CheckMaintenance,
 		ChargeTransactionPayment::<Runtime>::from(0),
