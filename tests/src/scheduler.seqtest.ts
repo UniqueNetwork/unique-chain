@@ -146,6 +146,47 @@ describe('Scheduling token and balance transfers', () => {
       );
   });
 
+  itSub('scheduler will not insert more tasks than allowed', async ({helper}) => {
+    const maxScheduledPerBlock = 50;
+    const scheduledIds = await helper.arrange.makeScheduledIds(maxScheduledPerBlock + 1);
+    const fillScheduledIds = scheduledIds.slice(0, maxScheduledPerBlock);
+    const extraScheduledId = scheduledIds[maxScheduledPerBlock];
+
+    // Since the dev node has Instant Seal,
+    // we need a larger gap between the current block and the target one.
+    //
+    // We will schedule `maxScheduledPerBlock` transaction into the target block,
+    // so we need at least `maxScheduledPerBlock`-wide gap.
+    // We add some additional blocks to this gap to mitigate possible PolkadotJS delays.
+    const waitForBlocks = await helper.arrange.isDevNode() ? maxScheduledPerBlock + 5 : 5;
+
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks;
+
+    const amount = 1n * helper.balance.getOneTokenNominal();
+
+    const balanceBefore = await helper.balance.getSubstrate(bob.address);
+
+    // Fill the target block
+    for (let i = 0; i < maxScheduledPerBlock; i++) {
+      await helper.scheduler.scheduleAt(fillScheduledIds[i], executionBlock)
+        .balance.transferToSubstrate(superuser, bob.address, amount);
+    }
+
+    // Try to schedule a task into a full block
+    await expect(helper.scheduler.scheduleAt(extraScheduledId, executionBlock)
+      .balance.transferToSubstrate(superuser, bob.address, amount))
+      .to.be.rejectedWith(/scheduler\.AgendaIsExhausted/);
+
+    await helper.wait.forParachainBlockNumber(executionBlock);
+
+    const balanceAfter = await helper.balance.getSubstrate(bob.address);
+
+    expect(balanceAfter > balanceBefore).to.be.true;
+
+    const diff = balanceAfter - balanceBefore;
+    expect(diff).to.be.equal(amount * BigInt(maxScheduledPerBlock));
+  });
+
   itSub.ifWithPallets('Scheduled tasks are transactional', [Pallets.TestUtils], async ({helper}) => {
     const scheduledId = await helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
