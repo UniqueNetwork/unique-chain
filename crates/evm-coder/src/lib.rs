@@ -163,7 +163,7 @@ pub mod types {
 	#[cfg(feature = "std")]
 	define_simple_type!(type string = ::std::string::String);
 
-	#[derive(Default, Debug)]
+	#[derive(Default, Debug, PartialEq)]
 	pub struct bytes(pub Vec<u8>);
 	impl Signature for bytes {
 		const SIGNATURE: SignatureUnit = make_signature!(new fixed("bytes"));
