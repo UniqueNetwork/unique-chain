@@ -186,6 +186,7 @@ fn dummy_counter() -> WeightCounter {
 
 benchmarks! {
 	// `service_agendas` when no work is done.
+	// (multiple agendas - scheduled tasks in several blocks)
 	service_agendas_base {
 		let now = T::BlockNumber::from(BLOCK_NUMBER);
 		IncompleteSince::<T>::put(now - One::one());
@@ -196,6 +197,7 @@ benchmarks! {
 	}
 
 	// `service_agenda` when no work is done.
+	// (only one agenda - scheduled tasks in a single block)
 	service_agenda_base {
 		let now = BLOCK_NUMBER.into();
 		let s in 0 .. T::MaxScheduledPerBlock::get();
