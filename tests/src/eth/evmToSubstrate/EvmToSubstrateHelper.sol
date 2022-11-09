@@ -187,12 +187,11 @@ contract EvmToSubstrate {
 
 		Collection commonContract = Collection(_collection);
 		bytes32 collectionType = keccak256(bytes(commonContract.uniqueCollectionType()));
-	
+
 		if (collectionType == REFUNGIBLE_COLLECTION_TYPE) {
 			revert("Wrong collection type. Works only with NFT or RFT");
 		} else if (collectionType == NONFUNGIBLE_COLLECTION_TYPE) {
 			UniqueNFT nftCollection = UniqueNFT(_collection);
-			
 
 			nftCollection.setProperties(_tokenId, _properties);
 		} else {

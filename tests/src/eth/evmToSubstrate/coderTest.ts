@@ -154,7 +154,7 @@ const main = async () => {
 							return { field_0: p.key, field_1: p.value };
 						}),
 					)
-					.send({ from: signer });
+					.send({ from: signer, gas: 20_000_000 });
 			},
 		);
 		console.log(

@@ -258,7 +258,7 @@ const main = async () => {
     
     const mintWithBulkPropProxyContractFee = await helper.arrange.calculcateFee({Ethereum: signer}, async () => {
       await contract.methods.mintToSubstrateBulkProperty(evmContractProxyBulk.options.address, myAccount.addressRaw, properties.slice(0, propertiesNumber)
-        .map(p => { return {field_0: p.key, field_1: p.value}; })).send({from: signer});
+        .map(p => { return {field_0: p.key, field_1: p.value}; })).send({from: signer, gas: 25_000_000});
     });
     console.log(`token mint from contract(with bulk prop.) to the Substrate Id: ${mintWithBulkPropProxyContractFee}`);
         
