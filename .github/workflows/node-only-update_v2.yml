@@ -182,6 +182,7 @@ jobs:
           path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-before-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.CORE_GITHUB_TOKEN }}
 
       # TODO uncomment thease steps after the merge
       #- name: Run Parallel tests before Node Parachain upgrade
@@ -327,6 +328,7 @@ jobs:
           path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.CORE_GITHUB_TOKEN }}
 
       # TODO uncomment thease steps after the merge
       #- name: Run Parallel tests after Node Parachain upgrade
