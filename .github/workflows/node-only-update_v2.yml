@@ -88,7 +88,7 @@ jobs:
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
+        run: tail -n 1000 .docker/docker-compose.node.${{ matrix.network }}.yml
 
       - name: Generate launch-config-forkless-nodata.json
         uses: cuchi/jinja2-action@v1.2.0
@@ -100,7 +100,7 @@ jobs:
             RUNTIME=${{ matrix.runtime }}
 
       - name: Show launch-config-forkless configuration
-        run: cat .docker/launch-config-forkless-nodata.json
+        run: tail -n 1000 .docker/launch-config-forkless-nodata.json
 
       - uses: actions/setup-node@v3
         with:
@@ -237,15 +237,28 @@ jobs:
           echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
           docker logs ${ContainerID}
       
-      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
+      - name: Tail chain logs in case of docker image crashed after Polkadot Launch restart
         if: failure()                   # run this step only at failure
         run: |
-          docker exec node-parachain cat /polkadot-launch/9944.log
-          docker exec node-parachain cat /polkadot-launch/9945.log
-          docker exec node-parachain cat /polkadot-launch/alice.log
-          docker exec node-parachain cat /polkadot-launch/eve.log
-          docker exec node-parachain cat /polkadot-launch/dave.log
-          docker exec node-parachain cat /polkadot-launch/charlie.log             
+          docker exec node-parachain tail -n 1000 /polkadot-launch/9944.log
+          docker exec node-parachain tail -n 1000 /polkadot-launch/9945.log
+          docker exec node-parachain tail -n 1000 /polkadot-launch/alice.log         
+
+      - name: copy chain log files from container to the host
+        if: success() || failure()    # run this step even if previous step failed
+        run: |
+          mkdir /tmp/node-only-update
+          docker cp node-parachain:/polkadot-launch/9944.log /tmp/node-only-update/
+          docker cp node-parachain:/polkadot-launch/9945.log /tmp/node-only-update/
+          docker cp node-parachain:/polkadot-launch/alice.log /tmp/node-only-update/
+
+      - name: Upload chain log files
+        if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: node-only-update-chain-logs
+          path: /tmp/node-only-update/
+          if-no-files-found: warn
 
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
         if: success()
