@@ -74,10 +74,22 @@ fn fill_schedule<T: Config>(when: T::BlockNumber, n: u32) -> Result<(), &'static
 	Ok(())
 }
 
+/// Generate a name for a scheduled task from an unsigned integer.
 fn u32_to_name(i: u32) -> TaskName {
 	i.using_encoded(blake2_256)
 }
 
+/// A utility for creating simple scheduled tasks.
+///
+/// # Arguments
+/// * `periodic` - makes the task periodic.
+/// 	Sets the task's period and repetition count to `100`.
+/// * `named` - gives a name to the task: `u32_to_name(0)`.
+/// * `signed` - determines the origin of the task.
+/// 	If true, it will have the Signed origin. Otherwise it will have the Root origin.
+/// 	See [`make_origin`] for details.
+/// * maybe_lookup_len - sets optional lookup length. It is used to benchmark task fetching from the `Preimages` store.
+/// * priority - the task's priority.
 fn make_task<T: Config>(
 	periodic: bool,
 	named: bool,
@@ -105,6 +117,8 @@ fn make_task<T: Config>(
 	}
 }
 
+/// Creates a `SystemCall::remark` scheduled call with a given `len` in bytes.
+/// Returns `None` if the call is too large to encode.
 fn bounded<T: Config>(len: u32) -> Option<ScheduledCall<T>> {
 	let call = <<T as Config>::RuntimeCall>::from(SystemCall::remark {
 		remark: vec![0; len as usize],
@@ -112,6 +126,12 @@ fn bounded<T: Config>(len: u32) -> Option<ScheduledCall<T>> {
 	ScheduledCall::new(call).ok()
 }
 
+/// Creates a scheduled call and maximizes its size.
+///
+/// If the `maybe_lookup_len` is not supplied, the task will create the maximal `Inline` scheduled call.
+///
+/// Otherwise, the function will take the length value from the `maybe_lookup_len`
+/// and find a minimal length value that ensures that the scheduled call will require a Preimage lookup.
 fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 	let bound = EncodedCall::bound() as u32;
 	let mut len = match maybe_lookup_len {
@@ -145,6 +165,10 @@ fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 	}
 }
 
+/// Creates an origin for a scheduled call.
+///
+/// If `signed` is true, it creates the Signed origin from a default account `account("origin", 0, SEED)`.
+/// Otherwise, it creates the Root origin.
 fn make_origin<T: Config>(signed: bool) -> <T as Config>::PalletsOrigin {
 	match signed {
 		true => frame_system::RawOrigin::Signed(account("origin", 0, SEED)).into(),
@@ -152,6 +176,7 @@ fn make_origin<T: Config>(signed: bool) -> <T as Config>::PalletsOrigin {
 	}
 }
 
+/// Creates a dummy `WeightCounter` with the maximum possible weight limit.
 fn dummy_counter() -> WeightCounter {
 	WeightCounter {
 		used: Weight::zero(),
