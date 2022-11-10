@@ -5,7 +5,7 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> proc_macro2::TokenStream
 	let name = &ast.ident;
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
 	let abi_type = impl_abi_type(ast);
-	println!("{}", abi_type);
+	// println!("{}", abi_type);
 	quote! {
 		#can_be_plcaed_in_vec
 		#abi_type
@@ -18,15 +18,22 @@ fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
 	}
 }
 
+fn map_field_to_type<'a>(field: &'a syn::Field) -> &'a syn::Type {
+	&field.ty
+}
+
 fn impl_abi_type(ast: &syn::DeriveInput) -> proc_macro2::TokenStream {
 	let name = &ast.ident;
 	let (fields, params_count) = match &ast.data {
 		syn::Data::Struct(ds) => match ds.fields {
 			syn::Fields::Named(ref fields) => (
-				fields.named.iter().map(|field| &field.ty),
+				fields.named.iter().map(map_field_to_type),
 				fields.named.len(),
 			),
-			syn::Fields::Unnamed(_) => todo!(),
+			syn::Fields::Unnamed(ref fields) => (
+				fields.unnamed.iter().map(map_field_to_type),
+				fields.unnamed.len(),
+			),
 			syn::Fields::Unit => unimplemented!("Unit structs not supported"),
 		},
 		syn::Data::Enum(_) => unimplemented!("Enums not supported"),
