@@ -116,6 +116,7 @@
     "@polkadot/util-crypto": "10.1.11",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
+    "csv-writer": "^1.6.0",
     "find-process": "^1.4.7",
     "solc": "0.8.17",
     "web3": "^1.8.0"

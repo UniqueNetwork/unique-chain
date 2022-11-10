@@ -1,7 +1,7 @@
 import {EthUniqueHelper, usingEthPlaygrounds} from '../util';
 import {readFile} from 'fs/promises';
 import {ContractImports} from '../util/playgrounds/types';
-import {Contract} from '@polkadot/api-contract/base';
+
 import Web3 from 'web3';
 import {IProperty, ITokenPropertyPermission} from '../../util/playgrounds/types';
 import {addressToEvm, decodeAddress} from '@polkadot/util-crypto';
@@ -105,16 +105,16 @@ const main = async () => {
     console.log(`token mint from eth : ${ethFee}`);
     
     const contract = await helper.ethContract.deployByCode(signer, 'EvmToSubstrate', contract_source, CONTRACT_IMPORT);
-    console.log(`contract has been deployed`);
+    console.log('contract has been deployed');
     
     await helper.eth.transferBalanceFromSubstrate(donor, contract.options.address, 100n);
     
-    console.log(`transfer has been completed`);
+    console.log('transfer has been completed');
     
-    await collection.addToAllowList(donor, { Ethereum: contract.options.address });
+    await collection.addToAllowList(donor, {Ethereum: contract.options.address});
     await collection.addAdmin(donor, {Ethereum: contract.options.address});
    
-    console.log(`setup has been completed`);
+    console.log('setup has been completed');
     
     const feeForProxyContractMinting = await helper.arrange.calculcateFee(
       {Ethereum: signer},
