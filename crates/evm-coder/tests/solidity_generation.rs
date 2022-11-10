@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use evm_coder::{execution::Result, generate_stubgen, solidity_interface, types::*};
-use evm_coder::{types::Signature};
+use evm_coder::{abi::AbiType, execution::Result, generate_stubgen, solidity_interface, types::*};
 
 pub struct ERC20;
 

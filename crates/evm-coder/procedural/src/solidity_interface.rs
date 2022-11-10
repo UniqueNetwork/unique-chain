@@ -328,14 +328,14 @@ impl Parse for MethodInfo {
 	}
 }
 
-trait AbiType {
+trait AbiTypeHelper {
 	fn plain(&self) -> syn::Result<&Ident>;
 	fn is_value(&self) -> bool;
 	fn is_caller(&self) -> bool;
 	fn is_special(&self) -> bool;
 }
 
-impl AbiType for Type {
+impl AbiTypeHelper for Type {
 	fn plain(&self) -> syn::Result<&Ident> {
 		let path = parse_path(self)?;
 		let segment = parse_path_segment(path)?;
