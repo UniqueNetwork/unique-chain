@@ -80,7 +80,7 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}            
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
@@ -181,6 +181,7 @@ jobs:
           path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-before-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # TODO uncomment thease steps after the merge
       #- name: Run Parallel tests before Node Parachain upgrade
@@ -220,7 +221,7 @@ jobs:
       #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
       #     reporter: mochawesome-json
       #     fail-on-error: 'false'
-     
+
       - name: Send SIGUSR1 to polkadot-launch process
         if: success() || failure()
         run: |
@@ -235,7 +236,7 @@ jobs:
           docker exec node-parachain kill -SIGUSR1 ${PID}
           echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
           docker logs ${ContainerID}
-      
+
       - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
         if: failure()                   # run this step only at failure
         run: |
@@ -244,7 +245,7 @@ jobs:
           docker exec node-parachain cat /polkadot-launch/alice.log
           docker exec node-parachain cat /polkadot-launch/eve.log
           docker exec node-parachain cat /polkadot-launch/dave.log
-          docker exec node-parachain cat /polkadot-launch/charlie.log             
+          docker exec node-parachain cat /polkadot-launch/charlie.log
 
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
         if: success()
@@ -290,9 +291,10 @@ jobs:
           echo "Halting script"
           exit 0
         shell: bash
-        
+
       ## TODO: Remove next two blocks before switch to Parrallel & Sequental tests. Uncoment commented blocks.
       - name: Run tests after Node Parachain upgrade
+        if: success() || failure()    # run this step even if previous step failed
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
@@ -313,6 +315,7 @@ jobs:
           path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # TODO uncomment thease steps after the merge
       #- name: Run Parallel tests after Node Parachain upgrade
@@ -336,7 +339,7 @@ jobs:
       #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
       #    reporter: mochawesome-json
       #    fail-on-error: 'false'
-      
+
       #- name: Run Sequential tests after Node Parachain upgrade
       #  if: success() || failure()
       #  working-directory: ${{ matrix.mainnet_branch }}/tests
