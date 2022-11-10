@@ -79,17 +79,17 @@ class ContractGroup extends EthGroupBase {
     };
   }
 
-  async deployByCode(signer: string, name: string, src: string, imports?: ContractImports[]): Promise<Contract> {
+  async deployByCode(signer: string, name: string, src: string, imports?: ContractImports[], gas?: number): Promise<Contract> {
     const compiledContract = await this.compile(name, src, imports);
-    return this.deployByAbi(signer, compiledContract.abi, compiledContract.object);
+    return this.deployByAbi(signer, compiledContract.abi, compiledContract.object, gas);
   }
 
-  async deployByAbi(signer: string, abi: any, object: string): Promise<Contract> {
+  async deployByAbi(signer: string, abi: any, object: string, gas?: number): Promise<Contract> {
     const web3 = this.helper.getWeb3();
     const contract = new web3.eth.Contract(abi, undefined, {
       data: object,
       from: signer,
-      gas: this.helper.eth.DEFAULT_GAS,
+      gas: gas ?? this.helper.eth.DEFAULT_GAS,
     });
     return await contract.deploy({data: object}).send({from: signer});
   }
