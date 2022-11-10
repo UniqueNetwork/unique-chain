@@ -2560,24 +2560,21 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    return this.schedule<T>('scheduleNamed', scheduledId, executionBlockNumber, options);
+    return this.schedule<T>('schedule', executionBlockNumber, options);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    return this.schedule<T>('scheduleNamedAfter', scheduledId, blocksBeforeExecution, options);
+    return this.schedule<T>('scheduleAfter', blocksBeforeExecution, options);
   }
 
   schedule<T extends UniqueHelper>(
-    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
-    scheduledId: string,
+    scheduleFn: 'schedule' | 'scheduleAfter',
     blocksNum: number,
     options: ISchedulerOptions = {},
   ) {
@@ -2585,7 +2582,6 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
     const ScheduledHelperType = ScheduledUniqueHelper(this.helper.helperBase);
     return this.helper.clone(ScheduledHelperType, {
       scheduleFn,
-      scheduledId,
       blocksNum,
       options,
     }) as T;
@@ -2874,16 +2870,14 @@ export class AcalaHelper extends XcmChainHelper {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
   return class extends Base {
-    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter';
-    scheduledId: string;
+    scheduleFn: 'schedule' | 'scheduleAfter';
     blocksNum: number;
     options: ISchedulerOptions;
 
     constructor(...args: any[]) {
       const logger = args[0] as ILogger;
       const options = args[1] as {
-        scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
-        scheduledId: string,
+        scheduleFn: 'schedule' | 'scheduleAfter',
         blocksNum: number,
         options: ISchedulerOptions
       };
@@ -2891,25 +2885,42 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
       super(logger);
 
       this.scheduleFn = options.scheduleFn;
-      this.scheduledId = options.scheduledId;
       this.blocksNum = options.blocksNum;
       this.options = options.options;
     }
 
     executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
       const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
-      const extrinsic = 'api.tx.scheduler.' +  this.scheduleFn;
+      
+      const mandatorySchedArgs = [
+        this.blocksNum,
+        this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
+        this.options.priority ?? null,
+        scheduledTx,
+      ];
+      
+      let schedArgs;
+      let scheduleFn;
+
+      if (this.options.scheduledId) {
+        schedArgs = [this.options.scheduledId!, ...mandatorySchedArgs];
+
+        if (this.scheduleFn == 'schedule') {
+          scheduleFn = 'scheduleNamed';
+        } else if (this.scheduleFn == 'scheduleAfter') {
+          scheduleFn = 'scheduleNamedAfter';
+        }
+      } else {
+        schedArgs = mandatorySchedArgs;
+        scheduleFn = this.scheduleFn;
+      }
+
+      const extrinsic = 'api.tx.scheduler.' +  scheduleFn;
 
       return super.executeExtrinsic(
         sender,
         extrinsic,
-        [
-          this.scheduledId,
-          this.blocksNum,
-          this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
-          this.options.priority ?? null,
-          scheduledTx,
-        ],
+        schedArgs,
         expectSuccess,
       );
     }
@@ -3046,20 +3057,18 @@ export class UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueBaseCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueBaseCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3155,20 +3164,18 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueNFTCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueNFTCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3260,20 +3267,18 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueRFTCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueRFTCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3329,20 +3334,18 @@ export class UniqueFTCollection extends UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueFTCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueFTCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3388,20 +3391,18 @@ export class UniqueBaseToken {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledCollection = this.collection.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueBaseToken(this.tokenId, scheduledCollection);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledCollection = this.collection.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueBaseToken(this.tokenId, scheduledCollection);
   }
 
@@ -3468,20 +3469,18 @@ export class UniqueNFToken extends UniqueBaseToken {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledCollection = this.collection.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueNFToken(this.tokenId, scheduledCollection);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledCollection = this.collection.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueNFToken(this.tokenId, scheduledCollection);
   }
 
@@ -3543,20 +3542,18 @@ export class UniqueRFToken extends UniqueBaseToken {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledCollection = this.collection.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueRFToken(this.tokenId, scheduledCollection);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledCollection = this.collection.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueRFToken(this.tokenId, scheduledCollection);
   }
 

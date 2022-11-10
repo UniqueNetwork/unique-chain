@@ -308,9 +308,7 @@ class ArrangeGroup {
     return encodeAddress(address);
   }
 
-  async makeScheduledIds(num: number): Promise<string[]> {
-    await this.helper.wait.noScheduledTasks();
-
+  makeScheduledIds(num: number): string[] {
     function makeId(slider: number) {
       const scheduledIdSize = 64;
       const hexId = slider.toString(16);
@@ -330,8 +328,8 @@ class ArrangeGroup {
     return ids;
   }
 
-  async makeScheduledId(): Promise<string> {
-    return (await this.makeScheduledIds(1))[0];
+  makeScheduledId(): string {
+    return (this.makeScheduledIds(1))[0];
   }
 
   async captureEvents(eventSection: string, eventMethod: string): Promise<EventCapture> {

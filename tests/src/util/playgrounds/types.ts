@@ -172,6 +172,7 @@ export interface IStakingInfo {
 }
 
 export interface ISchedulerOptions {
+  scheduledId?: string,
   priority?: number,
   periodic?: {
     period: number,
