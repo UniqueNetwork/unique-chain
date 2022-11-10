@@ -248,7 +248,7 @@ jobs:
       - name: copy chain log files from container to the host
         if: success() || failure()    # run this step even if previous step failed
         run: |
-          mkdir /tmp/node-only-update
+          mkdir -p /tmp/node-only-update
           docker cp node-parachain:/polkadot-launch/9944.log /tmp/node-only-update/
           docker cp node-parachain:/polkadot-launch/9945.log /tmp/node-only-update/
           docker cp node-parachain:/polkadot-launch/alice.log /tmp/node-only-update/
