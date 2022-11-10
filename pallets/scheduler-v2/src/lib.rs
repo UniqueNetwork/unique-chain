@@ -177,9 +177,23 @@ impl<T: Config> ScheduledCall<T> {
 	}
 }
 
+/// Weight Info for the Preimages fetches.
+pub trait SchedulerPreimagesWeightInfo<W: WeightInfo> {
+	/// Get the weight of a task fetches with a given decoded length.
+	fn service_task_fetched(call_length: u32) -> Weight;
+}
+
+impl<W: WeightInfo> SchedulerPreimagesWeightInfo<W> for () {
+	fn service_task_fetched(_call_length: u32) -> Weight {
+		W::service_task_base()
+	}
+}
+
 /// A scheduler's interface for managing preimages to hashes
 /// and looking up preimages from their hash on-chain.
-pub trait SchedulerPreimages<T: Config>: PreimageRecipient<T::Hash> {
+pub trait SchedulerPreimages<T: Config>:
+	PreimageRecipient<T::Hash> + SchedulerPreimagesWeightInfo<T::WeightInfo>
+{
 	/// No longer request that the data for decoding the given `call` is available.
 	fn drop(call: &ScheduledCall<T>);
 
@@ -200,7 +214,9 @@ pub trait SchedulerPreimages<T: Config>: PreimageRecipient<T::Hash> {
 	) -> Result<(<T as pallet::Config>::RuntimeCall, Option<u32>), DispatchError>;
 }
 
-impl<T: Config, PP: PreimageRecipient<T::Hash>> SchedulerPreimages<T> for PP {
+impl<T: Config, PP: PreimageRecipient<T::Hash> + SchedulerPreimagesWeightInfo<T::WeightInfo>>
+	SchedulerPreimages<T> for PP
+{
 	fn drop(call: &ScheduledCall<T>) {
 		match call {
 			ScheduledCall::Inline(_) => {}
@@ -414,29 +430,25 @@ impl WeightCounter {
 	}
 }
 
-pub(crate) trait MarginalWeightInfo: WeightInfo {
+pub(crate) struct MarginalWeightInfo<T: Config>(sp_std::marker::PhantomData<T>);
+
+impl<T: Config> MarginalWeightInfo<T> {
 	/// Return the weight of servicing a single task.
 	fn service_task(maybe_lookup_len: Option<usize>, named: bool, periodic: bool) -> Weight {
-		let base = Self::service_task_base();
+		let base = T::WeightInfo::service_task_base();
 		let mut total = match maybe_lookup_len {
 			None => base,
-			Some(_l) => {
-				// TODO uncomment if we will use the Preimages
-				// Self::service_task_fetched(l as u32)
-				base
-			}
+			Some(l) => T::Preimages::service_task_fetched(l as u32),
 		};
 		if named {
-			total.saturating_accrue(Self::service_task_named().saturating_sub(base));
+			total.saturating_accrue(T::WeightInfo::service_task_named().saturating_sub(base));
 		}
 		if periodic {
-			total.saturating_accrue(Self::service_task_periodic().saturating_sub(base));
+			total.saturating_accrue(T::WeightInfo::service_task_periodic().saturating_sub(base));
 		}
 		total
 	}
 }
-
-impl<T: WeightInfo> MarginalWeightInfo for T {}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -1119,7 +1131,7 @@ impl<T: Config> Pallet<T> {
 				None => continue,
 				Some(t) => t,
 			};
-			let base_weight = T::WeightInfo::service_task(
+			let base_weight = MarginalWeightInfo::<T>::service_task(
 				task.call.lookup_len().map(|x| x as usize),
 				task.maybe_id.is_some(),
 				task.maybe_periodic.is_some(),
@@ -1176,7 +1188,7 @@ impl<T: Config> Pallet<T> {
 			}
 		};
 
-		weight.check_accrue(T::WeightInfo::service_task(
+		weight.check_accrue(MarginalWeightInfo::<T>::service_task(
 			lookup_len.map(|x| x as usize),
 			task.maybe_id.is_some(),
 			task.maybe_periodic.is_some(),

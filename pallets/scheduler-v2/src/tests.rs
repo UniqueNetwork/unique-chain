@@ -514,7 +514,7 @@ fn on_initialize_weight_is_correct() {
 			Scheduler::on_initialize(1),
 			TestWeightInfo::service_agendas_base()
 				+ TestWeightInfo::service_agenda_base(1)
-				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, true, true)
+				+ <MarginalWeightInfo<Test>>::service_task(None, true, true)
 				+ TestWeightInfo::execute_dispatch_unsigned()
 				+ call_weight + Weight::from_ref_time(4)
 		);
@@ -526,10 +526,10 @@ fn on_initialize_weight_is_correct() {
 			Scheduler::on_initialize(2),
 			TestWeightInfo::service_agendas_base()
 				+ TestWeightInfo::service_agenda_base(2)
-				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, false, true)
+				+ <MarginalWeightInfo<Test>>::service_task(None, false, true)
 				+ TestWeightInfo::execute_dispatch_unsigned()
 				+ call_weight + Weight::from_ref_time(3)
-				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, false, false)
+				+ <MarginalWeightInfo<Test>>::service_task(None, false, false)
 				+ TestWeightInfo::execute_dispatch_unsigned()
 				+ call_weight + Weight::from_ref_time(2)
 		);
@@ -544,7 +544,7 @@ fn on_initialize_weight_is_correct() {
 			Scheduler::on_initialize(3),
 			TestWeightInfo::service_agendas_base()
 				+ TestWeightInfo::service_agenda_base(1)
-				+ <TestWeightInfo as MarginalWeightInfo>::service_task(None, true, false)
+				+ <MarginalWeightInfo<Test>>::service_task(None, true, false)
 				+ TestWeightInfo::execute_dispatch_unsigned()
 				+ call_weight + Weight::from_ref_time(1)
 		);
