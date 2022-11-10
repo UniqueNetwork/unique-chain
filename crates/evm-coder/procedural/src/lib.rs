@@ -247,7 +247,10 @@ pub fn to_log(value: TokenStream) -> TokenStream {
 #[proc_macro_derive(AbiCoder)]
 pub fn abi_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 	let ast = syn::parse(input).unwrap();
-	let ts = abi_derive::impl_abi_macro(&ast);
+	let ts = match abi_derive::impl_abi_macro(&ast) {
+		Ok(e) => e,
+		Err(e) => e.to_compile_error(),
+	};
 	// println!("{}", &ts);
 	ts.into()
 }

@@ -4,8 +4,9 @@ use evm_coder::{
 	abi::{AbiType},
 };
 
-#[derive(AbiCoder)]
-struct TypeStructUnit {}
+// TODO: move to build_failed tests
+// #[derive(AbiCoder)]
+// struct TypeStructUnit {}
 
 #[derive(AbiCoder)]
 struct TypeStruct1SimpleParam {
@@ -70,10 +71,6 @@ fn empty() {}
 #[test]
 fn impl_abi_type_signature() {
 	assert_eq!(
-		<TypeStructUnit as AbiType>::SIGNATURE.as_str().unwrap(),
-		"()"
-	);
-	assert_eq!(
 		<TypeStruct1SimpleParam as AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
@@ -137,7 +134,6 @@ fn impl_abi_type_signature() {
 
 #[test]
 fn impl_abi_type_is_dynamic() {
-	assert_eq!(<TypeStructUnit as AbiType>::is_dynamic(), false);
 	assert_eq!(<TypeStruct1SimpleParam as AbiType>::is_dynamic(), false);
 	assert_eq!(<TypeStruct1DynamicParam as AbiType>::is_dynamic(), true);
 	assert_eq!(<TypeStruct2SimpleParam as AbiType>::is_dynamic(), false);
@@ -168,7 +164,6 @@ fn impl_abi_type_is_dynamic() {
 #[test]
 fn impl_abi_type_size() {
 	const ABI_ALIGNMENT: usize = 32;
-	assert_eq!(<TypeStructUnit as AbiType>::size(), 0);
 	assert_eq!(<TypeStruct1SimpleParam as AbiType>::size(), ABI_ALIGNMENT);
 	assert_eq!(<TypeStruct1DynamicParam as AbiType>::size(), ABI_ALIGNMENT);
 	assert_eq!(
