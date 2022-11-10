@@ -25,6 +25,7 @@ use syn::{
 	parse_macro_input, spanned::Spanned,
 };
 
+mod abi_derive;
 mod solidity_interface;
 mod to_log;
 
@@ -241,4 +242,12 @@ pub fn to_log(value: TokenStream) -> TokenStream {
 		Err(e) => e.to_compile_error(),
 	}
 	.into()
+}
+
+#[proc_macro_derive(AbiCoder)]
+pub fn abi_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let ast = syn::parse(input).unwrap();
+	let ts = abi_derive::impl_abi_macro(&ast);
+	println!("{}", &ts);
+	ts.into()
 }
