@@ -63,16 +63,22 @@ interface IBenchmarkResultForProp {
 }
 
 const main = async () => {
+  const benchmarks = [
+    'substrateFee',
+    'ethFee',
+    'ethBulkFee',
+    'evmProxyContractFee',
+    'evmProxyContractBulkFee',
+  ];
+  const headers = [
+    'propertiesNumber',
+    ...benchmarks,
+  ];
+
+
   const csvWriter = createObjectCsvWriter({
     path: 'properties.csv',
-    header: [
-      'propertiesNumber',
-      'substrateFee',
-      'ethFee',
-      'ethBulkFee',
-      'evmProxyContractFee',
-      'evmProxyContractBulkFee',
-    ],
+    header: headers,
   });
 
   await usingEthPlaygrounds(async (helper, privateKey) => {
@@ -81,7 +87,6 @@ const main = async () => {
     ).toString();
 
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-    const myAccount = await privateKey('//Bob'); // replace with account from polkadot extension
     const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
 
     const contract = await helper.ethContract.deployByCode(
@@ -92,19 +97,32 @@ const main = async () => {
     );
 
     const fees = await benchMintFee(helper, privateKey, contract);
-    console.log(fees);
+    console.log('Minting without properties');
+    console.table(fees);
 
     const result: IBenchmarkResultForProp[] = [];
+    const csvResult: IBenchmarkResultForProp[] = [];
 
     for (let i = 1; i <= 20; i++) {
-      result.push(await benchMintWithProperties(helper, privateKey, contract, {
+      const benchResult = await benchMintWithProperties(helper, privateKey, contract, {
         propertiesNumber: i,
-      }));
+      }) as any;
+
+      csvResult.push(benchResult);
+
+      const minFee = Math.min(...(benchmarks.map(x => benchResult[x])));
+      for(const key of benchmarks) {
+        const keyPercent = Math.round((benchResult[key] / minFee) * 100);
+        benchResult[key] = `${benchResult[key]} (${keyPercent}%)`;
+      }
+
+      result.push(benchResult);
     }
 
-    await csvWriter.writeRecords(result);
+    await csvWriter.writeRecords(csvResult);
 
-    console.table(result);
+    console.log('Minting with properties');
+    console.table(result, headers);
   });
 };
 
