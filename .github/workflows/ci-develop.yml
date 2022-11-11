@@ -25,25 +25,25 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
 
   canary:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'canary')) }}    # Conditional check for draft & labels per job.
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-canary')) }}    # Conditional check for draft & labels per job.
     uses: ./.github/workflows/canary.yml
     secrets: inherit # pass all secrets from initial workflow to nested
 
   xcm:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'xcm')) }}       # Conditional check for draft & labels per job.
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-xcm')) }}       # Conditional check for draft & labels per job.
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested
     
   forkless:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'forkless')) }}  # Conditional check for draft & labels per job.
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/forkless.yml
   
   node-only-update:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'node-only-update')) }}  # Conditional check for draft & labels per job.
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-node-only-update')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/node-only-update.yml
     
   integration:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'integration')) }}      # Conditional check for draft & labels per job.
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-integration')) }}      # Conditional check for draft & labels per job.
     uses: ./.github/workflows/integration-tests.yml
 
   codestyle:
