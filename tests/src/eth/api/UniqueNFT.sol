@@ -13,7 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x55dba919
+/// @dev the ERC-165 identifier for this interface is 0x91a97a68
 interface TokenProperties is Dummy, ERC165 {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
@@ -51,13 +51,21 @@ interface TokenProperties is Dummy, ERC165 {
 	///  or in textual repr: setProperties(uint256,(string,bytes)[])
 	function setProperties(uint256 tokenId, Tuple21[] memory properties) external;
 
-	/// @notice Delete token property value.
+	// /// @notice Delete token property value.
+	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// /// @param tokenId ID of the token.
+	// /// @param key Property key.
+	// /// @dev EVM selector for this function is: 0x066111d1,
+	// ///  or in textual repr: deleteProperty(uint256,string)
+	// function deleteProperty(uint256 tokenId, string memory key) external;
+
+	/// @notice Delete token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
-	/// @param key Property key.
-	/// @dev EVM selector for this function is: 0x066111d1,
-	///  or in textual repr: deleteProperty(uint256,string)
-	function deleteProperty(uint256 tokenId, string memory key) external;
+	/// @param keys Properties key.
+	/// @dev EVM selector for this function is: 0xc472d371,
+	///  or in textual repr: deleteProperties(uint256,string[])
+	function deleteProperties(uint256 tokenId, string[] memory keys) external;
 
 	/// @notice Get token property value.
 	/// @dev Throws error if key not found

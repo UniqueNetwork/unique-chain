@@ -3,9 +3,18 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
-## [v0.1.7] - 2022-11-02
+
+## [v0.1.8] - 2022-11-11
+
 ### Changed
- - Use named structure `EthCrossAccount` in eth functions.
+
+- Added `delete_properties` in eth functions. The `delete_property` function is now deprecated.
+
+## [v0.1.7] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
 
 ## [v0.1.6] - 2022-20-10
 
