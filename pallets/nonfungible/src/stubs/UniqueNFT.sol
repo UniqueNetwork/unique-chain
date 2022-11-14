@@ -18,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x55dba919
+/// @dev the ERC-165 identifier for this interface is 0x91a97a68
 contract TokenProperties is Dummy, ERC165 {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
@@ -74,16 +74,29 @@ contract TokenProperties is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	/// @notice Delete token property value.
+	// /// @notice Delete token property value.
+	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// /// @param tokenId ID of the token.
+	// /// @param key Property key.
+	// /// @dev EVM selector for this function is: 0x066111d1,
+	// ///  or in textual repr: deleteProperty(uint256,string)
+	// function deleteProperty(uint256 tokenId, string memory key) public {
+	// 	require(false, stub_error);
+	// 	tokenId;
+	// 	key;
+	// 	dummy = 0;
+	// }
+
+	/// @notice Delete token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
-	/// @param key Property key.
-	/// @dev EVM selector for this function is: 0x066111d1,
-	///  or in textual repr: deleteProperty(uint256,string)
-	function deleteProperty(uint256 tokenId, string memory key) public {
+	/// @param keys Properties key.
+	/// @dev EVM selector for this function is: 0xc472d371,
+	///  or in textual repr: deleteProperties(uint256,string[])
+	function deleteProperties(uint256 tokenId, string[] memory keys) public {
 		require(false, stub_error);
 		tokenId;
-		key;
+		keys;
 		dummy = 0;
 	}
 

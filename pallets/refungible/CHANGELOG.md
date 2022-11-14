@@ -2,9 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.2.6] - 2022-11-02
+<!-- bureaucrate goes here -->
+
+## [v0.2.7] - 2022-11-11
+
 ### Changed
- - Use named structure `EthCrossAccount` in eth functions.
+
+- Added `delete_properties` in eth functions. The `delete_property` function is now deprecated.
+
+## [v0.2.6] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
 
 ## [v0.2.5] - 2022-20-10
 
@@ -17,8 +27,6 @@ All notable changes to this project will be documented in this file.
 ### Change
 
 - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
-
-<!-- bureaucrate goes here -->
 
 ## [v0.2.3] 2022-08-16
 

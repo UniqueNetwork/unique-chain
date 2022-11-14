@@ -138,18 +138,25 @@ describe('EVM token properties', () => {
           mutable: true,
           collectionAdmin: true,
         },
+      },
+      {
+        key: 'testKey_1',
+        permission: {
+          mutable: true,
+          collectionAdmin: true,
+        },
       }],
     });
     
     const token = await collection.mintToken(alice);
-    await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
+    await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}, {key: 'testKey_1', value: 'testValue_1'}]);
 
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    await contract.methods.deleteProperty(token.tokenId, 'testKey').send({from: caller});
+    await contract.methods.deleteProperties(token.tokenId, ['testKey', 'testKey_1']).send({from: caller});
 
     const result = await token.getProperties(['testKey']);
     expect(result.length).to.equal(0);

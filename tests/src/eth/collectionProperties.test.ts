@@ -139,7 +139,7 @@ describe('Supports ERC721Metadata', () => {
     await contract.methods.setProperty(tokenId1, 'URI', Buffer.from(URI)).send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(URI);
 
-    await contract.methods.deleteProperty(tokenId1, 'URI').send();
+    await contract.methods.deleteProperties(tokenId1, ['URI']).send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI + SUFFIX);
 
     const token2Result = await contract.methods.mintWithTokenURI(bruh, URI).send();
@@ -147,7 +147,7 @@ describe('Supports ERC721Metadata', () => {
 
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(URI);
 
-    await contract.methods.deleteProperty(tokenId2, 'URI').send();
+    await contract.methods.deleteProperties(tokenId2, ['URI']).send();
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI);
 
     await contract.methods.setProperty(tokenId2, 'URISuffix', Buffer.from(SUFFIX)).send();
