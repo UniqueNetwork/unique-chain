@@ -275,11 +275,11 @@ macro_rules! impl_tuples {
 		#[allow(non_snake_case)]
 		impl<$($ident),+> AbiWrite for ($($ident,)+)
 		where
-			$($ident: AbiWrite,)+
+			$($ident: AbiWrite + AbiType,)+
 		{
 			fn abi_write(&self, writer: &mut AbiWriter) {
 				let ($($ident,)+) = self;
-				if writer.is_dynamic {
+				if <Self as AbiType>::is_dynamic() {
 					let mut sub = AbiWriter::new();
 					$($ident.abi_write(&mut sub);)+
 					writer.write_subresult(sub);
