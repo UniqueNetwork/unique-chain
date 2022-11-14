@@ -359,6 +359,37 @@ describe('Refungible: Plain calls', () => {
       expect(+balance).to.equal(1);
     }
   });
+  
+  itEth('Can perform transferCross()', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const to = helper.ethCrossAccount.fromAddress(receiver);
+    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry', '6', '6');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+
+    {
+      const result = await contract.methods.transferCross(to, tokenId).send({from: caller});
+
+      const event = result.events.Transfer;
+      expect(event.address).to.equal(collectionAddress);
+      expect(event.returnValues.from).to.equal(caller);
+      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.returnValues.tokenId).to.equal(tokenId.toString());
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(caller).call();
+      expect(+balance).to.equal(0);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(receiver).call();
+      expect(+balance).to.equal(1);
+    }
+  });
 
   itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);

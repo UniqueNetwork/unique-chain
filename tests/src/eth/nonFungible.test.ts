@@ -402,6 +402,37 @@ describe('NFT: Plain calls', () => {
       expect(+balance).to.equal(1);
     }
   });
+  
+  itEth('Can perform transferCross()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {});
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const to = helper.ethCrossAccount.fromAddress(receiver);
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    {
+      const result = await contract.methods.transferCross(to, tokenId).send({from: owner});
+
+      const event = result.events.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.from).to.be.equal(owner);
+      expect(event.returnValues.to).to.be.equal(receiver);
+      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(owner).call();
+      expect(+balance).to.equal(0);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(receiver).call();
+      expect(+balance).to.equal(1);
+    }
+  });
 });
 
 describe('NFT: Fees', () => {

@@ -230,6 +230,37 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
+  itEth('Can perform transferCross()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const to = helper.ethCrossAccount.fromAddress(receiver);
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, 200n, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    {
+      const result = await contract.methods.transferCross(to, 50).send({from: owner});
+      
+      const event = result.events.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.from).to.be.equal(owner);
+      expect(event.returnValues.to).to.be.equal(receiver);
+      expect(event.returnValues.value).to.be.equal('50');
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(owner).call();
+      expect(+balance).to.equal(150);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(receiver).call();
+      expect(+balance).to.equal(50);
+    }
+  });
+  
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);

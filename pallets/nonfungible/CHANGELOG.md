@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.9] - 2022-11-14
+
+### Changed
+
+- Added `transfer_cross` in eth functions.
+
 ## [v0.1.8] - 2022-11-11
 
 ### Changed
