@@ -32,10 +32,16 @@ use fp_self_contained::*;
 // #[cfg(any(feature = "std", test))]
 // pub use sp_runtime::BuildStorage;
 
+use scale_info::TypeInfo;
 use sp_runtime::{
 	Permill, Perbill, Percent, create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member},
-	transaction_validity::{TransactionSource, TransactionValidity},
+	traits::{
+		AccountIdLookup, BlakeTwo256, Block as BlockT, AccountIdConversion, Zero, Member,
+		SignedExtension,
+	},
+	transaction_validity::{
+		TransactionSource, TransactionValidity, ValidTransaction, InvalidTransaction,
+	},
 	ApplyExtrinsicResult, RuntimeAppPublic,
 };
 
@@ -89,7 +95,6 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use smallvec::smallvec;
-// use scale_info::TypeInfo;
 use codec::{Encode, Decode};
 use fp_rpc::TransactionStatus;
 use sp_runtime::{
@@ -192,7 +197,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 924012,
+	spec_version: 924013,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -958,6 +963,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 			from,
 		)),
 		frame_system::CheckWeight::<Runtime>::new(),
+		CheckMaintenance,
 		// sponsoring transaction logic
 		// pallet_charge_transaction::ChargeTransactionPayment::<Runtime>::new(0),
 	)
@@ -1121,6 +1127,92 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 	type DefaultSponsoringRateLimit = DefaultSponsoringRateLimit;
 }
 
+impl pallet_maintenance::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = pallet_maintenance::weights::SubstrateWeight<Self>;
+}
+
+#[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
+pub struct CheckMaintenance;
+
+impl SignedExtension for CheckMaintenance {
+	type AccountId = AccountId;
+	type Call = Call;
+	type AdditionalSigned = ();
+	type Pre = ();
+
+	const IDENTIFIER: &'static str = "CheckMaintenance";
+
+	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
+		Ok(())
+	}
+
+	fn pre_dispatch(
+		self,
+		who: &Self::AccountId,
+		call: &Self::Call,
+		info: &DispatchInfoOf<Self::Call>,
+		len: usize,
+	) -> Result<Self::Pre, TransactionValidityError> {
+		self.validate(who, call, info, len).map(|_| ())
+	}
+
+	fn validate(
+		&self,
+		_who: &Self::AccountId,
+		call: &Self::Call,
+		_info: &DispatchInfoOf<Self::Call>,
+		_len: usize,
+	) -> TransactionValidity {
+		if Maintenance::is_enabled() {
+			match call {
+				Call::EvmMigration(_)
+				| Call::EVM(_)
+				| Call::Ethereum(_)
+				| Call::Inflation(_)
+				| Call::Maintenance(_)
+				| Call::Scheduler(_)
+				| Call::Structure(_)
+				| Call::Unique(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+
+				#[cfg(any(feature = "opal-runtime", feature = "quartz-runtime"))]
+				Call::RmrkCore(_) | Call::RmrkEquip(_) => {
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+				}
+
+				_ => Ok(ValidTransaction::default()),
+			}
+		} else {
+			Ok(ValidTransaction::default())
+		}
+	}
+
+	fn pre_dispatch_unsigned(
+		call: &Self::Call,
+		info: &DispatchInfoOf<Self::Call>,
+		len: usize,
+	) -> Result<(), TransactionValidityError> {
+		Self::validate_unsigned(call, info, len).map(|_| ())
+	}
+
+	fn validate_unsigned(
+		call: &Self::Call,
+		_info: &DispatchInfoOf<Self::Call>,
+		_len: usize,
+	) -> TransactionValidity {
+		if Maintenance::is_enabled() {
+			match call {
+				Call::EVM(_) | Call::Ethereum(_) | Call::EvmMigration(_) => {
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+				}
+				_ => Ok(ValidTransaction::default()),
+			}
+		} else {
+			Ok(ValidTransaction::default())
+		}
+	}
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1173,6 +1265,8 @@ construct_runtime!(
 		EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage} = 151,
 		EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
 		EvmMigration: pallet_evm_migration::{Pallet, Call, Storage} = 153,
+
+		Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
 	}
 );
 
@@ -1218,6 +1312,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	CheckMaintenance,
 	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
@@ -1228,6 +1323,7 @@ pub type SignedExtraScheduler = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
+	CheckMaintenance,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =

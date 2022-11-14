@@ -4,14 +4,16 @@ import {
   changeIssuer,
   createCollection,
 } from './util/tx';
+import {Pallets, requirePallets} from '../util/helpers';
 
 describe('integration test: collection issuer', () => {
   const Alice = '//Alice';
   const Bob = '//Bob';
 
   let api: any;
-  before(async () => {
+  before(async function() {
     api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   it('change collection issuer', async () => {

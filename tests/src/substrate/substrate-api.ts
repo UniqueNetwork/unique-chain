@@ -39,6 +39,10 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+      CheckMaintenance: {
+        extrinsic: {},
+        payload: {},
+      },
     },
     rpc: {
       unique: defs.unique.rpc,

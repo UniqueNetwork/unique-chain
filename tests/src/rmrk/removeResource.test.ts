@@ -9,16 +9,17 @@ import {
   createCollection,
   mintNft, removeNftResource, sendNft,
 } from './util/tx';
-
+import {Pallets, requirePallets} from '../util/helpers';
 
 
 
 describe('Integration test: remove nft resource', () => {
   let api: any;
   let ss58Format: string;
-  before(async () => {
+  before(async function() {
     api = await getApiConnection();
     ss58Format = api.registry.getChainProperties()!.toJSON().ss58Format;
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   const Alice = '//Alice';

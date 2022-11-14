@@ -1,10 +1,14 @@
 import {getApiConnection} from '../substrate/substrate-api';
 import {expectTxFailure} from './util/helpers';
 import {mintNft, createCollection, setResourcePriorities} from './util/tx';
+import {Pallets, requirePallets} from '../util/helpers';
 
 describe('integration test: set NFT resource priorities', () => {
   let api: any;
-  before(async () => { api = await getApiConnection(); });
+  before(async function() {
+    api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
+  });
 
   const alice = '//Alice';
   const bob = '//Bob';

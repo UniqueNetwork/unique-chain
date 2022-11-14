@@ -5316,6 +5316,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-fungible",
  "pallet-inflation",
+ "pallet-maintenance",
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
@@ -6070,6 +6071,18 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-maintenance"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
  "sp-std",
 ]
 
@@ -8625,6 +8638,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-fungible",
  "pallet-inflation",
+ "pallet-maintenance",
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
@@ -12628,6 +12642,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-fungible",
  "pallet-inflation",
+ "pallet-maintenance",
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",

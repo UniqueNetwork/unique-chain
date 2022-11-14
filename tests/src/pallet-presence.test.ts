@@ -52,6 +52,7 @@ const requiredPallets = [
   'refungible',
   'scheduler',
   'charging',
+  'maintenance',
 ];
 
 // Pallets that depend on consensus and governance configuration

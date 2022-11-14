@@ -13,6 +13,7 @@ import {
   sendNft,
   unequipNft,
 } from './util/tx';
+import {Pallets, requirePallets} from '../util/helpers';
 
 const Alice = '//Alice';
 const Bob = '//Bob';
@@ -122,8 +123,9 @@ async function checkEquipStatus(
 describe.skip('integration test: Equip NFT', () => {
 
   let api: any;
-  before(async () => {
+  before(async function() {
     api = await getApiConnection();
+    await requirePallets(this, [Pallets.RmrkCore]);
   });
 
   it('equip nft', async () => {
