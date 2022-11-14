@@ -137,7 +137,7 @@ pub mod types {
 	#[cfg(feature = "std")]
 	pub type string = ::std::string::String;
 
-	#[derive(Default, Debug, PartialEq)]
+	#[derive(Default, Debug, PartialEq, Clone)]
 	pub struct bytes(pub Vec<u8>);
 
 	/// Solidity doesn't have `void` type, however we have special implementation
