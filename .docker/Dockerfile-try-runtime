@@ -41,11 +41,9 @@ ENV REPLICA_FROM $REPLICA_FROM
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
-RUN echo "[BE CAREFUL] applying disable-ic patch\n" && \
-    git apply .docker/patch/disable-ic.patch
 
 RUN echo "Requested features: $FEATURE\n" && \
     echo "Fork from: $REPLICA_FROM\n" && \
-    cargo build --features=try-runtime,$FEATURE --release
+    cargo build --features=$FEATURE --release
 
-CMD cargo run --features=try-runtime,$FEATURE --release -- try-runtime on-runtime-upgrade live --uri $REPLICA_FROM
+CMD cargo run --features=try-runtime,$FEATURE --release -- try-runtime -ltry-runtime::cli=debug --no-spec-check-panic on-runtime-upgrade live --uri $REPLICA_FROM

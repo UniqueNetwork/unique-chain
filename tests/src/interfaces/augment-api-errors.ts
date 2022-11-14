@@ -1,10 +1,46 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/errors';
+
+import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
+
+export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
 
 declare module '@polkadot/api-base/types/errors' {
-  export interface AugmentedErrors<ApiType extends ApiTypes> {
+  interface AugmentedErrors<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * Error due to action requiring admin to be set.
+       **/
+      AdminNotSet: AugmentedError<ApiType>;
+      /**
+       * Errors caused by incorrect actions with a locked balance.
+       **/
+      IncorrectLockedBalanceOperation: AugmentedError<ApiType>;
+      /**
+       * No permission to perform an action.
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Insufficient funds to perform an action.
+       **/
+      NotSufficientFunds: AugmentedError<ApiType>;
+      /**
+       * Occurs when a pending unstake cannot be added in this block. PENDING_LIMIT_PER_BLOCK` limits exceeded.
+       **/
+      PendingForBlockOverflow: AugmentedError<ApiType>;
+      /**
+       * The error is due to the fact that the collection/contract must already be sponsored in order to perform the action.
+       **/
+      SponsorNotSet: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -57,7 +93,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AddressNotInAllowlist: AugmentedError<ApiType>;
       /**
-       * Requested value more than approved.
+       * Requested value is more than the approved
        **/
       ApprovedValueTooLow: AugmentedError<ApiType>;
       /**
@@ -113,7 +149,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
       /**
-       * Only ASCII letters, digits, and '_', '-' are allowed
+       * Only ASCII letters, digits, and symbols `_`, `-`, and `.` are allowed
        **/
       InvalidCharacterInPropertyKey: AugmentedError<ApiType>;
       /**
@@ -133,7 +169,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoSpaceForProperty: AugmentedError<ApiType>;
       /**
-       * Not sufficient funds to perform action
+       * Insufficient funds to perform an action
        **/
       NotSufficientFounds: AugmentedError<ApiType>;
       /**
@@ -153,15 +189,15 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       PublicMintingNotAllowed: AugmentedError<ApiType>;
       /**
-       * Only tokens from specific collections may nest tokens under this
+       * Only tokens from specific collections may nest tokens under this one
        **/
       SourceCollectionIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
-       * Item not exists.
+       * Item does not exist
        **/
       TokenNotFound: AugmentedError<ApiType>;
       /**
-       * Item balance not enough.
+       * Item is balance not enough
        **/
       TokenValueTooLow: AugmentedError<ApiType>;
       /**
@@ -173,11 +209,11 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TransferNotAllowed: AugmentedError<ApiType>;
       /**
-       * Target collection doesn't supports this operation
+       * The operation is not supported
        **/
       UnsupportedOperation: AugmentedError<ApiType>;
       /**
-       * User not passed nesting rule
+       * User does not satisfy the nesting rule
        **/
       UserIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
@@ -259,17 +295,54 @@ declare module '@polkadot/api-base/types/errors' {
     };
     evmContractHelpers: {
       /**
-       * This method is only executable by owner
+       * No pending sponsor for contract.
+       **/
+      NoPendingSponsor: AugmentedError<ApiType>;
+      /**
+       * This method is only executable by contract owner
        **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * Number of methods that sponsored limit is defined for exceeds maximum.
+       **/
+      TooManyMethodsHaveSponsoredLimit: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
     evmMigration: {
+      /**
+       * Migration of this account is not yet started, or already finished.
+       **/
       AccountIsNotMigrating: AugmentedError<ApiType>;
+      /**
+       * Can only migrate to empty address.
+       **/
       AccountNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    foreignAssets: {
+      /**
+       * AssetId exists
+       **/
+      AssetIdExisted: AugmentedError<ApiType>;
+      /**
+       * AssetId not exists
+       **/
+      AssetIdNotExists: AugmentedError<ApiType>;
+      /**
+       * The given location could not be used (e.g. because it cannot be expressed in the
+       * desired version of XCM).
+       **/
+      BadLocation: AugmentedError<ApiType>;
+      /**
+       * MultiLocation existed
+       **/
+      MultiLocationExisted: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -277,15 +350,15 @@ declare module '@polkadot/api-base/types/errors' {
     };
     fungible: {
       /**
-       * Fungible token does not support nested
+       * Fungible token does not support nesting.
        **/
       FungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
-       * Tried to set data for fungible item
+       * Tried to set data for fungible item.
        **/
       FungibleItemsDontHaveData: AugmentedError<ApiType>;
       /**
-       * Not default id passed as TokenId argument
+       * Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
       /**
@@ -293,7 +366,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Setting item properties is not allowed
+       * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
@@ -431,19 +504,19 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotRefungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Refungible token can't nest other tokens
+       * Refungible token can't nest other tokens.
        **/
       RefungibleDisallowsNesting: AugmentedError<ApiType>;
       /**
-       * Refungible token can't be repartitioned by user who isn't owns all pieces
+       * Refungible token can't be repartitioned by user who isn't owns all pieces.
        **/
       RepartitionWhileNotOwningAllPieces: AugmentedError<ApiType>;
       /**
-       * Setting item properties is not allowed
+       * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
       /**
-       * Maximum refungibility exceeded
+       * Maximum refungibility exceeded.
        **/
       WrongRefungiblePieces: AugmentedError<ApiType>;
       /**
@@ -452,25 +525,83 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     rmrkCore: {
+      /**
+       * Not the target owner of the sent NFT.
+       **/
       CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
+      /**
+       * Not the target owner of the sent NFT.
+       **/
       CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      /**
+       * NFT was not sent and is not pending.
+       **/
       CannotRejectNonPendingNft: AugmentedError<ApiType>;
+      /**
+       * If an NFT is sent to a descendant, that would form a nesting loop, an ouroboros.
+       * Sending to self is redundant.
+       **/
       CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
+      /**
+       * Too many tokens created in the collection, no new ones are allowed.
+       **/
       CollectionFullOrLocked: AugmentedError<ApiType>;
+      /**
+       * Only destroying collections without tokens is allowed.
+       **/
       CollectionNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Collection does not exist, has a wrong type, or does not map to a Unique ID.
+       **/
       CollectionUnknown: AugmentedError<ApiType>;
+      /**
+       * Property of the type of RMRK collection could not be read successfully.
+       **/
       CorruptedCollectionType: AugmentedError<ApiType>;
-      NftTypeEncodeError: AugmentedError<ApiType>;
+      /**
+       * Could not find an ID for a collection. It is likely there were too many collections created on the chain, causing an overflow.
+       **/
       NoAvailableCollectionId: AugmentedError<ApiType>;
+      /**
+       * Token does not exist, or there is no suitable ID for it, likely too many tokens were created in a collection, causing an overflow.
+       **/
       NoAvailableNftId: AugmentedError<ApiType>;
+      /**
+       * Could not find an ID for the resource. It is likely there were too many resources created on an NFT, causing an overflow.
+       **/
       NoAvailableResourceId: AugmentedError<ApiType>;
+      /**
+       * Token is marked as non-transferable, and thus cannot be transferred.
+       **/
       NonTransferable: AugmentedError<ApiType>;
+      /**
+       * No permission to perform action.
+       **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * No such resource found.
+       **/
       ResourceDoesntExist: AugmentedError<ApiType>;
+      /**
+       * Resource is not pending for the operation.
+       **/
       ResourceNotPending: AugmentedError<ApiType>;
+      /**
+       * Could not find a property by the supplied key.
+       **/
       RmrkPropertyIsNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many symbols supplied as the property key. The maximum is [256](up_data_structs::MAX_PROPERTY_KEY_LENGTH).
+       **/
       RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Too many bytes supplied as the property value. The maximum is [32768](up_data_structs::MAX_PROPERTY_VALUE_LENGTH).
+       **/
       RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Something went wrong when decoding encoded data from the storage.
+       * Perhaps, there was a wrong key supplied for the type, or the data was improperly stored.
+       **/
       UnableToDecodeRmrkData: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -478,12 +609,33 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     rmrkEquip: {
+      /**
+       * Base collection linked to this ID does not exist.
+       **/
       BaseDoesntExist: AugmentedError<ApiType>;
+      /**
+       * No Theme named "default" is associated with the Base.
+       **/
       NeedsDefaultThemeFirst: AugmentedError<ApiType>;
+      /**
+       * Could not find an ID for a Base collection. It is likely there were too many collections created on the chain, causing an overflow.
+       **/
       NoAvailableBaseId: AugmentedError<ApiType>;
+      /**
+       * Could not find a suitable ID for a Part, likely too many Part tokens were created in the Base, causing an overflow
+       **/
       NoAvailablePartId: AugmentedError<ApiType>;
+      /**
+       * Cannot assign equippables to a fixed Part.
+       **/
       NoEquippableOnFixedPart: AugmentedError<ApiType>;
+      /**
+       * Part linked to this ID does not exist.
+       **/
       PartDoesntExist: AugmentedError<ApiType>;
+      /**
+       * No permission to perform action.
+       **/
       PermissionError: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -514,19 +666,19 @@ declare module '@polkadot/api-base/types/errors' {
     };
     structure: {
       /**
-       * While iterating over children, encountered breadth limit
+       * While nesting, reached the breadth limit of nesting, exceeding the provided budget.
        **/
       BreadthLimit: AugmentedError<ApiType>;
       /**
-       * While searched for owner, encountered depth limit
+       * While nesting, reached the depth limit of nesting, exceeding the provided budget.
        **/
       DepthLimit: AugmentedError<ApiType>;
       /**
-       * While searched for owner, got already checked account
+       * While nesting, encountered an already checked account, detecting a loop.
        **/
       OuroborosDetected: AugmentedError<ApiType>;
       /**
-       * While searched for owner, found token owner by not-yet-existing token
+       * Couldn't find the token owner that is itself a token.
        **/
       TokenNotFound: AugmentedError<ApiType>;
       /**
@@ -578,7 +730,55 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    testUtils: {
+      TestPalletDisabled: AugmentedError<ApiType>;
+      TriggerRollback: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    tokens: {
+      /**
+       * Cannot convert Amount into Balance type
+       **/
+      AmountIntoBalanceFailed: AugmentedError<ApiType>;
+      /**
+       * The balance is too low
+       **/
+      BalanceTooLow: AugmentedError<ApiType>;
+      /**
+       * Beneficiary account must pre-exist
+       **/
+      DeadAccount: AugmentedError<ApiType>;
+      /**
+       * Value too low to create account due to existential deposit
+       **/
+      ExistentialDeposit: AugmentedError<ApiType>;
+      /**
+       * Transfer/payment would kill account
+       **/
+      KeepAlive: AugmentedError<ApiType>;
+      /**
+       * Failed because liquidity restrictions due to locking
+       **/
+      LiquidityRestrictions: AugmentedError<ApiType>;
+      /**
+       * Failed because the maximum locks was exceeded
+       **/
+      MaxLocksExceeded: AugmentedError<ApiType>;
+      TooManyReserves: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     treasury: {
+      /**
+       * The spend origin is valid but the amount it is allowed to spend is lower than the
+       * amount to be spent.
+       **/
+      InsufficientPermission: AugmentedError<ApiType>;
       /**
        * Proposer's balance is too low.
        **/
@@ -602,7 +802,7 @@ declare module '@polkadot/api-base/types/errors' {
     };
     unique: {
       /**
-       * Decimal_points parameter must be lower than MAX_DECIMAL_POINTS constant, currently it is 30.
+       * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
       /**
@@ -614,7 +814,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EmptyArgument: AugmentedError<ApiType>;
       /**
-       * Repertition is only supported by refungible collection
+       * Repertition is only supported by refungible collection.
        **/
       RepartitionCalledOnNonRefungibleCollection: AugmentedError<ApiType>;
       /**
@@ -673,6 +873,91 @@ declare module '@polkadot/api-base/types/errors' {
        * Provided weight is possibly not enough to execute the message.
        **/
       WeightOverLimit: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    xTokens: {
+      /**
+       * Asset has no reserve location.
+       **/
+      AssetHasNoReserve: AugmentedError<ApiType>;
+      /**
+       * The specified index does not exist in a MultiAssets struct.
+       **/
+      AssetIndexNonExistent: AugmentedError<ApiType>;
+      /**
+       * The version of the `Versioned` value used is not able to be
+       * interpreted.
+       **/
+      BadVersion: AugmentedError<ApiType>;
+      /**
+       * Could not re-anchor the assets to declare the fees for the
+       * destination chain.
+       **/
+      CannotReanchor: AugmentedError<ApiType>;
+      /**
+       * The destination `MultiLocation` provided cannot be inverted.
+       **/
+      DestinationNotInvertible: AugmentedError<ApiType>;
+      /**
+       * We tried sending distinct asset and fee but they have different
+       * reserve chains.
+       **/
+      DistinctReserveForAssetAndFee: AugmentedError<ApiType>;
+      /**
+       * Fee is not enough.
+       **/
+      FeeNotEnough: AugmentedError<ApiType>;
+      /**
+       * Could not get ancestry of asset reserve location.
+       **/
+      InvalidAncestry: AugmentedError<ApiType>;
+      /**
+       * The MultiAsset is invalid.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
+      /**
+       * Invalid transfer destination.
+       **/
+      InvalidDest: AugmentedError<ApiType>;
+      /**
+       * MinXcmFee not registered for certain reserve location
+       **/
+      MinXcmFeeNotDefined: AugmentedError<ApiType>;
+      /**
+       * Not cross-chain transfer.
+       **/
+      NotCrossChainTransfer: AugmentedError<ApiType>;
+      /**
+       * Currency is not cross-chain transferable.
+       **/
+      NotCrossChainTransferableCurrency: AugmentedError<ApiType>;
+      /**
+       * Not supported MultiLocation
+       **/
+      NotSupportedMultiLocation: AugmentedError<ApiType>;
+      /**
+       * The number of assets to be sent is over the maximum.
+       **/
+      TooManyAssetsBeingSent: AugmentedError<ApiType>;
+      /**
+       * The message's weight could not be determined.
+       **/
+      UnweighableMessage: AugmentedError<ApiType>;
+      /**
+       * XCM execution failed.
+       **/
+      XcmExecutionFailed: AugmentedError<ApiType>;
+      /**
+       * The transfering asset amount is zero.
+       **/
+      ZeroAmount: AugmentedError<ApiType>;
+      /**
+       * The fee is zero.
+       **/
+      ZeroFee: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

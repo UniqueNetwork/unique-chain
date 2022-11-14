@@ -50,6 +50,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             FEATURE=${{ matrix.features }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
+
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
 

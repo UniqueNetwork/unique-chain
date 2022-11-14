@@ -15,8 +15,23 @@ concurrency:
 
 # List of a jobs included into Workflow.
 jobs:
+
+  unit-test:
+    uses: ./.github/workflows/unit-test_v2.yml
+
+  node-only-update:
+    uses: ./.github/workflows/node-only-update_v2.yml
+
   forkless:
     uses: ./.github/workflows/forkless.yml
 
-  # codestyle:
-  #  uses: ./.github/workflows/codestyle.yml
+  canary:
+    uses: ./.github/workflows/canary.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
+
+  xcm:
+    uses: ./.github/workflows/xcm.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
+
+  codestyle:
+    uses: ./.github/workflows/codestyle_v2.yml

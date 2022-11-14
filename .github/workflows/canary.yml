@@ -1,0 +1,12 @@
+on:
+  workflow_call:
+
+jobs:
+  
+  market-e2e-test:
+    name: market e2e tests    
+    uses: ./.github/workflows/market-test_v2.yml
+    secrets: inherit
+
+
+

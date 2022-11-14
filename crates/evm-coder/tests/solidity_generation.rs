@@ -16,9 +16,9 @@
 
 use evm_coder::{execution::Result, generate_stubgen, solidity_interface, types::*};
 
-struct ERC20;
+pub struct ERC20;
 
-#[solidity_interface(name = "ERC20")]
+#[solidity_interface(name = ERC20)]
 impl ERC20 {
 	fn decimals(&self) -> Result<uint8> {
 		unreachable!()

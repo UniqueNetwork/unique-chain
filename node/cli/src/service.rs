@@ -43,14 +43,14 @@ use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
+use cumulus_relay_chain_rpc_interface::{RelayChainRpcInterface, create_client_and_start_worker};
 
 // Substrate Imports
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
-use sc_network::NetworkService;
-use sc_service::{BasePath, Configuration, PartialComponents, Role, TaskManager};
+use sc_network::{NetworkService, NetworkBlock};
+use sc_service::{BasePath, Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
@@ -63,7 +63,9 @@ use polkadot_service::CollatorPair;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-use unique_runtime_common::types::{AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block};
+use up_common::types::opaque::{
+	AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block, BlockNumber,
+};
 
 // RMRK
 use up_data_structs::{
@@ -318,10 +320,14 @@ async fn build_relay_chain_interface(
 	Option<CollatorPair>,
 )> {
 	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) => Ok((
-			Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>,
-			None,
-		)),
+		Some(relay_chain_url) => {
+			let rpc_client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
+
+			Ok((
+				Arc::new(RelayChainRpcInterface::new(rpc_client)) as Arc<_>,
+				None,
+			))
+		}
 		None => build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
@@ -362,6 +368,7 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
 		+ rmrk_rpc::RmrkApi<
 			Block,
 			AccountId,
@@ -398,10 +405,6 @@ where
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
-	if matches!(parachain_config.role, Role::Light) {
-		return Err("Light client not supported!".into());
-	}
-
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params =
@@ -435,7 +438,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
 
-	let (network, system_rpc_tx, start_network) =
+	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
@@ -518,6 +521,7 @@ where
 		network: network.clone(),
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
+		tx_handler_controller,
 	})?;
 
 	if let Some(hwbench) = hwbench {
@@ -535,7 +539,9 @@ where
 
 	let announce_block = {
 		let network = network.clone();
-		Arc::new(move |hash, data| network.announce_block(hash, data))
+		Arc::new(Box::new(move |hash, data| {
+			network.announce_block(hash, data)
+		}))
 	};
 
 	let relay_chain_slot_duration = Duration::from_secs(6);
@@ -620,7 +626,6 @@ where
 		_,
 		_,
 		_,
-		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import: client.clone(),
 		client: client.clone(),
@@ -633,10 +638,9 @@ where
 					slot_duration,
 				);
 
-			Ok((time, slot))
+			Ok((slot, time))
 		},
 		registry: config.prometheus_registry(),
-		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
 	})
@@ -667,6 +671,7 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
 		+ rmrk_rpc::RmrkApi<
 			Block,
 			AccountId,
@@ -743,7 +748,7 @@ where
 								"Failed to create parachain inherent",
 							)
 						})?;
-						Ok((time, slot, parachain_inherent))
+						Ok((slot, time, parachain_inherent))
 					}
 				},
 				block_import: client.clone(),
@@ -811,6 +816,7 @@ where
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
 		+ rmrk_rpc::RmrkApi<
 			Block,
 			AccountId,
@@ -856,7 +862,7 @@ where
 		prometheus_registry.clone(),
 	));
 
-	let (network, system_rpc_tx, network_starter) =
+	let (network, system_rpc_tx, tx_handler_controller, network_starter) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -947,12 +953,14 @@ where
 							current_para_block,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
+							para_blocks_per_relay_epoch: 0,
 							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
 								Default::default(),
 								Default::default(),
 							),
+							relay_randomness_config: (),
 							raw_downward_messages: vec![],
 							raw_horizontal_messages: vec![],
 						};
@@ -1029,6 +1037,7 @@ where
 		system_rpc_tx,
 		config,
 		telemetry: None,
+		tx_handler_controller,
 	})?;
 
 	network_starter.start_network();

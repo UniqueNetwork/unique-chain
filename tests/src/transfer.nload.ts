@@ -18,9 +18,23 @@ import {ApiPromise} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import usingApi, {submitTransactionAsync} from './substrate/substrate-api';
 import waitNewBlocks from './substrate/wait-new-blocks';
-import {findUnusedAddresses} from './util/helpers';
 import * as cluster from 'cluster';
 import os from 'os';
+
+async function findUnusedAddress(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, seedAddition = ''): Promise<IKeyringPair> {
+  let bal = 0n;
+  let unused;
+  do {
+    const randomSeed = 'seed' + Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
+    unused = privateKeyWrapper(`//${randomSeed}`);
+    bal = (await api.query.system.account(unused.address)).data.free.toBigInt();
+  } while (bal !== 0n);
+  return unused;
+}
+
+function findUnusedAddresses(api: ApiPromise, privateKeyWrapper: (account: string) => IKeyringPair, amount: number): Promise<IKeyringPair[]> {
+  return Promise.all(new Array(amount).fill(null).map(() => findUnusedAddress(api, privateKeyWrapper, '_' + Date.now())));
+}
 
 // Innacurate transfer fee
 const FEE = 10n ** 8n;

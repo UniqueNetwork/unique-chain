@@ -14,13 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {ApiPromise} from '@polkadot/api';
-import {expect} from 'chai';
-import usingApi from './substrate/substrate-api';
-
-function getModuleNames(api: ApiPromise): string[] {
-  return api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
-}
+import {itSub, usingPlaygrounds, expect} from './util';
 
 // Pallets that must always be present
 const requiredPallets = [
@@ -49,9 +43,10 @@ const requiredPallets = [
   'inflation',
   'unique',
   'nonfungible',
-  'refungible',
-  'scheduler',
   'charging',
+  'configuration',
+  'tokens',
+  'xtokens',
   'maintenance',
 ];
 
@@ -64,32 +59,40 @@ const consensusPallets = [
 
 describe('Pallet presence', () => {
   before(async () => {
-    await usingApi(async api => {
-      const chain = await api.rpc.system.chain();
+    await usingPlaygrounds(async helper => {
+      const chain = await helper.callRpc('api.rpc.system.chain', []);
 
-      if (!chain.eq('UNIQUE')) {
-        requiredPallets.push(...['rmrkcore', 'rmrkequip']);
+      const refungible = 'refungible';
+      // const scheduler = 'scheduler';
+      const foreignAssets = 'foreignassets';
+      const rmrkPallets = ['rmrkcore', 'rmrkequip'];
+      const appPromotion = 'apppromotion';
+
+      if (chain.eq('OPAL by UNIQUE')) {
+        requiredPallets.push(
+          refungible,
+          // scheduler,
+          foreignAssets,
+          appPromotion,
+          ...rmrkPallets,
+        );
+      } else if (chain.eq('QUARTZ by UNIQUE')) {
+        requiredPallets.push(refungible);
+      } else if (chain.eq('UNIQUE')) {
+        // Insert Unique additional pallets here
       }
     });
   });
 
-  it('Required pallets are present', async () => {
-    await usingApi(async api => {
-      for (let i=0; i<requiredPallets.length; i++) {
-        expect(getModuleNames(api)).to.include(requiredPallets[i]);
-      }
-    });
+  itSub('Required pallets are present', async ({helper}) => {
+    expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets]);
   });
-  it('Governance and consensus pallets are present', async () => {
-    await usingApi(async api => {
-      for (let i=0; i<consensusPallets.length; i++) {
-        expect(getModuleNames(api)).to.include(consensusPallets[i]);
-      }
-    });
+
+  itSub('Governance and consensus pallets are present', async ({helper}) => {
+    expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets]);
   });
-  it('No extra pallets are included', async () => {
-    await usingApi(async api => {
-      expect(getModuleNames(api).sort()).to.be.deep.equal([...requiredPallets, ...consensusPallets].sort());
-    });
+
+  itSub('No extra pallets are included', async ({helper}) => {
+    expect(helper.fetchAllPalletNames().sort()).to.be.deep.equal([...requiredPallets, ...consensusPallets].sort());
   });
 });

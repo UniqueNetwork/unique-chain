@@ -13,207 +13,194 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect} from 'chai';
-import privateKey from '../substrate/privateKey';
-import {
-  createEthAccount,
-  createEthAccountWithBalance, 
-  evmCollection, 
-  evmCollectionHelpers, 
-  getCollectionAddressFromResult, 
-  itWeb3,
-} from './util/helpers';
+import {IKeyringPair} from '@polkadot/types/types';
+import {usingEthPlaygrounds, itEth, expect, EthUniqueHelper} from './util';
+
+async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
+  const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
+  await call();
+  await helper.wait.newBlocks(1);
+  const after = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
+
+  expect(after < before).to.be.true;
+
+  return before - after;
+}
 
 describe('Add collection admins', () => {
-  itWeb3('Add admin by owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  let donor: IKeyringPair;
 
-    const newAdmin = await createEthAccount(web3);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+    });
+  });
+
+  itEth('Add admin by owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const newAdmin = helper.eth.createAccount();
+
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(newAdmin.toLocaleLowerCase());
   });
 
-  itWeb3('Add substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth.skip('Add substrate admin by owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    const newAdmin = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(newAdmin.address.toLocaleLowerCase());
   });
 
-  itWeb3('(!negative tests!) Add admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth('Verify owner or admin', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const newAdmin = helper.eth.createAccount();
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.false;
+    await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
+    expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.true;
+  });
+
+  itEth('(!negative tests!) Add admin by ADMIN is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+
+    const admin = await helper.eth.createAccountWithBalance(donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
-    
-    const user = await createEthAccount(web3);
+
+    const user = helper.eth.createAccount();
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(admin.toLocaleLowerCase());
   });
 
-  itWeb3('(!negative tests!) Add admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth('(!negative tests!) Add admin by USER is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const notAdmin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    
-    const user = await createEthAccount(web3);
+    const notAdmin = await helper.eth.createAccountWithBalance(donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const user = helper.eth.createAccount();
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: notAdmin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth.skip('(!negative tests!) Add substrate admin by ADMIN is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const admin = await helper.eth.createAccountWithBalance(donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
 
-    const notAdmin = privateKey('//Alice');
+    const [notAdmin] = await helper.arrange.createAccounts([10n], donor);
     await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin.addressRaw).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(admin.toLocaleLowerCase());
   });
-  
-  itWeb3('(!negative tests!) Add substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
 
-    const notAdmin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-    const notAdmin1 = privateKey('//Alice');
+  itEth.skip('(!negative tests!) Add substrate admin by USER is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+
+    const notAdmin0 = await helper.eth.createAccountWithBalance(donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const [notAdmin1] = await helper.arrange.createAccounts([10n], donor);
     await expect(collectionEvm.methods.addCollectionAdminSubstrate(notAdmin1.addressRaw).call({from: notAdmin0}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 });
 
 describe('Remove collection admins', () => {
-  itWeb3('Remove admin by owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  let donor: IKeyringPair;
 
-    const newAdmin = await createEthAccount(web3);
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+    });
+  });
+
+  itEth('Remove admin by owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+
+    const newAdmin = helper.eth.createAccount();
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
+
     {
-      const adminList = await api.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(1);
       expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
         .to.be.eq(newAdmin.toLocaleLowerCase());
     }
 
     await collectionEvm.methods.removeCollectionAdmin(newAdmin).send();
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('Remove substrate admin by owner', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth.skip('Remove substrate admin by owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const newAdmin = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
     {
-      const adminList = await api.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
         .to.be.eq(newAdmin.address.toLocaleLowerCase());
     }
-    
+
     await collectionEvm.methods.removeCollectionAdminSubstrate(newAdmin.addressRaw).send();
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
 
-  itWeb3('(!negative tests!) Remove admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth('(!negative tests!) Remove admin by ADMIN is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    const admin0 = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const admin0 = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(admin0).send();
-    const admin1 = await createEthAccount(web3);
+    const admin1 = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(admin1).send();
 
     await expect(collectionEvm.methods.removeCollectionAdmin(admin1).call({from: admin0}))
       .to.be.rejectedWith('NoPermission');
     {
-      const adminList = await api.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(2);
       expect(adminList.toString().toLocaleLowerCase())
         .to.be.deep.contains(admin0.toLocaleLowerCase())
@@ -221,76 +208,150 @@ describe('Remove collection admins', () => {
     }
   });
 
-  itWeb3('(!negative tests!) Remove admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth('(!negative tests!) Remove admin by USER is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    const admin = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const admin = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
-    const notAdmin = await createEthAccount(web3);
+    const notAdmin = helper.eth.createAccount();
 
     await expect(collectionEvm.methods.removeCollectionAdmin(admin).call({from: notAdmin}))
       .to.be.rejectedWith('NoPermission');
     {
-      const adminList = await api.rpc.unique.adminlist(collectionId);
+      const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
         .to.be.eq(admin.toLocaleLowerCase());
       expect(adminList.length).to.be.eq(1);
     }
   });
 
-  itWeb3('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth.skip('(!negative tests!) Remove substrate admin by ADMIN is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const adminSub = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const [adminSub] = await helper.arrange.createAccounts([10n], donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
-    const adminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const adminEth = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(adminEth).send();
 
     await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: adminEth}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(2);
     expect(adminList.toString().toLocaleLowerCase())
       .to.be.deep.contains(adminSub.address.toLocaleLowerCase())
       .to.be.deep.contains(adminEth.toLocaleLowerCase());
   });
 
-  itWeb3('(!negative tests!) Remove substrate admin by USER is not allowed', async ({api, web3, privateKeyWrapper}) => {
-    const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-    const collectionHelper = evmCollectionHelpers(web3, owner);
-        
-    const result = await collectionHelper.methods
-      .createNonfungibleCollection('A', 'B', 'C')
-      .send();
-    const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
+  itEth.skip('(!negative tests!) Remove substrate admin by USER is not allowed', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const adminSub = privateKeyWrapper('//Alice');
-    const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
+    const [adminSub] = await helper.arrange.createAccounts([10n], donor);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
-    const notAdminEth = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
+    const notAdminEth = await helper.eth.createAccountWithBalance(donor);
 
     await expect(collectionEvm.methods.removeCollectionAdminSubstrate(adminSub.addressRaw).call({from: notAdminEth}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await api.rpc.unique.adminlist(collectionId);
+    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
     expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
       .to.be.eq(adminSub.address.toLocaleLowerCase());
+  });
+});
+
+describe('Change owner tests', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+    });
+  });
+
+  itEth('Change owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const newOwner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    await collectionEvm.methods.changeCollectionOwner(newOwner).send();
+
+    expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.false;
+    expect(await collectionEvm.methods.isOwnerOrAdmin(newOwner).call()).to.be.true;
+  });
+
+  itEth('change owner call fee', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const newOwner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.changeCollectionOwner(newOwner).send());
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
+    expect(cost > 0);
+  });
+
+  itEth('(!negative tests!) call setOwner by non owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const newOwner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    await expect(collectionEvm.methods.changeCollectionOwner(newOwner).send({from: newOwner})).to.be.rejected;
+    expect(await collectionEvm.methods.isOwnerOrAdmin(newOwner).call()).to.be.false;
+  });
+});
+
+describe('Change substrate owner tests', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+    });
+  });
+
+  itEth.skip('Change owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const [newOwner] = await helper.arrange.createAccounts([10n], donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.true;
+    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
+
+    await collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send();
+
+    expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.false;
+    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.true;
+  });
+
+  itEth.skip('change owner call fee', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const [newOwner] = await helper.arrange.createAccounts([10n], donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send());
+    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
+    expect(cost > 0);
+  });
+
+  itEth.skip('(!negative tests!) call setOwner by non owner', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const otherReceiver = await helper.eth.createAccountWithBalance(donor);
+    const [newOwner] = await helper.arrange.createAccounts([10n], donor);
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    await expect(collectionEvm.methods.setOwnerSubstrate(newOwner.addressRaw).send({from: otherReceiver})).to.be.rejected;
+    expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;
   });
 });

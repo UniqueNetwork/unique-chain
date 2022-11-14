@@ -24,7 +24,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 	http://www.apache.org/licenses/LICENSE-2.0
+// 	<http://www.apache.org/licenses/LICENSE-2.0>
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,27 +32,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! # Schedulerdo_reschedule
+//! # Unique scheduler
+//! A Pallet for scheduling dispatches.
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
+//! ## Overview
 //!
 //! This Pallet exposes capabilities for scheduling dispatches to occur at a
 //! specified block number or at a specified period. These scheduled dispatches
-//! may be named or anonymous and may be canceled.
+//! should be named and may be canceled.
 //!
-//! **NOTE:** The scheduled calls will be dispatched with the default filter
-//! for the origin: namely `frame_system::Config::BaseCallFilter` for all origin
-//! except root which will get no filter. And not the filter contained in origin
-//! use to call `fn schedule`.
+//! **NOTE:** The unique scheduler is designed for deferred transaction calls by block number.
+//! Any user can book a call of a certain transaction to a specific block number.
+//! Also possible to book a call with a certain frequency.
 //!
-//! If a call is scheduled using proxy or whatever mecanism which adds filter,
-//! then those filter will not be used when dispatching the schedule call.
+//! Key differences from the original pallet:
+//! <https://crates.io/crates/pallet-scheduler>
+//! Schedule Id restricted by 16 bytes. Identificator for booked call.
+//! Priority limited by HARD DEADLINE (<= 63). Calls over maximum weight don't include to block.
+//! The maximum weight that may be scheduled per block for any dispatchables of less priority than `schedule::HARD_DEADLINE`.
+//! Maybe_periodic limit is 100 calls. Reserved for future sponsored transaction support.
+//! At 100 calls reserved amount is not so much and this is avoid potential problems with balance locks.
+//! Any account allowed to schedule any calls. Account withdraw implemented through default transaction logic.
 //!
 //! ## Interface
 //!
 //! ### Dispatchable Functions
 //!
-//! * `schedule` - schedule a dispatch, which may be periodic, to occur at a specified block and
-//!   with a specified priority.
-//! * `cancel` - cancel a scheduled dispatch, specified by block number and index.
 //! * `schedule_named` - augments the `schedule` interface with an additional `Vec<u8>` parameter
 //!   that can be used for identification.
 //! * `cancel_named` - the named complement to the cancel function.
@@ -77,13 +86,13 @@ use sp_runtime::{
 use sp_std::{borrow::Borrow, cmp::Ordering, marker::PhantomData, prelude::*};
 
 use frame_support::{
-	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter},
+	dispatch::{DispatchError, DispatchResult, Dispatchable, Parameter, GetDispatchInfo},
 	traits::{
 		schedule::{self, DispatchTime, MaybeHashed},
 		NamedReservableCurrency, EnsureOrigin, Get, IsType, OriginTrait, PrivilegeCmp,
 		StorageVersion,
 	},
-	weights::{GetDispatchInfo, Weight},
+	weights::{Weight},
 };
 
 pub use weights::WeightInfo;
@@ -95,7 +104,8 @@ pub type TaskAddress<BlockNumber> = (BlockNumber, u32);
 pub const MAX_TASK_ID_LENGTH_IN_BYTES: u8 = 16;
 
 type ScheduledId = [u8; MAX_TASK_ID_LENGTH_IN_BYTES as usize];
-pub type CallOrHashOf<T> = MaybeHashed<<T as Config>::Call, <T as frame_system::Config>::Hash>;
+pub type CallOrHashOf<T> =
+	MaybeHashed<<T as Config>::RuntimeCall, <T as frame_system::Config>::Hash>;
 
 /// Information regarding an item to be executed in the future.
 #[cfg_attr(any(feature = "std", test), derive(PartialEq, Eq))]
@@ -200,12 +210,12 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The aggregated origin which the dispatch will take.
-		type Origin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
+		type RuntimeOrigin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
 			+ From<Self::PalletsOrigin>
-			+ IsType<<Self as system::Config>::Origin>;
+			+ IsType<<Self as system::Config>::RuntimeOrigin>;
 
 		/// The caller origin, overarching type of all pallets origins.
 		type PalletsOrigin: From<system::RawOrigin<Self::AccountId>> + Codec + Clone + Eq + TypeInfo;
@@ -213,9 +223,11 @@ pub mod pallet {
 		type Currency: NamedReservableCurrency<Self::AccountId, ReserveIdentifier = ScheduledId>;
 
 		/// The aggregated call type.
-		type Call: Parameter
-			+ Dispatchable<Origin = <Self as Config>::Origin, PostInfo = PostDispatchInfo>
-			+ GetDispatchInfo
+		type RuntimeCall: Parameter
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
 			+ From<system::Call<Self>>;
 
 		/// The maximum weight that may be scheduled per block for any dispatchables of less
@@ -224,7 +236,7 @@ pub mod pallet {
 		type MaximumWeight: Get<Weight>;
 
 		/// Required origin to schedule or cancel calls.
-		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::Origin>;
+		type ScheduleOrigin: EnsureOrigin<<Self as system::Config>::RuntimeOrigin>;
 
 		/// Compare the privileges of origins.
 		///
@@ -258,28 +270,31 @@ pub mod pallet {
 
 	/// A Scheduler-Runtime interface for finer payment handling.
 	pub trait DispatchCall<T: frame_system::Config + Config, SelfContainedSignedInfo> {
+		/// Reserve (lock) the maximum spendings on a call, calculated from its weight and the repetition count.
 		fn reserve_balance(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
-			call: <T as Config>::Call,
+			call: <T as Config>::RuntimeCall,
 			count: u32,
 		) -> Result<(), DispatchError>;
 
+		/// Unreserve (unlock) a certain amount from the payer's reserved funds, returning the change.
 		fn pay_for_call(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
-			call: <T as Config>::Call,
+			call: <T as Config>::RuntimeCall,
 		) -> Result<u128, DispatchError>;
 
 		/// Resolve the call dispatch, including any post-dispatch operations.
 		fn dispatch_call(
 			signer: T::AccountId,
-			function: <T as Config>::Call,
+			function: <T as Config>::RuntimeCall,
 		) -> Result<
 			Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 			TransactionValidityError,
 		>;
 
+		/// Release unspent reserved funds in case of a schedule cancel.
 		fn cancel_reserve(
 			id: ScheduledId,
 			sponsor: <T as frame_system::Config>::AccountId,
@@ -392,9 +407,10 @@ pub mod pallet {
 				let periodic = s.maybe_periodic.is_some();
 				let call_weight = call.get_dispatch_info().weight;
 				let mut item_weight = T::WeightInfo::item(periodic, named, Some(resolved));
-				let origin =
-					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
-						.into();
+				let origin = <<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(
+					s.origin.clone(),
+				)
+				.into();
 				if ensure_signed(origin).is_ok() {
 					// Weights of Signed dispatches expect their signing account to be whitelisted.
 					item_weight.saturating_accrue(T::DbWeight::get().reads_writes(1, 1));
@@ -408,7 +424,7 @@ pub mod pallet {
 				let test_weight = total_weight
 					.saturating_add(call_weight)
 					.saturating_add(item_weight);
-				if !hard_deadline && order > 0 && test_weight > limit {
+				if !hard_deadline && order > 0 && test_weight.all_gt(limit) {
 					// Cannot be scheduled this block - postpone until next.
 					total_weight.saturating_accrue(T::WeightInfo::item(false, named, None));
 					if let Some(ref id) = s.maybe_id {
@@ -424,8 +440,10 @@ pub mod pallet {
 				}
 
 				let sender = ensure_signed(
-					<<T as Config>::Origin as From<T::PalletsOrigin>>::from(s.origin.clone())
-						.into(),
+					<<T as Config>::RuntimeOrigin as From<T::PalletsOrigin>>::from(
+						s.origin.clone(),
+					)
+					.into(),
 				)
 				.unwrap();
 
@@ -438,6 +456,8 @@ pub mod pallet {
 				// 	);
 				// }
 
+				// Execute transaction via chain default pipeline
+				// That means dispatch will be processed like any user's extrinsic e.g. transaction fees will be taken
 				let r = T::CallExecutor::dispatch_call(sender, call.clone());
 
 				let mut actual_call_weight: Weight = item_weight;
@@ -482,8 +502,8 @@ pub mod pallet {
 					Agenda::<T>::append(wake, Some(s));
 				}
 			}
-			0
-			//total_weight
+			// Total weight should be 0, because the transaction is already paid for
+			Weight::zero()
 		}
 	}
 
@@ -500,7 +520,7 @@ pub mod pallet {
 			call: Box<CallOrHashOf<T>>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::At(when),
@@ -516,7 +536,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::cancel_named(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel_named(origin: OriginFor<T>, id: ScheduledId) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_cancel_named(Some(origin.caller().clone()), id)?;
 			Ok(())
 		}
@@ -536,7 +556,7 @@ pub mod pallet {
 			call: Box<CallOrHashOf<T>>,
 		) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
-			let origin = <T as Config>::Origin::from(origin);
+			let origin = <T as Config>::RuntimeOrigin::from(origin);
 			Self::do_schedule_named(
 				id,
 				DispatchTime::After(after),

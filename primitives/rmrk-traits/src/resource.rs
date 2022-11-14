@@ -151,13 +151,13 @@ pub enum ResourceTypes<BoundedString, BoundedParts> {
 		"#)
 )]
 pub struct ResourceInfo<BoundedString, BoundedParts> {
-	/// id is a 5-character string of reasonable uniqueness.
-	/// The combination of base ID and resource id should be unique across the entire RMRK
-	/// ecosystem which
+	/// ID is a unique identifier for a resource across all those of a single NFT.
+	/// The combination of a collection ID, an NFT ID, and the resource ID must be
+	/// unique across the entire RMRK ecosystem.
 	//#[cfg_attr(feature = "std", serde(with = "serialize::vec"))]
 	pub id: ResourceId,
 
-	/// Resource
+	/// Resource type and the accordingly structured data stored
 	pub resource: ResourceTypes<BoundedString, BoundedParts>,
 
 	/// If resource is sent to non-rootowned NFT, pending will be false and need to be accepted

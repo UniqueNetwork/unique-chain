@@ -40,9 +40,8 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
 use std::{collections::BTreeMap, sync::Arc};
 
-use unique_runtime_common::types::{
-	Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance,
-};
+use up_common::types::opaque::{Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance};
+
 // RMRK
 use up_data_structs::{
 	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
@@ -146,6 +145,12 @@ where
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
 	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
+	C::Api: app_promotion_rpc::AppPromotionApi<
+		Block,
+		BlockNumber,
+		<R as RuntimeInstance>::CrossAccountId,
+		AccountId,
+	>,
 	C::Api: rmrk_rpc::RmrkApi<
 		Block,
 		AccountId,
@@ -170,6 +175,9 @@ where
 		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
+
+	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	use uc_rpc::{AppPromotionApiServer, AppPromotion};
 
 	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{RmrkApiServer, Rmrk};
@@ -227,6 +235,9 @@ where
 	)?;
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
+
+	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
