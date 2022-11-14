@@ -186,7 +186,7 @@ impl<'i> AbiReader<'i> {
 
 	/// Slice recursive buffer, advance one word for buffer offset
 	/// If `size` is [`None`] then [`Self::offset`] and [`Self::subresult_offset`] evals from [`Self::buf`].
-	fn subresult(&mut self, size: Option<usize>) -> Result<AbiReader<'i>> {
+	pub fn subresult(&mut self, size: Option<usize>) -> Result<AbiReader<'i>> {
 		let subresult_offset = self.subresult_offset;
 		let offset = if let Some(size) = size {
 			self.offset += size;
