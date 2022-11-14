@@ -405,3 +405,8 @@ fn impl_abi_type_size_same_for_structs() {
 		<TupleStruct3DerivedMixedParam as AbiType>::size()
 	);
 }
+
+// #[test]
+// fn impl_abi_read() {
+// 	TypeStruct1SimpleParam::
+// }
