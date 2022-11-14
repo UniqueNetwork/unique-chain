@@ -137,7 +137,7 @@ fn impl_abi_write<'a>(
 	let abi_write = if is_named_fields {
 		quote!(
 			#(
-				self.#field_names.abi_write(writer);
+				self.#field_names.abi_write(sub);
 			)*
 		)
 	} else {
@@ -146,14 +146,24 @@ fn impl_abi_write<'a>(
 			.map(proc_macro2::Literal::usize_unsuffixed);
 		quote!(
 			#(
-				self.#field_names.abi_write(writer);
+				self.#field_names.abi_write(sub);
 			)*
 		)
 	};
 	quote!(
 		impl ::evm_coder::abi::AbiWrite for #name {
 			fn abi_write(&self, writer: &mut ::evm_coder::abi::AbiWriter) {
-				#abi_write
+				if <Self as ::evm_coder::abi::AbiType>::is_dynamic() {
+					let mut sub = ::evm_coder::abi::AbiWriter::new();
+					{
+						let sub = &mut sub;
+						#abi_write
+					}
+					writer.write_subresult(sub);
+				} else {
+					let sub = writer;
+					#abi_write
+				}
 			}
 		}
 	)
