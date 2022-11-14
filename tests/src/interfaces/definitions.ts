@@ -15,5 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 export {default as unique} from './unique/definitions';
+export {default as appPromotion} from './appPromotion/definitions';
 export {default as rmrk} from './rmrk/definitions';
 export {default as default} from './default/definitions';

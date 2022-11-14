@@ -17,35 +17,41 @@
 use super::*;
 use crate::{Pallet, Config, RefungibleHandle};
 
-use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, create_data};
-use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, CUSTOM_DATA_LIMIT, budget::Unlimited};
-use pallet_common::bench_init;
 use core::convert::TryInto;
 use core::iter::IntoIterator;
+use frame_benchmarking::{benchmarks, account};
+use pallet_common::{
+	bench_init,
+	benchmarking::{create_collection_raw, property_key, property_value, create_data},
+};
+use sp_core::H160;
+use sp_std::prelude::*;
+use up_data_structs::{
+	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, CUSTOM_DATA_LIMIT,
+	budget::Unlimited,
+};
 
 const SEED: u32 = 1;
 
 fn create_max_item_data<CrossAccountId: Ord>(
 	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
-) -> CreateRefungibleExData<CrossAccountId> {
-	let const_data = create_data::<CUSTOM_DATA_LIMIT>();
-	CreateRefungibleExData {
-		const_data,
+) -> CreateItemData<CrossAccountId> {
+	CreateItemData {
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap(),
+		properties: Default::default(),
 	}
 }
+
 fn create_max_item<T: Config>(
 	collection: &RefungibleHandle<T>,
 	sender: &T::CrossAccountId,
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
-	let data: CreateRefungibleExData<T::CrossAccountId> = create_max_item_data(users);
+	let data: CreateItemData<T::CrossAccountId> = create_max_item_data(users);
 	<Pallet<T>>::create_item(&collection, sender, data, &Unlimited)?;
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }
@@ -55,11 +61,14 @@ fn create_collection<T: Config>(
 ) -> Result<RefungibleHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
-		CollectionMode::NFT,
-		<Pallet<T>>::init_collection,
+		CollectionMode::ReFungible,
+		|owner: T::CrossAccountId, data| {
+			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
+		},
 		RefungibleHandle::cast,
 	)
 }
+
 benchmarks! {
 	create_item {
 		bench_init!{
@@ -204,6 +213,68 @@ benchmarks! {
 		<Pallet<T>>::set_allowance(&collection, &sender, &burner, item, 200)?;
 	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, 200, &Unlimited)?}
 
+	set_token_property_permissions {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let perms = (0..b).map(|k| PropertyKeyPermission {
+			key: property_key(k as usize),
+			permission: PropertyPermission {
+				mutable: false,
+				collection_admin: false,
+				token_owner: false,
+			},
+		}).collect::<Vec<_>>();
+	}: {<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?}
+
+	set_token_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let perms = (0..b).map(|k| PropertyKeyPermission {
+			key: property_key(k as usize),
+			permission: PropertyPermission {
+				mutable: false,
+				collection_admin: true,
+				token_owner: true,
+			},
+		}).collect::<Vec<_>>();
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
+		let props = (0..b).map(|k| Property {
+			key: property_key(k as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+		let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?}
+
+	delete_token_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let perms = (0..b).map(|k| PropertyKeyPermission {
+			key: property_key(k as usize),
+			permission: PropertyPermission {
+				mutable: true,
+				collection_admin: true,
+				token_owner: true,
+			},
+		}).collect::<Vec<_>>();
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
+		let props = (0..b).map(|k| Property {
+			key: property_key(k as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+		let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?;
+		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
+	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete.into_iter(), &Unlimited)?}
+
 	repartition_item {
 		bench_init!{
 			owner: sub; collection: collection(owner);
@@ -211,4 +282,12 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
 	}: {<Pallet<T>>::repartition(&collection, &owner, item, 200)?}
+
+	token_owner {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); owner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
+	}: {<Pallet<T>>::token_owner(collection.id, item)}
 }

@@ -14,136 +14,112 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {ApiPromise} from '@polkadot/api';
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {addCollectionAdminExpectSuccess, createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId, queryCollectionExpectSuccess} from './util/helpers';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
-  it('Add collection admin.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
+  let donor: IKeyringPair;
 
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.equal(alice.address);
-
-      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, changeAdminTx);
-
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
+  before(async () => {
+    await usingPlaygrounds(async (_, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
+  });
+
+  itSub('Add collection admin.', async ({helper}) => {
+    const [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
+    const {collectionId} = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
+
+    const collection = await helper.collection.getData(collectionId);
+    expect(collection!.normalizedOwner!).to.be.equal(helper.address.normalizeSubstrate(alice.address));
+
+    await helper.nft.addAdmin(alice, collectionId, {Substrate: bob.address});
+
+    const adminListAfterAddAdmin = await helper.collection.getAdmins(collectionId);
+    expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: bob.address});
   });
 });
 
 describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
-  it("Not owner can't add collection admin.", async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//CHARLIE');
+  let donor: IKeyringPair;
 
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.equal(alice.address);
-
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).to.be.not.deep.contains(normalizeAccountId(bob.address));
-
-      const changeAdminTxCharlie = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
-      await expect(submitTransactionAsync(bob, changeAdminTxCharlie)).to.be.rejected;
-     
-      const adminListAfterAddNewAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddNewAdmin).to.be.not.deep.contains(normalizeAccountId(bob.address));
-      expect(adminListAfterAddNewAdmin).to.be.not.deep.contains(normalizeAccountId(charlie.address));
+  before(async () => {
+    await usingPlaygrounds(async (_, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
   });
 
-  it("Admin can't add collection admin.", async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//CHARLIE');
+  itSub("Not owner can't add collection admin.", async ({helper}) => {
+    const [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
+    const {collectionId} = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.equal(alice.address);
+    const collection = await helper.collection.getData(collectionId);
+    expect(collection?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(alice.address));
 
-      const changeAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, changeAdminTx);
+    const changeAdminTxBob = async () => helper.collection.addAdmin(bob, collectionId, {Substrate: bob.address});
+    const changeAdminTxCharlie = async () => helper.collection.addAdmin(bob, collectionId, {Substrate: charlie.address});
+    await expect(changeAdminTxCharlie()).to.be.rejectedWith(/common\.NoPermission/);
+    await expect(changeAdminTxBob()).to.be.rejectedWith(/common\.NoPermission/);
 
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-
-      const changeAdminTxCharlie = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
-      await expect(submitTransactionAsync(bob, changeAdminTxCharlie)).to.be.rejected;
-     
-      const adminListAfterAddNewAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddNewAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-      expect(adminListAfterAddNewAdmin).to.be.not.deep.contains(normalizeAccountId(charlie.address));
-    });
+    const adminListAfterAddAdmin = await helper.collection.getAdmins(collectionId);
+    expect(adminListAfterAddAdmin).to.be.not.deep.contains({Substrate: charlie.address});
+    expect(adminListAfterAddAdmin).to.be.not.deep.contains({Substrate: bob.address});
   });
 
-  it("Can't add collection admin of not existing collection.", async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = (1 << 32) - 1;
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
+  itSub("Admin can't add collection admin.", async ({helper}) => {
+    const [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
+    const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
-      const changeOwnerTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
+    await collection.addAdmin(alice, {Substrate: bob.address});
 
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
-    });
+    const adminListAfterAddAdmin = await collection.getAdmins();
+    expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: bob.address});
+
+    const changeAdminTxCharlie = async () => collection.addAdmin(bob, {Substrate: charlie.address});
+    await expect(changeAdminTxCharlie()).to.be.rejectedWith(/common\.NoPermission/);
+
+    const adminListAfterAddNewAdmin = await collection.getAdmins();
+    expect(adminListAfterAddNewAdmin).to.be.deep.contains({Substrate: bob.address});
+    expect(adminListAfterAddNewAdmin).to.be.not.deep.contains({Substrate: charlie.address});
   });
 
-  it("Can't add an admin to a destroyed collection.", async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      await destroyCollectionExpectSuccess(collectionId);
-      const changeOwnerTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
+  itSub("Can't add collection admin of not existing collection.", async ({helper}) => {
+    const [alice, bob] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
+    const collectionId = (1 << 32) - 1;
 
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
-    });
+    const addAdminTx = async () => helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
+    await expect(addAdminTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
+
+    // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
+    await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
   });
 
-  it('Add an admin to a collection that has reached the maximum number of admins limit', async () => {
-    await usingApi(async (api: ApiPromise, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const accounts = [
-        privateKeyWrapper('//AdminTest/1').address,
-        privateKeyWrapper('//AdminTest/2').address,
-        privateKeyWrapper('//AdminTest/3').address,
-        privateKeyWrapper('//AdminTest/4').address,
-        privateKeyWrapper('//AdminTest/5').address,
-        privateKeyWrapper('//AdminTest/6').address,
-        privateKeyWrapper('//AdminTest/7').address,
-      ];
-      const collectionId = await createCollectionExpectSuccess();
+  itSub("Can't add an admin to a destroyed collection.", async ({helper}) => {
+    const [alice, bob] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
+    const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
-      const chainAdminLimit = (api.consts.common.collectionAdminsLimit as any).toNumber();
-      expect(chainAdminLimit).to.be.equal(5);
+    await collection.burn(alice);
+    const addAdminTx = async () => collection.addAdmin(alice, {Substrate: bob.address});
+    await expect(addAdminTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
 
-      for (let i = 0; i < chainAdminLimit; i++) {
-        await addCollectionAdminExpectSuccess(alice, collectionId, accounts[i]);
-        const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-        expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(accounts[i]));
-      }
+    // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
+    await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
+  });
 
-      const tx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(accounts[chainAdminLimit]));
-      await expect(submitTransactionExpectFailAsync(alice, tx)).to.be.rejected;
-    });
+  itSub('Add an admin to a collection that has reached the maximum number of admins limit', async ({helper}) => {
+    const [alice, ...accounts] = await helper.arrange.createAccounts([10n, 0n, 0n, 0n, 0n, 0n, 0n, 0n], donor);
+    const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
+
+    const chainAdminLimit = (helper.getApi().consts.common.collectionAdminsLimit as any).toNumber();
+    expect(chainAdminLimit).to.be.equal(5);
+
+    for (let i = 0; i < chainAdminLimit; i++) {
+      await collection.addAdmin(alice, {Substrate: accounts[i].address});
+      const adminListAfterAddAdmin = await collection.getAdmins();
+      expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: accounts[i].address});
+    }
+
+    const addExtraAdminTx = async () => collection.addAdmin(alice, {Substrate: accounts[chainAdminLimit].address});
+    await expect(addExtraAdminTx()).to.be.rejectedWith(/common\.CollectionAdminCountExceeded/);
   });
 });

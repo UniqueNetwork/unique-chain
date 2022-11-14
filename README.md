@@ -23,8 +23,8 @@ The Unique Chain also provides:
 
 Wider Unique Ecosystem (most of it was developed during Hackusama):
 
--   [SubstraPunks Game hosted on IPFS](https://github.com/usetech-llc/substrapunks)
--   [Unique Wallet and UI](https://uniqueapps.usetech.com/#/nft)
+-   [SubstraPunks Game hosted on IPFS](https://github.com/UniqueNetwork/substrapunks)
+-   [Unique Wallet and UI](https://wallet.unique.network)
 -   [NFT Asset for Unity Framework](https://github.com/usetech-llc/nft_unity)
 
 Please see our [walk-through instructions](doc/hackusama_walk_through.md) to try everything out!
@@ -42,23 +42,23 @@ so that we can keep the builds stable.
 1. Install Rust:
 
 ```bash
-sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake
+sudo apt-get install git curl libssl-dev llvm pkg-config libclang-dev clang make cmake protobuf-compiler
 curl https://sh.rustup.rs -sSf | sh
 ```
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install toolchain nightly-2022-05-11 and make it default:
+3. Install toolchain nightly-2022-07-24 and make it default:
 
 ```bash
-rustup toolchain install nightly-2022-05-11
-rustup default nightly-2022-05-11
+rustup toolchain install nightly-2022-07-24
+rustup default nightly-2022-07-24
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2022-05-11
+rustup target add wasm32-unknown-unknown --toolchain nightly-2022-07-24
 ```
 
 5. Build:
@@ -92,7 +92,7 @@ git checkout feature/runtime-upgrade-testing
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.24
+git checkout release-v0.9.30
 cargo build --release
 ```
 
@@ -195,7 +195,7 @@ tokens -> accounts
 xtokens -> transfer
 
 currencyId:
-	ForeingAsset
+	ForeignAsset
 		<TOKEN_ID>
 
 amount:

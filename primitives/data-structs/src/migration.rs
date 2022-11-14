@@ -38,3 +38,26 @@ fn sponsoring_rate_limit_has_same_encoding_as_option_u32() {
 	test_to_option(SponsoringRateLimit::SponsoringDisabled);
 	test_to_option(SponsoringRateLimit::Blocks(10));
 }
+
+#[test]
+fn collection_flags_have_same_encoding_as_bool() {
+	use crate::CollectionFlags;
+	use codec::Encode;
+
+	assert_eq!(
+		true.encode(),
+		CollectionFlags {
+			external: true,
+			..Default::default()
+		}
+		.encode()
+	);
+	assert_eq!(
+		false.encode(),
+		CollectionFlags {
+			external: false,
+			..Default::default()
+		}
+		.encode()
+	);
+}

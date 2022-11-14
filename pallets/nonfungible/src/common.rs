@@ -26,7 +26,7 @@ use pallet_common::{
 	weights::WeightInfo as _,
 };
 use sp_runtime::DispatchError;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
@@ -44,16 +44,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 			CreateItemExData::NFT(t) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
 					+ t.iter()
-						.map(|t| {
+						.filter_map(|t| {
 							if t.properties.len() > 0 {
-								Self::set_token_properties(t.properties.len() as u32)
+								Some(Self::set_token_properties(t.properties.len() as u32))
 							} else {
-								0
+								None
 							}
 						})
-						.sum::<u64>()
+						.fold(Weight::zero(), |a, b| a.saturating_add(b))
 			}
-			_ => 0,
+			_ => Weight::zero(),
 		}
 	}
 
@@ -67,7 +67,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 					}
 					_ => None,
 				})
-				.sum::<u64>()
+				.fold(Weight::zero(), |a, b| a.saturating_add(b))
 	}
 
 	fn burn_item() -> Weight {
@@ -118,6 +118,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_recursively_breadth_plus_self_plus_self_per_each_raw(amount)
 			.saturating_sub(Self::burn_recursively_self_raw().saturating_mul(amount as u64 + 1))
 	}
+
+	fn token_owner() -> Weight {
+		<SelfWeightOf<T>>::token_owner()
+	}
 }
 
 fn map_create_data<T: Config>(
@@ -133,6 +137,8 @@ fn map_create_data<T: Config>(
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `NonfungibleHandle`. It wraps Nonfungible Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -420,6 +426,11 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
 	}
 
+	/// Returns token owners.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
+	}
+
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
 		<Pallet<T>>::token_properties((self.id, token_id))
 			.get(key)
@@ -486,5 +497,13 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		None
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		if <TokenData<T>>::contains_key((self.id, token)) {
+			Some(1)
+		} else {
+			None
+		}
 	}
 }

@@ -50,7 +50,7 @@ use crate::service::{OpalRuntimeExecutor, DefaultRuntimeExecutor};
 
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
-use cumulus_client_service::genesis::generate_genesis_block;
+use cumulus_client_cli::generate_genesis_block;
 use std::{future::Future, pin::Pin};
 use log::info;
 use sc_cli::{
@@ -62,9 +62,9 @@ use sc_service::{
 };
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{io::Write, net::SocketAddr, time::Duration};
+use std::{net::SocketAddr, time::Duration};
 
-use unique_runtime_common::types::Block;
+use up_common::types::opaque::Block;
 
 macro_rules! no_runtime_err {
 	($chain_name:expr) => {
@@ -191,16 +191,6 @@ impl SubstrateCli for RelayChainCli {
 	}
 }
 
-#[allow(clippy::borrowed_box)]
-fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<Vec<u8>> {
-	let mut storage = chain_spec.build_storage()?;
-
-	storage
-		.top
-		.remove(sp_core::storage::well_known_keys::CODE)
-		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
-}
-
 macro_rules! async_run_with_runtime {
 	(
 		$runtime_api:path, $executor:path,
@@ -239,6 +229,45 @@ macro_rules! construct_async_run {
 			),
 
 			RuntimeId::Opal => async_run_with_runtime!(
+				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
+
+			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into())
+		}
+	}}
+}
+
+macro_rules! sync_run_with_runtime {
+	(
+		$runtime_api:path, $executor:path,
+		$runner:ident, $components:ident, $cli:ident, $cmd:ident, $config:ident,
+		$( $code:tt )*
+	) => {
+		$runner.sync_run(|$config| {
+			$( $code )*
+		})
+	};
+}
+
+macro_rules! construct_sync_run {
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		let runner = $cli.create_runner($cmd)?;
+
+		match runner.config().chain_spec.runtime_id() {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => sync_run_with_runtime!(
+				unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
+
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => sync_run_with_runtime!(
+				quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				runner, $components, $cli, $cmd, $config, $( $code )*
+			),
+
+			RuntimeId::Opal => sync_run_with_runtime!(
 				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
@@ -329,63 +358,27 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
 			Ok(cmd.run(components.client, components.backend, None))
 		}),
-		Some(Subcommand::ExportGenesisState(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
-
-			let spec = load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&spec).state_version();
-			let block: Block = generate_genesis_block(&spec, state_version)?;
-			let raw_header = block.header().encode();
-			let output_buf = if params.raw {
-				raw_header
-			} else {
-				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
-			};
-
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
-
-			Ok(())
+		Some(Subcommand::ExportGenesisState(cmd)) => {
+			construct_sync_run!(|components, cli, cmd, _config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				let state_version = Cli::native_runtime_version(&spec).state_version();
+				cmd.run::<Block>(&*spec, state_version)
+			})
 		}
-		Some(Subcommand::ExportGenesisWasm(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
-
-			let raw_wasm_blob =
-				extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
-			let output_buf = if params.raw {
-				raw_wasm_blob
-			} else {
-				format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
-			};
-
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
-
-			Ok(())
+		Some(Subcommand::ExportGenesisWasm(cmd)) => {
+			construct_sync_run!(|components, cli, cmd, _config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				cmd.run(&*spec)
+			})
 		}
+		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
-					} else {
-						Err("Benchmarking wasn't enabled when building the node. \
-					You can enable it with `--features runtime-benchmarks`."
-							.into())
-					}
+					runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
@@ -409,7 +402,9 @@ pub fn run() -> Result<()> {
 				BenchmarkCmd::Machine(cmd) => {
 					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
 				}
-				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Extrinsic(_) => {
+					Err("Unsupported benchmarking command".into())
+				}
 			}
 		}
 		Some(Subcommand::TryRuntime(cmd)) => {
@@ -500,7 +495,7 @@ pub fn run() -> Result<()> {
 
 				let state_version =
 					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
+				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 				let genesis_hash = format!("0x{:?}", HexDisplay::from(&block.header().hash().0));
@@ -574,7 +569,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	fn base_path(&self) -> Result<Option<BasePath>> {
 		Ok(self
 			.shared_params()
-			.base_path()
+			.base_path()?
 			.or_else(|| self.base_path.clone().map(Into::into)))
 	}
 
@@ -624,12 +619,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.role(is_dev)
 	}
 
-	fn transaction_pool(&self) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool()
-	}
-
-	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
-		self.base.base.state_cache_child_ratio()
+	fn transaction_pool(&self, is_dev: bool) -> Result<sc_service::config::TransactionPoolOptions> {
+		self.base.base.transaction_pool(is_dev)
 	}
 
 	fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {

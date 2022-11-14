@@ -42,13 +42,13 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn enable() -> Weight {
-		(7_367_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(7_367_000)
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn disable() -> Weight {
-		(7_273_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(7_273_000)
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }
 
@@ -56,12 +56,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 impl WeightInfo for () {
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn enable() -> Weight {
-		(7_367_000 as Weight)
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(7_367_000)
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn disable() -> Weight {
-		(7_273_000 as Weight)
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(7_273_000)
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 }

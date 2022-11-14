@@ -1,7 +1,26 @@
+// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// This file is part of Unique Network.
+
+// Unique Network is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Unique Network is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
+
+//! Realizations of RMRK RPCs (remote procedure calls) related to the Equip pallet.
+
 use super::*;
 use pallet_rmrk_core::{misc, property::*};
 use sp_std::vec::Vec;
 
+/// Get base info by its ID.
 pub fn base<T: Config>(
 	base_id: RmrkBaseId,
 ) -> Result<Option<RmrkBaseInfo<T::AccountId>>, DispatchError> {
@@ -22,6 +41,7 @@ pub fn base<T: Config>(
 	}))
 }
 
+/// Get all parts of a base.
 pub fn base_parts<T: Config>(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
 	use pallet_common::CommonCollectionOperations;
 
@@ -93,6 +113,7 @@ pub fn base_parts<T: Config>(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, D
 	Ok(parts)
 }
 
+/// Get the theme names belonging to a base.
 pub fn theme_names<T: Config>(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
 	use pallet_common::CommonCollectionOperations;
 
@@ -124,6 +145,7 @@ pub fn theme_names<T: Config>(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>,
 	Ok(theme_names)
 }
 
+/// Get theme info, including properties, optionally limited to the provided keys.
 pub fn theme<T: Config>(
 	base_id: RmrkBaseId,
 	theme_name: RmrkThemeName,

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // Tests to be written here
-use crate::{Test, TestCrossAccountId, CollectionCreationPrice, Origin, Unique, new_test_ext};
+use crate::{Test, TestCrossAccountId, CollectionCreationPrice, RuntimeOrigin, Unique, new_test_ext};
 use up_data_structs::{
 	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
 	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, TokenId,
@@ -32,13 +32,13 @@ use pallet_unique::Error as UniqueError;
 fn add_balance(user: u64, value: u64) {
 	const DONOR_USER: u64 = 999;
 	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(
-		Origin::root(),
+		RuntimeOrigin::root(),
 		DONOR_USER,
 		value,
 		0
 	));
 	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(
-		Origin::root(),
+		RuntimeOrigin::root(),
 		DONOR_USER,
 		user,
 		value
@@ -62,8 +62,13 @@ fn default_fungible_data() -> CreateFungibleData {
 
 fn default_re_fungible_data() -> CreateReFungibleData {
 	CreateReFungibleData {
-		const_data: vec![1, 2, 3].try_into().unwrap(),
 		pieces: 1023,
+		properties: vec![Property {
+			key: b"test-prop".to_vec().try_into().unwrap(),
+			value: b"test-nft-prop".to_vec().try_into().unwrap(),
+		}]
+		.try_into()
+		.unwrap(),
 	}
 }
 
@@ -105,7 +110,7 @@ fn create_test_collection_for_owner(
 		..Default::default()
 	};
 
-	let origin1 = Origin::signed(owner);
+	let origin1 = RuntimeOrigin::signed(owner);
 	assert_ok!(Unique::create_collection_ex(origin1, data));
 
 	let saved_col_name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
@@ -174,7 +179,7 @@ fn create_test_collection(mode: &CollectionMode, id: CollectionId) -> Collection
 }
 
 fn create_test_item(collection_id: CollectionId, data: &CreateItemData) {
-	let origin1 = Origin::signed(1);
+	let origin1 = RuntimeOrigin::signed(1);
 	assert_ok!(Unique::create_item(
 		origin1,
 		collection_id,
@@ -194,7 +199,7 @@ fn account(sub: u64) -> TestCrossAccountId {
 fn check_not_sufficient_founds() {
 	new_test_ext().execute_with(|| {
 		let acc: u64 = 1;
-		<pallet_balances::Pallet<Test>>::set_balance(Origin::root(), acc, 0, 0).unwrap();
+		<pallet_balances::Pallet<Test>>::set_balance(RuntimeOrigin::root(), acc, 0, 0).unwrap();
 
 		let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
@@ -209,7 +214,7 @@ fn check_not_sufficient_founds() {
 				..Default::default()
 			};
 
-		let result = Unique::create_collection_ex(Origin::signed(acc), data);
+		let result = Unique::create_collection_ex(RuntimeOrigin::signed(acc), data);
 		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
 	});
 }
@@ -229,7 +234,7 @@ fn create_fungible_collection_fails_with_large_decimal_numbers() {
 			..Default::default()
 		};
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_noop!(
 			Unique::create_collection_ex(origin1, data),
 			UniqueError::<Test>::CollectionDecimalPointLimitExceeded
@@ -259,7 +264,7 @@ fn create_nft_multiple_items() {
 	new_test_ext().execute_with(|| {
 		create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let items_data = vec![default_nft_data(), default_nft_data(), default_nft_data()];
 
@@ -292,7 +297,6 @@ fn create_refungible_item() {
 		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
 		let balance =
 			<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1)));
-		assert_eq!(item.const_data, data.const_data.into_inner());
 		assert_eq!(balance, 1023);
 	});
 }
@@ -302,7 +306,7 @@ fn create_multiple_refungible_items() {
 	new_test_ext().execute_with(|| {
 		create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let items_data = vec![
 			default_re_fungible_data(),
@@ -327,7 +331,6 @@ fn create_multiple_refungible_items() {
 			));
 			let balance =
 				<pallet_refungible::Balance<Test>>::get((CollectionId(1), TokenId(1), account(1)));
-			assert_eq!(item.const_data.to_vec(), data.const_data.into_inner());
 			assert_eq!(balance, 1023);
 		}
 	});
@@ -355,7 +358,7 @@ fn create_fungible_item() {
 
 //         create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
 
-//         let origin1 = Origin::signed(1);
+//         let origin1 = RuntimeOrigin::signed(1);
 
 //         let items_data = vec![default_fungible_data(), default_fungible_data(), default_fungible_data()];
 
@@ -379,8 +382,8 @@ fn transfer_fungible_item() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		let data = default_fungible_data();
 		create_test_item(collection_id, &data.into());
@@ -440,7 +443,6 @@ fn transfer_refungible_item() {
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
 		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
-		assert_eq!(item.const_data, data.const_data.into_inner());
 		assert_eq!(
 			<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))),
 			1
@@ -455,8 +457,8 @@ fn transfer_refungible_item() {
 		);
 
 		// Account 1 transfers all 1023 pieces of RFT 1 to account 2
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 		assert_ok!(Unique::transfer(
 			origin1,
 			account(2),
@@ -569,7 +571,7 @@ fn transfer_nft_item() {
 			true
 		);
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		// default scenario
 		assert_ok!(Unique::transfer(
 			origin1,
@@ -613,7 +615,7 @@ fn transfer_nft_item_wrong_value() {
 			true
 		);
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_noop!(
 			Unique::transfer(origin1, account(2), CollectionId(1), TokenId(1), 2)
@@ -639,7 +641,7 @@ fn transfer_nft_item_zero_value() {
 			true
 		);
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// Transferring 0 amount works on NFT...
 		assert_ok!(Unique::transfer(
@@ -669,8 +671,8 @@ fn nft_approve_and_transfer_from() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_eq!(
 			<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))),
@@ -727,8 +729,8 @@ fn nft_approve_and_transfer_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		// Create NFT 1 for account 1
 		let data = default_nft_data();
@@ -801,8 +803,8 @@ fn refungible_approve_and_transfer_from() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		// Create RFT 1 in 1023 pieces for account 1
 		let data = default_re_fungible_data();
@@ -918,8 +920,8 @@ fn fungible_approve_and_transfer_from() {
 		let data = default_fungible_data();
 		create_test_item(collection_id, &data.into());
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -1008,7 +1010,7 @@ fn change_collection_owner() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::change_collection_owner(origin1, collection_id, 2));
 		assert_eq!(
 			<pallet_common::CollectionById<Test>>::get(collection_id)
@@ -1024,7 +1026,7 @@ fn destroy_collection() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::destroy_collection(origin1, collection_id));
 	});
 }
@@ -1034,7 +1036,7 @@ fn burn_nft_item() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1064,7 +1066,7 @@ fn burn_same_nft_item_twice() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1101,7 +1103,7 @@ fn burn_fungible_item() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::add_collection_admin(
 			origin1.clone(),
 			collection_id,
@@ -1141,7 +1143,7 @@ fn burn_fungible_item_with_token_id() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::Fungible(3), CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::add_collection_admin(
 			origin1.clone(),
 			collection_id,
@@ -1168,7 +1170,7 @@ fn burn_fungible_item_with_token_id() {
 fn burn_refungible_item() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::ReFungible, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -1228,7 +1230,7 @@ fn add_collection_admin() {
 	new_test_ext().execute_with(|| {
 		let collection1_id =
 			create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// Add collection admins
 		assert_ok!(Unique::add_collection_admin(
@@ -1263,7 +1265,7 @@ fn remove_collection_admin() {
 	new_test_ext().execute_with(|| {
 		let collection1_id =
 			create_test_collection_for_owner(&CollectionMode::NFT, 1, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// Add collection admins 2 and 3
 		assert_ok!(Unique::add_collection_admin(
@@ -1374,7 +1376,7 @@ fn approve() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// approve
 		assert_ok!(Unique::approve(
@@ -1395,8 +1397,8 @@ fn approve() {
 fn transfer_from() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1470,7 +1472,7 @@ fn owner_can_add_address_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::add_to_allow_list(
 			origin1,
 			collection_id,
@@ -1487,8 +1489,8 @@ fn owner_can_add_address_to_allow_list() {
 fn admin_can_add_address_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::add_collection_admin(
 			origin1,
@@ -1512,7 +1514,7 @@ fn nonprivileged_user_cannot_add_address_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin2 = Origin::signed(2);
+		let origin2 = RuntimeOrigin::signed(2);
 		assert_noop!(
 			Unique::add_to_allow_list(origin2, collection_id, account(3)),
 			CommonError::<Test>::NoPermission
@@ -1523,7 +1525,7 @@ fn nonprivileged_user_cannot_add_address_to_allow_list() {
 #[test]
 fn nobody_can_add_address_to_allow_list_of_nonexisting_collection() {
 	new_test_ext().execute_with(|| {
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_noop!(
 			Unique::add_to_allow_list(origin1, CollectionId(1), account(2)),
@@ -1537,7 +1539,7 @@ fn nobody_can_add_address_to_allow_list_of_deleted_collection() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::destroy_collection(origin1.clone(), collection_id));
 		assert_noop!(
 			Unique::add_to_allow_list(origin1, collection_id, account(2)),
@@ -1551,7 +1553,7 @@ fn nobody_can_add_address_to_allow_list_of_deleted_collection() {
 fn address_is_already_added_to_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1575,7 +1577,7 @@ fn owner_can_remove_address_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
 			collection_id,
@@ -1597,8 +1599,8 @@ fn owner_can_remove_address_from_allow_list() {
 fn admin_can_remove_address_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		// Owner adds admin
 		assert_ok!(Unique::add_collection_admin(
@@ -1631,8 +1633,8 @@ fn admin_can_remove_address_from_allow_list() {
 fn nonprivileged_user_cannot_remove_address_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::add_to_allow_list(
 			origin1,
@@ -1653,7 +1655,7 @@ fn nonprivileged_user_cannot_remove_address_from_allow_list() {
 #[test]
 fn nobody_can_remove_address_from_allow_list_of_nonexisting_collection() {
 	new_test_ext().execute_with(|| {
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_noop!(
 			Unique::remove_from_allow_list(origin1, CollectionId(1), account(2)),
@@ -1666,8 +1668,8 @@ fn nobody_can_remove_address_from_allow_list_of_nonexisting_collection() {
 fn nobody_can_remove_address_from_allow_list_of_deleted_collection() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		// Add account 2 to allow list
 		assert_ok!(Unique::add_to_allow_list(
@@ -1704,7 +1706,7 @@ fn nobody_can_remove_address_from_allow_list_of_deleted_collection() {
 fn address_is_already_removed_from_allow_list() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::add_to_allow_list(
 			origin1.clone(),
@@ -1738,7 +1740,7 @@ fn allow_list_test_1() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1770,7 +1772,7 @@ fn allow_list_test_1() {
 fn allow_list_test_2() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1835,7 +1837,7 @@ fn allow_list_test_3() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1868,7 +1870,7 @@ fn allow_list_test_4() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1933,7 +1935,7 @@ fn allow_list_test_5() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1960,7 +1962,7 @@ fn allow_list_test_6() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -1994,7 +1996,7 @@ fn allow_list_test_7() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2035,7 +2037,7 @@ fn allow_list_test_8() {
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// Toggle Allow List mode and add accounts 1 and 2
 		assert_ok!(Unique::set_collection_permissions(
@@ -2088,7 +2090,7 @@ fn allow_list_test_8() {
 fn allow_list_test_9() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2111,8 +2113,8 @@ fn allow_list_test_10() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2145,8 +2147,8 @@ fn allow_list_test_11() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2182,8 +2184,8 @@ fn allow_list_test_12() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2214,7 +2216,7 @@ fn allow_list_test_13() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2237,8 +2239,8 @@ fn allow_list_test_14() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2271,8 +2273,8 @@ fn allow_list_test_15() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2303,8 +2305,8 @@ fn allow_list_test_16() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
-		let origin2 = Origin::signed(2);
+		let origin1 = RuntimeOrigin::signed(1);
+		let origin2 = RuntimeOrigin::signed(2);
 
 		assert_ok!(Unique::set_collection_permissions(
 			origin1.clone(),
@@ -2351,7 +2353,7 @@ fn create_max_collections() {
 #[test]
 fn total_number_collections_bound_neg() {
 	new_test_ext().execute_with(|| {
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		for i in 1..=COLLECTION_NUMBER_LIMIT {
 			create_test_collection(&CollectionMode::NFT, CollectionId(i));
@@ -2395,7 +2397,7 @@ fn owned_tokens_bound_neg() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		for _ in 1..=MAX_TOKEN_OWNERSHIP {
 			let data = default_nft_data();
@@ -2417,7 +2419,7 @@ fn collection_admins_bound() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		assert_ok!(Unique::add_collection_admin(
 			origin1.clone(),
@@ -2438,7 +2440,7 @@ fn collection_admins_bound_neg() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		for i in 0..COLLECTION_ADMINS_LIMIT {
 			assert_ok!(Unique::add_collection_admin(
@@ -2462,7 +2464,7 @@ fn collection_admins_bound_neg() {
 #[test]
 fn collection_transfer_flag_works() {
 	new_test_ext().execute_with(|| {
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 		assert_ok!(Unique::set_transfers_enabled_flag(
@@ -2482,7 +2484,7 @@ fn collection_transfer_flag_works() {
 			true
 		);
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// default scenario
 		assert_ok!(Unique::transfer(
@@ -2514,7 +2516,7 @@ fn collection_transfer_flag_works() {
 #[test]
 fn collection_transfer_flag_works_neg() {
 	new_test_ext().execute_with(|| {
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 		assert_ok!(Unique::set_transfers_enabled_flag(
@@ -2534,7 +2536,7 @@ fn collection_transfer_flag_works_neg() {
 			true
 		);
 
-		let origin1 = Origin::signed(1);
+		let origin1 = RuntimeOrigin::signed(1);
 
 		// default scenario
 		assert_noop!(
@@ -2567,8 +2569,8 @@ fn collection_sponsoring() {
 		// default_limits();
 		let user1 = 1_u64;
 		let user2 = 777_u64;
-		let origin1 = Origin::signed(user1);
-		let origin2 = Origin::signed(user2);
+		let origin1 = RuntimeOrigin::signed(user1);
+		let origin2 = RuntimeOrigin::signed(user2);
 		let account2 = account(user2);
 
 		let collection_id =

@@ -1,14 +1,58 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/events';
+
+import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U256, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
-import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiLocation, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { AccountId32, H160, H256, Weight } from '@polkadot/types/interfaces/runtime';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportDispatchDispatchInfo, FrameSupportScheduleLookupError, FrameSupportTokensMiscBalanceStatus, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+
+export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
 declare module '@polkadot/api-base/types/events' {
-  export interface AugmentedEvents<ApiType extends ApiTypes> {
+  interface AugmentedEvents<ApiType extends ApiTypes> {
+    appPromotion: {
+      /**
+       * The admin was set
+       * 
+       * # Arguments
+       * * AccountId: account address of the admin
+       **/
+      SetAdmin: AugmentedEvent<ApiType, [AccountId32]>;
+      /**
+       * Staking was performed
+       * 
+       * # Arguments
+       * * AccountId: account of the staker
+       * * Balance : staking amount
+       **/
+      Stake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Staking recalculation was performed
+       * 
+       * # Arguments
+       * * AccountId: account of the staker.
+       * * Balance : recalculation base
+       * * Balance : total income
+       **/
+      StakingRecalculation: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Unstaking was performed
+       * 
+       * # Arguments
+       * * AccountId: account of the staker
+       * * Balance : unstaking amount
+       **/
+      Unstake: AugmentedEvent<ApiType, [AccountId32, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     balances: {
       /**
        * A balance was set by root.
@@ -59,82 +103,47 @@ declare module '@polkadot/api-base/types/events' {
     };
     common: {
       /**
-       * * collection_id
-       * 
-       * * item_id
-       * 
-       * * sender
-       * 
-       * * spender
-       * 
-       * * amount
+       * Amount pieces of token owned by `sender` was approved for `spender`.
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * New collection was created
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique identifier of newly created collection.
-       * 
-       * * mode: [CollectionMode] converted into u8.
-       * 
-       * * account_id: Collection owner.
        **/
       CollectionCreated: AugmentedEvent<ApiType, [u32, u8, AccountId32]>;
       /**
        * New collection was destroyed
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Globally unique identifier of collection.
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
+      /**
+       * The property has been deleted.
+       **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * The colletion property has been added or edited.
+       **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
       /**
        * New item was created.
-       * 
-       * # Arguments
-       * 
-       * * collection_id: Id of the collection where item was created.
-       * 
-       * * item_id: Id of an item. Unique within the collection.
-       * 
-       * * recipient: Owner of newly created item
-       * 
-       * * amount: Always 1 for NFT
        **/
       ItemCreated: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
        * Collection item was burned.
-       * 
-       * # Arguments
-       * 
-       * * collection_id.
-       * 
-       * * item_id: Identifier of burned NFT.
-       * 
-       * * owner: which user has destroyed its tokens
-       * 
-       * * amount: Always 1 for NFT
        **/
       ItemDestroyed: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
+      /**
+       * The token property permission of a collection has been set.
+       **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * The token property has been deleted.
+       **/
       TokenPropertyDeleted: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
+      /**
+       * The token property has been added or edited.
+       **/
       TokenPropertySet: AugmentedEvent<ApiType, [u32, u32, Bytes]>;
       /**
        * Item was transferred
-       * 
-       * * collection_id: Id of collection to which item is belong
-       * 
-       * * item_id: Id of an item
-       * 
-       * * sender: Original owner of item
-       * 
-       * * recipient: New owner of item
-       * 
-       * * amount: Always 1 for NFT
        **/
       Transfer: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
@@ -175,11 +184,11 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Downward message is overweight and was placed in the overweight queue.
        **/
-      OverweightEnqueued: AugmentedEvent<ApiType, [messageId: U8aFixed, overweightIndex: u64, requiredWeight: u64], { messageId: U8aFixed, overweightIndex: u64, requiredWeight: u64 }>;
+      OverweightEnqueued: AugmentedEvent<ApiType, [messageId: U8aFixed, overweightIndex: u64, requiredWeight: Weight], { messageId: U8aFixed, overweightIndex: u64, requiredWeight: Weight }>;
       /**
        * Downward message from the overweight queue was executed.
        **/
-      OverweightServiced: AugmentedEvent<ApiType, [overweightIndex: u64, weightUsed: u64], { overweightIndex: u64, weightUsed: u64 }>;
+      OverweightServiced: AugmentedEvent<ApiType, [overweightIndex: u64, weightUsed: Weight], { overweightIndex: u64, weightUsed: Weight }>;
       /**
        * Downward message is unsupported version of XCM.
        **/
@@ -187,7 +196,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * The weight limit for handling downward messages was reached.
        **/
-      WeightExhausted: AugmentedEvent<ApiType, [messageId: U8aFixed, remainingWeight: u64, requiredWeight: u64], { messageId: U8aFixed, remainingWeight: u64, requiredWeight: u64 }>;
+      WeightExhausted: AugmentedEvent<ApiType, [messageId: U8aFixed, remainingWeight: Weight, requiredWeight: Weight], { messageId: U8aFixed, remainingWeight: Weight, requiredWeight: Weight }>;
       /**
        * Generic event
        **/
@@ -237,6 +246,46 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    evmContractHelpers: {
+      /**
+       * Collection sponsor was removed.
+       **/
+      ContractSponsorRemoved: AugmentedEvent<ApiType, [H160]>;
+      /**
+       * Contract sponsor was set.
+       **/
+      ContractSponsorSet: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * New sponsor was confirm.
+       **/
+      ContractSponsorshipConfirmed: AugmentedEvent<ApiType, [H160, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    foreignAssets: {
+      /**
+       * The asset registered.
+       **/
+      AssetRegistered: AugmentedEvent<ApiType, [assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * The asset updated.
+       **/
+      AssetUpdated: AugmentedEvent<ApiType, [assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: PalletForeignAssetsAssetIds, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * The foreign asset registered.
+       **/
+      ForeignAssetRegistered: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * The foreign asset updated.
+       **/
+      ForeignAssetUpdated: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     maintenance: {
       MaintenanceDisabled: AugmentedEvent<ApiType, []>;
       MaintenanceEnabled: AugmentedEvent<ApiType, []>;
@@ -249,7 +298,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Downward messages were processed using the given weight.
        **/
-      DownwardMessagesProcessed: AugmentedEvent<ApiType, [weightUsed: u64, dmqHead: H256], { weightUsed: u64, dmqHead: H256 }>;
+      DownwardMessagesProcessed: AugmentedEvent<ApiType, [weightUsed: Weight, dmqHead: H256], { weightUsed: Weight, dmqHead: H256 }>;
       /**
        * Some downward messages have been received and will be processed.
        **/
@@ -337,7 +386,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ id, pallet index, call index, actual weight, max budgeted weight \]
        **/
-      NotifyOverweight: AugmentedEvent<ApiType, [u64, u8, u8, u64, u64]>;
+      NotifyOverweight: AugmentedEvent<ApiType, [u64, u8, u8, Weight, Weight]>;
       /**
        * A given location which had a version change subscription was dropped owing to an error
        * migrating the location to our new XCM format.
@@ -440,6 +489,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Dispatched: AugmentedEvent<ApiType, [task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError>], { task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError> }>;
       /**
+       * Scheduled task's priority has changed
+       **/
+      PriorityChanged: AugmentedEvent<ApiType, [when: u32, index: u32, priority: u8], { when: u32, index: u32, priority: u8 }>;
+      /**
        * Scheduled some task.
        **/
       Scheduled: AugmentedEvent<ApiType, [when: u32, index: u32], { when: u32, index: u32 }>;
@@ -450,7 +503,7 @@ declare module '@polkadot/api-base/types/events' {
     };
     structure: {
       /**
-       * Executed call on behalf of token
+       * Executed call on behalf of the token.
        **/
       Executed: AugmentedEvent<ApiType, [Result<Null, SpRuntimeDispatchError>]>;
       /**
@@ -484,11 +537,11 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * An extrinsic failed.
        **/
-      ExtrinsicFailed: AugmentedEvent<ApiType, [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportWeightsDispatchInfo], { dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportWeightsDispatchInfo }>;
+      ExtrinsicFailed: AugmentedEvent<ApiType, [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo], { dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo }>;
       /**
        * An extrinsic completed successfully.
        **/
-      ExtrinsicSuccess: AugmentedEvent<ApiType, [dispatchInfo: FrameSupportWeightsDispatchInfo], { dispatchInfo: FrameSupportWeightsDispatchInfo }>;
+      ExtrinsicSuccess: AugmentedEvent<ApiType, [dispatchInfo: FrameSupportDispatchDispatchInfo], { dispatchInfo: FrameSupportDispatchDispatchInfo }>;
       /**
        * An account was reaped.
        **/
@@ -501,6 +554,85 @@ declare module '@polkadot/api-base/types/events' {
        * On on-chain remark happened.
        **/
       Remarked: AugmentedEvent<ApiType, [sender: AccountId32, hash_: H256], { sender: AccountId32, hash_: H256 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    testUtils: {
+      ShouldRollback: AugmentedEvent<ApiType, []>;
+      ValueIsSet: AugmentedEvent<ApiType, []>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    tokens: {
+      /**
+       * A balance was set by root.
+       **/
+      BalanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, free: u128, reserved: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, free: u128, reserved: u128 }>;
+      /**
+       * Deposited some balance into an account
+       **/
+      Deposited: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * An account was removed whose balance was non-zero but below
+       * ExistentialDeposit, resulting in an outright loss.
+       **/
+      DustLost: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * An account was created with some free balance.
+       **/
+      Endowed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some locked funds were unlocked
+       **/
+      LockRemoved: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32 }>;
+      /**
+       * Some funds are locked
+       **/
+      LockSet: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some balance was reserved (moved from free to reserved).
+       **/
+      Reserved: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some reserved balance was repatriated (moved from reserved to
+       * another account).
+       **/
+      ReserveRepatriated: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128, status: FrameSupportTokensMiscBalanceStatus }>;
+      /**
+       * Some balances were slashed (e.g. due to mis-behavior)
+       **/
+      Slashed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, freeAmount: u128, reservedAmount: u128 }>;
+      /**
+       * The total issuance of an currency has been set
+       **/
+      TotalIssuanceSet: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, amount: u128], { currencyId: PalletForeignAssetsAssetIds, amount: u128 }>;
+      /**
+       * Transfer succeeded.
+       **/
+      Transfer: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128 }>;
+      /**
+       * Some balance was unreserved (moved from reserved to free).
+       **/
+      Unreserved: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Some balances were withdrawn (e.g. pay for transaction fee)
+       **/
+      Withdrawn: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    transactionPayment: {
+      /**
+       * A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
+       * has been paid by `who`.
+       **/
+      TransactionFeePaid: AugmentedEvent<ApiType, [who: AccountId32, actualFee: u128, tip: u128], { who: AccountId32, actualFee: u128, tip: u128 }>;
       /**
        * Generic event
        **/
@@ -532,6 +664,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Rollover: AugmentedEvent<ApiType, [rolloverBalance: u128], { rolloverBalance: u128 }>;
       /**
+       * A new spend proposal has been approved.
+       **/
+      SpendApproved: AugmentedEvent<ApiType, [proposalIndex: u32, amount: u128, beneficiary: AccountId32], { proposalIndex: u32, amount: u128, beneficiary: AccountId32 }>;
+      /**
        * We have ended a spend period and will now allocate funds.
        **/
       Spending: AugmentedEvent<ApiType, [budgetRemaining: u128], { budgetRemaining: u128 }>;
@@ -542,90 +678,80 @@ declare module '@polkadot/api-base/types/events' {
     };
     unique: {
       /**
-       * Address was add to allow list
+       * Address was added to the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the added account.
        **/
       AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Address was remove from allow list
+       * Address was removed from the allow list
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * user:  Address.
+       * * collection_id: ID of the affected collection.
+       * * user: Address of the removed account.
        **/
       AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was added
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Admin address.
        **/
       CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Collection admin was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * admin:  Admin address.
+       * * collection_id: ID of the affected collection.
+       * * admin: Removed admin address.
        **/
       CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
-       * Collection limits was set
+       * Collection limits were set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
       /**
-       * Collection owned was change
+       * Collection owned was changed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New owner address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New owner address.
        **/
       CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Collection permissions were set
+       * 
+       * # Arguments
+       * * collection_id: ID of the affected collection.
+       **/
       CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was removed
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
+       * * collection_id: ID of the affected collection.
        **/
       CollectionSponsorRemoved: AugmentedEvent<ApiType, [u32]>;
       /**
        * Collection sponsor was set
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * owner:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * owner: New sponsor address.
        **/
       CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * New sponsor was confirm
        * 
        * # Arguments
-       * 
-       * * collection_id: Globally unique collection identifier.
-       * 
-       * * sponsor:  New sponsor address.
+       * * collection_id: ID of the affected collection.
+       * * sponsor: New sponsor address.
        **/
       SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
@@ -655,35 +781,45 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Bad XCM format used.
        **/
-      BadFormat: AugmentedEvent<ApiType, [Option<H256>]>;
+      BadFormat: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
       /**
        * Bad XCM version used.
        **/
-      BadVersion: AugmentedEvent<ApiType, [Option<H256>]>;
+      BadVersion: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
       /**
        * Some XCM failed.
        **/
-      Fail: AugmentedEvent<ApiType, [Option<H256>, XcmV2TraitsError]>;
+      Fail: AugmentedEvent<ApiType, [messageHash: Option<H256>, error: XcmV2TraitsError, weight: Weight], { messageHash: Option<H256>, error: XcmV2TraitsError, weight: Weight }>;
       /**
        * An XCM exceeded the individual message weight budget.
        **/
-      OverweightEnqueued: AugmentedEvent<ApiType, [u32, u32, u64, u64]>;
+      OverweightEnqueued: AugmentedEvent<ApiType, [sender: u32, sentAt: u32, index: u64, required: Weight], { sender: u32, sentAt: u32, index: u64, required: Weight }>;
       /**
        * An XCM from the overweight queue was executed with the given actual weight used.
        **/
-      OverweightServiced: AugmentedEvent<ApiType, [u64, u64]>;
+      OverweightServiced: AugmentedEvent<ApiType, [index: u64, used: Weight], { index: u64, used: Weight }>;
       /**
        * Some XCM was executed ok.
        **/
-      Success: AugmentedEvent<ApiType, [Option<H256>]>;
+      Success: AugmentedEvent<ApiType, [messageHash: Option<H256>, weight: Weight], { messageHash: Option<H256>, weight: Weight }>;
       /**
        * An upward message was sent to the relay chain.
        **/
-      UpwardMessageSent: AugmentedEvent<ApiType, [Option<H256>]>;
+      UpwardMessageSent: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
       /**
        * An HRMP message was sent to a sibling parachain.
        **/
-      XcmpMessageSent: AugmentedEvent<ApiType, [Option<H256>]>;
+      XcmpMessageSent: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    xTokens: {
+      /**
+       * Transferred `MultiAsset` with fee.
+       **/
+      TransferredMultiAssets: AugmentedEvent<ApiType, [sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation], { sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation }>;
       /**
        * Generic event
        **/

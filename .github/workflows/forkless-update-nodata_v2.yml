@@ -37,6 +37,8 @@ jobs:
             network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
             network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
             network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+
+
   forkless-update-nodata:
     needs: execution-marix
     # The type of runner that the job will run on
@@ -79,6 +81,7 @@ jobs:
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
+
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
@@ -90,6 +93,7 @@ jobs:
           variables: |
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
+
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
@@ -158,7 +162,7 @@ jobs:
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
                 
-      - name: Run tests 
+      - name: Run Parallel tests 
         working-directory: tests
         run: |
           yarn install
@@ -166,17 +170,40 @@ jobs:
           node scripts/readyness.js
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
     
-      - name: Test Report
+      - name: Test Report Parallel
         uses: phoenix-actions/test-reporting@v8
-        id: test-report
+        id: test-report-parallel
         if: success() || failure()    # run this step even if previous step failed
         with:
-          name: Report tests results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          name: Report Parallel tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+          
+      - name: Run Sequential tests 
+        working-directory: tests
+        if: success() || failure() 
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+    
+      - name: Test Report Sequential
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-sequential
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Report Sequential tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 

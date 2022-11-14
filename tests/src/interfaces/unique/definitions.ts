@@ -24,7 +24,7 @@ const CROSS_ACCOUNT_ID_TYPE = 'PalletEvmAccountBasicCrossAccountIdRepr';
 
 const collectionParam = {name: 'collection', type: 'u32'};
 const tokenParam = {name: 'tokenId', type: 'u32'};
-const propertyKeysParam = {name: 'propertyKeys', type: 'Vec<String>', isOptional: true};
+const propertyKeysParam = {name: 'propertyKeys', type: 'Option<Vec<String>>', isOptional: true};
 const crossAccountParam = (name = 'account') => ({name, type: CROSS_ACCOUNT_ID_TYPE});
 const atParam = {name: 'at', type: 'Hash', isOptional: true};
 
@@ -37,47 +37,143 @@ const fun = (description: string, params: RpcParam[], type: string) => ({
 export default {
   types: {},
   rpc: {
-    adminlist: fun('Get admin list', [collectionParam], 'Vec<PalletEvmAccountBasicCrossAccountIdRepr>'),
-    allowlist: fun('Get allowlist', [collectionParam], 'Vec<PalletEvmAccountBasicCrossAccountIdRepr>'),
+    accountTokens: fun(
+      'Get tokens owned by an account in a collection', 
+      [collectionParam, crossAccountParam()], 
+      'Vec<u32>',
+    ),
+    collectionTokens: fun(
+      'Get tokens contained within a collection', 
+      [collectionParam], 
+      'Vec<u32>',
+    ),
+    tokenExists: fun(
+      'Check if the token exists', 
+      [collectionParam, tokenParam], 
+      'bool',
+    ),
 
-    accountTokens: fun('Get tokens owned by account', [collectionParam, crossAccountParam()], 'Vec<u32>'),
-    collectionTokens: fun('Get tokens contained in collection', [collectionParam], 'Vec<u32>'),
+    tokenOwner: fun(
+      'Get the token owner', 
+      [collectionParam, tokenParam], 
+      `Option<${CROSS_ACCOUNT_ID_TYPE}>`,
+    ),
+    topmostTokenOwner: fun(
+      'Get the topmost token owner in the hierarchy of a possibly nested token', 
+      [collectionParam, tokenParam], 
+      `Option<${CROSS_ACCOUNT_ID_TYPE}>`,
+    ),
+    tokenOwners: fun(
+      'Returns 10 tokens owners in no particular order', 
+      [collectionParam, tokenParam], 
+      `Vec<${CROSS_ACCOUNT_ID_TYPE}>`,
+    ),
+    tokenChildren: fun(
+      'Get tokens nested directly into the token', 
+      [collectionParam, tokenParam], 
+      'Vec<UpDataStructsTokenChild>',
+    ),
 
-    lastTokenId: fun('Get last token id', [collectionParam], 'u32'),
-    totalSupply: fun('Get amount of unique collection tokens', [collectionParam], 'u32'),
-    accountBalance: fun('Get amount of different user tokens', [collectionParam, crossAccountParam()], 'u32'),
-    balance: fun('Get amount of specific account token', [collectionParam, crossAccountParam(), tokenParam], 'u128'),
-    allowance: fun('Get allowed amount', [collectionParam, crossAccountParam('sender'), crossAccountParam('spender'), tokenParam], 'u128'),
-    tokenOwner: fun('Get token owner', [collectionParam, tokenParam], `Option<${CROSS_ACCOUNT_ID_TYPE}>`),
-    topmostTokenOwner: fun('Get token owner, in case of nested token - find parent recursive', [collectionParam, tokenParam], `Option<${CROSS_ACCOUNT_ID_TYPE}>`),
-    tokenChildren: fun('Get tokens nested directly into the token', [collectionParam, tokenParam], 'Vec<UpDataStructsTokenChild>'),
-    constMetadata: fun('Get token constant metadata', [collectionParam, tokenParam], 'Vec<u8>'),
-    variableMetadata: fun('Get token variable metadata', [collectionParam, tokenParam], 'Vec<u8>'),
     collectionProperties: fun(
-      'Get collection properties',
+      'Get collection properties, optionally limited to the provided keys',
       [collectionParam, propertyKeysParam],
       'Vec<UpDataStructsProperty>',
     ),
     tokenProperties: fun(
-      'Get token properties',
+      'Get token properties, optionally limited to the provided keys',
       [collectionParam, tokenParam, propertyKeysParam],
       'Vec<UpDataStructsProperty>',
     ),
     propertyPermissions: fun(
-      'Get property permissions',
+      'Get property permissions, optionally limited to the provided keys',
       [collectionParam, propertyKeysParam],
       'Vec<UpDataStructsPropertyKeyPermission>',
     ),
+
+    constMetadata: fun(
+      'Get token constant metadata', 
+      [collectionParam, tokenParam], 
+      'Vec<u8>',
+    ),
+    variableMetadata: fun(
+      'Get token variable metadata', 
+      [collectionParam, tokenParam], 
+      'Vec<u8>',
+    ),
+
     tokenData: fun(
-      'Get token data',
+      'Get token data, including properties, optionally limited to the provided keys, and total pieces for an RFT',
       [collectionParam, tokenParam, propertyKeysParam],
       'UpDataStructsTokenData',
     ),
-    tokenExists: fun('Check if token exists', [collectionParam, tokenParam], 'bool'),
-    collectionById: fun('Get collection by specified id', [collectionParam], 'Option<UpDataStructsRpcCollection>'),
-    collectionStats: fun('Get collection stats', [], 'UpDataStructsCollectionStats'),
-    allowed: fun('Check if user is allowed to use collection', [collectionParam, crossAccountParam()], 'bool'),
-    nextSponsored: fun('Get number of blocks when sponsored transaction is available', [collectionParam, crossAccountParam(), tokenParam], 'Option<u64>'),
-    effectiveCollectionLimits: fun('Get effective collection limits', [collectionParam], 'Option<UpDataStructsCollectionLimits>'),
+    totalSupply: fun(
+      'Get the amount of distinctive tokens present in a collection', 
+      [collectionParam], 
+      'u32',
+    ),
+
+    accountBalance: fun(
+      'Get the amount of any user tokens owned by an account', 
+      [collectionParam, crossAccountParam()], 
+      'u32',
+    ),
+    balance: fun(
+      'Get the amount of a specific token owned by an account', 
+      [collectionParam, crossAccountParam(), tokenParam], 
+      'u128',
+    ),
+    allowance: fun(
+      'Get the amount of currently possible sponsored transactions on a token for the fee to be taken off a sponsor', 
+      [collectionParam, crossAccountParam('sender'), crossAccountParam('spender'), tokenParam], 
+      'u128',
+    ),
+
+    adminlist: fun(
+      'Get the list of admin accounts of a collection', 
+      [collectionParam], 
+      'Vec<PalletEvmAccountBasicCrossAccountIdRepr>',
+    ),
+    allowlist: fun(
+      'Get the list of accounts allowed to operate within a collection', 
+      [collectionParam], 
+      'Vec<PalletEvmAccountBasicCrossAccountIdRepr>',
+    ),
+    allowed: fun(
+      'Check if a user is allowed to operate within a collection', 
+      [collectionParam, crossAccountParam()], 
+      'bool',
+    ),
+
+    lastTokenId: fun(
+      'Get the last token ID created in a collection', 
+      [collectionParam], 
+      'u32',
+    ),
+    collectionById: fun(
+      'Get a collection by the specified ID', 
+      [collectionParam], 
+      'Option<UpDataStructsRpcCollection>',
+    ),
+    collectionStats: fun(
+      'Get chain stats about collections', 
+      [], 
+      'UpDataStructsCollectionStats',
+    ),
+
+    nextSponsored: fun(
+      'Get the number of blocks until sponsoring a transaction is available', 
+      [collectionParam, crossAccountParam(), tokenParam], 
+      'Option<u64>',
+    ),
+    effectiveCollectionLimits: fun(
+      'Get effective collection limits', 
+      [collectionParam], 
+      'Option<UpDataStructsCollectionLimits>',
+    ),
+    totalPieces: fun(
+      'Get the total amount of pieces of an RFT', 
+      [collectionParam, tokenParam], 
+      'Option<u128>',
+    ),
   },
 };

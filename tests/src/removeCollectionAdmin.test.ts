@@ -14,125 +14,99 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import chai from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import {default as usingApi, submitTransactionAsync, submitTransactionExpectFailAsync} from './substrate/substrate-api';
-import {createCollectionExpectSuccess, destroyCollectionExpectSuccess, getAdminList, normalizeAccountId, queryCollectionExpectSuccess} from './util/helpers';
-
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds, expect} from './util';
 
 describe('Integration Test removeCollectionAdmin(collection_id, account_id):', () => {
-  it('Remove collection admin.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const collection = await queryCollectionExpectSuccess(api, collectionId);
-      expect(collection.owner.toString()).to.be.deep.eq(alice.address);
-      // first - add collection admin Bob
-      const addAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, addAdminTx);
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-
-      // then remove bob from admins of collection
-      const removeAdminTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, removeAdminTx);
-
-      const adminListAfterRemoveAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterRemoveAdmin).not.to.be.deep.contains(normalizeAccountId(bob.address));
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = await privateKey({filename: __filename});
+      [alice, bob] = await helper.arrange.createAccounts([20n, 10n], donor);
     });
   });
 
-  it('Remove admin from collection that has no admins', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const alice = privateKeyWrapper('//Alice');
-      const collectionId = await createCollectionExpectSuccess();
+  itSub('Remove collection admin', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-1', tokenPrefix: 'RCA'});
+    const collectionInfo = await collection.getData();
+    expect(collectionInfo?.raw.owner.toString()).to.be.deep.eq(alice.address);
+    // first - add collection admin Bob
+    await collection.addAdmin(alice, {Substrate: bob.address});
 
-      const adminListBeforeAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
+    const adminListAfterAddAdmin = await collection.getAdmins();
+    expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: bob.address});
 
-      const tx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(alice.address));
-      await submitTransactionAsync(alice, tx);
-    });
+    // then remove bob from admins of collection
+    await collection.removeAdmin(alice, {Substrate: bob.address});
+
+    const adminListAfterRemoveAdmin = await collection.getAdmins();
+    expect(adminListAfterRemoveAdmin).not.to.be.deep.contains({Substrate: bob.address});
+  });
+
+  itSub('Remove admin from collection that has no admins', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-2', tokenPrefix: 'RCA'});
+
+    const adminListBeforeAddAdmin = await collection.getAdmins();
+    expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
+
+    await collection.removeAdmin(alice, {Substrate: alice.address});
   });
 });
 
 describe('Negative Integration Test removeCollectionAdmin(collection_id, account_id):', () => {
-  it('Can\'t remove collection admin from not existing collection', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = (1 << 32) - 1;
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
-      const changeOwnerTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([20n, 10n, 10n], donor);
     });
   });
 
-  it('Can\'t remove collection admin from deleted collection', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      // tslint:disable-next-line: no-bitwise
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
+  itSub('Can\'t remove collection admin from not existing collection', async ({helper}) => {
+    const collectionId = (1 << 32) - 1;
 
-      await destroyCollectionExpectSuccess(collectionId);
-
-      const changeOwnerTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(alice, changeOwnerTx)).to.be.rejected;
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
-    });
+    await expect(helper.collection.removeAdmin(alice, collectionId, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  it('Regular user can\'t remove collection admin', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//Charlie');
+  itSub('Can\'t remove collection admin from deleted collection', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-Neg-2', tokenPrefix: 'RCA'});
 
-      const addAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, addAdminTx);
+    expect(await collection.burn(alice)).to.be.true;
 
-      const changeOwnerTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(charlie, changeOwnerTx)).to.be.rejected;
-
-      // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
-      await createCollectionExpectSuccess();
-    });
+    await expect(helper.collection.removeAdmin(alice, collection.collectionId, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  it('Admin can\'t remove collection admin.', async () => {
-    await usingApi(async (api, privateKeyWrapper) => {
-      const collectionId = await createCollectionExpectSuccess();
-      const alice = privateKeyWrapper('//Alice');
-      const bob = privateKeyWrapper('//Bob');
-      const charlie = privateKeyWrapper('//Charlie');
+  itSub('Regular user can\'t remove collection admin', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-Neg-3', tokenPrefix: 'RCA'});
 
-      const addBobAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await submitTransactionAsync(alice, addBobAdminTx);
-      const addCharlieAdminTx = api.tx.unique.addCollectionAdmin(collectionId, normalizeAccountId(charlie.address));
-      await submitTransactionAsync(alice, addCharlieAdminTx);
+    await collection.addAdmin(alice, {Substrate: bob.address});
 
-      const adminListAfterAddAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-      expect(adminListAfterAddAdmin).to.be.deep.contains(normalizeAccountId(charlie.address));
+    await expect(collection.removeAdmin(charlie, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.NoPermission/);
+  });
 
-      const removeAdminTx = api.tx.unique.removeCollectionAdmin(collectionId, normalizeAccountId(bob.address));
-      await expect(submitTransactionExpectFailAsync(charlie, removeAdminTx)).to.be.rejected;
+  itSub('Admin can\'t remove collection admin.', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-Neg-4', tokenPrefix: 'RCA'});
+    
+    await collection.addAdmin(alice, {Substrate: bob.address});
+    await collection.addAdmin(alice, {Substrate: charlie.address});
 
-      const adminListAfterRemoveAdmin = await getAdminList(api, collectionId);
-      expect(adminListAfterRemoveAdmin).to.be.deep.contains(normalizeAccountId(bob.address));
-      expect(adminListAfterRemoveAdmin).to.be.deep.contains(normalizeAccountId(charlie.address));
-    });
+    const adminListAfterAddAdmin = await collection.getAdmins();
+    expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: bob.address});
+    expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: charlie.address});
+
+    await expect(collection.removeAdmin(charlie, {Substrate: bob.address}))
+      .to.be.rejectedWith(/common\.NoPermission/);
+
+    const adminListAfterRemoveAdmin = await collection.getAdmins();
+    expect(adminListAfterRemoveAdmin).to.be.deep.contains({Substrate: bob.address});
+    expect(adminListAfterRemoveAdmin).to.be.deep.contains({Substrate: charlie.address});
   });
 });

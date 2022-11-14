@@ -19,26 +19,38 @@ use core::marker::PhantomData;
 use sp_std::collections::btree_map::BTreeMap;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{
-	CollectionId, TokenId, CreateItemExData, CreateRefungibleExData, budget::Budget, Property,
-	PropertyKey, PropertyValue, PropertyKeyPermission, CreateItemData,
+	CollectionId, TokenId, CreateItemExData, budget::Budget, Property, PropertyKey, PropertyValue,
+	PropertyKeyPermission, CollectionPropertiesVec, CreateRefungibleExMultipleOwners,
+	CreateRefungibleExSingleOwner,
 };
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight};
+use pallet_common::{
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	weights::WeightInfo as _,
+};
 use pallet_structure::Error as StructureError;
 use sp_runtime::{DispatchError};
 use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
+	SelfWeightOf, weights::WeightInfo, TokensMinted, TotalSupply, CreateItemData,
 };
 
 macro_rules! max_weight_of {
 	($($method:ident ($($args:tt)*)),*) => {
-		0
+		Weight::zero()
 		$(
 			.max(<SelfWeightOf<T>>::$method($($args)*))
 		)*
 	};
+}
+
+fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> Weight {
+	if properties.len() > 0 {
+		<CommonWeights<T>>::set_token_properties(properties.len() as u32)
+	} else {
+		Weight::zero()
+	}
 }
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -47,19 +59,34 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::create_item()
 	}
 
-	fn create_multiple_items(data: &[CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
+	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
+			data.iter()
+				.map(|data| match data {
+					up_data_structs::CreateItemData::ReFungible(rft_data) => {
+						properties_weight::<T>(&rft_data.properties)
+					}
+					_ => Weight::zero(),
+				})
+				.fold(Weight::zero(), |a, b| a.saturating_add(b)),
+		)
 	}
 
 	fn create_multiple_items_ex(call: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match call {
 			CreateItemExData::RefungibleMultipleOwners(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(i.users.len() as u32)
+					.saturating_add(properties_weight::<T>(&i.properties))
 			}
 			CreateItemExData::RefungibleMultipleItems(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(i.len() as u32)
+					.saturating_add(
+						i.iter()
+							.map(|d| properties_weight::<T>(&d.properties))
+							.fold(Weight::zero(), |a, b| a.saturating_add(b)),
+					)
 			}
-			_ => 0,
+			_ => Weight::zero(),
 		}
 	}
 
@@ -67,29 +94,24 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		max_weight_of!(burn_item_partial(), burn_item_fully())
 	}
 
-	fn set_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn set_collection_properties(amount: u32) -> Weight {
+		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
 	}
 
-	fn set_token_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn set_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_properties(amount)
 	}
 
-	fn delete_token_properties(_amount: u32) -> Weight {
-		// Error
-		0
+	fn delete_token_properties(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::delete_token_properties(amount)
 	}
 
-	fn set_token_property_permissions(_amount: u32) -> Weight {
-		// Error
-		0
+	fn set_token_property_permissions(amount: u32) -> Weight {
+		<SelfWeightOf<T>>::set_token_property_permissions(amount)
 	}
 
 	fn transfer() -> Weight {
@@ -124,27 +146,33 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
 		// Refungible token can't have children
-		0
+		Weight::zero()
+	}
+
+	fn token_owner() -> Weight {
+		<SelfWeightOf<T>>::token_owner()
 	}
 }
 
 fn map_create_data<T: Config>(
 	data: up_data_structs::CreateItemData,
 	to: &T::CrossAccountId,
-) -> Result<CreateRefungibleExData<T::CrossAccountId>, DispatchError> {
+) -> Result<CreateItemData<T::CrossAccountId>, DispatchError> {
 	match data {
-		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateRefungibleExData {
-			const_data: data.const_data,
+		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateItemData {
 			users: {
 				let mut out = BTreeMap::new();
 				out.insert(to.clone(), data.pieces);
 				out.try_into().expect("limit > 0")
 			},
+			properties: data.properties,
 		}),
 		_ => fail!(<Error<T>>::NotRefungibleDataUsedToMintFungibleCollectionToken),
 	}
 }
 
+/// Implementation of `CommonCollectionOperations` for `RefungibleHandle`. It wraps Refungible Pallete
+/// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn create_item(
 		&self,
@@ -191,12 +219,26 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
 		let data = match data {
-			CreateItemExData::RefungibleMultipleOwners(r) => vec![r],
-			CreateItemExData::RefungibleMultipleItems(r)
-				if r.iter().all(|i| i.users.len() == 1) =>
-			{
-				r.into_inner()
-			}
+			CreateItemExData::RefungibleMultipleOwners(CreateRefungibleExMultipleOwners {
+				users,
+				properties,
+			}) => vec![CreateItemData { users, properties }],
+			CreateItemExData::RefungibleMultipleItems(r) => r
+				.into_inner()
+				.into_iter()
+				.map(
+					|CreateRefungibleExSingleOwner {
+					     user,
+					     pieces,
+					     properties,
+					 }| CreateItemData {
+						users: BTreeMap::from([(user, pieces)])
+							.try_into()
+							.expect("limit >= 1"),
+						properties,
+					},
+				)
+				.collect(),
 			_ => fail!(<Error<T>>::NotRefungibleDataUsedToMintFungibleCollectionToken),
 		};
 
@@ -295,46 +337,85 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn set_collection_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_property: Vec<Property>,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_collection_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_collection_properties(self, &sender, properties),
+			weight,
+		)
 	}
 
 	fn delete_collection_properties(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_keys: Vec<PropertyKey>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_collection_properties(self, sender, property_keys),
+			weight,
+		)
 	}
 
 	fn set_token_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_token_id: TokenId,
-		_property: Vec<Property>,
-		_nesting_budget: &dyn Budget,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		properties: Vec<Property>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_token_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_properties(
+				self,
+				&sender,
+				token_id,
+				properties.into_iter(),
+				false,
+				nesting_budget,
+			),
+			weight,
+		)
 	}
 
 	fn set_token_property_permissions(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_permissions: Vec<PropertyKeyPermission>,
+		sender: &T::CrossAccountId,
+		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight =
+			<CommonWeights<T>>::set_token_property_permissions(property_permissions.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_token_property_permissions(self, sender, property_permissions),
+			weight,
+		)
 	}
 
 	fn delete_token_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_token_id: TokenId,
-		_property_keys: Vec<PropertyKey>,
-		_nesting_budget: &dyn Budget,
+		sender: T::CrossAccountId,
+		token_id: TokenId,
+		property_keys: Vec<PropertyKey>,
+		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_token_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_token_properties(
+				self,
+				&sender,
+				token_id,
+				property_keys.into_iter(),
+				nesting_budget,
+			),
+			weight,
+		)
 	}
 
 	fn check_nesting(
@@ -358,7 +439,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	}
 
 	fn collection_tokens(&self) -> Vec<TokenId> {
-		<TokenData<T>>::iter_prefix((self.id,))
+		<TotalSupply<T>>::iter_prefix((self.id,))
 			.map(|(id, _)| id)
 			.collect()
 	}
@@ -371,20 +452,40 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
-		None
+	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
+		<Pallet<T>>::token_owner(self.id, token)
 	}
 
-	fn token_property(&self, _token_id: TokenId, _key: &PropertyKey) -> Option<PropertyValue> {
-		None
+	/// Returns 10 token in no particular order.
+	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
+		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
-	fn token_properties(
-		&self,
-		_token_id: TokenId,
-		_keys: Option<Vec<PropertyKey>>,
-	) -> Vec<Property> {
-		Vec::new()
+	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
+		<Pallet<T>>::token_properties((self.id, token_id))
+			.get(key)
+			.cloned()
+	}
+
+	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
+		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+
+		keys.map(|keys| {
+			keys.into_iter()
+				.filter_map(|key| {
+					properties.get(&key).map(|value| Property {
+						key,
+						value: value.clone(),
+					})
+				})
+				.collect()
+		})
+		.unwrap_or_else(|| {
+			properties
+				.into_iter()
+				.map(|(key, value)| Property { key, value })
+				.collect()
+		})
 	}
 
 	fn total_supply(&self) -> u32 {
@@ -410,6 +511,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
 		Some(self)
+	}
+
+	fn total_pieces(&self, token: TokenId) -> Option<u128> {
+		<Pallet<T>>::total_pieces(self.id, token)
 	}
 }
 

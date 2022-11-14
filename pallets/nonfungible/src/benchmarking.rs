@@ -17,11 +17,14 @@
 use super::*;
 use crate::{Pallet, Config, NonfungibleHandle};
 
-use sp_std::prelude::*;
-use pallet_common::benchmarking::{create_collection_raw, property_key, property_value};
 use frame_benchmarking::{benchmarks, account};
+use pallet_common::{
+	bench_init,
+	benchmarking::{create_collection_raw, property_key, property_value},
+	CommonCollectionOperations,
+};
+use sp_std::prelude::*;
 use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited};
-use pallet_common::bench_init;
 
 const SEED: u32 = 1;
 
@@ -51,7 +54,9 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner, data| <Pallet<T>>::init_collection(owner, data, true),
+		|owner: T::CrossAccountId, data| {
+			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
+		},
 		NonfungibleHandle::cast,
 	)
 }
@@ -183,7 +188,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props, false, &Unlimited)?}
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?}
 
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -205,7 +210,16 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props, false, &Unlimited)?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?;
 		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
-	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete, &Unlimited)?}
+	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete.into_iter(), &Unlimited)?}
+
+	token_owner {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let item = create_max_item(&collection, &owner, owner.clone())?;
+
+	}: {collection.token_owner(item)}
 }

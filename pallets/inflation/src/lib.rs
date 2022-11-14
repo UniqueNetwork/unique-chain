@@ -14,6 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//! # Inflation
+//!
+//! The inflation pallet is designed to increase the number of tokens at certain intervals.
+//! With each iteration, increases the `total_issuance` value for the native token.
+//! Executing an `on_initialize` hook at the beginning of each block, causing inflation to begin.
+//!
+//! ## Interface
+//!
+//! ### Dispatchable Functions
+//!
+//! * `start_inflation` - This method sets the inflation start date. Can be only called once.
+//! Inflation start block can be backdated and will catch up. The method will create Treasury
+//!	account if it does not exist and perform the first inflation deposit.
+
 // #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -96,7 +110,7 @@ pub mod pallet {
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
-			let mut consumed_weight = 0;
+			let mut consumed_weight = Weight::zero();
 			let mut add_weight = |reads, writes, weight| {
 				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
 				consumed_weight += weight;
@@ -105,7 +119,7 @@ pub mod pallet {
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 			let current_relay_block = T::BlockNumberProvider::current_block_number();
 			let next_inflation: T::BlockNumber = <NextInflationBlock<T>>::get();
-			add_weight(1, 0, 5_000_000);
+			add_weight(1, 0, Weight::from_ref_time(5_000_000));
 
 			// Apply inflation every InflationBlockInterval blocks
 			// If next_inflation == 0, this means inflation wasn't yet initialized
@@ -114,10 +128,10 @@ pub mod pallet {
 				// Do the "current_relay_block >= next_recalculation" check in the "current_relay_block >= next_inflation"
 				// block because it saves InflationBlockInterval DB reads for NextRecalculationBlock.
 				let next_recalculation: T::BlockNumber = <NextRecalculationBlock<T>>::get();
-				add_weight(1, 0, 0);
+				add_weight(1, 0, Weight::zero());
 				if current_relay_block >= next_recalculation {
 					Self::recalculate_inflation(next_recalculation);
-					add_weight(0, 4, 5_000_000);
+					add_weight(0, 4, Weight::from_ref_time(5_000_000));
 				}
 
 				T::Currency::deposit_into_existing(
@@ -129,7 +143,7 @@ pub mod pallet {
 				// Update inflation block
 				<NextInflationBlock<T>>::set(next_inflation + block_interval.into());
 
-				add_weight(3, 3, 10_000_000);
+				add_weight(3, 3, Weight::from_ref_time(10_000_000));
 			}
 
 			consumed_weight

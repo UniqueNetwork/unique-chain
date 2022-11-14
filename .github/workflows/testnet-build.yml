@@ -55,6 +55,7 @@ jobs:
             network {opal}, runtime {opal}, features {opal-runtime}
             network {quartz}, runtime {quartz}, features {quartz-runtime}
             network {unique}, runtime {unique}, features {unique-runtime}
+
   testnet-build:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
@@ -99,6 +100,7 @@ jobs:
             FEATURE=${{ matrix.features }}
             RUNTIME=${{ matrix.runtime }}
             BRANCH=${{ github.head_ref }}
+
       - name: Show build configuration
         run: cat .docker/Dockerfile-testnet.${{ matrix.network }}.yml
 
