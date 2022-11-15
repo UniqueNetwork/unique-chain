@@ -231,6 +231,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
+  // Soft-deprecated
   itEth('Can perform burnFrom()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
@@ -240,7 +241,7 @@ describe('Refungible: Plain calls', () => {
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'rft');
+    const contract = helper.ethNativeContract.collection(address, 'rft', spender, true);
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
     const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, owner);
@@ -248,7 +249,7 @@ describe('Refungible: Plain calls', () => {
     await tokenContract.methods.approve(spender, 15).send();
 
     {
-      const result = await contract.methods.burnFrom(owner, token.tokenId).send({from: spender});
+      const result = await contract.methods.burnFrom(owner, token.tokenId).send();
       const event = result.events.Transfer;
       expect(event).to.be.like({
         address: helper.ethAddress.fromCollectionId(collection.collectionId),

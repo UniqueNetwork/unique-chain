@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 import {CollectionHelpers} from "../api/CollectionHelpers.sol";
 import {ContractHelpers} from "../api/ContractHelpers.sol";
 import {UniqueRefungibleToken} from "../api/UniqueRefungibleToken.sol";
-import {UniqueRefungible} from "../api/UniqueRefungible.sol";
+import {UniqueRefungible, EthCrossAccount} from "../api/UniqueRefungible.sol";
 import {UniqueNFT} from "../api/UniqueNFT.sol";
 
 /// @dev Fractionalization contract. It stores mappings between NFT and RFT tokens,
@@ -63,7 +63,7 @@ contract Fractionalizer {
 			"Wrong collection type. Collection is not refungible."
 		);
 		require(
-			refungibleContract.isOwnerOrAdmin(address(this)),
+			refungibleContract.isOwnerOrAdminCross(EthCrossAccount({eth: address(this), sub: uint256(0)})),
 			"Fractionalizer contract should be an admin of the collection"
 		);
 		rftCollection = _collection;

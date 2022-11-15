@@ -65,6 +65,30 @@ describe('EVM token properties', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
+    await contract.methods.setProperties(token.tokenId, [{key: 'testKey', value: Buffer.from('testValue')}]).send({from: caller});
+
+    const [{value}] = await token.getProperties(['testKey']);
+    expect(value).to.equal('testValue');
+  });
+
+  // Soft-deprecated
+  itEth('Property can be set', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {
+      tokenPropertyPermissions: [{
+        key: 'testKey',
+        permission: {
+          collectionAdmin: true,
+        },
+      }],
+    });
+    const token = await collection.mintToken(alice);
+
+    await collection.addAdmin(alice, {Ethereum: caller});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller, true);
+
     await contract.methods.setProperty(token.tokenId, 'testKey', Buffer.from('testValue')).send({from: caller});
 
     const [{value}] = await token.getProperties(['testKey']);
@@ -74,8 +98,8 @@ describe('EVM token properties', () => {
   itEth('Can be multiple set for NFT ', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     
-    const properties = Array(5).fill(0).map((_, i) => { return {field_0: `key_${i}`, field_1: Buffer.from(`value_${i}`)}; });
-    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.field_0, permission: {tokenOwner: true,
+    const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
+    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
       collectionAdmin: true,
       mutable: true}}; });
     
@@ -86,7 +110,7 @@ describe('EVM token properties', () => {
     
     const token = await collection.mintToken(alice);
     
-    const valuesBefore = await token.getProperties(properties.map(p => p.field_0));
+    const valuesBefore = await token.getProperties(properties.map(p => p.key));
     expect(valuesBefore).to.be.deep.equal([]);
     
     await collection.addAdmin(alice, {Ethereum: caller});
@@ -96,15 +120,15 @@ describe('EVM token properties', () => {
 
     await contract.methods.setProperties(token.tokenId, properties).send({from: caller});
 
-    const values = await token.getProperties(properties.map(p => p.field_0));
-    expect(values).to.be.deep.equal(properties.map(p => { return {key: p.field_0, value: p.field_1.toString()}; }));
+    const values = await token.getProperties(properties.map(p => p.key));
+    expect(values).to.be.deep.equal(properties.map(p => { return {key: p.key, value: p.value.toString()}; }));
   });
   
   itEth.ifWithPallets('Can be multiple set for RFT ', [Pallets.ReFungible], async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     
-    const properties = Array(5).fill(0).map((_, i) => { return {field_0: `key_${i}`, field_1: Buffer.from(`value_${i}`)}; });
-    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.field_0, permission: {tokenOwner: true,
+    const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
+    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
       collectionAdmin: true,
       mutable: true}}; });
     
@@ -115,7 +139,7 @@ describe('EVM token properties', () => {
         
     const token = await collection.mintToken(alice);
     
-    const valuesBefore = await token.getProperties(properties.map(p => p.field_0));
+    const valuesBefore = await token.getProperties(properties.map(p => p.key));
     expect(valuesBefore).to.be.deep.equal([]);
     
     await collection.addAdmin(alice, {Ethereum: caller});
@@ -125,8 +149,8 @@ describe('EVM token properties', () => {
 
     await contract.methods.setProperties(token.tokenId, properties).send({from: caller});
 
-    const values = await token.getProperties(properties.map(p => p.field_0));
-    expect(values).to.be.deep.equal(properties.map(p => { return {key: p.field_0, value: p.field_1.toString()}; }));
+    const values = await token.getProperties(properties.map(p => p.key));
+    expect(values).to.be.deep.equal(properties.map(p => { return {key: p.key, value: p.value.toString()}; }));
   });
 
   itEth('Can be deleted', async({helper}) => {

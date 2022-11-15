@@ -7,23 +7,20 @@ _help:
 	@echo "  bench-unique"
 
 FUNGIBLE_EVM_STUBS=./pallets/fungible/src/stubs
-FUNGIBLE_EVM_ABI=./tests/src/eth/fungibleAbi.json
-
-REFUNGIBLE_EVM_STUBS=./pallets/refungible/src/stubs
-REFUNGIBLE_EVM_ABI=./tests/src/eth/refungibleAbi.json
+FUNGIBLE_EVM_ABI=./tests/src/eth/abi/fungible.json
 
 NONFUNGIBLE_EVM_STUBS=./pallets/nonfungible/src/stubs
-NONFUNGIBLE_EVM_ABI=./tests/src/eth/nonFungibleAbi.json
+NONFUNGIBLE_EVM_ABI=./tests/src/eth/abi/nonFungible.json
 
 REFUNGIBLE_EVM_STUBS=./pallets/refungible/src/stubs
-REFUNGIBLE_EVM_ABI=./tests/src/eth/reFungibleAbi.json
-REFUNGIBLE_TOKEN_EVM_ABI=./tests/src/eth/reFungibleTokenAbi.json
+REFUNGIBLE_EVM_ABI=./tests/src/eth/abi/reFungible.json
+REFUNGIBLE_TOKEN_EVM_ABI=./tests/src/eth/abi/reFungibleToken.json
 
 CONTRACT_HELPERS_STUBS=./pallets/evm-contract-helpers/src/stubs/
-CONTRACT_HELPERS_ABI=./tests/src/eth/util/contractHelpersAbi.json
+CONTRACT_HELPERS_ABI=./tests/src/eth/abi/contractHelpers.json
 
 COLLECTION_HELPER_STUBS=./pallets/unique/src/eth/stubs/
-COLLECTION_HELPER_ABI=./tests/src/eth/collectionHelpersAbi.json
+COLLECTION_HELPER_ABI=./tests/src/eth/abi/collectionHelpers.json
 
 TESTS_API=./tests/src/eth/api/
 

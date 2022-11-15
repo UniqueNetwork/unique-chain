@@ -157,6 +157,7 @@ impl sealed::CanBePlacedInVec for uint256 {}
 impl sealed::CanBePlacedInVec for string {}
 impl sealed::CanBePlacedInVec for address {}
 impl sealed::CanBePlacedInVec for EthCrossAccount {}
+impl sealed::CanBePlacedInVec for Property {}
 
 impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T> {
 	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
@@ -193,6 +194,7 @@ impl SolidityTupleType for EthCrossAccount {
 		2
 	}
 }
+
 impl SolidityTypeName for EthCrossAccount {
 	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
 		write!(writer, "{}", tc.collect_struct::<Self>())
@@ -224,6 +226,61 @@ impl StructCollect for EthCrossAccount {
 		writeln!(str, "\tuint256 sub;").unwrap();
 		writeln!(str, "}}").unwrap();
 		str
+	}
+}
+
+impl StructCollect for Property {
+	fn name() -> String {
+		"Property".into()
+	}
+
+	fn declaration() -> String {
+		let mut str = String::new();
+		writeln!(str, "/// @dev Property struct").unwrap();
+		writeln!(str, "struct {} {{", Self::name()).unwrap();
+		writeln!(str, "\tstring key;").unwrap();
+		writeln!(str, "\tbytes value;").unwrap();
+		writeln!(str, "}}").unwrap();
+		str
+	}
+}
+
+impl SolidityTypeName for Property {
+	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		write!(writer, "{}", tc.collect_struct::<Self>())
+	}
+
+	fn is_simple() -> bool {
+		false
+	}
+
+	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		write!(writer, "{}(", tc.collect_struct::<Self>())?;
+		address::solidity_default(writer, tc)?;
+		write!(writer, ",")?;
+		uint256::solidity_default(writer, tc)?;
+		write!(writer, ")")
+	}
+}
+
+impl SolidityTupleType for Property {
+	fn names(tc: &TypeCollector) -> Vec<string> {
+		let mut collected = Vec::with_capacity(Self::len());
+		{
+			let mut out = string::new();
+			string::solidity_name(&mut out, tc).expect("no fmt error");
+			collected.push(out);
+		}
+		{
+			let mut out = string::new();
+			bytes::solidity_name(&mut out, tc).expect("no fmt error");
+			collected.push(out);
+		}
+		collected
+	}
+
+	fn len() -> usize {
+		2
 	}
 }
 

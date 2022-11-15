@@ -21,12 +21,15 @@ import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 import {ContractImports, CompiledContract, TEthCrossAccount, NormalizedEvent, EthProperty} from './types';
 
 // Native contracts ABI
-import collectionHelpersAbi from '../../collectionHelpersAbi.json';
-import fungibleAbi from '../../fungibleAbi.json';
-import nonFungibleAbi from '../../nonFungibleAbi.json';
-import refungibleAbi from '../../reFungibleAbi.json';
-import refungibleTokenAbi from '../../reFungibleTokenAbi.json';
-import contractHelpersAbi from './../contractHelpersAbi.json';
+import collectionHelpersAbi from '../../abi/collectionHelpers.json';
+import fungibleAbi from '../../abi/fungible.json';
+import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json';
+import nonFungibleAbi from '../../abi/nonFungible.json';
+import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json';
+import refungibleAbi from '../../abi/reFungible.json';
+import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json';
+import refungibleTokenAbi from '../../abi/reFungibleToken.json';
+import contractHelpersAbi from '../../abi/contractHelpers.json';
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 import {TCollectionMode} from '../../../util/playgrounds/types';
 
@@ -108,12 +111,20 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
-  collection(address: string, mode: TCollectionMode, caller?: string): Contract {
-    const abi = {
+  collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated: boolean = false): Contract {
+    let abi = {
       'nft': nonFungibleAbi,
       'rft': refungibleAbi,
       'ft': fungibleAbi,
     }[mode];
+    if (mergeDeprecated) {
+      const deprecated = {
+        'nft': nonFungibleDeprecatedAbi,
+        'rft': refungibleDeprecatedAbi,
+        'ft': fungibleDeprecatedAbi,
+      }[mode];
+      abi = [...abi,...deprecated];
+    }
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
