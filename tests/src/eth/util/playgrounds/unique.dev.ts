@@ -111,7 +111,7 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
-  collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated: boolean = false): Contract {
+  collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false): Contract {
     let abi = {
       'nft': nonFungibleAbi,
       'rft': refungibleAbi,

@@ -102,7 +102,7 @@ describe('Check ERC721 token URI for NFT', () => {
 
     if (propertyKey && propertyValue) {
       // Set URL or suffix
-      await contract.methods.setProperties(tokenId, [{ key: propertyKey, value: Buffer.from(propertyValue)}]).send();
+      await contract.methods.setProperties(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}]).send();
     }
 
     const event = result.events.Transfer;
