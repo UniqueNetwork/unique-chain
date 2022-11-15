@@ -756,7 +756,12 @@ where
 	/// @param to The new owner
 	/// @param tokenId The RFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
-	fn transfer_cross(&mut self, caller: caller, to: EthCrossAccount, token_id: uint256) -> Result<void> {
+	fn transfer_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		token_id: uint256,
+	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;

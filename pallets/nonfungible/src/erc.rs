@@ -738,14 +738,19 @@ where
 		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
-	
+
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer_cross(&mut self, caller: caller, to: EthCrossAccount, token_id: uint256) -> Result<void> {
+	fn transfer_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		token_id: uint256,
+	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
@@ -756,7 +761,7 @@ where
 		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
-	
+
 	/// @notice Transfer ownership of an NFT from cross account address to cross account address
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
