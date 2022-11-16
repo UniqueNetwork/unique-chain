@@ -17,7 +17,7 @@
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
 use evm_coder::types::{uint256, address};
-pub use pallet_evm::account::{Config, CrossAccountId};
+pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::H160;
 use up_data_structs::CollectionId;
 

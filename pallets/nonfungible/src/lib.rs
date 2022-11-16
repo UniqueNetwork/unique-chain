@@ -127,7 +127,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
+pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
