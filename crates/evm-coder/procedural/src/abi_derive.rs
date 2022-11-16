@@ -1,7 +1,6 @@
 use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-	// dbg!(ast);
 	let name = &ast.ident;
 	let (is_named_fields, field_names, field_types, params_count) = match &ast.data {
 		syn::Data::Struct(ds) => match ds.fields {
@@ -31,7 +30,7 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 	let abi_type = impl_abi_type(name, field_types.clone());
 	let abi_read = impl_abi_read(name, is_named_fields, field_names.clone(), field_types);
 	let abi_write = impl_abi_write(name, is_named_fields, params_count, field_names);
-	println!("{}", abi_write);
+
 	Ok(quote! {
 		#can_be_plcaed_in_vec
 		#abi_type
@@ -112,14 +111,19 @@ fn impl_abi_read<'a>(
 	quote!(
 		impl ::evm_coder::abi::AbiRead for #name {
 			fn abi_read(reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Self> {
-				let size = if !<Self as ::evm_coder::abi::AbiType>::is_dynamic() {
+				let is_dynamic = <Self as ::evm_coder::abi::AbiType>::is_dynamic();
+				let size = if !is_dynamic {
 					Some(<Self as ::evm_coder::abi::AbiType>::size())
 				} else {
 					None
 				};
 				let mut subresult = reader.subresult(size)?;
 				#(
-					let #field_names = <#field_types as ::evm_coder::abi::AbiRead>::abi_read(&mut subresult)?;
+					let #field_names = {
+						let value = <#field_types as ::evm_coder::abi::AbiRead>::abi_read(&mut subresult)?;
+						if !is_dynamic {subresult.seek(<#field_types as ::evm_coder::abi::AbiType>::size())};
+						value
+					};
 				)*
 
 				#struct_constructor
