@@ -1347,7 +1347,12 @@ export interface PalletEthereumError extends Enum {
 /** @name PalletEthereumEvent */
 export interface PalletEthereumEvent extends Enum {
   readonly isExecuted: boolean;
-  readonly asExecuted: ITuple<[H160, H160, H256, EvmCoreErrorExitReason]>;
+  readonly asExecuted: {
+    readonly from: H160;
+    readonly to: H160;
+    readonly transactionHash: H256;
+    readonly exitReason: EvmCoreErrorExitReason;
+  } & Struct;
   readonly type: 'Executed';
 }
 
@@ -1457,26 +1462,36 @@ export interface PalletEvmError extends Enum {
   readonly isWithdrawFailed: boolean;
   readonly isGasPriceTooLow: boolean;
   readonly isInvalidNonce: boolean;
-  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce';
+  readonly isGasLimitTooLow: boolean;
+  readonly isGasLimitTooHigh: boolean;
+  readonly isUndefined: boolean;
+  readonly isReentrancy: boolean;
+  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy';
 }
 
 /** @name PalletEvmEvent */
 export interface PalletEvmEvent extends Enum {
   readonly isLog: boolean;
-  readonly asLog: EthereumLog;
+  readonly asLog: {
+    readonly log: EthereumLog;
+  } & Struct;
   readonly isCreated: boolean;
-  readonly asCreated: H160;
+  readonly asCreated: {
+    readonly address: H160;
+  } & Struct;
   readonly isCreatedFailed: boolean;
-  readonly asCreatedFailed: H160;
+  readonly asCreatedFailed: {
+    readonly address: H160;
+  } & Struct;
   readonly isExecuted: boolean;
-  readonly asExecuted: H160;
+  readonly asExecuted: {
+    readonly address: H160;
+  } & Struct;
   readonly isExecutedFailed: boolean;
-  readonly asExecutedFailed: H160;
-  readonly isBalanceDeposit: boolean;
-  readonly asBalanceDeposit: ITuple<[AccountId32, H160, U256]>;
-  readonly isBalanceWithdraw: boolean;
-  readonly asBalanceWithdraw: ITuple<[AccountId32, H160, U256]>;
-  readonly type: 'Log' | 'Created' | 'CreatedFailed' | 'Executed' | 'ExecutedFailed' | 'BalanceDeposit' | 'BalanceWithdraw';
+  readonly asExecutedFailed: {
+    readonly address: H160;
+  } & Struct;
+  readonly type: 'Log' | 'Created' | 'CreatedFailed' | 'Executed' | 'ExecutedFailed';
 }
 
 /** @name PalletEvmMigrationCall */

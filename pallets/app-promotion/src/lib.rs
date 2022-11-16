@@ -102,7 +102,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm::account::Config {
+	pub trait Config: frame_system::Config + pallet_evm::Config {
 		/// Type to interact with the native token
 		type Currency: ExtendedLockableCurrency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>;
@@ -274,11 +274,13 @@ pub mod pallet {
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
-					<T::Currency as ReservableCurrency<T::AccountId>>::unreserve(&staker, amount);
+					<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::unreserve(
+						&staker, amount,
+					);
 				});
 			}
 
-			T::WeightInfo::on_initialize(counter)
+			<T as Config>::WeightInfo::on_initialize(counter)
 		}
 	}
 
@@ -297,7 +299,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `admin`: account of the new admin.
-		#[pallet::weight(T::WeightInfo::set_admin_address())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -315,7 +317,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `amount`: in native tokens.
-		#[pallet::weight(T::WeightInfo::stake())]
+		#[pallet::weight(<T as Config>::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
 
@@ -388,7 +390,7 @@ pub mod pallet {
 		/// Moves the sum of all stakes to the `reserved` state.
 		/// After the end of `PendingInterval` this sum becomes completely
 		/// free for further use.
-		#[pallet::weight(T::WeightInfo::unstake())]
+		#[pallet::weight(<T as Config>::WeightInfo::unstake())]
 		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let staker_id = ensure_signed(staker)?;
 
@@ -421,7 +423,10 @@ pub mod pallet {
 
 			Self::unlock_balance(&staker_id, total_staked)?;
 
-			<T::Currency as ReservableCurrency<T::AccountId>>::reserve(&staker_id, total_staked)?;
+			<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::reserve(
+				&staker_id,
+				total_staked,
+			)?;
 
 			TotalStaked::<T>::set(
 				TotalStaked::<T>::get()
@@ -445,7 +450,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection that will be sponsored by `pallet_id`
-		#[pallet::weight(T::WeightInfo::sponsor_collection())]
+		#[pallet::weight(<T as Config>::WeightInfo::sponsor_collection())]
 		pub fn sponsor_collection(
 			admin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -470,7 +475,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection that is sponsored by `pallet_id`
-		#[pallet::weight(T::WeightInfo::stop_sponsoring_collection())]
+		#[pallet::weight(<T as Config>::WeightInfo::stop_sponsoring_collection())]
 		pub fn stop_sponsoring_collection(
 			admin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -499,7 +504,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `contract_id`: the contract address that will be sponsored by `pallet_id`
-		#[pallet::weight(T::WeightInfo::sponsor_contract())]
+		#[pallet::weight(<T as Config>::WeightInfo::sponsor_contract())]
 		pub fn sponsor_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 
@@ -525,7 +530,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `contract_id`: the contract address that is sponsored by `pallet_id`
-		#[pallet::weight(T::WeightInfo::stop_sponsoring_contract())]
+		#[pallet::weight(<T as Config>::WeightInfo::stop_sponsoring_contract())]
 		pub fn stop_sponsoring_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 
@@ -555,7 +560,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `stakers_number`: the number of stakers for which recalculation will be performed
-		#[pallet::weight(T::WeightInfo::payout_stakers(stakers_number.unwrap_or(20) as u32))]
+		#[pallet::weight(<T as Config>::WeightInfo::payout_stakers(stakers_number.unwrap_or(20) as u32))]
 		pub fn payout_stakers(admin: OriginFor<T>, stakers_number: Option<u8>) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 
@@ -589,7 +594,7 @@ pub mod pallet {
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
-							<T::Currency as Currency<T::AccountId>>::transfer(
+							<<T as Config>::Currency as Currency<T::AccountId>>::transfer(
 								&T::TreasuryAccountId::get(),
 								last_id,
 								*income_acc.borrow(),
@@ -700,9 +705,12 @@ impl<T: Config> Pallet<T> {
 	/// - `amount`: amount of locked funds.
 	fn set_lock_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
 		if amount.is_zero() {
-			<T::Currency as LockableCurrency<T::AccountId>>::remove_lock(LOCK_IDENTIFIER, &staker);
+			<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
+				LOCK_IDENTIFIER,
+				&staker,
+			);
 		} else {
-			<T::Currency as LockableCurrency<T::AccountId>>::set_lock(
+			<<T as Config>::Currency as LockableCurrency<T::AccountId>>::set_lock(
 				LOCK_IDENTIFIER,
 				staker,
 				amount,
@@ -717,7 +725,7 @@ impl<T: Config> Pallet<T> {
 	pub fn get_locked_balance(
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<BalanceLock<BalanceOf<T>>> {
-		<T::Currency as ExtendedLockableCurrency<T::AccountId>>::locks(staker)
+		<<T as Config>::Currency as ExtendedLockableCurrency<T::AccountId>>::locks(staker)
 			.into_iter()
 			.find(|l| l.id == LOCK_IDENTIFIER)
 	}
