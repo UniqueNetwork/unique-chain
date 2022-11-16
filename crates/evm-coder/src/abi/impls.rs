@@ -92,7 +92,7 @@ impl AbiRead for bytes {
 	}
 }
 
-impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
+impl<R: AbiType + AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
 	fn abi_read(reader: &mut AbiReader) -> Result<Vec<R>> {
 		let mut sub = reader.subresult(None)?;
 		let size = sub.uint32()? as usize;
@@ -100,6 +100,9 @@ impl<R: AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
 		let mut out = Vec::with_capacity(size);
 		for _ in 0..size {
 			out.push(<R>::abi_read(&mut sub)?);
+			if !<R>::is_dynamic() {
+				sub.subresult_offset += <R>::size()
+			};
 		}
 		Ok(out)
 	}
@@ -260,14 +263,19 @@ macro_rules! impl_tuples {
 
 		impl<$($ident),+> AbiRead for ($($ident,)+)
 		where
-			$($ident: AbiRead,)+
+			$($ident: AbiRead + AbiType,)+
 			($($ident,)+): AbiType,
 		{
 			fn abi_read(reader: &mut AbiReader) -> Result<($($ident,)+)> {
-				let size = if !<($($ident,)+)>::is_dynamic() { Some(<($($ident,)+)>::size()) } else { None };
+				let is_dynamic = <($($ident,)+)>::is_dynamic();
+				let size = if !is_dynamic { Some(<($($ident,)+)>::size()) } else { None };
 				let mut subresult = reader.subresult(size)?;
 				Ok((
-					$(<$ident>::abi_read(&mut subresult)?,)+
+					$({
+						let value = <$ident>::abi_read(&mut subresult)?;
+						if !is_dynamic {subresult.seek(<$ident as AbiType>::size())};
+						value
+					},)+
 				))
 			}
 		}
