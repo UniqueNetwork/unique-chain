@@ -80,7 +80,7 @@ struct Property {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x324a7f5b
+/// @dev the ERC-165 identifier for this interface is 0x8b91d192
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -180,21 +180,13 @@ interface Collection is Dummy, ERC165 {
 	/// 	"tokenLimit",
 	/// 	"sponsorTransferTimeout",
 	/// 	"sponsorApproveTimeout"
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x6a3841db,
-	///  or in textual repr: setCollectionLimit(string,uint32)
-	function setCollectionLimit(string memory limit, uint32 value) external;
-
-	/// Set limits for the collection.
-	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"ownerCanTransfer",
+	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
 	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x993b7fba,
-	///  or in textual repr: setCollectionLimit(string,bool)
-	function setCollectionLimit(string memory limit, bool value) external;
+	/// @dev EVM selector for this function is: 0x4ad890a8,
+	///  or in textual repr: setCollectionLimit(string,uint256)
+	function setCollectionLimit(string memory limit, uint256 value) external;
 
 	/// Get contract address.
 	/// @dev EVM selector for this function is: 0xf6b4dfb4,
