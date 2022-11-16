@@ -83,7 +83,6 @@ try-runtime = [
     'pallet-proxy-rmrk-equip/try-runtime',
     'pallet-app-promotion/try-runtime',
     'pallet-foreign-assets/try-runtime',
-    'pallet-evm/try-runtime',
     'pallet-ethereum/try-runtime',
     'pallet-evm-coder-substrate/try-runtime',
     'pallet-evm-contract-helpers/try-runtime',
@@ -475,12 +474,12 @@ pallet-evm-migration = { path = '../../pallets/evm-migration', default-features 
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.30' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }

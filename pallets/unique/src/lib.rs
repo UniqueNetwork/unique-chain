@@ -138,7 +138,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Config>::AccountId,
-		<T as pallet_evm::account::Config>::CrossAccountId,
+		<T as pallet_evm::Config>::CrossAccountId,
 	{
 		/// Collection sponsor was removed
 		///

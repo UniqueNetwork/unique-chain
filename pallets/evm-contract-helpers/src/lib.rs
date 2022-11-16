@@ -41,7 +41,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
+		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::Config
 	{
 		/// Overarching event type.
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;

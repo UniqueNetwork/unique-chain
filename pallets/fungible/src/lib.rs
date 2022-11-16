@@ -106,7 +106,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = (<T as pallet_evm::account::Config>::CrossAccountId, u128);
+pub type CreateItemData<T> = (<T as pallet_evm::Config>::CrossAccountId, u128);
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
