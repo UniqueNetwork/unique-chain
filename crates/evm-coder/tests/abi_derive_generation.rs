@@ -1,7 +1,7 @@
 use evm_coder_procedural::AbiCoder;
 use evm_coder::{
 	types::*,
-	abi::{AbiType, AbiRead, AbiWrite},
+	abi::{AbiType, AbiRead, AbiWrite, AbiReader, AbiWriter},
 };
 
 // TODO: move to build_failed tests
@@ -406,53 +406,113 @@ fn impl_abi_type_size_same_for_structs() {
 	);
 }
 
-fn test_impl<TypeStruct, TupleStruct, Tuple>(
-	type_struct_data: TypeStruct,
-	tuple_struct_data: TupleStruct,
+const FUNCTION_IDENTIFIER: u32 = 0xdeadbeef;
+
+fn test_impl<Tuple, TupleStruct, TypeStruct>(
 	tuple_data: Tuple,
+	tuple_struct_data: TupleStruct,
+	type_struct_data: TypeStruct,
 ) where
 	TypeStruct: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
+	TupleStruct: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
 	Tuple: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
 {
-	use evm_coder::abi::{AbiReader, AbiWriter};
-	const FUNCTION_IDENTIFIER: u32 = 0xdeadbeef;
+	let encoded_type_struct = test_abi_write_impl(&type_struct_data);
+	let encoded_tuple_struct = test_abi_write_impl(&tuple_struct_data);
+	let encoded_tuple = test_abi_write_impl(&tuple_data);
 
+	similar_asserts::assert_eq!(encoded_tuple, encoded_type_struct);
+	similar_asserts::assert_eq!(encoded_tuple, encoded_tuple_struct);
+
+	// dbg!(&encoded_tuple);
+	// dbg!(&encoded_tuple_struct);
+	// dbg!(&encoded_type_struct);
+
+	{
+		let (_, mut decoder) = AbiReader::new_call(&encoded_tuple).unwrap();
+		let restored_struct_data = <TypeStruct>::abi_read(&mut decoder).unwrap();
+		assert_eq!(restored_struct_data, type_struct_data);
+	}
+	{
+		let (_, mut decoder) = AbiReader::new_call(&encoded_tuple).unwrap();
+		let restored_struct_data = <TupleStruct>::abi_read(&mut decoder).unwrap();
+		assert_eq!(restored_struct_data, tuple_struct_data);
+	}
+
+	{
+		let (_, mut decoder) = AbiReader::new_call(&encoded_type_struct).unwrap();
+		let restored_tuple_data = <Tuple>::abi_read(&mut decoder).unwrap();
+		assert_eq!(restored_tuple_data, tuple_data);
+	}
+	{
+		let (_, mut decoder) = AbiReader::new_call(&encoded_tuple_struct).unwrap();
+		let restored_tuple_data = <Tuple>::abi_read(&mut decoder).unwrap();
+		assert_eq!(restored_tuple_data, tuple_data);
+	}
+}
+
+fn test_abi_write_impl<A>(data: &A) -> Vec<u8>
+where
+	A: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
+{
 	let mut writer = AbiWriter::new_call(FUNCTION_IDENTIFIER);
-	tuple_data.abi_write(&mut writer);
+	data.abi_write(&mut writer);
 	let encoded_tuple = writer.finish();
-
-	let mut writer = AbiWriter::new_call(FUNCTION_IDENTIFIER);
-	type_struct_data.abi_write(&mut writer);
-	let encoded_struct = writer.finish();
-
-	similar_asserts::assert_eq!(encoded_tuple, encoded_struct);
-
-	// let (_, mut decoder) = AbiReader::new_call(&encoded_tuple).unwrap();
-	// let restored_struct_data = <TypeStruct>::abi_read(&mut decoder).unwrap();
-	// assert_eq!(restored_struct_data, type_struct_data);
-
-	// let (_, mut decoder) = AbiReader::new_call(&encoded_struct).unwrap();
-	// let restored_tuple_data = <Tuple>::abi_read(&mut decoder).unwrap();
-	// assert_eq!(restored_tuple_data, tuple_data);
+	encoded_tuple
 }
 
 #[test]
 fn codec_struct_1_simple() {
 	let _a = 0xff;
-	test_impl::<TypeStruct1SimpleParam, TupleStruct1SimpleParam, (uint8,)>(
-		TypeStruct1SimpleParam { _a },
-		TupleStruct1SimpleParam(_a),
+	test_impl::<(uint8,), TupleStruct1SimpleParam, TypeStruct1SimpleParam>(
 		(_a,),
+		TupleStruct1SimpleParam(_a),
+		TypeStruct1SimpleParam { _a },
 	);
 }
 
 #[test]
 fn codec_struct_1_dynamic() {
 	let _a: String = "some string".into();
-	test_impl::<TypeStruct1DynamicParam, TupleStruct1DynamicParam, (String,)>(
-		TypeStruct1DynamicParam { _a: _a.clone() },
+	test_impl::<(String,), TupleStruct1DynamicParam, TypeStruct1DynamicParam>(
+		(_a.clone(),),
 		TupleStruct1DynamicParam(_a.clone()),
-		(_a,),
+		TypeStruct1DynamicParam { _a },
+	);
+}
+
+#[test]
+fn codec_struct_1_derived_simple() {
+	let _a: u8 = 0xff;
+	test_impl::<((u8,),), TupleStruct1DerivedSimpleParam, TypeStruct1DerivedSimpleParam>(
+		((_a,),),
+		TupleStruct1DerivedSimpleParam(TupleStruct1SimpleParam(_a)),
+		TypeStruct1DerivedSimpleParam {
+			_a: TypeStruct1SimpleParam { _a },
+		},
+	);
+}
+
+#[test]
+fn codec_struct_1_derived_dynamic() {
+	let _a: String = "some string".into();
+	test_impl::<((String,),), TupleStruct1DerivedDynamicParam, TypeStruct1DerivedDynamicParam>(
+		((_a.clone(),),),
+		TupleStruct1DerivedDynamicParam(TupleStruct1DynamicParam(_a.clone())),
+		TypeStruct1DerivedDynamicParam {
+			_a: TypeStruct1DynamicParam { _a },
+		},
+	);
+}
+
+#[test]
+fn codec_struct_2_simple() {
+	let _a = 0xff;
+	let _b = 0xbeefbaba;
+	test_impl::<(u8, u32), TupleStruct2SimpleParam, TypeStruct2SimpleParam>(
+		(_a, _b),
+		TupleStruct2SimpleParam(_a, _b),
+		TypeStruct2SimpleParam { _a, _b },
 	);
 }
 
@@ -460,12 +520,85 @@ fn codec_struct_1_dynamic() {
 fn codec_struct_2_dynamic() {
 	let _a: String = "some string".into();
 	let _b: bytes = bytes(vec![0x11, 0x22, 0x33]);
-	test_impl::<TypeStruct2DynamicParam, TupleStruct2DynamicParam, (String, bytes)>(
-		TypeStruct2DynamicParam {
-			_a: _a.clone(),
-			_b: _b.clone(),
-		},
+	test_impl::<(String, bytes), TupleStruct2DynamicParam, TypeStruct2DynamicParam>(
+		(_a.clone(), _b.clone()),
 		TupleStruct2DynamicParam(_a.clone(), _b.clone()),
-		(_a, _b),
+		TypeStruct2DynamicParam { _a, _b },
+	);
+}
+
+#[test]
+fn codec_struct_2_mixed() {
+	let _a: u8 = 0xff;
+	let _b: bytes = bytes(vec![0x11, 0x22, 0x33]);
+	test_impl::<(u8, bytes), TupleStruct2MixedParam, TypeStruct2MixedParam>(
+		(_a.clone(), _b.clone()),
+		TupleStruct2MixedParam(_a.clone(), _b.clone()),
+		TypeStruct2MixedParam { _a, _b },
+	);
+}
+
+#[test]
+fn codec_struct_2_derived_simple() {
+	let _a = 0xff;
+	let _b = 0xbeefbaba;
+	test_impl::<((u8,), (u8, u32)), TupleStruct2DerivedSimpleParam, TypeStruct2DerivedSimpleParam>(
+		((_a,), (_a, _b)),
+		TupleStruct2DerivedSimpleParam(
+			TupleStruct1SimpleParam(_a),
+			TupleStruct2SimpleParam(_a, _b),
+		),
+		TypeStruct2DerivedSimpleParam {
+			_a: TypeStruct1SimpleParam { _a },
+			_b: TypeStruct2SimpleParam { _a, _b },
+		},
+	);
+}
+
+#[test]
+fn codec_struct_2_derived_dynamic() {
+	let _a = "some string".to_string();
+	let _b = bytes(vec![0x11, 0x22, 0x33]);
+	test_impl::<
+		((String,), (String, bytes)),
+		TupleStruct2DerivedDynamicParam,
+		TypeStruct2DerivedDynamicParam,
+	>(
+		((_a.clone(),), (_a.clone(), _b.clone())),
+		TupleStruct2DerivedDynamicParam(
+			TupleStruct1DynamicParam(_a.clone()),
+			TupleStruct2DynamicParam(_a.clone(), _b.clone()),
+		),
+		TypeStruct2DerivedDynamicParam {
+			_a: TypeStruct1DynamicParam { _a: _a.clone() },
+			_b: TypeStruct2DynamicParam { _a, _b },
+		},
+	);
+}
+
+#[test]
+fn codec_struct_3_derived_mixed() {
+	let int = 0xff;
+	let by = bytes(vec![0x11, 0x22, 0x33]);
+	let string = "some string".to_string();
+	test_impl::<
+		((u8,), (String, bytes), (u8, bytes)),
+		TupleStruct3DerivedMixedParam,
+		TypeStruct3DerivedMixedParam,
+	>(
+		((int,), (string.clone(), by.clone()), (int, by.clone())),
+		TupleStruct3DerivedMixedParam(
+			TupleStruct1SimpleParam(int),
+			TupleStruct2DynamicParam(string.clone(), by.clone()),
+			TupleStruct2MixedParam(int, by.clone()),
+		),
+		TypeStruct3DerivedMixedParam {
+			_a: TypeStruct1SimpleParam { _a: int },
+			_b: TypeStruct2DynamicParam {
+				_a: string.clone(),
+				_b: by.clone(),
+			},
+			_c: TypeStruct2MixedParam { _a: int, _b: by },
+		},
 	);
 }
