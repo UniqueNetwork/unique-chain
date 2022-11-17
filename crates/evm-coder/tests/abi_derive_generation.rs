@@ -1,8 +1,5 @@
 use evm_coder_procedural::AbiCoder;
-use evm_coder::{
-	types::*,
-	abi::{AbiType, AbiRead, AbiWrite, AbiReader, AbiWriter},
-};
+use evm_coder::types::bytes;
 
 // TODO: move to build_failed tests
 // #[derive(AbiCoder, PartialEq, Debug)]
@@ -71,61 +68,61 @@ fn empty() {}
 #[test]
 fn impl_abi_type_signature() {
 	assert_eq!(
-		<TypeStruct1SimpleParam as AbiType>::SIGNATURE
+		<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"(uint8)"
 	);
 	assert_eq!(
-		<TypeStruct1DynamicParam as AbiType>::SIGNATURE
+		<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"(string)"
 	);
 	assert_eq!(
-		<TypeStruct2SimpleParam as AbiType>::SIGNATURE
+		<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"(uint8,uint32)"
 	);
 	assert_eq!(
-		<TypeStruct2DynamicParam as AbiType>::SIGNATURE
+		<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"(string,bytes)"
 	);
 	assert_eq!(
-		<TypeStruct2MixedParam as AbiType>::SIGNATURE
+		<TypeStruct2MixedParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"(uint8,bytes)"
 	);
 	assert_eq!(
-		<TypeStruct1DerivedSimpleParam as AbiType>::SIGNATURE
+		<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"((uint8))"
 	);
 	assert_eq!(
-		<TypeStruct2DerivedSimpleParam as AbiType>::SIGNATURE
+		<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"((uint8),(uint8,uint32))"
 	);
 	assert_eq!(
-		<TypeStruct1DerivedDynamicParam as AbiType>::SIGNATURE
+		<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"((string))"
 	);
 	assert_eq!(
-		<TypeStruct2DerivedDynamicParam as AbiType>::SIGNATURE
+		<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"((string),(string,bytes))"
 	);
 	assert_eq!(
-		<TypeStruct3DerivedMixedParam as AbiType>::SIGNATURE
+		<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 		"((uint8),(string,bytes),(uint8,bytes))"
@@ -134,29 +131,44 @@ fn impl_abi_type_signature() {
 
 #[test]
 fn impl_abi_type_is_dynamic() {
-	assert_eq!(<TypeStruct1SimpleParam as AbiType>::is_dynamic(), false);
-	assert_eq!(<TypeStruct1DynamicParam as AbiType>::is_dynamic(), true);
-	assert_eq!(<TypeStruct2SimpleParam as AbiType>::is_dynamic(), false);
-	assert_eq!(<TypeStruct2DynamicParam as AbiType>::is_dynamic(), true);
-	assert_eq!(<TypeStruct2MixedParam as AbiType>::is_dynamic(), true);
 	assert_eq!(
-		<TypeStruct1DerivedSimpleParam as AbiType>::is_dynamic(),
+		<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
 		false
 	);
 	assert_eq!(
-		<TypeStruct2DerivedSimpleParam as AbiType>::is_dynamic(),
+		<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		true
+	);
+	assert_eq!(
+		<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
 		false
 	);
 	assert_eq!(
-		<TypeStruct1DerivedDynamicParam as AbiType>::is_dynamic(),
+		<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
 		true
 	);
 	assert_eq!(
-		<TypeStruct2DerivedDynamicParam as AbiType>::is_dynamic(),
+		<TypeStruct2MixedParam as evm_coder::abi::AbiType>::is_dynamic(),
 		true
 	);
 	assert_eq!(
-		<TypeStruct3DerivedMixedParam as AbiType>::is_dynamic(),
+		<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
+		false
+	);
+	assert_eq!(
+		<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
+		false
+	);
+	assert_eq!(
+		<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		true
+	);
+	assert_eq!(
+		<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		true
+	);
+	assert_eq!(
+		<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::is_dynamic(),
 		true
 	);
 }
@@ -164,38 +176,44 @@ fn impl_abi_type_is_dynamic() {
 #[test]
 fn impl_abi_type_size() {
 	const ABI_ALIGNMENT: usize = 32;
-	assert_eq!(<TypeStruct1SimpleParam as AbiType>::size(), ABI_ALIGNMENT);
-	assert_eq!(<TypeStruct1DynamicParam as AbiType>::size(), ABI_ALIGNMENT);
 	assert_eq!(
-		<TypeStruct2SimpleParam as AbiType>::size(),
-		ABI_ALIGNMENT * 2
-	);
-	assert_eq!(
-		<TypeStruct2DynamicParam as AbiType>::size(),
-		ABI_ALIGNMENT * 2
-	);
-	assert_eq!(
-		<TypeStruct2MixedParam as AbiType>::size(),
-		ABI_ALIGNMENT * 2
-	);
-	assert_eq!(
-		<TypeStruct1DerivedSimpleParam as AbiType>::size(),
+		<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::size(),
 		ABI_ALIGNMENT
 	);
 	assert_eq!(
-		<TypeStruct2DerivedSimpleParam as AbiType>::size(),
-		ABI_ALIGNMENT * 3
-	);
-	assert_eq!(
-		<TypeStruct1DerivedDynamicParam as AbiType>::size(),
+		<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::size(),
 		ABI_ALIGNMENT
 	);
 	assert_eq!(
-		<TypeStruct2DerivedDynamicParam as AbiType>::size(),
+		<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::size(),
+		ABI_ALIGNMENT * 2
+	);
+	assert_eq!(
+		<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::size(),
+		ABI_ALIGNMENT * 2
+	);
+	assert_eq!(
+		<TypeStruct2MixedParam as evm_coder::abi::AbiType>::size(),
+		ABI_ALIGNMENT * 2
+	);
+	assert_eq!(
+		<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::size(),
+		ABI_ALIGNMENT
+	);
+	assert_eq!(
+		<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::size(),
 		ABI_ALIGNMENT * 3
 	);
 	assert_eq!(
-		<TypeStruct3DerivedMixedParam as AbiType>::size(),
+		<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::size(),
+		ABI_ALIGNMENT
+	);
+	assert_eq!(
+		<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::size(),
+		ABI_ALIGNMENT * 3
+	);
+	assert_eq!(
+		<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::size(),
 		ABI_ALIGNMENT * 5
 	);
 }
@@ -237,82 +255,82 @@ struct TupleStruct3DerivedMixedParam(
 #[test]
 fn impl_abi_type_signature_same_for_structs() {
 	assert_eq!(
-		<TypeStruct1SimpleParam as AbiType>::SIGNATURE
+		<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct1SimpleParam as AbiType>::SIGNATURE
+		<TupleStruct1SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap()
 	);
 	assert_eq!(
-		<TypeStruct1DynamicParam as AbiType>::SIGNATURE
+		<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct1DynamicParam as AbiType>::SIGNATURE
+		<TupleStruct1DynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap()
 	);
 	assert_eq!(
-		<TypeStruct2SimpleParam as AbiType>::SIGNATURE
+		<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct2SimpleParam as AbiType>::SIGNATURE
+		<TupleStruct2SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap()
 	);
 	assert_eq!(
-		<TypeStruct2DynamicParam as AbiType>::SIGNATURE
+		<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct2DynamicParam as AbiType>::SIGNATURE
+		<TupleStruct2DynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap()
 	);
 	assert_eq!(
-		<TypeStruct2MixedParam as AbiType>::SIGNATURE
+		<TypeStruct2MixedParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct2MixedParam as AbiType>::SIGNATURE
-			.as_str()
-			.unwrap(),
-	);
-	assert_eq!(
-		<TypeStruct1DerivedSimpleParam as AbiType>::SIGNATURE
-			.as_str()
-			.unwrap(),
-		<TupleStruct1DerivedSimpleParam as AbiType>::SIGNATURE
+		<TupleStruct2MixedParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 	);
 	assert_eq!(
-		<TypeStruct2DerivedSimpleParam as AbiType>::SIGNATURE
+		<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct2DerivedSimpleParam as AbiType>::SIGNATURE
-			.as_str()
-			.unwrap(),
-	);
-	assert_eq!(
-		<TypeStruct1DerivedDynamicParam as AbiType>::SIGNATURE
-			.as_str()
-			.unwrap(),
-		<TupleStruct1DerivedDynamicParam as AbiType>::SIGNATURE
+		<TupleStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 	);
 	assert_eq!(
-		<TypeStruct2DerivedDynamicParam as AbiType>::SIGNATURE
+		<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct2DerivedDynamicParam as AbiType>::SIGNATURE
+		<TupleStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 	);
 	assert_eq!(
-		<TypeStruct3DerivedMixedParam as AbiType>::SIGNATURE
+		<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
-		<TupleStruct3DerivedMixedParam as AbiType>::SIGNATURE
+		<TupleStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::SIGNATURE
+			.as_str()
+			.unwrap(),
+	);
+	assert_eq!(
+		<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::SIGNATURE
+			.as_str()
+			.unwrap(),
+		<TupleStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::SIGNATURE
+			.as_str()
+			.unwrap(),
+	);
+	assert_eq!(
+		<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::SIGNATURE
+			.as_str()
+			.unwrap(),
+		<TupleStruct3DerivedMixedParam as evm_coder::abi::AbiType>::SIGNATURE
 			.as_str()
 			.unwrap(),
 	);
@@ -321,88 +339,88 @@ fn impl_abi_type_signature_same_for_structs() {
 #[test]
 fn impl_abi_type_is_dynamic_same_for_structs() {
 	assert_eq!(
-		<TypeStruct1SimpleParam as AbiType>::is_dynamic(),
-		<TupleStruct1SimpleParam as AbiType>::is_dynamic()
+		<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct1SimpleParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct1DynamicParam as AbiType>::is_dynamic(),
-		<TupleStruct1DynamicParam as AbiType>::is_dynamic()
+		<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct1DynamicParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct2SimpleParam as AbiType>::is_dynamic(),
-		<TupleStruct2SimpleParam as AbiType>::is_dynamic()
+		<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct2SimpleParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct2DynamicParam as AbiType>::is_dynamic(),
-		<TupleStruct2DynamicParam as AbiType>::is_dynamic()
+		<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct2DynamicParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct2MixedParam as AbiType>::is_dynamic(),
-		<TupleStruct2MixedParam as AbiType>::is_dynamic()
+		<TypeStruct2MixedParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct2MixedParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct1DerivedSimpleParam as AbiType>::is_dynamic(),
-		<TupleStruct1DerivedSimpleParam as AbiType>::is_dynamic()
+		<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct2DerivedSimpleParam as AbiType>::is_dynamic(),
-		<TupleStruct2DerivedSimpleParam as AbiType>::is_dynamic()
+		<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct1DerivedDynamicParam as AbiType>::is_dynamic(),
-		<TupleStruct1DerivedDynamicParam as AbiType>::is_dynamic()
+		<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct2DerivedDynamicParam as AbiType>::is_dynamic(),
-		<TupleStruct2DerivedDynamicParam as AbiType>::is_dynamic()
+		<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 	assert_eq!(
-		<TypeStruct3DerivedMixedParam as AbiType>::is_dynamic(),
-		<TupleStruct3DerivedMixedParam as AbiType>::is_dynamic()
+		<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::is_dynamic(),
+		<TupleStruct3DerivedMixedParam as evm_coder::abi::AbiType>::is_dynamic()
 	);
 }
 
 #[test]
 fn impl_abi_type_size_same_for_structs() {
 	assert_eq!(
-		<TypeStruct1SimpleParam as AbiType>::size(),
-		<TupleStruct1SimpleParam as AbiType>::size()
+		<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct1SimpleParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct1DynamicParam as AbiType>::size(),
-		<TupleStruct1DynamicParam as AbiType>::size()
+		<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct1DynamicParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct2SimpleParam as AbiType>::size(),
-		<TupleStruct2SimpleParam as AbiType>::size()
+		<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct2SimpleParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct2DynamicParam as AbiType>::size(),
-		<TupleStruct2DynamicParam as AbiType>::size()
+		<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct2DynamicParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct2MixedParam as AbiType>::size(),
-		<TupleStruct2MixedParam as AbiType>::size()
+		<TypeStruct2MixedParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct2MixedParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct1DerivedSimpleParam as AbiType>::size(),
-		<TupleStruct1DerivedSimpleParam as AbiType>::size()
+		<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct2DerivedSimpleParam as AbiType>::size(),
-		<TupleStruct2DerivedSimpleParam as AbiType>::size()
+		<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct1DerivedDynamicParam as AbiType>::size(),
-		<TupleStruct1DerivedDynamicParam as AbiType>::size()
+		<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct2DerivedDynamicParam as AbiType>::size(),
-		<TupleStruct2DerivedDynamicParam as AbiType>::size()
+		<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::size()
 	);
 	assert_eq!(
-		<TypeStruct3DerivedMixedParam as AbiType>::size(),
-		<TupleStruct3DerivedMixedParam as AbiType>::size()
+		<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::size(),
+		<TupleStruct3DerivedMixedParam as evm_coder::abi::AbiType>::size()
 	);
 }
 
@@ -413,9 +431,12 @@ fn test_impl<Tuple, TupleStruct, TypeStruct>(
 	tuple_struct_data: TupleStruct,
 	type_struct_data: TypeStruct,
 ) where
-	TypeStruct: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
-	TupleStruct: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
-	Tuple: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
+	TypeStruct:
+		evm_coder::abi::AbiWrite + evm_coder::abi::AbiRead + std::cmp::PartialEq + std::fmt::Debug,
+	TupleStruct:
+		evm_coder::abi::AbiWrite + evm_coder::abi::AbiRead + std::cmp::PartialEq + std::fmt::Debug,
+	Tuple:
+		evm_coder::abi::AbiWrite + evm_coder::abi::AbiRead + std::cmp::PartialEq + std::fmt::Debug,
 {
 	let encoded_type_struct = test_abi_write_impl(&type_struct_data);
 	let encoded_tuple_struct = test_abi_write_impl(&tuple_struct_data);
@@ -424,28 +445,24 @@ fn test_impl<Tuple, TupleStruct, TypeStruct>(
 	similar_asserts::assert_eq!(encoded_tuple, encoded_type_struct);
 	similar_asserts::assert_eq!(encoded_tuple, encoded_tuple_struct);
 
-	// dbg!(&encoded_tuple);
-	// dbg!(&encoded_tuple_struct);
-	// dbg!(&encoded_type_struct);
-
 	{
-		let (_, mut decoder) = AbiReader::new_call(&encoded_tuple).unwrap();
+		let (_, mut decoder) = evm_coder::abi::AbiReader::new_call(&encoded_tuple).unwrap();
 		let restored_struct_data = <TypeStruct>::abi_read(&mut decoder).unwrap();
 		assert_eq!(restored_struct_data, type_struct_data);
 	}
 	{
-		let (_, mut decoder) = AbiReader::new_call(&encoded_tuple).unwrap();
+		let (_, mut decoder) = evm_coder::abi::AbiReader::new_call(&encoded_tuple).unwrap();
 		let restored_struct_data = <TupleStruct>::abi_read(&mut decoder).unwrap();
 		assert_eq!(restored_struct_data, tuple_struct_data);
 	}
 
 	{
-		let (_, mut decoder) = AbiReader::new_call(&encoded_type_struct).unwrap();
+		let (_, mut decoder) = evm_coder::abi::AbiReader::new_call(&encoded_type_struct).unwrap();
 		let restored_tuple_data = <Tuple>::abi_read(&mut decoder).unwrap();
 		assert_eq!(restored_tuple_data, tuple_data);
 	}
 	{
-		let (_, mut decoder) = AbiReader::new_call(&encoded_tuple_struct).unwrap();
+		let (_, mut decoder) = evm_coder::abi::AbiReader::new_call(&encoded_tuple_struct).unwrap();
 		let restored_tuple_data = <Tuple>::abi_read(&mut decoder).unwrap();
 		assert_eq!(restored_tuple_data, tuple_data);
 	}
@@ -453,9 +470,9 @@ fn test_impl<Tuple, TupleStruct, TypeStruct>(
 
 fn test_abi_write_impl<A>(data: &A) -> Vec<u8>
 where
-	A: AbiWrite + AbiRead + std::cmp::PartialEq + std::fmt::Debug,
+	A: evm_coder::abi::AbiWrite + evm_coder::abi::AbiRead + std::cmp::PartialEq + std::fmt::Debug,
 {
-	let mut writer = AbiWriter::new_call(FUNCTION_IDENTIFIER);
+	let mut writer = evm_coder::abi::AbiWriter::new_call(FUNCTION_IDENTIFIER);
 	data.abi_write(&mut writer);
 	let encoded_tuple = writer.finish();
 	encoded_tuple
@@ -464,7 +481,7 @@ where
 #[test]
 fn codec_struct_1_simple() {
 	let _a = 0xff;
-	test_impl::<(uint8,), TupleStruct1SimpleParam, TypeStruct1SimpleParam>(
+	test_impl::<(u8,), TupleStruct1SimpleParam, TypeStruct1SimpleParam>(
 		(_a,),
 		TupleStruct1SimpleParam(_a),
 		TypeStruct1SimpleParam { _a },
