@@ -450,6 +450,24 @@ fn encode_decode_tuple_uint8_uint8() {
 }
 
 #[test]
+fn encode_decode_tuple0_tuple1_uint8_uint8_tuple1_uint8_uint8_and_uint8() {
+	test_impl::<((u8, u8), (u8, u8), u8)>(
+		0xdeadbeef,
+		((10, 11), (12, 13), 14),
+		&hex!(
+			"
+                deadbeef
+                000000000000000000000000000000000000000000000000000000000000000a
+                000000000000000000000000000000000000000000000000000000000000000b
+                000000000000000000000000000000000000000000000000000000000000000c
+                000000000000000000000000000000000000000000000000000000000000000d
+                000000000000000000000000000000000000000000000000000000000000000e
+            "
+		),
+	);
+}
+
+#[test]
 fn encode_decode_tuple0_tuple1_string() {
 	test_impl::<((String,),)>(
 		0xdeadbeef,
@@ -524,4 +542,20 @@ fn encode_decode_tuple0_tuple1_uint8_tuple1_string() {
             "
 		),
 	);
+}
+
+#[test]
+fn parse_multiple_params() {
+	let encoded_data = hex!(
+		"
+            deadbeef
+            000000000000000000000000000000000000000000000000000000000000000a
+            000000000000000000000000000000000000000000000000000000000000000b
+        "
+	);
+	let (_, mut decoder) = AbiReader::new_call(&encoded_data).unwrap();
+	let p1 = <u8>::abi_read(&mut decoder).unwrap();
+	let p2 = <u8>::abi_read(&mut decoder).unwrap();
+	assert_eq!(p1, 0x0a);
+	assert_eq!(p2, 0x0b);
 }
