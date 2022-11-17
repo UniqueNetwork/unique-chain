@@ -227,12 +227,12 @@ macro_rules! impl_tuples {
 
 		impl<$($ident),+> AbiRead for ($($ident,)+)
 		where
+			Self: AbiType,
 			$($ident: AbiRead + AbiType,)+
-			($($ident,)+): AbiType,
 		{
 			fn abi_read(reader: &mut AbiReader) -> Result<($($ident,)+)> {
-				let is_dynamic = <($($ident,)+)>::is_dynamic();
-				let size = if !is_dynamic { Some(<($($ident,)+)>::size()) } else { None };
+				let is_dynamic = <Self>::is_dynamic();
+				let size = if !is_dynamic { Some(<Self>::size()) } else { None };
 				let mut subresult = reader.subresult(size)?;
 				Ok((
 					$({

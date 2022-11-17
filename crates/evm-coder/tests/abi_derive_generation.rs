@@ -619,3 +619,35 @@ fn codec_struct_3_derived_mixed() {
 		},
 	);
 }
+
+#[derive(AbiCoder, PartialEq, Debug)]
+struct TypeStruct2SimpleStruct1Simple {
+	_a: TypeStruct2SimpleParam,
+	_b: TypeStruct2SimpleParam,
+	_c: u8,
+}
+#[derive(AbiCoder, PartialEq, Debug)]
+struct TupleStruct2SimpleStruct1Simple(TupleStruct2SimpleParam, TupleStruct2SimpleParam, u8);
+
+#[test]
+fn codec_struct_2_struct_simple_1_simple() {
+	let _a = 0xff;
+	let _b = 0xbeefbaba;
+	test_impl::<
+		((u8, u32), (u8, u32), u8),
+		TupleStruct2SimpleStruct1Simple,
+		TypeStruct2SimpleStruct1Simple,
+	>(
+		((_a, _b), (_a, _b), _a),
+		TupleStruct2SimpleStruct1Simple(
+			TupleStruct2SimpleParam(_a, _b),
+			TupleStruct2SimpleParam(_a, _b),
+			_a,
+		),
+		TypeStruct2SimpleStruct1Simple {
+			_a: TypeStruct2SimpleParam { _a, _b },
+			_b: TypeStruct2SimpleParam { _a, _b },
+			_c: _a,
+		},
+	);
+}
