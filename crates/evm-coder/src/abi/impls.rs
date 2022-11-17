@@ -120,42 +120,6 @@ impl<R: AbiType> AbiType for Vec<R> {
 	}
 }
 
-impl sealed::CanBePlacedInVec for EthCrossAccount {}
-
-impl AbiType for EthCrossAccount {
-	const SIGNATURE: SignatureUnit = make_signature!(new fixed("(address,uint256)"));
-
-	fn is_dynamic() -> bool {
-		address::is_dynamic() || uint256::is_dynamic()
-	}
-
-	fn size() -> usize {
-		<address as AbiType>::size() + <uint256 as AbiType>::size()
-	}
-}
-
-impl AbiRead for EthCrossAccount {
-	fn abi_read(reader: &mut AbiReader) -> Result<EthCrossAccount> {
-		let size = if !EthCrossAccount::is_dynamic() {
-			Some(<EthCrossAccount as AbiType>::size())
-		} else {
-			None
-		};
-		let mut subresult = reader.subresult(size)?;
-		let eth = <address>::abi_read(&mut subresult)?;
-		let sub = <uint256>::abi_read(&mut subresult)?;
-
-		Ok(EthCrossAccount { eth, sub })
-	}
-}
-
-impl AbiWrite for EthCrossAccount {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		self.eth.abi_write(writer);
-		self.sub.abi_write(writer);
-	}
-}
-
 impl sealed::CanBePlacedInVec for Property {}
 
 impl AbiType for Property {
