@@ -145,7 +145,7 @@ impl SolidityTypeName for void {
 	}
 }
 
-mod sealed {
+pub mod sealed {
 	/// Not every type should be directly placed in vec.
 	/// Vec encoding is not memory efficient, as every item will be padded
 	/// to 32 bytes.
@@ -156,7 +156,6 @@ mod sealed {
 impl sealed::CanBePlacedInVec for uint256 {}
 impl sealed::CanBePlacedInVec for string {}
 impl sealed::CanBePlacedInVec for address {}
-impl sealed::CanBePlacedInVec for EthCrossAccount {}
 
 impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T> {
 	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
@@ -170,60 +169,6 @@ impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T>
 		write!(writer, "new ")?;
 		T::solidity_name(writer, tc)?;
 		write!(writer, "[](0)")
-	}
-}
-
-impl SolidityTupleType for EthCrossAccount {
-	fn names(tc: &TypeCollector) -> Vec<string> {
-		let mut collected = Vec::with_capacity(Self::len());
-		{
-			let mut out = string::new();
-			address::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		{
-			let mut out = string::new();
-			uint256::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		collected
-	}
-
-	fn len() -> usize {
-		2
-	}
-}
-impl SolidityTypeName for EthCrossAccount {
-	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}", tc.collect_struct::<Self>())
-	}
-
-	fn is_simple() -> bool {
-		false
-	}
-
-	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}(", tc.collect_struct::<Self>())?;
-		address::solidity_default(writer, tc)?;
-		write!(writer, ",")?;
-		uint256::solidity_default(writer, tc)?;
-		write!(writer, ")")
-	}
-}
-
-impl StructCollect for EthCrossAccount {
-	fn name() -> String {
-		"EthCrossAccount".into()
-	}
-
-	fn declaration() -> String {
-		let mut str = String::new();
-		writeln!(str, "/// @dev Cross account struct").unwrap();
-		writeln!(str, "struct {} {{", Self::name()).unwrap();
-		writeln!(str, "\taddress eth;").unwrap();
-		writeln!(str, "\tuint256 sub;").unwrap();
-		writeln!(str, "}}").unwrap();
-		str
 	}
 }
 

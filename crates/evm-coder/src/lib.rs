@@ -93,6 +93,7 @@ pub use evm_coder_procedural::solidity_interface;
 pub use evm_coder_procedural::solidity;
 /// See [`solidity_interface`]
 pub use evm_coder_procedural::weight;
+pub use evm_coder_procedural::AbiCoder;
 pub use sha3_const;
 
 /// Derives [`ToLog`] for enum
@@ -119,7 +120,6 @@ pub mod types {
 
 	#[cfg(not(feature = "std"))]
 	use alloc::{vec::Vec};
-	use pallet_evm::account::CrossAccountId;
 	use primitive_types::{U256, H160, H256};
 
 	pub type address = H160;
@@ -186,72 +186,6 @@ pub mod types {
 		pub fn is_empty(&self) -> bool {
 			self.len() == 0
 		}
-	}
-
-	#[derive(Debug, Default)]
-	pub struct EthCrossAccount {
-		pub(crate) eth: address,
-		pub(crate) sub: uint256,
-	}
-
-	impl EthCrossAccount {
-		pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
-		where
-			T: pallet_evm::account::Config,
-			T::AccountId: AsRef<[u8; 32]>,
-		{
-			if cross_account_id.is_canonical_substrate() {
-				Self {
-					eth: Default::default(),
-					sub: convert_cross_account_to_uint256::<T>(cross_account_id),
-				}
-			} else {
-				Self {
-					eth: *cross_account_id.as_eth(),
-					sub: Default::default(),
-				}
-			}
-		}
-
-		pub fn into_sub_cross_account<T>(&self) -> crate::execution::Result<T::CrossAccountId>
-		where
-			T: pallet_evm::account::Config,
-			T::AccountId: From<[u8; 32]>,
-		{
-			if self.eth == Default::default() && self.sub == Default::default() {
-				Err("All fields of cross account is zeroed".into())
-			} else if self.eth == Default::default() {
-				Ok(convert_uint256_to_cross_account::<T>(self.sub))
-			} else if self.sub == Default::default() {
-				Ok(T::CrossAccountId::from_eth(self.eth))
-			} else {
-				Err("All fields of cross account is non zeroed".into())
-			}
-		}
-	}
-
-	/// Convert `CrossAccountId` to `uint256`.
-	pub fn convert_cross_account_to_uint256<T: pallet_evm::account::Config>(
-		from: &T::CrossAccountId,
-	) -> uint256
-	where
-		T::AccountId: AsRef<[u8; 32]>,
-	{
-		let slice = from.as_sub().as_ref();
-		uint256::from_big_endian(slice)
-	}
-
-	/// Convert `uint256` to `CrossAccountId`.
-	pub fn convert_uint256_to_cross_account<T: pallet_evm::account::Config>(
-		from: uint256,
-	) -> T::CrossAccountId
-	where
-		T::AccountId: From<[u8; 32]>,
-	{
-		let mut new_admin_arr = [0_u8; 32];
-		from.to_big_endian(&mut new_admin_arr);
-		let account_id = T::AccountId::from(new_admin_arr);
-		T::CrossAccountId::from_sub(account_id)
 	}
 }
 

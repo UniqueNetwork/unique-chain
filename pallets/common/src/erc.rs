@@ -16,6 +16,7 @@
 
 //! This module contains the implementation of pallet methods for evm.
 
+pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use evm_coder::{
 	abi::AbiType,
 	solidity_interface, solidity, ToLog,
@@ -23,7 +24,6 @@ use evm_coder::{
 	execution::{Result, Error},
 	weight,
 };
-pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
@@ -34,7 +34,8 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::convert_cross_account_to_uint256, weights::WeightInfo,
+	eth::{EthCrossAccount, convert_cross_account_to_uint256},
+	weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.

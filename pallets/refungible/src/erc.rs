@@ -33,6 +33,7 @@ use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
+	eth::EthCrossAccount,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
