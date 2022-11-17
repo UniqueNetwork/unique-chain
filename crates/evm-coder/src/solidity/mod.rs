@@ -86,7 +86,6 @@ impl TypeCollector {
 		data.into_iter().map(|(code, _)| code).collect()
 	}
 }
-
 #[derive(Default)]
 pub struct UnnamedArgument<T>(PhantomData<*const T>);
 
