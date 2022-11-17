@@ -16,7 +16,10 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
-use evm_coder::types::{uint256, address};
+use evm_coder::{
+	AbiCoder,
+	types::{uint256, address},
+};
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::H160;
 use up_data_structs::CollectionId;
@@ -107,5 +110,113 @@ where
 		Ok(T::CrossAccountId::from_eth(eth_cross_account_id.0))
 	} else {
 		Err("All fields of cross account is non zeroed".into())
+	}
+}
+
+#[derive(Debug, Default, AbiCoder)]
+pub struct EthCrossAccount {
+	pub(crate) eth: address,
+	pub(crate) sub: uint256,
+}
+
+impl EthCrossAccount {
+	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
+	where
+		T: pallet_evm::account::Config,
+		T::AccountId: AsRef<[u8; 32]>,
+	{
+		if cross_account_id.is_canonical_substrate() {
+			Self {
+				eth: Default::default(),
+				sub: convert_cross_account_to_uint256::<T>(cross_account_id),
+			}
+		} else {
+			Self {
+				eth: *cross_account_id.as_eth(),
+				sub: Default::default(),
+			}
+		}
+	}
+
+	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
+	where
+		T: pallet_evm::account::Config,
+		T::AccountId: From<[u8; 32]>,
+	{
+		if self.eth == Default::default() && self.sub == Default::default() {
+			Err("All fields of cross account is zeroed".into())
+		} else if self.eth == Default::default() {
+			Ok(convert_uint256_to_cross_account::<T>(self.sub))
+		} else if self.sub == Default::default() {
+			Ok(T::CrossAccountId::from_eth(self.eth))
+		} else {
+			Err("All fields of cross account is non zeroed".into())
+		}
+	}
+}
+
+impl ::evm_coder::solidity::sealed::CanBePlacedInVec for EthCrossAccount {}
+impl ::evm_coder::solidity::SolidityTupleType for EthCrossAccount {
+	fn names(tc: &::evm_coder::solidity::TypeCollector) -> Vec<String> {
+		let mut collected =
+			Vec::with_capacity(<Self as ::evm_coder::solidity::SolidityTupleType>::len());
+		{
+			let mut out = String::new();
+			<address as ::evm_coder::solidity::SolidityTypeName>::solidity_name(&mut out, tc)
+				.expect("no fmt error");
+			collected.push(out);
+		}
+		{
+			let mut out = String::new();
+			<uint256 as ::evm_coder::solidity::SolidityTypeName>::solidity_name(&mut out, tc)
+				.expect("no fmt error");
+			collected.push(out);
+		}
+		collected
+	}
+
+	fn len() -> usize {
+		2
+	}
+}
+impl ::evm_coder::solidity::SolidityTypeName for EthCrossAccount {
+	fn solidity_name(
+		writer: &mut impl ::core::fmt::Write,
+		tc: &::evm_coder::solidity::TypeCollector,
+	) -> ::core::fmt::Result {
+		write!(writer, "{}", tc.collect_struct::<Self>())
+	}
+
+	fn is_simple() -> bool {
+		false
+	}
+
+	fn solidity_default(
+		writer: &mut impl ::core::fmt::Write,
+		tc: &::evm_coder::solidity::TypeCollector,
+	) -> ::core::fmt::Result {
+		write!(writer, "{}(", tc.collect_struct::<Self>())?;
+		address::solidity_default(writer, tc)?;
+		write!(writer, ",")?;
+		uint256::solidity_default(writer, tc)?;
+		write!(writer, ")")
+	}
+}
+
+impl ::evm_coder::solidity::StructCollect for EthCrossAccount {
+	fn name() -> String {
+		"EthCrossAccount".into()
+	}
+
+	fn declaration() -> String {
+		use std::fmt::Write;
+
+		let mut str = String::new();
+		writeln!(str, "/// @dev Cross account struct").unwrap();
+		writeln!(str, "struct {} {{", Self::name()).unwrap();
+		writeln!(str, "\taddress eth;").unwrap();
+		writeln!(str, "\tuint256 sub;").unwrap();
+		writeln!(str, "}}").unwrap();
+		str
 	}
 }
