@@ -141,7 +141,7 @@ fn impl_abi_write<'a>(
 	let abi_write = if is_named_fields {
 		quote!(
 			#(
-				self.#field_names.abi_write(sub);
+				::evm_coder::abi::AbiWrite::abi_write(&self.#field_names, sub);
 			)*
 		)
 	} else {
@@ -150,7 +150,7 @@ fn impl_abi_write<'a>(
 			.map(proc_macro2::Literal::usize_unsuffixed);
 		quote!(
 			#(
-				self.#field_names.abi_write(sub);
+				::evm_coder::abi::AbiWrite::abi_write(&self.#field_names, sub);
 			)*
 		)
 	};

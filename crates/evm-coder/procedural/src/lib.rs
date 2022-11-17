@@ -251,6 +251,5 @@ pub fn abi_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 		Ok(e) => e,
 		Err(e) => e.to_compile_error(),
 	};
-	// println!("{}", &ts);
 	ts.into()
 }
