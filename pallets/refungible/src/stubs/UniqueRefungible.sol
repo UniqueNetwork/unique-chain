@@ -700,6 +700,42 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		return "";
 	}
 
+	/// @notice A description for the collection.
+	/// @dev EVM selector for this function is: 0x7284e416,
+	///  or in textual repr: description()
+	function description() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	/// @dev EVM selector for this function is: 0x2b29dace,
+	///  or in textual repr: crossOwnerOf(uint256)
+	function crossOwnerOf(uint256 tokenId) public view returns (EthCrossAccount memory) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	/// Returns the token properties.
+	///
+	/// @param tokenId Id for the token.
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0xefc26c69,
+	///  or in textual repr: tokenProperties(uint256,string[])
+	function tokenProperties(uint256 tokenId, string[] memory keys) public view returns (Tuple8[] memory) {
+		require(false, stub_error);
+		tokenId;
+		keys;
+		dummy;
+		return new Tuple8[](0);
+	}
+
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid RFT.
@@ -838,6 +874,12 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 struct Tuple10 {
 	uint256 field_0;
 	string field_1;
+}
+
+/// @dev anonymous struct
+struct Tuple8 {
+	string field_0;
+	bytes field_1;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension

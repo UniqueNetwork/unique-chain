@@ -4,11 +4,21 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.8] - 2022-11-18
+
+### Added
+
+- The function `description` to `ERC20UniqueExtensions` interface.
+
 ## [0.1.7] - 2022-11-14
 
 ### Changed
 
 - Added `transfer_cross` in eth functions.
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
 
 ## [0.1.6] - 2022-11-02
 

@@ -17,6 +17,7 @@
 import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
+import exp from 'constants';
 
 
 describe('NFT: Information getting', () => {
@@ -149,7 +150,7 @@ describe('NFT: Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint()', async ({helper}) => {
+  itEth('Can perform mint() & get crossOwner()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
@@ -166,7 +167,8 @@ describe('NFT: Plain calls', () => {
     expect(event.returnValues.to).to.be.equal(receiver);
 
     expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-
+    console.log(await contract.methods.crossOwnerOf(tokenId).call());
+    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
     // TODO: this wont work right now, need release 919000 first
     // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
     // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();

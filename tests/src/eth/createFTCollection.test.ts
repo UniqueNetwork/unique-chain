@@ -36,9 +36,11 @@ describe('Create FT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, 'absolutely anything', 'ENVY');
+    const description = 'absolutely anything';
+    
+    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, description, 'ENVY');
 
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner, true);
+    const collection = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
     await collection.methods.setCollectionSponsor(sponsor).send();
 
     let data = (await helper.rft.getData(collectionId))!;
@@ -57,8 +59,9 @@ describe('Create FT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, 'absolutely anything', 'ENVY');
-
+    const description = 'absolutely anything';
+    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, description, 'ENVY');
+    
     const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
     await collection.methods.setCollectionSponsorCross(sponsorCross).send();
@@ -73,6 +76,7 @@ describe('Create FT collection from EVM', () => {
 
     data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(await collection.methods.description().call()).to.deep.equal(description);
   });
 
   itEth('Set limits', async ({helper}) => {
