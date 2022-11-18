@@ -19,7 +19,7 @@ pub trait SolidityTypeName: 'static {
 	}
 }
 
-pub trait SolidityTupleType {
+pub trait SolidityType {
 	fn names(tc: &TypeCollector) -> Vec<String>;
 	fn len() -> usize;
 }

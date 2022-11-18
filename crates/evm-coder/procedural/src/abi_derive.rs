@@ -30,6 +30,7 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 	let abi_type = impl_abi_type(name, field_types.clone());
 	let abi_read = impl_abi_read(name, is_named_fields, field_names.clone(), field_types);
 	let abi_write = impl_abi_write(name, is_named_fields, params_count, field_names);
+	// let solidity_tuple_type =
 
 	Ok(quote! {
 		#can_be_plcaed_in_vec

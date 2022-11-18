@@ -156,10 +156,10 @@ impl EthCrossAccount {
 }
 
 #[cfg(feature = "stubgen")]
-impl ::evm_coder::solidity::SolidityTupleType for EthCrossAccount {
+impl ::evm_coder::solidity::SolidityType for EthCrossAccount {
 	fn names(tc: &::evm_coder::solidity::TypeCollector) -> Vec<String> {
 		let mut collected =
-			Vec::with_capacity(<Self as ::evm_coder::solidity::SolidityTupleType>::len());
+			Vec::with_capacity(<Self as ::evm_coder::solidity::SolidityType>::len());
 		{
 			let mut out = String::new();
 			<address as ::evm_coder::solidity::SolidityTypeName>::solidity_name(&mut out, tc)
