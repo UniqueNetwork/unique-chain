@@ -112,6 +112,15 @@ pub mod events;
 #[cfg(feature = "stubgen")]
 pub mod solidity;
 
+/// Sealed traits.
+pub mod sealed {
+	/// Not every type should be directly placed in vec.
+	/// Vec encoding is not memory efficient, as every item will be padded
+	/// to 32 bytes.
+	/// Instead you should use specialized types (`bytes` in case of `Vec<u8>`)
+	pub trait CanBePlacedInVec {}
+}
+
 /// Solidity type definitions (aliases from solidity name to rust type)
 /// To be used in [`solidity_interface`] definitions, to make sure there is no
 /// type conflict between Rust code and generated definitions

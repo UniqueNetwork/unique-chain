@@ -1,14 +1,6 @@
 use super::TypeCollector;
 use core::fmt;
 
-pub mod sealed {
-	/// Not every type should be directly placed in vec.
-	/// Vec encoding is not memory efficient, as every item will be padded
-	/// to 32 bytes.
-	/// Instead you should use specialized types (`bytes` in case of `Vec<u8>`)
-	pub trait CanBePlacedInVec {}
-}
-
 pub trait StructCollect: 'static {
 	/// Structure name.
 	fn name() -> String;

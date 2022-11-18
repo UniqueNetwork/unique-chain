@@ -41,7 +41,7 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 
 fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
 	quote! {
-		impl ::evm_coder::abi::sealed::CanBePlacedInVec for #ident {}
+		impl ::evm_coder::sealed::CanBePlacedInVec for #ident {}
 	}
 }
 

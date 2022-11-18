@@ -1,10 +1,6 @@
-use super::{TypeCollector, SolidityTypeName, SolidityTupleType, sealed};
-use crate::types::*;
+use super::{TypeCollector, SolidityTypeName, SolidityTupleType};
+use crate::{sealed, types::*};
 use core::fmt;
-
-impl sealed::CanBePlacedInVec for uint256 {}
-impl sealed::CanBePlacedInVec for string {}
-impl sealed::CanBePlacedInVec for address {}
 
 macro_rules! solidity_type_name {
     ($($ty:ty => $name:literal $simple:literal = $default:literal),* $(,)?) => {
@@ -74,7 +70,6 @@ macro_rules! count {
 
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
-		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
 		impl<$($ident: SolidityTypeName + 'static),+> SolidityTupleType for ($($ident,)+) {
 			fn names(tc: &TypeCollector) -> Vec<string> {
 				let mut collected = Vec::with_capacity(Self::len());
