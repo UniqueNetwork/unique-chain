@@ -121,7 +121,7 @@ fn impl_abi_read<'a>(
 				#(
 					let #field_names = {
 						let value = <#field_types as ::evm_coder::abi::AbiRead>::abi_read(&mut subresult)?;
-						if !is_dynamic {subresult.seek(<#field_types as ::evm_coder::abi::AbiType>::size())};
+						if !is_dynamic {subresult.bytes_read(<#field_types as ::evm_coder::abi::AbiType>::size())};
 						value
 					};
 				)*
