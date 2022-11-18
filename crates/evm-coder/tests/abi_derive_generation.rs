@@ -1,9 +1,11 @@
 use evm_coder_procedural::AbiCoder;
 use evm_coder::types::bytes;
 
-// TODO: move to build_failed tests
-// #[derive(AbiCoder, PartialEq, Debug)]
-// struct TypeStructUnit {}
+#[test]
+fn empty_struct() {
+	let t = trybuild::TestCases::new();
+	t.compile_fail("tests/build_failed/abi_derive_generation.rs");
+}
 
 #[derive(AbiCoder, PartialEq, Debug)]
 struct TypeStruct1SimpleParam {
