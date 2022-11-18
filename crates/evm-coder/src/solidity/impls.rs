@@ -1,4 +1,4 @@
-use super::{TypeCollector, SolidityTypeName, SolidityTupleType};
+use super::{TypeCollector, SolidityTypeName, SolidityType};
 use crate::{sealed, types::*};
 use core::fmt;
 
@@ -70,7 +70,7 @@ macro_rules! count {
 
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
-		impl<$($ident: SolidityTypeName + 'static),+> SolidityTupleType for ($($ident,)+) {
+		impl<$($ident: SolidityTypeName + 'static),+> SolidityType for ($($ident,)+) {
 			fn names(tc: &TypeCollector) -> Vec<string> {
 				let mut collected = Vec::with_capacity(Self::len());
 				$({

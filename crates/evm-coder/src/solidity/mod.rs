@@ -59,7 +59,7 @@ impl TypeCollector {
 		self.id.set(v + 1);
 		v
 	}
-	pub fn collect_tuple<T: SolidityTupleType>(&self) -> String {
+	pub fn collect_tuple<T: SolidityType>(&self) -> String {
 		let names = T::names(self);
 		if let Some(id) = self.anonymous.borrow().get(&names).cloned() {
 			return format!("Tuple{}", id);
