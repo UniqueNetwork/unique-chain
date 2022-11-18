@@ -406,7 +406,7 @@ impl MethodArg {
 		quote! {
 			#name: {
 				let value = <#ty as ::evm_coder::abi::AbiRead>::abi_read(reader)?;
-				if !is_dynamic {reader.seek(<#ty as ::evm_coder::abi::AbiType>::size())};
+				if !is_dynamic {reader.bytes_read(<#ty as ::evm_coder::abi::AbiType>::size())};
 				value
 			}
 		}

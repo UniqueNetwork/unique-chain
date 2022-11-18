@@ -10,12 +10,12 @@ use primitive_types::{U256, H160};
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-macro_rules! impl_abi_readable {
-	($ty:ty, $method:ident, $dynamic:literal) => {
+macro_rules! impl_abi_type {
+	($ty:ty, $name:ident, $dynamic:literal) => {
 		impl sealed::CanBePlacedInVec for $ty {}
 
 		impl AbiType for $ty {
-			const SIGNATURE: SignatureUnit = make_signature!(new fixed(stringify!($ty)));
+			const SIGNATURE: SignatureUnit = make_signature!(new fixed(stringify!($name)));
 
 			fn is_dynamic() -> bool {
 				$dynamic
@@ -25,99 +25,17 @@ macro_rules! impl_abi_readable {
 				ABI_ALIGNMENT
 			}
 		}
+	};
+}
 
+macro_rules! impl_abi_readable {
+	($ty:ty, $method:ident) => {
 		impl AbiRead for $ty {
 			fn abi_read(reader: &mut AbiReader) -> Result<$ty> {
 				reader.$method()
 			}
 		}
 	};
-}
-
-impl_abi_readable!(uint32, uint32, false);
-impl_abi_readable!(uint64, uint64, false);
-impl_abi_readable!(uint128, uint128, false);
-impl_abi_readable!(uint256, uint256, false);
-impl_abi_readable!(bytes4, bytes4, false);
-impl_abi_readable!(address, address, false);
-impl_abi_readable!(string, string, true);
-
-impl sealed::CanBePlacedInVec for bool {}
-
-impl AbiType for bool {
-	const SIGNATURE: SignatureUnit = make_signature!(new fixed("bool"));
-
-	fn is_dynamic() -> bool {
-		false
-	}
-	fn size() -> usize {
-		ABI_ALIGNMENT
-	}
-}
-impl AbiRead for bool {
-	fn abi_read(reader: &mut AbiReader) -> Result<bool> {
-		reader.bool()
-	}
-}
-
-impl AbiType for uint8 {
-	const SIGNATURE: SignatureUnit = make_signature!(new fixed("uint8"));
-
-	fn is_dynamic() -> bool {
-		false
-	}
-	fn size() -> usize {
-		ABI_ALIGNMENT
-	}
-}
-impl AbiRead for uint8 {
-	fn abi_read(reader: &mut AbiReader) -> Result<uint8> {
-		reader.uint8()
-	}
-}
-
-impl AbiType for bytes {
-	const SIGNATURE: SignatureUnit = make_signature!(new fixed("bytes"));
-
-	fn is_dynamic() -> bool {
-		true
-	}
-	fn size() -> usize {
-		ABI_ALIGNMENT
-	}
-}
-impl AbiRead for bytes {
-	fn abi_read(reader: &mut AbiReader) -> Result<bytes> {
-		Ok(bytes(reader.bytes()?))
-	}
-}
-
-impl<R: AbiType + AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<R> {
-	fn abi_read(reader: &mut AbiReader) -> Result<Vec<R>> {
-		let mut sub = reader.subresult(None)?;
-		let size = sub.uint32()? as usize;
-		sub.subresult_offset = sub.offset;
-		let mut out = Vec::with_capacity(size);
-		for _ in 0..size {
-			out.push(<R>::abi_read(&mut sub)?);
-			if !<R>::is_dynamic() {
-				sub.subresult_offset += <R>::size()
-			};
-		}
-		Ok(out)
-	}
-}
-
-impl<R: AbiType> AbiType for Vec<R> {
-	const SIGNATURE: SignatureUnit = make_signature!(new nameof(R::SIGNATURE) fixed("[]"));
-
-	fn is_dynamic() -> bool {
-		true
-	}
-
-	fn size() -> usize {
-		ABI_ALIGNMENT
-	}
 }
 
 macro_rules! impl_abi_writeable {
@@ -130,23 +48,72 @@ macro_rules! impl_abi_writeable {
 	};
 }
 
-impl_abi_writeable!(u8, uint8);
-impl_abi_writeable!(u32, uint32);
-impl_abi_writeable!(u128, uint128);
-impl_abi_writeable!(U256, uint256);
-impl_abi_writeable!(H160, address);
-impl_abi_writeable!(bool, bool);
+macro_rules! impl_abi {
+	($ty:ty, $method:ident, $dynamic:literal) => {
+		impl_abi_type!($ty, $method, $dynamic);
+		impl_abi_readable!($ty, $method);
+		impl_abi_writeable!($ty, $method);
+	};
+}
+
+impl_abi!(bool, bool, false);
+impl_abi!(u8, uint8, false);
+impl_abi!(u32, uint32, false);
+impl_abi!(u64, uint64, false);
+impl_abi!(u128, uint128, false);
+impl_abi!(U256, uint256, false);
+impl_abi!(H160, address, false);
+impl_abi!(string, string, true);
+
 impl_abi_writeable!(&str, string);
 
-impl AbiWrite for string {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		writer.string(self)
+impl_abi_type!(bytes, bytes, true);
+
+impl AbiRead for bytes {
+	fn abi_read(reader: &mut AbiReader) -> Result<bytes> {
+		Ok(bytes(reader.bytes()?))
 	}
 }
 
 impl AbiWrite for bytes {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		writer.bytes(self.0.as_slice())
+	}
+}
+
+impl_abi_type!(bytes4, bytes4, false);
+impl AbiRead for bytes4 {
+	fn abi_read(reader: &mut AbiReader) -> Result<bytes4> {
+		reader.bytes4()
+	}
+}
+
+impl<T: AbiType + AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<T> {
+	fn abi_read(reader: &mut AbiReader) -> Result<Vec<T>> {
+		let mut sub = reader.subresult(None)?;
+		let size = sub.uint32()? as usize;
+		sub.subresult_offset = sub.offset;
+		let is_dynamic = <T as AbiType>::is_dynamic();
+		let mut out = Vec::with_capacity(size);
+		for _ in 0..size {
+			out.push(<T as AbiRead>::abi_read(&mut sub)?);
+			if !is_dynamic {
+				sub.bytes_read(<T as AbiType>::size());
+			};
+		}
+		Ok(out)
+	}
+}
+
+impl<T: AbiType> AbiType for Vec<T> {
+	const SIGNATURE: SignatureUnit = make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
+
+	fn is_dynamic() -> bool {
+		true
+	}
+
+	fn size() -> usize {
+		ABI_ALIGNMENT
 	}
 }
 
@@ -237,7 +204,7 @@ macro_rules! impl_tuples {
 				Ok((
 					$({
 						let value = <$ident>::abi_read(&mut subresult)?;
-						if !is_dynamic {subresult.seek(<$ident as AbiType>::size())};
+						if !is_dynamic {subresult.bytes_read(<$ident as AbiType>::size())};
 						value
 					},)+
 				))
