@@ -156,9 +156,6 @@ impl EthCrossAccount {
 }
 
 #[cfg(feature = "stubgen")]
-impl ::evm_coder::solidity::sealed::CanBePlacedInVec for EthCrossAccount {}
-
-#[cfg(feature = "stubgen")]
 impl ::evm_coder::solidity::SolidityTupleType for EthCrossAccount {
 	fn names(tc: &::evm_coder::solidity::TypeCollector) -> Vec<String> {
 		let mut collected =
