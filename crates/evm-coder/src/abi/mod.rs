@@ -208,7 +208,7 @@ impl<'i> AbiReader<'i> {
 	}
 
 	/// Notify about readed data portion.
-	pub fn seek(&mut self, size: usize) {
+	pub fn bytes_read(&mut self, size: usize) {
 		self.subresult_offset += size;
 	}
 
@@ -279,6 +279,11 @@ impl AbiWriter {
 	/// Write [`u32`] to end of buffer
 	pub fn uint32(&mut self, value: &u32) {
 		self.write_padleft(&u32::to_be_bytes(*value))
+	}
+
+	/// Write [`u64`] to end of buffer
+	pub fn uint64(&mut self, value: &u64) {
+		self.write_padleft(&u64::to_be_bytes(*value))
 	}
 
 	/// Write [`u128`] to end of buffer

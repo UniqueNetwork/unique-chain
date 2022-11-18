@@ -48,8 +48,41 @@ fn encode_decode_uint32() {
 }
 
 #[test]
+fn encode_decode_uint64() {
+	test_impl_uint!(uint64);
+}
+
+#[test]
 fn encode_decode_uint128() {
 	test_impl_uint!(uint128);
+}
+
+#[test]
+fn encode_decode_bool_true() {
+	test_impl::<bool>(
+		0xdeadbeef,
+		true,
+		&hex!(
+			"
+                deadbeef
+                0000000000000000000000000000000000000000000000000000000000000001
+            "
+		),
+	);
+}
+
+#[test]
+fn encode_decode_bool_false() {
+	test_impl::<bool>(
+		0xdeadbeef,
+		false,
+		&hex!(
+			"
+                deadbeef
+                0000000000000000000000000000000000000000000000000000000000000000
+            "
+		),
+	);
 }
 
 #[test]
