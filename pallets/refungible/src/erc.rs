@@ -164,6 +164,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
+	#[solidity(hide)]
 	fn delete_property(&mut self, token_id: uint256, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -177,6 +178,37 @@ impl<T: Config> RefungibleHandle<T> {
 
 		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key, &nesting_budget)
 			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Delete token properties value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param keys Properties key.
+	fn delete_properties(
+		&mut self,
+		token_id: uint256,
+		caller: caller,
+		keys: Vec<string>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		let keys = keys
+			.into_iter()
+			.map(|k| Ok(<Vec<u8>>::from(k).try_into().map_err(|_| "key too long")?))
+			.collect::<Result<Vec<_>>>()?;
+
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::delete_token_properties(
+			self,
+			&caller,
+			TokenId(token_id),
+			keys.into_iter(),
+			&nesting_budget,
+		)
+		.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// @notice Get token property value.

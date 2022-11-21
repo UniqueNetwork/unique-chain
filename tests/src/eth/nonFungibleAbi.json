@@ -334,9 +334,9 @@
   {
     "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
-      { "internalType": "string", "name": "key", "type": "string" }
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
     ],
-    "name": "deleteProperty",
+    "name": "deleteProperties",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
