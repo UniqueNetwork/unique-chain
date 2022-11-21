@@ -63,6 +63,8 @@ struct TypeStruct2DerivedDynamicParam {
 #[derive(AbiCoder, PartialEq, Debug)]
 struct TypeStruct3DerivedMixedParam {
 	/// Docs for A
+	/// multi
+	/// line
 	_a: TypeStruct1SimpleParam,
 	/// Docs for B
 	_b: TypeStruct2DynamicParam,
@@ -71,7 +73,30 @@ struct TypeStruct3DerivedMixedParam {
 }
 
 #[test]
-fn empty() {}
+#[cfg(feature = "stubgen")]
+fn struct_collect_TypeStruct3DerivedMixedParam() {
+	assert_eq!(
+		<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
+		"TypeStruct3DerivedMixedParam"
+	);
+	assert_eq!(
+		<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::declaration(),
+		r#"/// @dev Some docs
+/// At multi
+/// line
+struct TypeStruct3DerivedMixedParam {
+	/// @dev Docs for A
+	/// multi
+	/// line
+	TypeStruct1SimpleParam _a;
+	/// @dev Docs for B
+	TypeStruct2DynamicParam _b;
+	/// @dev Docs for C
+	TypeStruct2MixedParam _c;
+}
+"#
+	);
+}
 
 #[test]
 fn impl_abi_type_signature() {

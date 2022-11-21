@@ -306,7 +306,7 @@ fn impl_solidity_struct_collect<'a>(
 					let doc = doc.trim();
 					let dev = if i == 0 { " @dev" } else { "" };
 					quote! {
-						writeln!(str, "///{} {}", #dev, #doc).unwrap();
+						writeln!(str, "\t///{} {}", #dev, #doc).unwrap();
 					}
 				}),
 				Err(e) => unreachable!("{:?}", e),
