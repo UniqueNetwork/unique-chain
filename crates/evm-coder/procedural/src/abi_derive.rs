@@ -28,15 +28,25 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
 	let abi_type = impl_abi_type(name, field_types.clone());
-	let abi_read = impl_abi_read(name, is_named_fields, field_names.clone(), field_types);
-	let abi_write = impl_abi_write(name, is_named_fields, params_count, field_names);
-	// let solidity_tuple_type =
+	let abi_read = impl_abi_read(
+		name,
+		is_named_fields,
+		field_names.clone(),
+		field_types.clone(),
+	);
+	let abi_write = impl_abi_write(name, is_named_fields, params_count, field_names.clone());
+	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
+	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
+	let solidity_struct_collect = impl_solidity_struct_collect(name, field_names, field_types);
 
 	Ok(quote! {
 		#can_be_plcaed_in_vec
 		#abi_type
 		#abi_read
 		#abi_write
+		#solidity_type
+		#solidity_type_name
+		#solidity_struct_collect
 	})
 }
 
@@ -172,4 +182,113 @@ fn impl_abi_write<'a>(
 			}
 		}
 	)
+}
+
+fn impl_solidity_type<'a>(
+	name: &syn::Ident,
+	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+	params_count: usize,
+) -> proc_macro2::TokenStream {
+	let len = proc_macro2::Literal::usize_suffixed(params_count);
+	quote! {
+		#[cfg(feature = "stubgen")]
+		impl ::evm_coder::solidity::SolidityType for #name {
+			fn names(tc: &::evm_coder::solidity::TypeCollector) -> Vec<String> {
+				let mut collected =
+					Vec::with_capacity(<Self as ::evm_coder::solidity::SolidityType>::len());
+				#({
+					let mut out = String::new();
+					<#field_types as ::evm_coder::solidity::SolidityTypeName>::solidity_name(&mut out, tc)
+						.expect("no fmt error");
+					collected.push(out);
+				})*
+				collected
+			}
+
+			fn len() -> usize {
+				#len
+			}
+		}
+	}
+}
+
+fn impl_solidity_type_name<'a>(
+	name: &syn::Ident,
+	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+	params_count: usize,
+) -> proc_macro2::TokenStream {
+	let arg_dafaults = field_types.enumerate().map(|(i, ty)| {
+		let mut defult_value = quote!(<#ty as ::evm_coder::solidity::SolidityTypeName
+			>::solidity_default(writer, tc)?;);
+		let last_item = params_count - 1;
+		if i != last_item {
+			defult_value.extend(quote! {write!(writer, ",")?;})
+		}
+		defult_value
+	});
+
+	quote! {
+		#[cfg(feature = "stubgen")]
+		impl ::evm_coder::solidity::SolidityTypeName for #name {
+			fn solidity_name(
+				writer: &mut impl ::core::fmt::Write,
+				tc: &::evm_coder::solidity::TypeCollector,
+			) -> ::core::fmt::Result {
+				write!(writer, "{}", tc.collect_struct::<Self>())
+			}
+
+			fn is_simple() -> bool {
+				false
+			}
+
+			fn solidity_default(
+				writer: &mut impl ::core::fmt::Write,
+				tc: &::evm_coder::solidity::TypeCollector,
+			) -> ::core::fmt::Result {
+				write!(writer, "{}(", tc.collect_struct::<Self>())?;
+
+				#(#arg_dafaults)*
+
+				write!(writer, ")")
+			}
+		}
+	}
+}
+
+fn impl_solidity_struct_collect<'a>(
+	name: &syn::Ident,
+	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
+	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+) -> proc_macro2::TokenStream {
+	let string_name = name.to_string();
+	let name_type = field_names
+		.into_iter()
+		.zip(field_types.into_iter())
+		.map(|(name, ty)| {
+			let name = format!("{}", name);
+			quote!(
+				write!(str, "\t{} ", <#ty as ::evm_coder::solidity::StructCollect>::name()).unwrap();
+				write!(str, "{};", #name).unwrap();
+			)
+		});
+
+	quote! {
+		#[cfg(feature = "stubgen")]
+		impl ::evm_coder::solidity::StructCollect for #name {
+			fn name() -> String {
+				#string_name.into()
+			}
+
+			fn declaration() -> String {
+				use std::fmt::Write;
+
+				let mut str = String::new();
+				writeln!(str, "/// @dev Cross account struct").unwrap();
+				writeln!(str, "struct {} {{", Self::name()).unwrap();
+				#(#name_type)*
+				writeln!(str, "}}").unwrap();
+				str
+			}
+		}
+	}
 }

@@ -1,4 +1,4 @@
-use super::{TypeCollector, SolidityTypeName, SolidityType};
+use super::{TypeCollector, SolidityTypeName, SolidityType, StructCollect};
 use crate::{sealed, types::*};
 use core::fmt;
 
@@ -16,6 +16,16 @@ macro_rules! solidity_type_name {
 					write!(writer, $default)
 				}
             }
+
+			impl StructCollect for $ty {
+				fn name() -> String {
+					$name.to_string()
+				}
+
+				fn declaration() -> String {
+					String::default()
+				}
+			}
         )*
     };
 }
