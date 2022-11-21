@@ -2,6 +2,29 @@ use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
+	let docs = ast
+		.attrs
+		.iter()
+		.filter_map(|attr| {
+			if let Some(ps) = attr.path.segments.first() {
+				if ps.ident == "doc" {
+					let meta = match attr.parse_meta() {
+						Ok(meta) => meta,
+						Err(e) => return Some(Err(e)),
+					};
+					match meta {
+						syn::Meta::NameValue(mnv) => match &mnv.lit {
+							syn::Lit::Str(ls) => return Some(Ok(ls.value())),
+							_ => unreachable!(),
+						},
+						_ => unreachable!(),
+					}
+				}
+			}
+			None
+		})
+		.collect::<syn::Result<Vec<_>>>()?;
+
 	let (is_named_fields, field_names, field_types, params_count) = match &ast.data {
 		syn::Data::Struct(ds) => match ds.fields {
 			syn::Fields::Named(ref fields) => Ok((
@@ -37,7 +60,8 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 	let abi_write = impl_abi_write(name, is_named_fields, params_count, field_names.clone());
 	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
 	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
-	let solidity_struct_collect = impl_solidity_struct_collect(name, field_names, field_types);
+	let solidity_struct_collect =
+		impl_solidity_struct_collect(name, field_names, field_types, &docs);
 
 	Ok(quote! {
 		#can_be_plcaed_in_vec
@@ -259,6 +283,7 @@ fn impl_solidity_struct_collect<'a>(
 	name: &syn::Ident,
 	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+	docs: &Vec<String>,
 ) -> proc_macro2::TokenStream {
 	let string_name = name.to_string();
 	let name_type = field_names
@@ -271,6 +296,13 @@ fn impl_solidity_struct_collect<'a>(
 				write!(str, "{};", #name).unwrap();
 			)
 		});
+	let docs = docs.iter().enumerate().map(|(i, doc)| {
+		let doc = doc.trim();
+		let dev = if i == 0 { " @dev" } else { "" };
+		quote! {
+			writeln!(str, "///{} {}", #dev, #doc).unwrap();
+		}
+	});
 
 	quote! {
 		#[cfg(feature = "stubgen")]
@@ -283,7 +315,7 @@ fn impl_solidity_struct_collect<'a>(
 				use std::fmt::Write;
 
 				let mut str = String::new();
-				writeln!(str, "/// @dev Cross account struct").unwrap();
+				#(#docs)*
 				writeln!(str, "struct {} {{", Self::name()).unwrap();
 				#(#name_type)*
 				writeln!(str, "}}").unwrap();
