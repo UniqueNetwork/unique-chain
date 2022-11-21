@@ -16,7 +16,7 @@ jobs:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
       - name: Checkout 🛎
-        uses: actions/checkout@v.2.5.0
+        uses: actions/checkout@v2.5.0
         with:
           # check out all branches
           fetch-depth: 0
