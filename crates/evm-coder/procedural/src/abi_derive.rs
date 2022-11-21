@@ -2,41 +2,22 @@ use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
-	let docs = ast
-		.attrs
-		.iter()
-		.filter_map(|attr| {
-			if let Some(ps) = attr.path.segments.first() {
-				if ps.ident == "doc" {
-					let meta = match attr.parse_meta() {
-						Ok(meta) => meta,
-						Err(e) => return Some(Err(e)),
-					};
-					match meta {
-						syn::Meta::NameValue(mnv) => match &mnv.lit {
-							syn::Lit::Str(ls) => return Some(Ok(ls.value())),
-							_ => unreachable!(),
-						},
-						_ => unreachable!(),
-					}
-				}
-			}
-			None
-		})
-		.collect::<syn::Result<Vec<_>>>()?;
+	let docs = extract_docs(&ast.attrs)?;
 
-	let (is_named_fields, field_names, field_types, params_count) = match &ast.data {
+	let (is_named_fields, field_names, field_types, field_docs, params_count) = match &ast.data {
 		syn::Data::Struct(ds) => match ds.fields {
 			syn::Fields::Named(ref fields) => Ok((
 				true,
 				fields.named.iter().enumerate().map(map_field_to_name),
 				fields.named.iter().map(map_field_to_type),
+				fields.named.iter().map(map_field_to_doc),
 				fields.named.len(),
 			)),
 			syn::Fields::Unnamed(ref fields) => Ok((
 				false,
 				fields.unnamed.iter().enumerate().map(map_field_to_name),
 				fields.unnamed.iter().map(map_field_to_type),
+				fields.unnamed.iter().map(map_field_to_doc),
 				fields.unnamed.len(),
 			)),
 			syn::Fields::Unit => Err(syn::Error::new(name.span(), "Unit structs not supported")),
@@ -61,7 +42,7 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
 	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
 	let solidity_struct_collect =
-		impl_solidity_struct_collect(name, field_names, field_types, &docs);
+		impl_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
 
 	Ok(quote! {
 		#can_be_plcaed_in_vec
@@ -74,10 +55,28 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 	})
 }
 
-fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
-	quote! {
-		impl ::evm_coder::sealed::CanBePlacedInVec for #ident {}
-	}
+fn extract_docs(attrs: &Vec<syn::Attribute>) -> syn::Result<Vec<String>> {
+	attrs
+		.iter()
+		.filter_map(|attr| {
+			if let Some(ps) = attr.path.segments.first() {
+				if ps.ident == "doc" {
+					let meta = match attr.parse_meta() {
+						Ok(meta) => meta,
+						Err(e) => return Some(Err(e)),
+					};
+					match meta {
+						syn::Meta::NameValue(mnv) => match &mnv.lit {
+							syn::Lit::Str(ls) => return Some(Ok(ls.value())),
+							_ => unreachable!(),
+						},
+						_ => unreachable!(),
+					}
+				}
+			}
+			None
+		})
+		.collect()
 }
 
 fn map_field_to_name(field: (usize, &syn::Field)) -> syn::Ident {
@@ -93,6 +92,16 @@ fn map_field_to_name(field: (usize, &syn::Field)) -> syn::Ident {
 
 fn map_field_to_type<'a>(field: &'a syn::Field) -> &'a syn::Type {
 	&field.ty
+}
+
+fn map_field_to_doc(field: &syn::Field) -> Result<Vec<std::string::String>, syn::Error> {
+	extract_docs(&field.attrs)
+}
+
+fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
+	quote! {
+		impl ::evm_coder::sealed::CanBePlacedInVec for #ident {}
+	}
 }
 
 fn impl_abi_type<'a>(
@@ -283,17 +292,30 @@ fn impl_solidity_struct_collect<'a>(
 	name: &syn::Ident,
 	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+	field_docs: impl Iterator<Item = syn::Result<Vec<String>>> + Clone,
 	docs: &Vec<String>,
-) -> proc_macro2::TokenStream {
+) -> syn::Result<proc_macro2::TokenStream> {
 	let string_name = name.to_string();
 	let name_type = field_names
 		.into_iter()
-		.zip(field_types.into_iter())
-		.map(|(name, ty)| {
+		.zip(field_types)
+		.zip(field_docs)
+		.map(|((name, ty), doc)| {
+			let field_docs = match doc {
+				Ok(doc) => doc.into_iter().enumerate().map(|(i, doc)| {
+					let doc = doc.trim();
+					let dev = if i == 0 { " @dev" } else { "" };
+					quote! {
+						writeln!(str, "///{} {}", #dev, #doc).unwrap();
+					}
+				}),
+				Err(e) => unreachable!("{:?}", e),
+			};
 			let name = format!("{}", name);
 			quote!(
+				#(#field_docs)*
 				write!(str, "\t{} ", <#ty as ::evm_coder::solidity::StructCollect>::name()).unwrap();
-				write!(str, "{};", #name).unwrap();
+				writeln!(str, "{};", #name).unwrap();
 			)
 		});
 	let docs = docs.iter().enumerate().map(|(i, doc)| {
@@ -304,7 +326,7 @@ fn impl_solidity_struct_collect<'a>(
 		}
 	});
 
-	quote! {
+	Ok(quote! {
 		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::StructCollect for #name {
 			fn name() -> String {
@@ -322,5 +344,5 @@ fn impl_solidity_struct_collect<'a>(
 				str
 			}
 		}
-	}
+	})
 }
