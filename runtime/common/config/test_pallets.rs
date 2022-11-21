@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{Runtime, RuntimeEvent};
+use crate::{Runtime, RuntimeEvent, RuntimeCall};
 
 impl pallet_test_utils::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
 }

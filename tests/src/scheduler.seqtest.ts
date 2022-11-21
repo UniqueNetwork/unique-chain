@@ -14,43 +14,53 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itSub, Pallets, usingPlaygrounds} from './util';
+import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 
 describe('Scheduling token and balance transfers', () => {
+  let superuser: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
-  before(async () => {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      alice = await privateKeyWrapper('//Alice');
-      bob = await privateKeyWrapper('//Bob');
-      charlie = await privateKeyWrapper('//Charlie');
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+
+      superuser = await privateKey('//Alice');
+      const donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
 
       await helper.testUtils.enable();
     });
   });
 
-  itSub.ifWithPallets('Can delay a transfer of an owned token', [Pallets.Scheduler], async ({helper}) => {
+  beforeEach(async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.wait.noScheduledTasks();
+    });
+  });
+
+  itSched('Can delay a transfer of an owned token', async (scheduleKind, {helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
-    const schedulerId = await helper.arrange.makeScheduledId();
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const blocksBeforeExecution = 4;
-
-    await token.scheduleAfter(schedulerId, blocksBeforeExecution)
+    
+    await token.scheduleAfter(blocksBeforeExecution, {scheduledId})
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + blocksBeforeExecution + 1;
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
 
-    await helper.wait.newBlocks(blocksBeforeExecution + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  itSub.ifWithPallets('Can transfer funds periodically', [Pallets.Scheduler], async ({helper}) => {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSched('Can transfer funds periodically', async (scheduleKind, {helper}) => {
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const waitForBlocks = 1;
 
     const amount = 1n * helper.balance.getOneTokenNominal();
@@ -61,10 +71,11 @@ describe('Scheduling token and balance transfers', () => {
 
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId, periodic})
       .balance.transferToSubstrate(alice, bob.address, amount);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const bobsBalanceAfterFirst = await helper.balance.getSubstrate(bob.address);
     expect(bobsBalanceAfterFirst)
@@ -73,7 +84,7 @@ describe('Scheduling token and balance transfers', () => {
         '#1 Balance of the recipient should be increased by 1 * amount',
       );
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     const bobsBalanceAfterSecond = await helper.balance.getSubstrate(bob.address);
     expect(bobsBalanceAfterSecond)
@@ -83,42 +94,44 @@ describe('Scheduling token and balance transfers', () => {
       );
   });
 
-  itSub.ifWithPallets('Can cancel a scheduled operation which has not yet taken effect', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Can cancel a scheduled operation which has not yet taken effect', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
 
-    await token.scheduleAfter(scheduledId, waitForBlocks)
+    await token.scheduleAfter(waitForBlocks, {scheduledId})
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await helper.scheduler.cancelScheduled(alice, scheduledId);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
   });
 
-  itSub.ifWithPallets('Can cancel a periodic operation (transfer of funds)', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Can cancel a periodic operation (transfer of funds)', async ({helper}) => {
     const waitForBlocks = 1;
     const periodic = {
       period: 3,
       repetitions: 2,
     };
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
 
     const amount = 1n * helper.balance.getOneTokenNominal();
 
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    await helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {periodic})
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId, periodic})
       .balance.transferToSubstrate(alice, bob.address, amount);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const bobsBalanceAfterFirst = await helper.balance.getSubstrate(bob.address);
 
@@ -129,7 +142,7 @@ describe('Scheduling token and balance transfers', () => {
       );
 
     await helper.scheduler.cancelScheduled(alice, scheduledId);
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     const bobsBalanceAfterSecond = await helper.balance.getSubstrate(bob.address);
     expect(bobsBalanceAfterSecond)
@@ -139,8 +152,54 @@ describe('Scheduling token and balance transfers', () => {
       );
   });
 
-  itSub.ifWithPallets('Scheduled tasks are transactional', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSched('scheduler will not insert more tasks than allowed', async (scheduleKind, {helper}) => {
+    const maxScheduledPerBlock = 50;
+    let fillScheduledIds = new Array(maxScheduledPerBlock);
+    let extraScheduledId = undefined;
+    
+    if (scheduleKind == 'named') {
+      const scheduledIds = helper.arrange.makeScheduledIds(maxScheduledPerBlock + 1);
+      fillScheduledIds = scheduledIds.slice(0, maxScheduledPerBlock);
+      extraScheduledId = scheduledIds[maxScheduledPerBlock];
+    }
+
+    // Since the dev node has Instant Seal,
+    // we need a larger gap between the current block and the target one.
+    //
+    // We will schedule `maxScheduledPerBlock` transaction into the target block,
+    // so we need at least `maxScheduledPerBlock`-wide gap.
+    // We add some additional blocks to this gap to mitigate possible PolkadotJS delays.
+    const waitForBlocks = await helper.arrange.isDevNode() ? maxScheduledPerBlock + 5 : 5;
+
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks;
+
+    const amount = 1n * helper.balance.getOneTokenNominal();
+
+    const balanceBefore = await helper.balance.getSubstrate(bob.address);
+
+    // Fill the target block
+    for (let i = 0; i < maxScheduledPerBlock; i++) {
+      await helper.scheduler.scheduleAt(executionBlock, {scheduledId: fillScheduledIds[i]})
+        .balance.transferToSubstrate(superuser, bob.address, amount);
+    }
+
+    // Try to schedule a task into a full block
+    await expect(helper.scheduler.scheduleAt(executionBlock, {scheduledId: extraScheduledId})
+      .balance.transferToSubstrate(superuser, bob.address, amount))
+      .to.be.rejectedWith(/scheduler\.AgendaIsExhausted/);
+
+    await helper.wait.forParachainBlockNumber(executionBlock);
+
+    const balanceAfter = await helper.balance.getSubstrate(bob.address);
+
+    expect(balanceAfter > balanceBefore).to.be.true;
+
+    const diff = balanceAfter - balanceBefore;
+    expect(diff).to.be.equal(amount * BigInt(maxScheduledPerBlock));
+  });
+
+  itSched.ifWithPallets('Scheduled tasks are transactional', [Pallets.TestUtils], async (scheduleKind, {helper}) => {
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const waitForBlocks = 4;
 
     const initTestVal = 42;
@@ -148,18 +207,19 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.testUtils.setTestValue(alice, initTestVal);
 
-    await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks)
+    await helper.scheduler.scheduleAfter<DevUniqueHelper>(waitForBlocks, {scheduledId})
       .testUtils.setTestValueAndRollback(alice, changedTestVal);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const testVal = await helper.testUtils.testValue();
     expect(testVal, 'The test value should NOT be commited')
       .to.be.equal(initTestVal);
   });
 
-  itSub.ifWithPallets('Scheduled tasks should take correct fees', [Pallets.Scheduler, Pallets.TestUtils], async function({helper}) {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSched.ifWithPallets('Scheduled tasks should take correct fees', [Pallets.TestUtils], async function(scheduleKind, {helper}) {
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const waitForBlocks = 4;
     const periodic = {
       period: 2,
@@ -172,15 +232,14 @@ describe('Scheduling token and balance transfers', () => {
     const expectedScheduledFee = (await helper.getPaymentInfo(alice, dummyTx, scheduledLen))
       .partialFee.toBigInt();
 
-    await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks, {periodic})
+    await helper.scheduler.scheduleAfter<DevUniqueHelper>(waitForBlocks, {scheduledId, periodic})
       .testUtils.justTakeFee(alice);
-
-    await helper.wait.newBlocks(1);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const aliceInitBalance = await helper.balance.getSubstrate(alice.address);
     let diff;
 
-    await helper.wait.newBlocks(waitForBlocks);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const aliceBalanceAfterFirst = await helper.balance.getSubstrate(alice.address);
     expect(
@@ -194,7 +253,7 @@ describe('Scheduling token and balance transfers', () => {
       'Scheduled task should take the right amount of fees',
     );
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     const aliceBalanceAfterSecond = await helper.balance.getSubstrate(alice.address);
     expect(
@@ -211,7 +270,7 @@ describe('Scheduling token and balance transfers', () => {
 
   // Check if we can cancel a scheduled periodic operation
   // in the same block in which it is running
-  itSub.ifWithPallets('Can cancel the periodic sheduled tx when the tx is running', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
+  itSub.ifWithPallets('Can cancel the periodic sheduled tx when the tx is running', [Pallets.TestUtils], async ({helper}) => {
     const currentBlockNumber = await helper.chain.getLatestBlockNumber();
     const blocksBeforeExecution = 10;
     const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
@@ -219,7 +278,7 @@ describe('Scheduling token and balance transfers', () => {
     const [
       scheduledId,
       scheduledCancelId,
-    ] = await helper.arrange.makeScheduledIds(2);
+    ] = helper.arrange.makeScheduledIds(2);
 
     const periodic = {
       period: 5,
@@ -232,14 +291,14 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.testUtils.setTestValue(alice, initTestVal);
 
-    await helper.scheduler.scheduleAt<DevUniqueHelper>(scheduledId, firstExecutionBlockNumber, {periodic})
+    await helper.scheduler.scheduleAt<DevUniqueHelper>(firstExecutionBlockNumber, {scheduledId, periodic})
       .testUtils.incTestValue(alice);
 
     // Cancel the inc tx after 2 executions
     // *in the same block* in which the second execution is scheduled
     await helper.scheduler.scheduleAt(
-      scheduledCancelId,
       firstExecutionBlockNumber + periodic.period,
+      {scheduledId: scheduledCancelId},
     ).scheduler.cancelScheduled(alice, scheduledId);
 
     await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
@@ -261,8 +320,8 @@ describe('Scheduling token and balance transfers', () => {
     }
   });
 
-  itSub.ifWithPallets('A scheduled operation can cancel itself', [Pallets.Scheduler, Pallets.TestUtils], async ({helper}) => {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSub.ifWithPallets('A scheduled operation can cancel itself', [Pallets.TestUtils], async ({helper}) => {
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
     const periodic = {
       period: 2,
@@ -274,47 +333,49 @@ describe('Scheduling token and balance transfers', () => {
 
     await helper.testUtils.setTestValue(alice, initTestVal);
 
-    await helper.scheduler.scheduleAfter<DevUniqueHelper>(scheduledId, waitForBlocks, {periodic})
+    await helper.scheduler.scheduleAfter<DevUniqueHelper>(waitForBlocks, {scheduledId, periodic})
       .testUtils.selfCancelingInc(alice, scheduledId, maxTestVal);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     // execution #0
     expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 1);
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + periodic.period);
 
     // execution #1
     expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 2);
 
-    await helper.wait.newBlocks(periodic.period);
+    await helper.wait.forParachainBlockNumber(executionBlock + 2 * periodic.period);
 
     // <canceled>
     expect(await helper.testUtils.testValue())
       .to.be.equal(initTestVal + 2);
   });
 
-  itSub.ifWithPallets('Root can cancel any scheduled operation', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Root can cancel any scheduled operation', async ({helper}) => {
     const collection = await helper.nft.mintCollection(bob, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(bob);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(scheduledId, waitForBlocks)
+    await token.scheduleAfter(waitForBlocks, {scheduledId})
       .transfer(bob, {Substrate: alice.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.getSudo().scheduler.cancelScheduled(alice, scheduledId);
+    await helper.getSudo().scheduler.cancelScheduled(superuser, scheduledId);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  itSub.ifWithPallets('Root can set prioritized scheduled operation', [Pallets.Scheduler], async ({helper}) => {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSched('Root can set prioritized scheduled operation', async (scheduleKind, {helper}) => {
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const waitForBlocks = 4;
 
     const amount = 42n * helper.balance.getOneTokenNominal();
@@ -322,10 +383,11 @@ describe('Scheduling token and balance transfers', () => {
     const balanceBefore = await helper.balance.getSubstrate(charlie.address);
 
     await helper.getSudo()
-      .scheduler.scheduleAfter(scheduledId, waitForBlocks, {priority: 42})
-      .balance.forceTransferToSubstrate(alice, bob.address, charlie.address, amount);
+      .scheduler.scheduleAfter(waitForBlocks, {scheduledId, priority: 42})
+      .balance.forceTransferToSubstrate(superuser, bob.address, charlie.address, amount);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const balanceAfter = await helper.balance.getSubstrate(charlie.address);
 
@@ -335,18 +397,19 @@ describe('Scheduling token and balance transfers', () => {
     expect(diff).to.be.equal(amount);
   });
 
-  itSub.ifWithPallets("Root can change scheduled operation's priority", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Root can change scheduled operation's priority", async ({helper}) => {
     const collection = await helper.nft.mintCollection(bob, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(bob);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 6;
 
-    await token.scheduleAfter(scheduledId, waitForBlocks)
+    await token.scheduleAfter(waitForBlocks, {scheduledId})
       .transfer(bob, {Substrate: alice.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const priority = 112;
-    await helper.getSudo().scheduler.changePriority(alice, scheduledId, priority);
+    await helper.getSudo().scheduler.changePriority(superuser, scheduledId, priority);
 
     const priorityChanged = await helper.wait.event(
       waitForBlocks,
@@ -355,14 +418,19 @@ describe('Scheduling token and balance transfers', () => {
     );
 
     expect(priorityChanged !== null).to.be.true;
-    expect(priorityChanged!.event.data[2].toString()).to.be.equal(priority.toString());
+
+    const [blockNumber, index] = priorityChanged!.event.data[0].toJSON() as any[];
+    expect(blockNumber).to.be.equal(executionBlock);
+    expect(index).to.be.equal(0);
+
+    expect(priorityChanged!.event.data[1].toString()).to.be.equal(priority.toString());
   });
 
-  itSub.ifWithPallets('Prioritized operations executes in valid order', [Pallets.Scheduler], async ({helper}) => {
+  itSub('Prioritized operations execute in valid order', async ({helper}) => {
     const [
       scheduledFirstId,
       scheduledSecondId,
-    ] = await helper.arrange.makeScheduledIds(2);
+    ] = helper.arrange.makeScheduledIds(2);
 
     const currentBlockNumber = await helper.chain.getLatestBlockNumber();
     const blocksBeforeExecution = 6;
@@ -379,19 +447,25 @@ describe('Scheduling token and balance transfers', () => {
     const amount = 1n * helper.balance.getOneTokenNominal();
 
     // Scheduler a task with a lower priority first, then with a higher priority
-    await helper.getSudo().scheduler.scheduleAt(scheduledFirstId, firstExecutionBlockNumber, {priority: prioLow, periodic})
-      .balance.forceTransferToSubstrate(alice, alice.address, bob.address, amount);
+    await helper.getSudo().scheduler.scheduleAt(firstExecutionBlockNumber, {
+      scheduledId: scheduledFirstId,
+      priority: prioLow,
+      periodic,
+    }).balance.forceTransferToSubstrate(superuser, alice.address, bob.address, amount);
 
-    await helper.getSudo().scheduler.scheduleAt(scheduledSecondId, firstExecutionBlockNumber, {priority: prioHigh, periodic})
-      .balance.forceTransferToSubstrate(alice, alice.address, bob.address, amount);
+    await helper.getSudo().scheduler.scheduleAt(firstExecutionBlockNumber, {
+      scheduledId: scheduledSecondId,
+      priority: prioHigh,
+      periodic,
+    }).balance.forceTransferToSubstrate(superuser, alice.address, bob.address, amount);
 
     const capture = await helper.arrange.captureEvents('scheduler', 'Dispatched');
 
     await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
 
     // Flip priorities
-    await helper.getSudo().scheduler.changePriority(alice, scheduledFirstId, prioHigh);
-    await helper.getSudo().scheduler.changePriority(alice, scheduledSecondId, prioLow);
+    await helper.getSudo().scheduler.changePriority(superuser, scheduledFirstId, prioHigh);
+    await helper.getSudo().scheduler.changePriority(superuser, scheduledSecondId, prioLow);
 
     await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + periodic.period);
 
@@ -409,38 +483,123 @@ describe('Scheduling token and balance transfers', () => {
     expect(secondExecuctionIds[0]).to.be.equal(scheduledFirstId);
     expect(secondExecuctionIds[1]).to.be.equal(scheduledSecondId);
   });
+
+  itSched('Periodic operations always can be rescheduled', async (scheduleKind, {helper}) => {
+    const maxScheduledPerBlock = 50;
+    const numFilledBlocks = 3;
+    const ids = helper.arrange.makeScheduledIds(numFilledBlocks * maxScheduledPerBlock + 1);
+    const periodicId = scheduleKind == 'named' ? ids[0] : undefined;
+    const fillIds = ids.slice(1);
+
+    const fillScheduleFn = scheduleKind == 'named' ? 'scheduleNamed' : 'schedule';
+
+    const initTestVal = 0;
+    const firstExecTestVal = 1;
+    const secondExecTestVal = 2;
+    await helper.testUtils.setTestValue(alice, initTestVal);
+
+    const currentBlockNumber = await helper.chain.getLatestBlockNumber();
+    const blocksBeforeExecution = 8;
+    const firstExecutionBlockNumber = currentBlockNumber + blocksBeforeExecution;
+
+    const period = 5;
+
+    const periodic = {
+      period,
+      repetitions: 2,
+    };
+
+    // Fill `numFilledBlocks` blocks beginning from the block in which the second execution should occur
+    const txs = [];
+    for (let offset = 0; offset < numFilledBlocks; offset ++) {
+      for (let i = 0; i < maxScheduledPerBlock; i++) {
+
+        const scheduledTx = helper.constructApiCall('api.tx.balances.transfer', [bob.address, 1n]);
+
+        const when = firstExecutionBlockNumber + period + offset;
+        const mandatoryArgs = [when, null, null, scheduledTx];
+        const scheduleArgs = scheduleKind == 'named'
+          ? [fillIds[i + offset * maxScheduledPerBlock], ...mandatoryArgs]
+          : mandatoryArgs;
+
+        const tx = helper.constructApiCall(`api.tx.scheduler.${fillScheduleFn}`, scheduleArgs);
+
+        txs.push(tx);
+      }
+    }
+    await helper.executeExtrinsic(alice, 'api.tx.testUtils.batchAll', [txs], true);
+
+    await helper.scheduler.scheduleAt<DevUniqueHelper>(firstExecutionBlockNumber, {
+      scheduledId: periodicId,
+      periodic,
+    }).testUtils.incTestValue(alice);
+
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber);
+    expect(await helper.testUtils.testValue()).to.be.equal(firstExecTestVal);
+
+    await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + period + numFilledBlocks);
+
+    // The periodic operation should be postponed by `numFilledBlocks`
+    for (let i = 0; i < numFilledBlocks; i++) {
+      expect(await helper.testUtils.testValue(firstExecutionBlockNumber + period + i)).to.be.equal(firstExecTestVal);
+    }
+
+    // After the `numFilledBlocks` the periodic operation will eventually be executed
+    expect(await helper.testUtils.testValue()).to.be.equal(secondExecTestVal);
+  });
+
+  itSched('scheduled operations does not change nonce', async (scheduleKind, {helper}) => {
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
+    const blocksBeforeExecution = 4;
+
+    await helper.scheduler
+      .scheduleAfter<DevUniqueHelper>(blocksBeforeExecution, {scheduledId})
+      .balance.transferToSubstrate(alice, bob.address, 1n);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + blocksBeforeExecution + 1;
+
+    const initNonce = await helper.chain.getNonce(alice.address);
+
+    await helper.wait.forParachainBlockNumber(executionBlock);
+
+    const finalNonce = await helper.chain.getNonce(alice.address);
+
+    expect(initNonce).to.be.equal(finalNonce);
+  });
 });
 
 describe('Negative Test: Scheduling', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
-  before(async () => {
-    await usingPlaygrounds(async (helper, privateKeyWrapper) => {
-      alice = await privateKeyWrapper('//Alice');
-      bob = await privateKeyWrapper('//Bob');
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+
+      const donor = await privateKey({filename: __filename});
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
 
       await helper.testUtils.enable();
     });
   });
 
-  itSub.ifWithPallets("Can't overwrite a scheduled ID", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Can't overwrite a scheduled ID", async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(scheduledId, waitForBlocks)
+    await token.scheduleAfter(waitForBlocks, {scheduledId})
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
-    const scheduled = helper.scheduler.scheduleAfter(scheduledId, waitForBlocks);
+    const scheduled = helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId});
     await expect(scheduled.balance.transferToSubstrate(alice, bob.address, 1n * helper.balance.getOneTokenNominal()))
       .to.be.rejectedWith(/scheduler\.FailedToSchedule/);
 
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const bobsBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -448,58 +607,61 @@ describe('Negative Test: Scheduling', () => {
     expect(bobsBalanceBefore).to.be.equal(bobsBalanceAfter);
   });
 
-  itSub.ifWithPallets("Can't cancel an operation which is not scheduled", [Pallets.Scheduler], async ({helper}) => {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSub("Can't cancel an operation which is not scheduled", async ({helper}) => {
+    const scheduledId = helper.arrange.makeScheduledId();
     await expect(helper.scheduler.cancelScheduled(alice, scheduledId))
       .to.be.rejectedWith(/scheduler\.NotFound/);
   });
 
-  itSub.ifWithPallets("Can't cancel a non-owned scheduled operation", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Can't cancel a non-owned scheduled operation", async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(alice);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(scheduledId, waitForBlocks)
+    await token.scheduleAfter(waitForBlocks, {scheduledId})
       .transfer(alice, {Substrate: bob.address});
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await expect(helper.scheduler.cancelScheduled(bob, scheduledId))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
 
-  itSub.ifWithPallets("Regular user can't set prioritized scheduled operation", [Pallets.Scheduler], async ({helper}) => {
-    const scheduledId = await helper.arrange.makeScheduledId();
+  itSched("Regular user can't set prioritized scheduled operation", async (scheduleKind, {helper}) => {
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const waitForBlocks = 4;
 
     const amount = 42n * helper.balance.getOneTokenNominal();
 
     const balanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    const scheduled = helper.scheduler.scheduleAfter(scheduledId, waitForBlocks, {priority: 42});
+    const scheduled = helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId, priority: 42});
     
     await expect(scheduled.balance.transferToSubstrate(alice, bob.address, amount))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.newBlocks(waitForBlocks + 1);
+    const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
+
+    await helper.wait.forParachainBlockNumber(executionBlock);
 
     const balanceAfter = await helper.balance.getSubstrate(bob.address);
 
     expect(balanceAfter).to.be.equal(balanceBefore);
   });
 
-  itSub.ifWithPallets("Regular user can't change scheduled operation's priority", [Pallets.Scheduler], async ({helper}) => {
+  itSub("Regular user can't change scheduled operation's priority", async ({helper}) => {
     const collection = await helper.nft.mintCollection(bob, {tokenPrefix: 'schd'});
     const token = await collection.mintToken(bob);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(scheduledId, waitForBlocks)
+    await token.scheduleAfter(waitForBlocks, {scheduledId})
       .transfer(bob, {Substrate: alice.address});
 
     const priority = 112;
@@ -522,9 +684,9 @@ describe.skip('Sponsoring scheduling', () => {
   // let bob: IKeyringPair;
 
   // before(async() => {
-  //   await usingApi(async (_, privateKeyWrapper) => {
-  //     alice = privateKeyWrapper('//Alice');
-  //     bob = privateKeyWrapper('//Bob');
+  //   await usingApi(async (_, privateKey) => {
+  //     alice = privateKey('//Alice');
+  //     bob = privateKey('//Bob');
   //   });
   // });
 
@@ -550,9 +712,9 @@ describe.skip('Sponsoring scheduling', () => {
   });
 
   it('Schedules and dispatches a transaction even if the caller has no funds at the time of the dispatch', async () => {
-    // await usingApi(async (api, privateKeyWrapper) => {
+    // await usingApi(async (api, privateKey) => {
     //   // Find an empty, unused account
-    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    //   const zeroBalance = await findUnusedAddress(api, privateKey);
 
     //   const collectionId = await createCollectionExpectSuccess();
 
@@ -591,8 +753,8 @@ describe.skip('Sponsoring scheduling', () => {
   it('Sponsor going bankrupt does not impact a scheduled transaction', async () => {
     // const collectionId = await createCollectionExpectSuccess();
 
-    // await usingApi(async (api, privateKeyWrapper) => {
-    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    // await usingApi(async (api, privateKey) => {
+    //   const zeroBalance = await findUnusedAddress(api, privateKey);
     //   const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
     //   await submitTransactionAsync(alice, balanceTx);
 
@@ -622,8 +784,8 @@ describe.skip('Sponsoring scheduling', () => {
     // await setCollectionSponsorExpectSuccess(collectionId, bob.address);
     // await confirmSponsorshipExpectSuccess(collectionId, '//Bob');
 
-    // await usingApi(async (api, privateKeyWrapper) => {
-    //   const zeroBalance = await findUnusedAddress(api, privateKeyWrapper);
+    // await usingApi(async (api, privateKey) => {
+    //   const zeroBalance = await findUnusedAddress(api, privateKey);
 
     //   await enablePublicMintingExpectSuccess(alice, collectionId);
     //   await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);

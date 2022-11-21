@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSub, Pallets, usingPlaygrounds} from './util';
+import {expect, itSched, itSub, Pallets, usingPlaygrounds} from './util';
 import {itEth} from './eth/util';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
@@ -162,34 +162,38 @@ describe('Integration Test: Maintenance Mode', () => {
     await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
   });
 
-  itSub.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.Scheduler], async ({helper}) => {
+  itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.Scheduler], async (scheduleKind, {helper}) => {
     const collection = await helper.nft.mintCollection(bob);
 
     const nftBeforeMM = await collection.mintToken(bob);
     const nftDuringMM = await collection.mintToken(bob);
     const nftAfterMM = await collection.mintToken(bob);
 
-    const scheduledIdBeforeMM = '0x' + '0'.repeat(31) + '0';
-    const scheduledIdDuringMM = '0x' + '0'.repeat(31) + '1';
-    const scheduledIdBunkerThroughMM = '0x' + '0'.repeat(31) + '2';
-    const scheduledIdAttemptDuringMM = '0x' + '0'.repeat(31) + '3';
-    const scheduledIdAfterMM = '0x' + '0'.repeat(31) + '4';
+    const [
+      scheduledIdBeforeMM,
+      scheduledIdDuringMM,
+      scheduledIdBunkerThroughMM,
+      scheduledIdAttemptDuringMM,
+      scheduledIdAfterMM,
+    ] = scheduleKind == 'named'
+      ? helper.arrange.makeScheduledIds(5)
+      : new Array(5);
 
     const blocksToWait = 6;
 
     // Scheduling works before the maintenance
-    await nftBeforeMM.scheduleAfter(scheduledIdBeforeMM, blocksToWait)
+    await nftBeforeMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdBeforeMM})
       .transfer(bob, {Substrate: superuser.address});
 
     await helper.wait.newBlocks(blocksToWait + 1);
     expect(await nftBeforeMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
 
     // Schedule a transaction that should occur *during* the maintenance
-    await nftDuringMM.scheduleAfter(scheduledIdDuringMM, blocksToWait)
+    await nftDuringMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdDuringMM})
       .transfer(bob, {Substrate: superuser.address});
     
     // Schedule a transaction that should occur *after* the maintenance
-    await nftDuringMM.scheduleAfter(scheduledIdBunkerThroughMM, blocksToWait * 2)
+    await nftDuringMM.scheduleAfter(blocksToWait * 2, {scheduledId: scheduledIdBunkerThroughMM})
       .transfer(bob, {Substrate: superuser.address});
 
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.enable', []);
@@ -200,7 +204,7 @@ describe('Integration Test: Maintenance Mode', () => {
     expect(await nftDuringMM.getOwner()).to.be.deep.equal({Substrate: bob.address});
 
     // Any attempts to schedule a tx during the MM should be rejected
-    await expect(nftDuringMM.scheduleAfter(scheduledIdAttemptDuringMM, blocksToWait)
+    await expect(nftDuringMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAttemptDuringMM})
       .transfer(bob, {Substrate: superuser.address}))
       .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
@@ -208,7 +212,7 @@ describe('Integration Test: Maintenance Mode', () => {
     expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
 
     // Scheduling works after the maintenance
-    await nftAfterMM.scheduleAfter(scheduledIdAfterMM, blocksToWait)
+    await nftAfterMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAfterMM})
       .transfer(bob, {Substrate: superuser.address});
     
     await helper.wait.newBlocks(blocksToWait + 1);

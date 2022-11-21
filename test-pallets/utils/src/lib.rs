@@ -22,13 +22,29 @@ use frame_system::pallet_prelude::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
+	use frame_support::{
+		pallet_prelude::*,
+		dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},
+		traits::{UnfilteredDispatchable, IsSubType, OriginTrait},
+	};
 	use frame_system::pallet_prelude::*;
-	use pallet_unique_scheduler::{ScheduledId, Pallet as SchedulerPallet};
+	use sp_std::vec::Vec;
+	use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_unique_scheduler::Config {
+	pub trait Config: frame_system::Config + pallet_unique_scheduler_v2::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// The overarching call type.
+		type RuntimeCall: Parameter
+			+ Dispatchable<
+				RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
+			+ From<frame_system::Call<Self>>
+			+ UnfilteredDispatchable<RuntimeOrigin = <Self as frame_system::Config>::RuntimeOrigin>
+			+ IsSubType<Call<Self>>
+			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
 	}
 
 	#[pallet::event]
@@ -36,6 +52,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		ValueIsSet,
 		ShouldRollback,
+		BatchCompleted,
 	}
 
 	#[pallet::pallet]
@@ -94,14 +111,13 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn self_canceling_inc(
 			origin: OriginFor<T>,
-			id: ScheduledId,
+			id: TaskName,
 			max_test_value: u32,
 		) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin.clone())?;
+			Self::inc_test_value(origin.clone())?;
 
-			if <TestValue<T>>::get() < max_test_value {
-				Self::inc_test_value(origin)?;
-			} else {
+			if <TestValue<T>>::get() == max_test_value {
 				SchedulerPallet::<T>::cancel_named(origin, id)?;
 			}
 
@@ -112,6 +128,35 @@ pub mod pallet {
 		pub fn just_take_fee(origin: OriginFor<T>) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin)?;
 			Ok(())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn batch_all(
+			origin: OriginFor<T>,
+			calls: Vec<<T as Config>::RuntimeCall>,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_origin_and_enabled(origin.clone())?;
+
+			let is_root = ensure_root(origin.clone()).is_ok();
+
+			for call in calls {
+				if is_root {
+					call.dispatch_bypass_filter(origin.clone())?;
+				} else {
+					let mut filtered_origin = origin.clone();
+					// Don't allow users to nest `batch_all` calls.
+					filtered_origin.add_filter(
+						move |c: &<T as frame_system::Config>::RuntimeCall| {
+							let c = <T as Config>::RuntimeCall::from_ref(c);
+							!matches!(c.is_sub_type(), Some(Call::batch_all { .. }))
+						},
+					);
+					call.dispatch(filtered_origin)?;
+				}
+			}
+
+			Self::deposit_event(Event::BatchCompleted);
+			Ok(None::<Weight>.into())
 		}
 	}
 }

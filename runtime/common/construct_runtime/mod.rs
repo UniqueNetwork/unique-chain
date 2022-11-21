@@ -58,7 +58,7 @@ macro_rules! construct_runtime {
                 Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
 
                 #[runtimes(opal)]
-                Scheduler: pallet_unique_scheduler::{Pallet, Call, Storage, Event<T>} = 62,
+                Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
 
                 Configuration: pallet_configuration::{Pallet, Call, Storage} = 63,
 

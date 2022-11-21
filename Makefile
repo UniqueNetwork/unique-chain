@@ -118,7 +118,7 @@ bench-structure:
 
 .PHONY: bench-scheduler
 bench-scheduler:
-	make _bench PALLET=unique-scheduler PALLET_DIR=scheduler
+	make _bench PALLET=unique-scheduler-v2 PALLET_DIR=scheduler-v2
 
 .PHONY: bench-rmrk-core
 bench-rmrk-core:

@@ -308,11 +308,9 @@ class ArrangeGroup {
     return encodeAddress(address);
   }
 
-  async makeScheduledIds(num: number): Promise<string[]> {
-    await this.helper.wait.noScheduledTasks();
-
+  makeScheduledIds(num: number): string[] {
     function makeId(slider: number) {
-      const scheduledIdSize = 32;
+      const scheduledIdSize = 64;
       const hexId = slider.toString(16);
       const prefixSize = scheduledIdSize - hexId.length;
 
@@ -330,8 +328,8 @@ class ArrangeGroup {
     return ids;
   }
 
-  async makeScheduledId(): Promise<string> {
-    return (await this.makeScheduledIds(1))[0];
+  makeScheduledId(): string {
+    return (this.makeScheduledIds(1))[0];
   }
 
   async captureEvents(eventSection: string, eventMethod: string): Promise<EventCapture> {
@@ -537,8 +535,12 @@ class TestUtilGroup {
     await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
   }
 
-  async testValue() {
-    return (await this.helper.callRpc('api.query.testUtils.testValue', [])).toNumber();
+  async testValue(blockIdx?: number) {
+    const api = blockIdx
+      ? await this.helper.getApi().at(await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockIdx]))
+      : this.helper.getApi();
+
+    return (await api.query.testUtils.testValue()).toJSON();
   }
 
   async justTakeFee(signer: TSigner) {
