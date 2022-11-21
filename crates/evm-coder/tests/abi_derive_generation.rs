@@ -57,10 +57,16 @@ struct TypeStruct2DerivedDynamicParam {
 	_b: TypeStruct2DynamicParam,
 }
 
+/// Some docs
+/// At multi
+/// line
 #[derive(AbiCoder, PartialEq, Debug)]
 struct TypeStruct3DerivedMixedParam {
+	/// Docs for A
 	_a: TypeStruct1SimpleParam,
+	/// Docs for B
 	_b: TypeStruct2DynamicParam,
+	/// Docs for C
 	_c: TypeStruct2MixedParam,
 }
 

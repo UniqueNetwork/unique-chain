@@ -113,6 +113,7 @@ where
 	}
 }
 
+/// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct EthCrossAccount {
 	pub(crate) eth: address,

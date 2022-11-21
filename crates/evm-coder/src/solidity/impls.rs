@@ -1,6 +1,7 @@
 use super::{TypeCollector, SolidityTypeName, SolidityType, StructCollect};
 use crate::{sealed, types::*};
 use core::fmt;
+use primitive_types::{U256, H160};
 
 macro_rules! solidity_type_name {
     ($($ty:ty => $name:literal $simple:literal = $default:literal),* $(,)?) => {
@@ -31,13 +32,13 @@ macro_rules! solidity_type_name {
 }
 
 solidity_type_name! {
-	uint8 => "uint8" true = "0",
-	uint32 => "uint32" true = "0",
-	uint64 => "uint64" true = "0",
-	uint128 => "uint128" true = "0",
-	uint256 => "uint256" true = "0",
+	u8 => "uint8" true = "0",
+	u32 => "uint32" true = "0",
+	u64 => "uint64" true = "0",
+	u128 => "uint128" true = "0",
+	U256 => "uint256" true = "0",
 	bytes4 => "bytes4" true = "bytes4(0)",
-	address => "address" true = "0x0000000000000000000000000000000000000000",
+	H160 => "address" true = "0x0000000000000000000000000000000000000000",
 	string => "string" false = "\"\"",
 	bytes => "bytes" false = "hex\"\"",
 	bool => "bool" true = "false",
