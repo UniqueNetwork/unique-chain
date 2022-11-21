@@ -39,7 +39,7 @@ macro_rules! impl_common_runtime_apis {
         use sp_runtime::{
             Permill,
             traits::Block as BlockT,
-            transaction_validity::{TransactionSource, TransactionValidity},
+            transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction},
             ApplyExtrinsicResult, DispatchError,
         };
         use fp_rpc::TransactionStatus;
@@ -775,6 +775,17 @@ macro_rules! impl_common_runtime_apis {
 
                     if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
                     Ok(batches)
+                }
+            }
+
+            impl up_pov_estimate_rpc::PovEstimateApi<Block> for Runtime {
+                #[allow(unused_variables)]
+                fn pov_estimate(uxt: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
+                    #[cfg(feature = "pov-estimate")]
+                    return Executive::apply_extrinsic(uxt);
+
+                    #[cfg(not(feature = "pov-estimate"))]
+                    return Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
                 }
             }
 
