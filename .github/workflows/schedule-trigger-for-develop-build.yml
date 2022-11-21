@@ -32,4 +32,4 @@ jobs:
           git push origin ci/develop-scheduler
       - name: Clean Workspace
         if: always()
-        uses: AutoModality/action-clean@latest
+        uses: AutoModality/action-clean@v1.1.0
