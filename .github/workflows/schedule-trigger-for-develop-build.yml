@@ -26,7 +26,7 @@ jobs:
           git config user.name "Unique"
           git config user.email github-actions@github.com
           git checkout ci/develop-scheduler
-          git merge develop --no-edit -m "Merged develop branch on $(date +%F)"
+          git merge origin/develop --no-edit -m "Merged develop branch on $(date +%F)"
       - name: Push the updated branch X
         run: |
           git push origin ci/develop-scheduler
