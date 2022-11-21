@@ -26,6 +26,8 @@ jobs:
           git config user.name "Unique"
           git config user.email github-actions@github.com
           git checkout ci/develop-scheduler
+          echo $(date) > .github/scheduler
+          git commit -a -m "commit timestamp for scheduler on $(date)"
           git merge origin/develop --no-edit -m "Merged develop branch on $(date +%F)"
       - name: Push the updated branch X
         run: |
