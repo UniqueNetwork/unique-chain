@@ -16,11 +16,11 @@ jobs:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
       - name: Checkout 🛎
-        uses: actions/checkout@v2.5.0
+        uses: actions/checkout@v3.1.0
         with:
           # check out all branches
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT }}
+          # token: ${{ secrets.GH_PAT }}
       - name: Update Git branch ci/develop-scheduler
         run: |
           git config user.name "Unique"
