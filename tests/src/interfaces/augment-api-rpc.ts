@@ -5,7 +5,7 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/rpc-core/types/jsonrpc';
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsBaseBaseInfo, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftChild, RmrkTraitsNftNftInfo, RmrkTraitsPartPartType, RmrkTraitsPropertyPropertyInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData } from './default';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, RmrkTraitsBaseBaseInfo, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftChild, RmrkTraitsNftNftInfo, RmrkTraitsPartPartType, RmrkTraitsPropertyPropertyInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsTheme, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData, UpPovEstimateRpcPovInfo } from './default';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u128, u32, u64 } from '@polkadot/types-codec';
@@ -733,6 +733,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get the number of blocks until sponsoring a transaction is available
        **/
       nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
+      /**
+       * Estimate PoV size
+       **/
+      povEstimate: AugmentedRpc<(encodedXt: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
       /**
        * Get property permissions, optionally limited to the provided keys
        **/

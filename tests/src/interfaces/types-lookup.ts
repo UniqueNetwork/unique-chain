@@ -3379,8 +3379,21 @@ declare module '@polkadot/types/lookup' {
     readonly collection: u32;
   }
 
+<<<<<<< HEAD
   /** @name PhantomTypeUpDataStructs (399) */
+=======
+<<<<<<< HEAD
+  /** @name PhantomTypeUpDataStructs (400) */
+=======
+<<<<<<< HEAD
+  /** @name PhantomTypeUpDataStructs (413) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
+=======
+  /** @name PhantomTypeUpDataStructs (408) */
+  interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild, UpPovEstimateRpcPovInfo]>> {}
+>>>>>>> fix: update polkadot types and definitions
 
   /** @name UpDataStructsTokenData (401) */
   interface UpDataStructsTokenData extends Struct {
@@ -3462,7 +3475,26 @@ declare module '@polkadot/types/lookup' {
     readonly nftId: u32;
   }
 
+<<<<<<< HEAD
   /** @name PalletCommonError (414) */
+=======
+<<<<<<< HEAD
+  /** @name PalletCommonError (415) */
+=======
+<<<<<<< HEAD
+  /** @name PalletCommonError (428) */
+=======
+  /** @name UpPovEstimateRpcPovInfo (422) */
+  interface UpPovEstimateRpcPovInfo extends Struct {
+    readonly proofSize: u64;
+    readonly compactProofSize: u64;
+    readonly compressedProofSize: u64;
+  }
+
+  /** @name PalletCommonError (424) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletCommonError extends Enum {
     readonly isCollectionNotFound: boolean;
     readonly isMustBeTokenOwner: boolean;
@@ -3503,7 +3535,19 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin';
   }
 
+<<<<<<< HEAD
   /** @name PalletFungibleError (416) */
+=======
+<<<<<<< HEAD
+  /** @name PalletFungibleError (417) */
+=======
+<<<<<<< HEAD
+  /** @name PalletFungibleError (430) */
+=======
+  /** @name PalletFungibleError (426) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletFungibleError extends Enum {
     readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isFungibleItemsHaveNoId: boolean;
@@ -3515,7 +3559,40 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed' | 'SettingAllowanceForAllNotAllowed' | 'FungibleTokensAreAlwaysValid';
   }
 
+<<<<<<< HEAD
   /** @name PalletRefungibleError (420) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRefungibleItemData (417) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRefungibleItemData (418) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRefungibleItemData (431) */
+=======
+  /** @name PalletRefungibleItemData (427) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+  interface PalletRefungibleItemData extends Struct {
+    readonly constData: Bytes;
+  }
+
+<<<<<<< HEAD
+  /** @name PalletRefungibleError (422) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRefungibleError (423) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRefungibleError (436) */
+=======
+  /** @name PalletRefungibleError (432) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletRefungibleError extends Enum {
     readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isWrongRefungiblePieces: boolean;
@@ -3525,19 +3602,67 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RepartitionWhileNotOwningAllPieces' | 'RefungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
   }
 
+<<<<<<< HEAD
   /** @name PalletNonfungibleItemData (421) */
+=======
+<<<<<<< HEAD
+  /** @name PalletNonfungibleItemData (423) */
+=======
+<<<<<<< HEAD
+  /** @name PalletNonfungibleItemData (424) */
+=======
+<<<<<<< HEAD
+  /** @name PalletNonfungibleItemData (437) */
+=======
+  /** @name PalletNonfungibleItemData (433) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletNonfungibleItemData extends Struct {
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsPropertyScope (423) */
+=======
+<<<<<<< HEAD
+  /** @name UpDataStructsPropertyScope (425) */
+=======
+<<<<<<< HEAD
+  /** @name UpDataStructsPropertyScope (426) */
+=======
+<<<<<<< HEAD
+  /** @name UpDataStructsPropertyScope (439) */
+=======
+  /** @name UpDataStructsPropertyScope (435) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface UpDataStructsPropertyScope extends Enum {
     readonly isNone: boolean;
     readonly isRmrk: boolean;
     readonly type: 'None' | 'Rmrk';
   }
 
+<<<<<<< HEAD
   /** @name PalletNonfungibleError (426) */
+=======
+<<<<<<< HEAD
+  /** @name PalletNonfungibleError (427) */
+=======
+<<<<<<< HEAD
+  /** @name PalletNonfungibleError (428) */
+=======
+<<<<<<< HEAD
+  /** @name PalletNonfungibleError (441) */
+=======
+  /** @name PalletNonfungibleError (437) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletNonfungibleError extends Enum {
     readonly isNotNonfungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isNonfungibleItemsHaveNoAmount: boolean;
@@ -3545,7 +3670,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotNonfungibleDataUsedToMintFungibleCollectionToken' | 'NonfungibleItemsHaveNoAmount' | 'CantBurnNftWithChildren';
   }
 
+<<<<<<< HEAD
   /** @name PalletStructureError (427) */
+=======
+<<<<<<< HEAD
+  /** @name PalletStructureError (428) */
+=======
+<<<<<<< HEAD
+  /** @name PalletStructureError (429) */
+=======
+<<<<<<< HEAD
+  /** @name PalletStructureError (442) */
+=======
+  /** @name PalletStructureError (438) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletStructureError extends Enum {
     readonly isOuroborosDetected: boolean;
     readonly isDepthLimit: boolean;
@@ -3554,7 +3695,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'OuroborosDetected' | 'DepthLimit' | 'BreadthLimit' | 'TokenNotFound';
   }
 
+<<<<<<< HEAD
   /** @name PalletRmrkCoreError (428) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRmrkCoreError (429) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRmrkCoreError (430) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRmrkCoreError (443) */
+=======
+  /** @name PalletRmrkCoreError (439) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletRmrkCoreError extends Enum {
     readonly isCorruptedCollectionType: boolean;
     readonly isRmrkPropertyKeyIsTooLong: boolean;
@@ -3578,7 +3735,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CorruptedCollectionType' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'RmrkPropertyIsNotFound' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'CannotRejectNonPendingNft' | 'ResourceNotPending' | 'NoAvailableResourceId';
   }
 
+<<<<<<< HEAD
   /** @name PalletRmrkEquipError (430) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRmrkEquipError (431) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRmrkEquipError (432) */
+=======
+<<<<<<< HEAD
+  /** @name PalletRmrkEquipError (445) */
+=======
+  /** @name PalletRmrkEquipError (441) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletRmrkEquipError extends Enum {
     readonly isPermissionError: boolean;
     readonly isNoAvailableBaseId: boolean;
@@ -3590,7 +3763,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'PermissionError' | 'NoAvailableBaseId' | 'NoAvailablePartId' | 'BaseDoesntExist' | 'NeedsDefaultThemeFirst' | 'PartDoesntExist' | 'NoEquippableOnFixedPart';
   }
 
+<<<<<<< HEAD
   /** @name PalletAppPromotionError (436) */
+=======
+<<<<<<< HEAD
+  /** @name PalletAppPromotionError (437) */
+=======
+<<<<<<< HEAD
+  /** @name PalletAppPromotionError (438) */
+=======
+<<<<<<< HEAD
+  /** @name PalletAppPromotionError (451) */
+=======
+  /** @name PalletAppPromotionError (447) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletAppPromotionError extends Enum {
     readonly isAdminNotSet: boolean;
     readonly isNoPermission: boolean;
@@ -3601,7 +3790,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation';
   }
 
+<<<<<<< HEAD
   /** @name PalletForeignAssetsModuleError (437) */
+=======
+<<<<<<< HEAD
+  /** @name PalletForeignAssetsModuleError (438) */
+=======
+<<<<<<< HEAD
+  /** @name PalletForeignAssetsModuleError (439) */
+=======
+<<<<<<< HEAD
+  /** @name PalletForeignAssetsModuleError (452) */
+=======
+  /** @name PalletForeignAssetsModuleError (448) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletForeignAssetsModuleError extends Enum {
     readonly isBadLocation: boolean;
     readonly isMultiLocationExisted: boolean;
@@ -3610,7 +3815,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'BadLocation' | 'MultiLocationExisted' | 'AssetIdNotExists' | 'AssetIdExisted';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmError (439) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmError (440) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmError (441) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmError (454) */
+=======
+  /** @name PalletEvmError (451) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletEvmError extends Enum {
     readonly isBalanceLow: boolean;
     readonly isFeeOverflow: boolean;
@@ -3626,7 +3847,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy' | 'TransactionMustComeFromEOA';
   }
 
+<<<<<<< HEAD
   /** @name FpRpcTransactionStatus (442) */
+=======
+<<<<<<< HEAD
+  /** @name FpRpcTransactionStatus (443) */
+=======
+<<<<<<< HEAD
+  /** @name FpRpcTransactionStatus (444) */
+=======
+<<<<<<< HEAD
+  /** @name FpRpcTransactionStatus (457) */
+=======
+  /** @name FpRpcTransactionStatus (454) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface FpRpcTransactionStatus extends Struct {
     readonly transactionHash: H256;
     readonly transactionIndex: u32;
@@ -3637,10 +3874,38 @@ declare module '@polkadot/types/lookup' {
     readonly logsBloom: EthbloomBloom;
   }
 
+<<<<<<< HEAD
   /** @name EthbloomBloom (444) */
   interface EthbloomBloom extends U8aFixed {}
 
   /** @name EthereumReceiptReceiptV3 (446) */
+=======
+<<<<<<< HEAD
+  /** @name EthbloomBloom (445) */
+  interface EthbloomBloom extends U8aFixed {}
+
+  /** @name EthereumReceiptReceiptV3 (447) */
+=======
+<<<<<<< HEAD
+  /** @name EthbloomBloom (446) */
+  interface EthbloomBloom extends U8aFixed {}
+
+  /** @name EthereumReceiptReceiptV3 (448) */
+=======
+<<<<<<< HEAD
+  /** @name EthbloomBloom (459) */
+  interface EthbloomBloom extends U8aFixed {}
+
+  /** @name EthereumReceiptReceiptV3 (461) */
+=======
+  /** @name EthbloomBloom (456) */
+  interface EthbloomBloom extends U8aFixed {}
+
+  /** @name EthereumReceiptReceiptV3 (458) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface EthereumReceiptReceiptV3 extends Enum {
     readonly isLegacy: boolean;
     readonly asLegacy: EthereumReceiptEip658ReceiptData;
@@ -3651,7 +3916,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Legacy' | 'Eip2930' | 'Eip1559';
   }
 
+<<<<<<< HEAD
   /** @name EthereumReceiptEip658ReceiptData (447) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumReceiptEip658ReceiptData (448) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumReceiptEip658ReceiptData (449) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumReceiptEip658ReceiptData (462) */
+=======
+  /** @name EthereumReceiptEip658ReceiptData (459) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface EthereumReceiptEip658ReceiptData extends Struct {
     readonly statusCode: u8;
     readonly usedGas: U256;
@@ -3659,14 +3940,46 @@ declare module '@polkadot/types/lookup' {
     readonly logs: Vec<EthereumLog>;
   }
 
+<<<<<<< HEAD
   /** @name EthereumBlock (448) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumBlock (449) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumBlock (450) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumBlock (463) */
+=======
+  /** @name EthereumBlock (460) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface EthereumBlock extends Struct {
     readonly header: EthereumHeader;
     readonly transactions: Vec<EthereumTransactionTransactionV2>;
     readonly ommers: Vec<EthereumHeader>;
   }
 
+<<<<<<< HEAD
   /** @name EthereumHeader (449) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumHeader (450) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumHeader (451) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumHeader (464) */
+=======
+  /** @name EthereumHeader (461) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface EthereumHeader extends Struct {
     readonly parentHash: H256;
     readonly ommersHash: H256;
@@ -3685,24 +3998,84 @@ declare module '@polkadot/types/lookup' {
     readonly nonce: EthereumTypesHashH64;
   }
 
+<<<<<<< HEAD
   /** @name EthereumTypesHashH64 (450) */
   interface EthereumTypesHashH64 extends U8aFixed {}
 
   /** @name PalletEthereumError (455) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumTypesHashH64 (451) */
+  interface EthereumTypesHashH64 extends U8aFixed {}
+
+  /** @name PalletEthereumError (456) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumTypesHashH64 (452) */
+  interface EthereumTypesHashH64 extends U8aFixed {}
+
+  /** @name PalletEthereumError (457) */
+=======
+<<<<<<< HEAD
+  /** @name EthereumTypesHashH64 (465) */
+  interface EthereumTypesHashH64 extends U8aFixed {}
+
+  /** @name PalletEthereumError (470) */
+=======
+  /** @name EthereumTypesHashH64 (462) */
+  interface EthereumTypesHashH64 extends U8aFixed {}
+
+  /** @name PalletEthereumError (467) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletEthereumError extends Enum {
     readonly isInvalidSignature: boolean;
     readonly isPreLogExists: boolean;
     readonly type: 'InvalidSignature' | 'PreLogExists';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmCoderSubstrateError (456) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmCoderSubstrateError (457) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmCoderSubstrateError (458) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmCoderSubstrateError (471) */
+=======
+  /** @name PalletEvmCoderSubstrateError (468) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletEvmCoderSubstrateError extends Enum {
     readonly isOutOfGas: boolean;
     readonly isOutOfFund: boolean;
     readonly type: 'OutOfGas' | 'OutOfFund';
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (457) */
+=======
+<<<<<<< HEAD
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (458) */
+=======
+<<<<<<< HEAD
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (459) */
+=======
+<<<<<<< HEAD
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (472) */
+=======
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (469) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
@@ -3712,7 +4085,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmContractHelpersSponsoringModeT (458) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmContractHelpersSponsoringModeT (459) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmContractHelpersSponsoringModeT (460) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmContractHelpersSponsoringModeT (473) */
+=======
+  /** @name PalletEvmContractHelpersSponsoringModeT (470) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletEvmContractHelpersSponsoringModeT extends Enum {
     readonly isDisabled: boolean;
     readonly isAllowlisted: boolean;
@@ -3720,7 +4109,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Allowlisted' | 'Generous';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmContractHelpersError (464) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmContractHelpersError (465) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmContractHelpersError (466) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmContractHelpersError (479) */
+=======
+  /** @name PalletEvmContractHelpersError (476) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletEvmContractHelpersError extends Enum {
     readonly isNoPermission: boolean;
     readonly isNoPendingSponsor: boolean;
@@ -3728,7 +4133,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NoPermission' | 'NoPendingSponsor' | 'TooManyMethodsHaveSponsoredLimit';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmMigrationError (465) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmMigrationError (466) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmMigrationError (467) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEvmMigrationError (480) */
+=======
+  /** @name PalletEvmMigrationError (477) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
@@ -3736,17 +4157,61 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating' | 'BadEvent';
   }
 
+<<<<<<< HEAD
   /** @name PalletMaintenanceError (466) */
   type PalletMaintenanceError = Null;
 
   /** @name PalletTestUtilsError (467) */
+=======
+<<<<<<< HEAD
+  /** @name PalletMaintenanceError (467) */
+  type PalletMaintenanceError = Null;
+
+  /** @name PalletTestUtilsError (468) */
+=======
+<<<<<<< HEAD
+  /** @name PalletMaintenanceError (468) */
+  type PalletMaintenanceError = Null;
+
+  /** @name PalletTestUtilsError (469) */
+=======
+<<<<<<< HEAD
+  /** @name PalletMaintenanceError (481) */
+  type PalletMaintenanceError = Null;
+
+  /** @name PalletTestUtilsError (482) */
+=======
+  /** @name PalletMaintenanceError (478) */
+  type PalletMaintenanceError = Null;
+
+  /** @name PalletTestUtilsError (479) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface PalletTestUtilsError extends Enum {
     readonly isTestPalletDisabled: boolean;
     readonly isTriggerRollback: boolean;
     readonly type: 'TestPalletDisabled' | 'TriggerRollback';
   }
 
+<<<<<<< HEAD
   /** @name SpRuntimeMultiSignature (469) */
+=======
+<<<<<<< HEAD
+  /** @name SpRuntimeMultiSignature (470) */
+=======
+<<<<<<< HEAD
+  /** @name SpRuntimeMultiSignature (471) */
+=======
+<<<<<<< HEAD
+  /** @name SpRuntimeMultiSignature (484) */
+=======
+  /** @name SpRuntimeMultiSignature (481) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -3757,7 +4222,20 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
+<<<<<<< HEAD
   /** @name SpCoreEd25519Signature (470) */
+=======
+<<<<<<< HEAD
+  /** @name SpCoreEd25519Signature (471) */
+=======
+<<<<<<< HEAD
+  /** @name SpCoreEd25519Signature (472) */
+=======
+<<<<<<< HEAD
+  /** @name SpCoreEd25519Signature (485) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   interface SpCoreEd25519Signature extends U8aFixed {}
 
   /** @name SpCoreSr25519Signature (472) */
@@ -3790,7 +4268,55 @@ declare module '@polkadot/types/lookup' {
   /** @name OpalRuntimeRuntime (485) */
   type OpalRuntimeRuntime = Null;
 
+<<<<<<< HEAD
   /** @name PalletEthereumFakeTransactionFinalizer (486) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEthereumFakeTransactionFinalizer (487) */
+=======
+<<<<<<< HEAD
+  /** @name PalletEthereumFakeTransactionFinalizer (488) */
+=======
+  /** @name PalletEthereumFakeTransactionFinalizer (501) */
+=======
+  /** @name SpCoreEd25519Signature (482) */
+  interface SpCoreEd25519Signature extends U8aFixed {}
+
+  /** @name SpCoreSr25519Signature (484) */
+  interface SpCoreSr25519Signature extends U8aFixed {}
+
+  /** @name SpCoreEcdsaSignature (485) */
+  interface SpCoreEcdsaSignature extends U8aFixed {}
+
+  /** @name FrameSystemExtensionsCheckSpecVersion (488) */
+  type FrameSystemExtensionsCheckSpecVersion = Null;
+
+  /** @name FrameSystemExtensionsCheckTxVersion (489) */
+  type FrameSystemExtensionsCheckTxVersion = Null;
+
+  /** @name FrameSystemExtensionsCheckGenesis (490) */
+  type FrameSystemExtensionsCheckGenesis = Null;
+
+  /** @name FrameSystemExtensionsCheckNonce (493) */
+  interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
+
+  /** @name FrameSystemExtensionsCheckWeight (494) */
+  type FrameSystemExtensionsCheckWeight = Null;
+
+  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (495) */
+  type OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
+
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (496) */
+  interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
+
+  /** @name OpalRuntimeRuntime (497) */
+  type OpalRuntimeRuntime = Null;
+
+  /** @name PalletEthereumFakeTransactionFinalizer (498) */
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module

@@ -175,10 +175,17 @@ export default {
       [collectionParam, tokenParam],
       'Option<u128>',
     ),
+<<<<<<< HEAD
     allowanceForAll: fun(
       'Tells whether the given `owner` approves the `operator`.',
       [collectionParam, crossAccountParam('owner'), crossAccountParam('operator')],
       'Option<bool>',
+=======
+    povEstimate: fun(
+      'Estimate PoV size',
+      [{name: 'encodedXt', type: 'Vec<u8>'}],
+      'UpPovEstimateRpcPovInfo',
+>>>>>>> fix: update polkadot types and definitions
     ),
   },
 };

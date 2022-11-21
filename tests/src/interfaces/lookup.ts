@@ -3106,7 +3106,7 @@ export default {
   /**
    * Lookup399: PhantomType::up_data_structs<T>
    **/
-  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,RmrkTraitsCollectionCollectionInfo,RmrkTraitsNftNftInfo,RmrkTraitsResourceResourceInfo,RmrkTraitsPropertyPropertyInfo,RmrkTraitsBaseBaseInfo,RmrkTraitsPartPartType,RmrkTraitsTheme,RmrkTraitsNftNftChild);0]',
+  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,RmrkTraitsCollectionCollectionInfo,RmrkTraitsNftNftInfo,RmrkTraitsResourceResourceInfo,RmrkTraitsPropertyPropertyInfo,RmrkTraitsBaseBaseInfo,RmrkTraitsPartPartType,RmrkTraitsTheme,RmrkTraitsNftNftChild,UpPovEstimateRpcPovInfo);0]',
   /**
    * Lookup401: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
@@ -3198,79 +3198,305 @@ export default {
     nftId: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup414: pallet_common::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup415: pallet_common::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup428: pallet_common::pallet::Error<T>
+=======
+   * Lookup422: up_pov_estimate_rpc::PovInfo
+   **/
+  UpPovEstimateRpcPovInfo: {
+    proofSize: 'u64',
+    compactProofSize: 'u64',
+    compressedProofSize: 'u64'
+  },
+  /**
+   * Lookup424: pallet_common::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletCommonError: {
     _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'CantDestroyNotEmptyCollection', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'UserIsNotAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey', 'CollectionIsExternal', 'CollectionIsInternal', 'ConfirmSponsorshipFail', 'UserIsNotCollectionAdmin']
   },
   /**
+<<<<<<< HEAD
    * Lookup416: pallet_fungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup417: pallet_fungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup430: pallet_fungible::pallet::Error<T>
+=======
+   * Lookup426: pallet_fungible::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletFungibleError: {
     _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingAllowanceForAllNotAllowed', 'FungibleTokensAreAlwaysValid']
   },
   /**
+<<<<<<< HEAD
    * Lookup420: pallet_refungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup417: pallet_refungible::ItemData
+=======
+<<<<<<< HEAD
+   * Lookup418: pallet_refungible::ItemData
+=======
+<<<<<<< HEAD
+   * Lookup431: pallet_refungible::ItemData
+=======
+   * Lookup427: pallet_refungible::ItemData
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+   **/
+  PalletRefungibleItemData: {
+    constData: 'Bytes'
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup422: pallet_refungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup423: pallet_refungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup436: pallet_refungible::pallet::Error<T>
+=======
+   * Lookup432: pallet_refungible::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletRefungibleError: {
     _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RepartitionWhileNotOwningAllPieces', 'RefungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
+<<<<<<< HEAD
    * Lookup421: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup423: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup424: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup437: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup433: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletNonfungibleItemData: {
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
+<<<<<<< HEAD
    * Lookup423: up_data_structs::PropertyScope
+=======
+<<<<<<< HEAD
+   * Lookup425: up_data_structs::PropertyScope
+=======
+<<<<<<< HEAD
+   * Lookup426: up_data_structs::PropertyScope
+=======
+<<<<<<< HEAD
+   * Lookup439: up_data_structs::PropertyScope
+=======
+   * Lookup435: up_data_structs::PropertyScope
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   UpDataStructsPropertyScope: {
     _enum: ['None', 'Rmrk']
   },
   /**
+<<<<<<< HEAD
    * Lookup426: pallet_nonfungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup427: pallet_nonfungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup428: pallet_nonfungible::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup441: pallet_nonfungible::pallet::Error<T>
+=======
+   * Lookup437: pallet_nonfungible::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletNonfungibleError: {
     _enum: ['NotNonfungibleDataUsedToMintFungibleCollectionToken', 'NonfungibleItemsHaveNoAmount', 'CantBurnNftWithChildren']
   },
   /**
+<<<<<<< HEAD
    * Lookup427: pallet_structure::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup428: pallet_structure::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup429: pallet_structure::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup442: pallet_structure::pallet::Error<T>
+=======
+   * Lookup438: pallet_structure::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletStructureError: {
     _enum: ['OuroborosDetected', 'DepthLimit', 'BreadthLimit', 'TokenNotFound']
   },
   /**
+<<<<<<< HEAD
    * Lookup428: pallet_rmrk_core::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup429: pallet_rmrk_core::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup430: pallet_rmrk_core::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup443: pallet_rmrk_core::pallet::Error<T>
+=======
+   * Lookup439: pallet_rmrk_core::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletRmrkCoreError: {
     _enum: ['CorruptedCollectionType', 'RmrkPropertyKeyIsTooLong', 'RmrkPropertyValueIsTooLong', 'RmrkPropertyIsNotFound', 'UnableToDecodeRmrkData', 'CollectionNotEmpty', 'NoAvailableCollectionId', 'NoAvailableNftId', 'CollectionUnknown', 'NoPermission', 'NonTransferable', 'CollectionFullOrLocked', 'ResourceDoesntExist', 'CannotSendToDescendentOrSelf', 'CannotAcceptNonOwnedNft', 'CannotRejectNonOwnedNft', 'CannotRejectNonPendingNft', 'ResourceNotPending', 'NoAvailableResourceId']
   },
   /**
+<<<<<<< HEAD
    * Lookup430: pallet_rmrk_equip::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup431: pallet_rmrk_equip::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup432: pallet_rmrk_equip::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup445: pallet_rmrk_equip::pallet::Error<T>
+=======
+   * Lookup441: pallet_rmrk_equip::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletRmrkEquipError: {
     _enum: ['PermissionError', 'NoAvailableBaseId', 'NoAvailablePartId', 'BaseDoesntExist', 'NeedsDefaultThemeFirst', 'PartDoesntExist', 'NoEquippableOnFixedPart']
   },
   /**
+<<<<<<< HEAD
    * Lookup436: pallet_app_promotion::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup437: pallet_app_promotion::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup438: pallet_app_promotion::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup451: pallet_app_promotion::pallet::Error<T>
+=======
+   * Lookup447: pallet_app_promotion::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletAppPromotionError: {
     _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFunds', 'PendingForBlockOverflow', 'SponsorNotSet', 'IncorrectLockedBalanceOperation']
   },
   /**
+<<<<<<< HEAD
    * Lookup437: pallet_foreign_assets::module::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup438: pallet_foreign_assets::module::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup439: pallet_foreign_assets::module::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup452: pallet_foreign_assets::module::Error<T>
+=======
+   * Lookup448: pallet_foreign_assets::module::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletForeignAssetsModuleError: {
     _enum: ['BadLocation', 'MultiLocationExisted', 'AssetIdNotExists', 'AssetIdExisted']
   },
   /**
+<<<<<<< HEAD
    * Lookup439: pallet_evm::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup440: pallet_evm::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup441: pallet_evm::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup454: pallet_evm::pallet::Error<T>
+=======
+   * Lookup451: pallet_evm::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce', 'GasLimitTooLow', 'GasLimitTooHigh', 'Undefined', 'Reentrancy', 'TransactionMustComeFromEOA']
   },
   /**
+<<<<<<< HEAD
    * Lookup442: fp_rpc::TransactionStatus
+=======
+<<<<<<< HEAD
+   * Lookup443: fp_rpc::TransactionStatus
+=======
+<<<<<<< HEAD
+   * Lookup444: fp_rpc::TransactionStatus
+=======
+<<<<<<< HEAD
+   * Lookup457: fp_rpc::TransactionStatus
+=======
+   * Lookup454: fp_rpc::TransactionStatus
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -3282,11 +3508,43 @@ export default {
     logsBloom: 'EthbloomBloom'
   },
   /**
+<<<<<<< HEAD
    * Lookup444: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
   /**
    * Lookup446: ethereum::receipt::ReceiptV3
+=======
+<<<<<<< HEAD
+   * Lookup445: ethbloom::Bloom
+   **/
+  EthbloomBloom: '[u8;256]',
+  /**
+   * Lookup447: ethereum::receipt::ReceiptV3
+=======
+<<<<<<< HEAD
+   * Lookup446: ethbloom::Bloom
+   **/
+  EthbloomBloom: '[u8;256]',
+  /**
+   * Lookup448: ethereum::receipt::ReceiptV3
+=======
+<<<<<<< HEAD
+   * Lookup459: ethbloom::Bloom
+   **/
+  EthbloomBloom: '[u8;256]',
+  /**
+   * Lookup461: ethereum::receipt::ReceiptV3
+=======
+   * Lookup456: ethbloom::Bloom
+   **/
+  EthbloomBloom: '[u8;256]',
+  /**
+   * Lookup458: ethereum::receipt::ReceiptV3
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -3296,7 +3554,23 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup447: ethereum::receipt::EIP658ReceiptData
+=======
+<<<<<<< HEAD
+   * Lookup448: ethereum::receipt::EIP658ReceiptData
+=======
+<<<<<<< HEAD
+   * Lookup449: ethereum::receipt::EIP658ReceiptData
+=======
+<<<<<<< HEAD
+   * Lookup462: ethereum::receipt::EIP658ReceiptData
+=======
+   * Lookup459: ethereum::receipt::EIP658ReceiptData
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -3305,7 +3579,23 @@ export default {
     logs: 'Vec<EthereumLog>'
   },
   /**
+<<<<<<< HEAD
    * Lookup448: ethereum::block::Block<ethereum::transaction::TransactionV2>
+=======
+<<<<<<< HEAD
+   * Lookup449: ethereum::block::Block<ethereum::transaction::TransactionV2>
+=======
+<<<<<<< HEAD
+   * Lookup450: ethereum::block::Block<ethereum::transaction::TransactionV2>
+=======
+<<<<<<< HEAD
+   * Lookup463: ethereum::block::Block<ethereum::transaction::TransactionV2>
+=======
+   * Lookup460: ethereum::block::Block<ethereum::transaction::TransactionV2>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -3313,7 +3603,23 @@ export default {
     ommers: 'Vec<EthereumHeader>'
   },
   /**
+<<<<<<< HEAD
    * Lookup449: ethereum::header::Header
+=======
+<<<<<<< HEAD
+   * Lookup450: ethereum::header::Header
+=======
+<<<<<<< HEAD
+   * Lookup451: ethereum::header::Header
+=======
+<<<<<<< HEAD
+   * Lookup464: ethereum::header::Header
+=======
+   * Lookup461: ethereum::header::Header
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -3333,23 +3639,87 @@ export default {
     nonce: 'EthereumTypesHashH64'
   },
   /**
+<<<<<<< HEAD
    * Lookup450: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
   /**
    * Lookup455: pallet_ethereum::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup451: ethereum_types::hash::H64
+   **/
+  EthereumTypesHashH64: '[u8;8]',
+  /**
+   * Lookup456: pallet_ethereum::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup452: ethereum_types::hash::H64
+   **/
+  EthereumTypesHashH64: '[u8;8]',
+  /**
+   * Lookup457: pallet_ethereum::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup465: ethereum_types::hash::H64
+   **/
+  EthereumTypesHashH64: '[u8;8]',
+  /**
+   * Lookup470: pallet_ethereum::pallet::Error<T>
+=======
+   * Lookup462: ethereum_types::hash::H64
+   **/
+  EthereumTypesHashH64: '[u8;8]',
+  /**
+   * Lookup467: pallet_ethereum::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
   },
   /**
+<<<<<<< HEAD
    * Lookup456: pallet_evm_coder_substrate::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup457: pallet_evm_coder_substrate::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup458: pallet_evm_coder_substrate::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup471: pallet_evm_coder_substrate::pallet::Error<T>
+=======
+   * Lookup468: pallet_evm_coder_substrate::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
+<<<<<<< HEAD
    * Lookup457: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup458: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup459: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup472: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup469: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   UpDataStructsSponsorshipStateBasicCrossAccountIdRepr: {
     _enum: {
@@ -3359,35 +3729,131 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup458: pallet_evm_contract_helpers::SponsoringModeT
+=======
+<<<<<<< HEAD
+   * Lookup459: pallet_evm_contract_helpers::SponsoringModeT
+=======
+<<<<<<< HEAD
+   * Lookup460: pallet_evm_contract_helpers::SponsoringModeT
+=======
+<<<<<<< HEAD
+   * Lookup473: pallet_evm_contract_helpers::SponsoringModeT
+=======
+   * Lookup470: pallet_evm_contract_helpers::SponsoringModeT
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
+<<<<<<< HEAD
    * Lookup464: pallet_evm_contract_helpers::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup465: pallet_evm_contract_helpers::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup466: pallet_evm_contract_helpers::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup479: pallet_evm_contract_helpers::pallet::Error<T>
+=======
+   * Lookup476: pallet_evm_contract_helpers::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission', 'NoPendingSponsor', 'TooManyMethodsHaveSponsoredLimit']
   },
   /**
+<<<<<<< HEAD
    * Lookup465: pallet_evm_migration::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup466: pallet_evm_migration::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup467: pallet_evm_migration::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup480: pallet_evm_migration::pallet::Error<T>
+=======
+   * Lookup477: pallet_evm_migration::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating', 'BadEvent']
   },
   /**
+<<<<<<< HEAD
    * Lookup466: pallet_maintenance::pallet::Error<T>
    **/
   PalletMaintenanceError: 'Null',
   /**
    * Lookup467: pallet_test_utils::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup467: pallet_maintenance::pallet::Error<T>
+   **/
+  PalletMaintenanceError: 'Null',
+  /**
+   * Lookup468: pallet_test_utils::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup468: pallet_maintenance::pallet::Error<T>
+   **/
+  PalletMaintenanceError: 'Null',
+  /**
+   * Lookup469: pallet_test_utils::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup481: pallet_maintenance::pallet::Error<T>
+   **/
+  PalletMaintenanceError: 'Null',
+  /**
+   * Lookup482: pallet_test_utils::pallet::Error<T>
+=======
+   * Lookup478: pallet_maintenance::pallet::Error<T>
+   **/
+  PalletMaintenanceError: 'Null',
+  /**
+   * Lookup479: pallet_test_utils::pallet::Error<T>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletTestUtilsError: {
     _enum: ['TestPalletDisabled', 'TriggerRollback']
   },
   /**
+<<<<<<< HEAD
    * Lookup469: sp_runtime::MultiSignature
+=======
+<<<<<<< HEAD
+   * Lookup470: sp_runtime::MultiSignature
+=======
+<<<<<<< HEAD
+   * Lookup471: sp_runtime::MultiSignature
+=======
+<<<<<<< HEAD
+   * Lookup484: sp_runtime::MultiSignature
+=======
+   * Lookup481: sp_runtime::MultiSignature
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -3397,7 +3863,20 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup470: sp_core::ed25519::Signature
+=======
+<<<<<<< HEAD
+   * Lookup471: sp_core::ed25519::Signature
+=======
+<<<<<<< HEAD
+   * Lookup472: sp_core::ed25519::Signature
+=======
+<<<<<<< HEAD
+   * Lookup485: sp_core::ed25519::Signature
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
@@ -3441,7 +3920,66 @@ export default {
    **/
   OpalRuntimeRuntime: 'Null',
   /**
+<<<<<<< HEAD
    * Lookup486: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+=======
+<<<<<<< HEAD
+   * Lookup487: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+=======
+<<<<<<< HEAD
+   * Lookup488: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+=======
+   * Lookup501: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+=======
+   * Lookup482: sp_core::ed25519::Signature
+   **/
+  SpCoreEd25519Signature: '[u8;64]',
+  /**
+   * Lookup484: sp_core::sr25519::Signature
+   **/
+  SpCoreSr25519Signature: '[u8;64]',
+  /**
+   * Lookup485: sp_core::ecdsa::Signature
+   **/
+  SpCoreEcdsaSignature: '[u8;65]',
+  /**
+   * Lookup488: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   **/
+  FrameSystemExtensionsCheckSpecVersion: 'Null',
+  /**
+   * Lookup489: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+   **/
+  FrameSystemExtensionsCheckTxVersion: 'Null',
+  /**
+   * Lookup490: frame_system::extensions::check_genesis::CheckGenesis<T>
+   **/
+  FrameSystemExtensionsCheckGenesis: 'Null',
+  /**
+   * Lookup493: frame_system::extensions::check_nonce::CheckNonce<T>
+   **/
+  FrameSystemExtensionsCheckNonce: 'Compact<u32>',
+  /**
+   * Lookup494: frame_system::extensions::check_weight::CheckWeight<T>
+   **/
+  FrameSystemExtensionsCheckWeight: 'Null',
+  /**
+   * Lookup495: opal_runtime::runtime_common::maintenance::CheckMaintenance
+   **/
+  OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
+  /**
+   * Lookup496: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   **/
+  PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
+  /**
+   * Lookup497: opal_runtime::Runtime
+   **/
+  OpalRuntimeRuntime: 'Null',
+  /**
+   * Lookup498: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
+>>>>>>> fix: update polkadot types and definitions
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };

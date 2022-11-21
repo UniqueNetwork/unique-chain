@@ -2444,7 +2444,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
+export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild, UpPovEstimateRpcPovInfo]>> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -3016,6 +3016,13 @@ export interface UpDataStructsTokenData extends Struct {
   readonly properties: Vec<UpDataStructsProperty>;
   readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
   readonly pieces: u128;
+}
+
+/** @name UpPovEstimateRpcPovInfo */
+export interface UpPovEstimateRpcPovInfo extends Struct {
+  readonly proofSize: u64;
+  readonly compactProofSize: u64;
+  readonly compressedProofSize: u64;
 }
 
 /** @name XcmDoubleEncoded */
