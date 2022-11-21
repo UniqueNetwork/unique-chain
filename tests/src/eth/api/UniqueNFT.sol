@@ -49,7 +49,7 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @param properties settable properties
 	/// @dev EVM selector for this function is: 0x14ed3a6e,
 	///  or in textual repr: setProperties(uint256,(string,bytes)[])
-	function setProperties(uint256 tokenId, Tuple21[] memory properties) external;
+	function setProperties(uint256 tokenId, Tuple22[] memory properties) external;
 
 	// /// @notice Delete token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -93,7 +93,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param properties Vector of properties key/value pair.
 	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple21[] memory properties) external;
+	function setCollectionProperties(Tuple22[] memory properties) external;
 
 	/// Delete collection property.
 	///
@@ -125,7 +125,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) external view returns (Tuple21[] memory);
+	function collectionProperties(string[] memory keys) external view returns (Tuple22[] memory);
 
 	/// Set the sponsor of the collection.
 	///
@@ -167,7 +167,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple24 memory);
+	function collectionSponsor() external view returns (Tuple25 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -352,13 +352,13 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple24 {
+struct Tuple25 {
 	address field_0;
 	uint256 field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple21 {
+struct Tuple22 {
 	string field_0;
 	bytes field_1;
 }
@@ -458,7 +458,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x244543ee
+/// @dev the ERC-165 identifier for this interface is 0x0e9fc611
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -488,6 +488,15 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xa9059cbb,
 	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 tokenId) external;
+
+	/// @notice Transfer ownership of an NFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid NFT.
+	/// @param to The new owner
+	/// @param tokenId The NFT to transfer
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(EthCrossAccount memory to, uint256 tokenId) external;
 
 	/// @notice Transfer ownership of an NFT from cross account address to cross account address
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -543,12 +552,12 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple10[] memory tokens) external returns (bool);
+	// function mintBulkWithTokenURI(address to, Tuple11[] memory tokens) external returns (bool);
 
 }
 
 /// @dev anonymous struct
-struct Tuple10 {
+struct Tuple11 {
 	uint256 field_0;
 	string field_1;
 }

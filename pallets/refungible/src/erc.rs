@@ -756,6 +756,34 @@ where
 	/// @param to The new owner
 	/// @param tokenId The RFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
+	fn transfer_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = to.into_sub_cross_account::<T>()?;
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
+
+		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,

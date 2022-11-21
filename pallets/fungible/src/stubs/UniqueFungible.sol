@@ -38,7 +38,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param properties Vector of properties key/value pair.
 	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple14[] memory properties) public {
+	function setCollectionProperties(Tuple15[] memory properties) public {
 		require(false, stub_error);
 		properties;
 		dummy = 0;
@@ -87,11 +87,11 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple14[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Tuple15[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple14[](0);
+		return new Tuple15[](0);
 	}
 
 	/// Set the sponsor of the collection.
@@ -439,12 +439,12 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple14 {
+struct Tuple15 {
 	string field_0;
 	bytes field_1;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x032e5926
+/// @dev the ERC-165 identifier for this interface is 0x29f4dcd9
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
@@ -493,6 +493,16 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	function mintBulk(Tuple8[] memory amounts) public returns (bool) {
 		require(false, stub_error);
 		amounts;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(EthCrossAccount memory to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
 		dummy = 0;
 		return false;
 	}

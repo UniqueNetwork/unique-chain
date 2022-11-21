@@ -67,7 +67,7 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @param properties settable properties
 	/// @dev EVM selector for this function is: 0x14ed3a6e,
 	///  or in textual repr: setProperties(uint256,(string,bytes)[])
-	function setProperties(uint256 tokenId, Tuple20[] memory properties) public {
+	function setProperties(uint256 tokenId, Tuple21[] memory properties) public {
 		require(false, stub_error);
 		tokenId;
 		properties;
@@ -137,7 +137,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param properties Vector of properties key/value pair.
 	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple20[] memory properties) public {
+	function setCollectionProperties(Tuple21[] memory properties) public {
 		require(false, stub_error);
 		properties;
 		dummy = 0;
@@ -186,11 +186,11 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple20[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Tuple21[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple20[](0);
+		return new Tuple21[](0);
 	}
 
 	/// Set the sponsor of the collection.
@@ -251,10 +251,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple23 memory) {
+	function collectionSponsor() public view returns (Tuple24 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple23(0x0000000000000000000000000000000000000000, 0);
+		return Tuple24(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -538,13 +538,13 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple23 {
+struct Tuple24 {
 	address field_0;
 	uint256 field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple20 {
+struct Tuple21 {
 	string field_0;
 	bytes field_1;
 }
@@ -691,7 +691,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x81feb398
+/// @dev the ERC-165 identifier for this interface is 0xab243667
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -720,6 +720,21 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xa9059cbb,
 	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 tokenId) public {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(EthCrossAccount memory to, uint256 tokenId) public {
 		require(false, stub_error);
 		to;
 		tokenId;
@@ -809,7 +824,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple9[] memory tokens) public returns (bool) {
+	// function mintBulkWithTokenURI(address to, Tuple10[] memory tokens) public returns (bool) {
 	// 	require(false, stub_error);
 	// 	to;
 	// 	tokens;
@@ -831,7 +846,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple9 {
+struct Tuple10 {
 	uint256 field_0;
 	string field_1;
 }

@@ -269,7 +269,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple21[]",
+        "internalType": "struct Tuple22[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -293,7 +293,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple24",
+        "internalType": "struct Tuple25",
         "name": "",
         "type": "tuple"
       }
@@ -611,7 +611,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple21[]",
+        "internalType": "struct Tuple22[]",
         "name": "properties",
         "type": "tuple[]"
       }
@@ -682,7 +682,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple21[]",
+        "internalType": "struct Tuple22[]",
         "name": "properties",
         "type": "tuple[]"
       }
@@ -772,6 +772,24 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "transfer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "to",
+        "type": "tuple"
+      },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "transferCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
