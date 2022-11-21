@@ -14,9 +14,9 @@ jobs:
     runs-on: medium
     steps:
       - name: Clean Workspace
-        uses: AutoModality/action-clean@latest
+        uses: AutoModality/action-clean@v1.1.0
       - name: Checkout 🛎
-        uses: actions/checkout@latest
+        uses: actions/checkout@v.2.5.0
         with:
           # check out all branches
           fetch-depth: 0
