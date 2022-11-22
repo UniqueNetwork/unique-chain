@@ -609,6 +609,24 @@ pub struct CollectionLimits {
 }
 
 impl CollectionLimits {
+	pub fn with_default_limits(collection_type: CollectionMode) -> Self {
+		CollectionLimits {
+			account_token_ownership_limit: Some(ACCOUNT_TOKEN_OWNERSHIP_LIMIT),
+			sponsored_data_size: Some(CUSTOM_DATA_LIMIT),
+			sponsored_data_rate_limit: Some(SponsoringRateLimit::SponsoringDisabled),
+			token_limit: Some(COLLECTION_TOKEN_LIMIT),
+			sponsor_transfer_timeout: match collection_type {
+				CollectionMode::NFT => Some(NFT_SPONSOR_TRANSFER_TIMEOUT),
+				CollectionMode::ReFungible => Some(REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT),
+				CollectionMode::Fungible(_) => Some(FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT),
+			},
+			sponsor_approve_timeout: Some(SPONSOR_APPROVE_TIMEOUT),
+			owner_can_transfer: Some(false),
+			owner_can_destroy: Some(true),
+			transfers_enabled: Some(true),
+		}
+	}
+
 	/// Get effective value for [`account_token_ownership_limit`](self.account_token_ownership_limit).
 	pub fn account_token_ownership_limit(&self) -> u32 {
 		self.account_token_ownership_limit
