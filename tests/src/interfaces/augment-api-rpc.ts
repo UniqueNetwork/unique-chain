@@ -726,6 +726,14 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
       /**
+       * Estimate PoV size of an encoded call
+       **/
+      estimateCallPoV: AugmentedRpc<(encodedCall: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
+      /**
+       * Estimate PoV size of an encoded extrinsic
+       **/
+      estimateExtrinsicPoV: AugmentedRpc<(encodedXt: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
+      /**
        * Get the last token ID created in a collection
        **/
       lastTokenId: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
@@ -733,10 +741,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get the number of blocks until sponsoring a transaction is available
        **/
       nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
-      /**
-       * Estimate PoV size
-       **/
-      povEstimate: AugmentedRpc<(encodedXt: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
       /**
        * Get property permissions, optionally limited to the provided keys
        **/

@@ -3489,12 +3489,58 @@ declare module '@polkadot/types/lookup' {
     readonly proofSize: u64;
     readonly compactProofSize: u64;
     readonly compressedProofSize: u64;
+    readonly result: Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>;
   }
 
+<<<<<<< HEAD
   /** @name PalletCommonError (424) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+  /** @name SpRuntimeTransactionValidityTransactionValidityError (424) */
+  interface SpRuntimeTransactionValidityTransactionValidityError extends Enum {
+    readonly isInvalid: boolean;
+    readonly asInvalid: SpRuntimeTransactionValidityInvalidTransaction;
+    readonly isUnknown: boolean;
+    readonly asUnknown: SpRuntimeTransactionValidityUnknownTransaction;
+    readonly type: 'Invalid' | 'Unknown';
+  }
+
+  /** @name SpRuntimeTransactionValidityInvalidTransaction (425) */
+  interface SpRuntimeTransactionValidityInvalidTransaction extends Enum {
+    readonly isCall: boolean;
+    readonly isPayment: boolean;
+    readonly isFuture: boolean;
+    readonly isStale: boolean;
+    readonly isBadProof: boolean;
+    readonly isAncientBirthBlock: boolean;
+    readonly isExhaustsResources: boolean;
+    readonly isCustom: boolean;
+    readonly asCustom: u8;
+    readonly isBadMandatory: boolean;
+    readonly isMandatoryDispatch: boolean;
+    readonly isBadSigner: boolean;
+    readonly type: 'Call' | 'Payment' | 'Future' | 'Stale' | 'BadProof' | 'AncientBirthBlock' | 'ExhaustsResources' | 'Custom' | 'BadMandatory' | 'MandatoryDispatch' | 'BadSigner';
+  }
+
+  /** @name SpRuntimeTransactionValidityUnknownTransaction (426) */
+  interface SpRuntimeTransactionValidityUnknownTransaction extends Enum {
+    readonly isCannotLookup: boolean;
+    readonly isNoUnsignedValidator: boolean;
+    readonly isCustom: boolean;
+    readonly asCustom: u8;
+    readonly type: 'CannotLookup' | 'NoUnsignedValidator' | 'Custom';
+  }
+
+  /** @name PalletCommonError (428) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletCommonError extends Enum {
     readonly isCollectionNotFound: boolean;
     readonly isMustBeTokenOwner: boolean;
@@ -3536,18 +3582,32 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletFungibleError (416) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletFungibleError (417) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletFungibleError (430) */
 =======
   /** @name PalletFungibleError (426) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+  /** @name PalletFungibleError (430) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletFungibleError extends Enum {
     readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isFungibleItemsHaveNoId: boolean;
@@ -3560,39 +3620,72 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletRefungibleError (420) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRefungibleItemData (417) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRefungibleItemData (418) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRefungibleItemData (431) */
 =======
   /** @name PalletRefungibleItemData (427) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+  /** @name PalletRefungibleItemData (431) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletRefungibleItemData extends Struct {
     readonly constData: Bytes;
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletRefungibleError (422) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRefungibleError (423) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRefungibleError (436) */
 =======
   /** @name PalletRefungibleError (432) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletRefungibleError (436) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletRefungibleError extends Enum {
     readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isWrongRefungiblePieces: boolean;
@@ -3603,43 +3696,81 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletNonfungibleItemData (421) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletNonfungibleItemData (423) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletNonfungibleItemData (424) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletNonfungibleItemData (437) */
 =======
   /** @name PalletNonfungibleItemData (433) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletNonfungibleItemData (437) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletNonfungibleItemData extends Struct {
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name UpDataStructsPropertyScope (423) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name UpDataStructsPropertyScope (425) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name UpDataStructsPropertyScope (426) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name UpDataStructsPropertyScope (439) */
 =======
   /** @name UpDataStructsPropertyScope (435) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name UpDataStructsPropertyScope (439) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface UpDataStructsPropertyScope extends Enum {
     readonly isNone: boolean;
     readonly isRmrk: boolean;
@@ -3647,22 +3778,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletNonfungibleError (426) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletNonfungibleError (427) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletNonfungibleError (428) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletNonfungibleError (441) */
 =======
   /** @name PalletNonfungibleError (437) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletNonfungibleError (441) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletNonfungibleError extends Enum {
     readonly isNotNonfungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isNonfungibleItemsHaveNoAmount: boolean;
@@ -3671,22 +3821,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletStructureError (427) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletStructureError (428) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletStructureError (429) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletStructureError (442) */
 =======
   /** @name PalletStructureError (438) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletStructureError (442) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletStructureError extends Enum {
     readonly isOuroborosDetected: boolean;
     readonly isDepthLimit: boolean;
@@ -3696,22 +3865,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletRmrkCoreError (428) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRmrkCoreError (429) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRmrkCoreError (430) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRmrkCoreError (443) */
 =======
   /** @name PalletRmrkCoreError (439) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletRmrkCoreError (443) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletRmrkCoreError extends Enum {
     readonly isCorruptedCollectionType: boolean;
     readonly isRmrkPropertyKeyIsTooLong: boolean;
@@ -3736,22 +3924,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletRmrkEquipError (430) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRmrkEquipError (431) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRmrkEquipError (432) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletRmrkEquipError (445) */
 =======
   /** @name PalletRmrkEquipError (441) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletRmrkEquipError (445) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletRmrkEquipError extends Enum {
     readonly isPermissionError: boolean;
     readonly isNoAvailableBaseId: boolean;
@@ -3764,22 +3971,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletAppPromotionError (436) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletAppPromotionError (437) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletAppPromotionError (438) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletAppPromotionError (451) */
 =======
   /** @name PalletAppPromotionError (447) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletAppPromotionError (451) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletAppPromotionError extends Enum {
     readonly isAdminNotSet: boolean;
     readonly isNoPermission: boolean;
@@ -3791,22 +4017,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletForeignAssetsModuleError (437) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletForeignAssetsModuleError (438) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletForeignAssetsModuleError (439) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletForeignAssetsModuleError (452) */
 =======
   /** @name PalletForeignAssetsModuleError (448) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletForeignAssetsModuleError (452) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletForeignAssetsModuleError extends Enum {
     readonly isBadLocation: boolean;
     readonly isMultiLocationExisted: boolean;
@@ -3816,22 +4061,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletEvmError (439) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmError (440) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmError (441) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmError (454) */
 =======
   /** @name PalletEvmError (451) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletEvmError (455) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletEvmError extends Enum {
     readonly isBalanceLow: boolean;
     readonly isFeeOverflow: boolean;
@@ -3848,22 +4112,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name FpRpcTransactionStatus (442) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name FpRpcTransactionStatus (443) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name FpRpcTransactionStatus (444) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name FpRpcTransactionStatus (457) */
 =======
   /** @name FpRpcTransactionStatus (454) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name FpRpcTransactionStatus (458) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface FpRpcTransactionStatus extends Struct {
     readonly transactionHash: H256;
     readonly transactionIndex: u32;
@@ -3875,23 +4158,30 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name EthbloomBloom (444) */
   interface EthbloomBloom extends U8aFixed {}
 
   /** @name EthereumReceiptReceiptV3 (446) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthbloomBloom (445) */
   interface EthbloomBloom extends U8aFixed {}
 
   /** @name EthereumReceiptReceiptV3 (447) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthbloomBloom (446) */
   interface EthbloomBloom extends U8aFixed {}
 
   /** @name EthereumReceiptReceiptV3 (448) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthbloomBloom (459) */
   interface EthbloomBloom extends U8aFixed {}
@@ -3903,9 +4193,24 @@ declare module '@polkadot/types/lookup' {
 
   /** @name EthereumReceiptReceiptV3 (458) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name EthbloomBloom (460) */
+  interface EthbloomBloom extends U8aFixed {}
+
+  /** @name EthereumReceiptReceiptV3 (462) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface EthereumReceiptReceiptV3 extends Enum {
     readonly isLegacy: boolean;
     readonly asLegacy: EthereumReceiptEip658ReceiptData;
@@ -3917,22 +4222,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name EthereumReceiptEip658ReceiptData (447) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumReceiptEip658ReceiptData (448) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumReceiptEip658ReceiptData (449) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumReceiptEip658ReceiptData (462) */
 =======
   /** @name EthereumReceiptEip658ReceiptData (459) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name EthereumReceiptEip658ReceiptData (463) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface EthereumReceiptEip658ReceiptData extends Struct {
     readonly statusCode: u8;
     readonly usedGas: U256;
@@ -3941,22 +4265,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name EthereumBlock (448) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumBlock (449) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumBlock (450) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumBlock (463) */
 =======
   /** @name EthereumBlock (460) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name EthereumBlock (464) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface EthereumBlock extends Struct {
     readonly header: EthereumHeader;
     readonly transactions: Vec<EthereumTransactionTransactionV2>;
@@ -3964,22 +4307,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name EthereumHeader (449) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumHeader (450) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumHeader (451) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumHeader (464) */
 =======
   /** @name EthereumHeader (461) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name EthereumHeader (465) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface EthereumHeader extends Struct {
     readonly parentHash: H256;
     readonly ommersHash: H256;
@@ -3999,23 +4361,30 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name EthereumTypesHashH64 (450) */
   interface EthereumTypesHashH64 extends U8aFixed {}
 
   /** @name PalletEthereumError (455) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumTypesHashH64 (451) */
   interface EthereumTypesHashH64 extends U8aFixed {}
 
   /** @name PalletEthereumError (456) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumTypesHashH64 (452) */
   interface EthereumTypesHashH64 extends U8aFixed {}
 
   /** @name PalletEthereumError (457) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name EthereumTypesHashH64 (465) */
   interface EthereumTypesHashH64 extends U8aFixed {}
@@ -4027,9 +4396,24 @@ declare module '@polkadot/types/lookup' {
 
   /** @name PalletEthereumError (467) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name EthereumTypesHashH64 (466) */
+  interface EthereumTypesHashH64 extends U8aFixed {}
+
+  /** @name PalletEthereumError (471) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletEthereumError extends Enum {
     readonly isInvalidSignature: boolean;
     readonly isPreLogExists: boolean;
@@ -4037,22 +4421,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletEvmCoderSubstrateError (456) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmCoderSubstrateError (457) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmCoderSubstrateError (458) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmCoderSubstrateError (471) */
 =======
   /** @name PalletEvmCoderSubstrateError (468) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletEvmCoderSubstrateError (472) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletEvmCoderSubstrateError extends Enum {
     readonly isOutOfGas: boolean;
     readonly isOutOfFund: boolean;
@@ -4060,22 +4463,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (457) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (458) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (459) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (472) */
 =======
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (469) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (473) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
@@ -4086,22 +4508,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletEvmContractHelpersSponsoringModeT (458) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmContractHelpersSponsoringModeT (459) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmContractHelpersSponsoringModeT (460) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmContractHelpersSponsoringModeT (473) */
 =======
   /** @name PalletEvmContractHelpersSponsoringModeT (470) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletEvmContractHelpersSponsoringModeT (474) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletEvmContractHelpersSponsoringModeT extends Enum {
     readonly isDisabled: boolean;
     readonly isAllowlisted: boolean;
@@ -4110,22 +4551,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletEvmContractHelpersError (464) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmContractHelpersError (465) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmContractHelpersError (466) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmContractHelpersError (479) */
 =======
   /** @name PalletEvmContractHelpersError (476) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletEvmContractHelpersError (480) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletEvmContractHelpersError extends Enum {
     readonly isNoPermission: boolean;
     readonly isNoPendingSponsor: boolean;
@@ -4134,22 +4594,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletEvmMigrationError (465) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmMigrationError (466) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmMigrationError (467) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletEvmMigrationError (480) */
 =======
   /** @name PalletEvmMigrationError (477) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletEvmMigrationError (481) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
@@ -4158,23 +4637,30 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name PalletMaintenanceError (466) */
   type PalletMaintenanceError = Null;
 
   /** @name PalletTestUtilsError (467) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletMaintenanceError (467) */
   type PalletMaintenanceError = Null;
 
   /** @name PalletTestUtilsError (468) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletMaintenanceError (468) */
   type PalletMaintenanceError = Null;
 
   /** @name PalletTestUtilsError (469) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name PalletMaintenanceError (481) */
   type PalletMaintenanceError = Null;
@@ -4186,9 +4672,24 @@ declare module '@polkadot/types/lookup' {
 
   /** @name PalletTestUtilsError (479) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletMaintenanceError (482) */
+  type PalletMaintenanceError = Null;
+
+  /** @name PalletTestUtilsError (483) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface PalletTestUtilsError extends Enum {
     readonly isTestPalletDisabled: boolean;
     readonly isTriggerRollback: boolean;
@@ -4196,22 +4697,41 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name SpRuntimeMultiSignature (469) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name SpRuntimeMultiSignature (470) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name SpRuntimeMultiSignature (471) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name SpRuntimeMultiSignature (484) */
 =======
   /** @name SpRuntimeMultiSignature (481) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name SpRuntimeMultiSignature (485) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -4223,14 +4743,21 @@ declare module '@polkadot/types/lookup' {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   /** @name SpCoreEd25519Signature (470) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name SpCoreEd25519Signature (471) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name SpCoreEd25519Signature (472) */
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
   /** @name SpCoreEd25519Signature (485) */
 >>>>>>> fix: update polkadot types and definitions
@@ -4280,43 +4807,59 @@ declare module '@polkadot/types/lookup' {
   /** @name PalletEthereumFakeTransactionFinalizer (501) */
 =======
   /** @name SpCoreEd25519Signature (482) */
+=======
+  /** @name SpCoreEd25519Signature (486) */
+>>>>>>> chore: regenerate types
   interface SpCoreEd25519Signature extends U8aFixed {}
 
-  /** @name SpCoreSr25519Signature (484) */
+  /** @name SpCoreSr25519Signature (488) */
   interface SpCoreSr25519Signature extends U8aFixed {}
 
-  /** @name SpCoreEcdsaSignature (485) */
+  /** @name SpCoreEcdsaSignature (489) */
   interface SpCoreEcdsaSignature extends U8aFixed {}
 
-  /** @name FrameSystemExtensionsCheckSpecVersion (488) */
+  /** @name FrameSystemExtensionsCheckSpecVersion (492) */
   type FrameSystemExtensionsCheckSpecVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckTxVersion (489) */
+  /** @name FrameSystemExtensionsCheckTxVersion (493) */
   type FrameSystemExtensionsCheckTxVersion = Null;
 
-  /** @name FrameSystemExtensionsCheckGenesis (490) */
+  /** @name FrameSystemExtensionsCheckGenesis (494) */
   type FrameSystemExtensionsCheckGenesis = Null;
 
-  /** @name FrameSystemExtensionsCheckNonce (493) */
+  /** @name FrameSystemExtensionsCheckNonce (497) */
   interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-  /** @name FrameSystemExtensionsCheckWeight (494) */
+  /** @name FrameSystemExtensionsCheckWeight (498) */
   type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (495) */
+  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (499) */
   type OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
 
-  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (496) */
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (500) */
   interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name OpalRuntimeRuntime (497) */
+  /** @name OpalRuntimeRuntime (501) */
   type OpalRuntimeRuntime = Null;
 
+<<<<<<< HEAD
   /** @name PalletEthereumFakeTransactionFinalizer (498) */
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+  /** @name PalletEthereumFakeTransactionFinalizer (502) */
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module

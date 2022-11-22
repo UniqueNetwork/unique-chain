@@ -176,6 +176,7 @@ export default {
       'Option<u128>',
     ),
 <<<<<<< HEAD
+<<<<<<< HEAD
     allowanceForAll: fun(
       'Tells whether the given `owner` approves the `operator`.',
       [collectionParam, crossAccountParam('owner'), crossAccountParam('operator')],
@@ -184,6 +185,16 @@ export default {
     povEstimate: fun(
       'Estimate PoV size',
       [{name: 'encodedXt', type: 'Vec<u8>'}],
+=======
+    estimateExtrinsicPoV: fun(
+      'Estimate PoV size of an encoded extrinsic',
+      [{name: 'encodedXt', type: 'Bytes'}],
+      'UpPovEstimateRpcPovInfo',
+    ),
+    estimateCallPoV: fun(
+      'Estimate PoV size of an encoded call',
+      [{name: 'encodedCall', type: 'Bytes'}],
+>>>>>>> chore: regenerate types
       'UpPovEstimateRpcPovInfo',
 >>>>>>> fix: update polkadot types and definitions
     ),

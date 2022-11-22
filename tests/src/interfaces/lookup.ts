@@ -3212,291 +3212,576 @@ export default {
   UpPovEstimateRpcPovInfo: {
     proofSize: 'u64',
     compactProofSize: 'u64',
-    compressedProofSize: 'u64'
+    compressedProofSize: 'u64',
+    result: 'Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>'
   },
   /**
+<<<<<<< HEAD
    * Lookup424: pallet_common::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+   * Lookup424: sp_runtime::transaction_validity::TransactionValidityError
+   **/
+  SpRuntimeTransactionValidityTransactionValidityError: {
+    _enum: {
+      Invalid: 'SpRuntimeTransactionValidityInvalidTransaction',
+      Unknown: 'SpRuntimeTransactionValidityUnknownTransaction'
+    }
+  },
+  /**
+   * Lookup425: sp_runtime::transaction_validity::InvalidTransaction
+   **/
+  SpRuntimeTransactionValidityInvalidTransaction: {
+    _enum: {
+      Call: 'Null',
+      Payment: 'Null',
+      Future: 'Null',
+      Stale: 'Null',
+      BadProof: 'Null',
+      AncientBirthBlock: 'Null',
+      ExhaustsResources: 'Null',
+      Custom: 'u8',
+      BadMandatory: 'Null',
+      MandatoryDispatch: 'Null',
+      BadSigner: 'Null'
+    }
+  },
+  /**
+   * Lookup426: sp_runtime::transaction_validity::UnknownTransaction
+   **/
+  SpRuntimeTransactionValidityUnknownTransaction: {
+    _enum: {
+      CannotLookup: 'Null',
+      NoUnsignedValidator: 'Null',
+      Custom: 'u8'
+    }
+  },
+  /**
+   * Lookup428: pallet_common::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletCommonError: {
     _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'CantDestroyNotEmptyCollection', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'UserIsNotAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey', 'CollectionIsExternal', 'CollectionIsInternal', 'ConfirmSponsorshipFail', 'UserIsNotCollectionAdmin']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup416: pallet_fungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup417: pallet_fungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup430: pallet_fungible::pallet::Error<T>
 =======
    * Lookup426: pallet_fungible::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+   * Lookup430: pallet_fungible::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletFungibleError: {
     _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingAllowanceForAllNotAllowed', 'FungibleTokensAreAlwaysValid']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup420: pallet_refungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup417: pallet_refungible::ItemData
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup418: pallet_refungible::ItemData
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup431: pallet_refungible::ItemData
 =======
    * Lookup427: pallet_refungible::ItemData
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+   * Lookup431: pallet_refungible::ItemData
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletRefungibleItemData: {
     constData: 'Bytes'
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup422: pallet_refungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup423: pallet_refungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup436: pallet_refungible::pallet::Error<T>
 =======
    * Lookup432: pallet_refungible::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup436: pallet_refungible::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletRefungibleError: {
     _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RepartitionWhileNotOwningAllPieces', 'RefungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup421: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup423: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup424: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup437: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
    * Lookup433: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup437: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletNonfungibleItemData: {
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup423: up_data_structs::PropertyScope
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup425: up_data_structs::PropertyScope
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup426: up_data_structs::PropertyScope
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup439: up_data_structs::PropertyScope
 =======
    * Lookup435: up_data_structs::PropertyScope
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup439: up_data_structs::PropertyScope
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   UpDataStructsPropertyScope: {
     _enum: ['None', 'Rmrk']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup426: pallet_nonfungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup427: pallet_nonfungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup428: pallet_nonfungible::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup441: pallet_nonfungible::pallet::Error<T>
 =======
    * Lookup437: pallet_nonfungible::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup441: pallet_nonfungible::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletNonfungibleError: {
     _enum: ['NotNonfungibleDataUsedToMintFungibleCollectionToken', 'NonfungibleItemsHaveNoAmount', 'CantBurnNftWithChildren']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup427: pallet_structure::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup428: pallet_structure::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup429: pallet_structure::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup442: pallet_structure::pallet::Error<T>
 =======
    * Lookup438: pallet_structure::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup442: pallet_structure::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletStructureError: {
     _enum: ['OuroborosDetected', 'DepthLimit', 'BreadthLimit', 'TokenNotFound']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup428: pallet_rmrk_core::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup429: pallet_rmrk_core::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup430: pallet_rmrk_core::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup443: pallet_rmrk_core::pallet::Error<T>
 =======
    * Lookup439: pallet_rmrk_core::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup443: pallet_rmrk_core::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletRmrkCoreError: {
     _enum: ['CorruptedCollectionType', 'RmrkPropertyKeyIsTooLong', 'RmrkPropertyValueIsTooLong', 'RmrkPropertyIsNotFound', 'UnableToDecodeRmrkData', 'CollectionNotEmpty', 'NoAvailableCollectionId', 'NoAvailableNftId', 'CollectionUnknown', 'NoPermission', 'NonTransferable', 'CollectionFullOrLocked', 'ResourceDoesntExist', 'CannotSendToDescendentOrSelf', 'CannotAcceptNonOwnedNft', 'CannotRejectNonOwnedNft', 'CannotRejectNonPendingNft', 'ResourceNotPending', 'NoAvailableResourceId']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup430: pallet_rmrk_equip::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup431: pallet_rmrk_equip::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup432: pallet_rmrk_equip::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup445: pallet_rmrk_equip::pallet::Error<T>
 =======
    * Lookup441: pallet_rmrk_equip::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup445: pallet_rmrk_equip::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletRmrkEquipError: {
     _enum: ['PermissionError', 'NoAvailableBaseId', 'NoAvailablePartId', 'BaseDoesntExist', 'NeedsDefaultThemeFirst', 'PartDoesntExist', 'NoEquippableOnFixedPart']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup436: pallet_app_promotion::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup437: pallet_app_promotion::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup438: pallet_app_promotion::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup451: pallet_app_promotion::pallet::Error<T>
 =======
    * Lookup447: pallet_app_promotion::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup451: pallet_app_promotion::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletAppPromotionError: {
     _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFunds', 'PendingForBlockOverflow', 'SponsorNotSet', 'IncorrectLockedBalanceOperation']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup437: pallet_foreign_assets::module::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup438: pallet_foreign_assets::module::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup439: pallet_foreign_assets::module::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup452: pallet_foreign_assets::module::Error<T>
 =======
    * Lookup448: pallet_foreign_assets::module::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup452: pallet_foreign_assets::module::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletForeignAssetsModuleError: {
     _enum: ['BadLocation', 'MultiLocationExisted', 'AssetIdNotExists', 'AssetIdExisted']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup439: pallet_evm::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup440: pallet_evm::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup441: pallet_evm::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup454: pallet_evm::pallet::Error<T>
 =======
    * Lookup451: pallet_evm::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup455: pallet_evm::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce', 'GasLimitTooLow', 'GasLimitTooHigh', 'Undefined', 'Reentrancy', 'TransactionMustComeFromEOA']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup442: fp_rpc::TransactionStatus
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup443: fp_rpc::TransactionStatus
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup444: fp_rpc::TransactionStatus
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup457: fp_rpc::TransactionStatus
 =======
    * Lookup454: fp_rpc::TransactionStatus
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup458: fp_rpc::TransactionStatus
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -3509,12 +3794,15 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup444: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
   /**
    * Lookup446: ethereum::receipt::ReceiptV3
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup445: ethbloom::Bloom
    **/
@@ -3522,6 +3810,8 @@ export default {
   /**
    * Lookup447: ethereum::receipt::ReceiptV3
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup446: ethbloom::Bloom
    **/
@@ -3529,6 +3819,8 @@ export default {
   /**
    * Lookup448: ethereum::receipt::ReceiptV3
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup459: ethbloom::Bloom
    **/
@@ -3542,9 +3834,25 @@ export default {
   /**
    * Lookup458: ethereum::receipt::ReceiptV3
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup460: ethbloom::Bloom
+   **/
+  EthbloomBloom: '[u8;256]',
+  /**
+   * Lookup462: ethereum::receipt::ReceiptV3
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -3555,22 +3863,41 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup447: ethereum::receipt::EIP658ReceiptData
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup448: ethereum::receipt::EIP658ReceiptData
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup449: ethereum::receipt::EIP658ReceiptData
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup462: ethereum::receipt::EIP658ReceiptData
 =======
    * Lookup459: ethereum::receipt::EIP658ReceiptData
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup463: ethereum::receipt::EIP658ReceiptData
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -3580,22 +3907,41 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup448: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup449: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup450: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup463: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
    * Lookup460: ethereum::block::Block<ethereum::transaction::TransactionV2>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup464: ethereum::block::Block<ethereum::transaction::TransactionV2>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -3604,22 +3950,41 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup449: ethereum::header::Header
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup450: ethereum::header::Header
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup451: ethereum::header::Header
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup464: ethereum::header::Header
 =======
    * Lookup461: ethereum::header::Header
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup465: ethereum::header::Header
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -3640,12 +4005,15 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup450: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
   /**
    * Lookup455: pallet_ethereum::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup451: ethereum_types::hash::H64
    **/
@@ -3653,6 +4021,8 @@ export default {
   /**
    * Lookup456: pallet_ethereum::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup452: ethereum_types::hash::H64
    **/
@@ -3660,6 +4030,8 @@ export default {
   /**
    * Lookup457: pallet_ethereum::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup465: ethereum_types::hash::H64
    **/
@@ -3673,53 +4045,107 @@ export default {
   /**
    * Lookup467: pallet_ethereum::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup466: ethereum_types::hash::H64
+   **/
+  EthereumTypesHashH64: '[u8;8]',
+  /**
+   * Lookup471: pallet_ethereum::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup456: pallet_evm_coder_substrate::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup457: pallet_evm_coder_substrate::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup458: pallet_evm_coder_substrate::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup471: pallet_evm_coder_substrate::pallet::Error<T>
 =======
    * Lookup468: pallet_evm_coder_substrate::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup472: pallet_evm_coder_substrate::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup457: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup458: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup459: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup472: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
    * Lookup469: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup473: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   UpDataStructsSponsorshipStateBasicCrossAccountIdRepr: {
     _enum: {
@@ -3730,71 +4156,129 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup458: pallet_evm_contract_helpers::SponsoringModeT
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup459: pallet_evm_contract_helpers::SponsoringModeT
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup460: pallet_evm_contract_helpers::SponsoringModeT
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup473: pallet_evm_contract_helpers::SponsoringModeT
 =======
    * Lookup470: pallet_evm_contract_helpers::SponsoringModeT
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup474: pallet_evm_contract_helpers::SponsoringModeT
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup464: pallet_evm_contract_helpers::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup465: pallet_evm_contract_helpers::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup466: pallet_evm_contract_helpers::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup479: pallet_evm_contract_helpers::pallet::Error<T>
 =======
    * Lookup476: pallet_evm_contract_helpers::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup480: pallet_evm_contract_helpers::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission', 'NoPendingSponsor', 'TooManyMethodsHaveSponsoredLimit']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup465: pallet_evm_migration::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup466: pallet_evm_migration::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup467: pallet_evm_migration::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup480: pallet_evm_migration::pallet::Error<T>
 =======
    * Lookup477: pallet_evm_migration::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup481: pallet_evm_migration::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating', 'BadEvent']
   },
   /**
+<<<<<<< HEAD
 <<<<<<< HEAD
    * Lookup466: pallet_maintenance::pallet::Error<T>
    **/
@@ -3802,6 +4286,8 @@ export default {
   /**
    * Lookup467: pallet_test_utils::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup467: pallet_maintenance::pallet::Error<T>
    **/
@@ -3809,6 +4295,8 @@ export default {
   /**
    * Lookup468: pallet_test_utils::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup468: pallet_maintenance::pallet::Error<T>
    **/
@@ -3816,6 +4304,8 @@ export default {
   /**
    * Lookup469: pallet_test_utils::pallet::Error<T>
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup481: pallet_maintenance::pallet::Error<T>
    **/
@@ -3829,31 +4319,66 @@ export default {
   /**
    * Lookup479: pallet_test_utils::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup482: pallet_maintenance::pallet::Error<T>
+   **/
+  PalletMaintenanceError: 'Null',
+  /**
+   * Lookup483: pallet_test_utils::pallet::Error<T>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletTestUtilsError: {
     _enum: ['TestPalletDisabled', 'TriggerRollback']
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup469: sp_runtime::MultiSignature
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup470: sp_runtime::MultiSignature
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup471: sp_runtime::MultiSignature
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup484: sp_runtime::MultiSignature
 =======
    * Lookup481: sp_runtime::MultiSignature
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup485: sp_runtime::MultiSignature
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -3864,14 +4389,21 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup470: sp_core::ed25519::Signature
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup471: sp_core::ed25519::Signature
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup472: sp_core::ed25519::Signature
 =======
+=======
+>>>>>>> chore: regenerate types
 <<<<<<< HEAD
    * Lookup485: sp_core::ed25519::Signature
 >>>>>>> fix: update polkadot types and definitions
@@ -3932,54 +4464,70 @@ export default {
    * Lookup501: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
 =======
    * Lookup482: sp_core::ed25519::Signature
+=======
+   * Lookup486: sp_core::ed25519::Signature
+>>>>>>> chore: regenerate types
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup484: sp_core::sr25519::Signature
+   * Lookup488: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup485: sp_core::ecdsa::Signature
+   * Lookup489: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup488: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup492: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup489: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+   * Lookup493: frame_system::extensions::check_tx_version::CheckTxVersion<T>
    **/
   FrameSystemExtensionsCheckTxVersion: 'Null',
   /**
-   * Lookup490: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup494: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup493: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup497: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup494: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup498: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup495: opal_runtime::runtime_common::maintenance::CheckMaintenance
+   * Lookup499: opal_runtime::runtime_common::maintenance::CheckMaintenance
    **/
   OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
   /**
-   * Lookup496: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup500: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup497: opal_runtime::Runtime
+   * Lookup501: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
+<<<<<<< HEAD
    * Lookup498: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+<<<<<<< HEAD
 >>>>>>> fix: update polkadot types and definitions
+=======
+=======
+=======
+=======
+   * Lookup502: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
+>>>>>>> chore: regenerate types
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };

@@ -2748,6 +2748,41 @@ export interface SpRuntimeTransactionalError extends Enum {
   readonly type: 'LimitReached' | 'NoLayer';
 }
 
+/** @name SpRuntimeTransactionValidityInvalidTransaction */
+export interface SpRuntimeTransactionValidityInvalidTransaction extends Enum {
+  readonly isCall: boolean;
+  readonly isPayment: boolean;
+  readonly isFuture: boolean;
+  readonly isStale: boolean;
+  readonly isBadProof: boolean;
+  readonly isAncientBirthBlock: boolean;
+  readonly isExhaustsResources: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: u8;
+  readonly isBadMandatory: boolean;
+  readonly isMandatoryDispatch: boolean;
+  readonly isBadSigner: boolean;
+  readonly type: 'Call' | 'Payment' | 'Future' | 'Stale' | 'BadProof' | 'AncientBirthBlock' | 'ExhaustsResources' | 'Custom' | 'BadMandatory' | 'MandatoryDispatch' | 'BadSigner';
+}
+
+/** @name SpRuntimeTransactionValidityTransactionValidityError */
+export interface SpRuntimeTransactionValidityTransactionValidityError extends Enum {
+  readonly isInvalid: boolean;
+  readonly asInvalid: SpRuntimeTransactionValidityInvalidTransaction;
+  readonly isUnknown: boolean;
+  readonly asUnknown: SpRuntimeTransactionValidityUnknownTransaction;
+  readonly type: 'Invalid' | 'Unknown';
+}
+
+/** @name SpRuntimeTransactionValidityUnknownTransaction */
+export interface SpRuntimeTransactionValidityUnknownTransaction extends Enum {
+  readonly isCannotLookup: boolean;
+  readonly isNoUnsignedValidator: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: u8;
+  readonly type: 'CannotLookup' | 'NoUnsignedValidator' | 'Custom';
+}
+
 /** @name SpTrieStorageProof */
 export interface SpTrieStorageProof extends Struct {
   readonly trieNodes: BTreeSet<Bytes>;
@@ -3023,6 +3058,7 @@ export interface UpPovEstimateRpcPovInfo extends Struct {
   readonly proofSize: u64;
   readonly compactProofSize: u64;
   readonly compressedProofSize: u64;
+  readonly result: Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>;
 }
 
 /** @name XcmDoubleEncoded */
