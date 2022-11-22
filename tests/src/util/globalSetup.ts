@@ -17,19 +17,6 @@ const globalSetup = async (): Promise<void> => {
         .then((result) => {
           if (!result) Promise.reject();
         });
-
-      // 3. Set up App Promotion admin 
-      const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
-      if (missingPallets.length === 0) {
-        const superuser = await privateKey('//Alice');
-        const palletAddress = helper.arrange.calculatePalletAddress('appstake');
-        const palletAdmin = await privateKey('//PromotionAdmin');
-        const api = helper.getApi();
-        await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
-        const nominal = helper.balance.getOneTokenNominal();
-        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 1000n * nominal);
-        await helper.balance.transferToSubstrate(superuser, palletAddress, 1000n * nominal);
-      }
     } catch (error) {
       console.error(error);
       Promise.reject();

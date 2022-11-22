@@ -1,0 +1,10 @@
+import './app-promotion.seqtest';
+import './block-production.seqtest';
+import './creditFeesToTreasury.seqtest';
+import './inflation.seqtest';
+import './maintenanceMode.seqtest';
+import './scheduler.seqtest';
+import './rmrk';
+import './eth/migration.seqtest';
+import './eth/createFTCollection.seqtest';
+import './eth/createNFTCollection.seqtest';
