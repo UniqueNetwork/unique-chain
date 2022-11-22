@@ -9,7 +9,7 @@ import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { Perbill, Permill, Weight } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, UpDataStructsCollectionLimits, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
@@ -226,6 +226,64 @@ declare module '@polkadot/api-base/types/consts' {
        * Period between successive spends.
        **/
       spendPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    unique: {
+      /**
+       * Maximum admins per collection.
+       **/
+      collectionAdminsLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Default FT collection limit.
+       **/
+      ftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
+      /**
+       * Maximum length for collection description.
+       **/
+      maxCollectionDescriptionLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum length for collection name.
+       **/
+      maxCollectionNameLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum size for all collection properties.
+       **/
+      maxCollectionPropertiesSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum properties that can be assigned to token.
+       **/
+      maxPropertiesPerItem: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal lenght of property key.
+       **/
+      maxPropertyKeyLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal lenght of property value.
+       **/
+      maxPropertyValueLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal token prefix length.
+       **/
+      maxTokenPrefixLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum size for all token properties.
+       **/
+      maxTokenPropertiesSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum number of levels of depth in the token nesting tree.
+       **/
+      nestingBudget: u32 & AugmentedConst<ApiType>;
+      /**
+       * Default NFT collection limit.
+       **/
+      nftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
+      /**
+       * Default RFT collection limit.
+       **/
+      rftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
