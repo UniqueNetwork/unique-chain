@@ -74,12 +74,13 @@ describe('EVM collection allowlist', () => {
     });
   });
 
+  // Soft-deprecated
   itEth('Collection allowlist can be added and removed by [eth] address', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const user = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
@@ -105,13 +106,14 @@ describe('EVM collection allowlist', () => {
     expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
   });
 
+  // Soft-deprecated
   itEth('Collection allowlist can not be add and remove [eth] address by not owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const notOwner = await helper.eth.createAccountWithBalance(donor);
     const user = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');

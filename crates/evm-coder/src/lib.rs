@@ -253,6 +253,12 @@ pub mod types {
 		let account_id = T::AccountId::from(new_admin_arr);
 		T::CrossAccountId::from_sub(account_id)
 	}
+
+	#[derive(Debug, Default)]
+	pub struct Property {
+		pub key: string,
+		pub value: bytes,
+	}
 }
 
 /// Parseable EVM call, this trait should be implemented with [`solidity_interface`] macro

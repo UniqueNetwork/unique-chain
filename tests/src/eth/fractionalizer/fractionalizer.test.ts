@@ -95,7 +95,8 @@ describe('Fractionalizer contract usage', () => {
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
     const rftContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
-    await rftContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    const fractionalizerAddressCross = helper.ethCrossAccount.fromAddress(fractionalizer.options.address);
+    await rftContract.methods.addCollectionAdminCross(fractionalizerAddressCross).send({from: owner});
     const result = await fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).send({from: owner});
     expect(result.events).to.be.like({
       RFTCollectionSet: {
@@ -235,7 +236,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
     const fractionalizer = await deployContract(helper, owner);
-    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    const fractionalizerAddressCross = helper.ethCrossAccount.fromAddress(fractionalizer.options.address);
+    await refungibleContract.methods.addCollectionAdminCross(fractionalizerAddressCross).send({from: owner});
     await fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).send({from: owner});
 
     await expect(fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).call())
@@ -248,7 +250,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
 
     const fractionalizer = await deployContract(helper, owner);
-    await nftContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    const fractionalizerAddressCross = helper.ethCrossAccount.fromAddress(fractionalizer.options.address);
+    await nftContract.methods.addCollectionAdminCross(fractionalizerAddressCross).send({from: owner});
 
     await expect(fractionalizer.methods.setRFTCollection(nftCollection.collectionAddress).call())
       .to.be.rejectedWith(/Wrong collection type. Collection is not refungible.$/g);
@@ -370,7 +373,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const fractionalizer = await deployContract(helper, owner);
 
-    await refungibleContract.methods.addCollectionAdmin(fractionalizer.options.address).send({from: owner});
+    const fractionalizerAddressCross = helper.ethCrossAccount.fromAddress(fractionalizer.options.address);
+    await refungibleContract.methods.addCollectionAdminCross(fractionalizerAddressCross).send({from: owner});
     await fractionalizer.methods.setRFTCollection(rftCollection.collectionAddress).send({from: owner});
 
     const mintResult = await refungibleContract.methods.mint(owner).send({from: owner});

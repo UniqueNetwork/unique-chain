@@ -27,7 +27,7 @@ describe('EVM collection properties', () => {
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice] = await _helper.arrange.createAccounts([10n], donor);
+      [alice] = await _helper.arrange.createAccounts([20n], donor);
     });
   });
 
@@ -39,7 +39,7 @@ describe('EVM collection properties', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    await contract.methods.setCollectionProperty('testKey', Buffer.from('testValue')).send({from: caller});
+    await contract.methods.setCollectionProperties([{key: 'testKey', value: Buffer.from('testValue')}]).send({from: caller});
 
     const raw = (await collection.getData())?.raw;
 
@@ -55,7 +55,7 @@ describe('EVM collection properties', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    await contract.methods.deleteCollectionProperty('testKey').send({from: caller});
+    await contract.methods.deleteCollectionProperties(['testKey']).send({from: caller});
 
     const raw = (await collection.getData())?.raw;
 
@@ -71,6 +71,39 @@ describe('EVM collection properties', () => {
 
     const value = await contract.methods.collectionProperty('testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
+  });
+
+  // Soft-deprecated
+  itEth('Collection property can be set', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
+    await collection.addAdmin(alice, {Ethereum: caller});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller, true);
+
+    await contract.methods.setCollectionProperty('testKey', Buffer.from('testValue')).send();
+
+    const raw = (await collection.getData())?.raw;
+
+    expect(raw.properties[0].value).to.equal('testValue');
+  });
+
+  // Soft-deprecated
+  itEth('Collection property can be deleted', async({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: [{key: 'testKey', value: 'testValue'}]});
+
+    await collection.addAdmin(alice, {Ethereum: caller});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft', caller, true);
+
+    await contract.methods.deleteCollectionProperty('testKey').send({from: caller});
+
+    const raw = (await collection.getData())?.raw;
+
+    expect(raw.properties.length).to.equal(0);
   });
 });
 
@@ -95,9 +128,10 @@ describe('Supports ERC721Metadata', () => {
     const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection';
 
     const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p');
+    const bruhCross = helper.ethCrossAccount.fromAddress(bruh);
 
     const contract = helper.ethNativeContract.collectionById(collectionId, mode, caller);
-    await contract.methods.addCollectionAdmin(bruh).send(); // to check that admin will work too
+    await contract.methods.addCollectionAdminCross(bruhCross).send(); // to check that admin will work too
 
     const collection1 = helper.nft.getCollectionObject(collectionId);
     const data1 = await collection1.getData();
@@ -133,10 +167,10 @@ describe('Supports ERC721Metadata', () => {
 
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI);
 
-    await contract.methods.setProperty(tokenId1, 'URISuffix', Buffer.from(SUFFIX)).send();
+    await contract.methods.setProperties(tokenId1, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}]).send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(BASE_URI + SUFFIX);
 
-    await contract.methods.setProperty(tokenId1, 'URI', Buffer.from(URI)).send();
+    await contract.methods.setProperties(tokenId1, [{key: 'URI', value: Buffer.from(URI)}]).send();
     expect(await contract.methods.tokenURI(tokenId1).call()).to.equal(URI);
 
     await contract.methods.deleteProperties(tokenId1, ['URI']).send();
@@ -150,7 +184,7 @@ describe('Supports ERC721Metadata', () => {
     await contract.methods.deleteProperties(tokenId2, ['URI']).send();
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI);
 
-    await contract.methods.setProperty(tokenId2, 'URISuffix', Buffer.from(SUFFIX)).send();
+    await contract.methods.setProperties(tokenId2, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}]).send();
     expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI + SUFFIX);
   };
 

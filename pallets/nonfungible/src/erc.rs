@@ -26,7 +26,7 @@ use core::{
 };
 use evm_coder::{
 	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	weight,
+	types::Property as PropertyStruct, weight,
 };
 use frame_support::BoundedVec;
 use up_data_structs::{
@@ -88,6 +88,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	/// @param value Property value.
+	#[solidity(hide)]
 	fn set_property(
 		&mut self,
 		caller: caller,
@@ -125,7 +126,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		token_id: uint256,
-		properties: Vec<(string, bytes)>,
+		properties: Vec<PropertyStruct>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -136,7 +137,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		let properties = properties
 			.into_iter()
-			.map(|(key, value)| {
+			.map(|PropertyStruct { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -794,6 +795,7 @@ where
 	///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param from The current owner of the NFT
 	/// @param tokenId The NFT to transfer
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);

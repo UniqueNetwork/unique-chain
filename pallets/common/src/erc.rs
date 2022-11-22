@@ -20,6 +20,7 @@ use evm_coder::{
 	abi::AbiType,
 	solidity_interface, solidity, ToLog,
 	types::*,
+	types::Property as PropertyStruct,
 	execution::{Result, Error},
 	weight,
 };
@@ -78,6 +79,7 @@ where
 	///
 	/// @param key Property key.
 	/// @param value Propery value.
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
 	fn set_collection_property(
 		&mut self,
@@ -102,13 +104,13 @@ where
 	fn set_collection_properties(
 		&mut self,
 		caller: caller,
-		properties: Vec<(string, bytes)>,
+		properties: Vec<PropertyStruct>,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let properties = properties
 			.into_iter()
-			.map(|(key, value)| {
+			.map(|PropertyStruct { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -126,6 +128,7 @@ where
 	/// Delete collection property.
 	///
 	/// @param key Property key.
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -208,6 +211,7 @@ where
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
 	///
 	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
+	#[solidity(hide)]
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -411,6 +415,7 @@ where
 
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
+	#[solidity(hide)]
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
 		self.consume_store_writes(2)?;
 
@@ -423,6 +428,7 @@ where
 	/// Remove collection admin.
 	///
 	/// @param admin Address of the removed administrator.
+	#[solidity(hide)]
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
 		self.consume_store_writes(2)?;
 
@@ -547,6 +553,7 @@ where
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
+	#[solidity(hide)]
 	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -575,6 +582,7 @@ where
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
+	#[solidity(hide)]
 	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -625,7 +633,7 @@ where
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	#[solidity(rename_selector = "isOwnerOrAdmin")]
+	#[solidity(hide, rename_selector = "isOwnerOrAdmin")]
 	fn is_owner_or_admin_eth(&self, user: address) -> Result<bool> {
 		let user = T::CrossAccountId::from_eth(user);
 		Ok(self.is_owner_or_admin(&user))
@@ -666,7 +674,7 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
-	#[solidity(rename_selector = "changeCollectionOwner")]
+	#[solidity(hide, rename_selector = "changeCollectionOwner")]
 	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -691,7 +699,11 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
-	fn set_owner_cross(&mut self, caller: caller, new_owner: EthCrossAccount) -> Result<void> {
+	fn change_collection_owner_cross(
+		&mut self,
+		caller: caller,
+		new_owner: EthCrossAccount,
+	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
