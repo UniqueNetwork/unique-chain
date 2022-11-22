@@ -101,6 +101,8 @@ impl Cli {
 					"Unique"
 				} else if cfg!(feature = "quartz-runtime") {
 					"Quartz"
+				} else if cfg!(feature = "sapphire-runtime") {
+					"Sapphire"
 				} else {
 					"Opal"
 				}
