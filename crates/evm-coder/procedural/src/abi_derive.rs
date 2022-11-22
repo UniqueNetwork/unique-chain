@@ -2,10 +2,10 @@ use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
-	let docs = extract_docs(&ast.attrs)?;
 
 	match &ast.data {
 		syn::Data::Struct(ds) => {
+			let docs = extract_docs(&ast.attrs)?;
 			let (is_named_fields, field_names, field_types, field_docs, params_count) =
 				match ds.fields {
 					syn::Fields::Named(ref fields) => Ok((
@@ -57,9 +57,59 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 				#solidity_struct_collect
 			})
 		}
-		syn::Data::Enum(_) => Err(syn::Error::new(name.span(), "Enums not supported")),
+		syn::Data::Enum(de) => {
+			let _ = check_repr_u8(name, &ast.attrs)?;
+
+			// dbg!(de);
+			Ok(quote!())
+		}
 		syn::Data::Union(_) => Err(syn::Error::new(name.span(), "Unions not supported")),
 	}
+}
+
+fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Result<()> {
+	let repr_u8 = attrs
+		.iter()
+		.filter_map(|attr| {
+			if let Some(ps) = attr.path.segments.first() {
+				if ps.ident == "repr" {
+					let meta = match attr.parse_meta() {
+						Ok(meta) => meta,
+						Err(e) => return Some(Err(e)),
+					};
+					let is_repr_u8 = match meta {
+						syn::Meta::List(p) => {
+							p.nested
+								.iter()
+								.filter(|nm| match nm {
+									syn::NestedMeta::Meta(m) => match m {
+										syn::Meta::Path(p) => {
+											p.segments.iter().filter(|ps| ps.ident == "u8").count()
+												== 1
+										}
+										_ => false,
+									},
+									_ => false,
+								})
+								.count() == 1
+						}
+						_ => false,
+					};
+
+					if is_repr_u8 {
+						return Some(Ok(()));
+					};
+				}
+			}
+			None::<syn::Result<()>>
+		})
+		.collect::<syn::Result<Vec<_>>>()?;
+
+	if repr_u8.len() != 1 {
+		return Err(syn::Error::new(name.span(), "Enum is not \"repr(u8)\""));
+	};
+
+	Ok(())
 }
 
 fn tuple_type<'a>(

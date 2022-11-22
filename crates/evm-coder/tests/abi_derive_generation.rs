@@ -735,3 +735,18 @@ struct TupleStruct3DerivedMixedParam {
 		);
 	}
 }
+
+mod test_enum {
+	use evm_coder::AbiCoder;
+
+	#[derive(AbiCoder)]
+	#[repr(u8)]
+	enum Color {
+		Red,
+		Green,
+		Blue = 255,
+	}
+
+	#[test]
+	fn empty() {}
+}
