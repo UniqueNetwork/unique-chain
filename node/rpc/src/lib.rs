@@ -48,6 +48,7 @@ use up_data_structs::{
 	RmrkPartType, RmrkTheme,
 };
 
+#[cfg(feature = "pov-estimate")]
 type FullBackend = sc_service::TFullBackend<Block>;
 
 /// Extra dependencies for GRANDPA
@@ -84,7 +85,7 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub deny_unsafe: DenyUnsafe,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
-	
+
 	#[cfg(feature = "pov-estimate")]
 	pub runtime_id: RuntimeId,
 	/// Executor params for PoV estimating
@@ -271,7 +272,16 @@ where
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
 
 	#[cfg(feature = "pov-estimate")]
-	io.merge(PovEstimate::new(client.clone(), backend, deny_unsafe, exec_params, runtime_id).into_rpc())?;
+	io.merge(
+		PovEstimate::new(
+			client.clone(),
+			backend,
+			deny_unsafe,
+			exec_params,
+			runtime_id,
+		)
+		.into_rpc(),
+	)?;
 
 	if let Some(filter_pool) = filter_pool {
 		io.merge(

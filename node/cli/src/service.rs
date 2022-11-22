@@ -67,6 +67,8 @@ use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use up_common::types::opaque::*;
+
+#[cfg(feature = "pov-estimate")]
 use crate::chain_spec::RuntimeIdentification;
 
 // RMRK
@@ -517,8 +519,12 @@ where
 		.for_each(|()| futures::future::ready(())),
 	);
 
+	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
 	let runtime_id = parachain_config.chain_spec.runtime_id();
+
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
 		let full_deps = unique_rpc::FullDeps {
 			#[cfg(feature = "pov-estimate")]
@@ -1058,8 +1064,13 @@ where
 	let rpc_pool = transaction_pool.clone();
 	let rpc_network = network.clone();
 	let rpc_frontier_backend = frontier_backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
 	let runtime_id = config.chain_spec.runtime_id();
+
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
 			#[cfg(feature = "pov-estimate")]

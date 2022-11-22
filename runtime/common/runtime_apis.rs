@@ -35,11 +35,11 @@ macro_rules! impl_common_runtime_apis {
     ) => {
         use sp_std::prelude::*;
         use sp_api::impl_runtime_apis;
-        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
+        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160, Bytes};
         use sp_runtime::{
             Permill,
             traits::Block as BlockT,
-            transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError, InvalidTransaction},
+            transaction_validity::{TransactionSource, TransactionValidity},
             ApplyExtrinsicResult, DispatchError,
         };
         use fp_rpc::TransactionStatus;
@@ -780,12 +780,24 @@ macro_rules! impl_common_runtime_apis {
 
             impl up_pov_estimate_rpc::PovEstimateApi<Block> for Runtime {
                 #[allow(unused_variables)]
-                fn pov_estimate(uxt: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
+                fn pov_estimate(uxt: Bytes) -> ApplyExtrinsicResult {
                     #[cfg(feature = "pov-estimate")]
-                    return Executive::apply_extrinsic(uxt);
+                    {
+                        use codec::Decode;
+
+                        let uxt_decode = <<Block as BlockT>::Extrinsic as Decode>::decode(&mut &*uxt)
+                            .map_err(|_| DispatchError::Other("failed to decode the extrinsic"));
+
+                        let uxt = match uxt_decode {
+                            Ok(uxt) => uxt,
+                            Err(err) => return Ok(err.into()),
+                        };
+
+                        Executive::apply_extrinsic(uxt)
+                    }
 
                     #[cfg(not(feature = "pov-estimate"))]
-                    return Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+                    return Ok(unsupported!());
                 }
             }
 

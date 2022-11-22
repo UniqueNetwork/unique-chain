@@ -16,7 +16,8 @@
 
 use std::sync::Arc;
 
-use codec::Encode;
+use codec::{Encode, Decode};
+use sp_externalities::Extensions;
 
 use up_pov_estimate_rpc::{PovEstimateApi as PovEstimateRuntimeApi};
 use up_common::types::opaque::RuntimeId;
@@ -24,14 +25,21 @@ use up_common::types::opaque::RuntimeId;
 use sc_service::{NativeExecutionDispatch, config::ExecutionStrategy};
 use sp_state_machine::{StateMachine, TrieBackendBuilder};
 
-use jsonrpsee::{
-	core::RpcResult as Result,
-	proc_macros::rpc,
-};
+use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
 use anyhow::anyhow;
 
 use sc_client_api::backend::Backend;
 use sp_blockchain::HeaderBackend;
+use sp_core::{
+	Bytes,
+	offchain::{
+		testing::{TestOffchainExt, TestTransactionPoolExt},
+		OffchainDbExt, OffchainWorkerExt, TransactionPoolExt,
+	},
+	testing::TaskExecutor,
+	traits::TaskExecutorExt,
+};
+use sp_keystore::{testing::KeyStore, KeystoreExt};
 use sp_api::{AsTrieBackend, BlockId, BlockT, ProvideRuntimeApi};
 
 use sc_executor::NativeElseWasmExecutor;
@@ -113,93 +121,137 @@ define_struct_for_server_api! {
 #[rpc(server)]
 #[async_trait]
 pub trait PovEstimateApi<BlockHash> {
-    #[method(name = "unique_povEstimate")]
-    fn pov_estimate(&self, encoded_xt: Vec<u8>, at: Option<BlockHash>) -> Result<PovInfo>;
+	#[method(name = "unique_estimateExtrinsicPoV")]
+	fn estimate_extrinsic_pov(&self, encoded_xt: Bytes, at: Option<BlockHash>) -> Result<PovInfo>;
 }
 
 #[allow(deprecated)]
 #[cfg(feature = "pov-estimate")]
-impl<C, Block>
-	PovEstimateApiServer<<Block as BlockT>::Hash> for PovEstimate<C, Block>
+impl<C, Block> PovEstimateApiServer<<Block as BlockT>::Hash> for PovEstimate<C, Block>
 where
 	Block: BlockT,
 	C: 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: PovEstimateRuntimeApi<Block>,
 {
-	fn pov_estimate(&self, encoded_xt: Vec<u8>, at: Option<<Block as BlockT>::Hash>,) -> Result<PovInfo> {
-        self.deny_unsafe.check_if_safe()?;
+	fn estimate_extrinsic_pov(
+		&self,
+		encoded_xt: Bytes,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<PovInfo> {
+		self.deny_unsafe.check_if_safe()?;
 
 		let at = BlockId::<Block>::hash(at.unwrap_or_else(|| self.client.info().best_hash));
-		let state = self.backend.state_at(at).map_err(|_| anyhow!("unable to fetch the state at {at:?}"))?;
-        match &self.runtime_id {
-            #[cfg(feature = "unique-runtime")]
-            RuntimeId::Unique => execute_extrinsic_in_sandbox::<Block, UniqueRuntimeExecutor>(state, &self.exec_params, encoded_xt),
+		let state = self
+			.backend
+			.state_at(at)
+			.map_err(|_| anyhow!("unable to fetch the state at {at:?}"))?;
 
-            #[cfg(feature = "quartz-runtime")]
-            RuntimeId::Quartz => execute_extrinsic_in_sandbox::<Block, QuartzRuntimeExecutor>(state, &self.exec_params, encoded_xt),
+		match &self.runtime_id {
+			#[cfg(feature = "unique-runtime")]
+			RuntimeId::Unique => execute_extrinsic_in_sandbox::<Block, UniqueRuntimeExecutor>(
+				state,
+				&self.exec_params,
+				encoded_xt,
+			),
 
-            RuntimeId::Opal => execute_extrinsic_in_sandbox::<Block, OpalRuntimeExecutor>(state, &self.exec_params, encoded_xt),
+			#[cfg(feature = "quartz-runtime")]
+			RuntimeId::Quartz => execute_extrinsic_in_sandbox::<Block, QuartzRuntimeExecutor>(
+				state,
+				&self.exec_params,
+				encoded_xt,
+			),
 
-            runtime_id => Err(anyhow!("unknown runtime id {:?}", runtime_id).into()),
-        }
+			RuntimeId::Opal => execute_extrinsic_in_sandbox::<Block, OpalRuntimeExecutor>(
+				state,
+				&self.exec_params,
+				encoded_xt,
+			),
+
+			runtime_id => Err(anyhow!("unknown runtime id {:?}", runtime_id).into()),
+		}
 	}
 }
 
-fn execute_extrinsic_in_sandbox<Block, D>(state: StateOf<Block>, exec_params: &ExecutorParams, encoded_xt: Vec<u8>) -> Result<PovInfo>
+fn full_extensions() -> Extensions {
+	let mut extensions = Extensions::default();
+	extensions.register(TaskExecutorExt::new(TaskExecutor::new()));
+	let (offchain, _offchain_state) = TestOffchainExt::new();
+	let (pool, _pool_state) = TestTransactionPoolExt::new();
+	extensions.register(OffchainDbExt::new(offchain.clone()));
+	extensions.register(OffchainWorkerExt::new(offchain));
+	extensions.register(KeystoreExt(std::sync::Arc::new(KeyStore::new())));
+	extensions.register(TransactionPoolExt::new(pool));
+
+	extensions
+}
+
+fn execute_extrinsic_in_sandbox<Block, D>(
+	state: StateOf<Block>,
+	exec_params: &ExecutorParams,
+	encoded_xt: Bytes,
+) -> Result<PovInfo>
 where
-    Block: BlockT,
-    D: NativeExecutionDispatch + 'static,
+	Block: BlockT,
+	D: NativeExecutionDispatch + 'static,
 {
-    let backend = state.as_trie_backend().clone();
-    let mut changes = Default::default();
-    let runtime_code_backend = sp_state_machine::backend::BackendRuntimeCode::new(backend);
+	let backend = state.as_trie_backend().clone();
+	let mut changes = Default::default();
+	let runtime_code_backend = sp_state_machine::backend::BackendRuntimeCode::new(backend);
 
-    let proving_backend =
-        TrieBackendBuilder::wrap(&backend).with_recorder(Default::default()).build();
+	let proving_backend = TrieBackendBuilder::wrap(&backend)
+		.with_recorder(Default::default())
+		.build();
 
-    let runtime_code = runtime_code_backend.runtime_code()
-        .map_err(|_| anyhow!("runtime code backend creation failed"))?;
+	let runtime_code = runtime_code_backend
+		.runtime_code()
+		.map_err(|_| anyhow!("runtime code backend creation failed"))?;
 
-    let pre_root = *backend.root();
+	let pre_root = *backend.root();
 
-    let executor = NativeElseWasmExecutor::<D>::new(
-        exec_params.wasm_method,
-        exec_params.default_heap_pages,
-        exec_params.max_runtime_instances,
-        exec_params.runtime_cache_size,
-    );
-    let execution = ExecutionStrategy::NativeElseWasm;
+	let executor = NativeElseWasmExecutor::<D>::new(
+		exec_params.wasm_method,
+		exec_params.default_heap_pages,
+		exec_params.max_runtime_instances,
+		exec_params.runtime_cache_size,
+	);
+	let execution = ExecutionStrategy::NativeElseWasm;
 
-    StateMachine::new(
-        &proving_backend,
-        &mut changes,
-        &executor,
-        "PovEstimateApi_pov_estimate",
-        encoded_xt.as_slice(),
-        sp_externalities::Extensions::default(),
-        &runtime_code,
-        sp_core::testing::TaskExecutor::new(),
-    )
-    .execute(execution.into())
-    .map_err(|e| anyhow!("failed to execute the extrinsic {:?}", e))?;
+	let encoded_bytes = encoded_xt.encode();
 
-    let proof = proving_backend
-        .extract_proof()
-        .expect("A recorder was set and thus, a storage proof can be extracted; qed");
-    let proof_size = proof.encoded_size();
-    let compact_proof = proof
-        .clone()
-        .into_compact_proof::<HasherOf<Block>>(pre_root)
-        .map_err(|e| anyhow!("failed to generate compact proof {:?}", e))?;
-    let compact_proof_size = compact_proof.encoded_size();
+	let xt_result = StateMachine::new(
+		&proving_backend,
+		&mut changes,
+		&executor,
+		"PovEstimateApi_pov_estimate",
+		encoded_bytes.as_slice(),
+		full_extensions(),
+		&runtime_code,
+		sp_core::testing::TaskExecutor::new(),
+	)
+	.execute(execution.into())
+	.map_err(|e| anyhow!("failed to execute the extrinsic {:?}", e))?;
 
-    let compressed_proof = zstd::stream::encode_all(&compact_proof.encode()[..], 0)
-            .map_err(|e| anyhow!("failed to generate compact proof {:?}", e))?;
-    let compressed_proof_size = compressed_proof.len();
+	let xt_result = Decode::decode(&mut &*xt_result)
+		.map_err(|e| anyhow!("failed to decode the extrinsic result {:?}", e))?;
 
-    Ok(PovInfo {
-        proof_size: proof_size as u64,
-        compact_proof_size: compact_proof_size as u64,
-        compressed_proof_size: compressed_proof_size as u64,
-    })
+	let proof = proving_backend
+		.extract_proof()
+		.expect("A recorder was set and thus, a storage proof can be extracted; qed");
+	let proof_size = proof.encoded_size();
+	let compact_proof = proof
+		.clone()
+		.into_compact_proof::<HasherOf<Block>>(pre_root)
+		.map_err(|e| anyhow!("failed to generate compact proof {:?}", e))?;
+	let compact_proof_size = compact_proof.encoded_size();
+
+	let compressed_proof = zstd::stream::encode_all(&compact_proof.encode()[..], 0)
+		.map_err(|e| anyhow!("failed to generate compact proof {:?}", e))?;
+	let compressed_proof_size = compressed_proof.len();
+
+	Ok(PovInfo {
+		proof_size: proof_size as u64,
+		compact_proof_size: compact_proof_size as u64,
+		compressed_proof_size: compressed_proof_size as u64,
+		result: xt_result,
+	})
 }

@@ -16,24 +16,25 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 #[cfg(feature = "std")]
 use serde::Serialize;
 
 use sp_runtime::ApplyExtrinsicResult;
+use sp_core::Bytes;
 
 #[cfg_attr(feature = "std", derive(Serialize))]
-#[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(Debug, TypeInfo)]
 pub struct PovInfo {
-    pub proof_size: u64,
-    pub compact_proof_size: u64,
-    pub compressed_proof_size: u64,
+	pub proof_size: u64,
+	pub compact_proof_size: u64,
+	pub compressed_proof_size: u64,
+	pub result: ApplyExtrinsicResult,
 }
 
 sp_api::decl_runtime_apis! {
-    pub trait PovEstimateApi {
-        fn pov_estimate(uxt: Block::Extrinsic) -> ApplyExtrinsicResult;
-    }
+	pub trait PovEstimateApi {
+		fn pov_estimate(uxt: Bytes) -> ApplyExtrinsicResult;
+	}
 }
