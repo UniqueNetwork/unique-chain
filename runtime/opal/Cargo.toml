@@ -181,6 +181,7 @@ opal-runtime = [
     'foreign-assets',
     'pallet-test-utils',
 ]
+become-sapphire = []
 
 refungible = []
 scheduler = []

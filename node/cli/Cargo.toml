@@ -335,3 +335,7 @@ try-runtime = [
     'quartz-runtime?/try-runtime',
     'opal-runtime?/try-runtime',
 ]
+sapphire-runtime = [
+    'opal-runtime',
+    'opal-runtime/become-sapphire',
+]
