@@ -24,8 +24,8 @@ let palletAdmin: IKeyringPair;
 let nominal: bigint;
 let palletAddress: string;
 let accounts: IKeyringPair[];
-const LOCKING_PERIOD = 8n; // 20 blocks of relay
-const UNLOCKING_PERIOD = 4n; // 10 blocks of parachain
+const LOCKING_PERIOD = 8n; // 8 blocks of relay
+const UNLOCKING_PERIOD = 4n; // 4 blocks of parachain
 
 describe('App promotion', () => {
   before(async function () {
@@ -655,6 +655,7 @@ describe('App promotion', () => {
 function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
   const ACCURACY = 1_000_000_000n;
+  // 5n / 10_000n = 0.05% p/day
   const income = base + base * (ACCURACY * (calcPeriod * 5n) / (10_000n * DAY)) / ACCURACY ;
   
   if (iter > 1) {
