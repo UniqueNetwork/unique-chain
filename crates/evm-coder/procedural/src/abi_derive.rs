@@ -4,56 +4,62 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 	let name = &ast.ident;
 	let docs = extract_docs(&ast.attrs)?;
 
-	let (is_named_fields, field_names, field_types, field_docs, params_count) = match &ast.data {
-		syn::Data::Struct(ds) => match ds.fields {
-			syn::Fields::Named(ref fields) => Ok((
-				true,
-				fields.named.iter().enumerate().map(map_field_to_name),
-				fields.named.iter().map(map_field_to_type),
-				fields.named.iter().map(map_field_to_doc),
-				fields.named.len(),
-			)),
-			syn::Fields::Unnamed(ref fields) => Ok((
-				false,
-				fields.unnamed.iter().enumerate().map(map_field_to_name),
-				fields.unnamed.iter().map(map_field_to_type),
-				fields.unnamed.iter().map(map_field_to_doc),
-				fields.unnamed.len(),
-			)),
-			syn::Fields::Unit => Err(syn::Error::new(name.span(), "Unit structs not supported")),
-		},
+	match &ast.data {
+		syn::Data::Struct(ds) => {
+			let (is_named_fields, field_names, field_types, field_docs, params_count) =
+				match ds.fields {
+					syn::Fields::Named(ref fields) => Ok((
+						true,
+						fields.named.iter().enumerate().map(map_field_to_name),
+						fields.named.iter().map(map_field_to_type),
+						fields.named.iter().map(map_field_to_doc),
+						fields.named.len(),
+					)),
+					syn::Fields::Unnamed(ref fields) => Ok((
+						false,
+						fields.unnamed.iter().enumerate().map(map_field_to_name),
+						fields.unnamed.iter().map(map_field_to_type),
+						fields.unnamed.iter().map(map_field_to_doc),
+						fields.unnamed.len(),
+					)),
+					syn::Fields::Unit => {
+						Err(syn::Error::new(name.span(), "Unit structs not supported"))
+					}
+				}?;
+
+			if params_count == 0 {
+				return Err(syn::Error::new(name.span(), "Empty structs not supported"));
+			};
+
+			let tuple_type = tuple_type(field_types.clone());
+			let tuple_ref_type = tuple_ref_type(field_types.clone());
+			let tuple_data = tuple_data_as_ref(is_named_fields, field_names.clone());
+			let tuple_names = tuple_names(is_named_fields, field_names.clone());
+			let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
+
+			let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
+			let abi_type = impl_abi_type(name, tuple_type.clone());
+			let abi_read = impl_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
+			let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
+			let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
+			let solidity_type_name =
+				impl_solidity_type_name(name, field_types.clone(), params_count);
+			let solidity_struct_collect =
+				impl_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
+
+			Ok(quote! {
+				#can_be_plcaed_in_vec
+				#abi_type
+				#abi_read
+				#abi_write
+				#solidity_type
+				#solidity_type_name
+				#solidity_struct_collect
+			})
+		}
 		syn::Data::Enum(_) => Err(syn::Error::new(name.span(), "Enums not supported")),
 		syn::Data::Union(_) => Err(syn::Error::new(name.span(), "Unions not supported")),
-	}?;
-
-	if params_count == 0 {
-		return Err(syn::Error::new(name.span(), "Empty structs not supported"));
-	};
-
-	let tuple_type = tuple_type(field_types.clone());
-	let tuple_ref_type = tuple_ref_type(field_types.clone());
-	let tuple_data = tuple_data_as_ref(is_named_fields, field_names.clone());
-	let tuple_names = tuple_names(is_named_fields, field_names.clone());
-	let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
-
-	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
-	let abi_type = impl_abi_type(name, tuple_type.clone());
-	let abi_read = impl_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
-	let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
-	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
-	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
-	let solidity_struct_collect =
-		impl_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
-
-	Ok(quote! {
-		#can_be_plcaed_in_vec
-		#abi_type
-		#abi_read
-		#abi_write
-		#solidity_type
-		#solidity_type_name
-		#solidity_struct_collect
-	})
+	}
 }
 
 fn tuple_type<'a>(
