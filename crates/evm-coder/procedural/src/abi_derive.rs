@@ -58,9 +58,26 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 			})
 		}
 		syn::Data::Enum(de) => {
-			let _ = check_repr_u8(name, &ast.attrs)?;
+			check_repr_u8(name, &ast.attrs)?;
 
-			// dbg!(de);
+			dbg!(&de);
+			for f in de.variants.iter().filter_map(|v| {
+				if !v.fields.is_empty() {
+					Some(Err(syn::Error::new(
+						v.ident.span(),
+						"Enumeration parameters should not have fields",
+					)))
+				} else if v.discriminant.is_some() {
+					Some(Err(syn::Error::new(
+						v.ident.span(),
+						"Enumeration options should not have an explicit specified value",
+					)))
+				} else {
+					None
+				}
+			}) {
+				f?;
+			}
 			Ok(quote!())
 		}
 		syn::Data::Union(_) => Err(syn::Error::new(name.span(), "Unions not supported")),

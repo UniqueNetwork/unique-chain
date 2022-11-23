@@ -5,7 +5,7 @@ mod test_struct {
 	#[test]
 	fn empty_struct() {
 		let t = trybuild::TestCases::new();
-		t.compile_fail("tests/build_failed/abi_derive_generation.rs");
+		t.compile_fail("tests/build_failed/abi_derive_struct_generation.rs");
 	}
 
 	#[derive(AbiCoder, PartialEq, Debug)]
@@ -744,9 +744,15 @@ mod test_enum {
 	enum Color {
 		Red,
 		Green,
-		Blue = 255,
+		Blue,
 	}
 
 	#[test]
 	fn empty() {}
+
+	#[test]
+	fn bad_enums() {
+		let t = trybuild::TestCases::new();
+		t.compile_fail("tests/build_failed/abi_derive_enum_generation.rs");
+	}
 }
