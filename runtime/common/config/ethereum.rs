@@ -91,6 +91,7 @@ impl pallet_evm::Config for Runtime {
 }
 
 impl pallet_evm_migration::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
 }
 
