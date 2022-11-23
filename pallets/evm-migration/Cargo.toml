@@ -8,6 +8,7 @@ edition = "2021"
 scale-info = { version = "2.0.1", default-features = false, features = [
     "derive",
 ] }
+ethereum = { version = "0.12.0", default-features = false }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
