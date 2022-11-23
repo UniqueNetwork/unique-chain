@@ -303,10 +303,28 @@ where
 	/// 	"tokenLimit",
 	/// 	"sponsorTransferTimeout",
 	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
+	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint256) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
+
+		let value = value
+			.try_into()
+			.map_err(|_| Error::Revert(format!("can't convert value to u32 \"{}\"", value)))?;
+
+		let convert_value_to_bool = || match value {
+			0 => Ok(false),
+			1 => Ok(true),
+			_ => {
+				return Err(Error::Revert(format!(
+					"can't convert value to boolean \"{}\"",
+					value
+				)))
+			}
+		};
 
 		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
@@ -330,48 +348,16 @@ where
 			"sponsorApproveTimeout" => {
 				limits.sponsor_approve_timeout = Some(value);
 			}
-			_ => {
-				return Err(Error::Revert(format!(
-					"unknown integer limit \"{}\"",
-					limit
-				)))
-			}
-		}
-		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
-	}
-
-	/// Set limits for the collection.
-	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param value Value of the limit.
-	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
-		self.consume_store_reads_and_writes(1, 1)?;
-
-		check_is_owner_or_admin(caller, self)?;
-		let mut limits = self.limits.clone();
-
-		match limit.as_str() {
 			"ownerCanTransfer" => {
-				limits.owner_can_transfer = Some(value);
+				limits.owner_can_transfer = Some(convert_value_to_bool()?);
 			}
 			"ownerCanDestroy" => {
-				limits.owner_can_destroy = Some(value);
+				limits.owner_can_destroy = Some(convert_value_to_bool()?);
 			}
 			"transfersEnabled" => {
-				limits.transfers_enabled = Some(value);
+				limits.transfers_enabled = Some(convert_value_to_bool()?);
 			}
-			_ => {
-				return Err(Error::Revert(format!(
-					"unknown boolean limit \"{}\"",
-					limit
-				)))
-			}
+			_ => return Err(Error::Revert(format!("unknown limit \"{}\"", limit))),
 		}
 		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
 			.map_err(dispatch_to_evm::<T>)?;

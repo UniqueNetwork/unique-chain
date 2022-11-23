@@ -5831,7 +5831,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-common"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "ethereum",
  "evm-coder",
