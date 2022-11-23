@@ -178,7 +178,7 @@ where
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<(string, bytes)>> {
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -200,7 +200,7 @@ where
 				let key =
 					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
 				let value = bytes(p.value.to_vec());
-				Ok((key, value))
+				Ok(PropertyStruct { key, value })
 			})
 			.collect::<Result<Vec<_>>>()?;
 		Ok(properties)

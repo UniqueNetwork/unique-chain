@@ -188,11 +188,11 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple26[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Property[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple26[](0);
+		return new Property[](0);
 	}
 
 	// /// Set the sponsor of the collection.
@@ -530,12 +530,6 @@ struct EthCrossAccount {
 struct Tuple29 {
 	address field_0;
 	uint256 field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple26 {
-	string field_0;
-	bytes field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f

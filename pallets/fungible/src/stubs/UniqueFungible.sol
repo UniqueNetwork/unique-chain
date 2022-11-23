@@ -87,11 +87,11 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple16[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Property[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple16[](0);
+		return new Property[](0);
 	}
 
 	// /// Set the sponsor of the collection.
@@ -423,12 +423,6 @@ contract Collection is Dummy, ERC165 {
 struct EthCrossAccount {
 	address eth;
 	uint256 sub;
-}
-
-/// @dev anonymous struct
-struct Tuple16 {
-	string field_0;
-	bytes field_1;
 }
 
 /// @dev Property struct
