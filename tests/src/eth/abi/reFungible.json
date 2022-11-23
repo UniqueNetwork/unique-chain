@@ -231,7 +231,7 @@
           { "internalType": "string", "name": "field_0", "type": "string" },
           { "internalType": "bytes", "name": "field_1", "type": "bytes" }
         ],
-        "internalType": "struct Tuple22[]",
+        "internalType": "struct Tuple26[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -255,7 +255,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple25",
+        "internalType": "struct Tuple29",
         "name": "",
         "type": "tuple"
       }
@@ -665,10 +665,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "string", "name": "field_0", "type": "string" },
-          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
         ],
-        "internalType": "struct Tuple8[]",
+        "internalType": "struct Property[]",
         "name": "",
         "type": "tuple[]"
       }

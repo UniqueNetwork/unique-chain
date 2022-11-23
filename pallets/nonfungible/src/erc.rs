@@ -725,7 +725,7 @@ where
 		&self,
 		token_id: uint256,
 		keys: Vec<string>,
-	) -> Result<Vec<(string, bytes)>> {
+	) -> Result<Vec<PropertyStruct>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -745,7 +745,7 @@ where
 			let key = string::from_utf8(p.key.to_vec())
 				.map_err(|e| Error::Revert(alloc::format!("{}", e)))?;
 			let value = bytes(p.value.to_vec());
-			Ok((key, value))
+			Ok(PropertyStruct { key, value })
 		})
 		.collect::<Result<Vec<_>>>()
 	}

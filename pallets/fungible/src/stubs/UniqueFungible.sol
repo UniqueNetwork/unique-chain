@@ -437,7 +437,7 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x29f4dcd9
+/// @dev the ERC-165 identifier for this interface is 0x5b7038cf
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,

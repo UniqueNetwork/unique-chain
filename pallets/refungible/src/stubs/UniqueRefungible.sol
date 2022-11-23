@@ -188,11 +188,11 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple22[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Tuple26[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple22[](0);
+		return new Tuple26[](0);
 	}
 
 	// /// Set the sponsor of the collection.
@@ -253,10 +253,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple25 memory) {
+	function collectionSponsor() public view returns (Tuple29 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple25(0x0000000000000000000000000000000000000000, 0);
+		return Tuple29(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -527,13 +527,13 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple25 {
+struct Tuple29 {
 	address field_0;
 	uint256 field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple22 {
+struct Tuple26 {
 	string field_0;
 	bytes field_1;
 }
@@ -680,7 +680,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xab243667
+/// @dev the ERC-165 identifier for this interface is 0x1d4b64d6
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -728,12 +728,12 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0xefc26c69,
 	///  or in textual repr: tokenProperties(uint256,string[])
-	function tokenProperties(uint256 tokenId, string[] memory keys) public view returns (Tuple8[] memory) {
+	function tokenProperties(uint256 tokenId, string[] memory keys) public view returns (Property[] memory) {
 		require(false, stub_error);
 		tokenId;
 		keys;
 		dummy;
-		return new Tuple8[](0);
+		return new Property[](0);
 	}
 
 	/// @notice Transfer ownership of an RFT
@@ -849,7 +849,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple10[] memory tokens) public returns (bool) {
+	// function mintBulkWithTokenURI(address to, Tuple14[] memory tokens) public returns (bool) {
 	// 	require(false, stub_error);
 	// 	to;
 	// 	tokens;
@@ -871,15 +871,9 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple10 {
+struct Tuple14 {
 	uint256 field_0;
 	string field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple8 {
-	string field_0;
-	bytes field_1;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension

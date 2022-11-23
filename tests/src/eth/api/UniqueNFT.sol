@@ -45,7 +45,7 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @param properties settable properties
 	/// @dev EVM selector for this function is: 0x14ed3a6e,
 	///  or in textual repr: setProperties(uint256,(string,bytes)[])
-	function setProperties(uint256 tokenId, Tuple21[] memory properties) external;
+	function setProperties(uint256 tokenId, Property[] memory properties) external;
 
 	// /// @notice Delete token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -95,7 +95,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param properties Vector of properties key/value pair.
 	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple21[] memory properties) external;
+	function setCollectionProperties(Property[] memory properties) external;
 
 	// /// Delete collection property.
 	// ///
@@ -127,7 +127,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) external view returns (Tuple21[] memory);
+	function collectionProperties(string[] memory keys) external view returns (Tuple25[] memory);
 
 	// /// Set the sponsor of the collection.
 	// ///
@@ -169,7 +169,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple24 memory);
+	function collectionSponsor() external view returns (Tuple28 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -346,13 +346,13 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple24 {
+struct Tuple28 {
 	address field_0;
 	uint256 field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple21 {
+struct Tuple25 {
 	string field_0;
 	bytes field_1;
 }
@@ -452,7 +452,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x244543ee
+/// @dev the ERC-165 identifier for this interface is 0xb8f094a0
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -483,7 +483,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0xefc26c69,
 	///  or in textual repr: tokenProperties(uint256,string[])
-	function tokenProperties(uint256 tokenId, string[] memory keys) external view returns (Tuple7[] memory);
+	function tokenProperties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
 
 	/// @notice Set or reaffirm the approved address for an NFT
 	/// @dev The zero address indicates there is no approved address.
@@ -567,20 +567,14 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple10[] memory tokens) external returns (bool);
+	// function mintBulkWithTokenURI(address to, Tuple13[] memory tokens) external returns (bool);
 
 }
 
 /// @dev anonymous struct
-struct Tuple10 {
+struct Tuple13 {
 	uint256 field_0;
 	string field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple7 {
-	string field_0;
-	bytes field_1;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
