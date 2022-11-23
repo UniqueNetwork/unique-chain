@@ -122,7 +122,11 @@ define_struct_for_server_api! {
 #[async_trait]
 pub trait PovEstimateApi<BlockHash> {
 	#[method(name = "unique_estimateExtrinsicPoV")]
-	fn estimate_extrinsic_pov(&self, encoded_xt: Bytes, at: Option<BlockHash>) -> Result<PovInfo>;
+	fn estimate_extrinsic_pov(
+		&self,
+		encoded_xts: Vec<Bytes>,
+		at: Option<BlockHash>,
+	) -> Result<PovInfo>;
 }
 
 #[allow(deprecated)]
@@ -135,7 +139,7 @@ where
 {
 	fn estimate_extrinsic_pov(
 		&self,
-		encoded_xt: Bytes,
+		encoded_xts: Vec<Bytes>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> Result<PovInfo> {
 		self.deny_unsafe.check_if_safe()?;
@@ -151,20 +155,20 @@ where
 			RuntimeId::Unique => execute_extrinsic_in_sandbox::<Block, UniqueRuntimeExecutor>(
 				state,
 				&self.exec_params,
-				encoded_xt,
+				encoded_xts,
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => execute_extrinsic_in_sandbox::<Block, QuartzRuntimeExecutor>(
 				state,
 				&self.exec_params,
-				encoded_xt,
+				encoded_xts,
 			),
 
 			RuntimeId::Opal => execute_extrinsic_in_sandbox::<Block, OpalRuntimeExecutor>(
 				state,
 				&self.exec_params,
-				encoded_xt,
+				encoded_xts,
 			),
 
 			runtime_id => Err(anyhow!("unknown runtime id {:?}", runtime_id).into()),
@@ -188,7 +192,7 @@ fn full_extensions() -> Extensions {
 fn execute_extrinsic_in_sandbox<Block, D>(
 	state: StateOf<Block>,
 	exec_params: &ExecutorParams,
-	encoded_xt: Bytes,
+	encoded_xts: Vec<Bytes>,
 ) -> Result<PovInfo>
 where
 	Block: BlockT,
@@ -216,23 +220,29 @@ where
 	);
 	let execution = ExecutionStrategy::NativeElseWasm;
 
-	let encoded_bytes = encoded_xt.encode();
+	let mut results = Vec::new();
 
-	let xt_result = StateMachine::new(
-		&proving_backend,
-		&mut changes,
-		&executor,
-		"PovEstimateApi_pov_estimate",
-		encoded_bytes.as_slice(),
-		full_extensions(),
-		&runtime_code,
-		sp_core::testing::TaskExecutor::new(),
-	)
-	.execute(execution.into())
-	.map_err(|e| anyhow!("failed to execute the extrinsic {:?}", e))?;
+	for encoded_xt in encoded_xts {
+		let encoded_bytes = encoded_xt.encode();
 
-	let xt_result = Decode::decode(&mut &*xt_result)
-		.map_err(|e| anyhow!("failed to decode the extrinsic result {:?}", e))?;
+		let xt_result = StateMachine::new(
+			&proving_backend,
+			&mut changes,
+			&executor,
+			"PovEstimateApi_pov_estimate",
+			encoded_bytes.as_slice(),
+			full_extensions(),
+			&runtime_code,
+			sp_core::testing::TaskExecutor::new(),
+		)
+		.execute(execution.into())
+		.map_err(|e| anyhow!("failed to execute the extrinsic {:?}", e))?;
+
+		let xt_result = Decode::decode(&mut &*xt_result)
+			.map_err(|e| anyhow!("failed to decode the extrinsic result {:?}", e))?;
+
+		results.push(xt_result);
+	}
 
 	let proof = proving_backend
 		.extract_proof()
@@ -252,6 +262,6 @@ where
 		proof_size: proof_size as u64,
 		compact_proof_size: compact_proof_size as u64,
 		compressed_proof_size: compressed_proof_size as u64,
-		result: xt_result,
+		results,
 	})
 }

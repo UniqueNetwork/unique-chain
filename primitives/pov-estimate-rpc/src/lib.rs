@@ -17,6 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use scale_info::TypeInfo;
+use sp_std::vec::Vec;
 
 #[cfg(feature = "std")]
 use serde::Serialize;
@@ -30,7 +31,7 @@ pub struct PovInfo {
 	pub proof_size: u64,
 	pub compact_proof_size: u64,
 	pub compressed_proof_size: u64,
-	pub result: ApplyExtrinsicResult,
+	pub results: Vec<ApplyExtrinsicResult>,
 }
 
 sp_api::decl_runtime_apis! {
