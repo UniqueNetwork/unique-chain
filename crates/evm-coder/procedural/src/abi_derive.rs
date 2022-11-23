@@ -2,129 +2,151 @@ use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
-
 	match &ast.data {
-		syn::Data::Struct(ds) => {
-			let docs = extract_docs(&ast.attrs)?;
-			let (is_named_fields, field_names, field_types, field_docs, params_count) =
-				match ds.fields {
-					syn::Fields::Named(ref fields) => Ok((
-						true,
-						fields.named.iter().enumerate().map(map_field_to_name),
-						fields.named.iter().map(map_field_to_type),
-						fields.named.iter().map(map_field_to_doc),
-						fields.named.len(),
-					)),
-					syn::Fields::Unnamed(ref fields) => Ok((
-						false,
-						fields.unnamed.iter().enumerate().map(map_field_to_name),
-						fields.unnamed.iter().map(map_field_to_type),
-						fields.unnamed.iter().map(map_field_to_doc),
-						fields.unnamed.len(),
-					)),
-					syn::Fields::Unit => {
-						Err(syn::Error::new(name.span(), "Unit structs not supported"))
-					}
-				}?;
-
-			if params_count == 0 {
-				return Err(syn::Error::new(name.span(), "Empty structs not supported"));
-			};
-
-			let tuple_type = tuple_type(field_types.clone());
-			let tuple_ref_type = tuple_ref_type(field_types.clone());
-			let tuple_data = tuple_data_as_ref(is_named_fields, field_names.clone());
-			let tuple_names = tuple_names(is_named_fields, field_names.clone());
-			let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
-
-			let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
-			let abi_type = impl_abi_type(name, tuple_type.clone());
-			let abi_read = impl_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
-			let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
-			let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
-			let solidity_type_name =
-				impl_solidity_type_name(name, field_types.clone(), params_count);
-			let solidity_struct_collect =
-				impl_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
-
-			Ok(quote! {
-				#can_be_plcaed_in_vec
-				#abi_type
-				#abi_read
-				#abi_write
-				#solidity_type
-				#solidity_type_name
-				#solidity_struct_collect
-			})
-		}
-		syn::Data::Enum(de) => {
-			check_repr_u8(name, &ast.attrs)?;
-
-			dbg!(&de);
-			for f in de.variants.iter().filter_map(|v| {
-				if !v.fields.is_empty() {
-					Some(Err(syn::Error::new(
-						v.ident.span(),
-						"Enumeration parameters should not have fields",
-					)))
-				} else if v.discriminant.is_some() {
-					Some(Err(syn::Error::new(
-						v.ident.span(),
-						"Enumeration options should not have an explicit specified value",
-					)))
-				} else {
-					None
-				}
-			}) {
-				f?;
-			}
-			Ok(quote!())
-		}
+		syn::Data::Struct(ds) => expand_struct(ds, ast),
+		syn::Data::Enum(de) => expand_enum(de, ast),
 		syn::Data::Union(_) => Err(syn::Error::new(name.span(), "Unions not supported")),
 	}
 }
 
-fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Result<()> {
-	let repr_u8 = attrs
-		.iter()
-		.filter_map(|attr| {
-			if let Some(ps) = attr.path.segments.first() {
-				if ps.ident == "repr" {
-					let meta = match attr.parse_meta() {
-						Ok(meta) => meta,
-						Err(e) => return Some(Err(e)),
-					};
-					let is_repr_u8 = match meta {
-						syn::Meta::List(p) => {
-							p.nested
-								.iter()
-								.filter(|nm| match nm {
-									syn::NestedMeta::Meta(m) => match m {
-										syn::Meta::Path(p) => {
-											p.segments.iter().filter(|ps| ps.ident == "u8").count()
-												== 1
-										}
-										_ => false,
-									},
-									_ => false,
-								})
-								.count() == 1
-						}
-						_ => false,
-					};
+fn expand_struct(
+	ds: &syn::DataStruct,
+	ast: &syn::DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+	let name = &ast.ident;
+	let docs = extract_docs(&ast.attrs)?;
+	let (is_named_fields, field_names, field_types, field_docs, params_count) = match ds.fields {
+		syn::Fields::Named(ref fields) => Ok((
+			true,
+			fields.named.iter().enumerate().map(map_field_to_name),
+			fields.named.iter().map(map_field_to_type),
+			fields.named.iter().map(map_field_to_doc),
+			fields.named.len(),
+		)),
+		syn::Fields::Unnamed(ref fields) => Ok((
+			false,
+			fields.unnamed.iter().enumerate().map(map_field_to_name),
+			fields.unnamed.iter().map(map_field_to_type),
+			fields.unnamed.iter().map(map_field_to_doc),
+			fields.unnamed.len(),
+		)),
+		syn::Fields::Unit => Err(syn::Error::new(name.span(), "Unit structs not supported")),
+	}?;
 
-					if is_repr_u8 {
-						return Some(Ok(()));
-					};
-				}
-			}
-			None::<syn::Result<()>>
-		})
-		.collect::<syn::Result<Vec<_>>>()?;
-
-	if repr_u8.len() != 1 {
-		return Err(syn::Error::new(name.span(), "Enum is not \"repr(u8)\""));
+	if params_count == 0 {
+		return Err(syn::Error::new(name.span(), "Empty structs not supported"));
 	};
+
+	let tuple_type = tuple_type(field_types.clone());
+	let tuple_ref_type = tuple_ref_type(field_types.clone());
+	let tuple_data = tuple_data_as_ref(is_named_fields, field_names.clone());
+	let tuple_names = tuple_names(is_named_fields, field_names.clone());
+	let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
+
+	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
+	let abi_type = impl_abi_type(name, tuple_type.clone());
+	let abi_read = impl_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
+	let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
+	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
+	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
+	let solidity_struct_collect =
+		impl_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
+
+	Ok(quote! {
+		#can_be_plcaed_in_vec
+		#abi_type
+		#abi_read
+		#abi_write
+		#solidity_type
+		#solidity_type_name
+		#solidity_struct_collect
+	})
+}
+
+fn expand_enum(
+	de: &syn::DataEnum,
+	ast: &syn::DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+	let name = &ast.ident;
+	check_repr_u8(name, &ast.attrs)?;
+	check_option_validity(de)?;
+
+	dbg!(&de);
+
+	Ok(quote!())
+}
+
+fn check_option_validity(de: &syn::DataEnum) -> syn::Result<()> {
+	for error in de.variants.iter().filter_map(|v| {
+		if !v.fields.is_empty() {
+			Some(Err(syn::Error::new(
+				v.ident.span(),
+				"Enumeration parameters should not have fields",
+			)))
+		} else if v.discriminant.is_some() {
+			Some(Err(syn::Error::new(
+				v.ident.span(),
+				"Enumeration options should not have an explicit specified value",
+			)))
+		} else {
+			None
+		}
+	}) {
+		return error;
+	}
+
+	Ok(())
+}
+
+fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Result<()> {
+	let mut has_repr = false;
+	for error in attrs.iter().filter_map(|attr| {
+		if let Some(ps) = attr.path.segments.first() {
+			if ps.ident == "repr" {
+				has_repr = true;
+				let meta = match attr.parse_meta() {
+					Ok(meta) => meta,
+					Err(e) => return Some(Err(e)),
+				};
+				match meta {
+					syn::Meta::List(p) => {
+						for error in p.nested.iter().filter_map(|nm| match nm {
+							syn::NestedMeta::Meta(m) => match m {
+								syn::Meta::Path(p) => {
+									for i in p.segments.iter().filter_map(|ps| {
+										if ps.ident != "u8" {
+											Some(Err(syn::Error::new(
+												ps.ident.span(),
+												"Enum is not \"repr(u8)\"",
+											)))
+										} else {
+											None
+										}
+									}) {
+										return Some(i);
+									}
+									None
+								}
+								_ => None,
+							},
+							_ => None,
+						}) {
+							return Some(error);
+						}
+						None::<syn::Result<()>>
+					}
+					_ => None,
+				};
+			}
+		}
+		None
+	}) {
+		return error;
+	}
+
+	if !has_repr {
+		return Err(syn::Error::new(name.span(), "Enum is not \"repr(u8)\""));
+	}
 
 	Ok(())
 }
