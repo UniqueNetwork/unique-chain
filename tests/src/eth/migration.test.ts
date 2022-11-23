@@ -16,16 +16,36 @@
 
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
+import {Struct} from '@polkadot/types';
+
+import {IEvent} from '../util/playgrounds/types';
+import {ApiPromise} from '@polkadot/api';
+
+const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, event: string, fields: any) => {
+  const palletIndex = api.runtimeMetadata.asV14.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
+  const eventMeta = api.events[palletEvents][event].meta;
+  const eventIndex = eventMeta.index.toNumber();
+  const data = [
+    palletIndex, eventIndex,
+  ];
+  const metaEvent = api.registry.findMetaEvent(new Uint8Array(data));
+  data.push(...new Struct(api.registry, {data: metaEvent}, {data: fields}).toU8a());
+
+  const typeName = api.registry.lookup.names.find(n => n.endsWith('RuntimeEvent'))!;
+  return api.registry.createType(typeName, new Uint8Array(data)).toHex();
+};
 
 describe('EVM Migrations', () => {
   let superuser: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
       superuser = await privateKey('//Alice');
+      charlie = await privateKey('//Charlie');
     });
   });
-  
+
   // todo:playgrounds requires sudo, look into later
   itEth('Deploy contract saved state', async ({helper}) => {
     /*
@@ -104,5 +124,84 @@ describe('EVM Migrations', () => {
     for (let i = 1; i <= 4; i++) {
       expect(await contract.methods.get(i).call()).to.be.equal(i.toString());
     }
+  });
+  itEth('Fake collection creation on substrate side', async ({helper}) => {
+    const txInsertEvents = helper.constructApiCall('api.tx.evmMigration.insertEvents', [[
+      encodeEvent(helper.api!, 'Common', 'common', 'CollectionCreated', [
+        // Collection Id
+        9999,
+        // Collection mode: NFT
+        1,
+        // Owner
+        charlie.address,
+      ]),
+    ]]);
+    await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEvents]);
+    const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
+    const eventStrings = event.map(e => `${e.section}.${e.method}`);
+
+    expect(eventStrings).to.contain('common.CollectionCreated');
+  });
+  itEth('Fake token creation on substrate side', async ({helper}) => {
+    const txInsertEvents = helper.constructApiCall('api.tx.evmMigration.insertEvents', [[
+      encodeEvent(helper.api!, 'Common', 'common', 'ItemCreated', [
+        // Collection Id
+        9999,
+        // TokenId
+        9999,
+        // Owner
+        {Substrate: charlie.address},
+        // Amount
+        1,
+      ]),
+    ]]);
+    await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEvents]);
+    const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
+    const eventStrings = event.map(e => `${e.section}.${e.method}`);
+
+    expect(eventStrings).to.contain('common.ItemCreated');
+  });
+  itEth('Fake token creation on ethereum side', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(superuser);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const caller = await helper.eth.createAccountWithBalance(superuser);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+
+    const events: any = [];
+    contract.events.allEvents((_: any, event: any) => {
+      events.push(event);
+    });
+
+    {
+      const txInsertEthLogs = helper.constructApiCall('api.tx.evmMigration.insertEthLogs', [[
+        {
+        // Contract, which has emitted this log
+          address: collectionAddress,
+
+          topics: [
+            // First topic - event signature
+            helper.getWeb3().eth.abi.encodeEventSignature('Transfer(address,address,uint256)'),
+            // Rest of topics - indexed event fields in definition order
+            helper.getWeb3().eth.abi.encodeParameter('address', '0x' + '00'.repeat(20)),
+            helper.getWeb3().eth.abi.encodeParameter('address', caller),
+            helper.getWeb3().eth.abi.encodeParameter('uint256', 9999),
+          ],
+
+          // Every field coming from event, which is not marked as indexed, should be encoded here
+          // NFT transfer has no such fields, but here is an example for some other possible event:
+          // data: helper.getWeb3().eth.abi.encodeParameters(['uint256', 'address'], [22, collectionAddress])
+          data: [],
+        },
+      ]]);
+      await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEthLogs]);
+    }
+
+    if (events.length == 0) await helper.wait.newBlocks(1);
+    const event = events[0];
+
+    expect(event.address).to.be.equal(collectionAddress);
+    expect(event.returnValues.from).to.be.equal('0x' + '00'.repeat(20));
+    expect(event.returnValues.to).to.be.equal(caller);
+    expect(event.returnValues.tokenId).to.be.equal('9999');
   });
 });

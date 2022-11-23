@@ -25,8 +25,11 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
+	use frame_support::{
+		pallet_prelude::{*, DispatchResult},
+		traits::IsType,
+	};
+	use frame_system::pallet_prelude::{*, OriginFor};
 	use sp_core::{H160, H256};
 	use sp_std::vec::Vec;
 	use super::weights::WeightInfo;
@@ -36,6 +39,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm::Config {
 		/// Weights
 		type WeightInfo: WeightInfo;
+		/// The overarching event type.
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 	}
 
 	type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -44,12 +49,20 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	#[pallet::event]
+	pub enum Event<T: Config> {
+		/// This event is used in benchmarking and can be used for tests
+		TestEvent,
+	}
+
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Can only migrate to empty address.
 		AccountNotEmpty,
 		/// Migration of this account is not yet started, or already finished.
 		AccountIsNotMigrating,
+		/// Failed to decode event bytes
+		BadEvent,
 	}
 
 	#[pallet::storage]
@@ -105,6 +118,30 @@ pub mod pallet {
 
 			<pallet_evm::AccountCodes<T>>::insert(&address, code);
 			<MigrationPending<T>>::remove(address);
+			Ok(())
+		}
+
+		/// Create ethereum events attached to the fake transaction
+		#[pallet::weight(<SelfWeightOf<T>>::insert_eth_logs(logs.len() as u32))]
+		pub fn insert_eth_logs(origin: OriginFor<T>, logs: Vec<ethereum::Log>) -> DispatchResult {
+			ensure_root(origin)?;
+			for log in logs {
+				<pallet_evm::Pallet<T>>::deposit_log(log);
+			}
+			// Transactions is created by FakeTransactionFinalizer
+			Ok(())
+		}
+
+		/// Create substrate events
+		#[pallet::weight(<SelfWeightOf<T>>::insert_events(events.len() as u32))]
+		pub fn insert_events(origin: OriginFor<T>, events: Vec<Vec<u8>>) -> DispatchResult {
+			ensure_root(origin)?;
+			for event in events {
+				<frame_system::Pallet<T>>::deposit_event(
+					<T as frame_system::Config>::RuntimeEvent::decode(&mut event.as_slice())
+						.map_err(|_| <Error<T>>::BadEvent)?,
+				);
+			}
 			Ok(())
 		}
 	}
