@@ -59,7 +59,7 @@ jobs:
         include: ${{fromJson(needs.nodes-execution-matrix.outputs.matrix)}}
 
     steps:
-
+    
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -163,16 +163,16 @@ jobs:
 
 
       - name: Run Parallel tests before Node Parachain upgrade
-       working-directory: ${{ matrix.mainnet_branch }}/tests
-       run: |
-         yarn install
-         yarn add mochawesome
-         node scripts/readyness.js
-         echo "Ready to start tests"
-         yarn polkadot-types
-         NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
-       env:
-         RPC_URL: http://127.0.0.1:9933/
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Parallel Test Report Before Node upgrade
       #  uses: phoenix-actions/test-reporting@v8
@@ -285,16 +285,16 @@ jobs:
         shell: bash
 
       - name: Run Parallel tests after Node Parachain upgrade
-       working-directory: ${{ matrix.mainnet_branch }}/tests
-       run: |
-         yarn install
-         yarn add mochawesome
-         node scripts/readyness.js
-         echo "Ready to start tests"
-         yarn polkadot-types
-         NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
-       env:
-         RPC_URL: http://127.0.0.1:9933/
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
 
       # - name: Test Report Parallel After Node upgrade
       #  uses: phoenix-actions/test-reporting@v8
@@ -307,11 +307,11 @@ jobs:
       #    fail-on-error: 'false'
       
       - name: Run Sequential tests after Node Parachain upgrade
-       if: success() || failure()
-       working-directory: ${{ matrix.mainnet_branch }}/tests
-       run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-       env:
-         RPC_URL: http://127.0.0.1:9933/
+        if: success() || failure()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Sequential Test Report After Node upgrade
       #  uses: phoenix-actions/test-reporting@v8
@@ -335,7 +335,8 @@ jobs:
           docker system prune -f
           docker image prune -f -a
 
-      - name: Remove repo at the end
+      - name: Remove repo and artifacts at the end
         if: always()                   # run this step always
         run: |
+          rm -rf /tmp/node-only-update
           ls -ls ./
