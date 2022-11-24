@@ -726,13 +726,9 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
       /**
-       * Estimate PoV size of an encoded call
-       **/
-      estimateCallPoV: AugmentedRpc<(encodedCall: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
-      /**
        * Estimate PoV size of an encoded extrinsic
        **/
-      estimateExtrinsicPoV: AugmentedRpc<(encodedXt: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
+      estimateExtrinsicPoV: AugmentedRpc<(encodedXt: Vec<Bytes> | (Bytes | string | Uint8Array)[], at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
       /**
        * Get the last token ID created in a collection
        **/

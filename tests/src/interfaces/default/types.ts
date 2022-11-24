@@ -3058,7 +3058,14 @@ export interface UpPovEstimateRpcPovInfo extends Struct {
   readonly proofSize: u64;
   readonly compactProofSize: u64;
   readonly compressedProofSize: u64;
-  readonly result: Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>;
+  readonly results: Vec<Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>>;
+  readonly keyValues: Vec<UpPovEstimateRpcTrieKeyValue>;
+}
+
+/** @name UpPovEstimateRpcTrieKeyValue */
+export interface UpPovEstimateRpcTrieKeyValue extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
 }
 
 /** @name XcmDoubleEncoded */

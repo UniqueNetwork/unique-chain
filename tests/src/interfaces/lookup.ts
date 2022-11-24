@@ -1211,7 +1211,15 @@ export default {
     data: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup109: pallet_ethereum::pallet::Event
+=======
+<<<<<<< HEAD
+   * Lookup113: pallet_ethereum::pallet::Event
+=======
+   * Lookup115: pallet_ethereum::pallet::Event
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEthereumEvent: {
     _enum: {
@@ -1224,7 +1232,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup110: evm_core::error::ExitReason
+=======
+<<<<<<< HEAD
+   * Lookup114: evm_core::error::ExitReason
+=======
+   * Lookup116: evm_core::error::ExitReason
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EvmCoreErrorExitReason: {
     _enum: {
@@ -1235,13 +1251,29 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup111: evm_core::error::ExitSucceed
+=======
+<<<<<<< HEAD
+   * Lookup115: evm_core::error::ExitSucceed
+=======
+   * Lookup117: evm_core::error::ExitSucceed
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EvmCoreErrorExitSucceed: {
     _enum: ['Stopped', 'Returned', 'Suicided']
   },
   /**
+<<<<<<< HEAD
    * Lookup112: evm_core::error::ExitError
+=======
+<<<<<<< HEAD
+   * Lookup116: evm_core::error::ExitError
+=======
+   * Lookup118: evm_core::error::ExitError
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EvmCoreErrorExitError: {
     _enum: {
@@ -1263,13 +1295,29 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup115: evm_core::error::ExitRevert
+=======
+<<<<<<< HEAD
+   * Lookup119: evm_core::error::ExitRevert
+=======
+   * Lookup121: evm_core::error::ExitRevert
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EvmCoreErrorExitRevert: {
     _enum: ['Reverted']
   },
   /**
+<<<<<<< HEAD
    * Lookup116: evm_core::error::ExitFatal
+=======
+<<<<<<< HEAD
+   * Lookup120: evm_core::error::ExitFatal
+=======
+   * Lookup122: evm_core::error::ExitFatal
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EvmCoreErrorExitFatal: {
     _enum: {
@@ -1280,7 +1328,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup117: pallet_evm_contract_helpers::pallet::Event<T>
+=======
+<<<<<<< HEAD
+   * Lookup121: pallet_evm_contract_helpers::pallet::Event<T>
+=======
+   * Lookup123: pallet_evm_contract_helpers::pallet::Event<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmContractHelpersEvent: {
     _enum: {
@@ -1290,25 +1346,53 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup118: pallet_evm_migration::pallet::Event<T>
+=======
+<<<<<<< HEAD
+   * Lookup122: pallet_evm_migration::pallet::Event<T>
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmMigrationEvent: {
     _enum: ['TestEvent']
   },
   /**
+<<<<<<< HEAD
    * Lookup119: pallet_maintenance::pallet::Event<T>
+=======
+   * Lookup123: pallet_maintenance::pallet::Event<T>
+=======
+   * Lookup124: pallet_maintenance::pallet::Event<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletMaintenanceEvent: {
     _enum: ['MaintenanceEnabled', 'MaintenanceDisabled']
   },
   /**
+<<<<<<< HEAD
    * Lookup120: pallet_test_utils::pallet::Event<T>
+=======
+<<<<<<< HEAD
+   * Lookup124: pallet_test_utils::pallet::Event<T>
+=======
+   * Lookup125: pallet_test_utils::pallet::Event<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTestUtilsEvent: {
     _enum: ['ValueIsSet', 'ShouldRollback', 'BatchCompleted']
   },
   /**
+<<<<<<< HEAD
    * Lookup121: frame_system::Phase
+=======
+<<<<<<< HEAD
+   * Lookup125: frame_system::Phase
+=======
+   * Lookup126: frame_system::Phase
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemPhase: {
     _enum: {
@@ -1318,14 +1402,30 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup124: frame_system::LastRuntimeUpgradeInfo
+=======
+<<<<<<< HEAD
+   * Lookup127: frame_system::LastRuntimeUpgradeInfo
+=======
+   * Lookup128: frame_system::LastRuntimeUpgradeInfo
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemLastRuntimeUpgradeInfo: {
     specVersion: 'Compact<u32>',
     specName: 'Text'
   },
   /**
+<<<<<<< HEAD
    * Lookup125: frame_system::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup128: frame_system::pallet::Call<T>
+=======
+   * Lookup129: frame_system::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemCall: {
     _enum: {
@@ -1360,7 +1460,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup129: frame_system::limits::BlockWeights
+=======
+<<<<<<< HEAD
+   * Lookup130: frame_system::limits::BlockWeights
+=======
+<<<<<<< HEAD
+   * Lookup133: frame_system::limits::BlockWeights
+=======
+   * Lookup134: frame_system::limits::BlockWeights
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemLimitsBlockWeights: {
     baseBlock: 'SpWeightsWeightV2Weight',
@@ -1368,7 +1480,19 @@ export default {
     perClass: 'FrameSupportDispatchPerDispatchClassWeightsPerClass'
   },
   /**
+<<<<<<< HEAD
    * Lookup130: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+=======
+<<<<<<< HEAD
+   * Lookup131: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+=======
+<<<<<<< HEAD
+   * Lookup134: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+=======
+   * Lookup135: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSupportDispatchPerDispatchClassWeightsPerClass: {
     normal: 'FrameSystemLimitsWeightsPerClass',
@@ -1376,7 +1500,19 @@ export default {
     mandatory: 'FrameSystemLimitsWeightsPerClass'
   },
   /**
+<<<<<<< HEAD
    * Lookup131: frame_system::limits::WeightsPerClass
+=======
+<<<<<<< HEAD
+   * Lookup132: frame_system::limits::WeightsPerClass
+=======
+<<<<<<< HEAD
+   * Lookup135: frame_system::limits::WeightsPerClass
+=======
+   * Lookup136: frame_system::limits::WeightsPerClass
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemLimitsWeightsPerClass: {
     baseExtrinsic: 'SpWeightsWeightV2Weight',
@@ -1385,13 +1521,37 @@ export default {
     reserved: 'Option<SpWeightsWeightV2Weight>'
   },
   /**
+<<<<<<< HEAD
    * Lookup133: frame_system::limits::BlockLength
+=======
+<<<<<<< HEAD
+   * Lookup134: frame_system::limits::BlockLength
+=======
+<<<<<<< HEAD
+   * Lookup137: frame_system::limits::BlockLength
+=======
+   * Lookup138: frame_system::limits::BlockLength
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemLimitsBlockLength: {
     max: 'FrameSupportDispatchPerDispatchClassU32'
   },
   /**
+<<<<<<< HEAD
    * Lookup134: frame_support::dispatch::PerDispatchClass<T>
+=======
+<<<<<<< HEAD
+   * Lookup135: frame_support::dispatch::PerDispatchClass<T>
+=======
+<<<<<<< HEAD
+   * Lookup138: frame_support::dispatch::PerDispatchClass<T>
+=======
+   * Lookup139: frame_support::dispatch::PerDispatchClass<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSupportDispatchPerDispatchClassU32: {
     normal: 'u32',
@@ -1399,14 +1559,38 @@ export default {
     mandatory: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup135: sp_weights::RuntimeDbWeight
+=======
+<<<<<<< HEAD
+   * Lookup136: sp_weights::RuntimeDbWeight
+=======
+<<<<<<< HEAD
+   * Lookup139: sp_weights::RuntimeDbWeight
+=======
+   * Lookup140: sp_weights::RuntimeDbWeight
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   SpWeightsRuntimeDbWeight: {
     read: 'u64',
     write: 'u64'
   },
   /**
+<<<<<<< HEAD
    * Lookup136: sp_version::RuntimeVersion
+=======
+<<<<<<< HEAD
+   * Lookup137: sp_version::RuntimeVersion
+=======
+<<<<<<< HEAD
+   * Lookup140: sp_version::RuntimeVersion
+=======
+   * Lookup141: sp_version::RuntimeVersion
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   SpVersionRuntimeVersion: {
     specName: 'Text',
@@ -1419,13 +1603,37 @@ export default {
     stateVersion: 'u8'
   },
   /**
+<<<<<<< HEAD
    * Lookup141: frame_system::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup142: frame_system::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup145: frame_system::pallet::Error<T>
+=======
+   * Lookup146: frame_system::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FrameSystemError: {
     _enum: ['InvalidSpecName', 'SpecVersionNeedsToIncrease', 'FailedToExtractRuntimeVersion', 'NonDefaultComposite', 'NonZeroRefCount', 'CallFiltered']
   },
   /**
+<<<<<<< HEAD
    * Lookup142: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
+=======
+<<<<<<< HEAD
+   * Lookup143: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
+=======
+<<<<<<< HEAD
+   * Lookup146: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
+=======
+   * Lookup147: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotPrimitivesV2PersistedValidationData: {
     parentHead: 'Bytes',
@@ -1434,19 +1642,55 @@ export default {
     maxPovSize: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup145: polkadot_primitives::v2::UpgradeRestriction
+=======
+<<<<<<< HEAD
+   * Lookup146: polkadot_primitives::v2::UpgradeRestriction
+=======
+<<<<<<< HEAD
+   * Lookup149: polkadot_primitives::v2::UpgradeRestriction
+=======
+   * Lookup150: polkadot_primitives::v2::UpgradeRestriction
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotPrimitivesV2UpgradeRestriction: {
     _enum: ['Present']
   },
   /**
+<<<<<<< HEAD
    * Lookup146: sp_trie::storage_proof::StorageProof
+=======
+<<<<<<< HEAD
+   * Lookup147: sp_trie::storage_proof::StorageProof
+=======
+<<<<<<< HEAD
+   * Lookup150: sp_trie::storage_proof::StorageProof
+=======
+   * Lookup151: sp_trie::storage_proof::StorageProof
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   SpTrieStorageProof: {
     trieNodes: 'BTreeSet<Bytes>'
   },
   /**
+<<<<<<< HEAD
    * Lookup148: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
+=======
+<<<<<<< HEAD
+   * Lookup149: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
+=======
+<<<<<<< HEAD
+   * Lookup152: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
+=======
+   * Lookup153: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: {
     dmqMqcHead: 'H256',
@@ -1455,7 +1699,19 @@ export default {
     egressChannels: 'Vec<(u32,PolkadotPrimitivesV2AbridgedHrmpChannel)>'
   },
   /**
+<<<<<<< HEAD
    * Lookup151: polkadot_primitives::v2::AbridgedHrmpChannel
+=======
+<<<<<<< HEAD
+   * Lookup152: polkadot_primitives::v2::AbridgedHrmpChannel
+=======
+<<<<<<< HEAD
+   * Lookup155: polkadot_primitives::v2::AbridgedHrmpChannel
+=======
+   * Lookup156: polkadot_primitives::v2::AbridgedHrmpChannel
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotPrimitivesV2AbridgedHrmpChannel: {
     maxCapacity: 'u32',
@@ -1466,7 +1722,19 @@ export default {
     mqcHead: 'Option<H256>'
   },
   /**
+<<<<<<< HEAD
    * Lookup152: polkadot_primitives::v2::AbridgedHostConfiguration
+=======
+<<<<<<< HEAD
+   * Lookup153: polkadot_primitives::v2::AbridgedHostConfiguration
+=======
+<<<<<<< HEAD
+   * Lookup156: polkadot_primitives::v2::AbridgedHostConfiguration
+=======
+   * Lookup157: polkadot_primitives::v2::AbridgedHostConfiguration
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotPrimitivesV2AbridgedHostConfiguration: {
     maxCodeSize: 'u32',
@@ -1480,14 +1748,38 @@ export default {
     validationUpgradeDelay: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup158: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
+=======
+<<<<<<< HEAD
+   * Lookup159: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
+=======
+<<<<<<< HEAD
+   * Lookup162: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
+=======
+   * Lookup163: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotCorePrimitivesOutboundHrmpMessage: {
     recipient: 'u32',
     data: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup159: cumulus_pallet_parachain_system::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup160: cumulus_pallet_parachain_system::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup163: cumulus_pallet_parachain_system::pallet::Call<T>
+=======
+   * Lookup164: cumulus_pallet_parachain_system::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletParachainSystemCall: {
     _enum: {
@@ -1506,7 +1798,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup160: cumulus_primitives_parachain_inherent::ParachainInherentData
+=======
+<<<<<<< HEAD
+   * Lookup161: cumulus_primitives_parachain_inherent::ParachainInherentData
+=======
+<<<<<<< HEAD
+   * Lookup164: cumulus_primitives_parachain_inherent::ParachainInherentData
+=======
+   * Lookup165: cumulus_primitives_parachain_inherent::ParachainInherentData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPrimitivesParachainInherentParachainInherentData: {
     validationData: 'PolkadotPrimitivesV2PersistedValidationData',
@@ -1515,27 +1819,75 @@ export default {
     horizontalMessages: 'BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>'
   },
   /**
+<<<<<<< HEAD
    * Lookup162: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
+=======
+<<<<<<< HEAD
+   * Lookup163: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
+=======
+<<<<<<< HEAD
+   * Lookup166: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
+=======
+   * Lookup167: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotCorePrimitivesInboundDownwardMessage: {
     sentAt: 'u32',
     msg: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup165: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
+=======
+<<<<<<< HEAD
+   * Lookup166: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
+=======
+<<<<<<< HEAD
+   * Lookup169: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
+=======
+   * Lookup170: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotCorePrimitivesInboundHrmpMessage: {
     sentAt: 'u32',
     data: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup168: cumulus_pallet_parachain_system::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup169: cumulus_pallet_parachain_system::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup172: cumulus_pallet_parachain_system::pallet::Error<T>
+=======
+   * Lookup173: cumulus_pallet_parachain_system::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletParachainSystemError: {
     _enum: ['OverlappingUpgrades', 'ProhibitedByPolkadot', 'TooBig', 'ValidationDataNotAvailable', 'HostConfigurationNotAvailable', 'NotScheduled', 'NothingAuthorized', 'Unauthorized']
   },
   /**
+<<<<<<< HEAD
    * Lookup170: pallet_balances::BalanceLock<Balance>
+=======
+<<<<<<< HEAD
+   * Lookup171: pallet_balances::BalanceLock<Balance>
+=======
+<<<<<<< HEAD
+   * Lookup174: pallet_balances::BalanceLock<Balance>
+=======
+   * Lookup175: pallet_balances::BalanceLock<Balance>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletBalancesBalanceLock: {
     id: '[u8;8]',
@@ -1543,20 +1895,70 @@ export default {
     reasons: 'PalletBalancesReasons'
   },
   /**
+<<<<<<< HEAD
    * Lookup171: pallet_balances::Reasons
+=======
+<<<<<<< HEAD
+   * Lookup172: pallet_balances::Reasons
+=======
+<<<<<<< HEAD
+   * Lookup175: pallet_balances::Reasons
+=======
+   * Lookup176: pallet_balances::Reasons
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletBalancesReasons: {
     _enum: ['Fee', 'Misc', 'All']
   },
   /**
+<<<<<<< HEAD
    * Lookup174: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+=======
+<<<<<<< HEAD
+   * Lookup175: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+=======
+<<<<<<< HEAD
+   * Lookup178: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+=======
+   * Lookup179: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletBalancesReserveData: {
     id: '[u8;16]',
     amount: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup176: pallet_balances::pallet::Call<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup177: pallet_balances::Releases
+=======
+<<<<<<< HEAD
+   * Lookup180: pallet_balances::Releases
+=======
+   * Lookup181: pallet_balances::Releases
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+   **/
+  PalletBalancesReleases: {
+    _enum: ['V1_0_0', 'V2_0_0']
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup178: pallet_balances::pallet::Call<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup181: pallet_balances::pallet::Call<T, I>
+=======
+   * Lookup182: pallet_balances::pallet::Call<T, I>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletBalancesCall: {
     _enum: {
@@ -1589,13 +1991,37 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup179: pallet_balances::pallet::Error<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup181: pallet_balances::pallet::Error<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup184: pallet_balances::pallet::Error<T, I>
+=======
+   * Lookup185: pallet_balances::pallet::Error<T, I>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletBalancesError: {
     _enum: ['VestingBalance', 'LiquidityRestrictions', 'InsufficientBalance', 'ExistentialDeposit', 'KeepAlive', 'ExistingVestingSchedule', 'DeadAccount', 'TooManyReserves']
   },
   /**
+<<<<<<< HEAD
    * Lookup181: pallet_timestamp::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup183: pallet_timestamp::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup186: pallet_timestamp::pallet::Call<T>
+=======
+   * Lookup187: pallet_timestamp::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTimestampCall: {
     _enum: {
@@ -1605,13 +2031,37 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup183: pallet_transaction_payment::Releases
+=======
+<<<<<<< HEAD
+   * Lookup185: pallet_transaction_payment::Releases
+=======
+<<<<<<< HEAD
+   * Lookup188: pallet_transaction_payment::Releases
+=======
+   * Lookup189: pallet_transaction_payment::Releases
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTransactionPaymentReleases: {
     _enum: ['V1Ancient', 'V2']
   },
   /**
+<<<<<<< HEAD
    * Lookup184: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
+=======
+<<<<<<< HEAD
+   * Lookup186: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
+=======
+<<<<<<< HEAD
+   * Lookup189: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
+=======
+   * Lookup190: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTreasuryProposal: {
     proposer: 'AccountId32',
@@ -1620,7 +2070,19 @@ export default {
     bond: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup187: pallet_treasury::pallet::Call<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup189: pallet_treasury::pallet::Call<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup192: pallet_treasury::pallet::Call<T, I>
+=======
+   * Lookup193: pallet_treasury::pallet::Call<T, I>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTreasuryCall: {
     _enum: {
@@ -1644,17 +2106,53 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup190: frame_support::PalletId
    **/
   FrameSupportPalletId: '[u8;8]',
   /**
    * Lookup191: pallet_treasury::pallet::Error<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup192: frame_support::PalletId
+   **/
+  FrameSupportPalletId: '[u8;8]',
+  /**
+   * Lookup193: pallet_treasury::pallet::Error<T, I>
+=======
+<<<<<<< HEAD
+   * Lookup195: frame_support::PalletId
+   **/
+  FrameSupportPalletId: '[u8;8]',
+  /**
+   * Lookup196: pallet_treasury::pallet::Error<T, I>
+=======
+   * Lookup196: frame_support::PalletId
+   **/
+  FrameSupportPalletId: '[u8;8]',
+  /**
+   * Lookup197: pallet_treasury::pallet::Error<T, I>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTreasuryError: {
     _enum: ['InsufficientProposersBalance', 'InvalidIndex', 'TooManyApprovals', 'InsufficientPermission', 'ProposalNotApproved']
   },
   /**
+<<<<<<< HEAD
    * Lookup192: pallet_sudo::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup194: pallet_sudo::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup197: pallet_sudo::pallet::Call<T>
+=======
+   * Lookup198: pallet_sudo::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletSudoCall: {
     _enum: {
@@ -1678,7 +2176,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup194: orml_vesting::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup196: orml_vesting::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup199: orml_vesting::module::Call<T>
+=======
+   * Lookup200: orml_vesting::module::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlVestingModuleCall: {
     _enum: {
@@ -1697,7 +2207,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup196: orml_xtokens::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup198: orml_xtokens::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup201: orml_xtokens::module::Call<T>
+=======
+   * Lookup202: orml_xtokens::module::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlXtokensModuleCall: {
     _enum: {
@@ -1740,7 +2262,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup197: xcm::VersionedMultiAsset
+=======
+<<<<<<< HEAD
+   * Lookup199: xcm::VersionedMultiAsset
+=======
+<<<<<<< HEAD
+   * Lookup202: xcm::VersionedMultiAsset
+=======
+   * Lookup203: xcm::VersionedMultiAsset
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmVersionedMultiAsset: {
     _enum: {
@@ -1749,7 +2283,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup200: orml_tokens::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup202: orml_tokens::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup205: orml_tokens::module::Call<T>
+=======
+   * Lookup206: orml_tokens::module::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlTokensModuleCall: {
     _enum: {
@@ -1783,7 +2329,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup201: cumulus_pallet_xcmp_queue::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup203: cumulus_pallet_xcmp_queue::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup206: cumulus_pallet_xcmp_queue::pallet::Call<T>
+=======
+   * Lookup207: cumulus_pallet_xcmp_queue::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueCall: {
     _enum: {
@@ -1832,7 +2390,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup202: pallet_xcm::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup204: pallet_xcm::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup207: pallet_xcm::pallet::Call<T>
+=======
+   * Lookup208: pallet_xcm::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletXcmCall: {
     _enum: {
@@ -1886,7 +2456,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup203: xcm::VersionedXcm<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup205: xcm::VersionedXcm<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup208: xcm::VersionedXcm<RuntimeCall>
+=======
+   * Lookup209: xcm::VersionedXcm<RuntimeCall>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmVersionedXcm: {
     _enum: {
@@ -1896,7 +2478,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup204: xcm::v0::Xcm<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup206: xcm::v0::Xcm<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup209: xcm::v0::Xcm<RuntimeCall>
+=======
+   * Lookup210: xcm::v0::Xcm<RuntimeCall>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmV0Xcm: {
     _enum: {
@@ -1950,7 +2544,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup206: xcm::v0::order::Order<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup208: xcm::v0::order::Order<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup211: xcm::v0::order::Order<RuntimeCall>
+=======
+   * Lookup212: xcm::v0::order::Order<RuntimeCall>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmV0Order: {
     _enum: {
@@ -1993,7 +2599,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup208: xcm::v0::Response
+=======
+<<<<<<< HEAD
+   * Lookup210: xcm::v0::Response
+=======
+<<<<<<< HEAD
+   * Lookup213: xcm::v0::Response
+=======
+   * Lookup214: xcm::v0::Response
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmV0Response: {
     _enum: {
@@ -2001,7 +2619,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup209: xcm::v1::Xcm<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup211: xcm::v1::Xcm<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup214: xcm::v1::Xcm<RuntimeCall>
+=======
+   * Lookup215: xcm::v1::Xcm<RuntimeCall>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmV1Xcm: {
     _enum: {
@@ -2060,7 +2690,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup211: xcm::v1::order::Order<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup213: xcm::v1::order::Order<RuntimeCall>
+=======
+<<<<<<< HEAD
+   * Lookup216: xcm::v1::order::Order<RuntimeCall>
+=======
+   * Lookup217: xcm::v1::order::Order<RuntimeCall>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmV1Order: {
     _enum: {
@@ -2105,7 +2747,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup213: xcm::v1::Response
+=======
+<<<<<<< HEAD
+   * Lookup215: xcm::v1::Response
+=======
+<<<<<<< HEAD
+   * Lookup218: xcm::v1::Response
+=======
+   * Lookup219: xcm::v1::Response
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   XcmV1Response: {
     _enum: {
@@ -2114,11 +2768,35 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup227: cumulus_pallet_xcm::pallet::Call<T>
    **/
   CumulusPalletXcmCall: 'Null',
   /**
    * Lookup228: cumulus_pallet_dmp_queue::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup229: cumulus_pallet_xcm::pallet::Call<T>
+   **/
+  CumulusPalletXcmCall: 'Null',
+  /**
+   * Lookup230: cumulus_pallet_dmp_queue::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup232: cumulus_pallet_xcm::pallet::Call<T>
+   **/
+  CumulusPalletXcmCall: 'Null',
+  /**
+   * Lookup233: cumulus_pallet_dmp_queue::pallet::Call<T>
+=======
+   * Lookup233: cumulus_pallet_xcm::pallet::Call<T>
+   **/
+  CumulusPalletXcmCall: 'Null',
+  /**
+   * Lookup234: cumulus_pallet_dmp_queue::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletDmpQueueCall: {
     _enum: {
@@ -2129,7 +2807,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup229: pallet_inflation::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup231: pallet_inflation::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup234: pallet_inflation::pallet::Call<T>
+=======
+   * Lookup235: pallet_inflation::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletInflationCall: {
     _enum: {
@@ -2139,7 +2829,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup230: pallet_unique::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup232: pallet_unique::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup235: pallet_unique::Call<T>
+=======
+   * Lookup236: pallet_unique::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletUniqueCall: {
     _enum: {
@@ -2283,7 +2985,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup235: up_data_structs::CollectionMode
+=======
+<<<<<<< HEAD
+   * Lookup237: up_data_structs::CollectionMode
+=======
+<<<<<<< HEAD
+   * Lookup240: up_data_structs::CollectionMode
+=======
+   * Lookup241: up_data_structs::CollectionMode
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCollectionMode: {
     _enum: {
@@ -2293,7 +3007,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup236: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup238: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup241: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
+=======
+   * Lookup242: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateCollectionData: {
     mode: 'UpDataStructsCollectionMode',
@@ -2308,13 +3034,37 @@ export default {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
+<<<<<<< HEAD
    * Lookup238: up_data_structs::AccessMode
+=======
+<<<<<<< HEAD
+   * Lookup240: up_data_structs::AccessMode
+=======
+<<<<<<< HEAD
+   * Lookup243: up_data_structs::AccessMode
+=======
+   * Lookup244: up_data_structs::AccessMode
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsAccessMode: {
     _enum: ['Normal', 'AllowList']
   },
   /**
+<<<<<<< HEAD
    * Lookup240: up_data_structs::CollectionLimits
+=======
+<<<<<<< HEAD
+   * Lookup242: up_data_structs::CollectionLimits
+=======
+<<<<<<< HEAD
+   * Lookup245: up_data_structs::CollectionLimits
+=======
+   * Lookup246: up_data_structs::CollectionLimits
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCollectionLimits: {
     accountTokenOwnershipLimit: 'Option<u32>',
@@ -2328,7 +3078,19 @@ export default {
     transfersEnabled: 'Option<bool>'
   },
   /**
+<<<<<<< HEAD
    * Lookup242: up_data_structs::SponsoringRateLimit
+=======
+<<<<<<< HEAD
+   * Lookup244: up_data_structs::SponsoringRateLimit
+=======
+<<<<<<< HEAD
+   * Lookup247: up_data_structs::SponsoringRateLimit
+=======
+   * Lookup248: up_data_structs::SponsoringRateLimit
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsSponsoringRateLimit: {
     _enum: {
@@ -2337,7 +3099,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup245: up_data_structs::CollectionPermissions
+=======
+<<<<<<< HEAD
+   * Lookup247: up_data_structs::CollectionPermissions
+=======
+<<<<<<< HEAD
+   * Lookup250: up_data_structs::CollectionPermissions
+=======
+   * Lookup251: up_data_structs::CollectionPermissions
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCollectionPermissions: {
     access: 'Option<UpDataStructsAccessMode>',
@@ -2345,7 +3119,19 @@ export default {
     nesting: 'Option<UpDataStructsNestingPermissions>'
   },
   /**
+<<<<<<< HEAD
    * Lookup247: up_data_structs::NestingPermissions
+=======
+<<<<<<< HEAD
+   * Lookup249: up_data_structs::NestingPermissions
+=======
+<<<<<<< HEAD
+   * Lookup252: up_data_structs::NestingPermissions
+=======
+   * Lookup253: up_data_structs::NestingPermissions
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsNestingPermissions: {
     tokenOwner: 'bool',
@@ -2353,18 +3139,54 @@ export default {
     restricted: 'Option<UpDataStructsOwnerRestrictedSet>'
   },
   /**
+<<<<<<< HEAD
    * Lookup249: up_data_structs::OwnerRestrictedSet
    **/
   UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
   /**
    * Lookup254: up_data_structs::PropertyKeyPermission
+=======
+<<<<<<< HEAD
+   * Lookup251: up_data_structs::OwnerRestrictedSet
+   **/
+  UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
+  /**
+   * Lookup256: up_data_structs::PropertyKeyPermission
+=======
+<<<<<<< HEAD
+   * Lookup254: up_data_structs::OwnerRestrictedSet
+   **/
+  UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
+  /**
+   * Lookup259: up_data_structs::PropertyKeyPermission
+=======
+   * Lookup255: up_data_structs::OwnerRestrictedSet
+   **/
+  UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
+  /**
+   * Lookup260: up_data_structs::PropertyKeyPermission
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsPropertyKeyPermission: {
     key: 'Bytes',
     permission: 'UpDataStructsPropertyPermission'
   },
   /**
+<<<<<<< HEAD
    * Lookup255: up_data_structs::PropertyPermission
+=======
+<<<<<<< HEAD
+   * Lookup257: up_data_structs::PropertyPermission
+=======
+<<<<<<< HEAD
+   * Lookup260: up_data_structs::PropertyPermission
+=======
+   * Lookup261: up_data_structs::PropertyPermission
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsPropertyPermission: {
     mutable: 'bool',
@@ -2372,14 +3194,38 @@ export default {
     tokenOwner: 'bool'
   },
   /**
+<<<<<<< HEAD
    * Lookup258: up_data_structs::Property
+=======
+<<<<<<< HEAD
+   * Lookup260: up_data_structs::Property
+=======
+<<<<<<< HEAD
+   * Lookup263: up_data_structs::Property
+=======
+   * Lookup264: up_data_structs::Property
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsProperty: {
     key: 'Bytes',
     value: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup261: up_data_structs::CreateItemData
+=======
+<<<<<<< HEAD
+   * Lookup263: up_data_structs::CreateItemData
+=======
+<<<<<<< HEAD
+   * Lookup266: up_data_structs::CreateItemData
+=======
+   * Lookup267: up_data_structs::CreateItemData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateItemData: {
     _enum: {
@@ -2389,26 +3235,74 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup262: up_data_structs::CreateNftData
+=======
+<<<<<<< HEAD
+   * Lookup264: up_data_structs::CreateNftData
+=======
+<<<<<<< HEAD
+   * Lookup267: up_data_structs::CreateNftData
+=======
+   * Lookup268: up_data_structs::CreateNftData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateNftData: {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
+<<<<<<< HEAD
    * Lookup263: up_data_structs::CreateFungibleData
+=======
+<<<<<<< HEAD
+   * Lookup265: up_data_structs::CreateFungibleData
+=======
+<<<<<<< HEAD
+   * Lookup268: up_data_structs::CreateFungibleData
+=======
+   * Lookup269: up_data_structs::CreateFungibleData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateFungibleData: {
     value: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup264: up_data_structs::CreateReFungibleData
+=======
+<<<<<<< HEAD
+   * Lookup266: up_data_structs::CreateReFungibleData
+=======
+<<<<<<< HEAD
+   * Lookup269: up_data_structs::CreateReFungibleData
+=======
+   * Lookup270: up_data_structs::CreateReFungibleData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateReFungibleData: {
     pieces: 'u128',
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
+<<<<<<< HEAD
    * Lookup267: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup269: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup272: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup273: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateItemExData: {
     _enum: {
@@ -2419,14 +3313,38 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup269: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup271: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup274: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup275: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateNftExData: {
     properties: 'Vec<UpDataStructsProperty>',
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
+<<<<<<< HEAD
    * Lookup276: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup278: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup281: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup282: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateRefungibleExSingleOwner: {
     user: 'PalletEvmAccountBasicCrossAccountIdRepr',
@@ -2434,14 +3352,38 @@ export default {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
+<<<<<<< HEAD
    * Lookup278: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup280: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup283: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup284: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCreateRefungibleExMultipleOwners: {
     users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>',
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
+<<<<<<< HEAD
    * Lookup279: pallet_configuration::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup281: pallet_configuration::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup284: pallet_unique_scheduler_v2::pallet::Call<T>
+=======
+   * Lookup285: pallet_unique_scheduler_v2::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletConfigurationCall: {
     _enum: {
@@ -2460,7 +3402,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup284: pallet_configuration::AppPromotionConfiguration<BlockNumber>
+=======
+<<<<<<< HEAD
+   * Lookup286: pallet_configuration::AppPromotionConfiguration<BlockNumber>
+=======
+<<<<<<< HEAD
+   * Lookup287: pallet_configuration::pallet::Call<T>
+=======
+   * Lookup288: pallet_configuration::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletConfigurationAppPromotionConfiguration: {
     recalculationInterval: 'Option<u32>',
@@ -2469,7 +3423,12 @@ export default {
     maxStakersPerCalculation: 'Option<u8>'
   },
   /**
+<<<<<<< HEAD
    * Lookup288: pallet_template_transaction_payment::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup289: pallet_template_transaction_payment::Call<T>
+>>>>>>> chore:  regenerate types
    **/
   PalletTemplateTransactionPaymentCall: 'Null',
   /**
@@ -2477,7 +3436,22 @@ export default {
    **/
   PalletStructureCall: 'Null',
   /**
+<<<<<<< HEAD
    * Lookup290: pallet_rmrk_core::pallet::Call<T>
+=======
+   * Lookup291: pallet_rmrk_core::pallet::Call<T>
+=======
+   * Lookup290: pallet_template_transaction_payment::Call<T>
+   **/
+  PalletTemplateTransactionPaymentCall: 'Null',
+  /**
+   * Lookup291: pallet_structure::pallet::Call<T>
+   **/
+  PalletStructureCall: 'Null',
+  /**
+   * Lookup292: pallet_rmrk_core::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletRmrkCoreCall: {
     _enum: {
@@ -2568,7 +3542,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup296: rmrk_traits::resource::ResourceTypes<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup297: rmrk_traits::resource::ResourceTypes<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup298: rmrk_traits::resource::ResourceTypes<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsResourceResourceTypes: {
     _enum: {
@@ -2578,7 +3560,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup298: rmrk_traits::resource::BasicResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup299: rmrk_traits::resource::BasicResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup300: rmrk_traits::resource::BasicResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsResourceBasicResource: {
     src: 'Option<Bytes>',
@@ -2587,7 +3577,15 @@ export default {
     thumb: 'Option<Bytes>'
   },
   /**
+<<<<<<< HEAD
    * Lookup300: rmrk_traits::resource::ComposableResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup301: rmrk_traits::resource::ComposableResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup302: rmrk_traits::resource::ComposableResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsResourceComposableResource: {
     parts: 'Vec<u32>',
@@ -2598,7 +3596,15 @@ export default {
     thumb: 'Option<Bytes>'
   },
   /**
+<<<<<<< HEAD
    * Lookup301: rmrk_traits::resource::SlotResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup302: rmrk_traits::resource::SlotResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup303: rmrk_traits::resource::SlotResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsResourceSlotResource: {
     base: 'u32',
@@ -2609,7 +3615,15 @@ export default {
     thumb: 'Option<Bytes>'
   },
   /**
+<<<<<<< HEAD
    * Lookup304: pallet_rmrk_equip::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup305: pallet_rmrk_equip::pallet::Call<T>
+=======
+   * Lookup306: pallet_rmrk_equip::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletRmrkEquipCall: {
     _enum: {
@@ -2630,7 +3644,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup307: rmrk_traits::part::PartType<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup308: rmrk_traits::part::PartType<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup309: rmrk_traits::part::PartType<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsPartPartType: {
     _enum: {
@@ -2639,7 +3661,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup309: rmrk_traits::part::FixedPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup310: rmrk_traits::part::FixedPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup311: rmrk_traits::part::FixedPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsPartFixedPart: {
     id: 'u32',
@@ -2647,7 +3677,15 @@ export default {
     src: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup310: rmrk_traits::part::SlotPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup311: rmrk_traits::part::SlotPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup312: rmrk_traits::part::SlotPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsPartSlotPart: {
     id: 'u32',
@@ -2656,7 +3694,15 @@ export default {
     z: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup311: rmrk_traits::part::EquippableList<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup312: rmrk_traits::part::EquippableList<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup313: rmrk_traits::part::EquippableList<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsPartEquippableList: {
     _enum: {
@@ -2666,7 +3712,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup313: rmrk_traits::theme::Theme<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>, S>>
+=======
+<<<<<<< HEAD
+   * Lookup314: rmrk_traits::theme::Theme<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>, S>>
+=======
+   * Lookup315: rmrk_traits::theme::Theme<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsTheme: {
     name: 'Bytes',
@@ -2674,14 +3728,30 @@ export default {
     inherit: 'bool'
   },
   /**
+<<<<<<< HEAD
    * Lookup315: rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup316: rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup317: rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsThemeThemeProperty: {
     key: 'Bytes',
     value: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup317: pallet_app_promotion::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup318: pallet_app_promotion::pallet::Call<T>
+=======
+   * Lookup319: pallet_app_promotion::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletAppPromotionCall: {
     _enum: {
@@ -2710,7 +3780,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup318: pallet_foreign_assets::module::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup319: pallet_foreign_assets::module::Call<T>
+=======
+   * Lookup320: pallet_foreign_assets::module::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletForeignAssetsModuleCall: {
     _enum: {
@@ -2727,7 +3805,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup319: pallet_evm::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup320: pallet_evm::pallet::Call<T>
+=======
+   * Lookup321: pallet_evm::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmCall: {
     _enum: {
@@ -2770,7 +3856,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup325: pallet_ethereum::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup326: pallet_ethereum::pallet::Call<T>
+=======
+   * Lookup325: pallet_ethereum::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEthereumCall: {
     _enum: {
@@ -2780,7 +3874,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup326: ethereum::transaction::TransactionV2
+=======
+<<<<<<< HEAD
+   * Lookup327: ethereum::transaction::TransactionV2
+=======
+   * Lookup326: ethereum::transaction::TransactionV2
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionTransactionV2: {
     _enum: {
@@ -2790,7 +3892,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup327: ethereum::transaction::LegacyTransaction
+=======
+<<<<<<< HEAD
+   * Lookup328: ethereum::transaction::LegacyTransaction
+=======
+   * Lookup327: ethereum::transaction::LegacyTransaction
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionLegacyTransaction: {
     nonce: 'U256',
@@ -2802,7 +3912,15 @@ export default {
     signature: 'EthereumTransactionTransactionSignature'
   },
   /**
+<<<<<<< HEAD
    * Lookup328: ethereum::transaction::TransactionAction
+=======
+<<<<<<< HEAD
+   * Lookup329: ethereum::transaction::TransactionAction
+=======
+   * Lookup328: ethereum::transaction::TransactionAction
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionTransactionAction: {
     _enum: {
@@ -2811,7 +3929,15 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup329: ethereum::transaction::TransactionSignature
+=======
+<<<<<<< HEAD
+   * Lookup330: ethereum::transaction::TransactionSignature
+=======
+   * Lookup329: ethereum::transaction::TransactionSignature
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionTransactionSignature: {
     v: 'u64',
@@ -2819,7 +3945,15 @@ export default {
     s: 'H256'
   },
   /**
+<<<<<<< HEAD
    * Lookup331: ethereum::transaction::EIP2930Transaction
+=======
+<<<<<<< HEAD
+   * Lookup332: ethereum::transaction::EIP2930Transaction
+=======
+   * Lookup331: ethereum::transaction::EIP2930Transaction
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionEip2930Transaction: {
     chainId: 'u64',
@@ -2835,14 +3969,30 @@ export default {
     s: 'H256'
   },
   /**
+<<<<<<< HEAD
    * Lookup333: ethereum::transaction::AccessListItem
+=======
+<<<<<<< HEAD
+   * Lookup334: ethereum::transaction::AccessListItem
+=======
+   * Lookup333: ethereum::transaction::AccessListItem
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionAccessListItem: {
     address: 'H160',
     storageKeys: 'Vec<H256>'
   },
   /**
+<<<<<<< HEAD
    * Lookup334: ethereum::transaction::EIP1559Transaction
+=======
+<<<<<<< HEAD
+   * Lookup335: ethereum::transaction::EIP1559Transaction
+=======
+   * Lookup334: ethereum::transaction::EIP1559Transaction
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumTransactionEip1559Transaction: {
     chainId: 'u64',
@@ -2859,7 +4009,15 @@ export default {
     s: 'H256'
   },
   /**
+<<<<<<< HEAD
    * Lookup335: pallet_evm_migration::pallet::Call<T>
+=======
+<<<<<<< HEAD
+   * Lookup336: pallet_evm_migration::pallet::Call<T>
+=======
+   * Lookup335: pallet_evm_migration::pallet::Call<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmMigrationCall: {
     _enum: {
@@ -2883,13 +4041,21 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup339: pallet_maintenance::pallet::Call<T>
+=======
+   * Lookup338: pallet_maintenance::pallet::Call<T>
+>>>>>>> chore:  regenerate types
    **/
   PalletMaintenanceCall: {
     _enum: ['enable', 'disable']
   },
   /**
+<<<<<<< HEAD
    * Lookup340: pallet_test_utils::pallet::Call<T>
+=======
+   * Lookup339: pallet_test_utils::pallet::Call<T>
+>>>>>>> chore:  regenerate types
    **/
   PalletTestUtilsCall: {
     _enum: {
@@ -2908,32 +4074,72 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup342: pallet_sudo::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup343: pallet_sudo::pallet::Error<T>
+=======
+   * Lookup341: pallet_sudo::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletSudoError: {
     _enum: ['RequireSudo']
   },
   /**
+<<<<<<< HEAD
    * Lookup344: orml_vesting::module::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup345: orml_vesting::module::Error<T>
+=======
+   * Lookup343: orml_vesting::module::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlVestingModuleError: {
     _enum: ['ZeroVestingPeriod', 'ZeroVestingPeriodCount', 'InsufficientBalanceToLock', 'TooManyVestingSchedules', 'AmountLow', 'MaxVestingSchedulesExceeded']
   },
   /**
+<<<<<<< HEAD
    * Lookup345: orml_xtokens::module::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup346: orml_xtokens::module::Error<T>
+=======
+   * Lookup344: orml_xtokens::module::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlXtokensModuleError: {
     _enum: ['AssetHasNoReserve', 'NotCrossChainTransfer', 'InvalidDest', 'NotCrossChainTransferableCurrency', 'UnweighableMessage', 'XcmExecutionFailed', 'CannotReanchor', 'InvalidAncestry', 'InvalidAsset', 'DestinationNotInvertible', 'BadVersion', 'DistinctReserveForAssetAndFee', 'ZeroFee', 'ZeroAmount', 'TooManyAssetsBeingSent', 'AssetIndexNonExistent', 'FeeNotEnough', 'NotSupportedMultiLocation', 'MinXcmFeeNotDefined']
   },
   /**
+<<<<<<< HEAD
    * Lookup348: orml_tokens::BalanceLock<Balance>
+=======
+<<<<<<< HEAD
+   * Lookup349: orml_tokens::BalanceLock<Balance>
+=======
+   * Lookup347: orml_tokens::BalanceLock<Balance>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlTokensBalanceLock: {
     id: '[u8;8]',
     amount: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup350: orml_tokens::AccountData<Balance>
+=======
+<<<<<<< HEAD
+   * Lookup351: orml_tokens::AccountData<Balance>
+=======
+   * Lookup349: orml_tokens::AccountData<Balance>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlTokensAccountData: {
     free: 'u128',
@@ -2941,20 +4147,44 @@ export default {
     frozen: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup352: orml_tokens::ReserveData<ReserveIdentifier, Balance>
+=======
+<<<<<<< HEAD
+   * Lookup353: orml_tokens::ReserveData<ReserveIdentifier, Balance>
+=======
+   * Lookup351: orml_tokens::ReserveData<ReserveIdentifier, Balance>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlTokensReserveData: {
     id: 'Null',
     amount: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup354: orml_tokens::module::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup355: orml_tokens::module::Error<T>
+=======
+   * Lookup353: orml_tokens::module::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   OrmlTokensModuleError: {
     _enum: ['BalanceTooLow', 'AmountIntoBalanceFailed', 'LiquidityRestrictions', 'MaxLocksExceeded', 'KeepAlive', 'ExistentialDeposit', 'DeadAccount', 'TooManyReserves']
   },
   /**
+<<<<<<< HEAD
    * Lookup356: cumulus_pallet_xcmp_queue::InboundChannelDetails
+=======
+<<<<<<< HEAD
+   * Lookup357: cumulus_pallet_xcmp_queue::InboundChannelDetails
+=======
+   * Lookup355: cumulus_pallet_xcmp_queue::InboundChannelDetails
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueInboundChannelDetails: {
     sender: 'u32',
@@ -2962,19 +4192,43 @@ export default {
     messageMetadata: 'Vec<(u32,PolkadotParachainPrimitivesXcmpMessageFormat)>'
   },
   /**
+<<<<<<< HEAD
    * Lookup357: cumulus_pallet_xcmp_queue::InboundState
+=======
+<<<<<<< HEAD
+   * Lookup358: cumulus_pallet_xcmp_queue::InboundState
+=======
+   * Lookup356: cumulus_pallet_xcmp_queue::InboundState
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueInboundState: {
     _enum: ['Ok', 'Suspended']
   },
   /**
+<<<<<<< HEAD
    * Lookup360: polkadot_parachain::primitives::XcmpMessageFormat
+=======
+<<<<<<< HEAD
+   * Lookup361: polkadot_parachain::primitives::XcmpMessageFormat
+=======
+   * Lookup359: polkadot_parachain::primitives::XcmpMessageFormat
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PolkadotParachainPrimitivesXcmpMessageFormat: {
     _enum: ['ConcatenatedVersionedXcm', 'ConcatenatedEncodedBlob', 'Signals']
   },
   /**
+<<<<<<< HEAD
    * Lookup363: cumulus_pallet_xcmp_queue::OutboundChannelDetails
+=======
+<<<<<<< HEAD
+   * Lookup364: cumulus_pallet_xcmp_queue::OutboundChannelDetails
+=======
+   * Lookup362: cumulus_pallet_xcmp_queue::OutboundChannelDetails
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueOutboundChannelDetails: {
     recipient: 'u32',
@@ -2984,13 +4238,29 @@ export default {
     lastIndex: 'u16'
   },
   /**
+<<<<<<< HEAD
    * Lookup364: cumulus_pallet_xcmp_queue::OutboundState
+=======
+<<<<<<< HEAD
+   * Lookup365: cumulus_pallet_xcmp_queue::OutboundState
+=======
+   * Lookup363: cumulus_pallet_xcmp_queue::OutboundState
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueOutboundState: {
     _enum: ['Ok', 'Suspended']
   },
   /**
+<<<<<<< HEAD
    * Lookup366: cumulus_pallet_xcmp_queue::QueueConfigData
+=======
+<<<<<<< HEAD
+   * Lookup367: cumulus_pallet_xcmp_queue::QueueConfigData
+=======
+   * Lookup365: cumulus_pallet_xcmp_queue::QueueConfigData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueQueueConfigData: {
     suspendThreshold: 'u32',
@@ -3001,29 +4271,69 @@ export default {
     xcmpMaxIndividualWeight: 'SpWeightsWeightV2Weight'
   },
   /**
+<<<<<<< HEAD
    * Lookup368: cumulus_pallet_xcmp_queue::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup369: cumulus_pallet_xcmp_queue::pallet::Error<T>
+=======
+   * Lookup367: cumulus_pallet_xcmp_queue::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletXcmpQueueError: {
     _enum: ['FailedToSend', 'BadXcmOrigin', 'BadXcm', 'BadOverweightIndex', 'WeightOverLimit']
   },
   /**
+<<<<<<< HEAD
    * Lookup369: pallet_xcm::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup370: pallet_xcm::pallet::Error<T>
+=======
+   * Lookup368: pallet_xcm::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletXcmError: {
     _enum: ['Unreachable', 'SendFailure', 'Filtered', 'UnweighableMessage', 'DestinationNotInvertible', 'Empty', 'CannotReanchor', 'TooManyAssets', 'InvalidOrigin', 'BadVersion', 'BadLocation', 'NoSubscription', 'AlreadySubscribed']
   },
   /**
+<<<<<<< HEAD
    * Lookup370: cumulus_pallet_xcm::pallet::Error<T>
    **/
   CumulusPalletXcmError: 'Null',
   /**
    * Lookup371: cumulus_pallet_dmp_queue::ConfigData
+=======
+<<<<<<< HEAD
+   * Lookup371: cumulus_pallet_xcm::pallet::Error<T>
+   **/
+  CumulusPalletXcmError: 'Null',
+  /**
+   * Lookup372: cumulus_pallet_dmp_queue::ConfigData
+=======
+   * Lookup369: cumulus_pallet_xcm::pallet::Error<T>
+   **/
+  CumulusPalletXcmError: 'Null',
+  /**
+   * Lookup370: cumulus_pallet_dmp_queue::ConfigData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletDmpQueueConfigData: {
     maxIndividual: 'SpWeightsWeightV2Weight'
   },
   /**
+<<<<<<< HEAD
    * Lookup372: cumulus_pallet_dmp_queue::PageIndexData
+=======
+<<<<<<< HEAD
+   * Lookup373: cumulus_pallet_dmp_queue::PageIndexData
+=======
+   * Lookup371: cumulus_pallet_dmp_queue::PageIndexData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletDmpQueuePageIndexData: {
     beginUsed: 'u32',
@@ -3031,25 +4341,285 @@ export default {
     overweightCount: 'u64'
   },
   /**
+<<<<<<< HEAD
    * Lookup375: cumulus_pallet_dmp_queue::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup376: cumulus_pallet_dmp_queue::pallet::Error<T>
+=======
+   * Lookup374: cumulus_pallet_dmp_queue::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   CumulusPalletDmpQueueError: {
     _enum: ['Unknown', 'OverLimit']
   },
   /**
+<<<<<<< HEAD
    * Lookup379: pallet_unique::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup380: pallet_unique::Error<T>
+=======
+   * Lookup378: pallet_unique::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletUniqueError: {
     _enum: ['CollectionDecimalPointLimitExceeded', 'EmptyArgument', 'RepartitionCalledOnNonRefungibleCollection']
   },
   /**
+<<<<<<< HEAD
    * Lookup380: pallet_configuration::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup381: pallet_configuration::pallet::Error<T>
+=======
+<<<<<<< HEAD
+   * Lookup381: pallet_unique_scheduler_v2::BlockAgenda<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletConfigurationError: {
     _enum: ['InconsistentConfiguration']
   },
   /**
+<<<<<<< HEAD
    * Lookup381: up_data_structs::Collection<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup382: up_data_structs::Collection<sp_core::crypto::AccountId32>
+=======
+   * Lookup384: pallet_unique_scheduler_v2::Scheduled<Name, pallet_unique_scheduler_v2::ScheduledCall<T>, BlockNumber, opal_runtime::OriginCaller, sp_core::crypto::AccountId32>
+   **/
+=======
+   * Lookup379: pallet_unique_scheduler_v2::BlockAgenda<T>
+   **/
+  PalletUniqueSchedulerV2BlockAgenda: {
+    agenda: 'Vec<Option<PalletUniqueSchedulerV2Scheduled>>',
+    freePlaces: 'u32'
+  },
+  /**
+   * Lookup382: pallet_unique_scheduler_v2::Scheduled<Name, pallet_unique_scheduler_v2::ScheduledCall<T>, BlockNumber, opal_runtime::OriginCaller, sp_core::crypto::AccountId32>
+   **/
+>>>>>>> chore:  regenerate types
+  PalletUniqueSchedulerV2Scheduled: {
+    maybeId: 'Option<[u8;32]>',
+    priority: 'u8',
+    call: 'PalletUniqueSchedulerV2ScheduledCall',
+    maybePeriodic: 'Option<(u32,u32)>',
+    origin: 'OpalRuntimeOriginCaller'
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup385: pallet_unique_scheduler_v2::ScheduledCall<T>
+=======
+   * Lookup383: pallet_unique_scheduler_v2::ScheduledCall<T>
+>>>>>>> chore:  regenerate types
+   **/
+  PalletUniqueSchedulerV2ScheduledCall: {
+    _enum: {
+      Inline: 'Bytes',
+      PreimageLookup: {
+        _alias: {
+          hash_: 'hash',
+        },
+        hash_: 'H256',
+        unboundedLen: 'u32'
+      }
+    }
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup387: opal_runtime::OriginCaller
+=======
+   * Lookup385: opal_runtime::OriginCaller
+>>>>>>> chore:  regenerate types
+   **/
+  OpalRuntimeOriginCaller: {
+    _enum: {
+      system: 'FrameSupportDispatchRawOrigin',
+      __Unused1: 'Null',
+      __Unused2: 'Null',
+      __Unused3: 'Null',
+      Void: 'SpCoreVoid',
+      __Unused5: 'Null',
+      __Unused6: 'Null',
+      __Unused7: 'Null',
+      __Unused8: 'Null',
+      __Unused9: 'Null',
+      __Unused10: 'Null',
+      __Unused11: 'Null',
+      __Unused12: 'Null',
+      __Unused13: 'Null',
+      __Unused14: 'Null',
+      __Unused15: 'Null',
+      __Unused16: 'Null',
+      __Unused17: 'Null',
+      __Unused18: 'Null',
+      __Unused19: 'Null',
+      __Unused20: 'Null',
+      __Unused21: 'Null',
+      __Unused22: 'Null',
+      __Unused23: 'Null',
+      __Unused24: 'Null',
+      __Unused25: 'Null',
+      __Unused26: 'Null',
+      __Unused27: 'Null',
+      __Unused28: 'Null',
+      __Unused29: 'Null',
+      __Unused30: 'Null',
+      __Unused31: 'Null',
+      __Unused32: 'Null',
+      __Unused33: 'Null',
+      __Unused34: 'Null',
+      __Unused35: 'Null',
+      __Unused36: 'Null',
+      __Unused37: 'Null',
+      __Unused38: 'Null',
+      __Unused39: 'Null',
+      __Unused40: 'Null',
+      __Unused41: 'Null',
+      __Unused42: 'Null',
+      __Unused43: 'Null',
+      __Unused44: 'Null',
+      __Unused45: 'Null',
+      __Unused46: 'Null',
+      __Unused47: 'Null',
+      __Unused48: 'Null',
+      __Unused49: 'Null',
+      __Unused50: 'Null',
+      PolkadotXcm: 'PalletXcmOrigin',
+      CumulusXcm: 'CumulusPalletXcmOrigin',
+      __Unused53: 'Null',
+      __Unused54: 'Null',
+      __Unused55: 'Null',
+      __Unused56: 'Null',
+      __Unused57: 'Null',
+      __Unused58: 'Null',
+      __Unused59: 'Null',
+      __Unused60: 'Null',
+      __Unused61: 'Null',
+      __Unused62: 'Null',
+      __Unused63: 'Null',
+      __Unused64: 'Null',
+      __Unused65: 'Null',
+      __Unused66: 'Null',
+      __Unused67: 'Null',
+      __Unused68: 'Null',
+      __Unused69: 'Null',
+      __Unused70: 'Null',
+      __Unused71: 'Null',
+      __Unused72: 'Null',
+      __Unused73: 'Null',
+      __Unused74: 'Null',
+      __Unused75: 'Null',
+      __Unused76: 'Null',
+      __Unused77: 'Null',
+      __Unused78: 'Null',
+      __Unused79: 'Null',
+      __Unused80: 'Null',
+      __Unused81: 'Null',
+      __Unused82: 'Null',
+      __Unused83: 'Null',
+      __Unused84: 'Null',
+      __Unused85: 'Null',
+      __Unused86: 'Null',
+      __Unused87: 'Null',
+      __Unused88: 'Null',
+      __Unused89: 'Null',
+      __Unused90: 'Null',
+      __Unused91: 'Null',
+      __Unused92: 'Null',
+      __Unused93: 'Null',
+      __Unused94: 'Null',
+      __Unused95: 'Null',
+      __Unused96: 'Null',
+      __Unused97: 'Null',
+      __Unused98: 'Null',
+      __Unused99: 'Null',
+      __Unused100: 'Null',
+      Ethereum: 'PalletEthereumRawOrigin'
+    }
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup388: frame_support::dispatch::RawOrigin<sp_core::crypto::AccountId32>
+=======
+   * Lookup386: frame_support::dispatch::RawOrigin<sp_core::crypto::AccountId32>
+>>>>>>> chore:  regenerate types
+   **/
+  FrameSupportDispatchRawOrigin: {
+    _enum: {
+      Root: 'Null',
+      Signed: 'AccountId32',
+      None: 'Null'
+    }
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup389: pallet_xcm::pallet::Origin
+=======
+   * Lookup387: pallet_xcm::pallet::Origin
+>>>>>>> chore:  regenerate types
+   **/
+  PalletXcmOrigin: {
+    _enum: {
+      Xcm: 'XcmV1MultiLocation',
+      Response: 'XcmV1MultiLocation'
+    }
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup390: cumulus_pallet_xcm::pallet::Origin
+=======
+   * Lookup388: cumulus_pallet_xcm::pallet::Origin
+>>>>>>> chore:  regenerate types
+   **/
+  CumulusPalletXcmOrigin: {
+    _enum: {
+      Relay: 'Null',
+      SiblingParachain: 'u32'
+    }
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup391: pallet_ethereum::RawOrigin
+=======
+   * Lookup389: pallet_ethereum::RawOrigin
+>>>>>>> chore:  regenerate types
+   **/
+  PalletEthereumRawOrigin: {
+    _enum: {
+      EthereumTransaction: 'H160'
+    }
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup392: sp_core::Void
+   **/
+  SpCoreVoid: 'Null',
+  /**
+   * Lookup394: pallet_unique_scheduler_v2::pallet::Error<T>
+=======
+   * Lookup390: sp_core::Void
+   **/
+  SpCoreVoid: 'Null',
+  /**
+   * Lookup392: pallet_unique_scheduler_v2::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+   **/
+  PalletUniqueSchedulerV2Error: {
+    _enum: ['FailedToSchedule', 'AgendaIsExhausted', 'ScheduledCallCorrupted', 'PreimageNotFound', 'TooBigScheduledCall', 'NotFound', 'TargetBlockNumberInPast', 'Named']
+  },
+  /**
+<<<<<<< HEAD
+   * Lookup395: up_data_structs::Collection<sp_core::crypto::AccountId32>
+=======
+   * Lookup393: up_data_structs::Collection<sp_core::crypto::AccountId32>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCollection: {
     owner: 'AccountId32',
@@ -3063,7 +4633,19 @@ export default {
     flags: '[u8;1]'
   },
   /**
+<<<<<<< HEAD
    * Lookup382: up_data_structs::SponsorshipState<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup383: up_data_structs::SponsorshipState<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup396: up_data_structs::SponsorshipState<sp_core::crypto::AccountId32>
+=======
+   * Lookup394: up_data_structs::SponsorshipState<sp_core::crypto::AccountId32>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsSponsorshipStateAccountId32: {
     _enum: {
@@ -3073,7 +4655,19 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup384: up_data_structs::Properties
+=======
+<<<<<<< HEAD
+   * Lookup385: up_data_structs::Properties
+=======
+<<<<<<< HEAD
+   * Lookup398: up_data_structs::Properties
+=======
+   * Lookup396: up_data_structs::Properties
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsProperties: {
     map: 'UpDataStructsPropertiesMapBoundedVec',
@@ -3081,7 +4675,16 @@ export default {
     spaceLimit: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup385: up_data_structs::PropertiesMap<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup386: up_data_structs::PropertiesMap<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup399: up_data_structs::PropertiesMap<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsPropertiesMapBoundedVec: 'BTreeMap<Bytes, Bytes>',
   /**
@@ -3089,7 +4692,26 @@ export default {
    **/
   UpDataStructsPropertiesMapPropertyPermission: 'BTreeMap<Bytes, UpDataStructsPropertyPermission>',
   /**
+<<<<<<< HEAD
    * Lookup397: up_data_structs::CollectionStats
+=======
+<<<<<<< HEAD
+   * Lookup398: up_data_structs::CollectionStats
+=======
+   * Lookup411: up_data_structs::CollectionStats
+=======
+   * Lookup397: up_data_structs::PropertiesMap<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+   **/
+  UpDataStructsPropertiesMapBoundedVec: 'BTreeMap<Bytes, Bytes>',
+  /**
+   * Lookup402: up_data_structs::PropertiesMap<up_data_structs::PropertyPermission>
+   **/
+  UpDataStructsPropertiesMapPropertyPermission: 'BTreeMap<Bytes, UpDataStructsPropertyPermission>',
+  /**
+   * Lookup409: up_data_structs::CollectionStats
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsCollectionStats: {
     created: 'u32',
@@ -3097,18 +4719,54 @@ export default {
     alive: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup398: up_data_structs::TokenChild
+=======
+<<<<<<< HEAD
+   * Lookup399: up_data_structs::TokenChild
+=======
+<<<<<<< HEAD
+   * Lookup412: up_data_structs::TokenChild
+=======
+   * Lookup410: up_data_structs::TokenChild
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsTokenChild: {
     token: 'u32',
     collection: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup399: PhantomType::up_data_structs<T>
    **/
   PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,RmrkTraitsCollectionCollectionInfo,RmrkTraitsNftNftInfo,RmrkTraitsResourceResourceInfo,RmrkTraitsPropertyPropertyInfo,RmrkTraitsBaseBaseInfo,RmrkTraitsPartPartType,RmrkTraitsTheme,RmrkTraitsNftNftChild,UpPovEstimateRpcPovInfo);0]',
   /**
    * Lookup401: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup400: PhantomType::up_data_structs<T>
+   **/
+  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,RmrkTraitsCollectionCollectionInfo,RmrkTraitsNftNftInfo,RmrkTraitsResourceResourceInfo,RmrkTraitsPropertyPropertyInfo,RmrkTraitsBaseBaseInfo,RmrkTraitsPartPartType,RmrkTraitsTheme,RmrkTraitsNftNftChild,UpPovEstimateRpcPovInfo);0]',
+  /**
+   * Lookup402: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+<<<<<<< HEAD
+   * Lookup413: PhantomType::up_data_structs<T>
+   **/
+  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,RmrkTraitsCollectionCollectionInfo,RmrkTraitsNftNftInfo,RmrkTraitsResourceResourceInfo,RmrkTraitsPropertyPropertyInfo,RmrkTraitsBaseBaseInfo,RmrkTraitsPartPartType,RmrkTraitsTheme,RmrkTraitsNftNftChild,UpPovEstimateRpcPovInfo);0]',
+  /**
+   * Lookup415: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+=======
+   * Lookup411: PhantomType::up_data_structs<T>
+   **/
+  PhantomTypeUpDataStructs: '[(UpDataStructsTokenData,UpDataStructsRpcCollection,RmrkTraitsCollectionCollectionInfo,RmrkTraitsNftNftInfo,RmrkTraitsResourceResourceInfo,RmrkTraitsPropertyPropertyInfo,RmrkTraitsBaseBaseInfo,RmrkTraitsPartPartType,RmrkTraitsTheme,RmrkTraitsNftNftChild,UpPovEstimateRpcPovInfo);0]',
+  /**
+   * Lookup413: up_data_structs::TokenData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsTokenData: {
     properties: 'Vec<UpDataStructsProperty>',
@@ -3116,7 +4774,19 @@ export default {
     pieces: 'u128'
   },
   /**
+<<<<<<< HEAD
    * Lookup403: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup404: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup417: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>
+=======
+   * Lookup415: up_data_structs::RpcCollection<sp_core::crypto::AccountId32>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsRpcCollection: {
     owner: 'AccountId32',
@@ -3133,14 +4803,38 @@ export default {
     flags: 'UpDataStructsRpcCollectionFlags'
   },
   /**
+<<<<<<< HEAD
    * Lookup404: up_data_structs::RpcCollectionFlags
+=======
+<<<<<<< HEAD
+   * Lookup405: up_data_structs::RpcCollectionFlags
+=======
+<<<<<<< HEAD
+   * Lookup418: up_data_structs::RpcCollectionFlags
+=======
+   * Lookup416: up_data_structs::RpcCollectionFlags
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsRpcCollectionFlags: {
     foreign: 'bool',
     erc721metadata: 'bool'
   },
   /**
+<<<<<<< HEAD
    * Lookup405: rmrk_traits::collection::CollectionInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup406: rmrk_traits::collection::CollectionInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
+=======
+<<<<<<< HEAD
+   * Lookup419: rmrk_traits::collection::CollectionInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
+=======
+   * Lookup417: rmrk_traits::collection::CollectionInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::crypto::AccountId32>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsCollectionCollectionInfo: {
     issuer: 'AccountId32',
@@ -3150,7 +4844,19 @@ export default {
     nftsCount: 'u32'
   },
   /**
+<<<<<<< HEAD
    * Lookup406: rmrk_traits::nft::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup407: rmrk_traits::nft::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup420: rmrk_traits::nft::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup418: rmrk_traits::nft::NftInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsNftNftInfo: {
     owner: 'RmrkTraitsNftAccountIdOrCollectionNftTuple',
@@ -3160,14 +4866,38 @@ export default {
     pending: 'bool'
   },
   /**
+<<<<<<< HEAD
    * Lookup408: rmrk_traits::nft::RoyaltyInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill>
+=======
+<<<<<<< HEAD
+   * Lookup409: rmrk_traits::nft::RoyaltyInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill>
+=======
+<<<<<<< HEAD
+   * Lookup422: rmrk_traits::nft::RoyaltyInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill>
+=======
+   * Lookup420: rmrk_traits::nft::RoyaltyInfo<sp_core::crypto::AccountId32, sp_arithmetic::per_things::Permill>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsNftRoyaltyInfo: {
     recipient: 'AccountId32',
     amount: 'Permill'
   },
   /**
+<<<<<<< HEAD
    * Lookup409: rmrk_traits::resource::ResourceInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup410: rmrk_traits::resource::ResourceInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup423: rmrk_traits::resource::ResourceInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup421: rmrk_traits::resource::ResourceInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsResourceResourceInfo: {
     id: 'u32',
@@ -3176,14 +4906,38 @@ export default {
     pendingRemoval: 'bool'
   },
   /**
+<<<<<<< HEAD
    * Lookup410: rmrk_traits::property::PropertyInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup411: rmrk_traits::property::PropertyInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup424: rmrk_traits::property::PropertyInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup422: rmrk_traits::property::PropertyInfo<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsPropertyPropertyInfo: {
     key: 'Bytes',
     value: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup411: rmrk_traits::base::BaseInfo<sp_core::crypto::AccountId32, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup412: rmrk_traits::base::BaseInfo<sp_core::crypto::AccountId32, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+<<<<<<< HEAD
+   * Lookup425: rmrk_traits::base::BaseInfo<sp_core::crypto::AccountId32, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+=======
+   * Lookup423: rmrk_traits::base::BaseInfo<sp_core::crypto::AccountId32, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsBaseBaseInfo: {
     issuer: 'AccountId32',
@@ -3191,7 +4945,19 @@ export default {
     symbol: 'Bytes'
   },
   /**
+<<<<<<< HEAD
    * Lookup412: rmrk_traits::nft::NftChild
+=======
+<<<<<<< HEAD
+   * Lookup413: rmrk_traits::nft::NftChild
+=======
+<<<<<<< HEAD
+   * Lookup426: rmrk_traits::nft::NftChild
+=======
+   * Lookup424: rmrk_traits::nft::NftChild
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   RmrkTraitsNftNftChild: {
     collectionId: 'u32',
@@ -3199,23 +4965,33 @@ export default {
   },
   /**
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup414: pallet_common::pallet::Error<T>
 =======
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup415: pallet_common::pallet::Error<T>
 =======
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup428: pallet_common::pallet::Error<T>
 =======
    * Lookup422: up_pov_estimate_rpc::PovInfo
+=======
+   * Lookup425: up_pov_estimate_rpc::PovInfo
+>>>>>>> chore:  regenerate types
    **/
   UpPovEstimateRpcPovInfo: {
     proofSize: 'u64',
     compactProofSize: 'u64',
     compressedProofSize: 'u64',
-    result: 'Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>'
+    results: 'Vec<Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>>',
+    keyValues: 'Vec<UpPovEstimateRpcTrieKeyValue>'
   },
   /**
+<<<<<<< HEAD
 <<<<<<< HEAD
    * Lookup424: pallet_common::pallet::Error<T>
 >>>>>>> fix: update polkadot types and definitions
@@ -3227,6 +5003,9 @@ export default {
 =======
 =======
    * Lookup424: sp_runtime::transaction_validity::TransactionValidityError
+=======
+   * Lookup428: sp_runtime::transaction_validity::TransactionValidityError
+>>>>>>> chore:  regenerate types
    **/
   SpRuntimeTransactionValidityTransactionValidityError: {
     _enum: {
@@ -3235,7 +5014,7 @@ export default {
     }
   },
   /**
-   * Lookup425: sp_runtime::transaction_validity::InvalidTransaction
+   * Lookup429: sp_runtime::transaction_validity::InvalidTransaction
    **/
   SpRuntimeTransactionValidityInvalidTransaction: {
     _enum: {
@@ -3253,7 +5032,7 @@ export default {
     }
   },
   /**
-   * Lookup426: sp_runtime::transaction_validity::UnknownTransaction
+   * Lookup430: sp_runtime::transaction_validity::UnknownTransaction
    **/
   SpRuntimeTransactionValidityUnknownTransaction: {
     _enum: {
@@ -3263,10 +5042,27 @@ export default {
     }
   },
   /**
+<<<<<<< HEAD
    * Lookup428: pallet_common::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+   * Lookup432: up_pov_estimate_rpc::TrieKeyValue
+   **/
+  UpPovEstimateRpcTrieKeyValue: {
+    key: 'Bytes',
+    value: 'Bytes'
+  },
+  /**
+   * Lookup434: pallet_common::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletCommonError: {
     _enum: ['CollectionNotFound', 'MustBeTokenOwner', 'NoPermission', 'CantDestroyNotEmptyCollection', 'PublicMintingNotAllowed', 'AddressNotInAllowlist', 'CollectionNameLimitExceeded', 'CollectionDescriptionLimitExceeded', 'CollectionTokenPrefixLimitExceeded', 'TotalCollectionsLimitExceeded', 'CollectionAdminCountExceeded', 'CollectionLimitBoundsExceeded', 'OwnerPermissionsCantBeReverted', 'TransferNotAllowed', 'AccountTokenLimitExceeded', 'CollectionTokenLimitExceeded', 'MetadataFlagFrozen', 'TokenNotFound', 'TokenValueTooLow', 'ApprovedValueTooLow', 'CantApproveMoreThanOwned', 'AddressIsZero', 'UnsupportedOperation', 'NotSufficientFounds', 'UserIsNotAllowedToNest', 'SourceCollectionIsNotAllowedToNest', 'CollectionFieldSizeExceeded', 'NoSpaceForProperty', 'PropertyLimitReached', 'PropertyKeyIsTooLong', 'InvalidCharacterInPropertyKey', 'EmptyPropertyKey', 'CollectionIsExternal', 'CollectionIsInternal', 'ConfirmSponsorshipFail', 'UserIsNotCollectionAdmin']
@@ -3274,15 +5070,20 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup416: pallet_fungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup417: pallet_fungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup430: pallet_fungible::pallet::Error<T>
 =======
@@ -3297,8 +5098,17 @@ export default {
 =======
    * Lookup430: pallet_fungible::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+   * Lookup436: pallet_fungible::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletFungibleError: {
     _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingAllowanceForAllNotAllowed', 'FungibleTokensAreAlwaysValid']
@@ -3306,20 +5116,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup420: pallet_refungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup417: pallet_refungible::ItemData
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup418: pallet_refungible::ItemData
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup431: pallet_refungible::ItemData
 =======
@@ -3334,8 +5151,17 @@ export default {
 =======
    * Lookup431: pallet_refungible::ItemData
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+   * Lookup437: pallet_refungible::ItemData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletRefungibleItemData: {
     constData: 'Bytes'
@@ -3343,15 +5169,20 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup422: pallet_refungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup423: pallet_refungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup436: pallet_refungible::pallet::Error<T>
 =======
@@ -3369,9 +5200,21 @@ export default {
 =======
    * Lookup436: pallet_refungible::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup442: pallet_refungible::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletRefungibleError: {
     _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RepartitionWhileNotOwningAllPieces', 'RefungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
@@ -3379,20 +5222,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup421: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup423: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup424: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup437: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
@@ -3410,9 +5260,21 @@ export default {
 =======
    * Lookup437: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup443: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletNonfungibleItemData: {
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
@@ -3420,20 +5282,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup423: up_data_structs::PropertyScope
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup425: up_data_structs::PropertyScope
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup426: up_data_structs::PropertyScope
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup439: up_data_structs::PropertyScope
 =======
@@ -3451,9 +5320,21 @@ export default {
 =======
    * Lookup439: up_data_structs::PropertyScope
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup445: up_data_structs::PropertyScope
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsPropertyScope: {
     _enum: ['None', 'Rmrk']
@@ -3461,20 +5342,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup426: pallet_nonfungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup427: pallet_nonfungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup428: pallet_nonfungible::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup441: pallet_nonfungible::pallet::Error<T>
 =======
@@ -3492,9 +5380,21 @@ export default {
 =======
    * Lookup441: pallet_nonfungible::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup447: pallet_nonfungible::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletNonfungibleError: {
     _enum: ['NotNonfungibleDataUsedToMintFungibleCollectionToken', 'NonfungibleItemsHaveNoAmount', 'CantBurnNftWithChildren']
@@ -3502,20 +5402,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup427: pallet_structure::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup428: pallet_structure::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup429: pallet_structure::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup442: pallet_structure::pallet::Error<T>
 =======
@@ -3533,9 +5440,21 @@ export default {
 =======
    * Lookup442: pallet_structure::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup448: pallet_structure::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletStructureError: {
     _enum: ['OuroborosDetected', 'DepthLimit', 'BreadthLimit', 'TokenNotFound']
@@ -3543,20 +5462,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup428: pallet_rmrk_core::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup429: pallet_rmrk_core::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup430: pallet_rmrk_core::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup443: pallet_rmrk_core::pallet::Error<T>
 =======
@@ -3574,9 +5500,21 @@ export default {
 =======
    * Lookup443: pallet_rmrk_core::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup449: pallet_rmrk_core::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletRmrkCoreError: {
     _enum: ['CorruptedCollectionType', 'RmrkPropertyKeyIsTooLong', 'RmrkPropertyValueIsTooLong', 'RmrkPropertyIsNotFound', 'UnableToDecodeRmrkData', 'CollectionNotEmpty', 'NoAvailableCollectionId', 'NoAvailableNftId', 'CollectionUnknown', 'NoPermission', 'NonTransferable', 'CollectionFullOrLocked', 'ResourceDoesntExist', 'CannotSendToDescendentOrSelf', 'CannotAcceptNonOwnedNft', 'CannotRejectNonOwnedNft', 'CannotRejectNonPendingNft', 'ResourceNotPending', 'NoAvailableResourceId']
@@ -3584,20 +5522,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup430: pallet_rmrk_equip::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup431: pallet_rmrk_equip::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup432: pallet_rmrk_equip::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup445: pallet_rmrk_equip::pallet::Error<T>
 =======
@@ -3615,9 +5560,21 @@ export default {
 =======
    * Lookup445: pallet_rmrk_equip::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup451: pallet_rmrk_equip::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletRmrkEquipError: {
     _enum: ['PermissionError', 'NoAvailableBaseId', 'NoAvailablePartId', 'BaseDoesntExist', 'NeedsDefaultThemeFirst', 'PartDoesntExist', 'NoEquippableOnFixedPart']
@@ -3625,20 +5582,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup436: pallet_app_promotion::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup437: pallet_app_promotion::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup438: pallet_app_promotion::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup451: pallet_app_promotion::pallet::Error<T>
 =======
@@ -3656,9 +5620,21 @@ export default {
 =======
    * Lookup451: pallet_app_promotion::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup457: pallet_app_promotion::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletAppPromotionError: {
     _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFunds', 'PendingForBlockOverflow', 'SponsorNotSet', 'IncorrectLockedBalanceOperation']
@@ -3666,20 +5642,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup437: pallet_foreign_assets::module::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup438: pallet_foreign_assets::module::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup439: pallet_foreign_assets::module::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup452: pallet_foreign_assets::module::Error<T>
 =======
@@ -3697,9 +5680,21 @@ export default {
 =======
    * Lookup452: pallet_foreign_assets::module::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup458: pallet_foreign_assets::module::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletForeignAssetsModuleError: {
     _enum: ['BadLocation', 'MultiLocationExisted', 'AssetIdNotExists', 'AssetIdExisted']
@@ -3707,20 +5702,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup439: pallet_evm::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup440: pallet_evm::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup441: pallet_evm::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup454: pallet_evm::pallet::Error<T>
 =======
@@ -3738,9 +5740,21 @@ export default {
 =======
    * Lookup455: pallet_evm::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup461: pallet_evm::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce', 'GasLimitTooLow', 'GasLimitTooHigh', 'Undefined', 'Reentrancy', 'TransactionMustComeFromEOA']
@@ -3748,20 +5762,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup442: fp_rpc::TransactionStatus
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup443: fp_rpc::TransactionStatus
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup444: fp_rpc::TransactionStatus
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup457: fp_rpc::TransactionStatus
 =======
@@ -3779,9 +5800,21 @@ export default {
 =======
    * Lookup458: fp_rpc::TransactionStatus
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup464: fp_rpc::TransactionStatus
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -3795,6 +5828,7 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup444: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
@@ -3803,6 +5837,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup445: ethbloom::Bloom
    **/
@@ -3812,6 +5848,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup446: ethbloom::Bloom
    **/
@@ -3821,6 +5859,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup459: ethbloom::Bloom
    **/
@@ -3850,9 +5890,25 @@ export default {
   /**
    * Lookup462: ethereum::receipt::ReceiptV3
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup466: ethbloom::Bloom
+   **/
+  EthbloomBloom: '[u8;256]',
+  /**
+   * Lookup468: ethereum::receipt::ReceiptV3
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -3864,20 +5920,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup447: ethereum::receipt::EIP658ReceiptData
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup448: ethereum::receipt::EIP658ReceiptData
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup449: ethereum::receipt::EIP658ReceiptData
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup462: ethereum::receipt::EIP658ReceiptData
 =======
@@ -3895,9 +5958,21 @@ export default {
 =======
    * Lookup463: ethereum::receipt::EIP658ReceiptData
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup469: ethereum::receipt::EIP658ReceiptData
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -3908,20 +5983,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup448: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup449: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup450: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup463: ethereum::block::Block<ethereum::transaction::TransactionV2>
 =======
@@ -3939,9 +6021,21 @@ export default {
 =======
    * Lookup464: ethereum::block::Block<ethereum::transaction::TransactionV2>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup470: ethereum::block::Block<ethereum::transaction::TransactionV2>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -3951,20 +6045,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup449: ethereum::header::Header
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup450: ethereum::header::Header
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup451: ethereum::header::Header
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup464: ethereum::header::Header
 =======
@@ -3982,9 +6083,21 @@ export default {
 =======
    * Lookup465: ethereum::header::Header
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup471: ethereum::header::Header
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -4006,6 +6119,7 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup450: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
@@ -4014,6 +6128,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup451: ethereum_types::hash::H64
    **/
@@ -4023,6 +6139,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup452: ethereum_types::hash::H64
    **/
@@ -4032,6 +6150,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup465: ethereum_types::hash::H64
    **/
@@ -4061,9 +6181,25 @@ export default {
   /**
    * Lookup471: pallet_ethereum::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup472: ethereum_types::hash::H64
+   **/
+  EthereumTypesHashH64: '[u8;8]',
+  /**
+   * Lookup477: pallet_ethereum::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
@@ -4071,20 +6207,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup456: pallet_evm_coder_substrate::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup457: pallet_evm_coder_substrate::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup458: pallet_evm_coder_substrate::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup471: pallet_evm_coder_substrate::pallet::Error<T>
 =======
@@ -4102,9 +6245,21 @@ export default {
 =======
    * Lookup472: pallet_evm_coder_substrate::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup478: pallet_evm_coder_substrate::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
@@ -4112,20 +6267,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup457: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup458: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup459: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup472: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 =======
@@ -4143,9 +6305,21 @@ export default {
 =======
    * Lookup473: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup479: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   UpDataStructsSponsorshipStateBasicCrossAccountIdRepr: {
     _enum: {
@@ -4157,20 +6331,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup458: pallet_evm_contract_helpers::SponsoringModeT
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup459: pallet_evm_contract_helpers::SponsoringModeT
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup460: pallet_evm_contract_helpers::SponsoringModeT
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup473: pallet_evm_contract_helpers::SponsoringModeT
 =======
@@ -4188,9 +6369,21 @@ export default {
 =======
    * Lookup474: pallet_evm_contract_helpers::SponsoringModeT
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup480: pallet_evm_contract_helpers::SponsoringModeT
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
@@ -4198,20 +6391,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup464: pallet_evm_contract_helpers::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup465: pallet_evm_contract_helpers::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup466: pallet_evm_contract_helpers::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup479: pallet_evm_contract_helpers::pallet::Error<T>
 =======
@@ -4229,9 +6429,21 @@ export default {
 =======
    * Lookup480: pallet_evm_contract_helpers::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup486: pallet_evm_contract_helpers::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission', 'NoPendingSponsor', 'TooManyMethodsHaveSponsoredLimit']
@@ -4239,20 +6451,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup465: pallet_evm_migration::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup466: pallet_evm_migration::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup467: pallet_evm_migration::pallet::Error<T>
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup480: pallet_evm_migration::pallet::Error<T>
 =======
@@ -4270,14 +6489,27 @@ export default {
 =======
    * Lookup481: pallet_evm_migration::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup487: pallet_evm_migration::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating', 'BadEvent']
   },
   /**
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
    * Lookup466: pallet_maintenance::pallet::Error<T>
@@ -4288,6 +6520,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup467: pallet_maintenance::pallet::Error<T>
    **/
@@ -4297,6 +6531,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup468: pallet_maintenance::pallet::Error<T>
    **/
@@ -4306,6 +6542,8 @@ export default {
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup481: pallet_maintenance::pallet::Error<T>
    **/
@@ -4335,9 +6573,25 @@ export default {
   /**
    * Lookup483: pallet_test_utils::pallet::Error<T>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup488: pallet_maintenance::pallet::Error<T>
+   **/
+  PalletMaintenanceError: 'Null',
+  /**
+   * Lookup489: pallet_test_utils::pallet::Error<T>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletTestUtilsError: {
     _enum: ['TestPalletDisabled', 'TriggerRollback']
@@ -4345,20 +6599,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup469: sp_runtime::MultiSignature
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup470: sp_runtime::MultiSignature
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup471: sp_runtime::MultiSignature
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup484: sp_runtime::MultiSignature
 =======
@@ -4376,9 +6637,21 @@ export default {
 =======
    * Lookup485: sp_runtime::MultiSignature
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup491: sp_runtime::MultiSignature
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -4390,20 +6663,27 @@ export default {
   /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
    * Lookup470: sp_core::ed25519::Signature
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup471: sp_core::ed25519::Signature
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup472: sp_core::ed25519::Signature
 =======
 =======
 >>>>>>> chore: regenerate types
+=======
+>>>>>>> chore:  regenerate types
 <<<<<<< HEAD
    * Lookup485: sp_core::ed25519::Signature
 >>>>>>> fix: update polkadot types and definitions
@@ -4467,49 +6747,53 @@ export default {
 =======
    * Lookup486: sp_core::ed25519::Signature
 >>>>>>> chore: regenerate types
+=======
+   * Lookup492: sp_core::ed25519::Signature
+>>>>>>> chore:  regenerate types
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup488: sp_core::sr25519::Signature
+   * Lookup494: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup489: sp_core::ecdsa::Signature
+   * Lookup495: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup492: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup498: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup493: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+   * Lookup499: frame_system::extensions::check_tx_version::CheckTxVersion<T>
    **/
   FrameSystemExtensionsCheckTxVersion: 'Null',
   /**
-   * Lookup494: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup500: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup497: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup503: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup498: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup504: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup499: opal_runtime::runtime_common::maintenance::CheckMaintenance
+   * Lookup505: opal_runtime::runtime_common::maintenance::CheckMaintenance
    **/
   OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
   /**
-   * Lookup500: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup506: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup501: opal_runtime::Runtime
+   * Lookup507: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
+<<<<<<< HEAD
 <<<<<<< HEAD
    * Lookup498: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
 >>>>>>> fix: update polkadot types and definitions
@@ -4525,9 +6809,21 @@ export default {
 =======
    * Lookup502: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+<<<<<<< HEAD
 >>>>>>> chore: regenerate types
+=======
+=======
+=======
+=======
+   * Lookup508: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
+>>>>>>> chore:  regenerate types
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };
