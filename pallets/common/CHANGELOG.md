@@ -4,13 +4,21 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
-## [0.1.11] - 2022-11-16
+## [0.1.12] - 2022-11-16
 
 ### Changed
 
 - Behavior of the `setCollectionLimit` method.
   Removed method overload: single signature `(string, uint256)`
   is used for both cases.
+
+## [0.1.11] - 2022-11-12
+
+### Changed
+
+- In the `Collection` solidity interface,
+  the `allowed` function has been renamed to `allow_listed_cross`.
+  Also `EthCrossAccount` type is now used as `user` arg.
 
 ## [0.1.10] - 2022-11-02
 

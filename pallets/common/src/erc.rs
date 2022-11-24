@@ -529,11 +529,9 @@ where
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	fn allowed(&self, user: address) -> Result<bool> {
-		Ok(Pallet::<T>::allowed(
-			self.id,
-			T::CrossAccountId::from_eth(user),
-		))
+	fn allowlisted_cross(&self, user: EthCrossAccount) -> Result<bool> {
+		let user = user.into_sub_cross_account::<T>()?;
+		Ok(Pallet::<T>::allowed(self.id, user))
 	}
 
 	/// Add the user to the allowed list.

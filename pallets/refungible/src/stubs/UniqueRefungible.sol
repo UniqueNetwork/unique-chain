@@ -119,7 +119,7 @@ struct Property {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x8b91d192
+/// @dev the ERC-165 identifier for this interface is 0xcc1d80ca
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -370,9 +370,9 @@ contract Collection is Dummy, ERC165 {
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	/// @dev EVM selector for this function is: 0xd63a8e11,
-	///  or in textual repr: allowed(address)
-	function allowed(address user) public view returns (bool) {
+	/// @dev EVM selector for this function is: 0x91b6df49,
+	///  or in textual repr: allowlistedCross((address,uint256))
+	function allowlistedCross(EthCrossAccount memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
