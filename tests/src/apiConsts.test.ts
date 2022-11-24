@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
+import {ApiBase} from '@polkadot/api/base';
 import {usingPlaygrounds, itSub, expect} from './util';
 
 
@@ -40,6 +41,9 @@ const DEFAULT_COLLETCTION_LIMIT = {
   ownerCanDestroy: true,
   transfersEnabled: true,
 };
+
+const EVM_COLLECTION_HELPERS_ADDRESS = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';
+const HELPERS_CONTRACT_ADDRESS = '0x842899ECF380553E8a4de75bF534cdf6fBF64049';
 
 describe('integration test: API UNIQUE consts', () => {
   let api: ApiPromise;
@@ -100,6 +104,14 @@ describe('integration test: API UNIQUE consts', () => {
   
   itSub('COLLECTION_ADMINS_LIMIT', () => {
     checkConst(api.consts.unique.collectionAdminsLimit, COLLECTION_ADMINS_LIMIT);
+  });
+  
+  itSub('HELPERS_CONTRACT_ADDRESS', () => {
+    expect(api.consts.evmContractHelpers.contractAddress.toString().toLowerCase()).to.be.equal(HELPERS_CONTRACT_ADDRESS.toLowerCase());
+  });
+  
+  itSub('EVM_COLLECTION_HELPERS_ADDRESS', () => {
+    expect(api.consts.common.contractAddress.toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS.toLowerCase());
   });
 });
 
