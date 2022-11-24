@@ -8,7 +8,7 @@ import '@polkadot/api-base/types/consts';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Perbill, Permill, Weight } from '@polkadot/types/interfaces/runtime';
+import type { H160, Perbill, Permill, Weight } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, UpDataStructsCollectionLimits, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
@@ -70,6 +70,10 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       collectionCreationPrice: u128 & AugmentedConst<ApiType>;
       /**
+       * Address under which the CollectionHelper contract would be available.
+       **/
+      contractAddress: H160 & AugmentedConst<ApiType>;
+      /**
        * Generic const
        **/
       [key: string]: Codec;
@@ -77,6 +81,16 @@ declare module '@polkadot/api-base/types/consts' {
     configuration: {
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
       defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    evmContractHelpers: {
+      /**
+       * Address, under which magic contract will be available
+       **/
+      contractAddress: H160 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

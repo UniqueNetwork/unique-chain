@@ -47,6 +47,7 @@ pub mod pallet {
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Address, under which magic contract will be available
+		#[pallet::constant]
 		type ContractAddress: Get<H160>;
 
 		/// In case of enabled sponsoring, but no sponsoring rate limit set,

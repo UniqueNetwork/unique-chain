@@ -103,12 +103,12 @@ class NativeContractGroup extends EthGroupBase {
 
   contractHelpers(caller: string): Contract {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
   collectionHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
   collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false): Contract {

@@ -376,6 +376,7 @@ pub mod pallet {
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		/// Address under which the CollectionHelper contract would be available.
+		#[pallet::constant]
 		type ContractAddress: Get<H160>;
 
 		/// Mapper for token addresses to Ethereum addresses.

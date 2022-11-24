@@ -2936,13 +2936,13 @@ export default {
     }
   },
   /**
-   * Lookup340: pallet_maintenance::pallet::Call<T>
+   * Lookup338: pallet_maintenance::pallet::Call<T>
    **/
   PalletMaintenanceCall: {
     _enum: ['enable', 'disable']
   },
   /**
-   * Lookup341: pallet_test_utils::pallet::Call<T>
+   * Lookup339: pallet_test_utils::pallet::Call<T>
    **/
   PalletTestUtilsCall: {
     _enum: {
