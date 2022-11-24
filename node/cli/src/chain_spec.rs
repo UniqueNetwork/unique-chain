@@ -89,7 +89,11 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 			return RuntimeId::Quartz;
 		}
 
-		if self.id().starts_with("opal") || self.id().starts_with("sapphire") || self.id() == "dev" || self.id() == "local_testnet" {
+		if self.id().starts_with("opal")
+			|| self.id().starts_with("sapphire")
+			|| self.id() == "dev"
+			|| self.id() == "local_testnet"
+		{
 			return RuntimeId::Opal;
 		}
 
