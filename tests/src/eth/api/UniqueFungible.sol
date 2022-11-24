@@ -354,7 +354,7 @@ interface ERC20Events {
 	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x942e8b22
+/// @dev the ERC-165 identifier for this interface is 0x8cb847c4
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	/// @dev EVM selector for this function is: 0x06fdde03,
 	///  or in textual repr: name()
@@ -395,6 +395,11 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 	/// @dev EVM selector for this function is: 0xdd62ed3e,
 	///  or in textual repr: allowance(address,address)
 	function allowance(address owner, address spender) external view returns (uint256);
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() external view returns (address);
 }
 
 interface UniqueFungible is Dummy, ERC165, ERC20, ERC20Mintable, ERC20UniqueExtensions, Collection {}

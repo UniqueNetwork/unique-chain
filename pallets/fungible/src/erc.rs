@@ -30,6 +30,7 @@ use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use pallet_common::{CollectionHandle, erc::CollectionCall};
+use sp_core::Get;
 
 use crate::{
 	Allowance, Balance, Config, FungibleHandle, Pallet, SelfWeightOf, TotalSupply,
@@ -131,6 +132,11 @@ impl<T: Config> FungibleHandle<T> {
 		let spender = T::CrossAccountId::from_eth(spender);
 
 		Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 
