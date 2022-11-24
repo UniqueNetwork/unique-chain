@@ -107,7 +107,11 @@
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug"
+                        "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
+                        "--",
+                        "--port=31335",
+                        "--ws-port=9745",
+                        "--rpc-port=9734"
                     ]
                 },
                 {
