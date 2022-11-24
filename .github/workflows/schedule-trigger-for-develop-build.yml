@@ -1,0 +1,37 @@
+name: schedule-trigger-for-develop-build
+on:
+  # update the branch ci/develop-scheduler every night
+  schedule:
+    - cron: '0 1 * * *'
+  # or update the branch manually
+  workflow_dispatch:
+  # pull_request:
+  #   branches: [ 'develop' ]
+  #   types: [ opened, reopened, synchronize, ready_for_review, converted_to_draft ]
+
+jobs:
+  update:
+    runs-on: medium
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+      - name: Checkout 🛎
+        uses: actions/checkout@v3.1.0
+        with:
+          # check out all branches
+          fetch-depth: 0
+          # token: ${{ secrets.GH_PAT }}
+      - name: Update Git branch ci/develop-scheduler
+        run: |
+          git config user.name "Unique"
+          git config user.email github-actions@usetech.com
+          git checkout ci/develop-scheduler
+          echo $(date) > .github/scheduler
+          git commit -a -m "commit timestamp for scheduler on $(date)"
+          git merge origin/develop --no-edit -m "Merged develop branch on $(date +%F)"
+      - name: Push the updated branch X
+        run: |
+          git push origin ci/develop-scheduler
+      - name: Clean Workspace
+        if: always()
+        uses: AutoModality/action-clean@v1.1.0
