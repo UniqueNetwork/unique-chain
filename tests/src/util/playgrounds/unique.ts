@@ -586,6 +586,20 @@ export class ChainHelperBase {
     });
   }
 
+  async signTransactionWithoutSending(signer: TSigner, tx: any) {
+    const api = this.getApi();
+    const signingInfo = await api.derive.tx.signingInfo(signer.address);
+
+    tx.sign(signer, {
+      blockHash: api.genesisHash,
+      genesisHash: api.genesisHash,
+      runtimeVersion: api.runtimeVersion,
+      nonce: signingInfo.nonce,
+    });
+
+    return tx.toHex();
+  }
+
   async getPaymentInfo(signer: TSigner, tx: any, len: number | null) {
     const api = this.getApi();
     const signingInfo = await api.derive.tx.signingInfo(signer.address);

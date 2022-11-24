@@ -171,6 +171,14 @@ export interface IStakingInfo {
   amount: bigint,
 }
 
+export interface IPovInfo {
+  proofSize: number,
+  compactProofSize: number,
+  compressedProofSize: number,
+  results: any[],
+  kv: any,
+}
+
 export interface ISchedulerOptions {
   scheduledId?: string,
   priority?: number,
