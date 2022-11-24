@@ -216,6 +216,7 @@ where
 
 	let overrides = overrides_handle::<_, _, R>(client.clone());
 
+	let execute_gas_limit_multiplier = 10;
 	io.merge(
 		Eth::new(
 			client.clone(),
@@ -230,7 +231,7 @@ where
 			block_data_cache.clone(),
 			fee_history_cache,
 			fee_history_limit,
-			10,
+			execute_gas_limit_multiplier,
 		)
 		.into_rpc(),
 	)?;
