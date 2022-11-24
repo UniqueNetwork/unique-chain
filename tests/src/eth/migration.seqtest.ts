@@ -127,7 +127,7 @@ describe('EVM Migrations', () => {
   });
   itEth('Fake collection creation on substrate side', async ({helper}) => {
     const txInsertEvents = helper.constructApiCall('api.tx.evmMigration.insertEvents', [[
-      encodeEvent(helper.api!, 'Common', 'common', 'CollectionCreated', [
+      encodeEvent(helper.getApi(), 'Common', 'common', 'CollectionCreated', [
         // Collection Id
         9999,
         // Collection mode: NFT
@@ -144,7 +144,7 @@ describe('EVM Migrations', () => {
   });
   itEth('Fake token creation on substrate side', async ({helper}) => {
     const txInsertEvents = helper.constructApiCall('api.tx.evmMigration.insertEvents', [[
-      encodeEvent(helper.api!, 'Common', 'common', 'ItemCreated', [
+      encodeEvent(helper.getApi(), 'Common', 'common', 'ItemCreated', [
         // Collection Id
         9999,
         // TokenId
