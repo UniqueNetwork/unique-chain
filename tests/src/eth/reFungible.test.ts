@@ -117,7 +117,7 @@ describe('Refungible: Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint()', async ({helper}) => {
+  itEth('Can perform mint() & crossOwnerOf()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Minty', '6', '6', '');
@@ -132,6 +132,7 @@ describe('Refungible: Plain calls', () => {
     const tokenId = event.returnValues.tokenId;
     expect(tokenId).to.be.equal('1');
 
+    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
     expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
   });
 

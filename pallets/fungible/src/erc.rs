@@ -158,6 +158,13 @@ impl<T: Config> FungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @notice A description for the collection.
+	fn description(&self) -> Result<string> {
+		Ok(decode_utf16(self.description.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
+	}
+
 	#[weight(<SelfWeightOf<T>>::approve())]
 	fn approve_cross(
 		&mut self,

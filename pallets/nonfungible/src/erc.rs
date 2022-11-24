@@ -37,7 +37,7 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	CollectionHandle, CollectionPropertyPermissions,
+	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -278,7 +278,7 @@ pub enum ERC721UniqueMintableEvents {
 #[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
 impl<T: Config> NonfungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
@@ -686,7 +686,7 @@ fn get_token_permission<T: Config>(
 #[solidity_interface(name = ERC721UniqueExtensions)]
 impl<T: Config> NonfungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	fn name(&self) -> Result<string> {
@@ -698,6 +698,56 @@ where
 	/// @notice An abbreviated name for NFTs in this contract
 	fn symbol(&self) -> Result<string> {
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	}
+
+	/// @notice A description for the collection.
+	fn description(&self) -> Result<string> {
+		Ok(decode_utf16(self.description.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
+	}
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	fn cross_owner_of(&self, token_id: uint256) -> Result<EthCrossAccount> {
+		Self::token_owner(&self, token_id.try_into()?)
+			.map(|o| EthCrossAccount::from_sub_cross_account::<T>(&o))
+			.ok_or(Error::Revert("key too large".into()))
+	}
+
+	/// Returns the token properties.
+	///
+	/// @param tokenId Id for the token.
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	fn token_properties(
+		&self,
+		token_id: uint256,
+		keys: Vec<string>,
+	) -> Result<Vec<PropertyStruct>> {
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Self as CommonCollectionOperations<T>>::token_properties(
+			&self,
+			token_id.try_into()?,
+			if keys.is_empty() { None } else { Some(keys) },
+		)
+		.into_iter()
+		.map(|p| {
+			let key = string::from_utf8(p.key.to_vec())
+				.map_err(|e| Error::Revert(alloc::format!("{}", e)))?;
+			let value = bytes(p.value.to_vec());
+			Ok(PropertyStruct { key, value })
+		})
+		.collect::<Result<Vec<_>>>()
 	}
 
 	/// @notice Set or reaffirm the approved address for an NFT

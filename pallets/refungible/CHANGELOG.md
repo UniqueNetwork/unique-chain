@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.2.9] - 2022-11-18
+
+### Added
+
+- The functions `description`, `crossOwnerOf`, `tokenProperties` to `ERC721UniqueExtensions` interface.
+
 ## [0.2.8] - 2022-11-14
 
 ### Changed

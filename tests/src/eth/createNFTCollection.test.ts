@@ -28,7 +28,7 @@ describe('Create NFT collection from EVM', () => {
     });
   });
 
-  itEth('Create collection with properties', async ({helper}) => {
+  itEth('Create collection with properties & get desctription', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const name = 'CollectionEVM';
@@ -37,7 +37,8 @@ describe('Create NFT collection from EVM', () => {
     const baseUri = 'BaseURI';
 
     const {collectionId, collectionAddress, events} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, name, description, prefix, baseUri);
-
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    
     expect(events).to.be.deep.equal([
       {
         address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
@@ -56,7 +57,9 @@ describe('Create NFT collection from EVM', () => {
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
     expect(data.raw.mode).to.be.eq('NFT');
-
+    
+    expect(await contract.methods.description().call()).to.deep.equal(description);
+    
     const options = await collection.getOptions();
     expect(options.tokenPropertyPermissions).to.be.deep.equal([
       {
@@ -92,11 +95,12 @@ describe('Create NFT collection from EVM', () => {
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
   });
 
-  itEth('[cross] Set sponsorship', async ({helper}) => {
+  itEth('[cross] Set sponsorship & get description', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
+    const description = 'absolutely anything';
+    const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', description, 'ROC');
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
@@ -112,6 +116,8 @@ describe('Create NFT collection from EVM', () => {
 
     data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    
+    expect(await sponsorCollection.methods.description().call()).to.deep.equal(description);
   });
 
   itEth('Set limits', async ({helper}) => {

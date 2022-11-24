@@ -127,7 +127,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) external view returns (Tuple22[] memory);
+	function collectionProperties(string[] memory keys) external view returns (Property[] memory);
 
 	// /// Set the sponsor of the collection.
 	// ///
@@ -169,7 +169,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple25 memory);
+	function collectionSponsor() external view returns (Tuple26 memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -346,15 +346,9 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple25 {
+struct Tuple26 {
 	address field_0;
 	uint256 field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple22 {
-	string field_0;
-	bytes field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
@@ -450,7 +444,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xab243667
+/// @dev the ERC-165 identifier for this interface is 0x1d4b64d6
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -461,6 +455,27 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x95d89b41,
 	///  or in textual repr: symbol()
 	function symbol() external view returns (string memory);
+
+	/// @notice A description for the collection.
+	/// @dev EVM selector for this function is: 0x7284e416,
+	///  or in textual repr: description()
+	function description() external view returns (string memory);
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	/// @dev EVM selector for this function is: 0x2b29dace,
+	///  or in textual repr: crossOwnerOf(uint256)
+	function crossOwnerOf(uint256 tokenId) external view returns (EthCrossAccount memory);
+
+	/// Returns the token properties.
+	///
+	/// @param tokenId Id for the token.
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0xefc26c69,
+	///  or in textual repr: tokenProperties(uint256,string[])
+	function tokenProperties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
 
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -539,7 +554,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple10[] memory tokens) external returns (bool);
+	// function mintBulkWithTokenURI(address to, Tuple12[] memory tokens) external returns (bool);
 
 	/// Returns EVM address for refungible token
 	///
@@ -550,7 +565,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple10 {
+struct Tuple12 {
 	uint256 field_0;
 	string field_1;
 }

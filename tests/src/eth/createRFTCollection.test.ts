@@ -53,7 +53,7 @@ describe('Create RFT collection from EVM', () => {
 
   
 
-  itEth('Create collection with properties', async ({helper}) => {
+  itEth('Create collection with properties & get description', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const name = 'CollectionEVM';
@@ -61,7 +61,8 @@ describe('Create RFT collection from EVM', () => {
     const prefix = 'token prefix';
     const baseUri = 'BaseURI';
 
-    const {collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
+    const {collectionId, collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const collection = helper.rft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
@@ -70,6 +71,8 @@ describe('Create RFT collection from EVM', () => {
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
     expect(data.raw.mode).to.be.eq('ReFungible');
+
+    expect(await contract.methods.description().call()).to.deep.equal(description);
 
     const options = await collection.getOptions();
     expect(options.tokenPropertyPermissions).to.be.deep.equal([

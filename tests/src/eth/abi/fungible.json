@@ -216,10 +216,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "string", "name": "field_0", "type": "string" },
-          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
         ],
-        "internalType": "struct Tuple16[]",
+        "internalType": "struct Property[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -279,6 +279,13 @@
     "name": "deleteCollectionProperties",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "description",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {

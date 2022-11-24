@@ -60,7 +60,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) external view returns (Tuple16[] memory);
+	function collectionProperties(string[] memory keys) external view returns (Property[] memory);
 
 	// /// Set the sponsor of the collection.
 	// ///
@@ -278,20 +278,19 @@ struct EthCrossAccount {
 	uint256 sub;
 }
 
-/// @dev anonymous struct
-struct Tuple16 {
-	string field_0;
-	bytes field_1;
-}
-
 /// @dev Property struct
 struct Property {
 	string key;
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x29f4dcd9
+/// @dev the ERC-165 identifier for this interface is 0x5b7038cf
 interface ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @notice A description for the collection.
+	/// @dev EVM selector for this function is: 0x7284e416,
+	///  or in textual repr: description()
+	function description() external view returns (string memory);
+
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
 	function approveCross(EthCrossAccount memory spender, uint256 amount) external returns (bool);
