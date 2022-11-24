@@ -24,6 +24,7 @@ use up_common::types::opaque::RuntimeId;
 
 use sc_service::{NativeExecutionDispatch, config::ExecutionStrategy};
 use sp_state_machine::{StateMachine, TrieBackendBuilder};
+use trie_db::{Trie, TrieDBBuilder};
 
 use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
 use anyhow::anyhow;
@@ -47,7 +48,7 @@ use sc_rpc_api::DenyUnsafe;
 
 use sp_runtime::traits::Header;
 
-use up_pov_estimate_rpc::PovInfo;
+use up_pov_estimate_rpc::{PovInfo, TrieKeyValue};
 
 use crate::define_struct_for_server_api;
 
@@ -244,10 +245,31 @@ where
 		results.push(xt_result);
 	}
 
+	let root = proving_backend.root().clone();
+
 	let proof = proving_backend
 		.extract_proof()
 		.expect("A recorder was set and thus, a storage proof can be extracted; qed");
 	let proof_size = proof.encoded_size();
+
+	let memory_db = proof.clone().into_memory_db();
+
+	let tree_db =
+		TrieDBBuilder::<sp_trie::LayoutV1<HasherOf<Block>>>::new(&memory_db, &root).build();
+
+	let key_values = tree_db
+		.iter()
+		.map_err(|e| anyhow!("failed to retrieve tree db key values: {:?}", e))?
+		.filter_map(|item| {
+			let item = item.ok()?;
+
+			Some(TrieKeyValue {
+				key: item.0,
+				value: item.1,
+			})
+		})
+		.collect();
+
 	let compact_proof = proof
 		.clone()
 		.into_compact_proof::<HasherOf<Block>>(pre_root)
@@ -263,5 +285,6 @@ where
 		compact_proof_size: compact_proof_size as u64,
 		compressed_proof_size: compressed_proof_size as u64,
 		results,
+		key_values,
 	})
 }

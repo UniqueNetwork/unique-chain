@@ -16,6 +16,7 @@ codec = { package = "parity-scale-codec", version = "3.1.2" }
 jsonrpsee = { version = "0.16.2", features = ["server", "macros"] }
 anyhow = "1.0.57"
 zstd = { version = "0.11.2", default-features = false }
+trie-db = { version = "0.24.0", default-features = false }
 
 sc-rpc-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
@@ -27,6 +28,7 @@ sp-blockchain = { default-features = false, git = "https://github.com/paritytech
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-keystore = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-trie = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 

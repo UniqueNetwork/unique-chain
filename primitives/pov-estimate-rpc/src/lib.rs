@@ -32,6 +32,14 @@ pub struct PovInfo {
 	pub compact_proof_size: u64,
 	pub compressed_proof_size: u64,
 	pub results: Vec<ApplyExtrinsicResult>,
+	pub key_values: Vec<TrieKeyValue>,
+}
+
+#[cfg_attr(feature = "std", derive(Serialize))]
+#[derive(Debug, TypeInfo)]
+pub struct TrieKeyValue {
+	pub key: Vec<u8>,
+	pub value: Vec<u8>,
 }
 
 sp_api::decl_runtime_apis! {

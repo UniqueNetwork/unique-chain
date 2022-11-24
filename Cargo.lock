@@ -12847,6 +12847,8 @@ dependencies = [
  "sp-rpc",
  "sp-runtime",
  "sp-state-machine",
+ "sp-trie",
+ "trie-db",
  "unique-runtime",
  "up-common",
  "up-data-structs",
