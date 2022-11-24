@@ -42,6 +42,7 @@ use pallet_common::{
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use sp_core::Get;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -488,6 +489,11 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn is_approved_for_all(&self, _owner: address, _operator: address) -> Result<address> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
+	}
+	
+	/// @notice Returns collection helper contract address 
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 

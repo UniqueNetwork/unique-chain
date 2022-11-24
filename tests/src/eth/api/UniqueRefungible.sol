@@ -604,7 +604,7 @@ interface ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x58800161
+/// @dev the ERC-165 identifier for this interface is 0x4016cd87
 interface ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all RFTs assigned to an owner
 	/// @dev RFTs assigned to the zero address are considered invalid, and this
@@ -682,6 +682,11 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
 	function isApprovedForAll(address owner, address operator) external view returns (address);
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() external view returns (address);
 }
 
 interface UniqueRefungible is
