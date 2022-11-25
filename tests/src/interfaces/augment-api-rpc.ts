@@ -436,6 +436,12 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       queryInfo: AugmentedRpc<(extrinsic: Bytes | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<RuntimeDispatchInfoV1>>;
     };
+    povinfo: {
+      /**
+       * Estimate PoV size of encoded signed extrinsics
+       **/
+      estimateExtrinsicPoV: AugmentedRpc<(encodedXt: Vec<Bytes> | (Bytes | string | Uint8Array)[], at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
+    };
     rmrk: {
       /**
        * Get tokens owned by an account in a collection
@@ -725,10 +731,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get effective collection limits
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
-      /**
-       * Estimate PoV size of an encoded extrinsic
-       **/
-      estimateExtrinsicPoV: AugmentedRpc<(encodedXt: Vec<Bytes> | (Bytes | string | Uint8Array)[], at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
       /**
        * Get the last token ID created in a collection
        **/

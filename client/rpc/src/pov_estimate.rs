@@ -122,7 +122,7 @@ define_struct_for_server_api! {
 #[rpc(server)]
 #[async_trait]
 pub trait PovEstimateApi<BlockHash> {
-	#[method(name = "unique_estimateExtrinsicPoV")]
+	#[method(name = "povinfo_estimateExtrinsicPoV")]
 	fn estimate_extrinsic_pov(
 		&self,
 		encoded_xts: Vec<Bytes>,

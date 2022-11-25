@@ -99,6 +99,7 @@ export class DevUniqueHelper extends UniqueHelper {
       rpc: {
         unique: defs.unique.rpc,
         appPromotion: defs.appPromotion.rpc,
+        povinfo: defs.povinfo.rpc,
         rmrk: defs.rmrk.rpc,
         eth: {
           feeHistory: {
@@ -324,7 +325,7 @@ class ArrangeGroup {
   }
 
   async calculatePoVInfo(txs: any[]): Promise<IPovInfo> {
-    const rawPovInfo = await this.helper.callRpc('api.rpc.unique.estimateExtrinsicPoV', [txs]);
+    const rawPovInfo = await this.helper.callRpc('api.rpc.povinfo.estimateExtrinsicPoV', [txs]);
 
     const kvJson: {[key: string]: string} = {};
 
@@ -341,6 +342,10 @@ class ArrangeGroup {
         '-e', 'function(data) cql.dump(cql.chain("wss://ws-opal.unique.network:443").latest._meta, data, {omit_empty:true})',
       ],
     );
+
+    if (!chainql.stdout) {
+      throw Error('unable to get an output from the `chainql`');
+    }
 
     return {
       proofSize: rawPovInfo.proofSize.toNumber(),

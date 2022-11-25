@@ -14,8 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-export {default as unique} from './unique/definitions';
-export {default as appPromotion} from './appPromotion/definitions';
-export {default as rmrk} from './rmrk/definitions';
-export {default as povinfo} from './povinfo/definitions';
-export {default as default} from './default/definitions';
+type RpcParam = {
+  name: string;
+  type: string;
+  isOptional?: true;
+};
+
+const atParam = {name: 'at', type: 'Hash', isOptional: true};
+
+const fun = (description: string, params: RpcParam[], type: string) => ({
+  description,
+  params: [...params, atParam],
+  type,
+});
+
+export default {
+  types: {},
+  rpc: {
+    estimateExtrinsicPoV: fun(
+      'Estimate PoV size of encoded signed extrinsics',
+      [{name: 'encodedXt', type: 'Vec<Bytes>'}],
+      'UpPovEstimateRpcPovInfo',
+    ),
+  },
+};
