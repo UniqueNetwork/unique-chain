@@ -147,8 +147,8 @@ impl AbiRead for Property {
 }
 
 impl AbiWrite for Property {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		(&self.key, &self.value).abi_write(writer);
+	fn abi_write<'a>(&'a self, writer: &mut AbiWriter) {
+		(self.key.clone(), self.value.clone()).abi_write(writer);
 	}
 }
 

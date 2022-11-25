@@ -123,7 +123,7 @@ pub struct EthCrossAccount {
 impl EthCrossAccount {
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
-		T: pallet_evm::account::Config,
+		T: pallet_evm::Config,
 		T::AccountId: AsRef<[u8; 32]>,
 	{
 		if cross_account_id.is_canonical_substrate() {
@@ -141,7 +141,7 @@ impl EthCrossAccount {
 
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
-		T: pallet_evm::account::Config,
+		T: pallet_evm::Config,
 		T::AccountId: From<[u8; 32]>,
 	{
 		if self.eth == Default::default() && self.sub == Default::default() {
