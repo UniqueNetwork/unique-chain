@@ -117,6 +117,7 @@ export class DevUniqueHelper extends UniqueHelper {
     });
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
+    this.wsEndpoint = wsEndpoint;
   }
 }
 
@@ -339,7 +340,7 @@ class ArrangeGroup {
       'chainql', 
       [
         `--tla-code=data=${kvStr}`,
-        '-e', 'function(data) cql.dump(cql.chain("wss://ws-opal.unique.network:443").latest._meta, data, {omit_empty:true})',
+        '-e', `function(data) cql.dump(cql.chain("${this.helper.getEndpoint()}").latest._meta, data, {omit_empty:true})`,
       ],
     );
 

@@ -371,6 +371,7 @@ export class ChainHelperBase {
   api: ApiPromise | null;
   forcedNetwork: TNetworks | null;
   network: TNetworks | null;
+  wsEndpoint: string | null;
   chainLog: IUniqueHelperLog[];
   children: ChainHelperBase[];
   address: AddressGroup;
@@ -386,6 +387,7 @@ export class ChainHelperBase {
     this.api = null;
     this.forcedNetwork = null;
     this.network = null;
+    this.wsEndpoint = null;
     this.chainLog = [];
     this.children = [];
     this.address = new AddressGroup(this);
@@ -403,6 +405,11 @@ export class ChainHelperBase {
     this.children.push(newHelper);
 
     return newHelper;
+  }
+
+  getEndpoint(): string {
+    if (this.wsEndpoint === null) throw Error('No connection was established');
+    return this.wsEndpoint;
   }
 
   getApi(): ApiPromise {
@@ -436,6 +443,7 @@ export class ChainHelperBase {
   async connect(wsEndpoint: string, listeners?: IApiListeners) {
     if (this.api !== null) throw Error('Already connected');
     const {api, network} = await ChainHelperBase.createConnection(wsEndpoint, listeners, this.forcedNetwork);
+    this.wsEndpoint = wsEndpoint;
     this.api = api;
     this.network = network;
   }
