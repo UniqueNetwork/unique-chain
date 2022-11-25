@@ -163,6 +163,7 @@ jobs:
 
 
       - name: Run Parallel tests before Node Parachain upgrade
+        if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
@@ -285,6 +286,7 @@ jobs:
         shell: bash
 
       - name: Run Parallel tests after Node Parachain upgrade
+        if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: |
           yarn install
