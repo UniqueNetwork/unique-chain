@@ -9,7 +9,7 @@ GIT_REPO=git@github.com:UniqueNetwork/unique-types-js.git
 . $DIR/functions.sh
 
 usage() {
-	echo "Usage: [RPC_URL=http://localhost:9933] $0 [--rc|--release|--sapphire] [--force] [--rpc-url=http://localhost:9933]" 1>&2
+	echo "Usage: [RPC_URL=http://localhost:9933] $0 <--rc|--release|--sapphire> [--force] [--push] [--rpc-url=http://localhost:9933]" 1>&2
 	exit 1
 }
 
@@ -17,6 +17,7 @@ rc=
 sapphire=
 release=
 force=
+push=
 
 for i in "$@"; do
 case $i in
@@ -34,6 +35,9 @@ case $i in
 		;;
 	--force)
 		force=1
+		;;
+	--push)
+		push=1
 		;;
 	--rpc-url=*)
 		RPC_URL=${i#*=}
@@ -188,7 +192,7 @@ popd
 
 # This check is only active if running in interactive terminal
 if [ -t 0 ]; then
-	read -p "Is everything ok at $gen? " -n 1 -r
+	read -p "Is everything ok at $gen [y/n]? " -n 1 -r
 	echo
 	if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 		echo "Aborting!"
@@ -201,6 +205,10 @@ yarn
 yarn prepublish
 git commit -m "chore: upgrade types to v$new_package_version"
 git tag --force $repo_tag-v$new_package_version
-git push --tags --force -u origin HEAD
-#yarn publish
+if test "$push" = 1; then
+	git push --tags --force -u origin HEAD
+else
+	echo "--push not given, origin repo left intact"
+	echo "To publish manually, go to $gen, and run \"git push --tags --force -u origin HEAD\""
+fi
 popd
