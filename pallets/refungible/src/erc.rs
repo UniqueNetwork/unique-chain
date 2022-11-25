@@ -749,11 +749,7 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn token_properties(
-		&self,
-		token_id: uint256,
-		keys: Vec<string>,
-	) -> Result<Vec<PropertyStruct>> {
+	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {

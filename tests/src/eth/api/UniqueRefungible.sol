@@ -444,7 +444,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x1d4b64d6
+/// @dev the ERC-165 identifier for this interface is 0x12f7d6c1
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -473,9 +473,9 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	/// @dev EVM selector for this function is: 0xefc26c69,
-	///  or in textual repr: tokenProperties(uint256,string[])
-	function tokenProperties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
+	/// @dev EVM selector for this function is: 0xe07ede7e,
+	///  or in textual repr: properties(uint256,string[])
+	function properties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
 
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
