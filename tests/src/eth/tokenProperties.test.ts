@@ -120,17 +120,17 @@ describe('EVM token properties', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, mode, caller);
     
-    expect(await contract.methods.tokenProperties(token.tokenId, []).call()).to.be.deep.equal([]);
+    expect(await contract.methods.properties(token.tokenId, []).call()).to.be.deep.equal([]);
 
     await contract.methods.setProperties(token.tokenId, properties).send({from: caller});
 
     const values = await token.getProperties(properties.map(p => p.key));
     expect(values).to.be.deep.equal(properties.map(p => { return {key: p.key, value: p.value.toString()}; }));
     
-    expect(await contract.methods.tokenProperties(token.tokenId, []).call()).to.be.like(properties
+    expect(await contract.methods.properties(token.tokenId, []).call()).to.be.like(properties
       .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
     
-    expect(await contract.methods.tokenProperties(token.tokenId, [properties[0].key]).call())
+    expect(await contract.methods.properties(token.tokenId, [properties[0].key]).call())
       .to.be.like([helper.ethProperty.property(properties[0].key, properties[0].value.toString())]);
   }
   
