@@ -82,8 +82,12 @@ declare module '@polkadot/api-base/types/consts' {
       appPromotionDailyRate: Perbill & AugmentedConst<ApiType>;
       dayRelayBlocks: u32 & AugmentedConst<ApiType>;
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
+<<<<<<< HEAD
       defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
       maxXcmAllowedLocations: u32 & AugmentedConst<ApiType>;
+=======
+      defaultWeightToFeeCoefficient: u64 & AugmentedConst<ApiType>;
+>>>>>>> chore: regenerate types
       /**
        * Generic const
        **/

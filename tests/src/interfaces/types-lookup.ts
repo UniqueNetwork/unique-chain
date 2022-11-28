@@ -2675,7 +2675,7 @@ declare module '@polkadot/types/lookup' {
   interface PalletConfigurationCall extends Enum {
     readonly isSetWeightToFeeCoefficientOverride: boolean;
     readonly asSetWeightToFeeCoefficientOverride: {
-      readonly coeff: Option<u32>;
+      readonly coeff: Option<u64>;
     } & Struct;
     readonly isSetMinGasPriceOverride: boolean;
     readonly asSetMinGasPriceOverride: {
