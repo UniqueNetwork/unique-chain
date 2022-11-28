@@ -27,12 +27,13 @@ use core::{
 };
 use evm_coder::{
 	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	weight,
+	types::Property as PropertyStruct, weight,
 };
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
+	CommonCollectionOperations,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
@@ -91,6 +92,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	/// @param value Property value.
+	#[solidity(hide)]
 	fn set_property(
 		&mut self,
 		caller: caller,
@@ -127,7 +129,7 @@ impl<T: Config> RefungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		token_id: uint256,
-		properties: Vec<(string, bytes)>,
+		properties: Vec<PropertyStruct>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -138,7 +140,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 		let properties = properties
 			.into_iter()
-			.map(|(key, value)| {
+			.map(|PropertyStruct { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -164,6 +166,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
+	#[solidity(hide)]
 	fn delete_property(&mut self, token_id: uint256, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -177,6 +180,37 @@ impl<T: Config> RefungibleHandle<T> {
 
 		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key, &nesting_budget)
 			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Delete token properties value.
+	/// @dev Throws error if `msg.sender` has no permission to edit the property.
+	/// @param tokenId ID of the token.
+	/// @param keys Properties key.
+	fn delete_properties(
+		&mut self,
+		token_id: uint256,
+		caller: caller,
+		keys: Vec<string>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
+		let keys = keys
+			.into_iter()
+			.map(|k| Ok(<Vec<u8>>::from(k).try_into().map_err(|_| "key too long")?))
+			.collect::<Result<Vec<_>>>()?;
+
+		let nesting_budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::delete_token_properties(
+			self,
+			&caller,
+			TokenId(token_id),
+			keys.into_iter(),
+			&nesting_budget,
+		)
+		.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// @notice Get token property value.
@@ -240,7 +274,7 @@ pub enum ERC721UniqueMintableEvents {
 #[solidity_interface(name = ERC721Metadata)]
 impl<T: Config> RefungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
@@ -680,7 +714,7 @@ fn get_token_permission<T: Config>(
 #[solidity_interface(name = ERC721UniqueExtensions)]
 impl<T: Config> RefungibleHandle<T>
 where
-	T::AccountId: From<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	fn name(&self) -> Result<string> {
@@ -694,6 +728,51 @@ where
 		Ok(string::from_utf8_lossy(&self.token_prefix).into())
 	}
 
+	/// @notice A description for the collection.
+	fn description(&self) -> Result<string> {
+		Ok(decode_utf16(self.description.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
+	}
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	fn cross_owner_of(&self, token_id: uint256) -> Result<EthCrossAccount> {
+		Self::token_owner(&self, token_id.try_into()?)
+			.map(|o| EthCrossAccount::from_sub_cross_account::<T>(&o))
+			.ok_or(Error::Revert("key too large".into()))
+	}
+
+	/// Returns the token properties.
+	///
+	/// @param tokenId Id for the token.
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
+		let keys = keys
+			.into_iter()
+			.map(|key| {
+				<Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| Error::Revert("key too large".into()))
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		<Self as CommonCollectionOperations<T>>::token_properties(
+			&self,
+			token_id.try_into()?,
+			if keys.is_empty() { None } else { Some(keys) },
+		)
+		.into_iter()
+		.map(|p| {
+			let key = string::from_utf8(p.key.to_vec())
+				.map_err(|e| Error::Revert(alloc::format!("{}", e)))?;
+			let value = bytes(p.value.to_vec());
+			Ok(PropertyStruct { key, value })
+		})
+		.collect::<Result<Vec<_>>>()
+	}
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid RFT.
@@ -704,6 +783,34 @@ where
 	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
+		let token = token_id.try_into()?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let balance = balance(self, token, &caller)?;
+		ensure_single_owner(self, token, balance)?;
+
+		<Pallet<T>>::transfer(self, &caller, &to, token, balance, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
+	}
+
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
+	fn transfer_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		token_id: uint256,
+	) -> Result<void> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = to.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
 		let budget = self
 			.recorder
@@ -754,6 +861,7 @@ where
 	///  Throws if RFT pieces have multiple owners.
 	/// @param from The current owner of the RFT
 	/// @param tokenId The RFT to transfer
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);

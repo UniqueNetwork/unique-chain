@@ -41,7 +41,7 @@ runtime-benchmarks = [
     'pallet-unique/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
     'pallet-app-promotion/runtime-benchmarks',
-    'pallet-unique-scheduler/runtime-benchmarks',
+    'pallet-unique-scheduler-v2/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
@@ -71,7 +71,6 @@ try-runtime = [
     'cumulus-pallet-dmp-queue/try-runtime',
     'pallet-inflation/try-runtime',
     'pallet-unique/try-runtime',
-    'pallet-unique-scheduler/try-runtime',
     'pallet-configuration/try-runtime',
     'pallet-charge-transaction/try-runtime',
     'pallet-common/try-runtime',
@@ -83,7 +82,6 @@ try-runtime = [
     'pallet-proxy-rmrk-equip/try-runtime',
     'pallet-app-promotion/try-runtime',
     'pallet-foreign-assets/try-runtime',
-    'pallet-evm/try-runtime',
     'pallet-ethereum/try-runtime',
     'pallet-evm-coder-substrate/try-runtime',
     'pallet-evm-contract-helpers/try-runtime',
@@ -142,7 +140,7 @@ std = [
     'pallet-proxy-rmrk-core/std',
     'pallet-proxy-rmrk-equip/std',
     'pallet-unique/std',
-    'pallet-unique-scheduler/std',
+    'pallet-unique-scheduler-v2/std',
     'pallet-charge-transaction/std',
     'up-data-structs/std',
     'sp-api/std',
@@ -175,7 +173,15 @@ std = [
     'pallet-test-utils?/std',
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'scheduler', 'rmrk', 'app-promotion', 'foreign-assets', 'pallet-test-utils']
+opal-runtime = [
+    'refungible',
+    'scheduler',
+    'rmrk',
+    'app-promotion',
+    'foreign-assets',
+    'pallet-test-utils',
+]
+become-sapphire = []
 
 refungible = []
 scheduler = []
@@ -462,7 +468,7 @@ pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc", default-features = false }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
+fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
@@ -474,17 +480,17 @@ pallet-refungible = { default-features = false, path = "../../pallets/refungible
 pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
 pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy-rmrk-core", package = "pallet-rmrk-core" }
 pallet-proxy-rmrk-equip = { default-features = false, path = "../../pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
-pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.30", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
+pallet-unique-scheduler-v2 = { path = '../../pallets/scheduler-v2', default-features = false }
 pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
-fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.30' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }

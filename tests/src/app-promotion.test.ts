@@ -24,12 +24,8 @@ let palletAdmin: IKeyringPair;
 let nominal: bigint;
 let palletAddress: string;
 let accounts: IKeyringPair[];
-const LOCKING_PERIOD = 20n; // 20 blocks of relay
-const UNLOCKING_PERIOD = 10n; // 10 blocks of parachain
-const rewardAvailableInBlock = (stakedInBlock: bigint) => {
-  if (stakedInBlock % LOCKING_PERIOD === 0n) return stakedInBlock + 20n;
-  return (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
-};
+const LOCKING_PERIOD = 8n; // 8 blocks of relay
+const UNLOCKING_PERIOD = 4n; // 4 blocks of parachain
 
 describe('App promotion', () => {
   before(async function () {
@@ -548,7 +544,7 @@ describe('App promotion', () => {
       expect(totalStakedAfter).to.equal(totalStakedBefore + (100n * nominal) + totalPayout);
       // staker can unstake
       await helper.staking.unstake(staker);
-      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedAfter - calculateIncome(100n * nominal, 10n));
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedAfter - calculateIncome(100n * nominal));
     });
   
     itSub('should credit 0.05% for staking period', async ({helper}) => {    
@@ -564,11 +560,11 @@ describe('App promotion', () => {
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
   
       const payoutToStaker = (await helper.admin.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;
-      expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal, 10n));
+      expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal));
   
       const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal, 10n));
-      expect(totalStakedPerBlock[1].amount).to.equal(calculateIncome(200n * nominal, 10n));
+      expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal));
+      expect(totalStakedPerBlock[1].amount).to.equal(calculateIncome(200n * nominal));
     });
   
     itSub('shoud be paid for more than one period if payments was missed', async ({helper}) => {
@@ -581,7 +577,7 @@ describe('App promotion', () => {
   
       await helper.admin.payoutStakers(palletAdmin, 100);
       [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      const frozenBalanceShouldBe = calculateIncome(100n * nominal, 10n, 2);
+      const frozenBalanceShouldBe = calculateIncome(100n * nominal, 2);
       expect(stake.amount).to.be.equal(frozenBalanceShouldBe);
   
       const stakerFullBalance = await helper.balance.getSubstrateFull(staker.address);
@@ -615,12 +611,12 @@ describe('App promotion', () => {
         
       await helper.admin.payoutStakers(palletAdmin, 100);
       [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n));
+      expect(stake.amount).to.equal(calculateIncome(100n * nominal));
         
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
       await helper.admin.payoutStakers(palletAdmin, 100);
       [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n, 2));
+      expect(stake.amount).to.equal(calculateIncome(100n * nominal, 2));
     });
   
     itSub.skip('can be paid 1000 rewards in a time', async ({helper}) => {
@@ -653,14 +649,20 @@ describe('App promotion', () => {
   });
 });
 
-function calculateIncome(base: bigint, calcPeriod: bigint, iter = 0): bigint {
+function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
   const ACCURACY = 1_000_000_000n;
+  // 5n / 10_000n = 0.05% p/day
   const income = base + base * (ACCURACY * (calcPeriod * 5n) / (10_000n * DAY)) / ACCURACY ;
   
   if (iter > 1) {
-    return calculateIncome(income, calcPeriod, iter - 1);
+    return calculateIncome(income, iter - 1, calcPeriod);
   } else return income;
+}
+
+function rewardAvailableInBlock(stakedInBlock: bigint) {
+  if (stakedInBlock % LOCKING_PERIOD === 0n) return stakedInBlock + LOCKING_PERIOD;
+  return (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
 }
 
 // Wait while promotion period less than specified block, to avoid boundary cases

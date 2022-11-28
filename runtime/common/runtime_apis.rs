@@ -482,6 +482,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let is_transactional = false;
+                    let validate = false;
                     <Runtime as pallet_evm::Config>::Runner::call(
                         CrossAccountId::from_eth(from),
                         to,
@@ -493,6 +494,7 @@ macro_rules! impl_common_runtime_apis {
                         nonce,
                         access_list.unwrap_or_default(),
                         is_transactional,
+                        validate,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -518,6 +520,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let is_transactional = false;
+                    let validate = false;
                     <Runtime as pallet_evm::Config>::Runner::create(
                         CrossAccountId::from_eth(from),
                         data,
@@ -528,6 +531,7 @@ macro_rules! impl_common_runtime_apis {
                         nonce,
                         access_list.unwrap_or_default(),
                         is_transactional,
+                        validate,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -683,8 +687,8 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
 
-                    // #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
-                    // list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    list_benchmark!(list, extra, pallet_unique_scheduler_v2, Scheduler);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
@@ -743,8 +747,8 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
 
-                    // #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
-                    // add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
+                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    add_benchmark!(params, batches, pallet_unique_scheduler_v2, Scheduler);
 
                     #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);

@@ -3,9 +3,30 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
-## [v0.1.7] - 2022-11-02
+
+## [0.1.10] - 2022-11-18
+
+### Added
+
+- The functions `description`, `crossOwnerOf`, `tokenProperties` to `ERC721UniqueExtensions` interface.
+
+## [0.1.9] - 2022-11-14
+
 ### Changed
- - Use named structure `EthCrossAccount` in eth functions.
+
+- Added `transfer_cross` in eth functions.
+
+## [v0.1.8] - 2022-11-11
+
+### Changed
+
+- Added `delete_properties` in eth functions. The `delete_property` function is now deprecated.
+
+## [v0.1.7] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
 
 ## [v0.1.6] - 2022-20-10
 

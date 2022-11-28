@@ -8,6 +8,7 @@ import config from '../../config';
 
 import {EthUniqueHelper} from './playgrounds/unique.dev';
 import {SilentLogger, SilentConsole} from '../../util/playgrounds/unique.dev';
+import {SchedKind} from '../../util';
 
 export {EthUniqueHelper} from './playgrounds/unique.dev';
 
@@ -81,3 +82,19 @@ itEth.skip = (name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (s
 itEthIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEthIfWithPallet(name, required, cb, {only: true});
 itEthIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itEthIfWithPallet(name, required, cb, {skip: true});
 itEth.ifWithPallets = itEthIfWithPallet;
+
+export function itSchedEth(
+  name: string,
+  cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any,
+  opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {},
+) {
+  itEth(name + ' (anonymous scheduling)', (apis) => cb('anon', apis), opts);
+  itEth(name + ' (named scheduling)', (apis) => cb('named', apis), opts);
+}
+itSchedEth.only = (name: string, cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itSchedEth(name, cb, {only: true});
+itSchedEth.skip = (name: string, cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itSchedEth(name, cb, {skip: true});
+itSchedEth.ifWithPallets = itSchedIfWithPallets;
+
+function itSchedIfWithPallets(name: string, required: string[], cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+  return itSchedEth(name, cb, {requiredPallets: required, ...opts});
+}

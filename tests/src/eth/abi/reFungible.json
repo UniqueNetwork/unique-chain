@@ -11,17 +11,48 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "spender",
+        "name": "approved",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
-        "name": "value",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
     "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      }
+    ],
+    "name": "ApprovalForAll",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "MintingFinished",
     "type": "event"
   },
   {
@@ -40,23 +71,14 @@
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
-        "name": "value",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
     "name": "Transfer",
     "type": "event"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "newAdmin", "type": "address" }
-    ],
-    "name": "addCollectionAdmin",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
   },
   {
     "inputs": [
@@ -71,15 +93,6 @@
       }
     ],
     "name": "addCollectionAdminCross",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
-    ],
-    "name": "addToCollectionAllowList",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -103,48 +116,28 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "owner", "type": "address" },
-      { "internalType": "address", "name": "spender", "type": "address" }
-    ],
-    "name": "allowance",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
-    ],
-    "name": "allowed",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "spender", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
-    ],
-    "name": "approve",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
       {
         "components": [
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
         "internalType": "struct EthCrossAccount",
-        "name": "spender",
+        "name": "user",
         "type": "tuple"
-      },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      }
     ],
-    "name": "approveCross",
+    "name": "allowlistedCross",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "approved", "type": "address" },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "approve",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -159,11 +152,10 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "from", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
-    "name": "burnFrom",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "name": "burn",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -178,18 +170,26 @@
         "name": "from",
         "type": "tuple"
       },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "burnFromCross",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "newOwner", "type": "address" }
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "newOwner",
+        "type": "tuple"
+      }
     ],
-    "name": "changeCollectionOwner",
+    "name": "changeCollectionOwnerCross",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -236,10 +236,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "string", "name": "field_0", "type": "string" },
-          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
         ],
-        "internalType": "struct Tuple14[]",
+        "internalType": "struct Property[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -263,7 +263,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple8",
+        "internalType": "struct Tuple29",
         "name": "",
         "type": "tuple"
       }
@@ -286,9 +286,21 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "decimals",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "crossOwnerOf",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
@@ -302,10 +314,36 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "string", "name": "key", "type": "string" }],
-    "name": "deleteCollectionProperty",
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "deleteProperties",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "description",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "finishMinting",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "getApproved",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -317,10 +355,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "address", "name": "operator", "type": "address" }
     ],
-    "name": "isOwnerOrAdmin",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "name": "isApprovedForAll",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -342,30 +381,27 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "to", "type": "address" }],
     "name": "mint",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
-        ],
-        "internalType": "struct Tuple8[]",
-        "name": "amounts",
-        "type": "tuple[]"
-      }
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "string", "name": "tokenUri", "type": "string" }
     ],
-    "name": "mintBulk",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "name": "mintWithTokenURI",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mintingFinished",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -376,12 +412,49 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "nextTokenId",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
-      { "internalType": "address", "name": "admin", "type": "address" }
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
-    "name": "removeCollectionAdmin",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "ownerOf",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      { "internalType": "string[]", "name": "keys", "type": "string[]" }
+    ],
+    "name": "properties",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
+        ],
+        "internalType": "struct Property[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      { "internalType": "string", "name": "key", "type": "string" }
+    ],
+    "name": "property",
+    "outputs": [{ "internalType": "bytes", "name": "", "type": "bytes" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -410,15 +483,6 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "user", "type": "address" }
-    ],
-    "name": "removeFromCollectionAllowList",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
       {
         "components": [
           { "internalType": "address", "name": "eth", "type": "address" },
@@ -435,6 +499,39 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "address", "name": "from", "type": "address" },
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "safeTransferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "from", "type": "address" },
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      { "internalType": "bytes", "name": "data", "type": "bytes" }
+    ],
+    "name": "safeTransferFromWithData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "operator", "type": "address" },
+      { "internalType": "bool", "name": "approved", "type": "bool" }
+    ],
+    "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "uint8", "name": "mode", "type": "uint8" }],
     "name": "setCollectionAccess",
     "outputs": [],
@@ -444,17 +541,7 @@
   {
     "inputs": [
       { "internalType": "string", "name": "limit", "type": "string" },
-      { "internalType": "uint32", "name": "value", "type": "uint32" }
-    ],
-    "name": "setCollectionLimit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
-      { "internalType": "bool", "name": "value", "type": "bool" }
+      { "internalType": "uint256", "name": "value", "type": "uint256" }
     ],
     "name": "setCollectionLimit",
     "outputs": [],
@@ -493,34 +580,15 @@
     "inputs": [
       {
         "components": [
-          { "internalType": "string", "name": "field_0", "type": "string" },
-          { "internalType": "bytes", "name": "field_1", "type": "bytes" }
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
         ],
-        "internalType": "struct Tuple14[]",
+        "internalType": "struct Property[]",
         "name": "properties",
         "type": "tuple[]"
       }
     ],
     "name": "setCollectionProperties",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "key", "type": "string" },
-      { "internalType": "bytes", "name": "value", "type": "bytes" }
-    ],
-    "name": "setCollectionProperty",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "sponsor", "type": "address" }
-    ],
-    "name": "setCollectionSponsor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -544,17 +612,30 @@
   },
   {
     "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       {
         "components": [
-          { "internalType": "address", "name": "eth", "type": "address" },
-          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
         ],
-        "internalType": "struct EthCrossAccount",
-        "name": "newOwner",
-        "type": "tuple"
+        "internalType": "struct Property[]",
+        "name": "properties",
+        "type": "tuple[]"
       }
     ],
-    "name": "setOwnerCross",
+    "name": "setProperties",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "key", "type": "string" },
+      { "internalType": "bool", "name": "isMutable", "type": "bool" },
+      { "internalType": "bool", "name": "collectionAdmin", "type": "bool" },
+      { "internalType": "bool", "name": "tokenOwner", "type": "bool" }
+    ],
+    "name": "setTokenPropertyPermission",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -576,6 +657,43 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "uint256", "name": "index", "type": "uint256" }
+    ],
+    "name": "tokenByIndex",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "token", "type": "uint256" }
+    ],
+    "name": "tokenContractAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "owner", "type": "address" },
+      { "internalType": "uint256", "name": "index", "type": "uint256" }
+    ],
+    "name": "tokenOfOwnerByIndex",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "tokenURI",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "totalSupply",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
@@ -585,10 +703,28 @@
   {
     "inputs": [
       { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "transfer",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "to",
+        "type": "tuple"
+      },
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "transferCross",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -596,10 +732,10 @@
     "inputs": [
       { "internalType": "address", "name": "from", "type": "address" },
       { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "transferFrom",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -623,10 +759,10 @@
         "name": "to",
         "type": "tuple"
       },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "transferFromCross",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },

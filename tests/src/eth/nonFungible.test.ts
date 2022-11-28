@@ -17,6 +17,7 @@
 import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
+import exp from 'constants';
 
 
 describe('NFT: Information getting', () => {
@@ -102,7 +103,7 @@ describe('Check ERC721 token URI for NFT', () => {
 
     if (propertyKey && propertyValue) {
       // Set URL or suffix
-      await contract.methods.setProperty(tokenId, propertyKey, Buffer.from(propertyValue)).send();
+      await contract.methods.setProperties(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}]).send();
     }
 
     const event = result.events.Transfer;
@@ -149,7 +150,7 @@ describe('NFT: Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint()', async ({helper}) => {
+  itEth('Can perform mint() & get crossOwner()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
@@ -166,7 +167,8 @@ describe('NFT: Plain calls', () => {
     expect(event.returnValues.to).to.be.equal(receiver);
 
     expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-
+    console.log(await contract.methods.crossOwnerOf(tokenId).call());
+    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
     // TODO: this wont work right now, need release 919000 first
     // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
     // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
@@ -400,6 +402,60 @@ describe('NFT: Plain calls', () => {
     {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(1);
+    }
+  });
+  
+  itEth('Can perform transferCross()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {});
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const to = helper.ethCrossAccount.fromAddress(receiver);
+    const toSubstrate = helper.ethCrossAccount.fromKeyringPair(minter);
+    
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    {
+      const result = await contract.methods.transferCross(to, tokenId).send({from: owner});
+
+      const event = result.events.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.from).to.be.equal(owner);
+      expect(event.returnValues.to).to.be.equal(receiver);
+      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(owner).call();
+      expect(+balance).to.equal(0);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(receiver).call();
+      expect(+balance).to.equal(1);
+    }
+    
+    {
+      const substrateResult = await contract.methods.transferCross(toSubstrate, tokenId).send({from: receiver});
+      
+
+      const event = substrateResult.events.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.from).to.be.equal(receiver);
+      expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(minter.address));
+      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+    }
+
+    {
+      const balance = await contract.methods.balanceOf(receiver).call();
+      expect(+balance).to.equal(0);
+    }
+
+    {
+      const balance = await helper.nft.getTokensByAddress(collection.collectionId, {Substrate: minter.address});
+      expect(balance).to.be.contain(tokenId);
     }
   });
 });

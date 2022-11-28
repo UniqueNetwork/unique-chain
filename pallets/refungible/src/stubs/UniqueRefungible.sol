@@ -18,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x55dba919
+/// @dev the ERC-165 identifier for this interface is 0x91a97a68
 contract TokenProperties is Dummy, ERC165 {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
@@ -42,24 +42,20 @@ contract TokenProperties is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	/// @notice Set token property value.
-	/// @dev Throws error if `msg.sender` has no permission to edit the property.
-	/// @param tokenId ID of the token.
-	/// @param key Property key.
-	/// @param value Property value.
-	/// @dev EVM selector for this function is: 0x1752d67b,
-	///  or in textual repr: setProperty(uint256,string,bytes)
-	function setProperty(
-		uint256 tokenId,
-		string memory key,
-		bytes memory value
-	) public {
-		require(false, stub_error);
-		tokenId;
-		key;
-		value;
-		dummy = 0;
-	}
+	// /// @notice Set token property value.
+	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// /// @param tokenId ID of the token.
+	// /// @param key Property key.
+	// /// @param value Property value.
+	// /// @dev EVM selector for this function is: 0x1752d67b,
+	// ///  or in textual repr: setProperty(uint256,string,bytes)
+	// function setProperty(uint256 tokenId, string memory key, bytes memory value) public {
+	// 	require(false, stub_error);
+	// 	tokenId;
+	// 	key;
+	// 	value;
+	// 	dummy = 0;
+	// }
 
 	/// @notice Set token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -67,23 +63,36 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @param properties settable properties
 	/// @dev EVM selector for this function is: 0x14ed3a6e,
 	///  or in textual repr: setProperties(uint256,(string,bytes)[])
-	function setProperties(uint256 tokenId, Tuple20[] memory properties) public {
+	function setProperties(uint256 tokenId, Property[] memory properties) public {
 		require(false, stub_error);
 		tokenId;
 		properties;
 		dummy = 0;
 	}
 
-	/// @notice Delete token property value.
+	// /// @notice Delete token property value.
+	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// /// @param tokenId ID of the token.
+	// /// @param key Property key.
+	// /// @dev EVM selector for this function is: 0x066111d1,
+	// ///  or in textual repr: deleteProperty(uint256,string)
+	// function deleteProperty(uint256 tokenId, string memory key) public {
+	// 	require(false, stub_error);
+	// 	tokenId;
+	// 	key;
+	// 	dummy = 0;
+	// }
+
+	/// @notice Delete token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
-	/// @param key Property key.
-	/// @dev EVM selector for this function is: 0x066111d1,
-	///  or in textual repr: deleteProperty(uint256,string)
-	function deleteProperty(uint256 tokenId, string memory key) public {
+	/// @param keys Properties key.
+	/// @dev EVM selector for this function is: 0xc472d371,
+	///  or in textual repr: deleteProperties(uint256,string[])
+	function deleteProperties(uint256 tokenId, string[] memory keys) public {
 		require(false, stub_error);
 		tokenId;
-		key;
+		keys;
 		dummy = 0;
 	}
 
@@ -103,43 +112,49 @@ contract TokenProperties is Dummy, ERC165 {
 	}
 }
 
+/// @dev Property struct
+struct Property {
+	string key;
+	bytes value;
+}
+
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xb3152af3
+/// @dev the ERC-165 identifier for this interface is 0xcc1d80ca
 contract Collection is Dummy, ERC165 {
-	/// Set collection property.
-	///
-	/// @param key Property key.
-	/// @param value Propery value.
-	/// @dev EVM selector for this function is: 0x2f073f66,
-	///  or in textual repr: setCollectionProperty(string,bytes)
-	function setCollectionProperty(string memory key, bytes memory value) public {
-		require(false, stub_error);
-		key;
-		value;
-		dummy = 0;
-	}
+	// /// Set collection property.
+	// ///
+	// /// @param key Property key.
+	// /// @param value Propery value.
+	// /// @dev EVM selector for this function is: 0x2f073f66,
+	// ///  or in textual repr: setCollectionProperty(string,bytes)
+	// function setCollectionProperty(string memory key, bytes memory value) public {
+	// 	require(false, stub_error);
+	// 	key;
+	// 	value;
+	// 	dummy = 0;
+	// }
 
 	/// Set collection properties.
 	///
 	/// @param properties Vector of properties key/value pair.
 	/// @dev EVM selector for this function is: 0x50b26b2a,
 	///  or in textual repr: setCollectionProperties((string,bytes)[])
-	function setCollectionProperties(Tuple20[] memory properties) public {
+	function setCollectionProperties(Property[] memory properties) public {
 		require(false, stub_error);
 		properties;
 		dummy = 0;
 	}
 
-	/// Delete collection property.
-	///
-	/// @param key Property key.
-	/// @dev EVM selector for this function is: 0x7b7debce,
-	///  or in textual repr: deleteCollectionProperty(string)
-	function deleteCollectionProperty(string memory key) public {
-		require(false, stub_error);
-		key;
-		dummy = 0;
-	}
+	// /// Delete collection property.
+	// ///
+	// /// @param key Property key.
+	// /// @dev EVM selector for this function is: 0x7b7debce,
+	// ///  or in textual repr: deleteCollectionProperty(string)
+	// function deleteCollectionProperty(string memory key) public {
+	// 	require(false, stub_error);
+	// 	key;
+	// 	dummy = 0;
+	// }
 
 	/// Delete collection properties.
 	///
@@ -173,25 +188,25 @@ contract Collection is Dummy, ERC165 {
 	/// @return Vector of properties key/value pairs.
 	/// @dev EVM selector for this function is: 0x285fb8e6,
 	///  or in textual repr: collectionProperties(string[])
-	function collectionProperties(string[] memory keys) public view returns (Tuple20[] memory) {
+	function collectionProperties(string[] memory keys) public view returns (Property[] memory) {
 		require(false, stub_error);
 		keys;
 		dummy;
-		return new Tuple20[](0);
+		return new Property[](0);
 	}
 
-	/// Set the sponsor of the collection.
-	///
-	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
-	///
-	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
-	/// @dev EVM selector for this function is: 0x7623402e,
-	///  or in textual repr: setCollectionSponsor(address)
-	function setCollectionSponsor(address sponsor) public {
-		require(false, stub_error);
-		sponsor;
-		dummy = 0;
-	}
+	// /// Set the sponsor of the collection.
+	// ///
+	// /// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	// ///
+	// /// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
+	// /// @dev EVM selector for this function is: 0x7623402e,
+	// ///  or in textual repr: setCollectionSponsor(address)
+	// function setCollectionSponsor(address sponsor) public {
+	// 	require(false, stub_error);
+	// 	sponsor;
+	// 	dummy = 0;
+	// }
 
 	/// Set the sponsor of the collection.
 	///
@@ -238,10 +253,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple23 memory) {
+	function collectionSponsor() public view returns (Tuple29 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple23(0x0000000000000000000000000000000000000000, 0);
+		return Tuple29(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Set limits for the collection.
@@ -253,26 +268,13 @@ contract Collection is Dummy, ERC165 {
 	/// 	"tokenLimit",
 	/// 	"sponsorTransferTimeout",
 	/// 	"sponsorApproveTimeout"
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x6a3841db,
-	///  or in textual repr: setCollectionLimit(string,uint32)
-	function setCollectionLimit(string memory limit, uint32 value) public {
-		require(false, stub_error);
-		limit;
-		value;
-		dummy = 0;
-	}
-
-	/// Set limits for the collection.
-	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"ownerCanTransfer",
+	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
 	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x993b7fba,
-	///  or in textual repr: setCollectionLimit(string,bool)
-	function setCollectionLimit(string memory limit, bool value) public {
+	/// @dev EVM selector for this function is: 0x4ad890a8,
+	///  or in textual repr: setCollectionLimit(string,uint256)
+	function setCollectionLimit(string memory limit, uint256 value) public {
 		require(false, stub_error);
 		limit;
 		value;
@@ -308,26 +310,26 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	/// Add collection admin.
-	/// @param newAdmin Address of the added administrator.
-	/// @dev EVM selector for this function is: 0x92e462c7,
-	///  or in textual repr: addCollectionAdmin(address)
-	function addCollectionAdmin(address newAdmin) public {
-		require(false, stub_error);
-		newAdmin;
-		dummy = 0;
-	}
+	// /// Add collection admin.
+	// /// @param newAdmin Address of the added administrator.
+	// /// @dev EVM selector for this function is: 0x92e462c7,
+	// ///  or in textual repr: addCollectionAdmin(address)
+	// function addCollectionAdmin(address newAdmin) public {
+	// 	require(false, stub_error);
+	// 	newAdmin;
+	// 	dummy = 0;
+	// }
 
-	/// Remove collection admin.
-	///
-	/// @param admin Address of the removed administrator.
-	/// @dev EVM selector for this function is: 0xfafd7b42,
-	///  or in textual repr: removeCollectionAdmin(address)
-	function removeCollectionAdmin(address admin) public {
-		require(false, stub_error);
-		admin;
-		dummy = 0;
-	}
+	// /// Remove collection admin.
+	// ///
+	// /// @param admin Address of the removed administrator.
+	// /// @dev EVM selector for this function is: 0xfafd7b42,
+	// ///  or in textual repr: removeCollectionAdmin(address)
+	// function removeCollectionAdmin(address admin) public {
+	// 	require(false, stub_error);
+	// 	admin;
+	// 	dummy = 0;
+	// }
 
 	/// Toggle accessibility of collection nesting.
 	///
@@ -368,25 +370,25 @@ contract Collection is Dummy, ERC165 {
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	/// @dev EVM selector for this function is: 0xd63a8e11,
-	///  or in textual repr: allowed(address)
-	function allowed(address user) public view returns (bool) {
+	/// @dev EVM selector for this function is: 0x91b6df49,
+	///  or in textual repr: allowlistedCross((address,uint256))
+	function allowlistedCross(EthCrossAccount memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
 		return false;
 	}
 
-	/// Add the user to the allowed list.
-	///
-	/// @param user Address of a trusted user.
-	/// @dev EVM selector for this function is: 0x67844fe6,
-	///  or in textual repr: addToCollectionAllowList(address)
-	function addToCollectionAllowList(address user) public {
-		require(false, stub_error);
-		user;
-		dummy = 0;
-	}
+	// /// Add the user to the allowed list.
+	// ///
+	// /// @param user Address of a trusted user.
+	// /// @dev EVM selector for this function is: 0x67844fe6,
+	// ///  or in textual repr: addToCollectionAllowList(address)
+	// function addToCollectionAllowList(address user) public {
+	// 	require(false, stub_error);
+	// 	user;
+	// 	dummy = 0;
+	// }
 
 	/// Add user to allowed list.
 	///
@@ -399,16 +401,16 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	/// Remove the user from the allowed list.
-	///
-	/// @param user Address of a removed user.
-	/// @dev EVM selector for this function is: 0x85c51acb,
-	///  or in textual repr: removeFromCollectionAllowList(address)
-	function removeFromCollectionAllowList(address user) public {
-		require(false, stub_error);
-		user;
-		dummy = 0;
-	}
+	// /// Remove the user from the allowed list.
+	// ///
+	// /// @param user Address of a removed user.
+	// /// @dev EVM selector for this function is: 0x85c51acb,
+	// ///  or in textual repr: removeFromCollectionAllowList(address)
+	// function removeFromCollectionAllowList(address user) public {
+	// 	require(false, stub_error);
+	// 	user;
+	// 	dummy = 0;
+	// }
 
 	/// Remove user from allowed list.
 	///
@@ -432,18 +434,18 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	/// Check that account is the owner or admin of the collection
-	///
-	/// @param user account to verify
-	/// @return "true" if account is the owner or admin
-	/// @dev EVM selector for this function is: 0x9811b0c7,
-	///  or in textual repr: isOwnerOrAdmin(address)
-	function isOwnerOrAdmin(address user) public view returns (bool) {
-		require(false, stub_error);
-		user;
-		dummy;
-		return false;
-	}
+	// /// Check that account is the owner or admin of the collection
+	// ///
+	// /// @param user account to verify
+	// /// @return "true" if account is the owner or admin
+	// /// @dev EVM selector for this function is: 0x9811b0c7,
+	// ///  or in textual repr: isOwnerOrAdmin(address)
+	// function isOwnerOrAdmin(address user) public view returns (bool) {
+	// 	require(false, stub_error);
+	// 	user;
+	// 	dummy;
+	// 	return false;
+	// }
 
 	/// Check that account is the owner or admin of the collection
 	///
@@ -481,17 +483,17 @@ contract Collection is Dummy, ERC165 {
 		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
 	}
 
-	/// Changes collection owner to another account
-	///
-	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner account
-	/// @dev EVM selector for this function is: 0x4f53e226,
-	///  or in textual repr: changeCollectionOwner(address)
-	function changeCollectionOwner(address newOwner) public {
-		require(false, stub_error);
-		newOwner;
-		dummy = 0;
-	}
+	// /// Changes collection owner to another account
+	// ///
+	// /// @dev Owner can be changed only by current owner
+	// /// @param newOwner new owner account
+	// /// @dev EVM selector for this function is: 0x4f53e226,
+	// ///  or in textual repr: changeCollectionOwner(address)
+	// function changeCollectionOwner(address newOwner) public {
+	// 	require(false, stub_error);
+	// 	newOwner;
+	// 	dummy = 0;
+	// }
 
 	/// Get collection administrators
 	///
@@ -509,9 +511,9 @@ contract Collection is Dummy, ERC165 {
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
-	/// @dev EVM selector for this function is: 0xe5c9913f,
-	///  or in textual repr: setOwnerCross((address,uint256))
-	function setOwnerCross(EthCrossAccount memory newOwner) public {
+	/// @dev EVM selector for this function is: 0x6496c497,
+	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
+	function changeCollectionOwnerCross(EthCrossAccount memory newOwner) public {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
@@ -525,15 +527,9 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple23 {
+struct Tuple29 {
 	address field_0;
 	uint256 field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple20 {
-	string field_0;
-	bytes field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
@@ -678,7 +674,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x81feb398
+/// @dev the ERC-165 identifier for this interface is 0x12f7d6c1
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -698,6 +694,42 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		return "";
 	}
 
+	/// @notice A description for the collection.
+	/// @dev EVM selector for this function is: 0x7284e416,
+	///  or in textual repr: description()
+	function description() public view returns (string memory) {
+		require(false, stub_error);
+		dummy;
+		return "";
+	}
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	/// @dev EVM selector for this function is: 0x2b29dace,
+	///  or in textual repr: crossOwnerOf(uint256)
+	function crossOwnerOf(uint256 tokenId) public view returns (EthCrossAccount memory) {
+		require(false, stub_error);
+		tokenId;
+		dummy;
+		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	/// Returns the token properties.
+	///
+	/// @param tokenId Id for the token.
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0xe07ede7e,
+	///  or in textual repr: properties(uint256,string[])
+	function properties(uint256 tokenId, string[] memory keys) public view returns (Property[] memory) {
+		require(false, stub_error);
+		tokenId;
+		keys;
+		dummy;
+		return new Property[](0);
+	}
+
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid RFT.
@@ -707,6 +739,21 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xa9059cbb,
 	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 tokenId) public {
+		require(false, stub_error);
+		to;
+		tokenId;
+		dummy = 0;
+	}
+
+	/// @notice Transfer ownership of an RFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid RFT.
+	///  Throws if RFT pieces have multiple owners.
+	/// @param to The new owner
+	/// @param tokenId The RFT to transfer
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(EthCrossAccount memory to, uint256 tokenId) public {
 		require(false, stub_error);
 		to;
 		tokenId;
@@ -733,21 +780,21 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 	}
 
-	/// @notice Burns a specific ERC721 token.
-	/// @dev Throws unless `msg.sender` is the current owner or an authorized
-	///  operator for this RFT. Throws if `from` is not the current owner. Throws
-	///  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
-	///  Throws if RFT pieces have multiple owners.
-	/// @param from The current owner of the RFT
-	/// @param tokenId The RFT to transfer
-	/// @dev EVM selector for this function is: 0x79cc6790,
-	///  or in textual repr: burnFrom(address,uint256)
-	function burnFrom(address from, uint256 tokenId) public {
-		require(false, stub_error);
-		from;
-		tokenId;
-		dummy = 0;
-	}
+	// /// @notice Burns a specific ERC721 token.
+	// /// @dev Throws unless `msg.sender` is the current owner or an authorized
+	// ///  operator for this RFT. Throws if `from` is not the current owner. Throws
+	// ///  if `to` is the zero address. Throws if `tokenId` is not a valid RFT.
+	// ///  Throws if RFT pieces have multiple owners.
+	// /// @param from The current owner of the RFT
+	// /// @param tokenId The RFT to transfer
+	// /// @dev EVM selector for this function is: 0x79cc6790,
+	// ///  or in textual repr: burnFrom(address,uint256)
+	// function burnFrom(address from, uint256 tokenId) public {
+	// 	require(false, stub_error);
+	// 	from;
+	// 	tokenId;
+	// 	dummy = 0;
+	// }
 
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current owner or an authorized
@@ -796,7 +843,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple9[] memory tokens) public returns (bool) {
+	// function mintBulkWithTokenURI(address to, Tuple14[] memory tokens) public returns (bool) {
 	// 	require(false, stub_error);
 	// 	to;
 	// 	tokens;
@@ -818,7 +865,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple9 {
+struct Tuple14 {
 	uint256 field_0;
 	string field_1;
 }

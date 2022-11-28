@@ -20,7 +20,8 @@ extern crate alloc;
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight,
+	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
+	weight,
 };
 use up_data_structs::CollectionMode;
 use pallet_common::erc::{CommonEvmHandler, PrecompileResult};
@@ -93,6 +94,7 @@ impl<T: Config> FungibleHandle<T> {
 		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
 		Ok(true)
 	}
+
 	#[weight(<SelfWeightOf<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
@@ -156,6 +158,13 @@ impl<T: Config> FungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @notice A description for the collection.
+	fn description(&self) -> Result<string> {
+		Ok(decode_utf16(self.description.iter().copied())
+			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
+			.collect::<string>())
+	}
+
 	#[weight(<SelfWeightOf<T>>::approve())]
 	fn approve_cross(
 		&mut self,
@@ -177,6 +186,7 @@ where
 	/// deducting from the sender's allowance for said account.
 	/// @param from The account whose tokens will be burnt.
 	/// @param amount The amount that will be burnt.
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -235,6 +245,24 @@ where
 
 		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	#[weight(<SelfWeightOf<T>>::transfer())]
+	fn transfer_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
 		Ok(true)
 	}
 

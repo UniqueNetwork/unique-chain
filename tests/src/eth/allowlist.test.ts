@@ -74,19 +74,21 @@ describe('EVM collection allowlist', () => {
     });
   });
 
+  // Soft-deprecated
   itEth('Collection allowlist can be added and removed by [eth] address', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const user = helper.eth.createAccount();
-
+    const crossUser = helper.ethCrossAccount.fromAddress(user);
+    
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.true;
 
     await collectionEvm.methods.removeFromCollectionAllowList(user).send({from: owner});
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
   });
 
   itEth('Collection allowlist can be added and removed by [cross] address', async ({helper}) => {
@@ -100,26 +102,30 @@ describe('EVM collection allowlist', () => {
     expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowListCross(userCross).send({from: owner});
     expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.true;
+    expect(await collectionEvm.methods.allowlistedCross(userCross).call({from: owner})).to.be.true;
     
     await collectionEvm.methods.removeFromCollectionAllowListCross(userCross).send({from: owner});
     expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
+    expect(await collectionEvm.methods.allowlistedCross(userCross).call({from: owner})).to.be.false;
   });
 
+  // Soft-deprecated
   itEth('Collection allowlist can not be add and remove [eth] address by not owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const notOwner = await helper.eth.createAccountWithBalance(donor);
     const user = helper.eth.createAccount();
+    const crossUser = helper.ethCrossAccount.fromAddress(user);
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
     await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.true;
     await expect(collectionEvm.methods.removeFromCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.true;
+    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.true;
   });
 
   itEth('Collection allowlist can not be add and remove [cross] address by not owner', async ({helper}) => {

@@ -130,6 +130,24 @@ itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper:
 itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
 
+export type SchedKind = 'anon' | 'named';
+
+export function itSched(
+  name: string,
+  cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any,
+  opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {},
+) {
+  itSub(name + ' (anonymous scheduling)', (apis) => cb('anon', apis), opts);
+  itSub(name + ' (named scheduling)', (apis) => cb('named', apis), opts);
+}
+itSched.only = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {only: true});
+itSched.skip = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {skip: true});
+itSched.ifWithPallets = itSchedIfWithPallets;
+
+function itSchedIfWithPallets(name: string, required: string[], cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+  return itSched(name, cb, {requiredPallets: required, ...opts});
+}
+
 export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
   (process.env.RUN_XCM_TESTS && !opts.skip
     ? describe

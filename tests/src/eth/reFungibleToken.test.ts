@@ -94,7 +94,8 @@ describe('Check ERC721 token URI for ReFungible', () => {
 
     if (propertyKey && propertyValue) {
       // Set URL or suffix
-      await contract.methods.setProperty(tokenId, propertyKey, Buffer.from(propertyValue)).send();
+
+      await contract.methods.setProperties(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}]).send();
     }
 
     return {contract, nextTokenId: tokenId};

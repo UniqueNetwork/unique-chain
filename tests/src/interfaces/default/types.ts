@@ -556,22 +556,6 @@ export interface FrameSupportDispatchRawOrigin extends Enum {
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
 
-/** @name FrameSupportScheduleLookupError */
-export interface FrameSupportScheduleLookupError extends Enum {
-  readonly isUnknown: boolean;
-  readonly isBadFormat: boolean;
-  readonly type: 'Unknown' | 'BadFormat';
-}
-
-/** @name FrameSupportScheduleMaybeHashed */
-export interface FrameSupportScheduleMaybeHashed extends Enum {
-  readonly isValue: boolean;
-  readonly asValue: Call;
-  readonly isHash: boolean;
-  readonly asHash: H256;
-  readonly type: 'Value' | 'Hash';
-}
-
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
   readonly isFree: boolean;
@@ -1347,7 +1331,12 @@ export interface PalletEthereumError extends Enum {
 /** @name PalletEthereumEvent */
 export interface PalletEthereumEvent extends Enum {
   readonly isExecuted: boolean;
-  readonly asExecuted: ITuple<[H160, H160, H256, EvmCoreErrorExitReason]>;
+  readonly asExecuted: {
+    readonly from: H160;
+    readonly to: H160;
+    readonly transactionHash: H256;
+    readonly exitReason: EvmCoreErrorExitReason;
+  } & Struct;
   readonly type: 'Executed';
 }
 
@@ -1457,26 +1446,36 @@ export interface PalletEvmError extends Enum {
   readonly isWithdrawFailed: boolean;
   readonly isGasPriceTooLow: boolean;
   readonly isInvalidNonce: boolean;
-  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce';
+  readonly isGasLimitTooLow: boolean;
+  readonly isGasLimitTooHigh: boolean;
+  readonly isUndefined: boolean;
+  readonly isReentrancy: boolean;
+  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy';
 }
 
 /** @name PalletEvmEvent */
 export interface PalletEvmEvent extends Enum {
   readonly isLog: boolean;
-  readonly asLog: EthereumLog;
+  readonly asLog: {
+    readonly log: EthereumLog;
+  } & Struct;
   readonly isCreated: boolean;
-  readonly asCreated: H160;
+  readonly asCreated: {
+    readonly address: H160;
+  } & Struct;
   readonly isCreatedFailed: boolean;
-  readonly asCreatedFailed: H160;
+  readonly asCreatedFailed: {
+    readonly address: H160;
+  } & Struct;
   readonly isExecuted: boolean;
-  readonly asExecuted: H160;
+  readonly asExecuted: {
+    readonly address: H160;
+  } & Struct;
   readonly isExecutedFailed: boolean;
-  readonly asExecutedFailed: H160;
-  readonly isBalanceDeposit: boolean;
-  readonly asBalanceDeposit: ITuple<[AccountId32, H160, U256]>;
-  readonly isBalanceWithdraw: boolean;
-  readonly asBalanceWithdraw: ITuple<[AccountId32, H160, U256]>;
-  readonly type: 'Log' | 'Created' | 'CreatedFailed' | 'Executed' | 'ExecutedFailed' | 'BalanceDeposit' | 'BalanceWithdraw';
+  readonly asExecutedFailed: {
+    readonly address: H160;
+  } & Struct;
+  readonly type: 'Log' | 'Created' | 'CreatedFailed' | 'Executed' | 'ExecutedFailed';
 }
 
 /** @name PalletEvmMigrationCall */
@@ -1495,14 +1494,29 @@ export interface PalletEvmMigrationCall extends Enum {
     readonly address: H160;
     readonly code: Bytes;
   } & Struct;
-  readonly type: 'Begin' | 'SetData' | 'Finish';
+  readonly isInsertEthLogs: boolean;
+  readonly asInsertEthLogs: {
+    readonly logs: Vec<EthereumLog>;
+  } & Struct;
+  readonly isInsertEvents: boolean;
+  readonly asInsertEvents: {
+    readonly events: Vec<Bytes>;
+  } & Struct;
+  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents';
 }
 
 /** @name PalletEvmMigrationError */
 export interface PalletEvmMigrationError extends Enum {
   readonly isAccountNotEmpty: boolean;
   readonly isAccountIsNotMigrating: boolean;
-  readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
+  readonly isBadEvent: boolean;
+  readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating' | 'BadEvent';
+}
+
+/** @name PalletEvmMigrationEvent */
+export interface PalletEvmMigrationEvent extends Enum {
+  readonly isTestEvent: boolean;
+  readonly type: 'TestEvent';
 }
 
 /** @name PalletForeignAssetsAssetIds */
@@ -2004,7 +2018,11 @@ export interface PalletTestUtilsCall extends Enum {
     readonly maxTestValue: u32;
   } & Struct;
   readonly isJustTakeFee: boolean;
-  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'SelfCancelingInc' | 'JustTakeFee';
+  readonly isBatchAll: boolean;
+  readonly asBatchAll: {
+    readonly calls: Vec<Call>;
+  } & Struct;
+  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'SelfCancelingInc' | 'JustTakeFee' | 'BatchAll';
 }
 
 /** @name PalletTestUtilsError */
@@ -2018,7 +2036,8 @@ export interface PalletTestUtilsError extends Enum {
 export interface PalletTestUtilsEvent extends Enum {
   readonly isValueIsSet: boolean;
   readonly isShouldRollback: boolean;
-  readonly type: 'ValueIsSet' | 'ShouldRollback';
+  readonly isBatchCompleted: boolean;
+  readonly type: 'ValueIsSet' | 'ShouldRollback' | 'BatchCompleted';
 }
 
 /** @name PalletTimestampCall */
@@ -2327,19 +2346,44 @@ export interface PalletUniqueRawEvent extends Enum {
   readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
 }
 
-/** @name PalletUniqueSchedulerCall */
-export interface PalletUniqueSchedulerCall extends Enum {
+/** @name PalletUniqueSchedulerV2BlockAgenda */
+export interface PalletUniqueSchedulerV2BlockAgenda extends Struct {
+  readonly agenda: Vec<Option<PalletUniqueSchedulerV2Scheduled>>;
+  readonly freePlaces: u32;
+}
+
+/** @name PalletUniqueSchedulerV2Call */
+export interface PalletUniqueSchedulerV2Call extends Enum {
+  readonly isSchedule: boolean;
+  readonly asSchedule: {
+    readonly when: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: Option<u8>;
+    readonly call: Call;
+  } & Struct;
+  readonly isCancel: boolean;
+  readonly asCancel: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
   readonly isScheduleNamed: boolean;
   readonly asScheduleNamed: {
     readonly id: U8aFixed;
     readonly when: u32;
     readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
     readonly priority: Option<u8>;
-    readonly call: FrameSupportScheduleMaybeHashed;
+    readonly call: Call;
   } & Struct;
   readonly isCancelNamed: boolean;
   readonly asCancelNamed: {
     readonly id: U8aFixed;
+  } & Struct;
+  readonly isScheduleAfter: boolean;
+  readonly asScheduleAfter: {
+    readonly after: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: Option<u8>;
+    readonly call: Call;
   } & Struct;
   readonly isScheduleNamedAfter: boolean;
   readonly asScheduleNamedAfter: {
@@ -2347,27 +2391,31 @@ export interface PalletUniqueSchedulerCall extends Enum {
     readonly after: u32;
     readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
     readonly priority: Option<u8>;
-    readonly call: FrameSupportScheduleMaybeHashed;
+    readonly call: Call;
   } & Struct;
   readonly isChangeNamedPriority: boolean;
   readonly asChangeNamedPriority: {
     readonly id: U8aFixed;
     readonly priority: u8;
   } & Struct;
-  readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter' | 'ChangeNamedPriority';
+  readonly type: 'Schedule' | 'Cancel' | 'ScheduleNamed' | 'CancelNamed' | 'ScheduleAfter' | 'ScheduleNamedAfter' | 'ChangeNamedPriority';
 }
 
-/** @name PalletUniqueSchedulerError */
-export interface PalletUniqueSchedulerError extends Enum {
+/** @name PalletUniqueSchedulerV2Error */
+export interface PalletUniqueSchedulerV2Error extends Enum {
   readonly isFailedToSchedule: boolean;
+  readonly isAgendaIsExhausted: boolean;
+  readonly isScheduledCallCorrupted: boolean;
+  readonly isPreimageNotFound: boolean;
+  readonly isTooBigScheduledCall: boolean;
   readonly isNotFound: boolean;
   readonly isTargetBlockNumberInPast: boolean;
-  readonly isRescheduleNoChange: boolean;
-  readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
+  readonly isNamed: boolean;
+  readonly type: 'FailedToSchedule' | 'AgendaIsExhausted' | 'ScheduledCallCorrupted' | 'PreimageNotFound' | 'TooBigScheduledCall' | 'NotFound' | 'TargetBlockNumberInPast' | 'Named';
 }
 
-/** @name PalletUniqueSchedulerEvent */
-export interface PalletUniqueSchedulerEvent extends Enum {
+/** @name PalletUniqueSchedulerV2Event */
+export interface PalletUniqueSchedulerV2Event extends Enum {
   readonly isScheduled: boolean;
   readonly asScheduled: {
     readonly when: u32;
@@ -2378,34 +2426,49 @@ export interface PalletUniqueSchedulerEvent extends Enum {
     readonly when: u32;
     readonly index: u32;
   } & Struct;
-  readonly isPriorityChanged: boolean;
-  readonly asPriorityChanged: {
-    readonly when: u32;
-    readonly index: u32;
-    readonly priority: u8;
-  } & Struct;
   readonly isDispatched: boolean;
   readonly asDispatched: {
     readonly task: ITuple<[u32, u32]>;
     readonly id: Option<U8aFixed>;
     readonly result: Result<Null, SpRuntimeDispatchError>;
   } & Struct;
-  readonly isCallLookupFailed: boolean;
-  readonly asCallLookupFailed: {
+  readonly isPriorityChanged: boolean;
+  readonly asPriorityChanged: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly priority: u8;
+  } & Struct;
+  readonly isCallUnavailable: boolean;
+  readonly asCallUnavailable: {
     readonly task: ITuple<[u32, u32]>;
     readonly id: Option<U8aFixed>;
-    readonly error: FrameSupportScheduleLookupError;
   } & Struct;
-  readonly type: 'Scheduled' | 'Canceled' | 'PriorityChanged' | 'Dispatched' | 'CallLookupFailed';
+  readonly isPermanentlyOverweight: boolean;
+  readonly asPermanentlyOverweight: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+  } & Struct;
+  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'PriorityChanged' | 'CallUnavailable' | 'PermanentlyOverweight';
 }
 
-/** @name PalletUniqueSchedulerScheduledV3 */
-export interface PalletUniqueSchedulerScheduledV3 extends Struct {
+/** @name PalletUniqueSchedulerV2Scheduled */
+export interface PalletUniqueSchedulerV2Scheduled extends Struct {
   readonly maybeId: Option<U8aFixed>;
   readonly priority: u8;
-  readonly call: FrameSupportScheduleMaybeHashed;
+  readonly call: PalletUniqueSchedulerV2ScheduledCall;
   readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
   readonly origin: OpalRuntimeOriginCaller;
+}
+
+/** @name PalletUniqueSchedulerV2ScheduledCall */
+export interface PalletUniqueSchedulerV2ScheduledCall extends Enum {
+  readonly isInline: boolean;
+  readonly asInline: Bytes;
+  readonly isPreimageLookup: boolean;
+  readonly asPreimageLookup: {
+    readonly hash_: H256;
+    readonly unboundedLen: u32;
+  } & Struct;
+  readonly type: 'Inline' | 'PreimageLookup';
 }
 
 /** @name PalletXcmCall */

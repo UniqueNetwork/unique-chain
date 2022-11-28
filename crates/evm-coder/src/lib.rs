@@ -197,7 +197,7 @@ pub mod types {
 	impl EthCrossAccount {
 		pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 		where
-			T: pallet_evm::account::Config,
+			T: pallet_evm::Config,
 			T::AccountId: AsRef<[u8; 32]>,
 		{
 			if cross_account_id.is_canonical_substrate() {
@@ -215,7 +215,7 @@ pub mod types {
 
 		pub fn into_sub_cross_account<T>(&self) -> crate::execution::Result<T::CrossAccountId>
 		where
-			T: pallet_evm::account::Config,
+			T: pallet_evm::Config,
 			T::AccountId: From<[u8; 32]>,
 		{
 			if self.eth == Default::default() && self.sub == Default::default() {
@@ -231,7 +231,7 @@ pub mod types {
 	}
 
 	/// Convert `CrossAccountId` to `uint256`.
-	pub fn convert_cross_account_to_uint256<T: pallet_evm::account::Config>(
+	pub fn convert_cross_account_to_uint256<T: pallet_evm::Config>(
 		from: &T::CrossAccountId,
 	) -> uint256
 	where
@@ -242,7 +242,7 @@ pub mod types {
 	}
 
 	/// Convert `uint256` to `CrossAccountId`.
-	pub fn convert_uint256_to_cross_account<T: pallet_evm::account::Config>(
+	pub fn convert_uint256_to_cross_account<T: pallet_evm::Config>(
 		from: uint256,
 	) -> T::CrossAccountId
 	where
@@ -252,6 +252,12 @@ pub mod types {
 		from.to_big_endian(&mut new_admin_arr);
 		let account_id = T::AccountId::from(new_admin_arr);
 		T::CrossAccountId::from_sub(account_id)
+	}
+
+	#[derive(Debug, Default)]
+	pub struct Property {
+		pub key: string,
+		pub value: bytes,
 	}
 }
 

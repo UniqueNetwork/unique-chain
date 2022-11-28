@@ -46,6 +46,7 @@ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use cumulus_relay_chain_rpc_interface::{RelayChainRpcInterface, create_client_and_start_worker};
 
 // Substrate Imports
+use sp_api::BlockT;
 use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
 use sc_network::{NetworkService, NetworkBlock};
@@ -159,7 +160,10 @@ impl Stream for AutosealInterval {
 	}
 }
 
-pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
+pub fn open_frontier_backend<Block: BlockT, C: sp_blockchain::HeaderBackend<Block>>(
+	client: Arc<C>,
+	config: &Configuration,
+) -> Result<Arc<fc_db::Backend<Block>>, String> {
 	let config_dir = config
 		.base_path
 		.as_ref()
@@ -170,6 +174,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 	let database_dir = config_dir.join("frontier").join("db");
 
 	Ok(Arc::new(fc_db::Backend::<Block>::new(
+		client,
 		&fc_db::DatabaseSettings {
 			source: fc_db::DatabaseSource::RocksDb {
 				path: database_dir,
@@ -285,7 +290,7 @@ where
 
 	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
-	let frontier_backend = open_frontier_backend(config)?;
+	let frontier_backend = open_frontier_backend(client.clone(), config)?;
 
 	let import_queue = build_import_queue(
 		client.clone(),

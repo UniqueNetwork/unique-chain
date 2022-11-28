@@ -2,9 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.10] - 2022-11-02
+<!-- bureaucrate goes here -->
+
+## [0.1.12] - 2022-11-16
+
 ### Changed
- - Use named structure `EthCrossAccount` in eth functions.
+
+- Behavior of the `setCollectionLimit` method.
+  Removed method overload: single signature `(string, uint256)`
+  is used for both cases.
+
+## [0.1.11] - 2022-11-12
+
+### Changed
+
+- In the `Collection` solidity interface,
+  the `allowed` function has been renamed to `allow_listed_cross`.
+  Also `EthCrossAccount` type is now used as `user` arg.
+
+## [0.1.10] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
 
 ## [0.1.9] - 2022-10-13
 
@@ -34,8 +54,6 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - New Ethereum API methods: changeOwner, changeOwner(Substrate) and verifyOwnerOrAdmin(Substrate).
-
-<!-- bureaucrate goes here -->
 
 ## [v0.1.5] 2022-08-16
 

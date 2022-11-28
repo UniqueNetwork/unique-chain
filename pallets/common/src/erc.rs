@@ -20,6 +20,7 @@ use evm_coder::{
 	abi::AbiType,
 	solidity_interface, solidity, ToLog,
 	types::*,
+	types::Property as PropertyStruct,
 	execution::{Result, Error},
 	weight,
 };
@@ -78,6 +79,7 @@ where
 	///
 	/// @param key Property key.
 	/// @param value Propery value.
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
 	fn set_collection_property(
 		&mut self,
@@ -102,13 +104,13 @@ where
 	fn set_collection_properties(
 		&mut self,
 		caller: caller,
-		properties: Vec<(string, bytes)>,
+		properties: Vec<PropertyStruct>,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let properties = properties
 			.into_iter()
-			.map(|(key, value)| {
+			.map(|PropertyStruct { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -126,6 +128,7 @@ where
 	/// Delete collection property.
 	///
 	/// @param key Property key.
+	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -175,7 +178,7 @@ where
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<(string, bytes)>> {
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -197,7 +200,7 @@ where
 				let key =
 					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
 				let value = bytes(p.value.to_vec());
-				Ok((key, value))
+				Ok(PropertyStruct { key, value })
 			})
 			.collect::<Result<Vec<_>>>()?;
 		Ok(properties)
@@ -208,6 +211,7 @@ where
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
 	///
 	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
+	#[solidity(hide)]
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -299,10 +303,28 @@ where
 	/// 	"tokenLimit",
 	/// 	"sponsorTransferTimeout",
 	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint32) -> Result<void> {
+	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint256) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
+
+		let value = value
+			.try_into()
+			.map_err(|_| Error::Revert(format!("can't convert value to u32 \"{}\"", value)))?;
+
+		let convert_value_to_bool = || match value {
+			0 => Ok(false),
+			1 => Ok(true),
+			_ => {
+				return Err(Error::Revert(format!(
+					"can't convert value to boolean \"{}\"",
+					value
+				)))
+			}
+		};
 
 		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
@@ -326,48 +348,16 @@ where
 			"sponsorApproveTimeout" => {
 				limits.sponsor_approve_timeout = Some(value);
 			}
-			_ => {
-				return Err(Error::Revert(format!(
-					"unknown integer limit \"{}\"",
-					limit
-				)))
-			}
-		}
-		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
-	}
-
-	/// Set limits for the collection.
-	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param value Value of the limit.
-	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_bool_limit(&mut self, caller: caller, limit: string, value: bool) -> Result<void> {
-		self.consume_store_reads_and_writes(1, 1)?;
-
-		check_is_owner_or_admin(caller, self)?;
-		let mut limits = self.limits.clone();
-
-		match limit.as_str() {
 			"ownerCanTransfer" => {
-				limits.owner_can_transfer = Some(value);
+				limits.owner_can_transfer = Some(convert_value_to_bool()?);
 			}
 			"ownerCanDestroy" => {
-				limits.owner_can_destroy = Some(value);
+				limits.owner_can_destroy = Some(convert_value_to_bool()?);
 			}
 			"transfersEnabled" => {
-				limits.transfers_enabled = Some(value);
+				limits.transfers_enabled = Some(convert_value_to_bool()?);
 			}
-			_ => {
-				return Err(Error::Revert(format!(
-					"unknown boolean limit \"{}\"",
-					limit
-				)))
-			}
+			_ => return Err(Error::Revert(format!("unknown limit \"{}\"", limit))),
 		}
 		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
 			.map_err(dispatch_to_evm::<T>)?;
@@ -411,6 +401,7 @@ where
 
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
+	#[solidity(hide)]
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
 		self.consume_store_writes(2)?;
 
@@ -423,6 +414,7 @@ where
 	/// Remove collection admin.
 	///
 	/// @param admin Address of the removed administrator.
+	#[solidity(hide)]
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
 		self.consume_store_writes(2)?;
 
@@ -537,16 +529,15 @@ where
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	fn allowed(&self, user: address) -> Result<bool> {
-		Ok(Pallet::<T>::allowed(
-			self.id,
-			T::CrossAccountId::from_eth(user),
-		))
+	fn allowlisted_cross(&self, user: EthCrossAccount) -> Result<bool> {
+		let user = user.into_sub_cross_account::<T>()?;
+		Ok(Pallet::<T>::allowed(self.id, user))
 	}
 
 	/// Add the user to the allowed list.
 	///
 	/// @param user Address of a trusted user.
+	#[solidity(hide)]
 	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -575,6 +566,7 @@ where
 	/// Remove the user from the allowed list.
 	///
 	/// @param user Address of a removed user.
+	#[solidity(hide)]
 	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -625,7 +617,7 @@ where
 	///
 	/// @param user account to verify
 	/// @return "true" if account is the owner or admin
-	#[solidity(rename_selector = "isOwnerOrAdmin")]
+	#[solidity(hide, rename_selector = "isOwnerOrAdmin")]
 	fn is_owner_or_admin_eth(&self, user: address) -> Result<bool> {
 		let user = T::CrossAccountId::from_eth(user);
 		Ok(self.is_owner_or_admin(&user))
@@ -666,7 +658,7 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
-	#[solidity(rename_selector = "changeCollectionOwner")]
+	#[solidity(hide, rename_selector = "changeCollectionOwner")]
 	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -691,7 +683,11 @@ where
 	///
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner cross account
-	fn set_owner_cross(&mut self, caller: caller, new_owner: EthCrossAccount) -> Result<void> {
+	fn change_collection_owner_cross(
+		&mut self,
+		caller: caller,
+		new_owner: EthCrossAccount,
+	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);

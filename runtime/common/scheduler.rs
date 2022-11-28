@@ -15,44 +15,29 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::NamedReservableCurrency,
 	dispatch::{GetDispatchInfo, PostDispatchInfo, DispatchInfo},
 };
 use sp_runtime::{
 	traits::{Dispatchable, Applyable, Member},
-	generic::Era,
 	transaction_validity::TransactionValidityError,
-	DispatchErrorWithPostInfo, DispatchError,
+	DispatchErrorWithPostInfo,
 };
 use codec::Encode;
-use crate::{Runtime, RuntimeCall, RuntimeOrigin, Balances, maintenance};
-use up_common::types::{AccountId, Balance};
+use crate::{Runtime, RuntimeCall, RuntimeOrigin, maintenance};
+use up_common::types::AccountId;
 use fp_self_contained::SelfContainedCall;
-use pallet_unique_scheduler::DispatchCall;
+use pallet_unique_scheduler_v2::DispatchCall;
 use pallet_transaction_payment::ChargeTransactionPayment;
-
-type SponsorshipChargeTransactionPayment =
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtraScheduler = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
 	ChargeTransactionPayment<Runtime>,
 );
 
-fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> SignedExtraScheduler {
+fn get_signed_extras() -> SignedExtraScheduler {
 	(
-		frame_system::CheckSpecVersion::<Runtime>::new(),
-		frame_system::CheckGenesis::<Runtime>::new(),
-		frame_system::CheckEra::<Runtime>::from(Era::Immortal),
-		frame_system::CheckNonce::<Runtime>::from(frame_system::Pallet::<Runtime>::account_nonce(
-			from,
-		)),
 		frame_system::CheckWeight::<Runtime>::new(),
 		maintenance::CheckMaintenance,
 		ChargeTransactionPayment::<Runtime>::from(0),
@@ -61,7 +46,7 @@ fn get_signed_extras(from: <Runtime as frame_system::Config>::AccountId) -> Sign
 
 pub struct SchedulerPaymentExecutor;
 
-impl<T: frame_system::Config + pallet_unique_scheduler::Config, SelfContainedSignedInfo>
+impl<T: frame_system::Config + pallet_unique_scheduler_v2::Config, SelfContainedSignedInfo>
 	DispatchCall<T, SelfContainedSignedInfo> for SchedulerPaymentExecutor
 where
 	<T as frame_system::Config>::RuntimeCall: Member
@@ -71,13 +56,13 @@ where
 		+ From<frame_system::Call<Runtime>>,
 	SelfContainedSignedInfo: Send + Sync + 'static,
 	RuntimeCall: From<<T as frame_system::Config>::RuntimeCall>
-		+ From<<T as pallet_unique_scheduler::Config>::RuntimeCall>
+		+ From<<T as pallet_unique_scheduler_v2::Config>::RuntimeCall>
 		+ SelfContainedCall<SignedInfo = SelfContainedSignedInfo>,
 	sp_runtime::AccountId32: From<<T as frame_system::Config>::AccountId>,
 {
 	fn dispatch_call(
 		signer: Option<<T as frame_system::Config>::AccountId>,
-		call: <T as pallet_unique_scheduler::Config>::RuntimeCall,
+		call: <T as pallet_unique_scheduler_v2::Config>::RuntimeCall,
 	) -> Result<
 		Result<PostDispatchInfo, DispatchErrorWithPostInfo<PostDispatchInfo>>,
 		TransactionValidityError,
@@ -88,7 +73,7 @@ where
 		let signed = match signer {
 			Some(signer) => fp_self_contained::CheckedSignature::Signed(
 				signer.clone().into(),
-				get_signed_extras(signer.into()),
+				get_signed_extras(),
 			),
 			None => fp_self_contained::CheckedSignature::Unsigned,
 		};
@@ -104,53 +89,5 @@ where
 		};
 
 		extrinsic.apply::<Runtime>(&dispatch_info, len)
-	}
-
-	fn reserve_balance(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::RuntimeCall,
-		count: u32,
-	) -> Result<(), DispatchError> {
-		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance =
-			SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0)
-				.saturating_mul(count.into());
-
-		<Balances as NamedReservableCurrency<AccountId>>::reserve_named(
-			&id,
-			&(sponsor.into()),
-			weight,
-		)
-	}
-
-	fn pay_for_call(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-		call: <T as pallet_unique_scheduler::Config>::RuntimeCall,
-	) -> Result<u128, DispatchError> {
-		let dispatch_info = call.get_dispatch_info();
-		let weight: Balance =
-			SponsorshipChargeTransactionPayment::traditional_fee(0, &dispatch_info, 0);
-		Ok(
-			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-				&id,
-				&(sponsor.into()),
-				weight,
-			),
-		)
-	}
-
-	fn cancel_reserve(
-		id: [u8; 16],
-		sponsor: <T as frame_system::Config>::AccountId,
-	) -> Result<u128, DispatchError> {
-		Ok(
-			<Balances as NamedReservableCurrency<AccountId>>::unreserve_named(
-				&id,
-				&(sponsor.into()),
-				u128::MAX,
-			),
-		)
 	}
 }

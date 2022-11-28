@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {EthUniqueHelper, itEth} from './util';
+import {EthUniqueHelper, itSchedEth} from './util';
 import {Pallets, usingPlaygrounds} from '../util';
 
 describe('Scheduing EVM smart contracts', () => {
@@ -26,11 +26,11 @@ describe('Scheduing EVM smart contracts', () => {
     });
   });
 
-  itEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async ({helper, privateKey}) => {
+  itSchedEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async (scheduleKind, {helper, privateKey}) => {
     const donor = await privateKey({filename: __filename});
     const [alice] = await helper.arrange.createAccounts([1000n], donor);
 
-    const scheduledId = await helper.arrange.makeScheduledId();
+    const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
 
     const deployer = await helper.eth.createAccountWithBalance(alice);
     const flipper = await helper.eth.deployFlipper(deployer);
@@ -44,7 +44,7 @@ describe('Scheduing EVM smart contracts', () => {
       repetitions: 2,
     };
 
-    await helper.scheduler.scheduleAfter<EthUniqueHelper>(scheduledId, waitForBlocks, {periodic})
+    await helper.scheduler.scheduleAfter<EthUniqueHelper>(waitForBlocks, {scheduledId, periodic})
       .eth.sendEVM(
         alice,
         flipper.options.address,
