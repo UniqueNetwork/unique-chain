@@ -1,7 +1,5 @@
 import {IKeyringPair} from '@polkadot/types/types';
-
 import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util';
-
 
 function linearRegression(points: { x: bigint, y: bigint }[]) {
   let sumxy = 0n;
@@ -19,8 +17,14 @@ function linearRegression(points: { x: bigint, y: bigint }[]) {
 
   const nb = BigInt(n);
 
-  const a = (nb * sumxy - sumx * sumy) / (nb * sumx2 - sumx * sumx);
-  const b = (sumy - a * sumx) / nb;
+  const precision = 100000000n;
+
+  // This is a workaround to beat the lack of precision of the `Number` type.
+  // We divide `BigInt`s. But since it is an integer division, we should take care of the precision on our own.
+  // After the division we can convert the result back to the `Number` and then we set the correct precision.
+  // It is crucial to have the correct slope for the regression line.
+  const a = Number((precision * (nb * sumxy - sumx * sumy)) / (nb * sumx2 - sumx * sumx)) / Number(precision);
+  const b = (Number(sumy) - a * Number(sumx)) / Number(nb);
 
   return {a, b};
 }
@@ -68,13 +72,13 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    console.log(`Original price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
+    console.log(`\t[NFT Transfer] Original price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 
   const api = helper.getApi();
-  const defaultCoeff = (api.consts.configuration.defaultWeightToFeeCoefficient as any).toBigInt();
+  const base = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt();
   for (let i = -5; i < 5; i++) {
-    await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(defaultCoeff + defaultCoeff / 1000n * BigInt(i))));
+    await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(base + base / 1000n * BigInt(i))));
 
     const coefficient = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt();
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
@@ -92,7 +96,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
 
   // console.log(`Error: ${error(dataPoints, x => a*x+b)}`);
 
-  const perfectValue = a * helper.balance.getOneTokenNominal() / 10n + b;
+  const perfectValue = BigInt(Math.ceil(a * Number(helper.balance.getOneTokenNominal()) / 10 + b));
   await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(perfectValue.toString())));
 
   {
@@ -102,7 +106,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    console.log(`Calibrated price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
+    console.log(`\t[NFT Transfer] Calibrated price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 }
 
@@ -121,13 +125,14 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
     const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
 
-    console.log(`Original price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
+    console.log(`\t[ETH NFT transfer] Original price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 
   const api = helper.getApi();
-  const defaultCoeff = (api.consts.configuration.defaultMinGasPrice as any).toBigInt();
+  // const defaultCoeff = (api.consts.configuration.defaultMinGasPrice as any).toBigInt();
+  const base = (await api.query.configuration.minGasPriceOverride() as any).toBigInt();
   for (let i = -8; i < 8; i++) {
-    const gasPrice = defaultCoeff + defaultCoeff / 100000n * BigInt(i);
+    const gasPrice = base + base / 100000n * BigInt(i);
     const gasPriceStr = '0x' + gasPrice.toString(16);
     await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(gasPrice)));
 
@@ -148,7 +153,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   // console.log(`Error: ${error(dataPoints, x => a*x+b)}`);
 
   // * 0.15 = * 10000 / 66666
-  const perfectValue = a * helper.balance.getOneTokenNominal() * 1000000n / 6666666n + b;
+  const perfectValue = BigInt(Math.ceil(a * Number(helper.balance.getOneTokenNominal() * 1000000n / 6666666n) + b));
   await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(perfectValue.toString())));
 
   {
@@ -160,18 +165,26 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
     const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
 
-    console.log(`Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
+    console.log(`\t[ETH NFT transfer] Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 }
 
 (async () => {
   await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
-    // Second run slightly reduces error sometimes, as price line is not actually straight, this is a curve
+    // Subsequent runs reduce error, as price line is not actually straight, this is a curve
 
-    await calibrateWeightToFee(helper, privateKey);
-    await calibrateWeightToFee(helper, privateKey);
+    const iterations = 3;
 
-    await calibrateMinGasPrice(helper, privateKey);
-    await calibrateMinGasPrice(helper, privateKey);
+    console.log('[Calibrate WeightToFee]');
+    for (let i = 0; i < iterations; i++) {
+      await calibrateWeightToFee(helper, privateKey);
+    }
+
+    console.log();
+
+    console.log('[Calibrate MinGasPrice]');
+    for (let i = 0; i < iterations; i++) {
+      await calibrateMinGasPrice(helper, privateKey);
+    }
   });
 })();
