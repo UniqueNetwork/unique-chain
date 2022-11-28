@@ -11,9 +11,9 @@ jobs:
   rustfmt:
     runs-on: [ self-hosted-ci ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@latest
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.6
         with:
             toolchain: nightly
             default: true
@@ -28,8 +28,8 @@ jobs:
   yarn_eslint:
     runs-on: [ self-hosted-ci ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: 16
       - name: Install modules
@@ -41,11 +41,11 @@ jobs:
     if: ${{ false }}
     runs-on: [ self-hosted-ci ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@latest
       - name: Install substrate dependencies
         run: sudo apt-get install libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.6
         with:
             toolchain: nightly
             default: true

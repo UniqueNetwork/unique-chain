@@ -54,7 +54,7 @@ jobs:
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --buildr --remove-orphans
 
       - uses: actions/setup-node@v3
         with:
@@ -104,6 +104,6 @@ jobs:
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@release/v1
+      uses: re-actors/alls-green@release/v1.2.2
       with:
         jobs: ${{ toJSON(needs) }}
