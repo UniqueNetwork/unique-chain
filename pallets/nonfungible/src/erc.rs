@@ -490,8 +490,8 @@ impl<T: Config> NonfungibleHandle<T> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
-	
-	/// @notice Returns collection helper contract address 
+
+	/// @notice Returns collection helper contract address
 	fn collection_helper_address(&self) -> Result<address> {
 		Ok(T::ContractAddress::get())
 	}

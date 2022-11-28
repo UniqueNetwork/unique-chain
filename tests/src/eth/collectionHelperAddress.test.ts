@@ -16,10 +16,11 @@
 
 import {itEth, usingEthPlaygrounds, expect} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
+import {Pallets} from '../util';
 
 const EVM_COLLECTION_HELPERS_ADDRESS = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';
 
-describe('[eth]CollectionHelerpAddress test: ERC721 ', () => {
+describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
   let donor: IKeyringPair;
 
   before(async function() {
@@ -28,18 +29,22 @@ describe('[eth]CollectionHelerpAddress test: ERC721 ', () => {
     });
   });
 
-  itEth('NFT\\RFT', async ({helper}) => {
+  itEth('NFT', async ({helper}) => {
     const owner =  await helper.eth.createAccountWithBalance(donor);
     
     const {collectionAddress: nftCollectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
     const nftCollection = helper.ethNativeContract.collection(nftCollectionAddress, 'nft', owner);
     
-    const {collectionAddress: rftCollectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
-    const rftCollection = helper.ethNativeContract.collection(rftCollectionAddress, 'rft', owner);
-    
     expect((await nftCollection.methods.collectionHelperAddress().call())
       .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
-    
+  });
+  
+  itEth.ifWithPallets('RFT ', [Pallets.ReFungible], async ({helper}) => {
+    const owner =  await helper.eth.createAccountWithBalance(donor);
+
+    const {collectionAddress: rftCollectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
+
+    const rftCollection = helper.ethNativeContract.collection(rftCollectionAddress, 'rft', owner);
     expect((await rftCollection.methods.collectionHelperAddress().call())
       .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
   });
@@ -52,6 +57,16 @@ describe('[eth]CollectionHelerpAddress test: ERC721 ', () => {
     
     expect((await collection.methods.collectionHelperAddress().call())
       .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
+  });
+  
+  itEth('[collectionHelpers] convert collectionId into address', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collectionId = 7;
+    const collectionAddress = helper.ethAddress.fromCollectionId(collectionId);
+    const helperContract = helper.ethNativeContract.collectionHelpers(owner);
+    
+    expect(await helperContract.methods.collectionAddress(collectionId).call()).to.be.equal(collectionAddress);
+    expect(parseInt(await helperContract.methods.collectionId(collectionAddress).call())).to.be.equal(collectionId);
   });
  
 });
