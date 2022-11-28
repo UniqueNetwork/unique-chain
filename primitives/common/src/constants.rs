@@ -43,7 +43,7 @@ pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u32 = /*<weight2fee>*/175_199_920/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/78_389_100_150_858_528/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
 pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_014_919_410_810/*</mingasprice>*/;
@@ -60,5 +60,5 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
 	.set_proof_size(MAX_POV_SIZE as u64);
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE;
+	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE / 2;
 }
