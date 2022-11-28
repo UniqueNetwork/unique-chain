@@ -36,7 +36,7 @@ jobs:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Checkout Market e2e tests
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.1.0
         with:
           repository: 'UniqueNetwork/market-e2e-tests'
           ssh-key: ${{ secrets.GH_PAT }}
