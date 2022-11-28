@@ -98,7 +98,7 @@ jobs:
           docker image prune -f -a
   check:
     if: always()
-
+    runs-on: [self-hosted-ci]
     needs:
     - dev_build_int_tests
 
