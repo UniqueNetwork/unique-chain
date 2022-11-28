@@ -13,11 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3.1.0
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1.0.6
+        uses: dtolnay/rust-toolchain@nightly
         with:
-            toolchain: nightly
-            default: true
-            target: wasm32-unknown-unknown
+            targets: wasm32-unknown-unknown
             components: rustfmt, clippy
       - name: Run cargo fmt
         run: cargo fmt -- --check   # In that mode it returns only exit code.
@@ -45,11 +43,9 @@ jobs:
       - name: Install substrate dependencies
         run: sudo apt-get install libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1.0.6
+        uses: dtolnay/rust-toolchain@nightly
         with:
-            toolchain: nightly
-            default: true
-            target: wasm32-unknown-unknown
+            targets: wasm32-unknown-unknown
             components: rustfmt, clippy
       - name: Run cargo check
         run: cargo clippy -- -Dwarnings

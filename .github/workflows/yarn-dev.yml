@@ -54,7 +54,7 @@ jobs:
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --buildr --remove-orphans
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
       - uses: actions/setup-node@v3
         with:
@@ -96,7 +96,7 @@ jobs:
           docker builder prune -f -a
           docker system prune -f
           docker image prune -f -a
-          
+
   # check:
   #   if: always()
   #   runs-on: [self-hosted-ci]
