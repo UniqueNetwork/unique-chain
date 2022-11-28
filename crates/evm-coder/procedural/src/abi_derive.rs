@@ -39,17 +39,8 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
 	let abi_type = impl_abi_type(name, tuple_type.clone());
-	let abi_read = impl_abi_read(
-		name,
-		tuple_type.clone(),
-		tuple_names.clone(),
-		struct_from_tuple,
-	);
+	let abi_read = impl_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
 	let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
-	println!(
-		"=========================\n{}\n=========================",
-		&abi_write
-	);
 	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
 	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
 	let solidity_struct_collect =
@@ -72,12 +63,14 @@ fn tuple_type<'a>(
 	let field_types = field_types.map(|ty| quote!(#ty,));
 	quote! {(#(#field_types)*)}
 }
+
 fn tuple_ref_type<'a>(
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
 ) -> proc_macro2::TokenStream {
 	let field_types = field_types.map(|ty| quote!(&#ty,));
 	quote! {(#(#field_types)*)}
 }
+
 fn tuple_data_as_ref(
 	is_named_fields: bool,
 	field_names: impl Iterator<Item = syn::Ident> + Clone,
@@ -92,6 +85,7 @@ fn tuple_data_as_ref(
 	});
 	quote! {(#(#field_names)*)}
 }
+
 fn tuple_names(
 	is_named_fields: bool,
 	field_names: impl Iterator<Item = syn::Ident> + Clone,
@@ -109,6 +103,7 @@ fn tuple_names(
 	});
 	quote! {(#(#field_names)*)}
 }
+
 fn struct_from_tuple(
 	name: &syn::Ident,
 	is_named_fields: bool,
