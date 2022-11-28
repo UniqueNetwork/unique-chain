@@ -96,14 +96,15 @@ jobs:
           docker builder prune -f -a
           docker system prune -f
           docker image prune -f -a
-  check:
-    if: always()
-    runs-on: [self-hosted-ci]
-    needs:
-    - dev_build_int_tests
+          
+  # check:
+  #   if: always()
+  #   runs-on: [self-hosted-ci]
+  #   needs:
+  #   - dev_build_int_tests
 
-    steps:
-    - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@v1.2.2
-      with:
-        jobs: ${{ toJSON(needs) }}
+  #   steps:
+  #   - name: Decide whether the needed jobs succeeded or failed
+  #     uses: re-actors/alls-green@v1.2.2
+  #     with:
+  #       jobs: ${{ toJSON(needs) }}
