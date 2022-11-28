@@ -43,9 +43,3 @@ pub trait AbiWrite {
 		Ok(writer.into())
 	}
 }
-
-impl<T: AbiWrite> AbiWrite for &T {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		T::abi_write(self, writer);
-	}
-}

@@ -88,6 +88,24 @@ impl AbiRead for bytes4 {
 	}
 }
 
+impl<T: AbiWrite> AbiWrite for &T {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		T::abi_write(self, writer);
+	}
+}
+
+impl<T: AbiType> AbiType for &T {
+	const SIGNATURE: SignatureUnit = T::SIGNATURE;
+
+	fn is_dynamic() -> bool {
+		T::is_dynamic()
+	}
+
+	fn size() -> usize {
+		T::size()
+	}
+}
+
 impl<T: AbiType + AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<T> {
 	fn abi_read(reader: &mut AbiReader) -> Result<Vec<T>> {
 		let mut sub = reader.subresult(None)?;
@@ -148,7 +166,7 @@ impl AbiRead for Property {
 
 impl AbiWrite for Property {
 	fn abi_write<'a>(&'a self, writer: &mut AbiWriter) {
-		(self.key.clone(), self.value.clone()).abi_write(writer);
+		(&self.key, &self.value).abi_write(writer);
 	}
 }
 
