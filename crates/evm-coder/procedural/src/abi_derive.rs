@@ -1,3 +1,4 @@
+use proc_macro2::TokenStream;
 use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -30,15 +31,25 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 		return Err(syn::Error::new(name.span(), "Empty structs not supported"));
 	};
 
+	let tuple_type = tuple_type(field_types.clone());
+	let tuple_ref_type = tuple_ref_type(field_types.clone());
+	let tuple_data = tuple_data_as_ref(is_named_fields, field_names.clone());
+	let tuple_names = tuple_names(is_named_fields, field_names.clone());
+	let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
+
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
-	let abi_type = impl_abi_type(name, field_types.clone());
+	let abi_type = impl_abi_type(name, tuple_type.clone());
 	let abi_read = impl_abi_read(
 		name,
-		is_named_fields,
-		field_names.clone(),
-		field_types.clone(),
+		tuple_type.clone(),
+		tuple_names.clone(),
+		struct_from_tuple,
 	);
-	let abi_write = impl_abi_write(name, is_named_fields, params_count, field_names.clone());
+	let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
+	println!(
+		"=========================\n{}\n=========================",
+		&abi_write
+	);
 	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
 	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
 	let solidity_struct_collect =
@@ -53,6 +64,73 @@ pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2:
 		#solidity_type_name
 		#solidity_struct_collect
 	})
+}
+
+fn tuple_type<'a>(
+	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+) -> proc_macro2::TokenStream {
+	let field_types = field_types.map(|ty| quote!(#ty,));
+	quote! {(#(#field_types)*)}
+}
+fn tuple_ref_type<'a>(
+	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+) -> proc_macro2::TokenStream {
+	let field_types = field_types.map(|ty| quote!(&#ty,));
+	quote! {(#(#field_types)*)}
+}
+fn tuple_data_as_ref(
+	is_named_fields: bool,
+	field_names: impl Iterator<Item = syn::Ident> + Clone,
+) -> proc_macro2::TokenStream {
+	let field_names = field_names.enumerate().map(|(i, field)| {
+		if is_named_fields {
+			quote!(&self.#field,)
+		} else {
+			let field = proc_macro2::Literal::usize_unsuffixed(i);
+			quote!(&self.#field,)
+		}
+	});
+	quote! {(#(#field_names)*)}
+}
+fn tuple_names(
+	is_named_fields: bool,
+	field_names: impl Iterator<Item = syn::Ident> + Clone,
+) -> proc_macro2::TokenStream {
+	let field_names = field_names.enumerate().map(|(i, field)| {
+		if is_named_fields {
+			quote!(#field,)
+		} else {
+			let field = proc_macro2::Ident::new(
+				format!("field{}", i).as_str(),
+				proc_macro2::Span::call_site(),
+			);
+			quote!(#field,)
+		}
+	});
+	quote! {(#(#field_names)*)}
+}
+fn struct_from_tuple(
+	name: &syn::Ident,
+	is_named_fields: bool,
+	field_names: impl Iterator<Item = syn::Ident> + Clone,
+) -> proc_macro2::TokenStream {
+	let field_names = field_names.enumerate().map(|(i, field)| {
+		if is_named_fields {
+			quote!(#field,)
+		} else {
+			let field = proc_macro2::Ident::new(
+				format!("field{}", i).as_str(),
+				proc_macro2::Span::call_site(),
+			);
+			quote!(#field,)
+		}
+	});
+
+	if is_named_fields {
+		quote! {#name {#(#field_names)*}}
+	} else {
+		quote! {#name (#(#field_names)*)}
+	}
 }
 
 fn extract_docs(attrs: &Vec<syn::Attribute>) -> syn::Result<Vec<String>> {
@@ -106,34 +184,16 @@ fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
 
 fn impl_abi_type<'a>(
 	name: &syn::Ident,
-	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+	tuple_type: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-	let mut params_signature = {
-		let types = field_types.clone();
-		quote!(
-			#(nameof(<#types as ::evm_coder::abi::AbiType>::SIGNATURE) fixed(","))*
-		)
-	};
-
-	params_signature.extend(quote!(shift_left(1)));
-
-	let fields_for_dynamic = field_types.clone();
-
 	quote! {
 		impl ::evm_coder::abi::AbiType for #name {
-			const SIGNATURE: ::evm_coder::custom_signature::SignatureUnit = ::evm_coder::make_signature!(
-				new fixed("(")
-				#params_signature
-				fixed(")")
-			);
+			const SIGNATURE: ::evm_coder::custom_signature::SignatureUnit = <#tuple_type as ::evm_coder::abi::AbiType>::SIGNATURE;
 			fn is_dynamic() -> bool {
-				false
-				#(
-					|| <#fields_for_dynamic as ::evm_coder::abi::AbiType>::is_dynamic()
-				)*
+				<#tuple_type as ::evm_coder::abi::AbiType>::is_dynamic()
 			}
 			fn size() -> usize {
-				0 #(+ <#field_types as ::evm_coder::abi::AbiType>::size())*
+				<#tuple_type as ::evm_coder::abi::AbiType>::size()
 			}
 		}
 	}
@@ -141,36 +201,15 @@ fn impl_abi_type<'a>(
 
 fn impl_abi_read<'a>(
 	name: &syn::Ident,
-	is_named_fields: bool,
-	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
-	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
+	tuple_type: proc_macro2::TokenStream,
+	tuple_names: proc_macro2::TokenStream,
+	struct_from_tuple: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-	let field_names1 = field_names.clone();
-
-	let struct_constructor = if is_named_fields {
-		quote!(Ok(Self { #(#field_names1),* }))
-	} else {
-		quote!(Ok(Self ( #(#field_names1),* )))
-	};
 	quote!(
 		impl ::evm_coder::abi::AbiRead for #name {
 			fn abi_read(reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Self> {
-				let is_dynamic = <Self as ::evm_coder::abi::AbiType>::is_dynamic();
-				let size = if !is_dynamic {
-					Some(<Self as ::evm_coder::abi::AbiType>::size())
-				} else {
-					None
-				};
-				let mut subresult = reader.subresult(size)?;
-				#(
-					let #field_names = {
-						let value = <#field_types as ::evm_coder::abi::AbiRead>::abi_read(&mut subresult)?;
-						if !is_dynamic {subresult.bytes_read(<#field_types as ::evm_coder::abi::AbiType>::size())};
-						value
-					};
-				)*
-
-				#struct_constructor
+				let #tuple_names = <#tuple_type as ::evm_coder::abi::AbiRead>::abi_read(reader)?;
+				Ok(#struct_from_tuple)
 			}
 		}
 	)
@@ -179,39 +218,13 @@ fn impl_abi_read<'a>(
 fn impl_abi_write<'a>(
 	name: &syn::Ident,
 	is_named_fields: bool,
-	params_count: usize,
-	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
+	tuple_type: proc_macro2::TokenStream,
+	tuple_data: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-	let abi_write = if is_named_fields {
-		quote!(
-			#(
-				::evm_coder::abi::AbiWrite::abi_write(&self.#field_names, sub);
-			)*
-		)
-	} else {
-		let field_names = (0..params_count)
-			.into_iter()
-			.map(proc_macro2::Literal::usize_unsuffixed);
-		quote!(
-			#(
-				::evm_coder::abi::AbiWrite::abi_write(&self.#field_names, sub);
-			)*
-		)
-	};
 	quote!(
 		impl ::evm_coder::abi::AbiWrite for #name {
 			fn abi_write(&self, writer: &mut ::evm_coder::abi::AbiWriter) {
-				if <Self as ::evm_coder::abi::AbiType>::is_dynamic() {
-					let mut sub = ::evm_coder::abi::AbiWriter::new();
-					{
-						let sub = &mut sub;
-						#abi_write
-					}
-					writer.write_subresult(sub);
-				} else {
-					let sub = writer;
-					#abi_write
-				}
+				<#tuple_type as ::evm_coder::abi::AbiWrite>::abi_write(&#tuple_data, writer)
 			}
 		}
 	)
