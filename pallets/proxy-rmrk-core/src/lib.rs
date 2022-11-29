@@ -178,7 +178,7 @@ pub use property::*;
 
 use RmrkProperty::*;
 
-/// Maximum number of levels of depth in the token nesting tree.
+/// A maximum number of levels of depth in the token nesting tree.
 pub const NESTING_BUDGET: u32 = 5;
 
 type PendingTarget = (CollectionId, TokenId);

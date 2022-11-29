@@ -255,11 +255,11 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       ftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
       /**
-       * Maximum length for collection description.
+       * Maximal length of a collection description.
        **/
       maxCollectionDescriptionLength: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximum length for collection name.
+       * Maximal length of a collection name.
        **/
       maxCollectionNameLength: u32 & AugmentedConst<ApiType>;
       /**
@@ -267,27 +267,27 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxCollectionPropertiesSize: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximum properties that can be assigned to token.
+       * A maximum number of token properties.
        **/
       maxPropertiesPerItem: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximal lenght of property key.
+       * Maximal length of a property key.
        **/
       maxPropertyKeyLength: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximal lenght of property value.
+       * Maximal length of a property value.
        **/
       maxPropertyValueLength: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximal token prefix length.
+       * Maximal length of a token prefix.
        **/
       maxTokenPrefixLength: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximum size for all token properties.
+       * Maximum size of all token properties.
        **/
       maxTokenPropertiesSize: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximum number of levels of depth in the token nesting tree.
+       * A maximum number of levels of depth in the token nesting tree.
        **/
       nestingBudget: u32 & AugmentedConst<ApiType>;
       /**

@@ -44,4 +44,4 @@ multiple users into `RefungibleMultipleItems` call.
 
 ### Added
 
-- Аields with properties to `CreateReFungibleData` and `CreateRefungibleExData`.
+- Fields with properties to `CreateReFungibleData` and `CreateRefungibleExData`.
