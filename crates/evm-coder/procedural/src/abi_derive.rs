@@ -14,7 +14,7 @@ fn expand_struct(
 	ast: &syn::DeriveInput,
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
-	let docs = extract_docs(&ast.attrs)?;
+	let docs = extract_docs(&ast.attrs, true)?;
 	let (is_named_fields, field_names, field_types, field_docs, params_count) = match ds.fields {
 		syn::Fields::Named(ref fields) => Ok((
 			true,
@@ -70,8 +70,10 @@ fn expand_enum(
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
 	check_repr_u8(name, &ast.attrs)?;
+	let docs = extract_docs(&ast.attrs, true)?;
 	let option_count = check_and_count_option(de)?;
 	let enum_options = de.variants.iter().map(|v| &v.ident);
+	let enum_options_docs = de.variants.iter().map(|v| extract_docs(&v.attrs, false));
 
 	let from = impl_enum_from_u8(name, enum_options.clone());
 	let solidity_option = impl_solidity_option(name, enum_options.clone());
@@ -80,8 +82,13 @@ fn expand_enum(
 	let abi_read = impl_enum_abi_read(name);
 	let abi_write = impl_enum_abi_write(name);
 	let solidity_type_name = impl_enum_solidity_type_name(name);
-	let solidity_struct_collect =
-		impl_enum_solidity_struct_collect(name, enum_options, option_count);
+	let solidity_struct_collect = impl_enum_solidity_struct_collect(
+		name,
+		enum_options,
+		option_count,
+		enum_options_docs,
+		&docs,
+	);
 
 	Ok(quote! {
 		#from
@@ -206,15 +213,23 @@ fn impl_enum_solidity_struct_collect<'a>(
 	name: &syn::Ident,
 	enum_options: impl Iterator<Item = &'a syn::Ident>,
 	option_count: usize,
+	enum_options_docs: impl Iterator<Item = syn::Result<Vec<proc_macro2::TokenStream>>>,
+	docs: &[proc_macro2::TokenStream],
 ) -> proc_macro2::TokenStream {
 	let string_name = name.to_string();
-	let enum_options = enum_options.enumerate().map(|(i, opt)| {
-		let opt = proc_macro2::Literal::string(opt.to_string().as_str());
-		let comma = if i != option_count - 1 { "," } else { "" };
-		quote! {
-			writeln!(str, "\t{}{}", #opt, #comma).expect("Enum format option");
-		}
-	});
+	let enum_options = enum_options
+		.zip(enum_options_docs)
+		.enumerate()
+		.map(|(i, (opt, doc))| {
+			let opt = proc_macro2::Literal::string(opt.to_string().as_str());
+			let doc = doc.expect("Doc parsing error");
+			let comma = if i != option_count - 1 { "," } else { "" };
+			quote! {
+				#(#doc)*
+				writeln!(str, "\t{}{}", #opt, #comma).expect("Enum format option");
+			}
+		});
+
 	quote!(
 		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::StructCollect for #name {
@@ -226,7 +241,7 @@ fn impl_enum_solidity_struct_collect<'a>(
 				use std::fmt::Write;
 
 				let mut str = String::new();
-				// #(#docs)*
+				#(#docs)*
 				writeln!(str, "enum {} {{", <Self as ::evm_coder::solidity::StructCollect>::name()).unwrap();
 				#(#enum_options)*
 				writeln!(str, "}}").unwrap();
@@ -384,7 +399,10 @@ fn struct_from_tuple(
 	}
 }
 
-fn extract_docs(attrs: &[syn::Attribute]) -> syn::Result<Vec<String>> {
+fn extract_docs(
+	attrs: &[syn::Attribute],
+	is_general: bool,
+) -> syn::Result<Vec<proc_macro2::TokenStream>> {
 	attrs
 		.iter()
 		.filter_map(|attr| {
@@ -405,6 +423,16 @@ fn extract_docs(attrs: &[syn::Attribute]) -> syn::Result<Vec<String>> {
 			}
 			None
 		})
+		.enumerate()
+		.map(|(i, doc)| {
+			let doc = doc?;
+			let doc = doc.trim();
+			let dev = if i == 0 { " @dev" } else { "" };
+			let tab = if is_general { "" } else { "\t" };
+			Ok(quote! {
+				writeln!(str, "{}///{} {}", #tab, #dev, #doc).unwrap();
+			})
+		})
 		.collect()
 }
 
@@ -423,8 +451,8 @@ fn map_field_to_type(field: &syn::Field) -> &syn::Type {
 	&field.ty
 }
 
-fn map_field_to_doc(field: &syn::Field) -> Result<Vec<std::string::String>, syn::Error> {
-	extract_docs(&field.attrs)
+fn map_field_to_doc(field: &syn::Field) -> syn::Result<Vec<proc_macro2::TokenStream>> {
+	extract_docs(&field.attrs, false)
 }
 
 fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
@@ -556,8 +584,8 @@ fn impl_struct_solidity_struct_collect<'a>(
 	name: &syn::Ident,
 	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
-	field_docs: impl Iterator<Item = syn::Result<Vec<String>>> + Clone,
-	docs: &[String],
+	field_docs: impl Iterator<Item = syn::Result<Vec<proc_macro2::TokenStream>>> + Clone,
+	docs: &[proc_macro2::TokenStream],
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let string_name = name.to_string();
 	let name_type = field_names
@@ -565,16 +593,7 @@ fn impl_struct_solidity_struct_collect<'a>(
 		.zip(field_types)
 		.zip(field_docs)
 		.map(|((name, ty), doc)| {
-			let field_docs = match doc {
-				Ok(doc) => doc.into_iter().enumerate().map(|(i, doc)| {
-					let doc = doc.trim();
-					let dev = if i == 0 { " @dev" } else { "" };
-					quote! {
-						writeln!(str, "\t///{} {}", #dev, #doc).unwrap();
-					}
-				}),
-				Err(e) => unreachable!("{:?}", e),
-			};
+			let field_docs = doc.expect("Doc parse error");
 			let name = format!("{}", name);
 			quote!(
 				#(#field_docs)*
@@ -582,13 +601,6 @@ fn impl_struct_solidity_struct_collect<'a>(
 				writeln!(str, "{};", #name).unwrap();
 			)
 		});
-	let docs = docs.iter().enumerate().map(|(i, doc)| {
-		let doc = doc.trim();
-		let dev = if i == 0 { " @dev" } else { "" };
-		quote! {
-			writeln!(str, "///{} {}", #dev, #doc).unwrap();
-		}
-	});
 
 	Ok(quote! {
 		#[cfg(feature = "stubgen")]
