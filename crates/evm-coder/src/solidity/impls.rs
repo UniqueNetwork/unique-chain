@@ -132,13 +132,14 @@ impl_tuples! {A B C D E F G H}
 impl_tuples! {A B C D E F G H I}
 impl_tuples! {A B C D E F G H I J}
 
-impl sealed::CanBePlacedInVec for Property {}
 impl StructCollect for Property {
 	fn name() -> String {
 		"Property".into()
 	}
 
 	fn declaration() -> String {
+		use std::fmt::Write;
+
 		let mut str = String::new();
 		writeln!(str, "/// @dev Property struct").unwrap();
 		writeln!(str, "struct {} {{", Self::name()).unwrap();
@@ -167,7 +168,7 @@ impl SolidityTypeName for Property {
 	}
 }
 
-impl SolidityTupleType for Property {
+impl SolidityType for Property {
 	fn names(tc: &TypeCollector) -> Vec<string> {
 		let mut collected = Vec::with_capacity(Self::len());
 		{
