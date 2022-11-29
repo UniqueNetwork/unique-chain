@@ -79,7 +79,7 @@ fn expand_enum(
 	let abi_type = impl_enum_abi_type(name);
 	let abi_read = impl_enum_abi_read(name);
 	let abi_write = impl_enum_abi_write(name);
-	let solidity_type_name = impl_enum_solidity_type_name(name, enum_options.clone());
+	let solidity_type_name = impl_enum_solidity_type_name(name);
 	let solidity_struct_collect =
 		impl_enum_solidity_struct_collect(name, enum_options, option_count);
 
@@ -105,6 +105,7 @@ fn impl_solidity_option<'a>(
 		quote!(#name::#opt => #as_string,)
 	});
 	quote!(
+		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::SolidityEnum for #name {
 			fn solidity_option(&self) -> &str {
 				match <#name>::default() {
@@ -176,11 +177,7 @@ fn impl_enum_abi_write(name: &syn::Ident) -> proc_macro2::TokenStream {
 	)
 }
 
-fn impl_enum_solidity_type_name<'a>(
-	name: &syn::Ident,
-	enum_options: impl Iterator<Item = &'a syn::Ident>,
-) -> proc_macro2::TokenStream {
-	let enum_options = enum_options.map(|opt| quote!(,));
+fn impl_enum_solidity_type_name<'a>(name: &syn::Ident) -> proc_macro2::TokenStream {
 	quote!(
 		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::SolidityTypeName for #name {
