@@ -739,11 +739,19 @@ struct TupleStruct3DerivedMixedParam {
 mod test_enum {
 	use evm_coder::AbiCoder;
 
-	#[derive(AbiCoder, Default)]
+	/// Some docs
+	/// At multi
+	/// line
+	#[derive(AbiCoder, Debug, PartialEq, Default)]
 	#[repr(u8)]
 	enum Color {
+		/// Docs for Red
+		/// multi
+		/// line
 		Red,
+		/// Docs for Green
 		Green,
+		/// Docs for Blue
 		#[default]
 		Blue,
 	}
@@ -755,5 +763,83 @@ mod test_enum {
 	fn bad_enums() {
 		let t = trybuild::TestCases::new();
 		t.compile_fail("tests/build_failed/abi_derive_enum_generation.rs");
+	}
+
+	#[test]
+	fn impl_abi_type_signature_same_for_structs() {
+		assert_eq!(
+			<Color as evm_coder::abi::AbiType>::SIGNATURE
+				.as_str()
+				.unwrap(),
+			<u8 as evm_coder::abi::AbiType>::SIGNATURE.as_str().unwrap()
+		);
+	}
+
+	#[test]
+	fn impl_abi_type_is_dynamic_same_for_structs() {
+		assert_eq!(
+			<Color as evm_coder::abi::AbiType>::is_dynamic(),
+			<u8 as evm_coder::abi::AbiType>::is_dynamic()
+		);
+	}
+
+	#[test]
+	fn impl_abi_type_size_same_for_structs() {
+		assert_eq!(
+			<Color as evm_coder::abi::AbiType>::size(),
+			<u8 as evm_coder::abi::AbiType>::size()
+		);
+	}
+
+	#[test]
+	fn test_coder() {
+		const FUNCTION_IDENTIFIER: u32 = 0xdeadbeef;
+
+		let encoded_enum = {
+			let mut writer = evm_coder::abi::AbiWriter::new_call(FUNCTION_IDENTIFIER);
+			<Color as evm_coder::abi::AbiWrite>::abi_write(&Color::Green, &mut writer);
+			writer.finish()
+		};
+
+		let encoded_u8 = {
+			let mut writer = evm_coder::abi::AbiWriter::new_call(FUNCTION_IDENTIFIER);
+			<u8 as evm_coder::abi::AbiWrite>::abi_write(&(Color::Green as u8), &mut writer);
+			writer.finish()
+		};
+
+		similar_asserts::assert_eq!(encoded_enum, encoded_u8);
+
+		{
+			let (_, mut decoder) = evm_coder::abi::AbiReader::new_call(&encoded_enum).unwrap();
+			let restored_enum_data =
+				<Color as evm_coder::abi::AbiRead>::abi_read(&mut decoder).unwrap();
+			assert_eq!(restored_enum_data, Color::Green);
+		}
+	}
+
+	#[test]
+	#[cfg(feature = "stubgen")]
+	fn struct_collect_enum() {
+		assert_eq!(
+			<Color as ::evm_coder::solidity::StructCollect>::name(),
+			"Color"
+		);
+		assert_eq!(
+			<Color as ::evm_coder::solidity::StructCollect>::declaration(),
+			r#"/// @dev Some docs
+/// At multi
+/// line
+enum Color {
+	/// @dev Docs for A
+	/// multi
+	/// line
+	Red,
+	/// @dev Docs for B
+	Green,
+	/// @dev Docs for C
+	Blue
+}
+"#
+		);
 	}
 }
