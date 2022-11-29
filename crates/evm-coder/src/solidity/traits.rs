@@ -8,6 +8,10 @@ pub trait StructCollect: 'static {
 	fn declaration() -> String;
 }
 
+pub trait SolidityEnum: 'static {
+	fn solidity_option(&self) -> &str;
+}
+
 pub trait SolidityTypeName: 'static {
 	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
 	/// "simple" types are stored inline, no `memory` modifier should be used in solidity

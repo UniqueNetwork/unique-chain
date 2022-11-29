@@ -75,7 +75,7 @@ mod test_struct {
 
 	#[test]
 	#[cfg(feature = "stubgen")]
-	fn struct_collect_TypeStruct3DerivedMixedParam() {
+	fn struct_collect_type_struct3_derived_mixed_param() {
 		assert_eq!(
 			<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
 			"TypeStruct3DerivedMixedParam"
@@ -296,7 +296,7 @@ struct TypeStruct3DerivedMixedParam {
 
 	#[test]
 	#[cfg(feature = "stubgen")]
-	fn struct_collect_TupleStruct3DerivedMixedParam() {
+	fn struct_collect_tuple_struct3_derived_mixed_param() {
 		assert_eq!(
 			<TupleStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
 			"TupleStruct3DerivedMixedParam"
@@ -739,11 +739,12 @@ struct TupleStruct3DerivedMixedParam {
 mod test_enum {
 	use evm_coder::AbiCoder;
 
-	#[derive(AbiCoder)]
+	#[derive(AbiCoder, Default)]
 	#[repr(u8)]
 	enum Color {
 		Red,
 		Green,
+		#[default]
 		Blue,
 	}
 
