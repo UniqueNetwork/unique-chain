@@ -44,13 +44,14 @@ fn expand_struct(
 	let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
 
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
-	let abi_type = impl_abi_type(name, tuple_type.clone());
-	let abi_read = impl_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
-	let abi_write = impl_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
-	let solidity_type = impl_solidity_type(name, field_types.clone(), params_count);
-	let solidity_type_name = impl_solidity_type_name(name, field_types.clone(), params_count);
+	let abi_type = impl_struct_abi_type(name, tuple_type.clone());
+	let abi_read = impl_struct_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
+	let abi_write = impl_struct_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
+	let solidity_type = impl_struct_solidity_type(name, field_types.clone(), params_count);
+	let solidity_type_name =
+		impl_struct_solidity_type_name(name, field_types.clone(), params_count);
 	let solidity_struct_collect =
-		impl_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
+		impl_struct_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
 
 	Ok(quote! {
 		#can_be_plcaed_in_vec
@@ -69,14 +70,177 @@ fn expand_enum(
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
 	check_repr_u8(name, &ast.attrs)?;
-	check_option_validity(de)?;
+	let option_count = check_and_count_option(de)?;
+	let enum_options = de.variants.iter().map(|v| &v.ident);
 
-	dbg!(&de);
+	let from = impl_enum_from_u8(name, enum_options.clone());
+	let solidity_option = impl_solidity_option(name, enum_options.clone());
+	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
+	let abi_type = impl_enum_abi_type(name);
+	let abi_read = impl_enum_abi_read(name);
+	let abi_write = impl_enum_abi_write(name);
+	let solidity_type_name = impl_enum_solidity_type_name(name, enum_options.clone());
+	let solidity_struct_collect =
+		impl_enum_solidity_struct_collect(name, enum_options, option_count);
 
-	Ok(quote!())
+	Ok(quote! {
+		#from
+		#solidity_option
+		#can_be_plcaed_in_vec
+		#abi_type
+		#abi_read
+		#abi_write
+		#solidity_type_name
+		#solidity_struct_collect
+	})
 }
 
-fn check_option_validity(de: &syn::DataEnum) -> syn::Result<()> {
+fn impl_solidity_option<'a>(
+	name: &proc_macro2::Ident,
+	enum_options: impl Iterator<Item = &'a syn::Ident>,
+) -> proc_macro2::TokenStream {
+	let enum_options = enum_options.map(|opt| {
+		let s = name.to_string() + "." + opt.to_string().as_str();
+		let as_string = proc_macro2::Literal::string(s.as_str());
+		quote!(#name::#opt => #as_string,)
+	});
+	quote!(
+		impl ::evm_coder::solidity::SolidityEnum for #name {
+			fn solidity_option(&self) -> &str {
+				match <#name>::default() {
+					#(#enum_options)*
+				}
+			}
+		}
+	)
+}
+
+fn impl_enum_from_u8<'a>(
+	name: &proc_macro2::Ident,
+	enum_options: impl Iterator<Item = &'a syn::Ident>,
+) -> proc_macro2::TokenStream {
+	let enum_options = enum_options.enumerate().map(|(i, opt)| {
+		let n = proc_macro2::Literal::u8_suffixed(i as u8);
+		quote! {#n => Ok(#name::#opt),}
+	});
+	quote!(
+		impl TryFrom<u8> for #name {
+			type Error = &'static str;
+
+			fn try_from(value: u8) -> ::std::result::Result<Self, Self::Error> {
+				const err: &'static str = "Not convertible";
+				match value {
+					#(#enum_options)*
+					_ => Err(err)
+				}
+			}
+		}
+	)
+}
+
+fn impl_enum_abi_type(name: &syn::Ident) -> proc_macro2::TokenStream {
+	quote! {
+		impl ::evm_coder::abi::AbiType for #name {
+			const SIGNATURE: ::evm_coder::custom_signature::SignatureUnit = <u8 as ::evm_coder::abi::AbiType>::SIGNATURE;
+
+			fn is_dynamic() -> bool {
+				<u8 as ::evm_coder::abi::AbiType>::is_dynamic()
+			}
+			fn size() -> usize {
+				<u8 as ::evm_coder::abi::AbiType>::size()
+			}
+		}
+	}
+}
+
+fn impl_enum_abi_read(name: &syn::Ident) -> proc_macro2::TokenStream {
+	quote!(
+		impl ::evm_coder::abi::AbiRead for #name {
+			fn abi_read(reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Self> {
+				Ok(
+					<u8 as ::evm_coder::abi::AbiRead>::abi_read(reader)?
+						.try_into()?
+				)
+			}
+		}
+	)
+}
+
+fn impl_enum_abi_write(name: &syn::Ident) -> proc_macro2::TokenStream {
+	quote!(
+		impl ::evm_coder::abi::AbiWrite for #name {
+			fn abi_write(&self, writer: &mut ::evm_coder::abi::AbiWriter) {
+				::evm_coder::abi::AbiWrite::abi_write(&(*self as u8), writer);
+			}
+		}
+	)
+}
+
+fn impl_enum_solidity_type_name<'a>(
+	name: &syn::Ident,
+	enum_options: impl Iterator<Item = &'a syn::Ident>,
+) -> proc_macro2::TokenStream {
+	let enum_options = enum_options.map(|opt| quote!(,));
+	quote!(
+		#[cfg(feature = "stubgen")]
+		impl ::evm_coder::solidity::SolidityTypeName for #name {
+			fn solidity_name(
+				writer: &mut impl ::core::fmt::Write,
+				tc: &::evm_coder::solidity::TypeCollector,
+			) -> ::core::fmt::Result {
+				write!(writer, "{}", tc.collect_struct::<Self>())
+			}
+
+			fn is_simple() -> bool {
+				true
+			}
+
+			fn solidity_default(
+				writer: &mut impl ::core::fmt::Write,
+				tc: &::evm_coder::solidity::TypeCollector,
+			) -> ::core::fmt::Result {
+				write!(writer, "{}", <#name as ::evm_coder::solidity::SolidityEnum>::solidity_option(&<#name>::default()))
+			}
+		}
+	)
+}
+
+fn impl_enum_solidity_struct_collect<'a>(
+	name: &syn::Ident,
+	enum_options: impl Iterator<Item = &'a syn::Ident>,
+	option_count: usize,
+) -> proc_macro2::TokenStream {
+	let string_name = name.to_string();
+	let enum_options = enum_options.enumerate().map(|(i, opt)| {
+		let opt = proc_macro2::Literal::string(opt.to_string().as_str());
+		let comma = if i != option_count - 1 { "," } else { "" };
+		quote! {
+			writeln!(str, "\t{}{}", #opt, #comma).expect("Enum format option");
+		}
+	});
+	quote!(
+		#[cfg(feature = "stubgen")]
+		impl ::evm_coder::solidity::StructCollect for #name {
+			fn name() -> String {
+				#string_name.into()
+			}
+
+			fn declaration() -> String {
+				use std::fmt::Write;
+
+				let mut str = String::new();
+				// #(#docs)*
+				writeln!(str, "enum {} {{", <Self as ::evm_coder::solidity::StructCollect>::name()).unwrap();
+				#(#enum_options)*
+				writeln!(str, "}}").unwrap();
+				str
+			}
+		}
+	)
+}
+
+fn check_and_count_option(de: &syn::DataEnum) -> syn::Result<usize> {
+	let mut count = 0;
 	for error in de.variants.iter().filter_map(|v| {
 		if !v.fields.is_empty() {
 			Some(Err(syn::Error::new(
@@ -89,13 +253,14 @@ fn check_option_validity(de: &syn::DataEnum) -> syn::Result<()> {
 				"Enumeration options should not have an explicit specified value",
 			)))
 		} else {
+			count += 1;
 			None
 		}
 	}) {
 		return error;
 	}
 
-	Ok(())
+	Ok(count)
 }
 
 fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Result<()> {
@@ -271,7 +436,7 @@ fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
 	}
 }
 
-fn impl_abi_type(
+fn impl_struct_abi_type(
 	name: &syn::Ident,
 	tuple_type: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
@@ -288,7 +453,7 @@ fn impl_abi_type(
 	}
 }
 
-fn impl_abi_read(
+fn impl_struct_abi_read(
 	name: &syn::Ident,
 	tuple_type: proc_macro2::TokenStream,
 	tuple_names: proc_macro2::TokenStream,
@@ -304,7 +469,7 @@ fn impl_abi_read(
 	)
 }
 
-fn impl_abi_write(
+fn impl_struct_abi_write(
 	name: &syn::Ident,
 	_is_named_fields: bool,
 	tuple_type: proc_macro2::TokenStream,
@@ -319,7 +484,7 @@ fn impl_abi_write(
 	)
 }
 
-fn impl_solidity_type<'a>(
+fn impl_struct_solidity_type<'a>(
 	name: &syn::Ident,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
 	params_count: usize,
@@ -347,7 +512,7 @@ fn impl_solidity_type<'a>(
 	}
 }
 
-fn impl_solidity_type_name<'a>(
+fn impl_struct_solidity_type_name<'a>(
 	name: &syn::Ident,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
 	params_count: usize,
@@ -390,7 +555,7 @@ fn impl_solidity_type_name<'a>(
 	}
 }
 
-fn impl_solidity_struct_collect<'a>(
+fn impl_struct_solidity_struct_collect<'a>(
 	name: &syn::Ident,
 	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
