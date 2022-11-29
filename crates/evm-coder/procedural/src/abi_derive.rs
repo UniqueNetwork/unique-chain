@@ -1,4 +1,3 @@
-use proc_macro2::TokenStream;
 use quote::quote;
 
 pub(crate) fn impl_abi_macro(ast: &syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -128,7 +127,7 @@ fn struct_from_tuple(
 	}
 }
 
-fn extract_docs(attrs: &Vec<syn::Attribute>) -> syn::Result<Vec<String>> {
+fn extract_docs(attrs: &[syn::Attribute]) -> syn::Result<Vec<String>> {
 	attrs
 		.iter()
 		.filter_map(|attr| {
@@ -163,7 +162,7 @@ fn map_field_to_name(field: (usize, &syn::Field)) -> syn::Ident {
 	}
 }
 
-fn map_field_to_type<'a>(field: &'a syn::Field) -> &'a syn::Type {
+fn map_field_to_type(field: &syn::Field) -> &syn::Type {
 	&field.ty
 }
 
@@ -177,7 +176,7 @@ fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
 	}
 }
 
-fn impl_abi_type<'a>(
+fn impl_abi_type(
 	name: &syn::Ident,
 	tuple_type: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
@@ -194,7 +193,7 @@ fn impl_abi_type<'a>(
 	}
 }
 
-fn impl_abi_read<'a>(
+fn impl_abi_read(
 	name: &syn::Ident,
 	tuple_type: proc_macro2::TokenStream,
 	tuple_names: proc_macro2::TokenStream,
@@ -210,9 +209,9 @@ fn impl_abi_read<'a>(
 	)
 }
 
-fn impl_abi_write<'a>(
+fn impl_abi_write(
 	name: &syn::Ident,
-	is_named_fields: bool,
+	_is_named_fields: bool,
 	tuple_type: proc_macro2::TokenStream,
 	tuple_data: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
@@ -301,7 +300,7 @@ fn impl_solidity_struct_collect<'a>(
 	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
 	field_docs: impl Iterator<Item = syn::Result<Vec<String>>> + Clone,
-	docs: &Vec<String>,
+	docs: &[String],
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let string_name = name.to_string();
 	let name_type = field_names

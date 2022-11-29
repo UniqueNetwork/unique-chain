@@ -165,7 +165,7 @@ impl AbiRead for Property {
 }
 
 impl AbiWrite for Property {
-	fn abi_write<'a>(&'a self, writer: &mut AbiWriter) {
+	fn abi_write(&self, writer: &mut AbiWriter) {
 		(&self.key, &self.value).abi_write(writer);
 	}
 }
