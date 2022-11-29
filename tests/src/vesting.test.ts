@@ -28,7 +28,31 @@ describe('Vesting', () => {
     });
   });
 
-  itSub.only('can perform vestedTransfer and claim tokens', async ({helper}) => {
+  itSub('cannot send more tokens than have', async ({helper}) => {
+    const [sender, receiver] = await helper.arrange.createAccounts([1000n, 1n], donor);
+    const manyPeriodsSchedule = {startRelayBlock: 0n, periodBlocks: 1n, periodCount: 100n, perPeriod: 10n * nominal};
+    const oneBigSumSchedule = {startRelayBlock: 0n, periodBlocks: 1n, periodCount: 1n, perPeriod: 5000n * nominal};
+
+    expect(helper.balance.vestedTransfer(sender, sender.address, manyPeriodsSchedule)).to.be.rejected.with('InsufficientBalanceToLock');
+    expect(helper.balance.vestedTransfer(sender, receiver.address, manyPeriodsSchedule)).to.be.rejected.with('InsufficientBalanceToLock');
+    expect(helper.balance.vestedTransfer(sender, sender.address, oneBigSumSchedule)).to.be.rejected.with('InsufficientBalanceToLock');
+    expect(helper.balance.vestedTransfer(sender, receiver.address, oneBigSumSchedule)).to.be.rejected.with('InsufficientBalanceToLock');
+
+    const balanceSender = await helper.balance.getSubstrateFull(sender.address);
+    const balanceReceiver = await helper.balance.getSubstrateFull(receiver.address);
+
+    expect(balanceSender.free / nominal).to.eq(999n);
+    expect(balanceSender.feeFrozen / nominal).to.eq(0n);
+    expect(balanceSender.miscFrozen / nominal).to.eq(0n);
+    expect(balanceSender.reserved / nominal).to.eq(0n);
+
+    expect(balanceReceiver.free).to.be.eq(1n * nominal);
+    expect(balanceReceiver.feeFrozen).to.be.eq(0n);
+    expect(balanceReceiver.miscFrozen).to.be.eq(0n);
+    expect(balanceReceiver.reserved).to.be.eq(0n);
+  });
+
+  itSub('can perform vestedTransfer and claim tokens', async ({helper}) => {
     // arrange
     const [sender, recepient] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const currentRelayBlock = await helper.chain.getRelayBlockNumber();
