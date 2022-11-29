@@ -104,7 +104,7 @@ pub mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
-/// Maximum number of levels of depth in the token nesting tree.
+/// A maximum number of levels of depth in the token nesting tree.
 pub const NESTING_BUDGET: u32 = 5;
 
 decl_error! {
@@ -279,34 +279,34 @@ decl_module! {
 	{
 		type Error = Error<T>;
 
-		#[doc = "Maximum number of levels of depth in the token nesting tree."]
+		#[doc = "A maximum number of levels of depth in the token nesting tree."]
 		const NESTING_BUDGET: u32 = NESTING_BUDGET;
 
-		#[doc = "Maximum length for collection name."]
+		#[doc = "Maximal length of a collection name."]
 		const MAX_COLLECTION_NAME_LENGTH: u32 = MAX_COLLECTION_NAME_LENGTH;
 
-		#[doc = "Maximum length for collection description."]
+		#[doc = "Maximal length of a collection description."]
 		const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = MAX_COLLECTION_DESCRIPTION_LENGTH;
 
-		#[doc = "Maximal token prefix length."]
+		#[doc = "Maximal length of a token prefix."]
 		const MAX_TOKEN_PREFIX_LENGTH: u32 = MAX_TOKEN_PREFIX_LENGTH;
 
 		#[doc = "Maximum admins per collection."]
 		const COLLECTION_ADMINS_LIMIT: u32 = COLLECTION_ADMINS_LIMIT;
 
-		#[doc = "Maximal lenght of property key."]
+		#[doc = "Maximal length of a property key."]
 		const MAX_PROPERTY_KEY_LENGTH: u32 = MAX_PROPERTY_KEY_LENGTH;
 
-		#[doc = "Maximal lenght of property value."]
+		#[doc = "Maximal length of a property value."]
 		const MAX_PROPERTY_VALUE_LENGTH: u32 = MAX_PROPERTY_VALUE_LENGTH;
 
-		#[doc = "Maximum properties that can be assigned to token."]
+		#[doc = "A maximum number of token properties."]
 		const MAX_PROPERTIES_PER_ITEM: u32 = MAX_PROPERTIES_PER_ITEM;
 
 		#[doc = "Maximum size for all collection properties."]
 		const MAX_COLLECTION_PROPERTIES_SIZE: u32 = MAX_COLLECTION_PROPERTIES_SIZE;
 
-		#[doc = "Maximum size for all token properties."]
+		#[doc = "Maximum size of all token properties."]
 		const MAX_TOKEN_PROPERTIES_SIZE: u32 = MAX_TOKEN_PROPERTIES_SIZE;
 
 		#[doc = "Default NFT collection limit."]
