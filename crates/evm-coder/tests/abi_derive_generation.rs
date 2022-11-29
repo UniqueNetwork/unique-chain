@@ -80,7 +80,7 @@ mod test_struct {
 			<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
 			"TypeStruct3DerivedMixedParam"
 		);
-		assert_eq!(
+		similar_asserts::assert_eq!(
 			<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::declaration(),
 			r#"/// @dev Some docs
 /// At multi
@@ -288,7 +288,6 @@ struct TypeStruct3DerivedMixedParam {
 		/// multi
 		/// line
 		TupleStruct1SimpleParam,
-		/// Docs for B
 		TupleStruct2DynamicParam,
 		/// Docs for C
 		TupleStruct2MixedParam,
@@ -301,7 +300,7 @@ struct TypeStruct3DerivedMixedParam {
 			<TupleStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
 			"TupleStruct3DerivedMixedParam"
 		);
-		assert_eq!(
+		similar_asserts::assert_eq!(
 			<TupleStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::declaration(),
 			r#"/// @dev Some docs
 /// At multi
@@ -311,7 +310,6 @@ struct TupleStruct3DerivedMixedParam {
 	/// multi
 	/// line
 	TupleStruct1SimpleParam field0;
-	/// @dev Docs for B
 	TupleStruct2DynamicParam field1;
 	/// @dev Docs for C
 	TupleStruct2MixedParam field2;
@@ -749,7 +747,6 @@ mod test_enum {
 		/// multi
 		/// line
 		Red,
-		/// Docs for Green
 		Green,
 		/// Docs for Blue
 		#[default]
@@ -824,19 +821,18 @@ mod test_enum {
 			<Color as ::evm_coder::solidity::StructCollect>::name(),
 			"Color"
 		);
-		assert_eq!(
+		similar_asserts::assert_eq!(
 			<Color as ::evm_coder::solidity::StructCollect>::declaration(),
 			r#"/// @dev Some docs
 /// At multi
 /// line
 enum Color {
-	/// @dev Docs for A
+	/// @dev Docs for Red
 	/// multi
 	/// line
 	Red,
-	/// @dev Docs for B
 	Green,
-	/// @dev Docs for C
+	/// @dev Docs for Blue
 	Blue
 }
 "#
