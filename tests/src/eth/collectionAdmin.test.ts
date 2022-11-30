@@ -80,13 +80,12 @@ describe('Add collection admins', () => {
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
     
     // cannot mint while not admin
-    await expect(collectionEvm.methods.mint(owner).call({from: adminEth})).to.be.rejectedWith('PublicMintingNotAllowed');
+    await expect(collectionEvm.methods.mint(owner).send({from: adminEth})).to.be.rejectedWith('PublicMintingNotAllowed');
     
     // admin can mint token:
     await collectionEvm.methods.addCollectionAdminCross(adminCrossEth).send();
-    const result = await collectionEvm.methods.mint(owner).call({from: adminEth});
+    await collectionEvm.methods.mint(owner).send({from: adminEth});
 
-    // TODO: Why fail
     expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
   });
 
