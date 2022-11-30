@@ -90,7 +90,7 @@ fn expand_enum(
 		&docs,
 	);
 
-	Ok(quote! {
+	let tt = quote! {
 		#from
 		#solidity_option
 		#can_be_plcaed_in_vec
@@ -99,7 +99,14 @@ fn expand_enum(
 		#abi_write
 		#solidity_type_name
 		#solidity_struct_collect
-	})
+	};
+
+	println!(
+		"!!!!!!!!!!!!!!!!!!!!!!!!!\n{}\n!!!!!!!!!!!!!!!!!!!!!!!!!",
+		tt
+	);
+
+	Ok(tt)
 }
 
 fn impl_solidity_option<'a>(
@@ -135,7 +142,7 @@ fn impl_enum_from_u8<'a>(
 		impl TryFrom<u8> for #name {
 			type Error = &'static str;
 
-			fn try_from(value: u8) -> ::std::result::Result<Self, Self::Error> {
+			fn try_from(value: u8) -> ::core::result::Result<Self, Self::Error> {
 				const err: &'static str = "Not convertible";
 				match value {
 					#(#enum_options)*
