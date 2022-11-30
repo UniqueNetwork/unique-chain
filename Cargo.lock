@@ -2337,7 +2337,7 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2356,7 +2356,7 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "Inflector",
  "hex",
