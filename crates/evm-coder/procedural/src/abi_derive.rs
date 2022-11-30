@@ -90,7 +90,7 @@ fn expand_enum(
 		&docs,
 	);
 
-	let tt = quote! {
+	Ok(quote! {
 		#from
 		#solidity_option
 		#can_be_plcaed_in_vec
@@ -99,14 +99,7 @@ fn expand_enum(
 		#abi_write
 		#solidity_type_name
 		#solidity_struct_collect
-	};
-
-	println!(
-		"!!!!!!!!!!!!!!!!!!!!!!!!!\n{}\n!!!!!!!!!!!!!!!!!!!!!!!!!",
-		tt
-	);
-
-	Ok(tt)
+	})
 }
 
 fn impl_solidity_option<'a>(
@@ -134,16 +127,19 @@ fn impl_enum_from_u8<'a>(
 	name: &proc_macro2::Ident,
 	enum_options: impl Iterator<Item = &'a syn::Ident>,
 ) -> proc_macro2::TokenStream {
+	let error_str = format!("Value not convertible into enum \"{name}\"");
+	let error_str = proc_macro2::Literal::string(&error_str);
 	let enum_options = enum_options.enumerate().map(|(i, opt)| {
 		let n = proc_macro2::Literal::u8_suffixed(i as u8);
 		quote! {#n => Ok(#name::#opt),}
 	});
+
 	quote!(
 		impl TryFrom<u8> for #name {
 			type Error = &'static str;
 
 			fn try_from(value: u8) -> ::core::result::Result<Self, Self::Error> {
-				const err: &'static str = "Not convertible";
+				const err: &'static str = #error_str;
 				match value {
 					#(#enum_options)*
 					_ => Err(err)
