@@ -162,7 +162,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       - name: Parallel Tests report
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v10
         id: test-report-parallel
         if: success() || failure()    # run this step even if previous step failed
         with:
@@ -310,7 +310,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       - name: Sequential Tests report
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v10
         id: test-report-sequential
         if: success() || failure()    # run this step even if previous step failed
         with:

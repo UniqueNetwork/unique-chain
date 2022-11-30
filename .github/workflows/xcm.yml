@@ -375,7 +375,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       - name: XCM Test Report
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v10
         id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:

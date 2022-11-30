@@ -173,7 +173,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       - name: Upload Test Report Before Node upgrade
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v10
         id: test-report-before
         if: success() || failure()    # run this step even if previous step failed
         with:
@@ -196,7 +196,7 @@ jobs:
       #    RPC_URL: http://127.0.0.1:9933/
 
       #- name: Upload Parallel Test Report Before Node upgrade
-      #  uses: phoenix-actions/test-reporting@v8
+      #  uses: phoenix-actions/test-reporting@v10
       #  id: test-parallel-report-before
       #  if: success() || failure()    # run this step even if previous step failed
       #  with:
@@ -213,7 +213,7 @@ jobs:
       #     RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Sequential Test Report Before Node upgrade
-      #   uses: phoenix-actions/test-reporting@v8
+      #   uses: phoenix-actions/test-reporting@v10
       #   id: test-sequential-report-before
       #   if: success() || failure()    # run this step even if previous step failed
       #   with:
@@ -320,7 +320,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       # - name: Test Report After Node upgrade
-      #   uses: phoenix-actions/test-reporting@v8
+      #   uses: phoenix-actions/test-reporting@v10
       #   id: test-report-after
       #   if: success() || failure()    # run this step even if previous step failed
       #   with:
@@ -344,7 +344,7 @@ jobs:
       #    RPC_URL: http://127.0.0.1:9933/
 
       #- name: Test Report Parallel After Node upgrade
-      #  uses: phoenix-actions/test-reporting@v8
+      #  uses: phoenix-actions/test-reporting@v10
       #  id: test-report-parallel-after
       #  if: success() || failure()    # run this step even if previous step failed
       #  with:
@@ -361,7 +361,7 @@ jobs:
       #    RPC_URL: http://127.0.0.1:9933/
 
       #- name: Upload Sequential Test Report After Node upgrade
-      #  uses: phoenix-actions/test-reporting@v8
+      #  uses: phoenix-actions/test-reporting@v10
       #  id: test-sequential-report-after
       #  if: success() || failure()    # run this step even if previous step failed
       #  with:
