@@ -54,7 +54,7 @@ jobs:
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --buildq --remove-orphans
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
       - uses: actions/setup-node@v3
         with:
@@ -65,7 +65,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}

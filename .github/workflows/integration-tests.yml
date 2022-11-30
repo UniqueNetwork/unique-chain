@@ -48,7 +48,7 @@ jobs:
 
     name: ${{ matrix.network }} - parallel
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -196,7 +196,7 @@ jobs:
 
     name: ${{ matrix.network }} - sequential
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:

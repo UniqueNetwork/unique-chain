@@ -52,7 +52,7 @@ jobs:
 
     name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -165,7 +165,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-before-${NOW}
@@ -312,7 +312,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-after-${NOW}
@@ -336,7 +336,7 @@ jobs:
       #  run: |
       #    yarn install
       #    yarn add mochawesome
-      #    node scripts/readyness.js
+      #    ./scripts/wait_for_first_block.sh
       #    echo "Ready to start tests"
       #    yarn polkadot-types
       #    NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
