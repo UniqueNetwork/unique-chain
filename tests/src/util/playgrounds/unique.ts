@@ -2343,8 +2343,8 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param schedule Schedule params
    * @example vestedTransfer(signer, recepient.address, 20000, 100, 10, 50 * nominal); // total amount of vested tokens will be 100 * 50 = 5000
    */
-  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: {startRelayBlock: bigint, periodBlocks: bigint, periodCount: bigint, perPeriod: bigint}): Promise<void> {
-    const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, {start: schedule.startRelayBlock, period: schedule.periodBlocks, periodCount: schedule.periodCount, perPeriod: schedule.perPeriod}]);
+  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: {start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}): Promise<void> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, schedule]);
     const event = result.result.events
       .find(e => e.event.section === 'vesting' &&
             e.event.method === 'VestingScheduleAdded' &&
@@ -2357,12 +2357,12 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param address Substrate address of recipient
    * @returns 
    */
-  async getVestingSchedules(address: TSubstrateAccount): Promise<{startRelayBlock: bigint, periodBlocks: bigint, periodCount: bigint, perPeriod: bigint}[]> {
+  async getVestingSchedules(address: TSubstrateAccount): Promise<{start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}[]> {
     const schedule = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])).toJSON();
     return schedule.map((schedule: any) => {
       return {
-        startRelayBlock: BigInt(schedule.start),
-        periodBlocks: BigInt(schedule.period),
+        start: BigInt(schedule.start),
+        period: BigInt(schedule.period),
         periodCount: BigInt(schedule.periodCount),
         perPeriod: BigInt(schedule.perPeriod),
       };
