@@ -339,6 +339,36 @@ describe('NFT: Plain calls', () => {
     expect(await helper.nft.getTokenOwner(collection.collectionId, token2.tokenId)).to.deep.eq({Ethereum: receiverEth.toLowerCase()});
   });
 
+  itEth('Can reaffirm approved address', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const [receiver1, receiver2] = await helper.arrange.createAccounts([100n, 100n], donor);
+    const receiver1Cross = helper.ethCrossAccount.fromKeyringPair(receiver1);
+    const receiver2Cross = helper.ethCrossAccount.fromKeyringPair(receiver2);
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const token1 = await collection.mintToken(minter, {Ethereum: owner});
+    const token2 = await collection.mintToken(minter, {Ethereum: owner});
+    const collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+
+    // Can approve and reaffirm approved address:
+    await collectionEvm.methods.approveCross(receiver1Cross, token1.tokenId).send({from: owner});
+    await collectionEvm.methods.approveCross(receiver2Cross, token1.tokenId).send({from: owner});
+
+    // receiver1 cannot transferFrom:
+    await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token1.tokenId, {Ethereum: owner}, {Substrate: receiver1.address})).to.be.rejected;
+    // receiver2 can transferFrom:
+    await helper.nft.transferTokenFrom(receiver2, collection.collectionId, token1.tokenId, {Ethereum: owner}, {Substrate: receiver2.address});
+
+    // can set approved address to zero address:
+    await collectionEvm.methods.approveCross(receiver1Cross, token2.tokenId).send({from: owner});
+
+    // FIXME how to remove approval?:
+    await collectionEvm.methods.approveCross({eth: '0x0000000000000000000000000000000000000000', sub: '0'}, token2.tokenId).call({from: owner});
+    await collectionEvm.methods.approve('0x0000000000000000000000000000000000000000', token2.tokenId).call({from: owner});
+
+    // receiver1 cannot transfer token anymore:
+    await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token2.tokenId, {Ethereum: owner}, {Substrate: receiver1.address})).to.be.rejected;
+  });
+
   itEth('Can perform transferFrom()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = await helper.eth.createAccountWithBalance(donor);
