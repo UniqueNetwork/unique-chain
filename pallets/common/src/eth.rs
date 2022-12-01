@@ -121,6 +121,7 @@ pub struct EthCrossAccount {
 }
 
 impl EthCrossAccount {
+	/// Converts `CrossAccountId` to `EthCrossAccountId`
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -138,7 +139,18 @@ impl EthCrossAccount {
 			}
 		}
 	}
-
+	/// Creates `EthCrossAccount` from substrate account
+	pub fn from_substrate<T>(account_id: &T::AccountId) -> Self
+	where
+		T: pallet_evm::Config,
+		T::AccountId: AsRef<[u8; 32]>,
+	{
+		Self {
+			eth: Default::default(),
+			sub: uint256::from_big_endian(account_id.as_ref()),
+		}
+	}
+	/// Converts `EthCrossAccount` to `CrossAccountId`
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,

@@ -102,7 +102,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple9 memory);
+	function collectionSponsor() external view returns (EthCrossAccount memory);
 
 	/// Get current collection limits.
 	///

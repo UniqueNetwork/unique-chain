@@ -681,7 +681,7 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData::<T::CrossAccountId> {
+			CreateItemData::<T> {
 				users,
 				properties: CollectionPropertiesVec::default(),
 			},
@@ -767,7 +767,7 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData::<T::CrossAccountId> { users, properties },
+			CreateItemData::<T> { users, properties },
 			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
@@ -1048,7 +1048,7 @@ where
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap();
-		let create_item_data = CreateItemData::<T::CrossAccountId> {
+		let create_item_data = CreateItemData::<T> {
 			users,
 			properties: CollectionPropertiesVec::default(),
 		};
@@ -1108,7 +1108,7 @@ where
 				})
 				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
 
-			let create_item_data = CreateItemData::<T::CrossAccountId> {
+			let create_item_data = CreateItemData::<T> {
 				users: users.clone(),
 				properties,
 			};
@@ -1166,7 +1166,7 @@ where
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData::<T::CrossAccountId> { users, properties },
+			CreateItemData::<T> { users, properties },
 			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;

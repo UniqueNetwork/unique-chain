@@ -152,10 +152,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple9 memory) {
+	function collectionSponsor() public view returns (EthCrossAccount memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple9(0x0000000000000000000000000000000000000000, 0);
+		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Get current collection limits.

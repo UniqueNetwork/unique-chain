@@ -349,10 +349,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct Tuple32",
+        "internalType": "struct EthCrossAccount",
         "name": "",
         "type": "tuple"
       }

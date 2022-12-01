@@ -198,7 +198,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple29 memory);
+	function collectionSponsor() external view returns (EthCrossAccount memory);
 
 	/// Get current collection limits.
 	///
@@ -406,6 +406,7 @@ struct EthCrossAccount {
 	uint256 sub;
 }
 
+<<<<<<< HEAD
 /// @dev anonymous struct
 struct Tuple38 {
 	CollectionPermissions field_0;
@@ -458,6 +459,8 @@ struct Tuple27 {
 	uint256 field_1;
 }
 
+=======
+>>>>>>> 0bf15e6f... fixed tests&tuple instead of struct, refactored `refungible` pallet
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
