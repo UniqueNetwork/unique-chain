@@ -198,7 +198,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple26 memory);
+	function collectionSponsor() external view returns (Tuple28 memory);
 
 	/// Get current collection limits.
 	///
@@ -551,7 +551,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x12f7d6c1
+/// @dev the ERC-165 identifier for this interface is 0xabf30dc2
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -662,6 +662,14 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
 	// function mintBulkWithTokenURI(address to, Tuple12[] memory tokens) external returns (bool);
+
+	/// @notice Function to mint token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0xb904db03,
+	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
+	function mintCross(EthCrossAccount memory to, Property[] memory properties) external returns (uint256);
 
 	/// Returns EVM address for refungible token
 	///

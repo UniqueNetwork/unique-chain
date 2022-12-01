@@ -102,7 +102,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple8 memory);
+	function collectionSponsor() external view returns (Tuple9 memory);
 
 	/// Get current collection limits.
 	///
@@ -362,12 +362,16 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x5b7038cf
+/// @dev the ERC-165 identifier for this interface is 0x7dee5997
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
 	///  or in textual repr: description()
 	function description() external view returns (string memory);
+
+	/// @dev EVM selector for this function is: 0x269e6158,
+	///  or in textual repr: mintCross((address,uint256),uint256)
+	function mintCross(EthCrossAccount memory to, uint256 amount) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
@@ -395,7 +399,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple8[] memory amounts) external returns (bool);
+	function mintBulk(Tuple9[] memory amounts) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
@@ -411,7 +415,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple8 {
+struct Tuple9 {
 	address field_0;
 	uint256 field_1;
 }

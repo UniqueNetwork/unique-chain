@@ -290,10 +290,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple30 memory) {
+	function collectionSponsor() public view returns (Tuple32 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple30(0x0000000000000000000000000000000000000000, 0);
+		return Tuple32(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Get current collection limits.
@@ -655,7 +655,7 @@ struct Tuple33 {
 }
 
 /// @dev anonymous struct
-struct Tuple30 {
+struct Tuple32 {
 	address field_0;
 	uint256 field_1;
 }
@@ -804,7 +804,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xb74c26b7
+/// @dev the ERC-165 identifier for this interface is 0x0e48fdb4
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -961,6 +961,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy;
 		return 0;
 	}
+
 	// /// @notice Function to mint multiple tokens.
 	// /// @dev `tokenIds` should be an array of consecutive numbers and first number
 	// ///  should be obtained with `nextTokenId` method
@@ -991,6 +992,19 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// 	return false;
 	// }
 
+	/// @notice Function to mint token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0xb904db03,
+	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
+	function mintCross(EthCrossAccount memory to, Property[] memory properties) public returns (uint256) {
+		require(false, stub_error);
+		to;
+		properties;
+		dummy = 0;
+		return 0;
+	}
 }
 
 /// @dev anonymous struct

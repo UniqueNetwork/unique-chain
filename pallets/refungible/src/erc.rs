@@ -1120,6 +1120,60 @@ where
 		Ok(true)
 	}
 
+	/// @notice Function to mint token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		properties: Vec<PropertyStruct>,
+	) -> Result<uint256> {
+		let token_id = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?;
+
+		let to = to.into_sub_cross_account::<T>()?;
+
+		let properties = properties
+			.into_iter()
+			.map(|PropertyStruct { key, value }| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?
+			.try_into()
+			.map_err(|_| Error::Revert(alloc::format!("too many properties")))?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let users = [(to, 1)]
+			.into_iter()
+			.collect::<BTreeMap<_, _>>()
+			.try_into()
+			.unwrap();
+		<Pallet<T>>::create_item(
+			self,
+			&caller,
+			CreateItemData::<T::CrossAccountId> { users, properties },
+			&budget,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(token_id.into())
+	}
+
 	/// Returns EVM address for refungible token
 	///
 	/// @param token ID of the token

@@ -334,7 +334,7 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple29",
+        "internalType": "struct Tuple31",
         "name": "",
         "type": "tuple"
       }
@@ -454,6 +454,32 @@
   {
     "inputs": [{ "internalType": "address", "name": "to", "type": "address" }],
     "name": "mint",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "to",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
+        ],
+        "internalType": "struct Property[]",
+        "name": "properties",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "mintCross",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "nonpayable",
     "type": "function"
