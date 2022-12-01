@@ -251,31 +251,44 @@ describe('NFT: Plain calls', () => {
 
   itEth('Can perform burnFromCross()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const ownerSub = bob;
+    const ownerCross = helper.ethCrossAccount.fromKeyringPair(ownerSub);
+    const ownerEth = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const owner = bob;
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const burnerEth = await helper.eth.createAccountWithBalance(donor, 100n);
+    const burnerCrossEth = helper.ethCrossAccount.fromAddress(burnerEth);
 
-    const token = await collection.mintToken(minter, {Substrate: owner.address});
+    const token1 = await collection.mintToken(minter, {Substrate: ownerSub.address});
+    const token2 = await collection.mintToken(minter, {Ethereum: ownerEth});
 
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft');
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    {
-      await token.approve(owner, {Ethereum: spender});
-      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
-      const result = await contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender});
-      const events = result.events.Transfer;
+    // Approve tokens from substrate and ethereum:
+    await token1.approve(ownerSub, {Ethereum: burnerEth});
+    await collectionEvm.methods.approveCross(burnerCrossEth, token2.tokenId).send({from: ownerEth});
 
-      expect(events).to.be.like({
-        address,
+    // can burnFromCross:
+    const result1 = await collectionEvm.methods.burnFromCross(ownerCross, token1.tokenId).send({from: burnerEth});
+    // FIXME Error No Permission?:
+    const result2 = await collectionEvm.methods.burnFromCross(ownerCross, token2.tokenId).send({from: burnerEth});
+    const events1 = result1.events.Transfer;
+    const events2 = result2.events.Transfer;
+
+    [[events1, token1], [events2, token2]].map(burnEvents => {
+      expect(burnEvents[0]).to.be.like({
+        address: collectionAddress,
         event: 'Transfer',
         returnValues: {
-          from: helper.address.substrateToEth(owner.address),
+          from: helper.address.substrateToEth(ownerSub.address),
           to: '0x0000000000000000000000000000000000000000',
-          tokenId: token.tokenId.toString(),
+          tokenId: burnEvents[1].tokenId.toString(),
         },
       });
-    }
+    });
+
+    expect(await token1.doesExist()).to.be.false;
+    expect(await token2.doesExist()).to.be.false;
   });
 
   itEth('Can perform approveCross()', async ({helper}) => {
