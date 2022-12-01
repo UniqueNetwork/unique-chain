@@ -77,16 +77,21 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', 'uri');
     const adminEth = (await helper.eth.createAccountWithBalance(donor)).toLowerCase();
     const adminCrossEth = helper.ethCrossAccount.fromAddress(adminEth);
+    const [adminSub] = await helper.arrange.createAccounts([100n], donor);
+    const adminCrossSub = helper.ethCrossAccount.fromKeyringPair(adminSub);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
     
     // cannot mint while not admin
-    await expect(collectionEvm.methods.mint(owner).send({from: adminEth})).to.be.rejectedWith('PublicMintingNotAllowed');
+    await expect(collectionEvm.methods.mint(owner).send({from: adminEth})).to.be.rejected;
+    await expect(helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner}})).to.be.rejectedWith(/common.PublicMintingNotAllowed/);
     
-    // admin can mint token:
+    // admin (sub and eth) can mint token:
     await collectionEvm.methods.addCollectionAdminCross(adminCrossEth).send();
+    await collectionEvm.methods.addCollectionAdminCross(adminCrossSub).send();
     await collectionEvm.methods.mint(owner).send({from: adminEth});
+    await helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner}});
 
-    expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
+    expect(await helper.collection.getLastTokenId(collectionId)).to.eq(2);
   });
 
   itEth('cannot add invalid cross account admin', async ({helper}) => {
