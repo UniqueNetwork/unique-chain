@@ -276,6 +276,21 @@ describe('Fungible: Plain calls', () => {
       expect(balance).to.equal(50n);
     }
   });
+
+  itEth('Cannot transferCross() more than have', async ({helper}) => {
+    const sender = await helper.eth.createAccountWithBalance(donor);
+    const receiverEth = await helper.eth.createAccountWithBalance(donor);
+    const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
+    const BALANCE = 200n;
+    const BALANCE_TO_TRANSFER = BALANCE + 100n;
+
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, BALANCE, {Ethereum: sender});
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', sender);
+
+    await expect(collectionEvm.methods.transferCross(receiverCrossEth, BALANCE_TO_TRANSFER).send({from: sender})).to.be.rejected;
+  });
   
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);

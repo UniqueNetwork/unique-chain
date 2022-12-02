@@ -415,15 +415,19 @@ describe('Refungible: Plain calls', () => {
 
   itEth('Cannot transferCross with invalid params', async ({helper}) => {
     const sender = await helper.eth.createAccountWithBalance(donor);
+    const tokenOwner = await helper.eth.createAccountWithBalance(donor);
     const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(minter);
 
     const collection = await helper.rft.mintCollection(minter, {});
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', sender);
 
-    const {tokenId} = await collection.mintToken(minter, 50n, {Ethereum: sender});
-    // FIXME (transaction successful): Cannot transfer token if it does not exist:
-    await expect(collectionEvm.methods.transferCross(receiverCrossSub, tokenId + 1).send({from: sender})).to.be.rejected;
+    await collection.mintToken(minter, 50n, {Ethereum: sender});
+    const notSendersToken = await collection.mintToken(minter, 50n, {Ethereum: tokenOwner});
+    // Cannot transferCross someone else's token:
+    await expect(collectionEvm.methods.transferCross(receiverCrossSub, notSendersToken.tokenId).send({from: sender})).to.be.rejected;
+    // FIXME: (transaction successful): Cannot transfer token if it does not exist:
+    await expect(collectionEvm.methods.transferCross(receiverCrossSub, 999999).send({from: sender})).to.be.rejected;
   });
 
   itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
