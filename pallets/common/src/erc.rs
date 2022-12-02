@@ -493,6 +493,21 @@ where
 		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
+	/// Returns nesting for a collection
+	#[solidity(rename_selector = "collectionNestingRestrictedCollectionIds")]
+	fn collection_nesting_restricted_ids(&self) -> Result<(bool, Vec<uint256>)> {
+		let nesting = self.collection.permissions.nesting();
+
+		Ok((
+			nesting.token_owner,
+			nesting
+				.restricted
+				.clone()
+				.map(|b| b.0.into_inner().iter().map(|id| id.0.into()).collect())
+				.unwrap_or_default(),
+		))
+	}
+
 	/// Set the collection access method.
 	/// @param mode Access mode
 	/// 	0 for Normal

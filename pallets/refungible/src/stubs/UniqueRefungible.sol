@@ -119,7 +119,7 @@ struct Property {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xcc1d80ca
+/// @dev the ERC-165 identifier for this interface is 0xeecfdb34
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -355,6 +355,15 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Returns nesting for a collection
+	/// @dev EVM selector for this function is: 0x22d25bfe,
+	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple33 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple33(false, new uint256[](0));
+	}
+
 	/// Set the collection access method.
 	/// @param mode Access mode
 	/// 	0 for Normal
@@ -524,6 +533,12 @@ contract Collection is Dummy, ERC165 {
 struct EthCrossAccount {
 	address eth;
 	uint256 sub;
+}
+
+/// @dev anonymous struct
+struct Tuple33 {
+	bool field_0;
+	uint256[] field_1;
 }
 
 /// @dev anonymous struct
