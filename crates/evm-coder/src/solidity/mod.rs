@@ -276,7 +276,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writer: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
-		let hide_comment = self.hide.then_some("// ").unwrap();
+		let hide_comment = self.hide.then_some("// ").unwrap_or("");
 		for doc in self.docs {
 			writeln!(writer, "\t{hide_comment}///{}", doc)?;
 		}
