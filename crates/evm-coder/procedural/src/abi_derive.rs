@@ -14,7 +14,7 @@ fn expand_struct(
 	ast: &syn::DeriveInput,
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
-	let docs = extract_docs(&ast.attrs, true)?;
+	let docs = extract_docs(&ast.attrs, false)?;
 	let (is_named_fields, field_names, field_types, field_docs, params_count) = match ds.fields {
 		syn::Fields::Named(ref fields) => Ok((
 			true,
@@ -70,10 +70,10 @@ fn expand_enum(
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
 	check_repr_u8(name, &ast.attrs)?;
-	let docs = extract_docs(&ast.attrs, true)?;
-	let option_count = check_and_count_option(de)?;
+	let docs = extract_docs(&ast.attrs, false)?;
+	let option_count = check_and_count_options(de)?;
 	let enum_options = de.variants.iter().map(|v| &v.ident);
-	let enum_options_docs = de.variants.iter().map(|v| extract_docs(&v.attrs, false));
+	let enum_options_docs = de.variants.iter().map(|v| extract_docs(&v.attrs, true));
 
 	let from = impl_enum_from_u8(name, enum_options.clone());
 	let solidity_option = impl_solidity_option(name, enum_options.clone());
@@ -115,7 +115,7 @@ fn impl_solidity_option<'a>(
 		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::SolidityEnum for #name {
 			fn solidity_option(&self) -> &str {
-				match <#name>::default() {
+				match Self::default() {
 					#(#enum_options)*
 				}
 			}
@@ -254,7 +254,7 @@ fn impl_enum_solidity_struct_collect<'a>(
 	)
 }
 
-fn check_and_count_option(de: &syn::DataEnum) -> syn::Result<usize> {
+fn check_and_count_options(de: &syn::DataEnum) -> syn::Result<usize> {
 	let mut count = 0;
 	for error in de.variants.iter().filter_map(|v| {
 		if !v.fields.is_empty() {
@@ -280,48 +280,35 @@ fn check_and_count_option(de: &syn::DataEnum) -> syn::Result<usize> {
 
 fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Result<()> {
 	let mut has_repr = false;
-	for error in attrs.iter().filter_map(|attr| {
-		if let Some(ps) = attr.path.segments.first() {
-			if ps.ident == "repr" {
-				has_repr = true;
-				let meta = match attr.parse_meta() {
-					Ok(meta) => meta,
-					Err(e) => return Some(Err(e)),
-				};
-				match meta {
-					syn::Meta::List(p) => {
-						for error in p.nested.iter().filter_map(|nm| match nm {
+	for attr in attrs.iter() {
+		if attr.path.is_ident("repr") {
+			has_repr = true;
+			match attr.parse_meta()? {
+				syn::Meta::List(p) => {
+					for nm in p.nested.iter() {
+						match nm {
 							syn::NestedMeta::Meta(m) => match m {
 								syn::Meta::Path(p) => {
-									for i in p.segments.iter().filter_map(|ps| {
-										if ps.ident != "u8" {
-											Some(Err(syn::Error::new(
-												ps.ident.span(),
-												"Enum is not \"repr(u8)\"",
-											)))
-										} else {
-											None
-										}
-									}) {
-										return Some(i);
+									if !p.is_ident("u8") {
+										return Err(syn::Error::new(
+											p.segments
+												.first()
+												.expect("repr segments are empty")
+												.ident
+												.span(),
+											"Enum is not \"repr(u8)\"",
+										));
 									}
-									None
 								}
-								_ => None,
+								_ => {}
 							},
-							_ => None,
-						}) {
-							return Some(error);
+							_ => {}
 						}
-						None::<syn::Result<()>>
 					}
-					_ => None,
-				};
-			}
+				}
+				_ => {}
+			};
 		}
-		None
-	}) {
-		return error;
 	}
 
 	if !has_repr {
@@ -404,7 +391,7 @@ fn struct_from_tuple(
 
 fn extract_docs(
 	attrs: &[syn::Attribute],
-	is_general: bool,
+	is_field_doc: bool,
 ) -> syn::Result<Vec<proc_macro2::TokenStream>> {
 	attrs
 		.iter()
@@ -431,7 +418,7 @@ fn extract_docs(
 			let doc = doc?;
 			let doc = doc.trim();
 			let dev = if i == 0 { " @dev" } else { "" };
-			let tab = if is_general { "" } else { "\t" };
+			let tab = if is_field_doc { "\t" } else { "" };
 			Ok(quote! {
 				writeln!(str, "{}///{} {}", #tab, #dev, #doc).unwrap();
 			})
@@ -455,7 +442,7 @@ fn map_field_to_type(field: &syn::Field) -> &syn::Type {
 }
 
 fn map_field_to_doc(field: &syn::Field) -> syn::Result<Vec<proc_macro2::TokenStream>> {
-	extract_docs(&field.attrs, false)
+	extract_docs(&field.attrs, true)
 }
 
 fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
