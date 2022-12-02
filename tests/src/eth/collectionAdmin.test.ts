@@ -405,16 +405,27 @@ describe('Change substrate owner tests', () => {
 
   itEth('Change owner [cross]', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const [newOwner] = await helper.arrange.createAccounts([10n], donor);
-    const newOwnerCross = helper.ethCrossAccount.fromKeyringPair(newOwner);
-    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const ownerEth = await helper.eth.createAccountWithBalance(donor);
+    const ownerCrossEth = helper.ethCrossAccount.fromAddress(ownerEth);
+    const [ownerSub] = await helper.arrange.createAccounts([10n], donor);
+    const ownerCrossSub = helper.ethCrossAccount.fromKeyringPair(ownerSub);
+
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    expect(await collectionEvm.methods.isOwnerOrAdminCross(newOwnerCross).call()).to.be.false;
+    expect(await collectionEvm.methods.isOwnerOrAdminCross(ownerCrossSub).call()).to.be.false;
 
-    await collectionEvm.methods.changeCollectionOwnerCross(newOwnerCross).send();
-
-    expect(await collectionEvm.methods.isOwnerOrAdminCross(newOwnerCross).call()).to.be.true;
+    // Can set ethereum owner:
+    await collectionEvm.methods.changeCollectionOwnerCross(ownerCrossEth).send({from: owner});
+    expect(await collectionEvm.methods.isOwnerOrAdminCross(ownerCrossEth).call()).to.be.true;
+    expect(await helper.collection.getData(collectionId))
+      .to.have.property('normalizedOwner').that.is.eq(helper.address.ethToSubstrate(ownerEth));
+    
+    // Can set Substrate owner:
+    await collectionEvm.methods.changeCollectionOwnerCross(ownerCrossSub).send({from: ownerEth});
+    expect(await collectionEvm.methods.isOwnerOrAdminCross(ownerCrossSub).call()).to.be.true;
+    expect(await helper.collection.getData(collectionId))
+      .to.have.property('normalizedOwner').that.is.eq(ownerSub.address);
   });
 
   itEth.skip('change owner call fee', async ({helper}) => {
