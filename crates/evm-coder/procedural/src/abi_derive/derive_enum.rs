@@ -85,7 +85,7 @@ pub fn impl_enum_abi_write(name: &syn::Ident) -> proc_macro2::TokenStream {
 	)
 }
 
-pub fn impl_enum_solidity_type_name<'a>(name: &syn::Ident) -> proc_macro2::TokenStream {
+pub fn impl_enum_solidity_type_name(name: &syn::Ident) -> proc_macro2::TokenStream {
 	quote!(
 		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::SolidityTypeName for #name {
@@ -154,29 +154,26 @@ pub fn impl_enum_solidity_struct_collect<'a>(
 
 pub fn check_and_count_options(de: &syn::DataEnum) -> syn::Result<usize> {
 	let mut count = 0;
-	for error in de.variants.iter().filter_map(|v| {
+	for v in de.variants.iter() {
 		if !v.fields.is_empty() {
-			Some(Err(syn::Error::new(
+			return Err(syn::Error::new(
 				v.ident.span(),
 				"Enumeration parameters should not have fields",
-			)))
+			));
 		} else if v.discriminant.is_some() {
-			Some(Err(syn::Error::new(
+			return Err(syn::Error::new(
 				v.ident.span(),
 				"Enumeration options should not have an explicit specified value",
-			)))
+			));
 		} else {
 			count += 1;
-			None
 		}
-	}) {
-		return error;
 	}
 
 	Ok(count)
 }
 
-pub fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Result<()> {
+pub fn check_repr_u8(name: &syn::Ident, attrs: &[syn::Attribute]) -> syn::Result<()> {
 	let mut has_repr = false;
 	for attr in attrs.iter() {
 		if attr.path.is_ident("repr") {
@@ -196,18 +193,16 @@ pub fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Res
 fn check_meta_u8(meta: &syn::Meta) -> Result<(), syn::Error> {
 	if let syn::Meta::List(p) = meta {
 		for nm in p.nested.iter() {
-			if let syn::NestedMeta::Meta(m) = nm {
-				if let syn::Meta::Path(p) = m {
-					if !p.is_ident("u8") {
-						return Err(syn::Error::new(
-							p.segments
-								.first()
-								.expect("repr segments are empty")
-								.ident
-								.span(),
-							"Enum is not \"repr(u8)\"",
-						));
-					}
+			if let syn::NestedMeta::Meta(syn::Meta::Path(p)) = nm {
+				if !p.is_ident("u8") {
+					return Err(syn::Error::new(
+						p.segments
+							.first()
+							.expect("repr segments are empty")
+							.ident
+							.span(),
+						"Enum is not \"repr(u8)\"",
+					));
 				}
 			}
 		}
