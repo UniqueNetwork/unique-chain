@@ -80,7 +80,7 @@ jobs:
  
       - name: Collect Docker Logs
         if: success() || failure()
-        uses: jwalton/gh-docker-logs@v2.2.0
+        uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './try-runtime-logs.${{ matrix.network }}'
           images: 'try-runtime' 

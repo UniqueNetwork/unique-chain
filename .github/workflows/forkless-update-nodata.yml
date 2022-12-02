@@ -96,7 +96,7 @@ jobs:
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 
@@ -152,7 +152,7 @@ jobs:
 
       - name: Collect Docker Logs
         if: success() || failure()
-        uses: jwalton/gh-docker-logs@v2.2.0
+        uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}'
           images: 'node-parachain'
