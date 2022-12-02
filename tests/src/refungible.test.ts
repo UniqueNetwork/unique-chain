@@ -255,3 +255,40 @@ describe('integration test: Refungible functionality:', async () => {
   });
 });
 
+describe('Refungible negative tests', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+
+      donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+    });
+  });
+
+  itSub('Cannot transfer incorrect amount of token pieces', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const tokenAlice = await collection.mintToken(alice, 10n, {Substrate: alice.address});
+    const tokenBob = await collection.mintToken(alice, 10n, {Substrate: bob.address});
+
+    // Alice cannot transfer Bob's token:
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejected;
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejected;
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 10n)).to.be.rejected;
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejected;
+    
+    // Alice cannot transfer non-existing token:
+    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 0n)).to.be.rejected;
+    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 1n)).to.be.rejected;
+
+    expect(await tokenAlice.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
+    expect(await tokenBob.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
+    expect(await tokenAlice.getBalance({Substrate: alice.address})).to.eq(10n);
+    expect(await tokenBob.getBalance({Substrate: bob.address})).to.eq(10n);
+    expect(await tokenBob.getBalance({Substrate: charlie.address})).to.eq(0n);
+  });
+});
