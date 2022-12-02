@@ -13,7 +13,7 @@ pub fn impl_solidity_option<'a>(
 		#[cfg(feature = "stubgen")]
 		impl ::evm_coder::solidity::SolidityEnum for #name {
 			fn solidity_option(&self) -> &str {
-				match Self::default() {
+				match self {
 					#(#enum_options)*
 				}
 			}
@@ -181,31 +181,8 @@ pub fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Res
 	for attr in attrs.iter() {
 		if attr.path.is_ident("repr") {
 			has_repr = true;
-			match attr.parse_meta()? {
-				syn::Meta::List(p) => {
-					for nm in p.nested.iter() {
-						match nm {
-							syn::NestedMeta::Meta(m) => match m {
-								syn::Meta::Path(p) => {
-									if !p.is_ident("u8") {
-										return Err(syn::Error::new(
-											p.segments
-												.first()
-												.expect("repr segments are empty")
-												.ident
-												.span(),
-											"Enum is not \"repr(u8)\"",
-										));
-									}
-								}
-								_ => {}
-							},
-							_ => {}
-						}
-					}
-				}
-				_ => {}
-			};
+			let meta = attr.parse_meta()?;
+			check_meta_u8(&meta)?;
 		}
 	}
 
@@ -213,5 +190,34 @@ pub fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Res
 		return Err(syn::Error::new(name.span(), "Enum is not \"repr(u8)\""));
 	}
 
+	Ok(())
+}
+
+fn check_meta_u8(meta: &syn::Meta) -> Result<(), syn::Error> {
+	match meta {
+		syn::Meta::List(p) => {
+			for nm in p.nested.iter() {
+				match nm {
+					syn::NestedMeta::Meta(m) => match m {
+						syn::Meta::Path(p) => {
+							if !p.is_ident("u8") {
+								return Err(syn::Error::new(
+									p.segments
+										.first()
+										.expect("repr segments are empty")
+										.ident
+										.span(),
+									"Enum is not \"repr(u8)\"",
+								));
+							}
+						}
+						_ => {}
+					},
+					_ => {}
+				}
+			}
+		}
+		_ => {}
+	};
 	Ok(())
 }
