@@ -194,30 +194,23 @@ pub fn check_repr_u8(name: &syn::Ident, attrs: &Vec<syn::Attribute>) -> syn::Res
 }
 
 fn check_meta_u8(meta: &syn::Meta) -> Result<(), syn::Error> {
-	match meta {
-		syn::Meta::List(p) => {
-			for nm in p.nested.iter() {
-				match nm {
-					syn::NestedMeta::Meta(m) => match m {
-						syn::Meta::Path(p) => {
-							if !p.is_ident("u8") {
-								return Err(syn::Error::new(
-									p.segments
-										.first()
-										.expect("repr segments are empty")
-										.ident
-										.span(),
-									"Enum is not \"repr(u8)\"",
-								));
-							}
-						}
-						_ => {}
-					},
-					_ => {}
+	if let syn::Meta::List(p) = meta {
+		for nm in p.nested.iter() {
+			if let syn::NestedMeta::Meta(m) = nm {
+				if let syn::Meta::Path(p) = m {
+					if !p.is_ident("u8") {
+						return Err(syn::Error::new(
+							p.segments
+								.first()
+								.expect("repr segments are empty")
+								.ident
+								.span(),
+							"Enum is not \"repr(u8)\"",
+						));
+					}
 				}
 			}
 		}
-		_ => {}
-	};
+	}
 	Ok(())
 }
