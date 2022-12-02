@@ -208,6 +208,27 @@
   },
   {
     "inputs": [],
+    "name": "collectionNestingRestrictedCollectionIds",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "bool", "name": "field_0", "type": "bool" },
+          {
+            "internalType": "uint256[]",
+            "name": "field_1",
+            "type": "uint256[]"
+          }
+        ],
+        "internalType": "struct Tuple21",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionOwner",
     "outputs": [
       {

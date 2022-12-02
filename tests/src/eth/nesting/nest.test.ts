@@ -51,7 +51,20 @@ describe('EVM nesting tests group', () => {
       await contract.methods.transferFrom(targetNftTokenAddress, owner, secondTokenId).send({from: owner});
       expect(await contract.methods.ownerOf(secondTokenId).call()).to.be.equal(owner);
     });
-
+    
+    itEth('NFT: collectionNestingRestrictedCollectionIds()', async ({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const {collectionId: unnestedCollsectionId, collectionAddress: unnsetedCollectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+      const unnestedContract = helper.ethNativeContract.collection(unnsetedCollectionAddress, 'nft', owner);
+      expect(await unnestedContract.methods.collectionNestingRestrictedCollectionIds().call({from: owner})).to.be.like([false, []]);
+      
+      const {contract} = await createNestingCollection(helper, owner);
+      expect(await contract.methods.collectionNestingRestrictedCollectionIds().call({from: owner})).to.be.like([true, []]);
+      await contract.methods.setCollectionNesting(true, [unnsetedCollectionAddress]).send({from: owner});
+      expect(await contract.methods.collectionNestingRestrictedCollectionIds().call({from: owner})).to.be.like([true, [unnestedCollsectionId.toString()]]);
+      
+    });
+    
     itEth('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
