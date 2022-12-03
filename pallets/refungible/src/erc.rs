@@ -31,14 +31,14 @@ use evm_coder::{
 };
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
-	CollectionHandle, CollectionPropertyPermissions,
+	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	CommonCollectionOperations,
+	eth::EthCrossAccount,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::H160;
+use sp_core::{H160, Get};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
 use up_data_structs::{
 	CollectionId, CollectionPropertiesVec, mapping::TokenAddressMapping, Property, PropertyKey,
@@ -481,6 +481,11 @@ impl<T: Config> RefungibleHandle<T> {
 	fn is_approved_for_all(&self, _owner: address, _operator: address) -> Result<address> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 

@@ -16,7 +16,10 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
-use evm_coder::types::{uint256, address};
+use evm_coder::{
+	AbiCoder,
+	types::{uint256, address},
+};
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::H160;
 use up_data_structs::CollectionId;
@@ -107,5 +110,48 @@ where
 		Ok(T::CrossAccountId::from_eth(eth_cross_account_id.0))
 	} else {
 		Err("All fields of cross account is non zeroed".into())
+	}
+}
+
+/// Cross account struct
+#[derive(Debug, Default, AbiCoder)]
+pub struct EthCrossAccount {
+	pub(crate) eth: address,
+	pub(crate) sub: uint256,
+}
+
+impl EthCrossAccount {
+	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
+	where
+		T: pallet_evm::Config,
+		T::AccountId: AsRef<[u8; 32]>,
+	{
+		if cross_account_id.is_canonical_substrate() {
+			Self {
+				eth: Default::default(),
+				sub: convert_cross_account_to_uint256::<T>(cross_account_id),
+			}
+		} else {
+			Self {
+				eth: *cross_account_id.as_eth(),
+				sub: Default::default(),
+			}
+		}
+	}
+
+	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
+	where
+		T: pallet_evm::Config,
+		T::AccountId: From<[u8; 32]>,
+	{
+		if self.eth == Default::default() && self.sub == Default::default() {
+			Err("All fields of cross account is zeroed".into())
+		} else if self.eth == Default::default() {
+			Ok(convert_uint256_to_cross_account::<T>(self.sub))
+		} else if self.sub == Default::default() {
+			Ok(T::CrossAccountId::from_eth(self.eth))
+		} else {
+			Err("All fields of cross account is non zeroed".into())
+		}
 	}
 }

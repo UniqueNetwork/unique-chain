@@ -120,22 +120,22 @@ pub const CONST_ON_CHAIN_SCHEMA_LIMIT: u32 = 32768;
 // TODO: not used. Delete?
 pub const COLLECTION_FIELD_LIMIT: u32 = CONST_ON_CHAIN_SCHEMA_LIMIT;
 
-/// Maximum length for collection name.
+/// Maximal length of a collection name.
 pub const MAX_COLLECTION_NAME_LENGTH: u32 = 64;
 
-/// Maximum length for collection description.
+/// Maximal length of a collection description.
 pub const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = 256;
 
-/// Maximal token prefix length.
+/// Maximal length of a token prefix.
 pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
 
-/// Maximal lenght of property key.
+/// Maximal length of a property key.
 pub const MAX_PROPERTY_KEY_LENGTH: u32 = 256;
 
-/// Maximal lenght of property value.
+/// Maximal length of a property value.
 pub const MAX_PROPERTY_VALUE_LENGTH: u32 = 32768;
 
-/// Maximum properties that can be assigned to token.
+/// A maximum number of token properties.
 pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
 
 /// Maximal lenght of extended property value.
@@ -144,7 +144,7 @@ pub const MAX_AUX_PROPERTY_VALUE_LENGTH: u32 = 2048;
 /// Maximum size for all collection properties.
 pub const MAX_COLLECTION_PROPERTIES_SIZE: u32 = 40960;
 
-/// Maximum size for all token properties.
+/// Maximum size of all token properties.
 pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
 
 /// How much items can be created per single
@@ -609,6 +609,24 @@ pub struct CollectionLimits {
 }
 
 impl CollectionLimits {
+	pub fn with_default_limits(collection_type: CollectionMode) -> Self {
+		CollectionLimits {
+			account_token_ownership_limit: Some(ACCOUNT_TOKEN_OWNERSHIP_LIMIT),
+			sponsored_data_size: Some(CUSTOM_DATA_LIMIT),
+			sponsored_data_rate_limit: Some(SponsoringRateLimit::SponsoringDisabled),
+			token_limit: Some(COLLECTION_TOKEN_LIMIT),
+			sponsor_transfer_timeout: match collection_type {
+				CollectionMode::NFT => Some(NFT_SPONSOR_TRANSFER_TIMEOUT),
+				CollectionMode::ReFungible => Some(REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT),
+				CollectionMode::Fungible(_) => Some(FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT),
+			},
+			sponsor_approve_timeout: Some(SPONSOR_APPROVE_TIMEOUT),
+			owner_can_transfer: Some(false),
+			owner_can_destroy: Some(true),
+			transfers_enabled: Some(true),
+		}
+	}
+
 	/// Get effective value for [`account_token_ownership_limit`](self.account_token_ownership_limit).
 	pub fn account_token_ownership_limit(&self) -> u32 {
 		self.account_token_ownership_limit

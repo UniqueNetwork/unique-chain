@@ -404,7 +404,11 @@ impl MethodArg {
 		let name = &self.name;
 		let ty = &self.ty;
 		quote! {
-			#name: <#ty>::abi_read(reader)?
+			#name: {
+				let value = <#ty as ::evm_coder::abi::AbiRead>::abi_read(reader)?;
+				if !is_dynamic {reader.bytes_read(<#ty as ::evm_coder::abi::AbiType>::size())};
+				value
+			}
 		}
 	}
 
@@ -630,17 +634,18 @@ impl Method {
 		let pascal_name = &self.pascal_name;
 		let screaming_name = &self.screaming_name;
 		if self.has_normal_args {
-			let parsers = self
-				.args
-				.iter()
-				.filter(|a| !a.is_special())
-				.map(|a| a.expand_parse());
+			let args_iter = self.args.iter().filter(|a| !a.is_special());
+			let arg_type = args_iter.clone().map(|a| &a.ty);
+			let parsers = args_iter.map(|a| a.expand_parse());
 			quote! {
-				Self::#screaming_name => return Ok(Some(Self::#pascal_name {
-					#(
-						#parsers,
-					)*
-				}))
+				Self::#screaming_name => {
+					let is_dynamic = false #(|| <#arg_type as ::evm_coder::abi::AbiType>::is_dynamic())*;
+					return Ok(Some(Self::#pascal_name {
+						#(
+							#parsers,
+						)*
+					}))
+				}
 			}
 		} else {
 			quote! { Self::#screaming_name => return Ok(Some(Self::#pascal_name)) }

@@ -24,7 +24,7 @@ contract CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x7dea03b1
+/// @dev the ERC-165 identifier for this interface is 0xe65011aa
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -127,6 +127,30 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	///  or in textual repr: collectionCreationFee()
 	function collectionCreationFee() public view returns (uint256) {
 		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	/// Returns address of a collection.
+	/// @param collectionId  - CollectionId  of the collection
+	/// @return eth mirror address of the collection
+	/// @dev EVM selector for this function is: 0x2e716683,
+	///  or in textual repr: collectionAddress(uint32)
+	function collectionAddress(uint32 collectionId) public view returns (address) {
+		require(false, stub_error);
+		collectionId;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// Returns collectionId of a collection.
+	/// @param collectionAddress  - Eth address of the collection
+	/// @return collectionId of the collection
+	/// @dev EVM selector for this function is: 0xb5cb7498,
+	///  or in textual repr: collectionId(address)
+	function collectionId(address collectionAddress) public view returns (uint32) {
+		require(false, stub_error);
+		collectionAddress;
 		dummy;
 		return 0;
 	}

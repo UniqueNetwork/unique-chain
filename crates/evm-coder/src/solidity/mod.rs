@@ -21,6 +21,10 @@
 //! Purpose of this module is to receive solidity contract definition in module-specified
 //! format, and then output string, representing interface of this contract in solidity language
 
+mod traits;
+pub use traits::*;
+mod impls;
+
 #[cfg(not(feature = "std"))]
 use alloc::{string::String, vec::Vec, collections::BTreeMap, format};
 #[cfg(feature = "std")]
@@ -55,7 +59,7 @@ impl TypeCollector {
 		self.id.set(v + 1);
 		v
 	}
-	pub fn collect_tuple<T: SolidityTupleType>(&self) -> String {
+	pub fn collect_tuple<T: SolidityType>(&self) -> String {
 		let names = T::names(self);
 		if let Some(id) = self.anonymous.borrow().get(&names).cloned() {
 			return format!("Tuple{}", id);
@@ -82,282 +86,6 @@ impl TypeCollector {
 		data.into_iter().map(|(code, _)| code).collect()
 	}
 }
-
-pub trait StructCollect: 'static {
-	/// Structure name.
-	fn name() -> String;
-	/// Structure declaration.
-	fn declaration() -> String;
-}
-
-pub trait SolidityTypeName: 'static {
-	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
-	/// "simple" types are stored inline, no `memory` modifier should be used in solidity
-	fn is_simple() -> bool;
-	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
-	/// Specialization
-	fn is_void() -> bool {
-		false
-	}
-}
-macro_rules! solidity_type_name {
-    ($($ty:ty => $name:literal $simple:literal = $default:literal),* $(,)?) => {
-        $(
-            impl SolidityTypeName for $ty {
-                fn solidity_name(writer: &mut impl core::fmt::Write, _tc: &TypeCollector) -> core::fmt::Result {
-                    write!(writer, $name)
-                }
-				fn is_simple() -> bool {
-					$simple
-				}
-				fn solidity_default(writer: &mut impl core::fmt::Write, _tc: &TypeCollector) -> core::fmt::Result {
-					write!(writer, $default)
-				}
-            }
-        )*
-    };
-}
-
-solidity_type_name! {
-	uint8 => "uint8" true = "0",
-	uint32 => "uint32" true = "0",
-	uint64 => "uint64" true = "0",
-	uint128 => "uint128" true = "0",
-	uint256 => "uint256" true = "0",
-	bytes4 => "bytes4" true = "bytes4(0)",
-	address => "address" true = "0x0000000000000000000000000000000000000000",
-	string => "string" false = "\"\"",
-	bytes => "bytes" false = "hex\"\"",
-	bool => "bool" true = "false",
-}
-impl SolidityTypeName for void {
-	fn solidity_name(_writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
-		Ok(())
-	}
-	fn is_simple() -> bool {
-		true
-	}
-	fn solidity_default(_writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
-		Ok(())
-	}
-	fn is_void() -> bool {
-		true
-	}
-}
-
-mod sealed {
-	/// Not every type should be directly placed in vec.
-	/// Vec encoding is not memory efficient, as every item will be padded
-	/// to 32 bytes.
-	/// Instead you should use specialized types (`bytes` in case of `Vec<u8>`)
-	pub trait CanBePlacedInVec {}
-}
-
-impl sealed::CanBePlacedInVec for uint256 {}
-impl sealed::CanBePlacedInVec for string {}
-impl sealed::CanBePlacedInVec for address {}
-impl sealed::CanBePlacedInVec for EthCrossAccount {}
-impl sealed::CanBePlacedInVec for Property {}
-
-impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T> {
-	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		T::solidity_name(writer, tc)?;
-		write!(writer, "[]")
-	}
-	fn is_simple() -> bool {
-		false
-	}
-	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "new ")?;
-		T::solidity_name(writer, tc)?;
-		write!(writer, "[](0)")
-	}
-}
-
-impl SolidityTupleType for EthCrossAccount {
-	fn names(tc: &TypeCollector) -> Vec<string> {
-		let mut collected = Vec::with_capacity(Self::len());
-		{
-			let mut out = string::new();
-			address::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		{
-			let mut out = string::new();
-			uint256::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		collected
-	}
-
-	fn len() -> usize {
-		2
-	}
-}
-
-impl SolidityTypeName for EthCrossAccount {
-	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}", tc.collect_struct::<Self>())
-	}
-
-	fn is_simple() -> bool {
-		false
-	}
-
-	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}(", tc.collect_struct::<Self>())?;
-		address::solidity_default(writer, tc)?;
-		write!(writer, ",")?;
-		uint256::solidity_default(writer, tc)?;
-		write!(writer, ")")
-	}
-}
-
-impl StructCollect for EthCrossAccount {
-	fn name() -> String {
-		"EthCrossAccount".into()
-	}
-
-	fn declaration() -> String {
-		let mut str = String::new();
-		writeln!(str, "/// @dev Cross account struct").unwrap();
-		writeln!(str, "struct {} {{", Self::name()).unwrap();
-		writeln!(str, "\taddress eth;").unwrap();
-		writeln!(str, "\tuint256 sub;").unwrap();
-		writeln!(str, "}}").unwrap();
-		str
-	}
-}
-
-impl StructCollect for Property {
-	fn name() -> String {
-		"Property".into()
-	}
-
-	fn declaration() -> String {
-		let mut str = String::new();
-		writeln!(str, "/// @dev Property struct").unwrap();
-		writeln!(str, "struct {} {{", Self::name()).unwrap();
-		writeln!(str, "\tstring key;").unwrap();
-		writeln!(str, "\tbytes value;").unwrap();
-		writeln!(str, "}}").unwrap();
-		str
-	}
-}
-
-impl SolidityTypeName for Property {
-	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}", tc.collect_struct::<Self>())
-	}
-
-	fn is_simple() -> bool {
-		false
-	}
-
-	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}(", tc.collect_struct::<Self>())?;
-		address::solidity_default(writer, tc)?;
-		write!(writer, ",")?;
-		uint256::solidity_default(writer, tc)?;
-		write!(writer, ")")
-	}
-}
-
-impl SolidityTupleType for Property {
-	fn names(tc: &TypeCollector) -> Vec<string> {
-		let mut collected = Vec::with_capacity(Self::len());
-		{
-			let mut out = string::new();
-			string::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		{
-			let mut out = string::new();
-			bytes::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		collected
-	}
-
-	fn len() -> usize {
-		2
-	}
-}
-
-pub trait SolidityTupleType {
-	fn names(tc: &TypeCollector) -> Vec<String>;
-	fn len() -> usize;
-}
-
-macro_rules! count {
-    () => (0usize);
-    ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
-}
-
-macro_rules! impl_tuples {
-	($($ident:ident)+) => {
-		impl<$($ident),+> sealed::CanBePlacedInVec for ($($ident,)+) {}
-		impl<$($ident: SolidityTypeName + 'static),+> SolidityTupleType for ($($ident,)+) {
-			fn names(tc: &TypeCollector) -> Vec<string> {
-				let mut collected = Vec::with_capacity(Self::len());
-				$({
-					let mut out = string::new();
-					$ident::solidity_name(&mut out, tc).expect("no fmt error");
-					collected.push(out);
-				})*;
-				collected
-			}
-
-			fn len() -> usize {
-				count!($($ident)*)
-			}
-		}
-		impl<$($ident: SolidityTypeName + 'static),+> SolidityTypeName for ($($ident,)+) {
-			fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-				write!(writer, "{}", tc.collect_tuple::<Self>())
-			}
-			fn is_simple() -> bool {
-				false
-			}
-			#[allow(unused_assignments)]
-			fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-				write!(writer, "{}(", tc.collect_tuple::<Self>())?;
-				let mut first = true;
-				$(
-					if !first {
-						write!(writer, ",")?;
-					} else {
-						first = false;
-					}
-					<$ident>::solidity_default(writer, tc)?;
-				)*
-				write!(writer, ")")
-			}
-		}
-	};
-}
-
-impl_tuples! {A}
-impl_tuples! {A B}
-impl_tuples! {A B C}
-impl_tuples! {A B C D}
-impl_tuples! {A B C D E}
-impl_tuples! {A B C D E F}
-impl_tuples! {A B C D E F G}
-impl_tuples! {A B C D E F G H}
-impl_tuples! {A B C D E F G H I}
-impl_tuples! {A B C D E F G H I J}
-
-pub trait SolidityArguments {
-	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
-	fn solidity_get(&self, prefix: &str, writer: &mut impl fmt::Write) -> fmt::Result;
-	fn solidity_default(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
-	fn is_empty(&self) -> bool {
-		self.len() == 0
-	}
-	fn len(&self) -> usize;
-}
-
 #[derive(Default)]
 pub struct UnnamedArgument<T>(PhantomData<*const T>);
 
@@ -525,15 +253,6 @@ impl SolidityArguments for Tuple {
 	}
 }
 
-pub trait SolidityFunctions {
-	fn solidity_name(
-		&self,
-		is_impl: bool,
-		writer: &mut impl fmt::Write,
-		tc: &TypeCollector,
-	) -> fmt::Result;
-}
-
 pub enum SolidityMutability {
 	Pure,
 	View,
@@ -557,7 +276,7 @@ impl<A: SolidityArguments, R: SolidityArguments> SolidityFunctions for SolidityF
 		writer: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result {
-		let hide_comment = self.hide.then(|| "// ").unwrap_or("");
+		let hide_comment = self.hide.then_some("// ").unwrap_or("");
 		for doc in self.docs {
 			writeln!(writer, "\t{hide_comment}///{}", doc)?;
 		}
