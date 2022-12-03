@@ -144,7 +144,7 @@ describe('Create FT collection from EVM', () => {
   
   itEth('destroyCollection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
+    const {collectionAddress, collectionId} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
     const result = await collectionHelper.methods
@@ -166,6 +166,7 @@ describe('Create FT collection from EVM', () => {
     expect(await collectionHelper.methods
       .isCollectionExist(collectionAddress)
       .call()).to.be.false;
+    expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });
 

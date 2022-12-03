@@ -33,7 +33,7 @@ describe('Destroy Collection from EVM', function() {
   });
 
   testCases.map((testCase) => 
-    itEth.ifWithPallets(`(!negative test!) ${testCase.method}`, testCase.requiredPallets, async ({helper}) => {
+    itEth.ifWithPallets(`Cannot burn non-owned or non-existing collection ${testCase.method}`, testCase.requiredPallets, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const signer = await helper.eth.createAccountWithBalance(donor);
       

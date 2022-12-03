@@ -308,7 +308,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   itEth('destroyCollection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
+    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
 
@@ -331,5 +331,6 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     expect(await collectionHelper.methods
       .isCollectionExist(collectionAddress)
       .call()).to.be.false;
+    expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });
