@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.9] - 2022-12-05
+
+### Fixed 
+
+- Transfer with zero tokens.
+
 ## [0.1.8] - 2022-11-18
 
 ### Added

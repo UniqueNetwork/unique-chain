@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.13] - 2022-12-05
+
+### Added
+
+- The error `ZeroTransferNotAllowed` to handling transactions with the transfer of a zero amount of tokens.
+
 ## [0.1.12] - 2022-11-16
 
 ### Changed
