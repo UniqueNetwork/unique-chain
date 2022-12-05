@@ -60,7 +60,7 @@ class ContractGroup extends EthGroupBase {
   }
 
   async compile(name: string, src: string, imports?: ContractImports[]): Promise<CompiledContract> {
-    const out = JSON.parse(solc.compile(JSON.stringify({
+    const compiled = JSON.parse(solc.compile(JSON.stringify({
       language: 'Solidity',
       sources: {
         [`${name}.sol`]: {
@@ -74,7 +74,18 @@ class ContractGroup extends EthGroupBase {
           },
         },
       },
-    }), {import: await this.findImports(imports)})).contracts[`${name}.sol`][name];
+    }), {import: await this.findImports(imports)}));
+
+    const hasErrors = compiled['errors']
+      && compiled['errors'].length > 0
+      && compiled.errors.some(function(err: any) {
+        return err.severity == 'error';
+      });
+      
+    if (hasErrors) {
+      throw compiled.errors;
+    }
+    const out = compiled.contracts[`${name}.sol`][name];
 
     return {
       abi: out.abi,
