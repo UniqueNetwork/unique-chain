@@ -277,7 +277,7 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
-  itEth('Cannot transferCross() more than have', async ({helper}) => {
+  ['transfer', 'transferCross'].map(testCase => itEth(`Cannot ${testCase} incorrect amount`, async ({helper}) => {
     const sender = await helper.eth.createAccountWithBalance(donor);
     const receiverEth = await helper.eth.createAccountWithBalance(donor);
     const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
@@ -289,8 +289,13 @@ describe('Fungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', sender);
 
-    await expect(collectionEvm.methods.transferCross(receiverCrossEth, BALANCE_TO_TRANSFER).send({from: sender})).to.be.rejected;
-  });
+    // 1. Cannot transfer more than have
+    const receiver = testCase === 'transfer' ? receiverEth : receiverCrossEth;
+    await expect(collectionEvm.methods[testCase](receiver, BALANCE_TO_TRANSFER).send({from: sender})).to.be.rejected;
+    // 2. Zero transfer not allowed
+    await expect(collectionEvm.methods[testCase](receiver, 0n).send({from: sender})).to.be.rejected;
+  }));
+  
   
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);

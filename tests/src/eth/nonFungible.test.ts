@@ -517,6 +517,26 @@ describe('NFT: Plain calls', () => {
       expect(receiverBalance).to.contain(tokenId);
     }
   });
+
+  ['transfer', 'transferCross'].map(testCase => itEth(`Cannot ${testCase} non-owned token`, async ({helper}) => {
+    const sender = await helper.eth.createAccountWithBalance(donor);
+    const tokenOwner = await helper.eth.createAccountWithBalance(donor);
+    const receiverSub = minter;
+    const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(minter);
+
+    const collection = await helper.nft.mintCollection(minter, {});
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', sender);
+
+    await collection.mintToken(minter, {Ethereum: sender});
+    const nonSendersToken = await collection.mintToken(minter, {Ethereum: tokenOwner});
+
+    // Cannot transferCross someone else's token:
+    const receiver = testCase === 'transfer' ? helper.address.substrateToEth(receiverSub.address) : receiverCrossSub;
+    await expect(collectionEvm.methods[testCase](receiver, nonSendersToken.tokenId).send({from: sender})).to.be.rejected;
+    // Cannot transfer token if it does not exist:
+    await expect(collectionEvm.methods[testCase](receiver, 999999).send({from: sender})).to.be.rejected;
+  }));
 });
 
 describe('NFT: Fees', () => {
