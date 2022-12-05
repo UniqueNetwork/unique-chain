@@ -187,6 +187,24 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
+  itEth('Cannot transfer incorrect amount', async ({helper}) => {
+    const sender = await helper.eth.createAccountWithBalance(donor);
+    const receiverEth = await helper.eth.createAccountWithBalance(donor);
+    const BALANCE = 200n;
+    const BALANCE_TO_TRANSFER = BALANCE + 100n;
+
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, BALANCE, {Ethereum: sender});
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', sender);
+
+    // 1. Cannot transfer more than have
+    const receiver = receiverEth;
+    await expect(collectionEvm.methods.transfer(receiver, BALANCE_TO_TRANSFER).send({from: sender})).to.be.rejected;
+    // 2. Zero transfer not allowed
+    await expect(collectionEvm.methods.transfer(receiver, 0n).send({from: sender})).to.be.rejected;
+  });
+
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);
