@@ -340,7 +340,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   
   itEth('destroyCollection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
+    const {collectionAddress, collectionId} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     
     await expect(collectionHelper.methods
@@ -349,6 +349,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     
     expect(await collectionHelper.methods
       .isCollectionExist(collectionAddress)
-      .call()).to.be.false;  
+      .call()).to.be.false;
+    expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });
