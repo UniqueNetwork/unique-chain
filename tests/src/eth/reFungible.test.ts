@@ -413,7 +413,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth('Cannot transferCross with invalid params', async ({helper}) => {
+  itEth.skip('Cannot transferCross with invalid params', async ({helper}) => {
     const sender = await helper.eth.createAccountWithBalance(donor);
     const tokenOwner = await helper.eth.createAccountWithBalance(donor);
     const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(minter);

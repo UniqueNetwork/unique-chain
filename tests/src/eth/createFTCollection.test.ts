@@ -215,12 +215,15 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     }
   });
   
-  itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
+  itEth('(!negative test!) cannot create collection if value !== 2', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    await expect(collectionHelper.methods
-      .createFTCollection('Peasantry', DECIMALS, 'absolutely anything', 'TWIW')
-      .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    const expects = [0n, 1n, 30n].map(async value => {
+      await expect(collectionHelper.methods
+        .createFTCollection('Peasantry', DECIMALS, 'absolutely anything', 'TWIW')
+        .call({value: Number(value * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    });
+    await Promise.all(expects);
   });
 
   // Soft-deprecated
