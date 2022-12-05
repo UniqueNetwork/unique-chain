@@ -102,6 +102,7 @@
     "testXcmTransferStatemine": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferStatemine.test.ts statemineId=1000 uniqueId=5000",
     "testXcmTransferMoonbeam": "mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmTransferMoonbeam.test.ts",
     "benchMintingFee": "ts-node src/benchmarks/mintFee/benchmark.ts",
+    "testApiConsts": "mocha --timeout 9999999 -r ts-node/register ./**/apiConsts.test.ts",
     "load": "mocha --timeout 9999999 -r ts-node/register './**/*.load.ts'",
     "loadTransfer": "ts-node src/transfer.nload.ts",
     "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > src/interfaces/metadata.json",

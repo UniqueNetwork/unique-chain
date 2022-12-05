@@ -4,6 +4,7 @@ set -eu
 dir=$PWD
 
 tmp=$(mktemp -d)
+echo "Tmp file: $tmp/input.sol"
 cd $tmp
 cp $dir/$INPUT input.sol
 solcjs --abi -p input.sol

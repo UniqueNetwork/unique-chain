@@ -75,19 +75,19 @@ impl<'i> AbiReader<'i> {
 		buf: &[u8],
 		offset: usize,
 		pad_start: usize,
-		pad_size: usize,
+		pad_end: usize,
 		block_start: usize,
-		block_size: usize,
+		block_end: usize,
 	) -> Result<[u8; S]> {
 		if buf.len() - offset < ABI_ALIGNMENT {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
 		let mut block = [0; S];
-		let is_pad_zeroed = buf[pad_start..pad_size].iter().all(|&v| v == 0);
+		let is_pad_zeroed = buf[pad_start..pad_end].iter().all(|&v| v == 0);
 		if !is_pad_zeroed {
 			return Err(Error::Error(ExitError::InvalidRange));
 		}
-		block.copy_from_slice(&buf[block_start..block_size]);
+		block.copy_from_slice(&buf[block_start..block_end]);
 		Ok(block)
 	}
 
@@ -186,11 +186,10 @@ impl<'i> AbiReader<'i> {
 
 	/// Slice recursive buffer, advance one word for buffer offset
 	/// If `size` is [`None`] then [`Self::offset`] and [`Self::subresult_offset`] evals from [`Self::buf`].
-	fn subresult(&mut self, size: Option<usize>) -> Result<AbiReader<'i>> {
+	pub fn subresult(&mut self, size: Option<usize>) -> Result<AbiReader<'i>> {
 		let subresult_offset = self.subresult_offset;
 		let offset = if let Some(size) = size {
 			self.offset += size;
-			self.subresult_offset += size;
 			0
 		} else {
 			self.uint32()? as usize
@@ -206,6 +205,11 @@ impl<'i> AbiReader<'i> {
 			subresult_offset: new_offset,
 			offset: new_offset,
 		})
+	}
+
+	/// Notify about readed data portion.
+	pub fn bytes_read(&mut self, size: usize) {
+		self.subresult_offset += size;
 	}
 
 	/// Is this parser reached end of buffer?
@@ -275,6 +279,11 @@ impl AbiWriter {
 	/// Write [`u32`] to end of buffer
 	pub fn uint32(&mut self, value: &u32) {
 		self.write_padleft(&u32::to_be_bytes(*value))
+	}
+
+	/// Write [`u64`] to end of buffer
+	pub fn uint64(&mut self, value: &u64) {
+		self.write_padleft(&u64::to_be_bytes(*value))
 	}
 
 	/// Write [`u128`] to end of buffer
