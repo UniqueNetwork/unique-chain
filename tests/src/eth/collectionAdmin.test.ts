@@ -425,7 +425,7 @@ describe('Change substrate owner tests', () => {
     await collectionEvm.methods.changeCollectionOwnerCross(ownerCrossSub).send({from: ownerEth});
     expect(await collectionEvm.methods.isOwnerOrAdminCross(ownerCrossSub).call()).to.be.true;
     expect(await helper.collection.getData(collectionId))
-      .to.have.property('normalizedOwner').that.is.eq(ownerSub.address);
+      .to.have.property('normalizedOwner').that.is.eq(helper.address.normalizeSubstrate(ownerSub.address));
   });
 
   itEth.skip('change owner call fee', async ({helper}) => {
