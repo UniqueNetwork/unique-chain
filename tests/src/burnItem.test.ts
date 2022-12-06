@@ -140,6 +140,31 @@ describe('Negative integration test: ext. burnItem():', () => {
     await expect(token.burn(bob)).to.be.rejectedWith('common.NoPermission');
   });
 
+  itSub('RFT: cannot burn non-owned token pieces', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice);
+    const aliceToken = await collection.mintToken(alice, 10n, {Substrate: alice.address});
+    const bobToken = await collection.mintToken(alice, 10n, {Substrate: bob.address});
+
+    // 1. Cannot burn non-owned token:
+    await expect(bobToken.burn(alice, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
+    await expect(bobToken.burn(alice, 5n)).to.be.rejectedWith('common.TokenValueTooLow');
+    // 2. Cannot burn non-existing token:
+    await expect(helper.rft.burnToken(alice, 99999, 10)).to.be.rejectedWith('common.CollectionNotFound');
+    await expect(helper.rft.burnToken(alice, collection.collectionId, 99999)).to.be.rejectedWith('common.TokenValueTooLow');
+    // 3. Can burn zero amount of owned tokens (EIP-20)
+    await aliceToken.burn(alice, 0n);
+
+    // 4. Storage is not corrupted:
+    expect(await aliceToken.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
+    expect(await bobToken.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
+
+    // 4.1 Tokens can be transfered:
+    await aliceToken.transfer(alice, {Substrate: bob.address}, 10n);
+    await bobToken.transfer(bob, {Substrate: alice.address}, 10n);
+    expect(await aliceToken.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
+    expect(await bobToken.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
+  });
+
   itSub('Transfer a burned token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice);
     const token = await collection.mintToken(alice);
