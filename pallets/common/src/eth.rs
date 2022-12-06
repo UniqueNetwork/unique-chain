@@ -155,3 +155,10 @@ impl EthCrossAccount {
 		}
 	}
 }
+#[derive(Default, Debug, Clone, Copy, AbiCoder)]
+#[repr(u8)]
+pub enum CollectionPermissions {
+	#[default]
+	CollectionAdmin,
+	TokenOwner,
+}
