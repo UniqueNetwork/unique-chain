@@ -292,8 +292,8 @@ describe('Fungible: Plain calls', () => {
     // 1. Cannot transfer more than have
     const receiver = testCase === 'transfer' ? receiverEth : receiverCrossEth;
     await expect(collectionEvm.methods[testCase](receiver, BALANCE_TO_TRANSFER).send({from: sender})).to.be.rejected;
-    // 2. Zero transfer not allowed
-    await expect(collectionEvm.methods[testCase](receiver, 0n).send({from: sender})).to.be.rejected;
+    // 2. Zero transfer allowed (EIP-20):
+    await collectionEvm.methods[testCase](receiver, 0n).send({from: sender});
   }));
   
   

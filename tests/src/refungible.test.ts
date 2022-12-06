@@ -276,17 +276,17 @@ describe('Refungible negative tests', () => {
     const tokenBob = await collection.mintToken(alice, 10n, {Substrate: bob.address});
 
     // 1. Alice cannot transfer Bob's token:
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejected;
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejected;
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 10n)).to.be.rejected;
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejected;
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 10n)).to.be.rejectedWith('common.TokenValueTooLow');
+    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejectedWith('common.TokenValueTooLow');
     
     // 2. Alice cannot transfer non-existing token:
-    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 0n)).to.be.rejected;
-    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 1n)).to.be.rejected;
+    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
+    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
 
-    // 3. Zero transfer not allowed:
-    await expect(tokenAlice.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.ZeroTransferNotAllowed');
+    // 3. Zero transfer allowed (EIP-20):
+    await tokenAlice.transfer(alice, {Substrate: charlie.address}, 0n);
 
     expect(await tokenAlice.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
     expect(await tokenBob.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
