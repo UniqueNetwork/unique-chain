@@ -201,10 +201,11 @@ describe('Fungible: Plain calls', () => {
     // 1. Cannot transfer more than have
     const receiver = receiverEth;
     await expect(collectionEvm.methods.transfer(receiver, BALANCE_TO_TRANSFER).send({from: sender})).to.be.rejected;
-    // 2. Zero transfer not allowed
-    await expect(collectionEvm.methods.transfer(receiver, 0n).send({from: sender})).to.be.rejected;
+    // 2. Zero transfer allowed (EIP-20):
+    await collectionEvm.methods.transfer(receiver, 0n).send({from: sender});
   });
-
+  
+  
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);
