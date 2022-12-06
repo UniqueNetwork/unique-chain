@@ -1036,6 +1036,12 @@ impl<T: Config> Pallet<T> {
 		.map_err(<Error<T>>::from)?;
 
 		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 
 		Ok(())
 	}
@@ -1115,6 +1121,12 @@ impl<T: Config> Pallet<T> {
 			collection.id,
 			property_key,
 		));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 
 		Ok(())
 	}
@@ -1209,6 +1221,12 @@ impl<T: Config> Pallet<T> {
 			collection.id,
 			property_permission.key,
 		));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 
 		Ok(())
 	}
