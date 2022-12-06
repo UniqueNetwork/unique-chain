@@ -626,44 +626,6 @@ fn transfer_nft_item_wrong_value() {
 }
 
 #[test]
-fn transfer_nft_item_zero_value() {
-	new_test_ext().execute_with(|| {
-		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
-
-		let data = default_nft_data();
-		create_test_item(collection_id, &data.into());
-		assert_eq!(
-			<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))),
-			1
-		);
-		assert_eq!(
-			<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))),
-			true
-		);
-
-		let origin1 = RuntimeOrigin::signed(1);
-
-		// Transferring 0 amount works on NFT...
-		assert_ok!(Unique::transfer(
-			origin1,
-			account(2),
-			CollectionId(1),
-			TokenId(1),
-			0
-		));
-		// ... and results in no transfer
-		assert_eq!(
-			<pallet_nonfungible::AccountBalance<Test>>::get((collection_id, account(1))),
-			1
-		);
-		assert_eq!(
-			<pallet_nonfungible::Owned<Test>>::get((collection_id, account(1), TokenId(1))),
-			true
-		);
-	});
-}
-
-#[test]
 fn nft_approve_and_transfer_from() {
 	new_test_ext().execute_with(|| {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));

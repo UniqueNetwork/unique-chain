@@ -426,7 +426,7 @@ pub fn ensure_single_owner<T: Config>(
 
 	if owner_balance == 0 {
 		return Err(dispatch_to_evm::<T>(
-			<CommonError<T>>::TokenValueTooLow.into(),
+			<CommonError<T>>::MustBeTokenOwner.into(),
 		));
 	}
 
