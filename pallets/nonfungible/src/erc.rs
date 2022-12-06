@@ -470,7 +470,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @notice Sets or unsets the approval of a given operator.
-	///  An operator is allowed to transfer all tokens of the sender on their behalf.
+	/// The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
 	/// @param operator Operator
 	/// @param approved Is operator enabled or disabled
 	#[weight(<SelfWeightOf<T>>::set_approval_for_all())]

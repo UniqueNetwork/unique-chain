@@ -472,7 +472,7 @@ pub mod pallet {
 			u128,
 		),
 
-		/// Amount pieces of token owned by `sender` was approved for `spender`.
+		/// A `sender` approves operations on all owned tokens for `spender`.
 		ApprovedForAll(
 			/// Id of collection to which item is belong.
 			CollectionId,
@@ -480,7 +480,7 @@ pub mod pallet {
 			T::CrossAccountId,
 			/// Id for which operator status was granted or rewoked.
 			T::CrossAccountId,
-			/// Is operator status was granted or rewoked.
+			/// Is operator status granted or revoked?
 			bool,
 		),
 
@@ -1847,7 +1847,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// An operator is allowed to transfer all tokens of the sender on their behalf.
 	/// * `owner` - Token owner
 	/// * `operator` - Operator
-	/// * `approve` - Is operator enabled or disabled
+	/// * `approve` - Should operator status be granted or revoked?
 	fn set_approval_for_all(
 		&self,
 		owner: T::CrossAccountId,
@@ -1855,7 +1855,7 @@ pub trait CommonCollectionOperations<T: Config> {
 		approve: bool,
 	) -> DispatchResultWithPostInfo;
 
-	/// Tells whether an operator is approved by a given owner.
+	/// Tells whether the given `owner` approves the `operator`.
 	fn is_approved_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
 }
 
