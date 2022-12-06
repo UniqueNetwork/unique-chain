@@ -601,9 +601,6 @@ pub mod pallet {
 
 		/// Tried to access an internal collection with an external API
 		CollectionIsInternal,
-
-		/// Transfer operation with zero amount
-		ZeroTransferNotAllowed,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.

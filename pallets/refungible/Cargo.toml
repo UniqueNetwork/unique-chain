@@ -1,6 +1,6 @@
 [package]
 name = "pallet-refungible"
-version = "0.2.9"
+version = "0.2.8"
 license = "GPLv3"
 edition = "2021"
 

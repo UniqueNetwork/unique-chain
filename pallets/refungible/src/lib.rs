@@ -727,8 +727,6 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		ensure!(amount > 0, <CommonError<T>>::ZeroTransferNotAllowed);
-
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed

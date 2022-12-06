@@ -23,7 +23,7 @@ use up_data_structs::{
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, Error as CommonError,
+	weights::WeightInfo as _,
 };
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
@@ -314,12 +314,14 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
-		ensure!(amount > 0, <CommonError<T>>::ZeroTransferNotAllowed);
-
-		with_weight(
-			<Pallet<T>>::transfer(self, &from, &to, token, nesting_budget),
-			<CommonWeights<T>>::transfer(),
-		)
+		if amount == 1 {
+			with_weight(
+				<Pallet<T>>::transfer(self, &from, &to, token, nesting_budget),
+				<CommonWeights<T>>::transfer(),
+			)
+		} else {
+			Ok(().into())
+		}
 	}
 
 	fn approve(
@@ -351,12 +353,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
-		ensure!(amount > 0, <CommonError<T>>::ZeroTransferNotAllowed);
 
-		with_weight(
-			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, nesting_budget),
-			<CommonWeights<T>>::transfer_from(),
-		)
+		if amount == 1 {
+			with_weight(
+				<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, nesting_budget),
+				<CommonWeights<T>>::transfer_from(),
+			)
+		} else {
+			Ok(().into())
+		}
 	}
 
 	fn burn_from(

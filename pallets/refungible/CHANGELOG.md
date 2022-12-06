@@ -3,11 +3,6 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
-## [0.2.10] - 2022-12-05
-
-### Fixed
-
-- Transfer with zero pieces.
 
 ## [0.2.9] - 2022-11-18
 
