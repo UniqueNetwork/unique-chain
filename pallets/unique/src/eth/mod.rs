@@ -36,7 +36,7 @@ use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorde
 use sp_std::vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
-	CreateCollectionData, CollectionId,
+	CreateCollectionData,
 };
 
 use crate::{weights::WeightInfo, Config, SelfWeightOf};

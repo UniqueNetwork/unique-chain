@@ -107,7 +107,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
-       * Amount pieces of token owned by `sender` was approved for `spender`.
+       * A `sender` approves operations on all owned tokens for `spender`.
        **/
       ApprovedForAll: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
       /**

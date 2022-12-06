@@ -935,48 +935,54 @@ describe('Negative tests', () => {
   let donor: IKeyringPair;
   let minter: IKeyringPair;
   let alice: IKeyringPair;
-  let bob: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [minter, alice, bob] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+      [minter, alice] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
 
   itEth('[negative] Cant perform burn without approval', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = bob;
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, {Ethereum: owner});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft');
 
-    {
-      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
-      await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
-    }
+    const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+
+    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
+    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+
+    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
   });
 
   itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
-    const owner = bob;
     const receiver = alice;
 
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, {Ethereum: owner});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft');
 
-    {
-      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
-      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
-    }
+    const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+    const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+
+    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+
+    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
+    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+    
+    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
   });
 });

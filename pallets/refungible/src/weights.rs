@@ -55,8 +55,8 @@ pub trait WeightInfo {
 	fn delete_token_properties(b: u32, ) -> Weight;
 	fn repartition_item() -> Weight;
 	fn token_owner() -> Weight;
-	fn set_approval_for_all() -> Weight;
-	fn is_approved_for_all() -> Weight;
+	fn set_allowance_for_all() -> Weight;
+	fn allowance_for_all() -> Weight;
 }
 
 /// Weights for pallet_refungible using the Substrate node and recommended hardware.
@@ -263,12 +263,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
 	// Storage: Refungible WalletOperator (r:0 w:1)
-	fn set_approval_for_all() -> Weight {
+	fn set_allowance_for_all() -> Weight {
 		Weight::from_ref_time(16_150_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Refungible WalletOperator (r:1 w:0)
-	fn is_approved_for_all() -> Weight {
+	fn allowance_for_all() -> Weight {
 		Weight::from_ref_time(5_901_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
@@ -477,12 +477,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 	}
 	// Storage: Refungible WalletOperator (r:0 w:1)
-	fn set_approval_for_all() -> Weight {
+	fn set_allowance_for_all() -> Weight {
 		Weight::from_ref_time(16_150_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Refungible WalletOperator (r:1 w:0)
-	fn is_approved_for_all() -> Weight {
+	fn allowance_for_all() -> Weight {
 		Weight::from_ref_time(5_901_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}

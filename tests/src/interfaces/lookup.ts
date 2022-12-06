@@ -2305,7 +2305,7 @@ export default {
         tokenId: 'u32',
         amount: 'u128',
       },
-      set_approval_for_all: {
+      set_allowance_for_all: {
         collectionId: 'u32',
         operator: 'PalletEvmAccountBasicCrossAccountIdRepr',
         approve: 'bool'

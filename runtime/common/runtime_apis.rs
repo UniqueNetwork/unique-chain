@@ -188,8 +188,8 @@ macro_rules! impl_common_runtime_apis {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
 
-		        fn is_approved_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool, DispatchError> {
-                    dispatch_unique_runtime!(collection.is_approved_for_all(owner, operator))
+		        fn allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool, DispatchError> {
+                    dispatch_unique_runtime!(collection.allowance_for_all(owner, operator))
                 }
             }
 

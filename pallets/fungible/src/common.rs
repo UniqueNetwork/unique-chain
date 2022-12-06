@@ -108,7 +108,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		Weight::zero()
 	}
 
-	fn set_approval_for_all() -> Weight {
+	fn set_allowance_for_all() -> Weight {
 		Weight::zero()
 	}
 }
@@ -429,7 +429,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		<TotalSupply<T>>::try_get(self.id).ok()
 	}
 
-	fn set_approval_for_all(
+	fn set_allowance_for_all(
 		&self,
 		_owner: T::CrossAccountId,
 		_operator: T::CrossAccountId,
@@ -438,7 +438,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingApprovalForAllNotAllowed)
 	}
 
-	fn is_approved_for_all(&self, _owner: T::CrossAccountId, _operator: T::CrossAccountId) -> bool {
+	fn allowance_for_all(&self, _owner: T::CrossAccountId, _operator: T::CrossAccountId) -> bool {
 		false
 	}
 }
