@@ -453,7 +453,7 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 	) -> DispatchResult {
 		if <Balance<T>>::get((collection.id, token, owner)) == 0 {
-			return Err(<CommonError<T>>::MustBeTokenOwner.into());
+			return Err(<CommonError<T>>::TokenValueTooLow.into());
 		}
 
 		let total_supply = <TotalSupply<T>>::get((collection.id, token))
@@ -745,7 +745,7 @@ impl<T: Config> Pallet<T> {
 		let initial_balance_from = <Balance<T>>::get((collection.id, token, from));
 
 		if initial_balance_from == 0 {
-			return Err(<CommonError<T>>::MustBeTokenOwner.into());
+			return Err(<CommonError<T>>::TokenValueTooLow.into());
 		}
 
 		let updated_balance_from = initial_balance_from
