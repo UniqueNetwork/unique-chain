@@ -153,8 +153,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::token_owner()
 	}
 
-	fn set_approval_for_all() -> Weight {
-		<SelfWeightOf<T>>::set_approval_for_all()
+	fn set_allowance_for_all() -> Weight {
+		<SelfWeightOf<T>>::set_allowance_for_all()
 	}
 }
 
@@ -521,20 +521,20 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<Pallet<T>>::total_pieces(self.id, token)
 	}
 
-	fn set_approval_for_all(
+	fn set_allowance_for_all(
 		&self,
 		owner: T::CrossAccountId,
 		operator: T::CrossAccountId,
 		approve: bool,
 	) -> DispatchResultWithPostInfo {
 		with_weight(
-			<Pallet<T>>::set_approval_for_all(self, &owner, &operator, approve),
-			<CommonWeights<T>>::set_approval_for_all(),
+			<Pallet<T>>::set_allowance_for_all(self, &owner, &operator, approve),
+			<CommonWeights<T>>::set_allowance_for_all(),
 		)
 	}
 
-	fn is_approved_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool {
-		<Pallet<T>>::is_approved_for_all(self, &owner, &operator)
+	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool {
+		<Pallet<T>>::allowance_for_all(self, &owner, &operator)
 	}
 }
 

@@ -274,7 +274,7 @@ pub mod pallet {
 
 	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
 	#[pallet::storage]
-	pub type WalletOperator<T: Config> = StorageNMap<
+	pub type CollectionAllowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>,
@@ -450,7 +450,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::remove(id);
 		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
 		let _ = <AccountBalance<T>>::clear_prefix((id,), u32::MAX, None);
-		let _ = <WalletOperator<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <CollectionAllowance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
@@ -1192,7 +1192,7 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() == Some(spender) {
 			return Ok(());
 		}
-		if <WalletOperator<T>>::get((collection.id, from, spender)) == Some(true) {
+		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
 			return Ok(());
 		}
 		ensure!(
@@ -1331,11 +1331,11 @@ impl<T: Config> Pallet<T> {
 
 	/// Sets or unsets the approval of a given operator.
 	///
-	/// An operator is allowed to transfer all token pieces of the sender on their behalf.
+	/// The `operator` is allowed to transfer all token pieces of the `owner` on their behalf.
 	/// - `owner`: Token owner
 	/// - `operator`: Operator
-	/// - `approve`: Is operator enabled or disabled
-	pub fn set_approval_for_all(
+	/// - `approve`: Should operator status be granted or revoked?
+	pub fn set_allowance_for_all(
 		collection: &NonfungibleHandle<T>,
 		owner: &T::CrossAccountId,
 		operator: &T::CrossAccountId,
@@ -1350,7 +1350,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<WalletOperator<T>>::insert((collection.id, owner, operator), approve);
+		<CollectionAllowance<T>>::insert((collection.id, owner, operator), approve);
 		<PalletEvm<T>>::deposit_log(
 			ERC721Events::ApprovalForAll {
 				owner: *owner.as_eth(),
@@ -1368,12 +1368,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Tells whether an operator is approved by a given owner.
-	pub fn is_approved_for_all(
+	/// Tells whether the given `owner` approves the `operator`.
+	pub fn allowance_for_all(
 		collection: &NonfungibleHandle<T>,
 		owner: &T::CrossAccountId,
 		operator: &T::CrossAccountId,
 	) -> bool {
-		<WalletOperator<T>>::get((collection.id, owner, operator)).unwrap_or(false)
+		<CollectionAllowance<T>>::get((collection.id, owner, operator))
 	}
 }

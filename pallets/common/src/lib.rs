@@ -1535,7 +1535,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn token_owner() -> Weight;
 
 	/// The price of setting approval for all
-	fn set_approval_for_all() -> Weight;
+	fn set_allowance_for_all() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -1844,11 +1844,11 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// Get extension for RFT collection.
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
 
-	/// An operator is allowed to transfer all tokens of the sender on their behalf.
+	/// The `operator` is allowed to transfer all tokens of the `owner` on their behalf.
 	/// * `owner` - Token owner
 	/// * `operator` - Operator
 	/// * `approve` - Should operator status be granted or revoked?
-	fn set_approval_for_all(
+	fn set_allowance_for_all(
 		&self,
 		owner: T::CrossAccountId,
 		operator: T::CrossAccountId,
@@ -1856,7 +1856,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> DispatchResultWithPostInfo;
 
 	/// Tells whether the given `owner` approves the `operator`.
-	fn is_approved_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
+	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
 }
 
 /// Extension for RFT collection.

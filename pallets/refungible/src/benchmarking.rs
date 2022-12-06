@@ -291,17 +291,17 @@ benchmarks! {
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
 	}: {<Pallet<T>>::token_owner(collection.id, item)}
 
-	set_approval_for_all {
+	set_allowance_for_all {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			operator: cross_from_sub(owner); owner: cross_sub;
 		};
-	}: {<Pallet<T>>::set_approval_for_all(&collection, &owner, &operator, true)}
+	}: {<Pallet<T>>::set_allowance_for_all(&collection, &owner, &operator, true)}
 
-	is_approved_for_all {
+	allowance_for_all {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			operator: cross_from_sub(owner); owner: cross_sub;
 		};
-	}: {<Pallet<T>>::is_approved_for_all(&collection, &owner, &operator)}
+	}: {<Pallet<T>>::allowance_for_all(&collection, &owner, &operator)}
 }

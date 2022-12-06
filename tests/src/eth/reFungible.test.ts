@@ -747,10 +747,14 @@ describe('Negative tests', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'rft');
 
-    {
-      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
-      await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
-    }
+    const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+
+    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+
+    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
+    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+
+    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
   });
 
   itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
@@ -765,10 +769,14 @@ describe('Negative tests', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'rft');
 
-    {
-      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
-      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
-    }
+    const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+    const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+    
+    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+
+    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
+    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+    
+    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
   });
 });

@@ -121,8 +121,8 @@ where
 		max_weight_of!(token_owner())
 	}
 
-	fn set_approval_for_all() -> Weight {
-		max_weight_of!(set_approval_for_all())
+	fn set_allowance_for_all() -> Weight {
+		max_weight_of!(set_allowance_for_all())
 	}
 }
 

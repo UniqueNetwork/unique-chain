@@ -134,6 +134,6 @@ sp_api::decl_runtime_apis! {
 		fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec<CrossAccountId>>;
 
 		/// Get whether an operator is approved by a given owner.
-		fn is_approved_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool>;
+		fn allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool>;
 	}
 }

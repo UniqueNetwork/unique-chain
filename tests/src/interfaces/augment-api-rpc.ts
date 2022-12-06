@@ -684,6 +684,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       allowance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, sender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
       /**
+       * Tells whether the given `owner` approves the `operator`.
+       **/
+      allowanceForAll: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, operator: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<bool>>>;
+      /**
        * Check if a user is allowed to operate within a collection
        **/
       allowed: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
@@ -719,10 +723,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get effective collection limits
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
-      /**
-       * Tells whether an operator is approved by a given owner.
-       **/
-      isApprovedForAll: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, operator: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<bool>>>;
       /**
        * Get the last token ID created in a collection
        **/

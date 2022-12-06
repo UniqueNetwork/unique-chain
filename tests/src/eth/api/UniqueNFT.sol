@@ -672,9 +672,9 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	function approve(address approved, uint256 tokenId) external;
 
 	/// @notice Sets or unsets the approval of a given operator.
-	///  An operator is allowed to transfer all tokens of the sender on their behalf.
+	/// The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
 	/// @param operator Operator
-	/// @param approved Is operator enabled or disabled
+	/// @param approved Should operator status be granted or revoked?
 	/// @dev EVM selector for this function is: 0xa22cb465,
 	///  or in textual repr: setApprovalForAll(address,bool)
 	function setApprovalForAll(address operator, bool approved) external;
@@ -684,7 +684,7 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	///  or in textual repr: getApproved(uint256)
 	function getApproved(uint256 tokenId) external view returns (address);
 
-	/// @notice Tells whether an operator is approved by a given owner.
+	/// @notice Tells whether the given `owner` approves the `operator`.
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
 	function isApprovedForAll(address owner, address operator) external view returns (bool);

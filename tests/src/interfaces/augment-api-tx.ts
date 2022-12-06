@@ -1547,15 +1547,15 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * Sets or unsets the approval of a given operator.
        * 
-       * An operator is allowed to transfer all tokens of the sender on their behalf.
+       * The `operator` is allowed to transfer all tokens of the `owner` on their behalf.
        * 
        * # Arguments
        * 
        * * `owner`: Token owner
        * * `operator`: Operator
-       * * `approve`: Is operator enabled or disabled
+       * * `approve`: Should operator status be granted or revoked?
        **/
-      setApprovalForAll: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, operator: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, approve: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
+      setAllowanceForAll: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, operator: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, approve: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
       /**
        * Set specific limits of a collection. Empty, or None fields mean chain default.
        * 

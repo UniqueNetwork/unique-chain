@@ -1129,15 +1129,15 @@ decl_module! {
 
 		/// Sets or unsets the approval of a given operator.
 		///
-		/// An operator is allowed to transfer all tokens of the sender on their behalf.
+		/// The `operator` is allowed to transfer all tokens of the `owner` on their behalf.
 		///
 		/// # Arguments
 		///
 		/// * `owner`: Token owner
 		/// * `operator`: Operator
-		/// * `approve`: Is operator enabled or disabled
-		#[weight = T::CommonWeightInfo::set_approval_for_all()]
-		pub fn set_approval_for_all(
+		/// * `approve`: Should operator status be granted or revoked?
+		#[weight = T::CommonWeightInfo::set_allowance_for_all()]
+		pub fn set_allowance_for_all(
 			origin,
 			collection_id: CollectionId,
 			operator: T::CrossAccountId,
@@ -1145,7 +1145,7 @@ decl_module! {
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			dispatch_tx::<T, _>(collection_id, |d| {
-				d.set_approval_for_all(sender, operator, approve)
+				d.set_allowance_for_all(sender, operator, approve)
 			})
 		}
 	}

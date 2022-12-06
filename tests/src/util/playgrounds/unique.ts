@@ -1415,26 +1415,26 @@ class NFTnRFT extends CollectionGroup {
   }
 
   /**
-   * Tells whether an operator is approved by a given owner.
+   * Tells whether the given `owner` approves the `operator`.
    * @param collectionId ID of collection
    * @param owner owner address
-	 * @param operator operator addrees
+   * @param operator operator addrees
    * @returns true if operator is enabled
    */
-  async isApprovedForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.isApprovedForAll', [collectionId, owner, operator])).toJSON();
+  async allowanceForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean> {
+    return (await this.helper.callRpc('api.rpc.unique.allowanceForAll', [collectionId, owner, operator])).toJSON();
   }
 
   /** Sets or unsets the approval of a given operator.
-	 *  An operator is allowed to transfer all tokens of the sender on their behalf.
-	 *  @param operator Operator
-	 *  @param approved Is operator enabled or disabled
+   *  The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
+   *  @param operator Operator
+   *  @param approved Should operator status be granted or revoked?
    *  @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setApprovalForAll(signer: TSigner, collectionId: number, operator: ICrossAccountId, approved: boolean): Promise<boolean> {
+  async setAllowanceForAll(signer: TSigner, collectionId: number, operator: ICrossAccountId, approved: boolean): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.unique.setApprovalForAll', [collectionId, operator, approved],
+      'api.tx.unique.setAllowanceForAll', [collectionId, operator, approved],
       true,
     );
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'ApprovedForAll');
