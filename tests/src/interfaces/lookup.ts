@@ -1046,6 +1046,7 @@ export default {
       ItemDestroyed: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,u128)',
       Transfer: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,PalletEvmAccountBasicCrossAccountIdRepr,u128)',
       Approved: '(u32,u32,PalletEvmAccountBasicCrossAccountIdRepr,PalletEvmAccountBasicCrossAccountIdRepr,u128)',
+      ApprovedForAll: '(u32,PalletEvmAccountBasicCrossAccountIdRepr,PalletEvmAccountBasicCrossAccountIdRepr,bool)',
       CollectionPropertySet: '(u32,Bytes)',
       CollectionPropertyDeleted: '(u32,Bytes)',
       TokenPropertySet: '(u32,u32,Bytes)',
@@ -1054,7 +1055,7 @@ export default {
     }
   },
   /**
-   * Lookup99: pallet_structure::pallet::Event<T>
+   * Lookup100: pallet_structure::pallet::Event<T>
    **/
   PalletStructureEvent: {
     _enum: {
@@ -1062,7 +1063,7 @@ export default {
     }
   },
   /**
-   * Lookup100: pallet_rmrk_core::pallet::Event<T>
+   * Lookup101: pallet_rmrk_core::pallet::Event<T>
    **/
   PalletRmrkCoreEvent: {
     _enum: {
@@ -1139,7 +1140,7 @@ export default {
     }
   },
   /**
-   * Lookup101: rmrk_traits::nft::AccountIdOrCollectionNftTuple<sp_core::crypto::AccountId32>
+   * Lookup102: rmrk_traits::nft::AccountIdOrCollectionNftTuple<sp_core::crypto::AccountId32>
    **/
   RmrkTraitsNftAccountIdOrCollectionNftTuple: {
     _enum: {
@@ -2302,7 +2303,12 @@ export default {
       repartition: {
         collectionId: 'u32',
         tokenId: 'u32',
-        amount: 'u128'
+        amount: 'u128',
+      },
+      set_approval_for_all: {
+        collectionId: 'u32',
+        operator: 'PalletEvmAccountBasicCrossAccountIdRepr',
+        approve: 'bool'
       }
     }
   },
@@ -3445,7 +3451,7 @@ export default {
    * Lookup430: pallet_fungible::pallet::Error<T>
    **/
   PalletFungibleError: {
-    _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
+    _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingApprovalForAllNotAllowed']
   },
   /**
    * Lookup431: pallet_refungible::ItemData

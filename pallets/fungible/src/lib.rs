@@ -127,6 +127,8 @@ pub mod pallet {
 		FungibleDisallowsNesting,
 		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
+		/// Setting approval for all is not allowed.
+		SettingApprovalForAllNotAllowed,
 	}
 
 	#[pallet::config]

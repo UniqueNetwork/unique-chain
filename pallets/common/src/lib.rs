@@ -472,6 +472,18 @@ pub mod pallet {
 			u128,
 		),
 
+		/// Amount pieces of token owned by `sender` was approved for `spender`.
+		ApprovedForAll(
+			/// Id of collection to which item is belong.
+			CollectionId,
+			/// Owner of a wallet.
+			T::CrossAccountId,
+			/// Id for which operator status was granted or rewoked.
+			T::CrossAccountId,
+			/// Is operator status was granted or rewoked.
+			bool,
+		),
+
 		/// The colletion property has been added or edited.
 		CollectionPropertySet(
 			/// Id of collection to which property has been set.
@@ -1521,6 +1533,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 
 	/// The price of retrieving token owner
 	fn token_owner() -> Weight;
+
+	/// The price of setting approval for all
+	fn set_approval_for_all() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -1828,6 +1843,20 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Get extension for RFT collection.
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+
+	/// An operator is allowed to transfer all tokens of the sender on their behalf.
+	/// * `owner` - Token owner
+	/// * `operator` - Operator
+	/// * `approve` - Is operator enabled or disabled
+	fn set_approval_for_all(
+		&self,
+		owner: T::CrossAccountId,
+		operator: T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResultWithPostInfo;
+
+	/// Tells whether an operator is approved by a given owner.
+	fn is_approved_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
 }
 
 /// Extension for RFT collection.

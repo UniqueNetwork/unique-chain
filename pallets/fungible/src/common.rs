@@ -107,6 +107,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn token_owner() -> Weight {
 		Weight::zero()
 	}
+
+	fn set_approval_for_all() -> Weight {
+		Weight::zero()
+	}
 }
 
 /// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallete
@@ -423,5 +427,18 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 			return None;
 		}
 		<TotalSupply<T>>::try_get(self.id).ok()
+	}
+
+	fn set_approval_for_all(
+		&self,
+		_owner: T::CrossAccountId,
+		_operator: T::CrossAccountId,
+		_approve: bool,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingApprovalForAllNotAllowed)
+	}
+
+	fn is_approved_for_all(&self, _owner: T::CrossAccountId, _operator: T::CrossAccountId) -> bool {
+		false
 	}
 }

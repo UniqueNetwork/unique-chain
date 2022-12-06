@@ -1413,6 +1413,32 @@ class NFTnRFT extends CollectionGroup {
   getTokenObject(_collectionId: number, _tokenId: number): any {
     return null;
   }
+
+  /**
+   * Tells whether an operator is approved by a given owner.
+   * @param collectionId ID of collection
+   * @param owner owner address
+	 * @param operator operator addrees
+   * @returns true if operator is enabled
+   */
+  async isApprovedForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean> {
+    return (await this.helper.callRpc('api.rpc.unique.isApprovedForAll', [collectionId, owner, operator])).toJSON();
+  }
+
+  /** Sets or unsets the approval of a given operator.
+	 *  An operator is allowed to transfer all tokens of the sender on their behalf.
+	 *  @param operator Operator
+	 *  @param approved Is operator enabled or disabled
+   *  @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async setApprovalForAll(signer: TSigner, collectionId: number, operator: ICrossAccountId, approved: boolean): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.setApprovalForAll', [collectionId, operator, approved],
+      true,
+    );
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'ApprovedForAll');
+  }
 }
 
 

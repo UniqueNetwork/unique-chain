@@ -273,6 +273,18 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+	#[pallet::storage]
+	pub type WalletOperator<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+		),
+		Value = bool,
+		QueryKind = OptionQuery,
+	>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
@@ -1161,6 +1173,12 @@ impl<T: Config> Pallet<T> {
 		}
 		let allowance =
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
+
+		// Allowance if any would be reduced if spender is also wallet operator
+		if <WalletOperator<T>>::get((collection.id, from, spender)) == Some(true) {
+			return Ok(allowance);
+		}
+
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
@@ -1386,5 +1404,53 @@ impl<T: Config> Pallet<T> {
 		} else {
 			Some(res)
 		}
+	}
+
+	/// Sets or unsets the approval of a given operator.
+	///
+	/// An operator is allowed to transfer all tokens of the sender on their behalf.
+	/// - `owner`: Token owner
+	/// - `operator`: Operator
+	/// - `approve`: Is operator enabled or disabled
+	pub fn set_approval_for_all(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(operator)?;
+		}
+
+		<PalletCommon<T>>::ensure_correct_receiver(operator)?;
+
+		// =========
+
+		<WalletOperator<T>>::insert((collection.id, owner, operator), approve);
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::ApprovalForAll {
+				owner: *owner.as_eth(),
+				operator: *operator.as_eth(),
+				approved: approve,
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ApprovedForAll(
+			collection.id,
+			owner.clone(),
+			operator.clone(),
+			approve,
+		));
+		Ok(())
+	}
+
+	/// Tells whether an operator is approved by a given owner.
+	pub fn is_approved_for_all(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+	) -> bool {
+		<WalletOperator<T>>::get((collection.id, owner, operator)).unwrap_or(false)
 	}
 }

@@ -175,5 +175,10 @@ export default {
       [collectionParam, tokenParam], 
       'Option<u128>',
     ),
+    isApprovedForAll: fun(
+      'Tells whether an operator is approved by a given owner.', 
+      [collectionParam, crossAccountParam('owner'), crossAccountParam('operator')], 
+      'Option<bool>',
+    ),
   },
 };

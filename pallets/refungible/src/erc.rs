@@ -461,15 +461,23 @@ impl<T: Config> RefungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
-	/// @dev Not implemented
+	/// @notice Sets or unsets the approval of a given operator.
+	///  An operator is allowed to transfer all tokens of the sender on their behalf.
+	/// @param operator Operator
+	/// @param approved Is operator enabled or disabled
+	#[weight(<SelfWeightOf<T>>::set_approval_for_all())]
 	fn set_approval_for_all(
 		&mut self,
-		_caller: caller,
-		_operator: address,
-		_approved: bool,
+		caller: caller,
+		operator: address,
+		approved: bool,
 	) -> Result<void> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+		let caller = T::CrossAccountId::from_eth(caller);
+		let operator = T::CrossAccountId::from_eth(operator);
+
+		<Pallet<T>>::set_approval_for_all(self, &caller, &operator, approved)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	/// @dev Not implemented
@@ -478,10 +486,13 @@ impl<T: Config> RefungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
-	/// @dev Not implemented
-	fn is_approved_for_all(&self, _owner: address, _operator: address) -> Result<address> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+	/// @notice Tells whether an operator is approved by a given owner.
+	#[weight(<SelfWeightOf<T>>::is_approved_for_all())]
+	fn is_approved_for_all(&self, owner: address, operator: address) -> Result<bool> {
+		let owner = T::CrossAccountId::from_eth(owner);
+		let operator = T::CrossAccountId::from_eth(operator);
+
+		Ok(<Pallet<T>>::is_approved_for_all(self, &owner, &operator))
 	}
 
 	/// @notice Returns collection helper contract address
