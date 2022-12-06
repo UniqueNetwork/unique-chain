@@ -31,20 +31,24 @@ describe('EVM collection properties', () => {
     });
   });
 
-  itEth('Can be set', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
-    await collection.addAdmin(alice, {Ethereum: caller});
+  // Soft-deprecated: setCollectionProperty
+  [{method: 'setCollectionProperties', methodParams: [[{key: 'testKey1', value: Buffer.from('testValue1')}, {key: 'testKey2', value: Buffer.from('testValue2')}]], expectedProps: [{key: 'testKey1', value: 'testValue1'}, {key: 'testKey2', value: 'testValue2'}]}, 
+    {method: 'setCollectionProperty', methodParams: ['testKey', Buffer.from('testValue')], expectedProps: [{key: 'testKey', value: 'testValue'}]},
+  ].map(testCase => 
+    itEth(`Collection properties can be set: ${testCase.method}`, async({helper}) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
+      await collection.addAdmin(alice, {Ethereum: caller});
 
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contract = helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'setCollectionProperty');
 
-    await contract.methods.setCollectionProperties([{key: 'testKey', value: Buffer.from('testValue')}]).send({from: caller});
+      await contract.methods[testCase.method](...testCase.methodParams).send({from: caller});
 
-    const raw = (await collection.getData())?.raw;
+      const raw = (await collection.getData())?.raw;
+      expect(raw.properties).to.deep.equal(testCase.expectedProps);
+    }));
 
-    expect(raw.properties[0].value).to.equal('testValue');
-  });
 
   itEth('Can be deleted', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
@@ -71,22 +75,6 @@ describe('EVM collection properties', () => {
 
     const value = await contract.methods.collectionProperty('testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
-  });
-
-  // Soft-deprecated
-  itEth('Collection property can be set', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
-    await collection.addAdmin(alice, {Ethereum: caller});
-
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller, true);
-
-    await contract.methods.setCollectionProperty('testKey', Buffer.from('testValue')).send();
-
-    const raw = (await collection.getData())?.raw;
-
-    expect(raw.properties[0].value).to.equal('testValue');
   });
 
   // Soft-deprecated
