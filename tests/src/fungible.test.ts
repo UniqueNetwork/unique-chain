@@ -167,7 +167,7 @@ describe('Fungible negative tests', () => {
     await collection.mint(alice, 10n, {Substrate: bob.address});
 
     // 1. Alice cannot transfer Bob's token:
-    await expect(collection.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.ZeroTransferNotAllowed');
+    await expect(collection.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
     await expect(collection.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
     await expect(collection.transfer(alice, {Substrate: charlie.address}, 10n)).to.be.rejectedWith('common.TokenValueTooLow');
     await expect(collection.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejectedWith('common.TokenValueTooLow');
@@ -176,8 +176,8 @@ describe('Fungible negative tests', () => {
     await expect(nonExistingCollection.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.CollectionNotFound');
     await expect(nonExistingCollection.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.CollectionNotFound');
 
-    // 3. Zero transfer not allowed:
-    await expect(collection.transfer(bob, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.ZeroTransferNotAllowed');
+    // 3. Zero transfer allowed (EIP-20):
+    await collection.transfer(bob, {Substrate: charlie.address}, 0n);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.eq(0n);
     expect(await collection.getBalance({Substrate: bob.address})).to.eq(10n);
