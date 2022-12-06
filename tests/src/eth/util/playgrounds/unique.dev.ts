@@ -365,6 +365,14 @@ export class EthPropertyGroup extends EthGroupBase {
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthCrossAccountGroup extends EthGroupBase {
+  createAccount(): TEthCrossAccount {
+    return this.fromAddress(this.helper.eth.createAccount());
+  }
+
+  async createAccountWithBalance(donor: IKeyringPair, amount=100n) {
+    return this.fromAddress(await this.helper.eth.createAccountWithBalance(donor, amount));
+  }
+
   fromAddress(address: TEthereumAccount): TEthCrossAccount {
     return {
       eth: address,
