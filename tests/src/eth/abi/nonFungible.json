@@ -238,6 +238,27 @@
   },
   {
     "inputs": [],
+    "name": "collectionNestingPermissions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionPermissions",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" }
+        ],
+        "internalType": "struct Tuple37[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionNestingRestrictedCollectionIds",
     "outputs": [
       {

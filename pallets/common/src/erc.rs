@@ -26,7 +26,7 @@ use evm_coder::{
 	weight,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
 	SponsoringRateLimit, SponsorshipState,
@@ -35,7 +35,9 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{EthCrossAccount, convert_cross_account_to_uint256},
+	eth::{
+		EthCrossAccount, convert_cross_account_to_uint256, CollectionPermissions as EvmPermissions,
+	},
 	weights::WeightInfo,
 };
 
@@ -508,6 +510,14 @@ where
 		))
 	}
 
+	/// Returns permissions for a collection
+	fn collection_nesting_permissions(&self) -> Result<Vec<(EvmPermissions, bool)>> {
+		let nesting = self.collection.permissions.nesting();
+		Ok(vec![
+			(EvmPermissions::CollectionAdmin, nesting.collection_admin),
+			(EvmPermissions::TokenOwner, nesting.token_owner),
+		])
+	}
 	/// Set the collection access method.
 	/// @param mode Access mode
 	/// 	0 for Normal
