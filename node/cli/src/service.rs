@@ -34,7 +34,7 @@ use serde::{Serialize, Deserialize};
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::ParachainConsensus;
+use cumulus_client_consensus_common::{ParachainConsensus, ParachainBlockImport as TParachainBlockImport};
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
@@ -43,7 +43,7 @@ use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::{RelayChainRpcInterface, create_client_and_start_worker};
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 
 // Substrate Imports
 use sp_api::BlockT;
@@ -188,6 +188,7 @@ type FullClient<RuntimeApi, ExecutorDispatch> =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
+type ParachainBlockImport<RuntimeApi, ExecutorDispatch> = TParachainBlockImport<Arc<FullClient<RuntimeApi, ExecutorDispatch>>>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -332,14 +333,11 @@ async fn build_relay_chain_interface(
 	Option<CollatorPair>,
 )> {
 	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) => {
-			let rpc_client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
-
-			Ok((
-				Arc::new(RelayChainRpcInterface::new(rpc_client)) as Arc<_>,
-				None,
-			))
-		}
+		Some(relay_chain_url) => build_minimal_relay_chain_node(
+			polkadot_config,
+			task_manager,
+			relay_chain_url,
+		).await,
 		None => build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
@@ -597,7 +595,6 @@ where
 			import_queue,
 			relay_chain_interface,
 			relay_chain_slot_duration,
-			collator_options,
 		};
 
 		start_full_node(params)?;
@@ -631,6 +628,8 @@ where
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
+	let block_import = ParachainBlockImport::new(client.clone());
+
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
 		_,
@@ -639,7 +638,7 @@ where
 		_,
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
-		block_import: client.clone(),
+		block_import,
 		client: client.clone(),
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
@@ -726,6 +725,8 @@ where
 				telemetry.clone(),
 			);
 
+			let block_import = ParachainBlockImport::new(client.clone());
+
 			Ok(AuraConsensus::build::<
 				sp_consensus_aura::sr25519::AuthorityPair,
 				_,
@@ -763,7 +764,7 @@ where
 						Ok((slot, time, parachain_inherent))
 					}
 				},
-				block_import: client.clone(),
+				block_import,
 				para_client: client,
 				backoff_authoring_blocks: Option::<()>::None,
 				sync_oracle,

@@ -6,7 +6,7 @@ homepage = 'https://unique.network'
 license = 'All Rights Reserved'
 name = 'up-common'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = "0.9.30"
+version = "0.9.33"
 
 [features]
 default = ['std']
@@ -17,40 +17,46 @@ std = [
     'sp-core/std',
     'sp-consensus-aura/std',
     'fp-rpc/std',
+    'cumulus-primitives-core/std',
     'pallet-evm/std',
 ]
 
 [dependencies.sp-std]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.30"
+branch = "polkadot-v0.9.33"
 
 [dependencies.frame-support]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.30"
+branch = "polkadot-v0.9.33"
 
 [dependencies.sp-runtime]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.30"
+branch = "polkadot-v0.9.33"
 
 [dependencies.sp-core]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.30"
+branch = "polkadot-v0.9.33"
 
 [dependencies.sp-consensus-aura]
 default-features = false
 git = "https://github.com/paritytech/substrate"
-branch = "polkadot-v0.9.30"
+branch = "polkadot-v0.9.33"
 
 [dependencies.fp-rpc]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-branch = "unique-polkadot-v0.9.30-2"
+branch = "unique-polkadot-v0.9.33"
+
+[dependencies.cumulus-primitives-core]
+default-features = false
+git = "https://github.com/paritytech/cumulus"
+branch = "polkadot-v0.9.33"
 
 [dependencies.pallet-evm]
 default-features = false
 git = "https://github.com/uniquenetwork/frontier"
-branch = "unique-polkadot-v0.9.30-2"
+branch = "unique-polkadot-v0.9.33"

@@ -54,7 +54,6 @@ use crate::service::DefaultRuntimeExecutor;
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_cli::generate_genesis_block;
-use std::{future::Future, pin::Pin};
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -410,40 +409,43 @@ pub fn run() -> Result<()> {
 				}
 			}
 		}
+		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
-			if cfg!(feature = "try-runtime") {
-				let runner = cli.create_runner(cmd)?;
+			use std::{future::Future, pin::Pin};
 
-				// grab the task manager.
-				let registry = &runner
-					.config()
-					.prometheus_config
-					.as_ref()
-					.map(|cfg| &cfg.registry);
-				let task_manager =
-					sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-						.map_err(|e| format!("Error: {:?}", e))?;
+			let runner = cli.create_runner(cmd)?;
 
-				runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
-					Ok((
-						match config.chain_spec.runtime_id() {
-							#[cfg(feature = "unique-runtime")]
-							RuntimeId::Unique => Box::pin(cmd.run::<Block, UniqueRuntimeExecutor>(config)),
+			// grab the task manager.
+			let registry = &runner
+				.config()
+				.prometheus_config
+				.as_ref()
+				.map(|cfg| &cfg.registry);
+			let task_manager =
+				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+					.map_err(|e| format!("Error: {:?}", e))?;
 
-							#[cfg(feature = "quartz-runtime")]
-							RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
+			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
+				Ok((
+					match config.chain_spec.runtime_id() {
+						#[cfg(feature = "unique-runtime")]
+						RuntimeId::Unique => Box::pin(cmd.run::<Block, UniqueRuntimeExecutor>(config)),
 
-							RuntimeId::Opal => {
-								Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config))
-							}
-							RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
-						},
-						task_manager,
-					))
-				})
-			} else {
-				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			}
+						#[cfg(feature = "quartz-runtime")]
+						RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
+
+						RuntimeId::Opal => {
+							Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config))
+						}
+						RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
+					},
+					task_manager,
+				))
+			})
+		},
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime) => {
+			Err("Try-runtime must be enabled by `--features try-runtime`.".into())
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
