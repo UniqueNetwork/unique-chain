@@ -379,7 +379,7 @@ impl<T: Config> Pallet<T> {
 		let balance_from = <Balance<T>>::get((collection.id, from))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
-		let balance_to = if from != to {
+		let balance_to = if from != to && amount != 0 {
 			Some(
 				<Balance<T>>::get((collection.id, to))
 					.checked_add(amount)
@@ -391,16 +391,17 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
-			to,
-			collection.id,
-			TokenId::default(),
-			nesting_budget,
-		)?;
-
 		if let Some(balance_to) = balance_to {
-			// from != to
+			// from != to && amount != 0
+
+			<PalletStructure<T>>::nest_if_sent_to_token(
+				from.clone(),
+				to,
+				collection.id,
+				TokenId::default(),
+				nesting_budget,
+			)?;
+
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, from));
 				<PalletStructure<T>>::unnest_if_nested(from, collection.id, TokenId::default());
