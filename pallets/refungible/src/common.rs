@@ -152,6 +152,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn token_owner() -> Weight {
 		<SelfWeightOf<T>>::token_owner()
 	}
+
+	fn set_approval_for_all() -> Weight {
+		<SelfWeightOf<T>>::set_approval_for_all()
+	}
 }
 
 fn map_create_data<T: Config>(
@@ -515,6 +519,22 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		<Pallet<T>>::total_pieces(self.id, token)
+	}
+
+	fn set_approval_for_all(
+		&self,
+		owner: T::CrossAccountId,
+		operator: T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::set_approval_for_all(self, &owner, &operator, approve),
+			<CommonWeights<T>>::set_approval_for_all(),
+		)
+	}
+
+	fn is_approved_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool {
+		<Pallet<T>>::is_approved_for_all(self, &owner, &operator)
 	}
 }
 

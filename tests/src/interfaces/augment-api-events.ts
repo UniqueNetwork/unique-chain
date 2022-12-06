@@ -107,6 +107,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
       /**
+       * Amount pieces of token owned by `sender` was approved for `spender`.
+       **/
+      ApprovedForAll: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
+      /**
        * New collection was created
        **/
       CollectionCreated: AugmentedEvent<ApiType, [u32, u8, AccountId32]>;

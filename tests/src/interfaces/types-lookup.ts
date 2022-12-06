@@ -1182,6 +1182,8 @@ declare module '@polkadot/types/lookup' {
     readonly asTransfer: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
     readonly isApproved: boolean;
     readonly asApproved: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
+    readonly isApprovedForAll: boolean;
+    readonly asApprovedForAll: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
     readonly isCollectionPropertySet: boolean;
     readonly asCollectionPropertySet: ITuple<[u32, Bytes]>;
     readonly isCollectionPropertyDeleted: boolean;
@@ -1192,17 +1194,17 @@ declare module '@polkadot/types/lookup' {
     readonly asTokenPropertyDeleted: ITuple<[u32, u32, Bytes]>;
     readonly isPropertyPermissionSet: boolean;
     readonly asPropertyPermissionSet: ITuple<[u32, Bytes]>;
-    readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
+    readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'ApprovedForAll' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
   }
 
-  /** @name PalletStructureEvent (99) */
+  /** @name PalletStructureEvent (100) */
   interface PalletStructureEvent extends Enum {
     readonly isExecuted: boolean;
     readonly asExecuted: Result<Null, SpRuntimeDispatchError>;
     readonly type: 'Executed';
   }
 
-  /** @name PalletRmrkCoreEvent (100) */
+  /** @name PalletRmrkCoreEvent (101) */
   interface PalletRmrkCoreEvent extends Enum {
     readonly isCollectionCreated: boolean;
     readonly asCollectionCreated: {
@@ -1292,7 +1294,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'IssuerChanged' | 'CollectionLocked' | 'NftMinted' | 'NftBurned' | 'NftSent' | 'NftAccepted' | 'NftRejected' | 'PropertySet' | 'ResourceAdded' | 'ResourceRemoval' | 'ResourceAccepted' | 'ResourceRemovalAccepted' | 'PrioritySet';
   }
 
-  /** @name RmrkTraitsNftAccountIdOrCollectionNftTuple (101) */
+  /** @name RmrkTraitsNftAccountIdOrCollectionNftTuple (102) */
   interface RmrkTraitsNftAccountIdOrCollectionNftTuple extends Enum {
     readonly isAccountId: boolean;
     readonly asAccountId: AccountId32;
@@ -2539,7 +2541,13 @@ declare module '@polkadot/types/lookup' {
       readonly tokenId: u32;
       readonly amount: u128;
     } & Struct;
-    readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition';
+    readonly isSetApprovalForAll: boolean;
+    readonly asSetApprovalForAll: {
+      readonly collectionId: u32;
+      readonly operator: PalletEvmAccountBasicCrossAccountIdRepr;
+      readonly approve: bool;
+    } & Struct;
+    readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetApprovalForAll';
   }
 
   /** @name UpDataStructsCollectionMode (240) */
@@ -3655,7 +3663,8 @@ declare module '@polkadot/types/lookup' {
     readonly isFungibleItemsDontHaveData: boolean;
     readonly isFungibleDisallowsNesting: boolean;
     readonly isSettingPropertiesNotAllowed: boolean;
-    readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
+    readonly isSettingApprovalForAllNotAllowed: boolean;
+    readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed' | 'SettingApprovalForAllNotAllowed';
   }
 
   /** @name PalletRefungibleItemData (431) */

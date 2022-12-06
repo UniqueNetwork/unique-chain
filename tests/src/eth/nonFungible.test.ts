@@ -249,6 +249,114 @@ describe('NFT: Plain calls', () => {
     }
   });
 
+  itEth('Can perform setApprovalForAll()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = helper.eth.createAccount();
+
+    const collection = await helper.nft.mintCollection(minter, {});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const approvedBefore = await contract.methods.isApprovedForAll(owner, operator).call();
+    expect(approvedBefore).to.be.equal(false);
+
+    {
+      const result = await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+
+      expect(result.events.ApprovalForAll).to.be.like({
+        address: collectionAddress,
+        event: 'ApprovalForAll',
+        returnValues: {
+          owner,
+          operator,
+          approved: true,
+        },
+      });
+
+      const approvedAfter = await contract.methods.isApprovedForAll(owner, operator).call();
+      expect(approvedAfter).to.be.equal(true);
+    }
+
+    {
+      const result = await contract.methods.setApprovalForAll(operator, false).send({from: owner});
+
+      expect(result.events.ApprovalForAll).to.be.like({
+        address: collectionAddress,
+        event: 'ApprovalForAll',
+        returnValues: {
+          owner,
+          operator,
+          approved: false,
+        },
+      });
+
+      const approvedAfter = await contract.methods.isApprovedForAll(owner, operator).call();
+      expect(approvedAfter).to.be.equal(false);
+    }
+  });
+
+  itEth('Can perform burn with ApprovalForAll', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    {
+      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+      const result = await contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: operator});
+      const events = result.events.Transfer;
+
+      expect(events).to.be.like({
+        address,
+        event: 'Transfer',
+        returnValues: {
+          from: owner,
+          to: '0x0000000000000000000000000000000000000000',
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+  });
+  
+  itEth('Can perform transfer with ApprovalForAll', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = await helper.eth.createAccountWithBalance(donor);
+    const receiver = charlie;
+
+    const token = await collection.mintToken(minter, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    {
+      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: operator});
+      const event = result.events.Transfer;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Transfer',
+        returnValues: {
+          from: owner,
+          to: helper.address.substrateToEth(receiver.address),
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+
+    expect(await token.getOwner()).to.be.like({Substrate: receiver.address});
+  });
+
   itEth('Can perform burnFromCross()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
     const ownerSub = bob;
@@ -800,5 +908,55 @@ describe('Common metadata', () => {
     const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const symbol = await contract.methods.symbol().call();
     expect(symbol).to.equal('CHANGE');
+  });
+});
+
+describe('Negative tests', () => {
+  let donor: IKeyringPair;
+  let minter: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
+      [minter, alice, bob] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+    });
+  });
+
+  itEth('[negative] Cant perform burn without approval', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = bob;
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, {Substrate: owner.address});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    {
+      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
+      await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+    }
+  });
+
+  itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const owner = bob;
+    const receiver = alice;
+
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, {Substrate: owner.address});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'nft');
+
+    {
+      const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
+      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+      await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+    }
   });
 });

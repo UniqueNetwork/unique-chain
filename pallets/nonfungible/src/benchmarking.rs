@@ -222,4 +222,18 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, owner.clone())?;
 
 	}: {collection.token_owner(item)}
+
+	set_approval_for_all {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			operator: cross_from_sub(owner); owner: cross_sub;
+		};
+	}: {<Pallet<T>>::set_approval_for_all(&collection, &owner, &operator, true)}
+
+	is_approved_for_all {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			operator: cross_from_sub(owner); owner: cross_sub;
+		};
+	}: {<Pallet<T>>::is_approved_for_all(&collection, &owner, &operator)}
 }

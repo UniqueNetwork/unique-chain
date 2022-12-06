@@ -246,6 +246,16 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token_id: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<String>>;
+
+	/// Get whether an operator is approved by a given owner.
+	#[method(name = "unique_isApprovedForAll")]
+	fn is_approved_for_all(
+		&self,
+		collection: CollectionId,
+		owner: CrossAccountId,
+		operator: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<bool>;
 }
 
 mod app_promotion_unique_rpc {
@@ -569,6 +579,7 @@ where
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<String> => |o| o.map(|number| number.to_string()) , unique_api);
 	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
+	pass_method!(is_approved_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> bool, unique_api);
 }
 
 impl<C, Block, BlockNumber, CrossAccountId, AccountId>

@@ -720,6 +720,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
       /**
+       * Tells whether an operator is approved by a given owner.
+       **/
+      isApprovedForAll: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, operator: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<bool>>>;
+      /**
        * Get the last token ID created in a collection
        **/
       lastTokenId: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
