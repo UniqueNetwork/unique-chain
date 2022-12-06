@@ -732,6 +732,8 @@ describe('Negative tests', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      
       donor = await privateKey({filename: __filename});
       [minter, alice] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
