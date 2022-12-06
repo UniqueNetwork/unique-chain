@@ -50,21 +50,30 @@ describe('EVM collection properties', () => {
     }));
 
 
-  itEth('Can be deleted', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: [{key: 'testKey', value: 'testValue'}]});
-
-    await collection.addAdmin(alice, {Ethereum: caller});
-
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
-
-    await contract.methods.deleteCollectionProperties(['testKey']).send({from: caller});
-
-    const raw = (await collection.getData())?.raw;
-
-    expect(raw.properties.length).to.equal(0);
-  });
+  // Soft-deprecated: deleteCollectionProperty
+  [{method: 'deleteCollectionProperties', methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
+    {method: 'deleteCollectionProperty', methodParams: ['testKey1'], expectedProps: [{key: 'testKey2', value: 'testValue2'}, {key: 'testKey3', value: 'testValue3'}]}, 
+  ].map(testCase => 
+    itEth(`Collection properties can be deleted: ${testCase.method}`, async({helper}) => {
+      const properties = [
+        {key: 'testKey1', value: 'testValue1'},
+        {key: 'testKey2', value: 'testValue2'},
+        {key: 'testKey3', value: 'testValue3'}];
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties});
+  
+      await collection.addAdmin(alice, {Ethereum: caller});
+  
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contract = helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'deleteCollectionProperty');
+  
+      await contract.methods[testCase.method](...testCase.methodParams).send({from: caller});
+  
+      const raw = (await collection.getData())?.raw;
+  
+      expect(raw.properties.length).to.equal(testCase.expectedProps.length);
+      expect(raw.properties).to.deep.equal(testCase.expectedProps);
+    }));
 
   itEth('Can be read', async({helper}) => {
     const caller = helper.eth.createAccount();
@@ -75,23 +84,6 @@ describe('EVM collection properties', () => {
 
     const value = await contract.methods.collectionProperty('testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));
-  });
-
-  // Soft-deprecated
-  itEth('Collection property can be deleted', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: [{key: 'testKey', value: 'testValue'}]});
-
-    await collection.addAdmin(alice, {Ethereum: caller});
-
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller, true);
-
-    await contract.methods.deleteCollectionProperty('testKey').send({from: caller});
-
-    const raw = (await collection.getData())?.raw;
-
-    expect(raw.properties.length).to.equal(0);
   });
 });
 
