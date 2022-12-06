@@ -281,7 +281,7 @@ pub mod pallet {
 			Key<Blake2_128Concat, T::CrossAccountId>,
 		),
 		Value = bool,
-		QueryKind = OptionQuery,
+		QueryKind = ValueQuery,
 	>;
 
 	/// Upgrade from the old schema to properties.
