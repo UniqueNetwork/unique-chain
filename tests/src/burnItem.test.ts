@@ -140,7 +140,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     await expect(token.burn(bob)).to.be.rejectedWith('common.NoPermission');
   });
 
-  itSub('RFT: cannot burn non-owned token pieces', async ({helper}) => {
+  itSub.ifWithPallets('RFT: cannot burn non-owned token pieces', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice);
     const aliceToken = await collection.mintToken(alice, 10n, {Substrate: alice.address});
     const bobToken = await collection.mintToken(alice, 10n, {Substrate: bob.address});
