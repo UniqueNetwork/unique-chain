@@ -166,18 +166,18 @@ describe('Fungible negative tests', () => {
     const nonExistingCollection = helper.ft.getCollectionObject(99999);
     await collection.mint(alice, 10n, {Substrate: bob.address});
 
-    // 1. Alice cannot transfer Bob's token:
-    await expect(collection.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
+    // 1. Alice cannot transfer more than 0 tokens if balance low:
     await expect(collection.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
-    await expect(collection.transfer(alice, {Substrate: charlie.address}, 10n)).to.be.rejectedWith('common.TokenValueTooLow');
     await expect(collection.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejectedWith('common.TokenValueTooLow');
     
     // 2. Alice cannot transfer non-existing token:
     await expect(nonExistingCollection.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.CollectionNotFound');
     await expect(nonExistingCollection.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.CollectionNotFound');
-
+    
     // 3. Zero transfer allowed (EIP-20):
     await collection.transfer(bob, {Substrate: charlie.address}, 0n);
+    // 3.1 even if the balance = 0
+    await collection.transfer(alice, {Substrate: charlie.address}, 0n);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.eq(0n);
     expect(await collection.getBalance({Substrate: bob.address})).to.eq(10n);
