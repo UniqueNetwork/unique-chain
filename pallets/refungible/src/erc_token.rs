@@ -299,6 +299,31 @@ where
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	/// @dev Transfer tokens from one address to another
+	/// @param from address The address which you want to send tokens from
+	/// @param to address The address which you want to transfer to
+	/// @param amount uint256 the amount of tokens to be transferred
+	#[weight(<CommonWeights<T>>::transfer_from())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: caller,
+		from: EthCrossAccount,
+		to: EthCrossAccount,
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, self.1, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
 }
 
 impl<T: Config> RefungibleTokenHandle<T> {

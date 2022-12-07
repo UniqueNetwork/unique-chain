@@ -23,7 +23,7 @@ interface ERC1633 is Dummy, ERC165 {
 	function parentTokenId() external view returns (uint256);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x34b53e20
+/// @dev the ERC-165 identifier for this interface is 0xe17a7d2b
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
@@ -65,6 +65,18 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
 	function transferCross(EthCrossAccount memory to, uint256 amount) external returns (bool);
+
+	/// @dev Transfer tokens from one address to another
+	/// @param from address The address which you want to send tokens from
+	/// @param to address The address which you want to transfer to
+	/// @param amount uint256 the amount of tokens to be transferred
+	/// @dev EVM selector for this function is: 0xd5cf430b,
+	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	function transferFromCross(
+		EthCrossAccount memory from,
+		EthCrossAccount memory to,
+		uint256 amount
+	) external returns (bool);
 }
 
 /// @dev Cross account struct
