@@ -31,6 +31,7 @@ describe('evm collection sponsoring', () => {
     });
   });
   
+  // TODO: move to substrate tests
   itEth('sponsors mint transactions', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'spnr', permissions: {mintMode: true}});
     await collection.setSponsor(alice, alice.address);
@@ -124,15 +125,15 @@ describe('evm collection sponsoring', () => {
   
       // Set collection sponsor:
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsorEth : sponsorCrossEth).send({from: owner});
-      let collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
+      expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
       
       // Sponsor can confirm sponsorship:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
-      collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      sponsorship = (await collectionSub.getData())!.raw.sponsorship;
+      expect(sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
   
       // Create user with no balance:
       const user = helper.eth.createAccount();
@@ -259,8 +260,7 @@ describe('evm collection sponsoring', () => {
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
   
-      const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
-      await sponsorCollection.methods.confirmCollectionSponsorship().send();
+      await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
   
@@ -270,13 +270,11 @@ describe('evm collection sponsoring', () => {
   
       const ownerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
+    
+      const mintingResult = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
+      const tokenId = mintingResult.events.Transfer.returnValues.tokenId;
   
-      const userCollectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', user);
-  
-      const result = await userCollectionEvm.methods.mintWithTokenURI(user, 'Test URI').send();
-      const tokenId = result.events.Transfer.returnValues.tokenId;
-  
-      const events = helper.eth.normalizeEvents(result.events);
+      const events = helper.eth.normalizeEvents(mintingResult.events);
       const address = helper.ethAddress.fromCollectionId(collectionId);
   
       expect(events).to.be.deep.equal([
@@ -290,11 +288,32 @@ describe('evm collection sponsoring', () => {
           },
         },
       ]);
-      expect(await userCollectionEvm.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
+      expect(await collectionEvm.methods.tokenURI(tokenId).call({from: user})).to.be.equal('Test URI');
   
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
     }));
+
+  itEth('Can reassign collection sponsor', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsorEth = await helper.eth.createAccountWithBalance(donor);
+    const sponsorCrossEth = helper.ethCrossAccount.fromAddress(sponsorEth);
+    const [sponsorSub] = await helper.arrange.createAccounts([100n], donor);
+    const sponsorCrossSub = helper.ethCrossAccount.fromKeyringPair(sponsorSub);
+
+    const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner,'Sponsor collection', '1', '1', '');
+    const collectionSub = helper.nft.getCollectionObject(collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    // Set and confirm sponsor:
+    await collectionEvm.methods.setCollectionSponsorCross(sponsorCrossEth).send({from: owner});
+    await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
+
+    // Can reassign sponsor:
+    await collectionEvm.methods.setCollectionSponsorCross(sponsorCrossSub).send({from: owner});
+    const collectionSponsor = (await collectionSub.getData())?.raw.sponsorship;
+    expect(collectionSponsor).to.deep.eq({Unconfirmed: sponsorSub.address});
+  });
 });
