@@ -206,7 +206,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
     expect(await tokenBob.getOwner()).to.deep.eq({Substrate: bob.address});
     // 4. Storage is not corrupted:
     await tokenAlice.transfer(alice, {Substrate: bob.address});
-    await tokenBob.transfer(alice, {Substrate: alice.address});
+    await tokenBob.transfer(bob, {Substrate: alice.address});
     expect(await tokenAlice.getOwner()).to.deep.eq({Substrate: bob.address});
     expect(await tokenBob.getOwner()).to.deep.eq({Substrate: alice.address});
   });
