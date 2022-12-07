@@ -72,7 +72,7 @@ describe('EVM collection properties', () => {
     {method: 'deleteCollectionProperties', methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
     {method: 'deleteCollectionProperty', methodParams: ['testKey1'], expectedProps: [{key: 'testKey2', value: 'testValue2'}, {key: 'testKey3', value: 'testValue3'}]}, 
   ].map(testCase => 
-    itEth(`Collection properties can be deleted: ${testCase.method}`, async({helper}) => {
+    itEth(`Collection properties can be deleted: ${testCase.method}()`, async({helper}) => {
       const properties = [
         {key: 'testKey1', value: 'testValue1'},
         {key: 'testKey2', value: 'testValue2'},
@@ -92,8 +92,26 @@ describe('EVM collection properties', () => {
       expect(raw.properties.length).to.equal(testCase.expectedProps.length);
       expect(raw.properties).to.deep.equal(testCase.expectedProps);
     }));
+
   
-  // TODO cannot delete non-existing props and props of non-owned collections
+  [
+    {method: 'deleteCollectionProperties', methodParams: [['testKey2']]},
+    {method: 'deleteCollectionProperty', methodParams: ['testKey2']},
+  ].map(testCase => 
+    itEth(`cannot ${testCase.method}() of non-owned collections`, async ({helper}) => {
+      const properties = [
+        {key: 'testKey1', value: 'testValue1'},
+        {key: 'testKey2', value: 'testValue2'},
+      ];
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties});
+
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const collectionEvm = helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'deleteCollectionProperty');
+
+      await expect(collectionEvm.methods[testCase.method](...testCase.methodParams).send({from: caller})).to.be.rejected;
+      expect(await collection.getProperties()).to.deep.eq(properties);
+    }));
 
   itEth('Can be read', async({helper}) => {
     const caller = helper.eth.createAccount();
