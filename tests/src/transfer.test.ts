@@ -193,16 +193,15 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
   });
 
   itSub('Zero transfer NFT', async ({helper}) => {
-    const api = helper.getApi();
     const collection = await helper.nft.mintCollection(alice, {name: 'Transfer-Neg-3-NFT', description: '', tokenPrefix: 'T'});
     const tokenAlice = await collection.mintToken(alice, {Substrate: alice.address});
     const tokenBob = await collection.mintToken(alice, {Substrate: bob.address});
     // 1. Zero transfer of own tokens allowed:
-    await helper.signTransaction(alice, api.tx.unique.transfer({Substrate: bob.address}, collection.collectionId, tokenAlice.tokenId, 0));
+    await helper.executeExtrinsic(alice, 'api.tx.unique.transfer', [{Substrate: bob.address}, collection.collectionId, tokenAlice.tokenId, 0]);
     // 2. Zero transfer of non-owned tokens not allowed:
-    await expect(helper.signTransaction(alice, api.tx.unique.transfer({Substrate: alice.address}, collection.collectionId, tokenBob.tokenId, 0))).to.be.rejectedWith('common.NoPermission');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transfer', [{Substrate: alice.address}, collection.collectionId, tokenBob.tokenId, 0])).to.be.rejectedWith('common.NoPermission');
     // 3. Zero transfer of non-existing tokens not allowed:
-    await expect(helper.signTransaction(alice, api.tx.unique.transfer({Substrate: alice.address}, collection.collectionId, 10, 0))).to.be.rejectedWith('common.TokenNotFound');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transfer', [{Substrate: alice.address}, collection.collectionId, 10, 0])).to.be.rejectedWith('common.TokenNotFound');
     expect(await tokenAlice.getOwner()).to.deep.eq({Substrate: alice.address});
     expect(await tokenBob.getOwner()).to.deep.eq({Substrate: bob.address});
     // 4. Storage is not corrupted:
