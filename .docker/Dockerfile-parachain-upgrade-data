@@ -34,38 +34,35 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique-current
 
 ARG PROFILE=release
-ARG FEATURE=
-ARG MAINNET_BRANCH=
-ARG REPO_URL=
+ARG NETWORK
+ARG MAINNET_BRANCH
+ARG REPO_URL
 
 WORKDIR /unique_parachain
 
 RUN git clone $REPO_URL -b $MAINNET_BRANCH . && \
-    cargo build --features=$FEATURE --$PROFILE
+    cargo build --features=${NETWORK}-runtime --$PROFILE
 
 # ===== BUILD target version ======
 FROM rust-builder as builder-unique-target
 
 ARG PROFILE=release
-ARG FEATURE=
-ARG BRANCH=
-ARG REPO_URL=
+ARG NETWORK
+ARG BRANCH
+ARG REPO_URL
 
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
-RUN cargo build --features=$FEATURE --$PROFILE
+RUN cargo build --features=${NETWORK}-runtime --$PROFILE
 
 # ===== RUN ======
-
 FROM ubuntu:20.04
 
-ARG RUNTIME=
-ENV RUNTIME $RUNTIME
-ARG REPLICA_FROM=
-ENV REPLICA_FROM=$REPLICA_FROM
-ARG POLKADOT_BUILD_BRANCH=
-ENV POLKADOT_BUILD_BRANCH $POLKADOT_BUILD_BRANCH
+ARG NETWORK
+ARG REPLICA_FROM
+ENV REPLICA_FROM=${REPLICA_FROM}
+ARG POLKADOT_LAUNCH_BRANCH
 
 RUN apt-get -y update && \
     apt-get -y install curl git && \
@@ -75,7 +72,7 @@ RUN apt-get -y update && \
     nvm install v16.16.0 && \
     nvm use v16.16.0
 
-RUN git clone https://github.com/uniquenetwork/polkadot-launch.git -b unique-network
+RUN git clone https://github.com/uniquenetwork/polkadot-launch.git -b ${POLKADOT_LAUNCH_BRANCH}
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -83,13 +80,12 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
-RUN echo "$RUNTIME"
+RUN echo "$NETWORK"
 RUN echo "$REPLICA_FROM"
-RUN echo "$POLKADOT_BUILD_BRANCH"
 
 COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$RUNTIME"-runtime/"$RUNTIME"_runtime.compact.compressed.wasm
+COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$NETWORK"-runtime/"$NETWORK"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$NETWORK"-runtime/"$NETWORK"_runtime.compact.compressed.wasm
 
 COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
 

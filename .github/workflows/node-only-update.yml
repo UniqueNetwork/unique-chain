@@ -37,9 +37,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}
-            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
 
 
 
@@ -59,7 +59,7 @@ jobs:
         include: ${{fromJson(needs.nodes-execution-matrix.outputs.matrix)}}
 
     steps:
-    
+
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -80,11 +80,11 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
@@ -96,8 +96,7 @@ jobs:
           template: .docker/forkless-config/launch-config-forkless-nodata.j2
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
@@ -107,7 +106,7 @@ jobs:
           node-version: 16
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
 
       #  🚀 POLKADOT LAUNCH COMPLETE 🚀
       - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
@@ -161,10 +160,9 @@ jobs:
           ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
           path: ${{ matrix.mainnet_branch }}
 
-
       - name: Run Parallel tests before Node Parachain upgrade
-        if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()
         run: |
           yarn install
           yarn add mochawesome
@@ -176,14 +174,14 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Parallel Test Report Before Node upgrade
-      #  uses: phoenix-actions/test-reporting@v8
-      #  id: test-parallel-report-before
-      #  if: success() || failure()    # run this step even if previous step failed
-      #  with:
-      #    name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
-      #    reporter: mochawesome-json
-      #    fail-on-error: 'false'
+      #   uses: phoenix-actions/test-reporting@v8
+      #   id: test-parallel-report-before
+      #   if: success() || failure()    # run this step even if previous step failed
+      #   with:
+      #     name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+      #     reporter: mochawesome-json
+      #     fail-on-error: 'false'
 
       - name: Run Sequential tests before Node Parachain upgrade
         if: success() || failure()
@@ -201,7 +199,7 @@ jobs:
       #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
       #     reporter: mochawesome-json
       #     fail-on-error: 'false'
-     
+
       - name: Send SIGUSR1 to polkadot-launch process
         if: success() || failure()
         run: |
@@ -216,13 +214,13 @@ jobs:
           sleep 60s
           echo -e "Show logs of node-parachain container.\n"          
           docker logs ${ContainerID}
-      
-      - name: Tail chain logs in case of docker image crashed after Polkadot Launch restart
+
+      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
         if: failure()                   # run this step only at failure
         run: |
           docker exec node-parachain tail -n 1000 /polkadot-launch/9944.log
           docker exec node-parachain tail -n 1000 /polkadot-launch/9945.log
-          docker exec node-parachain tail -n 1000 /polkadot-launch/alice.log         
+          docker exec node-parachain tail -n 1000 /polkadot-launch/alice.log
 
       - name: copy chain log files from container to the host
         if: success() || failure()    # run this step even if previous step failed
@@ -286,8 +284,8 @@ jobs:
         shell: bash
 
       - name: Run Parallel tests after Node Parachain upgrade
-        if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()    # run this step even if previous step failed
         run: |
           yarn install
           yarn add mochawesome
@@ -298,7 +296,7 @@ jobs:
         env:
           RPC_URL: http://127.0.0.1:9933/
 
-      # - name: Test Report Parallel After Node upgrade
+      #- name: Test Report Parallel After Node upgrade
       #  uses: phoenix-actions/test-reporting@v8
       #  id: test-report-parallel-after
       #  if: success() || failure()    # run this step even if previous step failed
@@ -307,7 +305,7 @@ jobs:
       #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
       #    reporter: mochawesome-json
       #    fail-on-error: 'false'
-      
+
       - name: Run Sequential tests after Node Parachain upgrade
         if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
@@ -315,7 +313,7 @@ jobs:
         env:
           RPC_URL: http://127.0.0.1:9933/
 
-      # - name: Upload Sequential Test Report After Node upgrade
+      #- name: Upload Sequential Test Report After Node upgrade
       #  uses: phoenix-actions/test-reporting@v8
       #  id: test-sequential-report-after
       #  if: success() || failure()    # run this step even if previous step failed
@@ -325,10 +323,9 @@ jobs:
       #    reporter: mochawesome-json
       #    fail-on-error: 'false'
 
-
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
+        run: docker-compose -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always
@@ -337,8 +334,7 @@ jobs:
           docker system prune -f
           docker image prune -f -a
 
-      - name: Remove repo and artifacts at the end
+      - name: Remove repo at the end
         if: always()                   # run this step always
         run: |
-          rm -rf /tmp/node-only-update
           ls -ls ./
