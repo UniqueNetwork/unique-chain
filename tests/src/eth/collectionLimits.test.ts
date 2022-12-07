@@ -1,4 +1,5 @@
 import {IKeyringPair} from '@polkadot/types/types';
+import {Pallets} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 
 
@@ -13,10 +14,10 @@ describe('Can set collection limits', () => {
 
   [
     {case: 'nft' as const, method: 'createNFTCollection' as const},
-    {case: 'rft' as const, method: 'createRFTCollection' as const},
+    {case: 'rft' as const, method: 'createRFTCollection' as const, requiredPallets: [Pallets.ReFungible]},
     {case: 'ft' as const, method: 'createFTCollection' as const},
   ].map(testCase =>
-    itEth(`for ${testCase.case}`, async ({helper}) => {
+    itEth.ifWithPallets(`for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionId, collectionAddress} = await helper.eth.createCollecion(testCase.method, owner, 'Limits', 'absolutely anything', 'FLO', 18);
       const limits = {
@@ -71,10 +72,10 @@ describe('Cannot set invalid collection limits', () => {
 
   [
     {case: 'nft' as const, method: 'createNFTCollection' as const},
-    {case: 'rft' as const, method: 'createRFTCollection' as const},
+    {case: 'rft' as const, method: 'createRFTCollection' as const, requiredPallets: [Pallets.ReFungible]},
     {case: 'ft' as const, method: 'createFTCollection' as const},
   ].map(testCase =>
-    itEth(`for ${testCase.case}`, async ({helper}) => {
+    itEth.ifWithPallets(`for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
       const invalidLimits = {
         accountTokenOwnershipLimit: BigInt(Number.MAX_SAFE_INTEGER),
         transfersEnabled: 3,
