@@ -291,6 +291,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::burn_item(),
 			)
 		} else {
+			<Pallet<T>>::check_token_immediate_ownership(self, token, &sender)?;
 			Ok(().into())
 		}
 	}
@@ -320,6 +321,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::transfer(),
 			)
 		} else {
+			<Pallet<T>>::check_token_immediate_ownership(self, token, &from)?;
 			Ok(().into())
 		}
 	}
@@ -360,6 +362,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::transfer_from(),
 			)
 		} else {
+			<Pallet<T>>::check_allowed(self, &sender, &from, token, nesting_budget)?;
+
 			Ok(().into())
 		}
 	}
@@ -380,6 +384,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::burn_from(),
 			)
 		} else {
+			<Pallet<T>>::check_allowed(self, &sender, &from, token, nesting_budget)?;
+
 			Ok(().into())
 		}
 	}
