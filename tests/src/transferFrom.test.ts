@@ -359,7 +359,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     // 1. Cannot zero transferFrom (non-existing token)
     await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, 9999, 0])).to.be.rejectedWith('common.ApprovedValueTooLow');
     // 2. Cannot zero transferFrom (not approved token)
-    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, notApprovedNft.tokenId, 0])).to.be.rejectedWith('common.NoPermission');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, notApprovedNft.tokenId, 0])).to.be.rejectedWith('common.ApprovedValueTooLow');
     // 3. Can zero transferFrom (approved token):
     await helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, approvedNft.tokenId, 0]);
 
