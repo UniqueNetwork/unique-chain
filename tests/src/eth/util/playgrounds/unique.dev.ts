@@ -129,8 +129,8 @@ class NativeContractGroup extends EthGroupBase {
     return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
   }
 
-  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string): Contract {
-    return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller);
+  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string, mergeDeprecated = false): Contract {
+    return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller, mergeDeprecated);
   }
 
   rftToken(address: string, caller?: string): Contract {
