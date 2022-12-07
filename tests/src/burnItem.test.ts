@@ -182,17 +182,16 @@ describe('Negative integration test: ext. burnItem():', () => {
   });
 
   itSub('Zero burn NFT', async ({helper}) => {
-    const api = helper.getApi();
     const collection = await helper.nft.mintCollection(alice, {name: 'Coll', description: 'Desc', tokenPrefix: 'T'});
     const tokenAlice = await collection.mintToken(alice, {Substrate: alice.address});
     const tokenBob = await collection.mintToken(alice, {Substrate: bob.address});
     
     // 1. Zero burn of own tokens allowed:
-    await helper.signTransaction(alice, api.tx.unique.burnItem(collection.collectionId, tokenAlice.tokenId, 0));
+    await helper.executeExtrinsic(alice, 'api.tx.unique.burnItem', [collection.collectionId, tokenAlice.tokenId, 0]);
     // 2. Zero burn of non-owned tokens not allowed:
-    await expect(helper.signTransaction(alice, api.tx.unique.burnItem(collection.collectionId, tokenBob.tokenId, 0))).to.be.rejectedWith('common.NoPermission');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.burnItem', [collection.collectionId, tokenBob.tokenId, 0])).to.be.rejectedWith('common.NoPermission');
     // 3. Zero burn of non-existing tokens not allowed:
-    await expect(helper.signTransaction(alice, api.tx.unique.burnItem(collection.collectionId, 9999, 0))).to.be.rejectedWith('common.TokenNotFound');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.burnItem', [collection.collectionId, 9999, 0])).to.be.rejectedWith('common.TokenNotFound');
     expect(await tokenAlice.doesExist()).to.be.true;
     expect(await tokenAlice.getOwner()).to.deep.eq({Substrate: alice.address});
     expect(await tokenBob.getOwner()).to.deep.eq({Substrate: bob.address});
@@ -211,11 +210,11 @@ describe('Negative integration test: ext. burnItem():', () => {
     await approvedNft.approve(bob, {Substrate: alice.address});
 
     // 1. Zero burnFrom of non-existing tokens not allowed:
-    await expect(helper.signTransaction(alice, api.tx.unique.burnFrom(collection.collectionId, {Substrate: bob.address}, 9999, 0))).to.be.rejectedWith('common.ApprovedValueTooLow');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.burnFrom', [collection.collectionId, {Substrate: bob.address}, 9999, 0])).to.be.rejectedWith('common.ApprovedValueTooLow');
     // 2. Zero burnFrom of not approved tokens not allowed:
-    await expect(helper.signTransaction(alice, api.tx.unique.burnFrom(collection.collectionId, {Substrate: bob.address}, notApprovedNft.tokenId, 0))).to.be.rejectedWith('common.NoPermission');
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.burnFrom', [collection.collectionId, {Substrate: bob.address}, notApprovedNft.tokenId, 0])).to.be.rejectedWith('common.NoPermission');
     // 3. Zero burnFrom of approved tokens allowed:
-    await helper.signTransaction(alice, api.tx.unique.burnFrom(collection.collectionId, {Substrate: bob.address}, approvedNft.tokenId, 0));
+    await helper.executeExtrinsic(alice, 'api.tx.unique.burnFrom', [collection.collectionId, {Substrate: bob.address}, approvedNft.tokenId, 0]);
 
     // 4.1 approvedNft still approved:
     expect(await approvedNft.isApproved({Substrate: alice.address})).to.be.true;
