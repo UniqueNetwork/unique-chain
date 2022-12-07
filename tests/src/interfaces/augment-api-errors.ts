@@ -388,7 +388,7 @@ declare module '@polkadot/api-base/types/errors' {
       /**
        * Setting approval for all is not allowed.
        **/
-      SettingApprovalForAllNotAllowed: AugmentedError<ApiType>;
+      SettingAllowanceForAllNotAllowed: AugmentedError<ApiType>;
       /**
        * Setting item properties is not allowed.
        **/
