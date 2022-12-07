@@ -74,12 +74,6 @@ macro_rules! construct_runtime {
                 Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 
                 #[runtimes(opal)]
-                RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-
-                #[runtimes(opal)]
-                RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
-
-                #[runtimes(opal)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
                 #[runtimes(opal)]

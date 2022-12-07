@@ -173,7 +173,7 @@ std = [
     'pallet-maintenance/std',
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['refungible', 'rmrk', 'app-promotion', 'foreign-assets']
+opal-runtime = ['refungible', 'app-promotion', 'foreign-assets']
 become-sapphire = []
 
 refungible = []
