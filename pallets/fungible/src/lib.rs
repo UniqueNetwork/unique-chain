@@ -128,7 +128,7 @@ pub mod pallet {
 		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
 		/// Setting approval for all is not allowed.
-		SettingApprovalForAllNotAllowed,
+		SettingAllowanceForAllNotAllowed,
 	}
 
 	#[pallet::config]

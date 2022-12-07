@@ -435,7 +435,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		_operator: T::CrossAccountId,
 		_approve: bool,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingApprovalForAllNotAllowed)
+		fail!(<Error<T>>::SettingAllowanceForAllNotAllowed)
 	}
 
 	fn allowance_for_all(&self, _owner: T::CrossAccountId, _operator: T::CrossAccountId) -> bool {
