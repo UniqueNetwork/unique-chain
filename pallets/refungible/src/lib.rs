@@ -452,6 +452,10 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+		if <Balance<T>>::get((collection.id, token, owner)) == 0 {
+			return Err(<CommonError<T>>::TokenValueTooLow.into());
+		}
+
 		let total_supply = <TotalSupply<T>>::get((collection.id, token))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -739,12 +743,17 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
 		let initial_balance_from = <Balance<T>>::get((collection.id, token, from));
+
+		if initial_balance_from == 0 {
+			return Err(<CommonError<T>>::TokenValueTooLow.into());
+		}
+
 		let updated_balance_from = initial_balance_from
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let mut create_target = false;
 		let from_to_differ = from != to;
-		let updated_balance_to = if from != to {
+		let updated_balance_to = if from != to && amount != 0 {
 			let old_balance = <Balance<T>>::get((collection.id, token, to));
 			if old_balance == 0 {
 				create_target = true;
@@ -786,16 +795,17 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
-			to,
-			collection.id,
-			token,
-			nesting_budget,
-		)?;
-
 		if let Some(updated_balance_to) = updated_balance_to {
-			// from != to
+			// from != to && amount != 0
+
+			<PalletStructure<T>>::nest_if_sent_to_token(
+				from.clone(),
+				to,
+				collection.id,
+				token,
+				nesting_budget,
+			)?;
+
 			if updated_balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
 				<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
