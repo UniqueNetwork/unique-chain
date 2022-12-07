@@ -34,6 +34,7 @@ use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
 	eth::EthCrossAccount,
+	Error as CommonError,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
@@ -508,6 +509,13 @@ pub fn ensure_single_owner<T: Config>(
 ) -> Result<()> {
 	collection.consume_store_reads(1)?;
 	let total_supply = <TotalSupply<T>>::get((collection.id, token));
+
+	if owner_balance == 0 {
+		return Err(dispatch_to_evm::<T>(
+			<CommonError<T>>::MustBeTokenOwner.into(),
+		));
+	}
+
 	if total_supply != owner_balance {
 		return Err("token has multiple owners".into());
 	}
