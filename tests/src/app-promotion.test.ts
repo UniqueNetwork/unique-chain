@@ -524,7 +524,7 @@ describe('App promotion', () => {
     });
   });
   
-  describe('rewards', () => {
+  describe('payoutStakers', () => {
     itSub('can not be called by non admin', async ({helper}) => {
       const nonAdmin = accounts.pop()!;
       await expect(helper.admin.payoutStakers(nonAdmin, 100)).to.be.rejectedWith('appPromotion.NoPermission');
@@ -563,8 +563,14 @@ describe('App promotion', () => {
       expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal));
   
       const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal));
-      expect(totalStakedPerBlock[1].amount).to.equal(calculateIncome(200n * nominal));
+      const income1 = calculateIncome(100n * nominal);
+      const income2 = calculateIncome(200n * nominal);
+      expect(totalStakedPerBlock[0].amount).to.equal(income1);
+      expect(totalStakedPerBlock[1].amount).to.equal(income2);
+
+      const stakerBalance = await helper.balance.getSubstrateFull(staker.address);
+      expect(stakerBalance).to.contain({miscFrozen: income1 + income2, feeFrozen: income1 + income2, reserved: 0n});
+      expect(stakerBalance.free / nominal).to.eq(999n);
     });
   
     itSub('shoud be paid for more than one period if payments was missed', async ({helper}) => {
@@ -599,6 +605,25 @@ describe('App promotion', () => {
       const totalBalanceAfter = await helper.balance.getSubstrate(staker.address);
   
       expect(totalBalanceBefore).to.be.equal(totalBalanceAfter);
+    });
+
+    itSub('should not be credited for vested balance', async ({helper}) => {
+      const [staker, sender] = [accounts.pop()!, accounts.pop()!];
+      // Staker has frozen vested transfer of 500 tokens:
+      await helper.balance.vestedTransfer(sender, staker.address, {start: 1000n, period: 10n, periodCount: 1n, perPeriod: 500n * nominal});
+      // Staker has frozen vested transfer of 500 tokens:
+      await helper.staking.stake(staker, 100n * nominal);
+      let [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      // Staker's full balance inludes vested transfer and staked amount:
+      const stakerBalance = await helper.balance.getSubstrateFull(staker.address);
+      expect(stakerBalance).to.contain({miscFrozen: 600n * nominal, feeFrozen: 600n * nominal, reserved: 0n});
+      expect(stakerBalance.free / nominal).to.eq(1499n);
+
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
+      await helper.admin.payoutStakers(palletAdmin, 100);
+      // Staker got reward only for 100 staked tokens:
+      [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(stake.amount).to.be.equal(calculateIncome(100n * nominal, 2));
     });
     
     itSub('should bring compound interest', async ({helper}) => {
