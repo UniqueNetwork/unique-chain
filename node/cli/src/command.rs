@@ -434,15 +434,13 @@ pub fn run() -> Result<()> {
 						#[cfg(feature = "quartz-runtime")]
 						RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
 
-						RuntimeId::Opal => {
-							Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config))
-						}
+						RuntimeId::Opal => Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config)),
 						RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
 					},
 					task_manager,
 				))
 			})
-		},
+		}
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => {
 			Err("Try-runtime must be enabled by `--features try-runtime`.".into())
