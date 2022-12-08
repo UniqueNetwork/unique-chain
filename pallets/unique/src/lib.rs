@@ -86,6 +86,8 @@ use frame_system::{self as system, ensure_signed};
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
+	MAX_COLLECTION_PROPERTIES_SIZE, COLLECTION_ADMINS_LIMIT, MAX_TOKEN_PROPERTIES_SIZE,
 	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
 	SponsorshipState, CreateCollectionData, CreateItemExData, budget, Property, PropertyKey,
 	PropertyKeyPermission,
@@ -102,7 +104,7 @@ pub mod benchmarking;
 pub mod weights;
 use weights::WeightInfo;
 
-/// Maximum number of levels of depth in the token nesting tree.
+/// A maximum number of levels of depth in the token nesting tree.
 pub const NESTING_BUDGET: u32 = 5;
 
 decl_error! {
@@ -138,7 +140,7 @@ decl_event! {
 	pub enum Event<T>
 	where
 		<T as frame_system::Config>::AccountId,
-		<T as pallet_evm::account::Config>::CrossAccountId,
+		<T as pallet_evm::Config>::CrossAccountId,
 	{
 		/// Collection sponsor was removed
 		///
@@ -276,6 +278,46 @@ decl_module! {
 		origin: T::RuntimeOrigin
 	{
 		type Error = Error<T>;
+
+		#[doc = "A maximum number of levels of depth in the token nesting tree."]
+		const NESTING_BUDGET: u32 = NESTING_BUDGET;
+
+		#[doc = "Maximal length of a collection name."]
+		const MAX_COLLECTION_NAME_LENGTH: u32 = MAX_COLLECTION_NAME_LENGTH;
+
+		#[doc = "Maximal length of a collection description."]
+		const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = MAX_COLLECTION_DESCRIPTION_LENGTH;
+
+		#[doc = "Maximal length of a token prefix."]
+		const MAX_TOKEN_PREFIX_LENGTH: u32 = MAX_TOKEN_PREFIX_LENGTH;
+
+		#[doc = "Maximum admins per collection."]
+		const COLLECTION_ADMINS_LIMIT: u32 = COLLECTION_ADMINS_LIMIT;
+
+		#[doc = "Maximal length of a property key."]
+		const MAX_PROPERTY_KEY_LENGTH: u32 = MAX_PROPERTY_KEY_LENGTH;
+
+		#[doc = "Maximal length of a property value."]
+		const MAX_PROPERTY_VALUE_LENGTH: u32 = MAX_PROPERTY_VALUE_LENGTH;
+
+		#[doc = "A maximum number of token properties."]
+		const MAX_PROPERTIES_PER_ITEM: u32 = MAX_PROPERTIES_PER_ITEM;
+
+		#[doc = "Maximum size for all collection properties."]
+		const MAX_COLLECTION_PROPERTIES_SIZE: u32 = MAX_COLLECTION_PROPERTIES_SIZE;
+
+		#[doc = "Maximum size of all token properties."]
+		const MAX_TOKEN_PROPERTIES_SIZE: u32 = MAX_TOKEN_PROPERTIES_SIZE;
+
+		#[doc = "Default NFT collection limit."]
+		const NFT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::NFT);
+
+		#[doc = "Default RFT collection limit."]
+		const RFT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::ReFungible);
+
+		#[doc = "Default FT collection limit."]
+		const FT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::Fungible(0));
+
 
 		pub fn deposit_event() = default;
 

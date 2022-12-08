@@ -28,6 +28,7 @@ use pallet_common::{
 	CollectionById,
 	dispatch::CollectionDispatch,
 	erc::{CollectionHelpersEvents, static_property::key},
+	eth::{map_eth_to_id, collection_id_to_address},
 	Pallet as PalletCommon,
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
@@ -35,7 +36,7 @@ use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorde
 use sp_std::vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
-	CreateCollectionData,
+	CreateCollectionData, CollectionId,
 };
 
 use crate::{weights::WeightInfo, Config, SelfWeightOf};
@@ -360,6 +361,25 @@ where
 			.map_err(|_| ()) // workaround for `expect` requiring `Debug` trait
 			.expect("Collection creation price should be convertible to u128");
 		Ok(price.into())
+	}
+
+	/// Returns address of a collection.
+	/// @param collectionId  - CollectionId  of the collection
+	/// @return eth mirror address of the collection
+	fn collection_address(&self, collection_id: uint32) -> Result<address> {
+		Ok(collection_id_to_address(collection_id.into()))
+	}
+
+	/// Returns collectionId of a collection.
+	/// @param collectionAddress  - Eth address of the collection
+	/// @return collectionId of the collection
+	fn collection_id(&self, collection_address: address) -> Result<uint32> {
+		map_eth_to_id(&collection_address)
+			.map(|id| id.0)
+			.ok_or(Error::Revert(format!(
+				"failed to convert address {} into collectionId.",
+				collection_address
+			)))
 	}
 }
 

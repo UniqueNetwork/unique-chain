@@ -16,6 +16,7 @@
 
 //! This module contains the implementation of pallet methods for evm.
 
+pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use evm_coder::{
 	abi::AbiType,
 	solidity_interface, solidity, ToLog,
@@ -24,7 +25,6 @@ use evm_coder::{
 	execution::{Result, Error},
 	weight,
 };
-pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use up_data_structs::{
@@ -35,7 +35,8 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::convert_cross_account_to_uint256, weights::WeightInfo,
+	eth::{EthCrossAccount, convert_cross_account_to_uint256},
+	weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.
@@ -529,11 +530,9 @@ where
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	fn allowed(&self, user: address) -> Result<bool> {
-		Ok(Pallet::<T>::allowed(
-			self.id,
-			T::CrossAccountId::from_eth(user),
-		))
+	fn allowlisted_cross(&self, user: EthCrossAccount) -> Result<bool> {
+		let user = user.into_sub_cross_account::<T>()?;
+		Ok(Pallet::<T>::allowed(self.id, user))
 	}
 
 	/// Add the user to the allowed list.

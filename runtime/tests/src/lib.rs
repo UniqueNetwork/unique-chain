@@ -21,6 +21,7 @@ use frame_support::{
 	parameter_types,
 	traits::{Everything, ConstU32, ConstU64},
 	weights::IdentityFee,
+	pallet_prelude::Weight,
 };
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -202,6 +203,7 @@ impl Default for TestCrossAccountId {
 
 parameter_types! {
 	pub BlockGasLimit: U256 = 0u32.into();
+	pub WeightPerGas: Weight = Weight::from_ref_time(20);
 }
 
 impl pallet_ethereum::Config for Test {
@@ -210,11 +212,15 @@ impl pallet_ethereum::Config for Test {
 }
 
 impl pallet_evm::Config for Test {
+	type CrossAccountId = TestCrossAccountId;
+	type EvmAddressMapping = TestEvmAddressMapping;
+	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type RuntimeEvent = RuntimeEvent;
 	type FeeCalculator = ();
-	type GasWeightMapping = ();
-	type CallOrigin = EnsureAddressNever<Self::CrossAccountId>;
-	type WithdrawOrigin = EnsureAddressNever<Self::CrossAccountId>;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
+	type WeightPerGas = WeightPerGas;
+	type CallOrigin = EnsureAddressNever<Self>;
+	type WithdrawOrigin = EnsureAddressNever<Self>;
 	type AddressMapping = TestEvmAddressMapping;
 	type Currency = Balances;
 	type PrecompilesType = ();
@@ -242,12 +248,6 @@ impl pallet_common::Config for Test {
 	type EvmTokenAddressMapping = EvmTokenAddressMapping;
 	type CrossTokenAddressMapping = CrossTokenAddressMapping<Self::AccountId>;
 	type ContractAddress = EvmCollectionHelpersAddress;
-}
-
-impl pallet_evm::account::Config for Test {
-	type CrossAccountId = TestCrossAccountId;
-	type EvmAddressMapping = TestEvmAddressMapping;
-	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 }
 
 impl pallet_structure::Config for Test {

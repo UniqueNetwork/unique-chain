@@ -127,7 +127,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
+pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
@@ -812,6 +812,20 @@ impl<T: Config> Pallet<T> {
 		permission: PropertyKeyPermission,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
+	}
+
+	pub fn check_token_immediate_ownership(
+		collection: &NonfungibleHandle<T>,
+		token: TokenId,
+		possible_owner: &T::CrossAccountId,
+	) -> DispatchResult {
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		ensure!(
+			&token_data.owner == possible_owner,
+			<CommonError<T>>::NoPermission
+		);
+		Ok(())
 	}
 
 	/// Transfer NFT token from one account to another.

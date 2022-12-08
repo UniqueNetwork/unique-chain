@@ -80,7 +80,7 @@ struct Property {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x8b91d192
+/// @dev the ERC-165 identifier for this interface is 0xcc1d80ca
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -244,9 +244,9 @@ interface Collection is Dummy, ERC165 {
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	/// @dev EVM selector for this function is: 0xd63a8e11,
-	///  or in textual repr: allowed(address)
-	function allowed(address user) external view returns (bool);
+	/// @dev EVM selector for this function is: 0x91b6df49,
+	///  or in textual repr: allowlistedCross((address,uint256))
+	function allowlistedCross(EthCrossAccount memory user) external view returns (bool);
 
 	// /// Add the user to the allowed list.
 	// ///
@@ -444,7 +444,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x1d4b64d6
+/// @dev the ERC-165 identifier for this interface is 0x12f7d6c1
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -473,9 +473,9 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	/// @dev EVM selector for this function is: 0xefc26c69,
-	///  or in textual repr: tokenProperties(uint256,string[])
-	function tokenProperties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
+	/// @dev EVM selector for this function is: 0xe07ede7e,
+	///  or in textual repr: properties(uint256,string[])
+	function properties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
 
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -604,7 +604,7 @@ interface ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x58800161
+/// @dev the ERC-165 identifier for this interface is 0x4016cd87
 interface ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all RFTs assigned to an owner
 	/// @dev RFTs assigned to the zero address are considered invalid, and this
@@ -682,6 +682,11 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
 	function isApprovedForAll(address owner, address operator) external view returns (address);
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() external view returns (address);
 }
 
 interface UniqueRefungible is

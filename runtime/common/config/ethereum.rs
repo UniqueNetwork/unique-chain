@@ -17,19 +17,15 @@ use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
-impl pallet_evm::account::Config for Runtime {
-	type CrossAccountId = CrossAccountId;
-	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
-}
-
 // Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case
 // (contract, which only writes a lot of data),
 // approximating on top of our real store write weight
 parameter_types! {
 	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND.ref_time() / <Runtime as frame_system::Config>::DbWeight::get().write;
 	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
-	pub const WeightPerGas: u64 = WEIGHT_PER_SECOND.ref_time() / GasPerSecond::get();
+	pub const WeightTimePerGas: u64 = WEIGHT_PER_SECOND.ref_time() / GasPerSecond::get();
+
+	pub const WeightPerGas: Weight = Weight::from_ref_time(WeightTimePerGas::get());
 }
 
 /// Limiting EVM execution to 50% of block for substrate users and management tasks
@@ -37,17 +33,7 @@ parameter_types! {
 /// scheduled fairly
 const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
 parameter_types! {
-	pub BlockGasLimit: U256 = U256::from((NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightPerGas::get()).ref_time());
-}
-
-pub enum FixedGasWeightMapping {}
-impl pallet_evm::GasWeightMapping for FixedGasWeightMapping {
-	fn gas_to_weight(gas: u64) -> Weight {
-		Weight::from_ref_time(gas).saturating_mul(WeightPerGas::get())
-	}
-	fn weight_to_gas(weight: Weight) -> u64 {
-		(weight / WeightPerGas::get()).ref_time()
-	}
+	pub BlockGasLimit: U256 = U256::from((NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightTimePerGas::get()).ref_time());
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -65,9 +51,13 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 }
 
 impl pallet_evm::Config for Runtime {
+	type CrossAccountId = CrossAccountId;
+	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
+	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = pallet_configuration::FeeCalculator<Self>;
-	type GasWeightMapping = FixedGasWeightMapping;
+	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
+	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self>;
 	type WithdrawOrigin = EnsureAddressTruncated<Self>;

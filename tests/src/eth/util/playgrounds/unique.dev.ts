@@ -103,12 +103,12 @@ class NativeContractGroup extends EthGroupBase {
 
   contractHelpers(caller: string): Contract {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(contractHelpersAbi as any, '0x842899ECF380553E8a4de75bF534cdf6fBF64049', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
   collectionHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(collectionHelpersAbi as any, '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f', {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {from: caller, gas: this.helper.eth.DEFAULT_GAS});
   }
 
   collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false): Contract {
@@ -186,11 +186,12 @@ class EthGroup extends EthGroupBase {
     return await this.helper.callRpc('api.rpc.eth.call', [{from: signer, to: contractAddress, data: abi}]);
   }
 
-  async createCollecion(functionName: string, signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createCollecion(functionName: 'createNFTCollection' | 'createRFTCollection' | 'createFTCollection', signer: string, name: string, description: string, tokenPrefix: string, decimals?: number): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const result = await collectionHelper.methods[functionName](name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
+    const functionParams = functionName === 'createFTCollection' ? [name, decimals, description, tokenPrefix] : [name, description, tokenPrefix];
+    const result = await collectionHelper.methods[functionName](...functionParams).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
@@ -217,17 +218,8 @@ class EthGroup extends EthGroupBase {
     return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
   }
 
-  async createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
-    const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
-
-    const result = await collectionHelper.methods.createFTCollection(name, decimals, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
-    const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
-    const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
-
-    const events = this.helper.eth.normalizeEvents(result.events);
-
-    return {collectionId, collectionAddress, events};
+  createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+    return this.createCollecion('createFTCollection', signer, name, description, tokenPrefix, decimals);
   }
 
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {

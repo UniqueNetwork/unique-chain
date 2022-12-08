@@ -265,6 +265,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FeeOverflow: AugmentedError<ApiType>;
       /**
+       * Gas limit is too high.
+       **/
+      GasLimitTooHigh: AugmentedError<ApiType>;
+      /**
+       * Gas limit is too low.
+       **/
+      GasLimitTooLow: AugmentedError<ApiType>;
+      /**
        * Gas price is too low.
        **/
       GasPriceTooLow: AugmentedError<ApiType>;
@@ -276,6 +284,14 @@ declare module '@polkadot/api-base/types/errors' {
        * Calculating total payment overflowed
        **/
       PaymentOverflow: AugmentedError<ApiType>;
+      /**
+       * EVM reentrancy
+       **/
+      Reentrancy: AugmentedError<ApiType>;
+      /**
+       * Undefined error.
+       **/
+      Undefined: AugmentedError<ApiType>;
       /**
        * Withdraw fee failed
        **/
@@ -320,6 +336,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Can only migrate to empty address.
        **/
       AccountNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Failed to decode event bytes
+       **/
+      BadEvent: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -644,21 +664,37 @@ declare module '@polkadot/api-base/types/errors' {
     };
     scheduler: {
       /**
+       * There is no place for a new task in the agenda
+       **/
+      AgendaIsExhausted: AugmentedError<ApiType>;
+      /**
        * Failed to schedule a call
        **/
       FailedToSchedule: AugmentedError<ApiType>;
+      /**
+       * Attempt to use a non-named function on a named task.
+       **/
+      Named: AugmentedError<ApiType>;
       /**
        * Cannot find the scheduled call.
        **/
       NotFound: AugmentedError<ApiType>;
       /**
-       * Reschedule failed because it does not change scheduled time.
+       * Scheduled call preimage is not found
        **/
-      RescheduleNoChange: AugmentedError<ApiType>;
+      PreimageNotFound: AugmentedError<ApiType>;
+      /**
+       * Scheduled call is corrupted
+       **/
+      ScheduledCallCorrupted: AugmentedError<ApiType>;
       /**
        * Given target block number is in the past.
        **/
       TargetBlockNumberInPast: AugmentedError<ApiType>;
+      /**
+       * Scheduled call is too big
+       **/
+      TooBigScheduledCall: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

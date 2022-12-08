@@ -227,6 +227,46 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
+  [
+    'transfer',
+    // 'transferCross', // TODO
+  ].map(testCase => 
+    itEth(`Cannot ${testCase}() non-owned token`, async ({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const receiver = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper.rft.mintCollection(alice);
+      const rftOwner = await collection.mintToken(alice, 10n, {Ethereum: owner});
+      const rftReceiver = await collection.mintToken(alice, 10n, {Ethereum: receiver});
+      const tokenIdNonExist = 9999999;
+  
+      const tokenAddress1 = helper.ethAddress.fromTokenId(collection.collectionId, rftOwner.tokenId);
+      const tokenAddress2 = helper.ethAddress.fromTokenId(collection.collectionId, rftReceiver.tokenId);
+      const tokenAddressNonExist = helper.ethAddress.fromTokenId(collection.collectionId, tokenIdNonExist);
+      const tokenEvmOwner = helper.ethNativeContract.rftToken(tokenAddress1, owner);
+      const tokenEvmReceiver = helper.ethNativeContract.rftToken(tokenAddress2, owner);
+      const tokenEvmNonExist = helper.ethNativeContract.rftToken(tokenAddressNonExist, owner);
+      
+      // 1. Can transfer zero amount (EIP-20):
+      await tokenEvmOwner.methods[testCase](receiver, 0).send({from: owner});
+      // 2. Cannot transfer non-owned token:
+      await expect(tokenEvmReceiver.methods[testCase](owner, 0).send({from: owner})).to.be.rejected;
+      await expect(tokenEvmReceiver.methods[testCase](owner, 5).send({from: owner})).to.be.rejected;
+      // 3. Cannot transfer non-existing token:
+      await expect(tokenEvmNonExist.methods[testCase](owner, 0).send({from: owner})).to.be.rejected;
+      await expect(tokenEvmNonExist.methods[testCase](owner, 5).send({from: owner})).to.be.rejected;
+
+      // 4. Storage is not corrupted:
+      expect(await rftOwner.getTop10Owners()).to.deep.eq([{Ethereum: owner.toLowerCase()}]);
+      expect(await rftReceiver.getTop10Owners()).to.deep.eq([{Ethereum: receiver.toLowerCase()}]);
+      expect(await helper.rft.getTokenTop10Owners(collection.collectionId, tokenIdNonExist)).to.deep.eq([]); // TODO
+
+      // 4.1 Tokens can be transferred:
+      await tokenEvmOwner.methods[testCase](receiver, 10).send({from: owner});
+      await tokenEvmReceiver.methods[testCase](owner, 10).send({from: receiver});
+      expect(await rftOwner.getTop10Owners()).to.deep.eq([{Ethereum: receiver.toLowerCase()}]);
+      expect(await rftReceiver.getTop10Owners()).to.deep.eq([{Ethereum: owner.toLowerCase()}]);
+    }));
+
   itEth('Can perform repartition()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);

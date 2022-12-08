@@ -36,12 +36,14 @@ use up_data_structs::{
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
+	eth::EthCrossAccount,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use sp_core::Get;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -489,6 +491,11 @@ impl<T: Config> NonfungibleHandle<T> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
+	}
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
@@ -721,11 +728,7 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn token_properties(
-		&self,
-		token_id: uint256,
-		keys: Vec<string>,
-	) -> Result<Vec<PropertyStruct>> {
+	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {

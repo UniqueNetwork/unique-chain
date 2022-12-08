@@ -2484,7 +2484,7 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    * @param ethCrossAccount etherium cross account
    * @returns substrate cross account id
    */
-  convertCrossAccountFromEthCrossAcoount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
+  convertCrossAccountFromEthCrossAccount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
     if (ethCrossAccount.sub === '0') {
       return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
     }

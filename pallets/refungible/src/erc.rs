@@ -31,14 +31,15 @@ use evm_coder::{
 };
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
-	CollectionHandle, CollectionPropertyPermissions,
+	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	CommonCollectionOperations,
+	eth::EthCrossAccount,
+	Error as CommonError,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::H160;
+use sp_core::{H160, Get};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
 use up_data_structs::{
 	CollectionId, CollectionPropertiesVec, mapping::TokenAddressMapping, Property, PropertyKey,
@@ -482,6 +483,11 @@ impl<T: Config> RefungibleHandle<T> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
+	}
 }
 
 /// Returns amount of pieces of `token` that `owner` have
@@ -503,6 +509,13 @@ pub fn ensure_single_owner<T: Config>(
 ) -> Result<()> {
 	collection.consume_store_reads(1)?;
 	let total_supply = <TotalSupply<T>>::get((collection.id, token));
+
+	if owner_balance == 0 {
+		return Err(dispatch_to_evm::<T>(
+			<CommonError<T>>::MustBeTokenOwner.into(),
+		));
+	}
+
 	if total_supply != owner_balance {
 		return Err("token has multiple owners".into());
 	}
@@ -749,11 +762,7 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn token_properties(
-		&self,
-		token_id: uint256,
-		keys: Vec<string>,
-	) -> Result<Vec<PropertyStruct>> {
+	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {

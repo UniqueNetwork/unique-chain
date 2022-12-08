@@ -342,7 +342,6 @@ impl<T: Config> CollectionHandle<T> {
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use pallet_evm::account;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
 	use frame_system::pallet_prelude::*;
@@ -353,11 +352,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config
-		+ pallet_evm_coder_substrate::Config
-		+ pallet_evm::Config
-		+ TypeInfo
-		+ account::Config
+		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::Config + TypeInfo
 	{
 		/// Weight information for functions of this pallet.
 		type WeightInfo: WeightInfo;
@@ -381,6 +376,7 @@ pub mod pallet {
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		/// Address under which the CollectionHelper contract would be available.
+		#[pallet::constant]
 		type ContractAddress: Get<H160>;
 
 		/// Mapper for token addresses to Ethereum addresses.

@@ -119,7 +119,7 @@ struct Property {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x8b91d192
+/// @dev the ERC-165 identifier for this interface is 0xcc1d80ca
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -370,9 +370,9 @@ contract Collection is Dummy, ERC165 {
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	/// @dev EVM selector for this function is: 0xd63a8e11,
-	///  or in textual repr: allowed(address)
-	function allowed(address user) public view returns (bool) {
+	/// @dev EVM selector for this function is: 0x91b6df49,
+	///  or in textual repr: allowlistedCross((address,uint256))
+	function allowlistedCross(EthCrossAccount memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -676,7 +676,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xb8f094a0
+/// @dev the ERC-165 identifier for this interface is 0xb74c26b7
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -722,9 +722,9 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	/// @dev EVM selector for this function is: 0xefc26c69,
-	///  or in textual repr: tokenProperties(uint256,string[])
-	function tokenProperties(uint256 tokenId, string[] memory keys) public view returns (Property[] memory) {
+	/// @dev EVM selector for this function is: 0xe07ede7e,
+	///  or in textual repr: properties(uint256,string[])
+	function properties(uint256 tokenId, string[] memory keys) public view returns (Property[] memory) {
 		require(false, stub_error);
 		tokenId;
 		keys;
@@ -920,7 +920,7 @@ contract ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x80ac58cd
+/// @dev the ERC-165 identifier for this interface is 0x983a942b
 contract ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -1047,6 +1047,15 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		require(false, stub_error);
 		owner;
 		operator;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() public view returns (address) {
+		require(false, stub_error);
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
