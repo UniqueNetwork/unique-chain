@@ -121,7 +121,7 @@ describe('Create RFT collection from EVM', () => {
     let data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -143,7 +143,7 @@ describe('Create RFT collection from EVM', () => {
     let data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -235,11 +235,11 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -260,11 +260,11 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });

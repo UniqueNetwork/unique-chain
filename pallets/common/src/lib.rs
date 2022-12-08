@@ -229,28 +229,111 @@ impl<T: Config> CollectionHandle<T> {
 	/// Unique collections allows sponsoring for certain actions.
 	/// This method allows you to set the sponsor of the collection.
 	/// In order for sponsorship to become active, it must be confirmed through [`Self::confirm_sponsorship`].
-	pub fn set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
-		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor);
-		Ok(())
+	pub fn set_sponsor(
+		&mut self,
+		sender: &T::CrossAccountId,
+		sponsor: T::AccountId,
+	) -> DispatchResult {
+		self.check_is_internal()?;
+		self.check_is_owner_or_admin(sender)?;
+
+		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor.clone());
+
+		<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(self.id, sponsor));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(self.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+
+		self.save()
+	}
+
+	/// Force set `sponsor`.
+	///
+	/// Differs from [`set_sponsor`][`Self::set_sponsor`] in that confirmation
+	/// from the `sponsor` is not required.
+	///
+	/// # Arguments
+	///
+	/// * `sender`: Caller's account.
+	/// * `sponsor`: ID of the account of the sponsor-to-be.
+	pub fn force_set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
+		self.check_is_internal()?;
+
+		self.collection.sponsorship = SponsorshipState::Confirmed(sponsor.clone());
+
+		<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(self.id, sponsor.clone()));
+		<Pallet<T>>::deposit_event(Event::<T>::SponsorshipConfirmed(self.id, sponsor));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(self.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+
+		self.save()
 	}
 
 	/// Confirm sponsorship
 	///
 	/// In order for the sponsorship to become active, the user set as the sponsor must confirm their participation.
 	/// Before confirming sponsorship, the user must be specified as the sponsor of the collection via [`Self::set_sponsor`].
-	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> Result<bool, DispatchError> {
-		if self.collection.sponsorship.pending_sponsor() != Some(sender) {
-			return Ok(false);
-		}
+	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> DispatchResult {
+		self.check_is_internal()?;
+		ensure!(
+			self.collection.sponsorship.pending_sponsor() == Some(sender),
+			Error::<T>::ConfirmUnsetSponsorFail
+		);
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
-		Ok(true)
+
+		<Pallet<T>>::deposit_event(Event::<T>::SponsorshipConfirmed(self.id, sender.clone()));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(self.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+
+		self.save()
 	}
 
 	/// Remove collection sponsor.
-	pub fn remove_sponsor(&mut self) -> DispatchResult {
+	pub fn remove_sponsor(&mut self, sender: &T::CrossAccountId) -> DispatchResult {
+		self.check_is_internal()?;
+		self.check_is_owner(sender)?;
+
 		self.collection.sponsorship = SponsorshipState::Disabled;
-		Ok(())
+
+		<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorRemoved(self.id));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(self.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+		self.save()
+	}
+
+	/// Force remove `sponsor`.
+	///
+	/// Differs from `remove_sponsor` in that
+	/// it doesn't require consent from the `owner` of the collection.
+	pub fn force_remove_sponsor(&mut self) -> DispatchResult {
+		self.check_is_internal()?;
+
+		self.collection.sponsorship = SponsorshipState::Disabled;
+
+		<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorRemoved(self.id));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(self.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+		self.save()
 	}
 
 	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
@@ -328,13 +411,26 @@ impl<T: Config> CollectionHandle<T> {
 	/// Changes collection owner to another account
 	/// #### Store read/writes
 	/// 1 writes
-	fn set_owner_internal(
+	pub fn change_owner(
 		&mut self,
 		caller: T::CrossAccountId,
 		new_owner: T::CrossAccountId,
 	) -> DispatchResult {
+		self.check_is_internal()?;
 		self.check_is_owner(&caller)?;
 		self.collection.owner = new_owner.as_sub().clone();
+
+		<Pallet<T>>::deposit_event(Event::<T>::CollectionOwnedChanged(
+			self.id,
+			new_owner.as_sub().clone(),
+		));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(self.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+
 		self.save()
 	}
 }
@@ -527,6 +623,80 @@ pub mod pallet {
 			/// The property permission that was set.
 			PropertyKey,
 		),
+
+		/// Address was added to the allow list.
+		AllowListAddressAdded(
+			/// ID of the affected collection.
+			CollectionId,
+			/// Address of the added account.
+			T::CrossAccountId,
+		),
+
+		/// Address was removed from the allow list.
+		AllowListAddressRemoved(
+			/// ID of the affected collection.
+			CollectionId,
+			/// Address of the removed account.
+			T::CrossAccountId,
+		),
+
+		/// Collection admin was added.
+		CollectionAdminAdded(
+			/// ID of the affected collection.
+			CollectionId,
+			/// Admin address.
+			T::CrossAccountId,
+		),
+
+		/// Collection admin was removed.
+		CollectionAdminRemoved(
+			/// ID of the affected collection.
+			CollectionId,
+			/// Removed admin address.
+			T::CrossAccountId,
+		),
+
+		/// Collection limits were set.
+		CollectionLimitSet(
+			/// ID of the affected collection.
+			CollectionId,
+		),
+
+		/// Collection owned was changed.
+		CollectionOwnedChanged(
+			/// ID of the affected collection.
+			CollectionId,
+			/// New owner address.
+			T::AccountId,
+		),
+
+		/// Collection permissions were set.
+		CollectionPermissionSet(
+			/// ID of the affected collection.
+			CollectionId,
+		),
+
+		/// Collection sponsor was set.
+		CollectionSponsorSet(
+			/// ID of the affected collection.
+			CollectionId,
+			/// New sponsor address.
+			T::AccountId,
+		),
+
+		/// New sponsor was confirm.
+		SponsorshipConfirmed(
+			/// ID of the affected collection.
+			CollectionId,
+			/// New sponsor address.
+			T::AccountId,
+		),
+
+		/// Collection sponsor was removed.
+		CollectionSponsorRemoved(
+			/// ID of the affected collection.
+			CollectionId,
+		),
 	}
 
 	#[pallet::error]
@@ -613,6 +783,12 @@ pub mod pallet {
 
 		/// Tried to access an internal collection with an external API
 		CollectionIsInternal,
+
+		/// This address is not set as sponsor, use setCollectionSponsor first.
+		ConfirmUnsetSponsorFail,
+
+		/// The user is not an administrator.
+		UserIsNotAdmin,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.
@@ -1363,27 +1539,47 @@ impl<T: Config> Pallet<T> {
 
 		if allowed {
 			<Allowlist<T>>::insert((collection.id, user), true);
+			Self::deposit_event(Event::<T>::AllowListAddressAdded(
+				collection.id,
+				user.clone(),
+			));
 		} else {
 			<Allowlist<T>>::remove((collection.id, user));
+			Self::deposit_event(Event::<T>::AllowListAddressRemoved(
+				collection.id,
+				user.clone(),
+			));
 		}
+
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 
 		Ok(())
 	}
 
 	/// Toggle `user` participation in the `collection`'s admin list.
 	/// #### Store read/writes
-	/// 2 writes
+	/// 2 reads, 2 writes
 	pub fn toggle_admin(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
+		collection.check_is_internal()?;
 		collection.check_is_owner(sender)?;
 
-		let was_admin = <IsAdmin<T>>::get((collection.id, user));
-		if was_admin == admin {
-			return Ok(());
+		let is_admin = <IsAdmin<T>>::get((collection.id, user));
+		if is_admin == admin {
+			if admin {
+				return Ok(());
+			} else {
+				ensure!(false, Error::<T>::UserIsNotAdmin);
+			}
 		}
 		let amount = <AdminAmount<T>>::get(collection.id);
 
@@ -1400,16 +1596,56 @@ impl<T: Config> Pallet<T> {
 
 			<AdminAmount<T>>::insert(collection.id, amount);
 			<IsAdmin<T>>::insert((collection.id, user), true);
+
+			Self::deposit_event(Event::<T>::CollectionAdminAdded(
+				collection.id,
+				user.clone(),
+			));
 		} else {
 			<AdminAmount<T>>::insert(collection.id, amount.saturating_sub(1));
 			<IsAdmin<T>>::remove((collection.id, user));
+
+			Self::deposit_event(Event::<T>::CollectionAdminRemoved(
+				collection.id,
+				user.clone(),
+			));
 		}
+
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
 
 		Ok(())
 	}
 
+	/// Update collection limits.
+	pub fn update_limits(
+		user: &T::CrossAccountId,
+		collection: &mut CollectionHandle<T>,
+		new_limit: CollectionLimits,
+	) -> DispatchResult {
+		collection.check_is_internal()?;
+		collection.check_is_owner_or_admin(user)?;
+
+		collection.limits =
+			Self::clamp_limits(collection.mode.clone(), &collection.limits, new_limit)?;
+
+		Self::deposit_event(Event::<T>::CollectionLimitSet(collection.id));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+
+		collection.save()
+	}
+
 	/// Merge set fields from `new_limit` to `old_limit`.
-	pub fn clamp_limits(
+	fn clamp_limits(
 		mode: CollectionMode,
 		old_limit: &CollectionLimits,
 		mut new_limit: CollectionLimits,
@@ -1454,8 +1690,33 @@ impl<T: Config> Pallet<T> {
 		Ok(new_limit)
 	}
 
+	/// Update collection permissions.
+	pub fn update_permissions(
+		user: &T::CrossAccountId,
+		collection: &mut CollectionHandle<T>,
+		new_permission: CollectionPermissions,
+	) -> DispatchResult {
+		collection.check_is_internal()?;
+		collection.check_is_owner_or_admin(user)?;
+		collection.permissions = Self::clamp_permissions(
+			collection.mode.clone(),
+			&collection.permissions,
+			new_permission,
+		)?;
+
+		Self::deposit_event(Event::<T>::CollectionPermissionSet(collection.id));
+		<PalletEvm<T>>::deposit_log(
+			erc::CollectionHelpersEvents::CollectionChanged {
+				collection_id: eth::collection_id_to_address(collection.id),
+			}
+			.to_log(T::ContractAddress::get()),
+		);
+
+		collection.save()
+	}
+
 	/// Merge set fields from `new_permission` to `old_permission`.
-	pub fn clamp_permissions(
+	fn clamp_permissions(
 		_mode: CollectionMode,
 		old_permission: &CollectionPermissions,
 		mut new_permission: CollectionPermissions,

@@ -146,7 +146,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
     const confirmSponsorshipTx = () => collection.confirmSponsorship(alice);
     const removeSponsorTx = () => collection.removeSponsor(alice);
     await expect(setSponsorTx()).to.be.rejectedWith(/common\.NoPermission/);
-    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
+    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmUnsetSponsorFail/);
     await expect(removeSponsorTx()).to.be.rejectedWith(/common\.NoPermission/);
 
     const limits = {
