@@ -86,7 +86,7 @@ describe('Create NFT collection from EVM', () => {
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -109,7 +109,7 @@ describe('Create NFT collection from EVM', () => {
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -203,11 +203,11 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -228,11 +228,11 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });

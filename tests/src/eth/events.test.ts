@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
 import { expect } from 'chai';
+import {IKeyringPair} from '@polkadot/types/types';
 import { itEth, usingEthPlaygrounds } from './util';
 
-describe.only('NFT events', () => {
+describe('NFT events', () => {
     let donor: IKeyringPair;
   
     before(async function () {
@@ -29,8 +29,9 @@ describe.only('NFT events', () => {
 
     itEth('Create event', async ({helper}) => {
         const owner = await helper.eth.createAccountWithBalance(donor);
-        const {collectionAddress, events} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
-        expect(events).to.be.like([
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionCreated']}]);
+        const {collectionAddress, events: ethEvents} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        expect(ethEvents).to.be.like([
             {
                 event: 'CollectionCreated',
                 args: {
@@ -39,20 +40,25 @@ describe.only('NFT events', () => {
                 }
             }
         ]);
+        expect(subEvents).to.be.like([{method: 'CollectionCreated'}]);
+        unsubscribe();
     });
 
     itEth('Destroy event', async ({helper}) => {
         const owner = await helper.eth.createAccountWithBalance(donor);
         const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
         const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-        let resutl = await collectionHelper.methods.destroyCollection(collectionAddress).send({from:owner});
-        expect(resutl.events).to.be.like({
+        const {unsubscribe, collectedEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionDestroyed']}]);
+        let result = await collectionHelper.methods.destroyCollection(collectionAddress).send({from:owner});
+        expect(result.events).to.be.like({
             CollectionDestroyed: {
                 returnValues: {
                     collectionId: collectionAddress
                 }
             }
         });
+        expect(collectedEvents).to.be.like([{method: 'CollectionDestroyed'}]);
+        unsubscribe();
     });
     
     itEth('CollectionChanged event for CollectionPropertySet and CollectionPropertyDeleted', async ({helper}) => {
@@ -61,13 +67,14 @@ describe.only('NFT events', () => {
         const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
         const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
         
+        let {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionPropertySet', 'CollectionPropertyDeleted']}]);
         {
-            const events: any = [];
+            const ethEvents: any = [];
             collectionHelper.events.allEvents((_: any, event: any) => {
-                events.push(event);
+                ethEvents.push(event);
             });
             await collection.methods.setCollectionProperties([{key: 'A', value: [0,1,2,3]}]).send({from:owner});
-            expect(events).to.be.like([
+            expect(ethEvents).to.be.like([
                 {
                     event: 'CollectionChanged',
                     returnValues: {
@@ -75,14 +82,16 @@ describe.only('NFT events', () => {
                     }
                 }
             ]);
+            expect(subEvents).to.be.like([{method: 'CollectionPropertySet'}]);
+            subEvents.pop();
         }
         {
-            const events: any = [];
+            const ethEvents: any = [];
             collectionHelper.events.allEvents((_: any, event: any) => {
-                events.push(event);
+                ethEvents.push(event);
             });
             await collection.methods.deleteCollectionProperties(['A']).send({from:owner});
-            expect(events).to.be.like([
+            expect(ethEvents).to.be.like([
                 {
                     event: 'CollectionChanged',
                     returnValues: {
@@ -90,8 +99,9 @@ describe.only('NFT events', () => {
                     }
                 }
             ]);
+            expect(subEvents).to.be.like([{method: 'CollectionPropertyDeleted'}]);
         }
-
+        unsubscribe();
     });
     
     itEth('CollectionChanged event for PropertyPermissionSet', async ({helper}) => {
@@ -99,12 +109,13 @@ describe.only('NFT events', () => {
         const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
         const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
         const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-        const events: any = [];
+        const eethEvents: any = [];
         collectionHelper.events.allEvents((_: any, event: any) => {
-            events.push(event);
+            eethEvents.push(event);
         });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['PropertyPermissionSet']}]);
         await collection.methods.setTokenPropertyPermission('testKey', true, true, true).send({from: owner});
-        expect(events).to.be.like([
+        expect(eethEvents).to.be.like([
             {
                 event: 'CollectionChanged',
                 returnValues: {
@@ -112,28 +123,236 @@ describe.only('NFT events', () => {
                 }
             }
         ]);
+        expect(subEvents).to.be.like([{method: 'PropertyPermissionSet'}]);
+        unsubscribe();
     });
     
-    // itEth('CollectionChanged event for AllowListAddressAdded', async ({helper}) => {
-    //     const owner = await helper.eth.createAccountWithBalance(donor);
-    //     const user = await helper.eth.createAccount();
-    //     const userCross = helper.ethCrossAccount.fromAddress(user);
-    //     const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    //   // allow list does not need to be enabled to add someone in advance
-    //     const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    //     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    //     const events: any = [];
-    //     collectionHelper.events.allEvents((_: any, event: any) => {
-    //         events.push(event);
-    //     });
-    //     await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
-    //     expect(events).to.be.like([
-    //         {
-    //             event: 'CollectionChanged',
-    //             returnValues: {
-    //                 collectionId: collectionAddress
-    //             }
-    //         }
-    //     ]);
-    // });
+    itEth('CollectionChanged event for AllowListAddressAdded, AllowListAddressRemoved', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const user = helper.ethCrossAccount.createAccount();
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const ethEvents: any[] = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['AllowListAddressAdded', 'AllowListAddressRemoved']}]);
+        {
+            await collection.methods.addToCollectionAllowListCross(user).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'AllowListAddressAdded'}]);
+            ethEvents.pop();
+            subEvents.pop();
+        }
+        {
+            await collection.methods.removeFromCollectionAllowListCross(user).send({from: owner});
+            expect(ethEvents.length).to.be.eq(1);
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'AllowListAddressRemoved'}]);
+        }
+        unsubscribe();
+    });
+    
+    itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const user = helper.ethCrossAccount.createAccount();
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const ethEvents: any = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionAdminAdded', 'CollectionAdminRemoved']}]);
+        {
+            await collection.methods.addCollectionAdminCross(user).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionAdminAdded'}]);
+            ethEvents.pop();
+            subEvents.pop();
+        }
+        {
+            await collection.methods.removeCollectionAdminCross(user).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionAdminRemoved'}]);
+        }
+        unsubscribe();
+    });
+    
+    itEth('CollectionChanged event for CollectionLimitSet', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const ethEvents: any = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionLimitSet']}]);
+        {
+            await collection.methods.setCollectionLimit('ownerCanTransfer', 0n).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionLimitSet'}]);
+        }
+        unsubscribe();
+    });
+    
+    itEth('CollectionChanged event for CollectionOwnedChanged', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const new_owner = helper.ethCrossAccount.createAccount();
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const ethEvents: any = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionOwnedChanged']}]);
+        {
+            await collection.methods.changeCollectionOwnerCross(new_owner).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionOwnedChanged'}]);
+        }
+        unsubscribe();
+    });
+    
+    itEth('CollectionChanged event for CollectionPermissionSet', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const ethEvents: any = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionPermissionSet']}]);
+        {
+            await collection.methods.setCollectionMintMode(true).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionPermissionSet'}]);
+            ethEvents.pop();
+            subEvents.pop();
+        }
+        {
+            await collection.methods.setCollectionAccess(1).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionPermissionSet'}]);
+        }
+        unsubscribe();
+    });
+
+    itEth('CollectionChanged event for CollectionSponsorSet, SponsorshipConfirmed, CollectionSponsorRemoved', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const sponsor = await helper.ethCrossAccount.createAccountWithBalance(donor);
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const ethEvents: any = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{
+            section: 'common', names: ['CollectionSponsorSet', 'SponsorshipConfirmed', 'CollectionSponsorRemoved'
+        ]}]);
+        {
+            await collection.methods.setCollectionSponsorCross(sponsor).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionSponsorSet'}]);
+            ethEvents.pop();
+            subEvents.pop();
+        }
+        {
+            await collection.methods.confirmCollectionSponsorship().send({from: sponsor.eth});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'SponsorshipConfirmed'}]);
+            ethEvents.pop();
+            subEvents.pop();
+        }
+        {
+            await collection.methods.removeCollectionSponsor().send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'CollectionChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'CollectionSponsorRemoved'}]);
+        }
+        unsubscribe();
+    });
+    
 });

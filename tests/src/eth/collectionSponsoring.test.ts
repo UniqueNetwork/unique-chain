@@ -258,7 +258,7 @@ describe('evm collection sponsoring', () => {
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsor : sponsorCross).send();
       let collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
-      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
   
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;

@@ -222,12 +222,11 @@ where
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
-		self.set_sponsor(sponsor.as_sub().clone())
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
+		self.set_sponsor(&caller, sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Set the sponsor of the collection.
@@ -242,12 +241,11 @@ where
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let sponsor = sponsor.into_sub_cross_account::<T>()?;
-		self.set_sponsor(sponsor.as_sub().clone())
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
+		self.set_sponsor(&caller, sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Whether there is a pending sponsor.
@@ -265,21 +263,15 @@ where
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		if !self
-			.confirm_sponsorship(caller.as_sub())
-			.map_err(dispatch_to_evm::<T>)?
-		{
-			return Err("caller is not set as sponsor".into());
-		}
-		save(self)
+		self.confirm_sponsorship(caller.as_sub())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Remove collection sponsor.
 	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
-		check_is_owner_or_admin(caller, self)?;
-		self.remove_sponsor().map_err(dispatch_to_evm::<T>)?;
-		save(self)
+		let caller = T::CrossAccountId::from_eth(caller);
+		self.remove_sponsor(&caller).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get current sponsor.
@@ -333,7 +325,6 @@ where
 			}
 		};
 
-		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
 
 		match limit.as_str() {
@@ -366,9 +357,9 @@ where
 			}
 			_ => return Err(Error::Revert(format!("unknown limit \"{}\"", limit))),
 		}
-		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		<Pallet<T>>::update_limits(&caller, self, limits).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get contract address.
@@ -383,7 +374,7 @@ where
 		caller: caller,
 		new_admin: EthCrossAccount,
 	) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = new_admin.into_sub_cross_account::<T>()?;
@@ -398,7 +389,7 @@ where
 		caller: caller,
 		admin: EthCrossAccount,
 	) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = admin.into_sub_cross_account::<T>()?;
@@ -410,7 +401,7 @@ where
 	/// @param newAdmin Address of the added administrator.
 	#[solidity(hide)]
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
@@ -423,7 +414,7 @@ where
 	/// @param admin Address of the removed administrator.
 	#[solidity(hide)]
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
@@ -438,7 +429,7 @@ where
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let mut permissions = self.collection.permissions.clone();
 		let mut nesting = permissions.nesting().clone();
@@ -446,14 +437,7 @@ where
 		nesting.restricted = None;
 		permissions.nesting = Some(nesting);
 
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Toggle accessibility of collection nesting.
@@ -472,7 +456,7 @@ where
 		if collections.is_empty() {
 			return Err("no addresses provided".into());
 		}
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let mut permissions = self.collection.permissions.clone();
 		match enable {
@@ -497,14 +481,7 @@ where
 			}
 		};
 
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Set the collection access method.
@@ -514,7 +491,7 @@ where
 	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 		let permissions = CollectionPermissions {
 			access: Some(match mode {
 				0 => AccessMode::Normal,
@@ -523,14 +500,7 @@ where
 			}),
 			..Default::default()
 		};
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Checks that user allowed to operate with collection.
@@ -605,19 +575,12 @@ where
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 		let permissions = CollectionPermissions {
 			mint_mode: Some(mode),
 			..Default::default()
 		};
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Check that account is the owner or admin of the collection
@@ -671,7 +634,7 @@ where
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = T::CrossAccountId::from_eth(new_owner);
-		self.set_owner_internal(caller, new_owner)
+		self.change_owner(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -699,7 +662,7 @@ where
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = new_owner.into_sub_cross_account::<T>()?;
-		self.set_owner_internal(caller, new_owner)
+		self.change_owner(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
 }
