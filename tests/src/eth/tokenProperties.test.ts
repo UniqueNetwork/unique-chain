@@ -49,52 +49,44 @@ describe('EVM token properties', () => {
     }
   });
 
-  itEth('Can be set', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {
-      tokenPropertyPermissions: [{
-        key: 'testKey',
-        permission: {
-          collectionAdmin: true,
-        },
-      }],
-    });
-    const token = await collection.mintToken(alice);
+  [
+    {
+      method: 'setProperties',
+      methodParams: [[{key: 'testKey1', value: Buffer.from('testValue1')}, {key: 'testKey2', value: Buffer.from('testValue2')}]],
+      expectedProps: [{key: 'testKey1', value: 'testValue1'}, {key: 'testKey2', value: 'testValue2'}],
+    },
+    {
+      method: 'setProperty' /*Soft-deprecated*/, 
+      methodParams: ['testKey1', Buffer.from('testValue1')],
+      expectedProps: [{key: 'testKey1', value: 'testValue1'}],
+    },
+  ].map(testCase => 
+    itEth(`[${testCase.method}] Can be set`, async({helper}) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper.nft.mintCollection(alice, {
+        tokenPropertyPermissions: [{
+          key: 'testKey1',
+          permission: {
+            collectionAdmin: true,
+          },
+        }, {
+          key: 'testKey2',
+          permission: {
+            collectionAdmin: true,
+          },
+        }],
+      });
 
-    await collection.addAdmin(alice, {Ethereum: caller});
-
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
-
-    await contract.methods.setProperties(token.tokenId, [{key: 'testKey', value: Buffer.from('testValue')}]).send({from: caller});
-
-    const [{value}] = await token.getProperties(['testKey']);
-    expect(value).to.equal('testValue');
-  });
-
-  // Soft-deprecated
-  itEth('Property can be set', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.nft.mintCollection(alice, {
-      tokenPropertyPermissions: [{
-        key: 'testKey',
-        permission: {
-          collectionAdmin: true,
-        },
-      }],
-    });
-    const token = await collection.mintToken(alice);
-
-    await collection.addAdmin(alice, {Ethereum: caller});
-
-    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller, true);
-
-    await contract.methods.setProperty(token.tokenId, 'testKey', Buffer.from('testValue')).send({from: caller});
-
-    const [{value}] = await token.getProperties(['testKey']);
-    expect(value).to.equal('testValue');
-  });
+      await collection.addAdmin(alice, {Ethereum: caller});
+      const token = await collection.mintToken(alice);
+  
+      const collectionEvm = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller, testCase.method === 'setProperty');
+  
+      await collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller});
+  
+      const properties = await token.getProperties();
+      expect(properties).to.deep.equal(testCase.expectedProps);
+    }));
   
   async function checkProps(helper: EthUniqueHelper, mode: TCollectionMode) {
     const caller = await helper.eth.createAccountWithBalance(donor);
