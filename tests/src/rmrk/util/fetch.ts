@@ -20,7 +20,7 @@ export async function getCollectionsCount(api: ApiPromise): Promise<number> {
   return (await api.rpc.rmrk.lastCollectionIdx()).toNumber();
 }
 
-export async function getCollection(api: ApiPromise, id: number): Promise<Option<Collection>> {
+export function getCollection(api: ApiPromise, id: number): Promise<Option<Collection>> {
   return api.rpc.rmrk.collectionById(id);
 }
 
@@ -36,7 +36,7 @@ export async function getOwnedNfts(
     .map((value) => value.toNumber());
 }
 
-export async function getNft(api: ApiPromise, collectionId: number, nftId: number): Promise<Option<Nft>> {
+export function getNft(api: ApiPromise, collectionId: number, nftId: number): Promise<Option<Nft>> {
   return api.rpc.rmrk.nftById(collectionId, nftId);
 }
 
@@ -56,7 +56,7 @@ export async function getChildren(
   return (await api.rpc.rmrk.nftChildren(collectionId, nftId)).toArray();
 }
 
-export async function getBase(api: ApiPromise, baseId: number): Promise<Option<Base>> {
+export function getBase(api: ApiPromise, baseId: number): Promise<Option<Base>> {
   return api.rpc.rmrk.base(baseId);
 }
 
@@ -112,7 +112,7 @@ export async function getThemeNames(api: ApiPromise, baseId: number): Promise<st
     .map((name) => name.toUtf8());
 }
 
-export async function getTheme(
+export function getTheme(
   api: ApiPromise,
   baseId: number,
   themeName: string,

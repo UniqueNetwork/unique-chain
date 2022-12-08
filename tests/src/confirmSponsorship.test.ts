@@ -119,7 +119,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await token.transfer(alice, {Substrate: zeroBalance.address});
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    const transferTx = async () => token.transfer(zeroBalance, {Substrate: alice.address});
+    const transferTx = () => token.transfer(zeroBalance, {Substrate: alice.address});
     await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -137,7 +137,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.transfer(zeroBalance, {Substrate: zeroBalance.address}, 1n);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    const transferTx = async () => collection.transfer(zeroBalance, {Substrate: zeroBalance.address});
+    const transferTx = () => collection.transfer(zeroBalance, {Substrate: zeroBalance.address});
     await expect(transferTx()).to.be.rejected;
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -155,7 +155,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await token.transfer(zeroBalance, {Substrate: alice.address});
 
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const transferTx = async () => token.transfer(zeroBalance, {Substrate: alice.address});
+    const transferTx = () => token.transfer(zeroBalance, {Substrate: alice.address});
     await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -175,7 +175,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
 
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const mintTx = async () => collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
+    const mintTx = () => collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
     await expect(mintTx()).to.be.rejectedWith('Inability to pay some fees');
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -199,21 +199,21 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
 
   itSub('(!negative test!) Confirm sponsorship for a collection that never existed', async ({helper}) => {
     const collectionId = (1 << 32) - 1;
-    const confirmSponsorshipTx = async () => helper.collection.confirmSponsorship(bob, collectionId);
+    const confirmSponsorshipTx = () => helper.collection.confirmSponsorship(bob, collectionId);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
   itSub('(!negative test!) Confirm sponsorship using a non-sponsor address', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
-    const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+    const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship using owner address', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
-    const confirmSponsorshipTx = async () => collection.confirmSponsorship(alice);
+    const confirmSponsorshipTx = () => collection.confirmSponsorship(alice);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
   });
 
@@ -221,20 +221,20 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
     await collection.addAdmin(alice, {Substrate: charlie.address});
-    const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+    const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship without sponsor being set with setCollectionSponsor', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+    const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship in a collection that was destroyed', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.burn(alice);
-    const confirmSponsorshipTx = async () => collection.confirmSponsorship(charlie);
+    const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
@@ -244,7 +244,7 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     await collection.confirmSponsorship(bob);
     const token = await collection.mintToken(alice, {Substrate: ownerZeroBalance.address});
     const sponsorBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const transferTx = async () =>  token.transfer(senderZeroBalance, {Substrate: alice.address});
+    const transferTx = () =>  token.transfer(senderZeroBalance, {Substrate: alice.address});
     await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
     const sponsorBalanceAfter = await helper.balance.getSubstrate(bob.address);
     expect(sponsorBalanceAfter).to.equal(sponsorBalanceBefore);

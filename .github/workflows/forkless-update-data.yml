@@ -35,9 +35,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, runtime {opal}, features {opal-runtime}, mainnet_branch {${{ env.OPAL_MAINNET_TAG }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}
-            network {quartz}, runtime {quartz}, features {quartz-runtime}, mainnet_branch {${{ env.QUARTZ_MAINNET_TAG }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
-            network {unique}, runtime {unique}, features {unique-runtime}, mainnet_branch {${{ env.UNIQUE_MAINNET_TAG }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
 
   forkless-update-data:
     needs: execution-marix
@@ -51,7 +51,6 @@ jobs:
         include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
 
     steps:
       - name: Clean Workspace
@@ -69,21 +68,21 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/docker-compose.tmp-forkless-data.j2
-          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          output_file: .docker/docker-compose-forkless-data.${{ matrix.network }}.yml
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}            
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose-forkless-data.${{ matrix.network }}.yml
 
       - name: Generate launch-config-forkless-data.json
         uses: cuchi/jinja2-action@v1.2.0
@@ -91,15 +90,14 @@ jobs:
           template: .docker/forkless-config/launch-config-forkless-data.j2
           output_file: .docker/launch-config-forkless-data.json
           variables: |
-            FEATURE=${{ matrix.features }}
-            RUNTIME=${{ matrix.runtime }}
+            NETWORK=${{ matrix.network }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-data.json
 
-
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose-forkless-data.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -161,7 +159,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down --volumes
+        run: docker-compose -f ".docker/docker-compose-forkless-data.${{ matrix.network }}.yml" down --volumes
         
       - name: Remove builder cache
         if: always()                   # run this step always

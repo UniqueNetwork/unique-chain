@@ -1,6 +1,6 @@
 # Integration test in --dev mode
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586411104/Integration+tests
-name: yarn test dev
+name: yarn dev
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
@@ -24,11 +24,8 @@ jobs:
       matrix:
         include:
           - network: "opal"
-            features: "opal-runtime"
           - network: "quartz"
-            features: "quartz-runtime"
           - network: "unique"
-            features: "unique-runtime"
 
     steps:
 
@@ -50,14 +47,14 @@ jobs:
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            FEATURE=${{ matrix.features }}
+            NETWORK=${{ matrix.network }}
     
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
       - uses: actions/setup-node@v3
         with:
@@ -91,7 +88,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-dev.yaml" -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always

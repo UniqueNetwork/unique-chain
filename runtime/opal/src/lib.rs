@@ -42,7 +42,14 @@ mod tests;
 
 pub use runtime_common::*;
 
+#[cfg(feature = "become-sapphire")]
+pub const RUNTIME_NAME: &str = "sapphire";
+#[cfg(feature = "become-sapphire")]
+pub const TOKEN_SYMBOL: &str = "QTZ";
+
+#[cfg(not(feature = "become-sapphire"))]
 pub const RUNTIME_NAME: &str = "opal";
+#[cfg(not(feature = "become-sapphire"))]
 pub const TOKEN_SYMBOL: &str = "OPL";
 
 /// This runtime version.
@@ -50,7 +57,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 930032,
+	spec_version: 930033,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 2,
@@ -59,7 +66,16 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
-	pub const SS58Prefix: u8 = 42;
+}
+#[cfg(feature = "become-sapphire")]
+parameter_types! {
+	pub const SS58Prefix: u16 = 8883;
+	pub const ChainId: u64 = 8883;
+}
+
+#[cfg(not(feature = "become-sapphire"))]
+parameter_types! {
+	pub const SS58Prefix: u16 = 42;
 	pub const ChainId: u64 = 8882;
 }
 

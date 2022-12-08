@@ -1627,7 +1627,7 @@ class NFTGroup extends NFTnRFT {
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId) {
+  approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, 1n);
   }
 }
@@ -1820,7 +1820,7 @@ class RFTGroup extends NFTnRFT {
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5GHoZe9c73RYbVzq..."}, "", 10000n);
    * @returns true if the token success, otherwise false
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
+  approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, amount);
   }
 
@@ -2032,7 +2032,7 @@ class FTGroup extends CollectionGroup {
    * @example approveTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n)
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=1n) {
+  approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=1n) {
     return super.approveToken(signer, collectionId, 0, toAddressObj, amount);
   }
 
@@ -2043,7 +2043,7 @@ class FTGroup extends CollectionGroup {
    * @param toAddressObj the address approved for the transfer of tokens on behalf of the owner
    * @returns number of tokens approved for the transfer
    */
-  async getApprovedTokens(collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
+  getApprovedTokens(collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
     return super.getTokenApprovedPieces(collectionId, 0, toAddressObj, fromAddressObj);
   }
 }
@@ -2220,7 +2220,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example getSubstrate("5GrwvaEF5zXb26Fz...")
    * @returns amount of tokens on address
    */
-  async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
+  getSubstrate(address: TSubstrateAccount): Promise<bigint> {
     return this.subBalanceGroup.getSubstrate(address);
   }
 
@@ -2229,7 +2229,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param address substrate address
    * @returns
    */
-  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+  getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
     return this.subBalanceGroup.getSubstrateFull(address);
   }
 
@@ -2239,7 +2239,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example getEthereum("0x9F0583DbB855d...")
    * @returns amount of tokens on address
    */
-  async getEthereum(address: TEthereumAccount): Promise<bigint> {
+  getEthereum(address: TEthereumAccount): Promise<bigint> {
     return this.ethBalanceGroup.getEthereum(address);
   }
 
@@ -2251,7 +2251,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
+  transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     return this.subBalanceGroup.transferToSubstrate(signer, address, amount);
   }
 }
@@ -2402,7 +2402,7 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
     super(helper);
   }
 
-  async cancelScheduled(signer: TSigner, scheduledId: string) {
+  cancelScheduled(signer: TSigner, scheduledId: string) {
     return this.helper.executeExtrinsic(
       signer,
       'api.tx.scheduler.cancelNamed',
@@ -2411,7 +2411,7 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
     );
   }
 
-  async changePriority(signer: TSigner, scheduledId: string, priority: number) {
+  changePriority(signer: TSigner, scheduledId: string, priority: number) {
     return this.helper.executeExtrinsic(
       signer,
       'api.tx.scheduler.changeNamedPriority',

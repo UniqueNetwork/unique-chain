@@ -183,7 +183,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {},
       {},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
@@ -198,7 +198,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {value: 2n},
       {value: 3n},
     ];
-    const mintTx = async () => helper.ft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, args, {Substrate: alice.address});
+    const mintTx = () => helper.ft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, args, {Substrate: alice.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
@@ -213,7 +213,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {pieces: 1n},
       {pieces: 1n},
     ];
-    const mintTx = async () => helper.rft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.rft.mintMultipleTokensWithOneOwner(bob, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
@@ -223,7 +223,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {},
       {},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(bob, collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(bob, collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
@@ -241,7 +241,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {properties: [{key: 'data', value: 'B'.repeat(32769)}]},
       {properties: [{key: 'data', value: 'C'.repeat(32769)}]},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
@@ -259,7 +259,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {pieces: 10n, properties: [{key: 'data', value: 'B'.repeat(32769)}]},
       {pieces: 10n, properties: [{key: 'data', value: 'C'.repeat(32769)}]},
     ];
-    const mintTx = async () => helper.rft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.rft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
@@ -291,7 +291,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {properties: [{key: 'data', value: 'A'}]},
       {properties: [{key: 'data', value: 'B'.repeat(32769)}]},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
@@ -311,7 +311,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {},
       {},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith(/common\.CollectionTokenLimitExceeded/);
   });
 
@@ -327,7 +327,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     const args = [
       {properties: [{key: 'data', value: 'A'}]},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -346,7 +346,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
     const args = [
       {properties: [{key: 'data', value: 'A'}]},
     ];
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -368,7 +368,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       {properties: prps},
     ];
 
-    const mintTx = async () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
+    const mintTx = () => helper.nft.mintMultipleTokensWithOneOwner(alice, collection.collectionId, {Substrate: alice.address}, args);
     await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 });

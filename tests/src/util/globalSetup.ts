@@ -93,7 +93,7 @@ const fundFilenames = async () => {
   });
 };
 
-const fundFilenamesWithRetries = async (retriesLeft: number): Promise<boolean> => {
+const fundFilenamesWithRetries = (retriesLeft: number): Promise<boolean> => {
   if (retriesLeft <= 0) return Promise.resolve(false);
   return fundFilenames()
     .then(() => Promise.resolve(true))

@@ -65,7 +65,6 @@ describe('Pallet presence', () => {
       const refungible = 'refungible';
       // const scheduler = 'scheduler';
       const foreignAssets = 'foreignassets';
-      const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
 
       if (chain.eq('OPAL by UNIQUE')) {
@@ -74,7 +73,6 @@ describe('Pallet presence', () => {
           // scheduler,
           foreignAssets,
           appPromotion,
-          ...rmrkPallets,
         );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
         requiredPallets.push(refungible);
@@ -84,15 +82,15 @@ describe('Pallet presence', () => {
     });
   });
 
-  itSub('Required pallets are present', async ({helper}) => {
+  itSub('Required pallets are present', ({helper}) => {
     expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets]);
   });
 
-  itSub('Governance and consensus pallets are present', async ({helper}) => {
+  itSub('Governance and consensus pallets are present', ({helper}) => {
     expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets]);
   });
 
-  itSub('No extra pallets are included', async ({helper}) => {
+  itSub('No extra pallets are included', ({helper}) => {
     expect(helper.fetchAllPalletNames().sort()).to.be.deep.equal([...requiredPallets, ...consensusPallets].sort());
   });
 });

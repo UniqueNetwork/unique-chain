@@ -814,6 +814,20 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
 	}
 
+	pub fn check_token_immediate_ownership(
+		collection: &NonfungibleHandle<T>,
+		token: TokenId,
+		possible_owner: &T::CrossAccountId,
+	) -> DispatchResult {
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		ensure!(
+			&token_data.owner == possible_owner,
+			<CommonError<T>>::NoPermission
+		);
+		Ok(())
+	}
+
 	/// Transfer NFT token from one account to another.
 	///
 	/// `from` account stops being the owner and `to` account becomes the owner of the token.

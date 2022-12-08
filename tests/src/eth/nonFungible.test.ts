@@ -139,11 +139,12 @@ describe('Check ERC721 token URI for NFT', () => {
 describe('NFT: Plain calls', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
+  let minter: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([10n], donor);
+      [alice, minter] = await helper.arrange.createAccounts([10n, 100n], donor);
     });
   });
 
@@ -309,6 +310,25 @@ describe('NFT: Plain calls', () => {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(1);
     }
+  });
+
+  itEth('Cannot transfer non-owned token', async ({helper}) => {
+    const sender = await helper.eth.createAccountWithBalance(donor);
+    const tokenOwner = await helper.eth.createAccountWithBalance(donor);
+    const receiverSub = minter;
+
+    const collection = await helper.nft.mintCollection(minter, {});
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', sender);
+
+    await collection.mintToken(minter, {Ethereum: sender});
+    const nonSendersToken = await collection.mintToken(minter, {Ethereum: tokenOwner});
+
+    // Cannot transferCross someone else's token:
+    const receiver = helper.address.substrateToEth(receiverSub.address);
+    await expect(collectionEvm.methods.transfer(receiver, nonSendersToken.tokenId).send({from: sender})).to.be.rejected;
+    // Cannot transfer token if it does not exist:
+    await expect(collectionEvm.methods.transfer(receiver, 999999).send({from: sender})).to.be.rejected;
   });
 });
 

@@ -36,7 +36,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
     expect(limits.ownerCanTransfer).to.be.true;
 
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-    const transferResult = async () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
+    const transferResult = () => helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
     await expect(transferResult()).to.be.rejected;
 
     await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
@@ -52,7 +52,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
     expect(limits.ownerCanTransfer).to.be.true;
 
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
-    const burnTxFailed = async () => helper.nft.burnToken(alice, collectionId, tokenId);
+    const burnTxFailed = () => helper.nft.burnToken(alice, collectionId, tokenId);
 
     await expect(burnTxFailed()).to.be.rejected;
 
