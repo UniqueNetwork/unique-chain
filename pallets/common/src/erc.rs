@@ -64,6 +64,15 @@ pub enum CollectionHelpersEvents {
 		#[indexed]
 		collection_id: address,
 	},
+
+	/// The token has been changed.
+	TokenChanged {
+		/// Collection ID.
+		#[indexed]
+		collection_id: address,
+		/// Token ID.
+		token_id: uint256,
+	},
 }
 
 /// Does not always represent a full collection, for RFT it is either

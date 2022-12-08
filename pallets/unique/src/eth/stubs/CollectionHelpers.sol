@@ -22,6 +22,7 @@ contract CollectionHelpersEvents {
 	event CollectionCreated(address indexed owner, address indexed collectionId);
 	event CollectionDestroyed(address indexed collectionId);
 	event CollectionChanged(address indexed collectionId);
+	event TokenChanged(address indexed collectionId, uint256 tokenId);
 }
 
 /// @title Contract, which allows users to operate with collections

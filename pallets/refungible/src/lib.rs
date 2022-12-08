@@ -102,11 +102,11 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
 	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon,
+	Event as CommonEvent, Pallet as PalletCommon, erc::CollectionHelpersEvents,
 };
 use pallet_structure::Pallet as PalletStructure;
 use scale_info::TypeInfo;
-use sp_core::H160;
+use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
@@ -649,6 +649,14 @@ impl<T: Config> Pallet<T> {
 					));
 				}
 			}
+
+			<PalletEvm<T>>::deposit_log(
+				CollectionHelpersEvents::TokenChanged {
+					collection_id: collection_id_to_address(collection.id),
+					token_id: token_id.into(),
+				}
+				.to_log(T::ContractAddress::get()),
+			);
 		}
 
 		Ok(())
