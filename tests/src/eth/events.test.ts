@@ -354,5 +354,48 @@ describe('NFT events', () => {
         }
         unsubscribe();
     });
-    
+     
+    itEth('CollectionChanged event for TokenPropertySet, TokenPropertyDeleted', async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const {collectionAddress} = await helper.eth.createCollecion('createNFTCollection', owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+        const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+        const result = await collection.methods.mint(owner).send({from: owner});
+        const tokenId = result.events.Transfer.returnValues.tokenId;
+        await collection.methods.setTokenPropertyPermission('A', true, true, true).send({from: owner});
+
+
+        const ethEvents: any = [];
+        collectionHelper.events.allEvents((_: any, event: any) => {
+            ethEvents.push(event);
+        });
+        const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['TokenPropertySet', 'TokenPropertyDeleted']}]);
+        {
+            await collection.methods.setProperties(tokenId, [{key: 'A', value: [1,2,3]}]).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'TokenChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'TokenPropertySet'}]);
+            ethEvents.pop();
+            subEvents.pop();
+        }
+        {
+            await collection.methods.deleteProperties(tokenId, ['A']).send({from: owner});
+            expect(ethEvents).to.be.like([
+                {
+                    event: 'TokenChanged',
+                    returnValues: {
+                        collectionId: collectionAddress
+                    }
+                }
+            ]);
+            expect(subEvents).to.be.like([{method: 'TokenPropertyDeleted'}]);
+        }
+        unsubscribe();
+    });
 });
