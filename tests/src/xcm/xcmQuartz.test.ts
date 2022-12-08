@@ -32,6 +32,9 @@ const KARURA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
+const WAIT_XCM_KARURA_BLOCKS = 15;
+const WAIT_XCM_MOONRIVER_BLOCKS = 3;
+
 describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
@@ -133,7 +136,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     expect(qtzFees > 0n).to.be.true;
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
-      await helper.wait.newBlocks(3);
+      await helper.wait.newBlocks(WAIT_XCM_KARURA_BLOCKS);
       balanceQuartzForeignTokenMiddle = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
       balanceKaruraTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
@@ -192,7 +195,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
-    await helper.wait.newBlocks(3);
+    await helper.wait.newBlocks(WAIT_XCM_KARURA_BLOCKS);
 
     balanceQuartzTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
     const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
@@ -465,7 +468,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       console.log('Acquire Quartz AssetId Info on Moonriver.......');
 
       // Wait for the democracy execute
-      await helper.wait.newBlocks(5);
+      await helper.wait.newBlocks(WAIT_XCM_MOONRIVER_BLOCKS);
 
       assetId = (await helper.assetManager.assetTypeId(quartzAssetLocation)).toString();
 
@@ -516,7 +519,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     expect(transactionFees > 0).to.be.true;
 
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
-      await helper.wait.newBlocks(3);
+      await helper.wait.newBlocks(WAIT_XCM_MOONRIVER_BLOCKS);
 
       balanceMovrTokenMiddle = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
@@ -580,7 +583,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
-    await helper.wait.newBlocks(3);
+    await helper.wait.newBlocks(WAIT_XCM_MOONRIVER_BLOCKS);
 
     balanceQuartzTokenFinal = await helper.balance.getSubstrate(randomAccountQuartz.address);
     const actuallyDelivered = balanceQuartzTokenFinal - balanceQuartzTokenMiddle;
