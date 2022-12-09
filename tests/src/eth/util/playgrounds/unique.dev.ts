@@ -202,7 +202,7 @@ class EthGroup extends EthGroupBase {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
     const functionName: string = this.createCollectionMethodName(mode);
 
-    const functionParams = functionName === 'createFTCollection' ? [name, decimals, description, tokenPrefix] : [name, description, tokenPrefix];
+    const functionParams = mode === 'ft' ? [name, decimals, description, tokenPrefix] : [name, description, tokenPrefix];
     const result = await collectionHelper.methods[functionName](...functionParams).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
@@ -231,7 +231,7 @@ class EthGroup extends EthGroupBase {
   }
 
   createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
-    return this.createCollecion('createFTCollection', signer, name, description, tokenPrefix, decimals);
+    return this.createCollection('ft', signer, name, description, tokenPrefix, decimals);
   }
 
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
