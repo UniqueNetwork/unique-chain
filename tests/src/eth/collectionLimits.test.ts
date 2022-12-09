@@ -44,20 +44,33 @@ describe('Can set collection limits', () => {
         transfersEnabled: false,
       };
      
-      const collection = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
-      await collection.methods.setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, limits.accountTokenOwnershipLimit).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.SponsoredDataSize, true, limits.sponsoredDataSize).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.SponsoredDataRateLimit, true, limits.sponsoredDataRateLimit).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.TokenLimit, true, limits.tokenLimit).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.SponsorTransferTimeout, true, limits.sponsorTransferTimeout).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.SponsorApproveTimeout, true, limits.sponsorApproveTimeout).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.OwnerCanTransfer, true, limits.ownerCanTransfer).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.OwnerCanDestroy, true, limits.ownerCanDestroy).send();
-      await collection.methods.setCollectionLimit(CollectionLimits.TransferEnabled, true, limits.transfersEnabled).send();
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, limits.accountTokenOwnershipLimit).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.SponsoredDataSize, true, limits.sponsoredDataSize).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.SponsoredDataRateLimit, true, limits.sponsoredDataRateLimit).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.TokenLimit, true, limits.tokenLimit).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.SponsorTransferTimeout, true, limits.sponsorTransferTimeout).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.SponsorApproveTimeout, true, limits.sponsorApproveTimeout).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.OwnerCanTransfer, true, limits.ownerCanTransfer).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.OwnerCanDestroy, true, limits.ownerCanDestroy).send();
+      await collectionEvm.methods.setCollectionLimit(CollectionLimits.TransferEnabled, true, limits.transfersEnabled).send();
       
+      // Check limits from sub:
       const data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.limits).to.deep.eq(expectedLimits);
       expect(await helper.collection.getEffectiveLimits(collectionId)).to.deep.eq(expectedLimits);
+      // Check limits from eth:
+      const limitsEvm = await collectionEvm.methods.collectionLimits().call({from: owner});
+      expect(limitsEvm).to.have.length(9);
+      expect(limitsEvm[0]).to.deep.eq(['0', true, limits.accountTokenOwnershipLimit.toString()]);
+      expect(limitsEvm[1]).to.deep.eq(['1', true, limits.sponsoredDataSize.toString()]);
+      expect(limitsEvm[2]).to.deep.eq(['2', true, limits.sponsoredDataRateLimit.toString()]);
+      expect(limitsEvm[3]).to.deep.eq(['3', true, limits.tokenLimit.toString()]);
+      expect(limitsEvm[4]).to.deep.eq(['4', true, limits.sponsorTransferTimeout.toString()]);
+      expect(limitsEvm[5]).to.deep.eq(['5', true, limits.sponsorApproveTimeout.toString()]);
+      expect(limitsEvm[6]).to.deep.eq(['6', true, limits.ownerCanTransfer.toString()]);
+      expect(limitsEvm[7]).to.deep.eq(['7', true, limits.ownerCanDestroy.toString()]);
+      expect(limitsEvm[8]).to.deep.eq(['8', true, limits.transfersEnabled.toString()]);
     }));
 });
 
