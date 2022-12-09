@@ -161,19 +161,17 @@ describe('evm collection sponsoring', () => {
       {
         const result = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
         const event = helper.eth.normalizeEvents(result.events)
-        .find(event => event.event === 'Transfer');;
+          .find(event => event.event === 'Transfer');
   
-        expect(event).to.be.deep.equal(
-          {
-            address: collectionAddress,
-            event: 'Transfer',
-            args: {
-              from: '0x0000000000000000000000000000000000000000',
-              to: user,
-              tokenId: '1',
-            },
+        expect(event).to.be.deep.equal({
+          address: collectionAddress,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: user,
+            tokenId: '1',
           },
-        );
+        });
   
         const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
         const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsorEth));
@@ -276,20 +274,18 @@ describe('evm collection sponsoring', () => {
       const tokenId = mintingResult.events.Transfer.returnValues.tokenId;
   
       const event = helper.eth.normalizeEvents(mintingResult.events)
-      .find(event => event.event === 'Transfer');
+        .find(event => event.event === 'Transfer');
       const address = helper.ethAddress.fromCollectionId(collectionId);
   
-      expect(event).to.be.deep.equal(
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: user,
-            tokenId: '1',
-          },
+      expect(event).to.be.deep.equal({
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: user,
+          tokenId: '1',
         },
-      );
+      });
       expect(await collectionEvm.methods.tokenURI(tokenId).call({from: user})).to.be.equal('Test URI');
   
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));

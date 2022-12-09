@@ -44,7 +44,7 @@ import {
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
-import { FrameSystemEventRecord } from '@polkadot/types/lookup';
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -409,17 +409,17 @@ export class ChainHelperBase {
   async subscribeEvents(expectedEvents: {section: string, names: string[]}[]) {
     const collectedEvents: IEvent[] = [];
     const unsubscribe = await this.getApi().query.system.events((events: Vec<FrameSystemEventRecord>) => {
-        const ievents = this.eventHelper.extractEvents(events);
-        ievents.forEach((event) => {
-            expectedEvents.forEach((e => {
-                if (event.section === e.section && e.names.includes(event.method)) {
-                    collectedEvents.push(event);
-                }
-            }))
-        });
+      const ievents = this.eventHelper.extractEvents(events);
+      ievents.forEach((event) => {
+        expectedEvents.forEach((e => {
+          if (event.section === e.section && e.names.includes(event.method)) {
+            collectedEvents.push(event);
+          }
+        }));
+      });
     });
     return {unsubscribe: unsubscribe as any, collectedEvents};
-}
+  }
 
   clearChainLog(): void {
     this.chainLog = [];
