@@ -920,7 +920,7 @@ contract ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x80ac58cd
+/// @dev the ERC-165 identifier for this interface is 0x983a942b
 contract ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -1020,7 +1020,10 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		dummy = 0;
 	}
 
-	/// @dev Not implemented
+	/// @notice Sets or unsets the approval of a given operator.
+	/// The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
+	/// @param operator Operator
+	/// @param approved Should operator status be granted or revoked?
 	/// @dev EVM selector for this function is: 0xa22cb465,
 	///  or in textual repr: setApprovalForAll(address,bool)
 	function setApprovalForAll(address operator, bool approved) public {
@@ -1040,13 +1043,22 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	/// @dev Not implemented
+	/// @notice Tells whether the given `owner` approves the `operator`.
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
-	function isApprovedForAll(address owner, address operator) public view returns (address) {
+	function isApprovedForAll(address owner, address operator) public view returns (bool) {
 		require(false, stub_error);
 		owner;
 		operator;
+		dummy;
+		return false;
+	}
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() public view returns (address) {
+		require(false, stub_error);
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}

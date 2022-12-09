@@ -187,6 +187,10 @@ macro_rules! impl_common_runtime_apis {
                 fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
+
+		        fn allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool, DispatchError> {
+                    dispatch_unique_runtime!(collection.allowance_for_all(owner, operator))
+                }
             }
 
             impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {

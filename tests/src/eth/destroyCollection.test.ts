@@ -15,62 +15,48 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {Pallets, requirePalletsOrSkip} from '../util';
+import {Pallets} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 
-
-describe('Destroy Collection from EVM', () => {
+describe('Destroy Collection from EVM', function() {
   let donor: IKeyringPair;
+  const testCases = [
+    {method: 'createRFTCollection' as const, params: ['Limits', 'absolutely anything', 'OLF'], requiredPallets: [Pallets.ReFungible]},
+    {method: 'createNFTCollection' as const, params: ['Limits', 'absolutely anything', 'OLF'], requiredPallets: [Pallets.NFT]},
+    {method: 'createFTCollection' as const, params: ['Limits', 'absolutely anything', 'OLF', 18], requiredPallets: [Pallets.Fungible]},
+  ];
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible, Pallets.NFT]);
+    await usingEthPlaygrounds(async (_, privateKey) => {
       donor = await privateKey({filename: __filename});
     });
   });
 
-  
-  itEth('(!negative test!) RFT', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const signer = await helper.eth.createAccountWithBalance(donor);
-    
-    const unexistedCollection = helper.ethAddress.fromCollectionId(1000000);
-    
-    const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(signer);
-    
-    await expect(collectionHelper.methods
-      .destroyCollection(collectionAddress)
-      .send({from: signer})).to.be.rejected;
-    
-    await expect(collectionHelper.methods
-      .destroyCollection(unexistedCollection)
-      .send({from: signer})).to.be.rejected;
-    
-    expect(await collectionHelper.methods
-      .isCollectionExist(unexistedCollection)
-      .call()).to.be.false;
-  });
-  
-  itEth('(!negative test!) NFT', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const signer = await helper.eth.createAccountWithBalance(donor);
-    
-    const unexistedCollection = helper.ethAddress.fromCollectionId(1000000);
-    
-    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(signer);
-    
-    await expect(collectionHelper.methods
-      .destroyCollection(collectionAddress)
-      .send({from: signer})).to.be.rejected;
-    
-    await expect(collectionHelper.methods
-      .destroyCollection(unexistedCollection)
-      .send({from: signer})).to.be.rejected;
-    
-    expect(await collectionHelper.methods
-      .isCollectionExist(unexistedCollection)
-      .call()).to.be.false;
-  });
+  testCases.map((testCase) => 
+    itEth.ifWithPallets(`Cannot burn non-owned or non-existing collection ${testCase.method}`, testCase.requiredPallets, async ({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const signer = await helper.eth.createAccountWithBalance(donor);
+      
+      const unexistedCollection = helper.ethAddress.fromCollectionId(1000000);
+      
+      const collectionHelpers = helper.ethNativeContract.collectionHelpers(signer);
+      const {collectionAddress} = await helper.eth.createCollecion(testCase.method, owner, ...testCase.params as [string, string, string, number?]);
+
+      // cannot burn collec
+      await expect(collectionHelpers.methods
+        .destroyCollection(collectionAddress)
+        .send({from: signer})).to.be.rejected;
+      
+      await expect(collectionHelpers.methods
+        .destroyCollection(unexistedCollection)
+        .send({from: signer})).to.be.rejected;
+      
+      expect(await collectionHelpers.methods
+        .isCollectionExist(unexistedCollection)
+        .call()).to.be.false;
+      
+      expect(await collectionHelpers.methods
+        .isCollectionExist(collectionAddress)
+        .call()).to.be.true;
+    }));
 });

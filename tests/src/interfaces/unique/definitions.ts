@@ -175,5 +175,10 @@ export default {
       [collectionParam, tokenParam], 
       'Option<u128>',
     ),
+    allowanceForAll: fun(
+      'Tells whether the given `owner` approves the `operator`.', 
+      [collectionParam, crossAccountParam('owner'), crossAccountParam('operator')], 
+      'Option<bool>',
+    ),
   },
 };

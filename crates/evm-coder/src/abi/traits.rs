@@ -22,12 +22,6 @@ pub trait AbiType {
 	fn size() -> usize;
 }
 
-/// Sealed traits.
-pub mod sealed {
-	/// Not all types can be placed in vec, i.e `Vec<u8>` is restricted, `bytes` should be used instead
-	pub trait CanBePlacedInVec {}
-}
-
 /// [`AbiReader`] implements reading of many types.
 pub trait AbiRead {
 	/// Read item from current position, advanding decoder
@@ -47,11 +41,5 @@ pub trait AbiWrite {
 		let mut writer = AbiWriter::new();
 		self.abi_write(&mut writer);
 		Ok(writer.into())
-	}
-}
-
-impl<T: AbiWrite> AbiWrite for &T {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		T::abi_write(self, writer);
 	}
 }

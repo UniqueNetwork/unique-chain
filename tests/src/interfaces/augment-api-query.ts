@@ -406,6 +406,10 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       allowance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>, [u32, u32]> & QueryableStorageEntry<ApiType, [u32, u32]>;
       /**
+       * Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+       **/
+      collectionAllowance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg3: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
        * Used to enumerate tokens owned by account.
        **/
       owned: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg3: u32 | AnyNumber | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, u32]>;
@@ -620,6 +624,10 @@ declare module '@polkadot/api-base/types/storage' {
        * Amount of token pieces owned by account.
        **/
       balance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: u32 | AnyNumber | Uint8Array, arg3: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<u128>, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+       **/
+      collectionAllowance: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, arg3: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => Observable<bool>, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]> & QueryableStorageEntry<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * Used to enumerate tokens owned by account.
        **/

@@ -273,6 +273,18 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
+	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+	#[pallet::storage]
+	pub type CollectionAllowance<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+		),
+		Value = bool,
+		QueryKind = ValueQuery,
+	>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
@@ -452,6 +464,10 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
+		if <Balance<T>>::get((collection.id, token, owner)) == 0 {
+			return Err(<CommonError<T>>::TokenValueTooLow.into());
+		}
+
 		let total_supply = <TotalSupply<T>>::get((collection.id, token))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -739,12 +755,17 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
 		let initial_balance_from = <Balance<T>>::get((collection.id, token, from));
+
+		if initial_balance_from == 0 {
+			return Err(<CommonError<T>>::TokenValueTooLow.into());
+		}
+
 		let updated_balance_from = initial_balance_from
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		let mut create_target = false;
 		let from_to_differ = from != to;
-		let updated_balance_to = if from != to {
+		let updated_balance_to = if from != to && amount != 0 {
 			let old_balance = <Balance<T>>::get((collection.id, token, to));
 			if old_balance == 0 {
 				create_target = true;
@@ -786,16 +807,17 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
-			to,
-			collection.id,
-			token,
-			nesting_budget,
-		)?;
-
 		if let Some(updated_balance_to) = updated_balance_to {
-			// from != to
+			// from != to && amount != 0
+
+			<PalletStructure<T>>::nest_if_sent_to_token(
+				from.clone(),
+				to,
+				collection.id,
+				token,
+				nesting_budget,
+			)?;
+
 			if updated_balance_from == 0 {
 				<Balance<T>>::remove((collection.id, token, from));
 				<PalletStructure<T>>::unnest_if_nested(from, collection.id, token);
@@ -1151,6 +1173,12 @@ impl<T: Config> Pallet<T> {
 		}
 		let allowance =
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
+
+		// Allowance (if any) would be reduced if spender is also wallet operator
+		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
+			return Ok(allowance);
+		}
+
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
@@ -1376,5 +1404,53 @@ impl<T: Config> Pallet<T> {
 		} else {
 			Some(res)
 		}
+	}
+
+	/// Sets or unsets the approval of a given operator.
+	///
+	/// The `operator` is allowed to transfer all token pieces of the `owner` on their behalf.
+	/// - `owner`: Token owner
+	/// - `operator`: Operator
+	/// - `approve`: Should operator status be granted or revoked?
+	pub fn set_allowance_for_all(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(operator)?;
+		}
+
+		<PalletCommon<T>>::ensure_correct_receiver(operator)?;
+
+		// =========
+
+		<CollectionAllowance<T>>::insert((collection.id, owner, operator), approve);
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::ApprovalForAll {
+				owner: *owner.as_eth(),
+				operator: *operator.as_eth(),
+				approved: approve,
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ApprovedForAll(
+			collection.id,
+			owner.clone(),
+			operator.clone(),
+			approve,
+		));
+		Ok(())
+	}
+
+	/// Tells whether the given `owner` approves the `operator`.
+	pub fn allowance_for_all(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+	) -> bool {
+		<CollectionAllowance<T>>::get((collection.id, owner, operator))
 	}
 }

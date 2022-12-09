@@ -376,6 +376,7 @@ pub mod pallet {
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		/// Address under which the CollectionHelper contract would be available.
+		#[pallet::constant]
 		type ContractAddress: Get<H160>;
 
 		/// Mapper for token addresses to Ethereum addresses.
@@ -469,6 +470,18 @@ pub mod pallet {
 			T::CrossAccountId,
 			/// Amount of token pieces transfered. Always 1 for NFT.
 			u128,
+		),
+
+		/// A `sender` approves operations on all owned tokens for `spender`.
+		ApprovedForAll(
+			/// Id of collection to which item is belong.
+			CollectionId,
+			/// Owner of a wallet.
+			T::CrossAccountId,
+			/// Id for which operator status was granted or rewoked.
+			T::CrossAccountId,
+			/// Is operator status granted or revoked?
+			bool,
 		),
 
 		/// The colletion property has been added or edited.
@@ -1520,6 +1533,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 
 	/// The price of retrieving token owner
 	fn token_owner() -> Weight;
+
+	/// The price of setting approval for all
+	fn set_allowance_for_all() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -1827,6 +1843,20 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Get extension for RFT collection.
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+
+	/// The `operator` is allowed to transfer all tokens of the `owner` on their behalf.
+	/// * `owner` - Token owner
+	/// * `operator` - Operator
+	/// * `approve` - Should operator status be granted or revoked?
+	fn set_allowance_for_all(
+		&self,
+		owner: T::CrossAccountId,
+		operator: T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResultWithPostInfo;
+
+	/// Tells whether the given `owner` approves the `operator`.
+	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
 }
 
 /// Extension for RFT collection.

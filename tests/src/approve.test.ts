@@ -603,3 +603,45 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     await expect(approveTx()).to.be.rejected;
   });
 });
+
+describe('Normal user can approve other users to be wallet operator:', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = await privateKey({filename: __filename});
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
+    });
+  });
+
+  itSub('[nft] Enable and disable approval', async ({helper}) => {
+    const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+
+    const checkBeforeApproval = await helper.nft.allowanceForAll(collectionId, {Substrate: alice.address}, {Substrate: bob.address});
+    expect(checkBeforeApproval).to.be.false;
+
+    await helper.nft.setAllowanceForAll(alice, collectionId, {Substrate: bob.address}, true);
+    const checkAfterApproval = await helper.nft.allowanceForAll(collectionId, {Substrate: alice.address}, {Substrate: bob.address});
+    expect(checkAfterApproval).to.be.true;
+
+    await helper.nft.setAllowanceForAll(alice, collectionId, {Substrate: bob.address}, false);
+    const checkAfterDisapproval = await helper.nft.allowanceForAll(collectionId, {Substrate: alice.address}, {Substrate: bob.address});
+    expect(checkAfterDisapproval).to.be.false;
+  });
+
+  itSub.ifWithPallets('[rft] Enable and disable approval', [Pallets.ReFungible], async ({helper}) => {
+    const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+
+    const checkBeforeApproval = await helper.rft.allowanceForAll(collectionId, {Substrate: alice.address}, {Substrate: bob.address});
+    expect(checkBeforeApproval).to.be.false;
+
+    await helper.rft.setAllowanceForAll(alice, collectionId, {Substrate: bob.address}, true);
+    const checkAfterApproval = await helper.rft.allowanceForAll(collectionId, {Substrate: alice.address}, {Substrate: bob.address});
+    expect(checkAfterApproval).to.be.true;
+    
+    await helper.rft.setAllowanceForAll(alice, collectionId, {Substrate: bob.address}, false);
+    const checkAfterDisapproval = await helper.rft.allowanceForAll(collectionId, {Substrate: alice.address}, {Substrate: bob.address});
+    expect(checkAfterDisapproval).to.be.false;
+  });
+});

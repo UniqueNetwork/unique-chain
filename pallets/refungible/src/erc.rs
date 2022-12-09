@@ -31,14 +31,15 @@ use evm_coder::{
 };
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
-	CollectionHandle, CollectionPropertyPermissions,
+	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	CommonCollectionOperations,
+	eth::EthCrossAccount,
+	Error as CommonError,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::H160;
+use sp_core::{H160, Get};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
 use up_data_structs::{
 	CollectionId, CollectionPropertiesVec, mapping::TokenAddressMapping, Property, PropertyKey,
@@ -460,15 +461,23 @@ impl<T: Config> RefungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
-	/// @dev Not implemented
+	/// @notice Sets or unsets the approval of a given operator.
+	///  The `operator` is allowed to transfer all token pieces of the `caller` on their behalf.
+	/// @param operator Operator
+	/// @param approved Should operator status be granted or revoked?
+	#[weight(<SelfWeightOf<T>>::set_allowance_for_all())]
 	fn set_approval_for_all(
 		&mut self,
-		_caller: caller,
-		_operator: address,
-		_approved: bool,
+		caller: caller,
+		operator: address,
+		approved: bool,
 	) -> Result<void> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+		let caller = T::CrossAccountId::from_eth(caller);
+		let operator = T::CrossAccountId::from_eth(operator);
+
+		<Pallet<T>>::set_allowance_for_all(self, &caller, &operator, approved)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	/// @dev Not implemented
@@ -477,10 +486,18 @@ impl<T: Config> RefungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
-	/// @dev Not implemented
-	fn is_approved_for_all(&self, _owner: address, _operator: address) -> Result<address> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+	/// @notice Tells whether the given `owner` approves the `operator`.
+	#[weight(<SelfWeightOf<T>>::allowance_for_all())]
+	fn is_approved_for_all(&self, owner: address, operator: address) -> Result<bool> {
+		let owner = T::CrossAccountId::from_eth(owner);
+		let operator = T::CrossAccountId::from_eth(operator);
+
+		Ok(<Pallet<T>>::allowance_for_all(self, &owner, &operator))
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 
@@ -503,6 +520,13 @@ pub fn ensure_single_owner<T: Config>(
 ) -> Result<()> {
 	collection.consume_store_reads(1)?;
 	let total_supply = <TotalSupply<T>>::get((collection.id, token));
+
+	if owner_balance == 0 {
+		return Err(dispatch_to_evm::<T>(
+			<CommonError<T>>::MustBeTokenOwner.into(),
+		));
+	}
+
 	if total_supply != owner_balance {
 		return Err("token has multiple owners".into());
 	}

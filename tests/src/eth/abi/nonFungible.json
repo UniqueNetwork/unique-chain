@@ -231,6 +231,13 @@
   },
   {
     "inputs": [],
+    "name": "collectionHelperAddress",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionOwner",
     "outputs": [
       {
@@ -377,7 +384,7 @@
       { "internalType": "address", "name": "operator", "type": "address" }
     ],
     "name": "isApprovedForAll",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
     "type": "function"
   },

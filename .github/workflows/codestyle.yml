@@ -11,7 +11,11 @@ jobs:
   rustfmt:
     runs-on: [ self-hosted-ci ]
     steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}            
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -28,7 +32,11 @@ jobs:
   yarn_eslint:
     runs-on: [ self-hosted-ci ]
     steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}            
       - uses: actions/setup-node@v3
         with:
           node-version: 16

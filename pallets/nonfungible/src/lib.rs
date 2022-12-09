@@ -272,6 +272,18 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+	#[pallet::storage]
+	pub type CollectionAllowance<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+		),
+		Value = bool,
+		QueryKind = ValueQuery,
+	>;
+
 	/// Upgrade from the old schema to properties.
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -438,6 +450,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::remove(id);
 		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
 		let _ = <AccountBalance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <CollectionAllowance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
@@ -814,6 +827,20 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
 	}
 
+	pub fn check_token_immediate_ownership(
+		collection: &NonfungibleHandle<T>,
+		token: TokenId,
+		possible_owner: &T::CrossAccountId,
+	) -> DispatchResult {
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		ensure!(
+			&token_data.owner == possible_owner,
+			<CommonError<T>>::NoPermission
+		);
+		Ok(())
+	}
+
 	/// Transfer NFT token from one account to another.
 	///
 	/// `from` account stops being the owner and `to` account becomes the owner of the token.
@@ -1179,6 +1206,9 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() == Some(spender) {
 			return Ok(());
 		}
+		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
+			return Ok(());
+		}
 		ensure!(
 			collection.ignores_allowance(spender),
 			<CommonError<T>>::ApprovedValueTooLow
@@ -1311,5 +1341,53 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
+	}
+
+	/// Sets or unsets the approval of a given operator.
+	///
+	/// The `operator` is allowed to transfer all token pieces of the `owner` on their behalf.
+	/// - `owner`: Token owner
+	/// - `operator`: Operator
+	/// - `approve`: Should operator status be granted or revoked?
+	pub fn set_allowance_for_all(
+		collection: &NonfungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(operator)?;
+		}
+
+		<PalletCommon<T>>::ensure_correct_receiver(operator)?;
+
+		// =========
+
+		<CollectionAllowance<T>>::insert((collection.id, owner, operator), approve);
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::ApprovalForAll {
+				owner: *owner.as_eth(),
+				operator: *operator.as_eth(),
+				approved: approve,
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ApprovedForAll(
+			collection.id,
+			owner.clone(),
+			operator.clone(),
+			approve,
+		));
+		Ok(())
+	}
+
+	/// Tells whether the given `owner` approves the `operator`.
+	pub fn allowance_for_all(
+		collection: &NonfungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+	) -> bool {
+		<CollectionAllowance<T>>::get((collection.id, owner, operator))
 	}
 }

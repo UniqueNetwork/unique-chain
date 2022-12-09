@@ -386,6 +386,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
+       * Setting approval for all is not allowed.
+       **/
+      SettingAllowanceForAllNotAllowed: AugmentedError<ApiType>;
+      /**
        * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;

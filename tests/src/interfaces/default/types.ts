@@ -1286,6 +1286,8 @@ export interface PalletCommonEvent extends Enum {
   readonly asTransfer: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
   readonly isApproved: boolean;
   readonly asApproved: ITuple<[u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
+  readonly isApprovedForAll: boolean;
+  readonly asApprovedForAll: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
   readonly isCollectionPropertySet: boolean;
   readonly asCollectionPropertySet: ITuple<[u32, Bytes]>;
   readonly isCollectionPropertyDeleted: boolean;
@@ -1296,7 +1298,7 @@ export interface PalletCommonEvent extends Enum {
   readonly asTokenPropertyDeleted: ITuple<[u32, u32, Bytes]>;
   readonly isPropertyPermissionSet: boolean;
   readonly asPropertyPermissionSet: ITuple<[u32, Bytes]>;
-  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
+  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'ApprovedForAll' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
 }
 
 /** @name PalletConfigurationCall */
@@ -1603,7 +1605,8 @@ export interface PalletFungibleError extends Enum {
   readonly isFungibleItemsDontHaveData: boolean;
   readonly isFungibleDisallowsNesting: boolean;
   readonly isSettingPropertiesNotAllowed: boolean;
-  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
+  readonly isSettingAllowanceForAllNotAllowed: boolean;
+  readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed' | 'SettingAllowanceForAllNotAllowed';
 }
 
 /** @name PalletInflationCall */
@@ -2309,7 +2312,13 @@ export interface PalletUniqueCall extends Enum {
     readonly tokenId: u32;
     readonly amount: u128;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition';
+  readonly isSetAllowanceForAll: boolean;
+  readonly asSetAllowanceForAll: {
+    readonly collectionId: u32;
+    readonly operator: PalletEvmAccountBasicCrossAccountIdRepr;
+    readonly approve: bool;
+  } & Struct;
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll';
 }
 
 /** @name PalletUniqueError */

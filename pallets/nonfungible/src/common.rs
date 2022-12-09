@@ -122,6 +122,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn token_owner() -> Weight {
 		<SelfWeightOf<T>>::token_owner()
 	}
+
+	fn set_allowance_for_all() -> Weight {
+		<SelfWeightOf<T>>::set_allowance_for_all()
+	}
 }
 
 fn map_create_data<T: Config>(
@@ -291,6 +295,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::burn_item(),
 			)
 		} else {
+			<Pallet<T>>::check_token_immediate_ownership(self, token, &sender)?;
 			Ok(().into())
 		}
 	}
@@ -320,6 +325,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::transfer(),
 			)
 		} else {
+			<Pallet<T>>::check_token_immediate_ownership(self, token, &from)?;
 			Ok(().into())
 		}
 	}
@@ -360,6 +366,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::transfer_from(),
 			)
 		} else {
+			<Pallet<T>>::check_allowed(self, &sender, &from, token, nesting_budget)?;
+
 			Ok(().into())
 		}
 	}
@@ -380,6 +388,8 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<CommonWeights<T>>::burn_from(),
 			)
 		} else {
+			<Pallet<T>>::check_allowed(self, &sender, &from, token, nesting_budget)?;
+
 			Ok(().into())
 		}
 	}
@@ -505,5 +515,21 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		} else {
 			None
 		}
+	}
+
+	fn set_allowance_for_all(
+		&self,
+		owner: T::CrossAccountId,
+		operator: T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::set_allowance_for_all(self, &owner, &operator, approve),
+			<CommonWeights<T>>::set_allowance_for_all(),
+		)
+	}
+
+	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool {
+		<Pallet<T>>::allowance_for_all(self, &owner, &operator)
 	}
 }

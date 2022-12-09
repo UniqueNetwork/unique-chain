@@ -169,6 +169,136 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
+  itEth('Can perform setApprovalForAll()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = helper.eth.createAccount();
+
+    const collection = await helper.rft.mintCollection(minter, {});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+
+    const approvedBefore = await contract.methods.isApprovedForAll(owner, operator).call();
+    expect(approvedBefore).to.be.equal(false);
+
+    {
+      const result = await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+
+      expect(result.events.ApprovalForAll).to.be.like({
+        address: collectionAddress,
+        event: 'ApprovalForAll',
+        returnValues: {
+          owner,
+          operator,
+          approved: true,
+        },
+      });
+
+      const approvedAfter = await contract.methods.isApprovedForAll(owner, operator).call();
+      expect(approvedAfter).to.be.equal(true);
+    }
+
+    {
+      const result = await contract.methods.setApprovalForAll(operator, false).send({from: owner});
+
+      expect(result.events.ApprovalForAll).to.be.like({
+        address: collectionAddress,
+        event: 'ApprovalForAll',
+        returnValues: {
+          owner,
+          operator,
+          approved: false,
+        },
+      });
+
+      const approvedAfter = await contract.methods.isApprovedForAll(owner, operator).call();
+      expect(approvedAfter).to.be.equal(false);
+    }
+  });
+
+  itEth('Can perform burn with ApprovalForAll', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    {
+      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+      const result = await contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: operator});
+      const events = result.events.Transfer;
+
+      expect(events).to.be.like({
+        address,
+        event: 'Transfer',
+        returnValues: {
+          from: owner,
+          to: '0x0000000000000000000000000000000000000000',
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+  });
+
+  itEth('Can perform burn with approve and approvalForAll', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    const rftToken = helper.ethNativeContract.rftTokenById(token.collectionId, token.tokenId, owner);
+
+    {
+      await rftToken.methods.approve(operator, 15n).send({from: owner});
+      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      await rftToken.methods.burnFrom(owner, 10n).send({from: operator});
+      const allowance = await rftToken.methods.allowance(owner, operator).call();
+      expect(allowance).to.be.equal('5');
+    }
+  });
+  
+  itEth('Can perform transfer with ApprovalForAll', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = await helper.eth.createAccountWithBalance(donor);
+    const receiver = charlie;
+
+    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    {
+      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+      const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: operator});
+      const event = result.events.Transfer;
+      expect(event).to.be.like({
+        address: helper.ethAddress.fromCollectionId(collection.collectionId),
+        event: 'Transfer',
+        returnValues: {
+          from: owner,
+          to: helper.address.substrateToEth(receiver.address),
+          tokenId: token.tokenId.toString(),
+        },
+      });
+    }
+
+    expect(await token.getTop10Owners()).to.be.like([{Substrate: receiver.address}]);
+  });
+
   itEth('Can perform burn()', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'Burny', '6', '6');
@@ -363,57 +493,75 @@ describe('Refungible: Plain calls', () => {
   });
   
   itEth('Can perform transferCross()', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const receiver = await helper.eth.createAccountWithBalance(donor);
-    const to = helper.ethCrossAccount.fromAddress(receiver);
-    const toSubstrate = helper.ethCrossAccount.fromKeyringPair(minter);
+    const sender = await helper.eth.createAccountWithBalance(donor);
+    const receiverEth = await helper.eth.createAccountWithBalance(donor);
+    const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
+    const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(minter);
+
     const collection = await helper.rft.mintCollection(minter, {});
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', sender);
 
-    const {tokenId} = await collection.mintToken(minter, 1n, {Ethereum: caller});
+    const token = await collection.mintToken(minter, 50n, {Ethereum: sender});
 
     {
-      const result = await contract.methods.transferCross(to, tokenId).send({from: caller});
-
+      // Can transferCross to ethereum address:
+      const result = await collectionEvm.methods.transferCross(receiverCrossEth, token.tokenId).send({from: sender});
+      // Check events:
       const event = result.events.Transfer;
       expect(event.address).to.equal(collectionAddress);
-      expect(event.returnValues.from).to.equal(caller);
-      expect(event.returnValues.to).to.equal(receiver);
-      expect(event.returnValues.tokenId).to.equal(tokenId.toString());
-    }
-
-    {
-      const balance = await contract.methods.balanceOf(caller).call();
-      expect(+balance).to.equal(0);
-    }
-
-    {
-      const balance = await contract.methods.balanceOf(receiver).call();
-      expect(+balance).to.equal(1);
+      expect(event.returnValues.from).to.equal(sender);
+      expect(event.returnValues.to).to.equal(receiverEth);
+      expect(event.returnValues.tokenId).to.equal(token.tokenId.toString());
+      // Sender's balance decreased:
+      const senderBalance = await collectionEvm.methods.balanceOf(sender).call();
+      expect(+senderBalance).to.equal(0);
+      expect(await token.getBalance({Ethereum: sender})).to.eq(0n);
+      // Receiver's balance increased:
+      const receiverBalance = await collectionEvm.methods.balanceOf(receiverEth).call();
+      expect(+receiverBalance).to.equal(1);
+      expect(await token.getBalance({Ethereum: receiverEth})).to.eq(50n);
     }
     
     {
-      const substrateResult = await contract.methods.transferCross(toSubstrate, tokenId).send({from: receiver});
-      
-
+      // Can transferCross to substrate address:
+      const substrateResult = await collectionEvm.methods.transferCross(receiverCrossSub, token.tokenId).send({from: receiverEth});
+      // Check events:
       const event = substrateResult.events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal(receiver);
+      expect(event.returnValues.from).to.be.equal(receiverEth);
       expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(minter.address));
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
-    }
-
-    {
-      const balance = await contract.methods.balanceOf(receiver).call();
-      expect(+balance).to.equal(0);
-    }
-
-    {
-      const balance = await helper.nft.getTokensByAddress(collection.collectionId, {Substrate: minter.address});
-      expect(balance).to.be.contain(tokenId);
+      expect(event.returnValues.tokenId).to.be.equal(`${token.tokenId}`);
+      // Sender's balance decreased:
+      const senderBalance = await collectionEvm.methods.balanceOf(receiverEth).call();
+      expect(+senderBalance).to.equal(0);
+      expect(await token.getBalance({Ethereum: receiverEth})).to.eq(0n);
+      // Receiver's balance increased:
+      const receiverBalance = await helper.nft.getTokensByAddress(collection.collectionId, {Substrate: minter.address});
+      expect(receiverBalance).to.contain(token.tokenId);
+      expect(await token.getBalance({Substrate: minter.address})).to.eq(50n);
     }
   });
+
+  ['transfer', 'transferCross'].map(testCase => itEth(`Cannot ${testCase} non-owned token`, async ({helper}) => {
+    const sender = await helper.eth.createAccountWithBalance(donor);
+    const tokenOwner = await helper.eth.createAccountWithBalance(donor);
+    const receiverSub = minter;
+    const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(minter);
+
+    const collection = await helper.rft.mintCollection(minter, {});
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', sender);
+
+    await collection.mintToken(minter, 50n, {Ethereum: sender});
+    const nonSendersToken = await collection.mintToken(minter, 50n, {Ethereum: tokenOwner});
+
+    // Cannot transferCross someone else's token:
+    const receiver = testCase === 'transfer' ? helper.address.substrateToEth(receiverSub.address) : receiverCrossSub;
+    await expect(collectionEvm.methods[testCase](receiver, nonSendersToken.tokenId).send({from: sender})).to.be.rejected;
+    // Cannot transfer token if it does not exist:
+    await expect(collectionEvm.methods[testCase](receiver, 999999).send({from: sender})).to.be.rejected;
+  }));
 
   itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
@@ -574,5 +722,64 @@ describe('Common metadata', () => {
     const contract = helper.ethNativeContract.collectionById(collectionId, 'rft', caller);
     const symbol = await contract.methods.symbol().call();
     expect(symbol).to.equal('12');
+  });
+});
+
+describe('Negative tests', () => {
+  let donor: IKeyringPair;
+  let minter: IKeyringPair;
+  let alice: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      
+      donor = await privateKey({filename: __filename});
+      [minter, alice] = await helper.arrange.createAccounts([100n, 100n], donor);
+    });
+  });
+
+  itEth('[negative] Cant perform burn without approval', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+
+    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+
+    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
+    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+
+    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+  });
+
+  itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const receiver = alice;
+
+    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+
+    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+
+    const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(address, 'rft');
+
+    const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+    const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
+    
+    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+
+    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
+    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+    
+    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
   });
 });

@@ -79,56 +79,6 @@ describe('Create FT collection from EVM', () => {
     expect(await collection.methods.description().call()).to.deep.equal(description);
   });
 
-  itEth('Set limits', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Limits', DECIMALS, 'absolutely anything', 'INSI');
-    const limits = {
-      accountTokenOwnershipLimit: 1000,
-      sponsoredDataSize: 1024,
-      sponsoredDataRateLimit: 30,
-      tokenLimit: 1000000,
-      sponsorTransferTimeout: 6,
-      sponsorApproveTimeout: 6,
-      ownerCanTransfer: 0,
-      ownerCanDestroy: 0,
-      transfersEnabled: 0,
-    };
-    
-    const expectedLimits = {
-      accountTokenOwnershipLimit: 1000,
-      sponsoredDataSize: 1024,
-      sponsoredDataRateLimit: 30,
-      tokenLimit: 1000000,
-      sponsorTransferTimeout: 6,
-      sponsorApproveTimeout: 6,
-      ownerCanTransfer: false,
-      ownerCanDestroy: false,
-      transfersEnabled: false,
-    };
-   
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
-    await collection.methods.setCollectionLimit('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
-    await collection.methods.setCollectionLimit('sponsoredDataSize', limits.sponsoredDataSize).send();
-    await collection.methods.setCollectionLimit('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
-    await collection.methods.setCollectionLimit('tokenLimit', limits.tokenLimit).send();
-    await collection.methods.setCollectionLimit('sponsorTransferTimeout', limits.sponsorTransferTimeout).send();
-    await collection.methods.setCollectionLimit('sponsorApproveTimeout', limits.sponsorApproveTimeout).send();
-    await collection.methods.setCollectionLimit('ownerCanTransfer', limits.ownerCanTransfer).send();
-    await collection.methods.setCollectionLimit('ownerCanDestroy', limits.ownerCanDestroy).send();
-    await collection.methods.setCollectionLimit('transfersEnabled', limits.transfersEnabled).send();
-    
-    const data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.limits.accountTokenOwnershipLimit).to.be.eq(expectedLimits.accountTokenOwnershipLimit);
-    expect(data.raw.limits.sponsoredDataSize).to.be.eq(expectedLimits.sponsoredDataSize);
-    expect(data.raw.limits.sponsoredDataRateLimit.blocks).to.be.eq(expectedLimits.sponsoredDataRateLimit);
-    expect(data.raw.limits.tokenLimit).to.be.eq(expectedLimits.tokenLimit);
-    expect(data.raw.limits.sponsorTransferTimeout).to.be.eq(expectedLimits.sponsorTransferTimeout);
-    expect(data.raw.limits.sponsorApproveTimeout).to.be.eq(expectedLimits.sponsorApproveTimeout);
-    expect(data.raw.limits.ownerCanTransfer).to.be.eq(expectedLimits.ownerCanTransfer);
-    expect(data.raw.limits.ownerCanDestroy).to.be.eq(expectedLimits.ownerCanDestroy);
-    expect(data.raw.limits.transfersEnabled).to.be.eq(expectedLimits.transfersEnabled);
-  });
-
   itEth('Collection address exist', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
@@ -144,7 +94,7 @@ describe('Create FT collection from EVM', () => {
   
   itEth('destroyCollection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
+    const {collectionAddress, collectionId} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
     const result = await collectionHelper.methods
@@ -166,6 +116,7 @@ describe('Create FT collection from EVM', () => {
     expect(await collectionHelper.methods
       .isCollectionExist(collectionAddress)
       .call()).to.be.false;
+    expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });
 
@@ -214,12 +165,15 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     }
   });
   
-  itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
+  itEth('(!negative test!) cannot create collection if value !== 2', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    await expect(collectionHelper.methods
-      .createFTCollection('Peasantry', DECIMALS, 'absolutely anything', 'TWIW')
-      .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    const expects = [0n, 1n, 30n].map(async value => {
+      await expect(collectionHelper.methods
+        .createFTCollection('Peasantry', DECIMALS, 'absolutely anything', 'TWIW')
+        .call({value: Number(value * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    });
+    await Promise.all(expects);
   });
 
   // Soft-deprecated
@@ -270,31 +224,5 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
         .setCollectionLimit('account_token_ownership_limit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
-  });
-
-  itEth('(!negative test!) Set limits', async ({helper}) => {
-
-    const invalidLimits = {
-      accountTokenOwnershipLimit: BigInt(Number.MAX_SAFE_INTEGER),
-      transfersEnabled: 3,
-    };
-
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Limits', DECIMALS, 'absolutely anything', 'ISNI');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
-    await expect(collectionEvm.methods
-      .setCollectionLimit('badLimit', '1')
-      .call()).to.be.rejectedWith('unknown limit "badLimit"');
-    
-    await expect(collectionEvm.methods
-      .setCollectionLimit(Object.keys(invalidLimits)[0], invalidLimits.accountTokenOwnershipLimit)
-      .call()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
-    
-    await expect(collectionEvm.methods
-      .setCollectionLimit(Object.keys(invalidLimits)[1], invalidLimits.transfersEnabled)
-      .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
-  });
-
-   
-    
+  });    
 });

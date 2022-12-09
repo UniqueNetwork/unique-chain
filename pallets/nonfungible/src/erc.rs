@@ -36,12 +36,14 @@ use up_data_structs::{
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::vec::Vec;
 use pallet_common::{
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
+	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
+	eth::EthCrossAccount,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
+use sp_core::Get;
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
@@ -467,15 +469,23 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(())
 	}
 
-	/// @dev Not implemented
+	/// @notice Sets or unsets the approval of a given operator.
+	/// The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
+	/// @param operator Operator
+	/// @param approved Should operator status be granted or revoked?
+	#[weight(<SelfWeightOf<T>>::set_allowance_for_all())]
 	fn set_approval_for_all(
 		&mut self,
-		_caller: caller,
-		_operator: address,
-		_approved: bool,
+		caller: caller,
+		operator: address,
+		approved: bool,
 	) -> Result<void> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+		let caller = T::CrossAccountId::from_eth(caller);
+		let operator = T::CrossAccountId::from_eth(operator);
+
+		<Pallet<T>>::set_allowance_for_all(self, &caller, &operator, approved)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(())
 	}
 
 	/// @dev Not implemented
@@ -484,10 +494,18 @@ impl<T: Config> NonfungibleHandle<T> {
 		Err("not implemented".into())
 	}
 
-	/// @dev Not implemented
-	fn is_approved_for_all(&self, _owner: address, _operator: address) -> Result<address> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+	/// @notice Tells whether the given `owner` approves the `operator`.
+	#[weight(<SelfWeightOf<T>>::allowance_for_all())]
+	fn is_approved_for_all(&self, owner: address, operator: address) -> Result<bool> {
+		let owner = T::CrossAccountId::from_eth(owner);
+		let operator = T::CrossAccountId::from_eth(operator);
+
+		Ok(<Pallet<T>>::allowance_for_all(self, &owner, &operator))
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 
