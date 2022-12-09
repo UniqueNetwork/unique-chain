@@ -31,6 +31,7 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
   const owner = await helper.eth.createAccountWithBalance(donor);
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionCreated', 'CollectionDestroyed']}]);
   const {collectionAddress, events: ethEvents} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  await helper.wait.newBlocks(1);
   {
     expect(ethEvents).to.be.like([
       {
@@ -48,6 +49,7 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
   {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     const result = await collectionHelper.methods.destroyCollection(collectionAddress).send({from:owner});
+    await helper.wait.newBlocks(1);
     expect(result.events).to.be.like({
       CollectionDestroyed: {
         returnValues: {
@@ -73,6 +75,7 @@ async function testCollectionPropertySetAndCollectionPropertyDeleted(helper: Eth
       ethEvents.push(event);
     });
     await collection.methods.setCollectionProperties([{key: 'A', value: [0,1,2,3]}]).send({from:owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -90,6 +93,7 @@ async function testCollectionPropertySetAndCollectionPropertyDeleted(helper: Eth
       ethEvents.push(event);
     });
     await collection.methods.deleteCollectionProperties(['A']).send({from:owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -114,6 +118,7 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['PropertyPermissionSet']}]);
   await collection.methods.setTokenPropertyPermission('testKey', true, true, true).send({from: owner});
+  await helper.wait.newBlocks(1);
   expect(eethEvents).to.be.like([
     {
       event: 'CollectionChanged',
@@ -140,6 +145,7 @@ async function testAllowListAddressAddedAndAllowListAddressRemoved(helper: EthUn
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['AllowListAddressAdded', 'AllowListAddressRemoved']}]);
   {
     await collection.methods.addToCollectionAllowListCross(user).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -154,6 +160,7 @@ async function testAllowListAddressAddedAndAllowListAddressRemoved(helper: EthUn
   }
   {
     await collection.methods.removeFromCollectionAllowListCross(user).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents.length).to.be.eq(1);
     expect(ethEvents).to.be.like([
       {
@@ -181,6 +188,7 @@ async function testCollectionAdminAddedAndCollectionAdminRemoved(helper: EthUniq
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionAdminAdded', 'CollectionAdminRemoved']}]);
   {
     await collection.methods.addCollectionAdminCross(user).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -195,6 +203,7 @@ async function testCollectionAdminAddedAndCollectionAdminRemoved(helper: EthUniq
   }
   {
     await collection.methods.removeCollectionAdminCross(user).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -220,6 +229,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionLimitSet']}]);
   {
     await collection.methods.setCollectionLimit('ownerCanTransfer', 0n).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -246,6 +256,7 @@ async function testCollectionOwnedChanged(helper: EthUniqueHelper, mode: TCollec
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionOwnedChanged']}]);
   {
     await collection.methods.changeCollectionOwnerCross(new_owner).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -271,6 +282,7 @@ async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TColle
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionPermissionSet']}]);
   {
     await collection.methods.setCollectionMintMode(true).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -285,6 +297,7 @@ async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TColle
   }
   {
     await collection.methods.setCollectionAccess(1).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -313,6 +326,7 @@ async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSpons
     ]}]);
   {
     await collection.methods.setCollectionSponsorCross(sponsor).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -327,6 +341,7 @@ async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSpons
   }
   {
     await collection.methods.confirmCollectionSponsorship().send({from: sponsor.eth});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
@@ -371,6 +386,7 @@ async function testTokenPropertySetAndTokenPropertyDeleted(helper: EthUniqueHelp
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['TokenPropertySet', 'TokenPropertyDeleted']}]);
   {
     await collection.methods.setProperties(tokenId, [{key: 'A', value: [1,2,3]}]).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'TokenChanged',
@@ -398,7 +414,7 @@ async function testTokenPropertySetAndTokenPropertyDeleted(helper: EthUniqueHelp
   unsubscribe();
 }
 
-describe('[FT] Sync sub & eth events', () => {
+describe.only('[FT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'ft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
@@ -434,7 +450,7 @@ describe('[FT] Sync sub & eth events', () => {
   });
 });
 
-describe('[NFT] Sync sub & eth events', () => {
+describe.only('[NFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'nft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
@@ -478,7 +494,7 @@ describe('[NFT] Sync sub & eth events', () => {
   });
 });
 
-describe('[RFT] Sync sub & eth events', () => {
+describe.only('[RFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'rft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
