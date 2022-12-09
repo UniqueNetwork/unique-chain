@@ -291,6 +291,27 @@ contract Collection is Dummy, ERC165 {
 		return Tuple30(0x0000000000000000000000000000000000000000, 0);
 	}
 
+	/// Get current collection limits.
+	///
+	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// Return `false` if a limit not set.
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() public view returns (Tuple33[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new Tuple33[](0);
+	}
+
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
 	/// @param limit Name of the limit. Valid names:
@@ -304,11 +325,16 @@ contract Collection is Dummy, ERC165 {
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
 	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x4ad890a8,
-	///  or in textual repr: setCollectionLimit(string,uint256)
-	function setCollectionLimit(string memory limit, uint256 value) public {
+	/// @dev EVM selector for this function is: 0x88150bd0,
+	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
+	function setCollectionLimit(
+		CollectionLimits limit,
+		bool status,
+		uint256 value
+	) public {
 		require(false, stub_error);
 		limit;
+		status;
 		value;
 		dummy = 0;
 	}

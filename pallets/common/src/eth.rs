@@ -155,6 +155,20 @@ impl EthCrossAccount {
 		}
 	}
 }
+#[derive(Debug, Default, Clone, Copy, AbiCoder)]
+#[repr(u8)]
+pub enum CollectionLimits {
+	#[default]
+	AccountTokenOwnership,
+	SponsoredDataSize,
+	SponsoredDataRateLimit,
+	TokenLimit,
+	SponsorTransferTimeout,
+	SponsorApproveTimeout,
+	OwnerCanTransfer,
+	OwnerCanDestroy,
+	TransferEnabled,
+}
 #[derive(Default, Debug, Clone, Copy, AbiCoder)]
 #[repr(u8)]
 pub enum CollectionPermissions {

@@ -208,11 +208,16 @@
   },
   {
     "inputs": [],
+<<<<<<< HEAD
     "name": "collectionNestingPermissions",
+=======
+    "name": "collectionLimits",
+>>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
     "outputs": [
       {
         "components": [
           {
+<<<<<<< HEAD
             "internalType": "enum CollectionPermissions",
             "name": "field_0",
             "type": "uint8"
@@ -220,6 +225,16 @@
           { "internalType": "bool", "name": "field_1", "type": "bool" }
         ],
         "internalType": "struct Tuple24[]",
+=======
+            "internalType": "enum CollectionLimits",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" },
+          { "internalType": "uint256", "name": "field_2", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple20[]",
+>>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
         "name": "",
         "type": "tuple[]"
       }
@@ -229,6 +244,7 @@
   },
   {
     "inputs": [],
+<<<<<<< HEAD
     "name": "collectionNestingRestrictedCollectionIds",
     "outputs": [
       {
@@ -250,6 +266,8 @@
   },
   {
     "inputs": [],
+=======
+>>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
     "name": "collectionOwner",
     "outputs": [
       {
@@ -453,7 +471,12 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
+      {
+        "internalType": "enum CollectionLimits",
+        "name": "limit",
+        "type": "uint8"
+      },
+      { "internalType": "bool", "name": "status", "type": "bool" },
       { "internalType": "uint256", "name": "value", "type": "uint256" }
     ],
     "name": "setCollectionLimit",

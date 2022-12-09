@@ -589,7 +589,12 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
+      {
+        "internalType": "enum CollectionLimits",
+        "name": "limit",
+        "type": "uint8"
+      },
+      { "internalType": "bool", "name": "status", "type": "bool" },
       { "internalType": "uint256", "name": "value", "type": "uint256" }
     ],
     "name": "setCollectionLimit",
