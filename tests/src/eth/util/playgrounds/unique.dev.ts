@@ -188,16 +188,16 @@ class EthGroup extends EthGroupBase {
 
   createCollectionMethodName(mode: TCollectionMode) {
     switch (mode) {
-        case 'ft':
-            return 'createFTCollection';
-        case 'nft':
-            return 'createNFTCollection';
-        case 'rft':
-            return 'createRFTCollection';
+      case 'ft':
+        return 'createFTCollection';
+      case 'nft':
+        return 'createNFTCollection';
+      case 'rft':
+        return 'createRFTCollection';
     }
   }
 
-  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals: number = 18): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
     const functionName: string = this.createCollectionMethodName(mode);

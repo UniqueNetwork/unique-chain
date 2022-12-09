@@ -121,17 +121,15 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
         .find(event => event.event === 'Transfer')!;
       event.address = event.address.toLocaleLowerCase();
 
-      expect(event).to.be.deep.equal(
-        {
-          address: collectionAddress.toLocaleLowerCase(),
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId,
-          },
+      expect(event).to.be.deep.equal({
+        address: collectionAddress.toLocaleLowerCase(),
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId,
         },
-      );
+      });
 
       expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
     }
@@ -159,17 +157,15 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
         .find(event => event.event === 'Transfer')!;
       event.address = event.address.toLocaleLowerCase();
 
-      expect(event).to.be.deep.equal(
-        {
-          address: collectionAddress.toLocaleLowerCase(),
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId,
-          },
+      expect(event).to.be.deep.equal({
+        address: collectionAddress.toLocaleLowerCase(),
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId,
         },
-      );
+      });
 
       expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
     }
