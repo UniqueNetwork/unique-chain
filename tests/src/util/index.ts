@@ -3,7 +3,7 @@
 
 import * as path from 'path';
 import * as crypto from 'crypto';
-import {IKeyringPair} from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types/interfaces';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import {Context} from 'mocha';
