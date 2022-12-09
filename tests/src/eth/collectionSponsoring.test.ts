@@ -160,9 +160,10 @@ describe('evm collection sponsoring', () => {
       // User can mint token without balance:
       {
         const result = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
-        const events = helper.eth.normalizeEvents(result.events);
+        const event = helper.eth.normalizeEvents(result.events)
+        .find(event => event.event === 'Transfer');;
   
-        expect(events).to.be.deep.equal([
+        expect(event).to.be.deep.equal(
           {
             address: collectionAddress,
             event: 'Transfer',
@@ -274,10 +275,11 @@ describe('evm collection sponsoring', () => {
       const mintingResult = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
       const tokenId = mintingResult.events.Transfer.returnValues.tokenId;
   
-      const events = helper.eth.normalizeEvents(mintingResult.events);
+      const event = helper.eth.normalizeEvents(mintingResult.events)
+      .find(event => event.event === 'Transfer');
       const address = helper.ethAddress.fromCollectionId(collectionId);
   
-      expect(events).to.be.deep.equal([
+      expect(event).to.be.deep.equal(
         {
           address,
           event: 'Transfer',

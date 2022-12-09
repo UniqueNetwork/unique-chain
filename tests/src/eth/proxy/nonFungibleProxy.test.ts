@@ -117,10 +117,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       const tokenId = result.events.Transfer.returnValues.tokenId;
       expect(tokenId).to.be.equal('1');
 
-      const events = helper.eth.normalizeEvents(result.events);
-      events[0].address = events[0].address.toLocaleLowerCase();
+      const event = helper.eth.normalizeEvents(result.events)
+        .find(event => event.event === 'Transfer')!;
+      event.address = event.address.toLocaleLowerCase();
 
-      expect(events).to.be.deep.equal([
+      expect(event).to.be.deep.equal(
         {
           address: collectionAddress.toLocaleLowerCase(),
           event: 'Transfer',
@@ -130,7 +131,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
             tokenId,
           },
         },
-      ]);
+      );
 
       expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
     }
@@ -154,10 +155,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       const tokenId = result.events.Transfer.returnValues.tokenId;
       expect(tokenId).to.be.equal('1');
 
-      const events = helper.eth.normalizeEvents(result.events);
-      events[0].address = events[0].address.toLocaleLowerCase();
+      const event = helper.eth.normalizeEvents(result.events)
+        .find(event => event.event === 'Transfer')!;
+      event.address = event.address.toLocaleLowerCase();
 
-      expect(events).to.be.deep.equal([
+      expect(event).to.be.deep.equal(
         {
           address: collectionAddress.toLocaleLowerCase(),
           event: 'Transfer',
@@ -167,7 +169,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
             tokenId,
           },
         },
-      ]);
+      );
 
       expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
     }
