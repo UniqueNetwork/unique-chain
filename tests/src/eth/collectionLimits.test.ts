@@ -84,16 +84,27 @@ describe('Cannot set invalid collection limits', () => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'ISNI', 18);
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+
+      // Cannot set non-existing limit
       await expect(collectionEvm.methods
-        .setCollectionLimit(20, true, 1)
-        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimits"');
-      
+        .setCollectionLimit(9, true, 1)
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimits"');      
+        
+      // Cannot disable limits
       await expect(collectionEvm.methods
-        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, BigInt(Number.MAX_SAFE_INTEGER))
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, false, 200)
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert user can\'t disable limits');
+
+      await expect(collectionEvm.methods
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, invalidLimits.accountTokenOwnershipLimit)
         .call()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
-      
+ 
       await expect(collectionEvm.methods
         .setCollectionLimit(CollectionLimits.TransferEnabled, true, 3)
         .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
+
+      await expect(collectionEvm.methods
+        .setCollectionLimit(CollectionLimits.SponsoredDataSize, true, -1)
+        .call()).to.be.rejectedWith('Error: value out-of-bounds (argument="value", value=-1, code=INVALID_ARGUMENT');
     }));
 });
