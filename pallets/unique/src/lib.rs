@@ -120,9 +120,6 @@ decl_error! {
 
 /// Configuration trait of this pallet.
 pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
-	/// Overarching event type.
-	type RuntimeEvent: From<Event<Self>> + Into<<Self as frame_system::Config>::RuntimeEvent>;
-
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
@@ -131,27 +128,6 @@ pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 
 	/// Weight info information for extra refungible pallet operations.
 	type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
-}
-
-decl_event! {
-	pub enum Event<T>
-	where
-		<T as frame_system::Config>::AccountId,
-	{
-		/// Collection sponsor was removed
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		CollectionSponsorRemoved(CollectionId),
-
-		/// Collection sponsor was set
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * owner: New sponsor address.
-		CollectionSponsorSet(CollectionId, AccountId),
-
-	}
 }
 
 type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -260,9 +236,6 @@ decl_module! {
 
 		#[doc = "Default FT collection limit."]
 		const FT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::Fungible(0));
-
-
-		pub fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			Weight::zero()
