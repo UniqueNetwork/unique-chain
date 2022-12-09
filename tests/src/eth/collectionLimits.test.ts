@@ -1,6 +1,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util';
-import {expect, itEth, usingEthPlaygrounds} from './util';
+import {CollectionLimits, expect, itEth, usingEthPlaygrounds} from './util';
 
 
 describe('Can set collection limits', () => {
@@ -45,15 +45,15 @@ describe('Can set collection limits', () => {
       };
      
       const collection = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
-      await collection.methods.setCollectionLimit('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
-      await collection.methods.setCollectionLimit('sponsoredDataSize', limits.sponsoredDataSize).send();
-      await collection.methods.setCollectionLimit('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
-      await collection.methods.setCollectionLimit('tokenLimit', limits.tokenLimit).send();
-      await collection.methods.setCollectionLimit('sponsorTransferTimeout', limits.sponsorTransferTimeout).send();
-      await collection.methods.setCollectionLimit('sponsorApproveTimeout', limits.sponsorApproveTimeout).send();
-      await collection.methods.setCollectionLimit('ownerCanTransfer', limits.ownerCanTransfer).send();
-      await collection.methods.setCollectionLimit('ownerCanDestroy', limits.ownerCanDestroy).send();
-      await collection.methods.setCollectionLimit('transfersEnabled', limits.transfersEnabled).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, limits.accountTokenOwnershipLimit).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.SponsoredDataSize, true, limits.sponsoredDataSize).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.SponsoredDataRateLimit, true, limits.sponsoredDataRateLimit).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.TokenLimit, true, limits.tokenLimit).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.SponsorTransferTimeout, true, limits.sponsorTransferTimeout).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.SponsorApproveTimeout, true, limits.sponsorApproveTimeout).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.OwnerCanTransfer, true, limits.ownerCanTransfer).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.OwnerCanDestroy, true, limits.ownerCanDestroy).send();
+      await collection.methods.setCollectionLimit(CollectionLimits.TransferEnabled, true, limits.transfersEnabled).send();
       
       const data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.limits).to.deep.eq(expectedLimits);
@@ -85,16 +85,15 @@ describe('Cannot set invalid collection limits', () => {
       const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'ISNI', 18);
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
       await expect(collectionEvm.methods
-        .setCollectionLimit('badLimit', '1')
-        .call()).to.be.rejectedWith('unknown limit "badLimit"');
+        .setCollectionLimit(20, true, 1)
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimits"');
       
       await expect(collectionEvm.methods
-        .setCollectionLimit(Object.keys(invalidLimits)[0], invalidLimits.accountTokenOwnershipLimit)
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, BigInt(Number.MAX_SAFE_INTEGER))
         .call()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
       
       await expect(collectionEvm.methods
-        .setCollectionLimit(Object.keys(invalidLimits)[1], invalidLimits.transfersEnabled)
+        .setCollectionLimit(CollectionLimits.TransferEnabled, true, 3)
         .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
     }));
 });
-  
