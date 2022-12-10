@@ -116,8 +116,7 @@ describe('Cannot set invalid collection limits', () => {
         .setCollectionLimit(CollectionLimits.TransferEnabled, true, 3)
         .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
 
-      await expect(collectionEvm.methods
-        .setCollectionLimit(CollectionLimits.SponsoredDataSize, true, -1)
-        .call()).to.be.rejectedWith('Error: value out-of-bounds (argument="value", value=-1, code=INVALID_ARGUMENT');
+      expect(() => collectionEvm.methods
+        .setCollectionLimit(CollectionLimits.SponsoredDataSize, true, -1).send()).to.throw('value out-of-bounds');
     }));
 });
