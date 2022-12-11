@@ -17,7 +17,7 @@
 import fs from 'fs';
 import {usingPlaygrounds} from '../../util';
 import {config} from './config';
-import {Staker} from './types';
+import {Staker} from './helpers';
 
 async function main() {
   await usingPlaygrounds(async (helper) => {

@@ -18,7 +18,7 @@ import {config} from './config';
 import fs from 'fs';
 import {usingPlaygrounds} from '../../util';
 import {Retry} from '../../util/retry';
-import {Staker} from './types';
+import {Staker} from './helpers';
   
 async function main() {
   await usingPlaygrounds(async (helper, privateKey) => {
