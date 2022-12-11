@@ -31,25 +31,16 @@ async function main() {
     let donorNonce = await helper.chain.getNonce(donor.address);
 
     console.log('Sending to stakers...');
-    let txs = [];
     for (const staker of mnemonics) {
       const stakerKeyRing = helper.util.fromSeed(staker);
 
       const balance = await helper.balance.getSubstrate(stakerKeyRing.address);
       if (balance === config.INITIAL_BALANCE * config.NOMINAL) continue;
 
-      txs.push(api.tx.balances
+      api.tx.balances
         .transfer({Id: stakerKeyRing.address}, config.INITIAL_BALANCE * config.NOMINAL)
-        .signAndSend(donor, {nonce: donorNonce++}));
-      if (txs.length >= 1000) {
-        console.log(`Waiting for ${txs.length} transfers...`);
-        await Promise.allSettled(txs);
-        txs = [];
-      }
+        .signAndSend(donor, {nonce: donorNonce++});
     }
-
-    console.log(`Waiting for last ${txs.length} transfers...`);
-    await Promise.allSettled(txs);
 
     // 2. Wait all accounts have balance...
     console.log('Wait all accounts have balance...');
@@ -61,12 +52,13 @@ async function main() {
         address,
         errors: [],
         stakes: [],
+        unstakes: [],
       };
 
       await Retry.until({
         retryFunc: () => helper.balance.getSubstrate(address),
         checkFunc: (balance) => balance === config.INITIAL_BALANCE * config.NOMINAL,
-        timeout: 60_000,
+        timeout: 180_000,
       })
         .catch(err => {
           const message = err instanceof Error ? `STEP1: ${err.message}` : 'STEP1: Unknown error';
@@ -81,7 +73,7 @@ async function main() {
 
     fs.writeFileSync(config.STAKERS_LOG, JSON.stringify(result));
 
-    const errors = result.filter(res => res.errors);
+    const errors = result.filter(res => res.errors.length > 0);
     if (errors.length > 0) throw Error(`Some accounts were not created: ${errors.length}`);
   });
 }

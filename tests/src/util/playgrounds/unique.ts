@@ -2486,11 +2486,11 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    */
   async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<string> {
     if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
-    const _stakeResult = await this.helper.executeExtrinsic(
+    const stakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.stake',
       [amountToStake], true,
     );
-    return _stakeResult.blockHash;
+    return stakeResult.blockHash;
   }
 
   /**
@@ -2500,14 +2500,13 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @param label extra label for log
    * @returns block number where balances will be unlocked
    */
-  async unstake(signer: TSigner, label?: string): Promise<number> {
+  async unstake(signer: TSigner, label?: string): Promise<string> {
     if(typeof label === 'undefined') label = `${signer.address}`;
-    const _unstakeResult = await this.helper.executeExtrinsic(
+    const unstakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.unstake',
       [], true,
     );
-    // TODO extract block number fron events
-    return 1;
+    return unstakeResult.blockHash;
   }
 
   /**

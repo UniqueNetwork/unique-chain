@@ -21,6 +21,7 @@ import {Staker} from './types';
 
 async function main() {
   await usingPlaygrounds(async (helper) => {
+    const STEP = 'STEP2';
     const stakers: Staker[] = JSON.parse(fs.readFileSync(config.STAKERS_LOG).toString());
       
     // 1. All stakers stake simultaneously:
@@ -28,6 +29,7 @@ async function main() {
   
     console.log('Stakers starting stake...');
     for (const staker of stakers) {
+      if (staker.errors.length > 0) continue;
       const stakerKeyRing = helper.util.fromSeed(staker.mnemonic);
       stakingTxs.push(helper.staking
         .stake(stakerKeyRing, 100n * config.NOMINAL)
@@ -35,11 +37,11 @@ async function main() {
           staker.stakes.push(hash);
         })
         .catch(err => {
-          const message = err instanceof Error ? `STEP2: ${err.message}` : 'STEP2: Unknown error';
+          const message = err instanceof Error ? `${STEP}: ${err.message}` : `${STEP}: Unknown error`;
           staker.errors.push(message);
         }));
 
-      if (stakingTxs.length >= 1000) {
+      if (stakingTxs.length >= 980) {
         await Promise.allSettled(stakingTxs);
         stakingTxs = [];
       }
@@ -49,6 +51,9 @@ async function main() {
   
     console.log('Saving stakers to file...');
     fs.writeFileSync(config.STAKERS_LOG, JSON.stringify(stakers));
+
+    const errors = stakers.filter(staker => staker.errors.find(e => e.search(STEP)));
+    if (errors.length > 0) throw Error(`Some accounts were unable to stake: ${errors.length}`);
   }); 
 }
 

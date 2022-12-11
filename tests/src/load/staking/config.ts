@@ -10,6 +10,6 @@ export const config = {
   INITIAL_BALANCE: 1010n,
 
   // Log files:
-  STAKER_BASE_SEED: '//Stakersssssssss',
+  STAKER_BASE_SEED: '//Staker',
   STAKERS_LOG: path.resolve(__dirname, 'stakers.json'),
 };
