@@ -532,7 +532,7 @@ export class ChainHelperBase {
           if (status === this.transactionStatus.SUCCESS) {
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status});
+            resolve({result, status, blockHash: result.status.asInBlock});
           } else if (status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
@@ -2484,14 +2484,13 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @param label extra label for log
    * @returns
    */
-  async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
+  async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<string> {
     if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
     const _stakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.stake',
       [amountToStake], true,
     );
-    // TODO extract info from stakeResult
-    return true;
+    return _stakeResult.blockHash;
   }
 
   /**

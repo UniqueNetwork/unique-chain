@@ -1,4 +1,6 @@
 export type Staker = {
-  address: string,
   mnemonic: string,
+  address: string,
+  stakes: string[],
+  errors: string[],
 }

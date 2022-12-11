@@ -6,11 +6,10 @@ export const config = {
   NOMINAL: 10n ** 18n,
   
   // Stakers params:
-  STAKERS_NUM: 1000,
+  STAKERS_NUM: 8000,
   INITIAL_BALANCE: 1010n,
 
   // Log files:
-  STAKER_BASE_SEED: '//Stakerr',
+  STAKER_BASE_SEED: '//Stakersssssssss',
   STAKERS_LOG: path.resolve(__dirname, 'stakers.json'),
-  ERROR_LOG: path.resolve(__dirname, 'error.log'),
 };

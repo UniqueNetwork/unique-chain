@@ -13,6 +13,7 @@ export interface IEvent {
 
 export interface ITransactionResult {
   status: 'Fail' | 'Success';
+  blockHash: string,
   result: {
       dispatchError: any,
       events: {
