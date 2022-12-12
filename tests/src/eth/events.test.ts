@@ -357,6 +357,7 @@ async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSpons
   }
   {
     await collection.methods.removeCollectionSponsor().send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'CollectionChanged',
