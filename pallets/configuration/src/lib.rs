@@ -35,7 +35,8 @@ mod pallet {
 	use super::*;
 	use frame_support::{
 		traits::Get,
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, OptionQuery}, BoundedVec,
+		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, OptionQuery},
+		BoundedVec,
 	};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root};
 	use xcm::v1::MultiLocation;
