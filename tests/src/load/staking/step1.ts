@@ -23,7 +23,16 @@ import {Staker} from './helpers';
 async function main() {
   await usingPlaygrounds(async (helper, privateKey) => {
     const donor = await privateKey({filename: __filename});
+    // //{STAKER_BASE_SEED}/1 (..2,3,4)
     const mnemonics = Array(config.STAKERS_NUM).fill('').map((_, i) => `${config.STAKER_BASE_SEED}/${i}`);
+    const stakers: Staker[] = mnemonics.map(mnemonic => {
+      return {
+        address: helper.util.fromSeed(mnemonic).address,
+        mnemonic,
+        errors: [], stakes: [], unstakes: [],
+      };
+    });
+
     const api = helper.getApi();
     
     // 1. Generate 8000 test accounts with 1010 OPL each:
@@ -31,8 +40,8 @@ async function main() {
     let donorNonce = await helper.chain.getNonce(donor.address);
 
     console.log('Sending to stakers...');
-    for (const staker of mnemonics) {
-      const stakerKeyRing = helper.util.fromSeed(staker);
+    for (const staker of stakers) {
+      const stakerKeyRing = helper.util.fromSeed(staker.mnemonic);
 
       const balance = await helper.balance.getSubstrate(stakerKeyRing.address);
       if (balance === config.INITIAL_BALANCE * config.NOMINAL) continue;
@@ -44,16 +53,8 @@ async function main() {
 
     // 2. Wait all accounts have balance...
     console.log('Wait all accounts have balance...');
-    const checks = mnemonics.map(async (mnemonic) => {
-      const address = helper.util.fromSeed(mnemonic).address;
-
-      const staker: Staker = {
-        mnemonic,
-        address,
-        errors: [],
-        stakes: [],
-        unstakes: [],
-      };
+    const checks = stakers.map(async (staker) => {
+      const address = helper.util.fromSeed(staker.mnemonic).address;
 
       await Retry.until({
         retryFunc: () => helper.balance.getSubstrate(address),
@@ -69,7 +70,7 @@ async function main() {
     });
 
     // 3. Save fullfilled accounts to file:
-    const result = await Promise.all(checks);
+    const result: Staker[] = await Promise.all(checks);
 
     fs.writeFileSync(config.STAKERS_LOG, JSON.stringify(result));
 
