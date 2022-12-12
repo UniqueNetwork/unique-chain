@@ -30,7 +30,7 @@ use crate::{
 	runtime_common::{
 		config::xcm::{DenyThenTry, DenyTransact, DenyExchangeWithUnknownLocation},
 		xcm::OverridableAllowedLocations,
-	}
+	},
 };
 
 match_types! {
@@ -74,7 +74,7 @@ pub type Barrier = DenyThenTry<
 	(
 		DenyTransact,
 		DenyExchangeWithUnknownLocation<
-			OverridableAllowedLocations<Runtime, QuartzDefaultAllowedLocations>
+			OverridableAllowedLocations<Runtime, QuartzDefaultAllowedLocations>,
 		>,
 	),
 	(
