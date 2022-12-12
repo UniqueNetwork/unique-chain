@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
@@ -2469,11 +2468,23 @@ export default {
   /**
    * Lookup286: pallet_configuration::AppPromotionConfiguration<BlockNumber>
    **/
+<<<<<<< HEAD
   PalletConfigurationAppPromotionConfiguration: {
     recalculationInterval: 'Option<u32>',
     pendingInterval: 'Option<u32>',
     intervalIncome: 'Option<Perbill>',
     maxStakersPerCalculation: 'Option<u8>'
+=======
+  PalletConfigurationCall: {
+    _enum: {
+      set_weight_to_fee_coefficient_override: {
+        coeff: 'Option<u64>',
+      },
+      set_min_gas_price_override: {
+        coeff: 'Option<u64>'
+      }
+    }
+>>>>>>> chore: regenerate types
   },
   /**
    * Lookup289: pallet_template_transaction_payment::Call<T>
@@ -3458,6 +3469,3 @@ export default {
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };
-=======
-export default {}
->>>>>>> chore: regenerate types
