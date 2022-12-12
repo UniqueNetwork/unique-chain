@@ -20,17 +20,17 @@ use frame_support::traits::Get;
 
 pub struct OverridableAllowedLocations<T, L>(PhantomData<(T, L)>)
 where
-    T: pallet_configuration::Config,
-    L: Get<Vec<MultiLocation>>;
+	T: pallet_configuration::Config,
+	L: Get<Vec<MultiLocation>>;
 
 impl<T, L> Get<Vec<MultiLocation>> for OverridableAllowedLocations<T, L>
 where
-    T: pallet_configuration::Config,
-    L: Get<Vec<MultiLocation>>
+	T: pallet_configuration::Config,
+	L: Get<Vec<MultiLocation>>,
 {
-    fn get() -> Vec<MultiLocation> {
-        <pallet_configuration::XcmAllowedLocationsOverride<T>>::get()
-            .map(|bounded| bounded.into_inner())
-            .unwrap_or_else(|| L::get())
-    }
+	fn get() -> Vec<MultiLocation> {
+		<pallet_configuration::XcmAllowedLocationsOverride<T>>::get()
+			.map(|bounded| bounded.into_inner())
+			.unwrap_or_else(|| L::get())
+	}
 }
