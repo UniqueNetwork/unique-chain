@@ -103,6 +103,14 @@ declare module '@polkadot/api-base/types/events' {
     };
     common: {
       /**
+       * Address was added to the allow list.
+       **/
+      AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Address was removed from the allow list.
+       **/
+      AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
        * Amount pieces of token owned by `sender` was approved for `spender`.
        **/
       Approved: AugmentedEvent<ApiType, [u32, u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u128]>;
@@ -110,6 +118,14 @@ declare module '@polkadot/api-base/types/events' {
        * A `sender` approves operations on all owned tokens for `spender`.
        **/
       ApprovedForAll: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, bool]>;
+      /**
+       * Collection admin was added.
+       **/
+      CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+      /**
+       * Collection admin was removed.
+       **/
+      CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
       /**
        * New collection was created
        **/
@@ -119,6 +135,18 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollectionDestroyed: AugmentedEvent<ApiType, [u32]>;
       /**
+       * Collection limits were set.
+       **/
+      CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
+      /**
+       * Collection owned was changed.
+       **/
+      CollectionOwnerChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      /**
+       * Collection permissions were set.
+       **/
+      CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
+      /**
        * The property has been deleted.
        **/
       CollectionPropertyDeleted: AugmentedEvent<ApiType, [u32, Bytes]>;
@@ -126,6 +154,14 @@ declare module '@polkadot/api-base/types/events' {
        * The colletion property has been added or edited.
        **/
       CollectionPropertySet: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * Collection sponsor was removed.
+       **/
+      CollectionSponsorRemoved: AugmentedEvent<ApiType, [u32]>;
+      /**
+       * Collection sponsor was set.
+       **/
+      CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * New item was created.
        **/
@@ -138,6 +174,10 @@ declare module '@polkadot/api-base/types/events' {
        * The token property permission of a collection has been set.
        **/
       PropertyPermissionSet: AugmentedEvent<ApiType, [u32, Bytes]>;
+      /**
+       * New sponsor was confirm.
+       **/
+      SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * The token property has been deleted.
        **/
@@ -688,89 +728,6 @@ declare module '@polkadot/api-base/types/events' {
        * We have ended a spend period and will now allocate funds.
        **/
       Spending: AugmentedEvent<ApiType, [budgetRemaining: u128], { budgetRemaining: u128 }>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    unique: {
-      /**
-       * Address was added to the allow list
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * user: Address of the added account.
-       **/
-      AllowListAddressAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      /**
-       * Address was removed from the allow list
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * user: Address of the removed account.
-       **/
-      AllowListAddressRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      /**
-       * Collection admin was added
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * admin: Admin address.
-       **/
-      CollectionAdminAdded: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      /**
-       * Collection admin was removed
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * admin: Removed admin address.
-       **/
-      CollectionAdminRemoved: AugmentedEvent<ApiType, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      /**
-       * Collection limits were set
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       **/
-      CollectionLimitSet: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Collection owned was changed
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * owner: New owner address.
-       **/
-      CollectionOwnedChanged: AugmentedEvent<ApiType, [u32, AccountId32]>;
-      /**
-       * Collection permissions were set
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       **/
-      CollectionPermissionSet: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Collection sponsor was removed
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       **/
-      CollectionSponsorRemoved: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Collection sponsor was set
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * owner: New sponsor address.
-       **/
-      CollectionSponsorSet: AugmentedEvent<ApiType, [u32, AccountId32]>;
-      /**
-       * New sponsor was confirm
-       * 
-       * # Arguments
-       * * collection_id: ID of the affected collection.
-       * * sponsor: New sponsor address.
-       **/
-      SponsorshipConfirmed: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * Generic event
        **/

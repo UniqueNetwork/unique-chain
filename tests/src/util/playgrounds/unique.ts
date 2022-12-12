@@ -933,7 +933,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionOwnedChanged');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionOwnerChanged');
   }
 
   /**

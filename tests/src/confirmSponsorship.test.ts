@@ -207,14 +207,14 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
     const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
-    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmUnsetSponsorFail/);
+    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship using owner address', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
     const confirmSponsorshipTx = () => collection.confirmSponsorship(alice);
-    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmUnsetSponsorFail/);
+    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship by collection admin', async ({helper}) => {
@@ -222,13 +222,13 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     await collection.setSponsor(alice, bob.address);
     await collection.addAdmin(alice, {Substrate: charlie.address});
     const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
-    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmUnsetSponsorFail/);
+    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship without sponsor being set with setCollectionSponsor', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const confirmSponsorshipTx = () => collection.confirmSponsorship(charlie);
-    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmUnsetSponsorFail/);
+    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
   });
 
   itSub('(!negative test!) Confirm sponsorship in a collection that was destroyed', async ({helper}) => {

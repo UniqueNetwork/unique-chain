@@ -86,7 +86,7 @@ describe('Create NFT collection from EVM', () => {
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -109,7 +109,7 @@ describe('Create NFT collection from EVM', () => {
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -203,7 +203,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
+        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
       await expect(malfeasantCollection.methods
@@ -228,7 +228,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('ConfirmUnsetSponsorFail');
+        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
       await expect(malfeasantCollection.methods

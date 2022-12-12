@@ -145,6 +145,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * This address is not set as sponsor, use setCollectionSponsor first.
+       **/
+      ConfirmSponsorshipFail: AugmentedError<ApiType>;
+      /**
        * Empty property keys are forbidden
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
@@ -216,6 +220,10 @@ declare module '@polkadot/api-base/types/errors' {
        * User does not satisfy the nesting rule
        **/
       UserIsNotAllowedToNest: AugmentedError<ApiType>;
+      /**
+       * The user is not an administrator.
+       **/
+      UserIsNotCollectionAdmin: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -845,10 +853,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
-      /**
-       * This address is not set as sponsor, use setCollectionSponsor first.
-       **/
-      ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
       /**
        * Length of items properties must be greater than 0.
        **/
