@@ -240,7 +240,7 @@ describe('EVM token properties negative', () => {
     itEth(`[${testCase.method}] Cannot set properties of non-owned collection`, async ({helper}) => {
       caller = await helper.eth.createAccountWithBalance(donor);
       collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, true);
-      // Caller an owner and not an admin, so he cannot set properties:
+      // Caller not an owner and not an admin, so he cannot set properties:
       // FIXME: Can setProperties as non owner and non admin
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).call({from: caller})).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
@@ -264,15 +264,29 @@ describe('EVM token properties negative', () => {
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
 
       // Props have not changed:
-      const actualProps = await collectionEvm.methods.properties(token.tokenId, ['testKey2']).call();
-      expect(actualProps).to.deep.eq(tokenProps
-        .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); 
-        }));
+      const expectedProps = tokenProps.map(p => helper.ethProperty.property(p.key, p.value.toString()));
+      const actualProps = await collectionEvm.methods.properties(token.tokenId, []).call();
+      expect(actualProps).to.deep.eq(expectedProps);
     }));
 
-  itEth('Cannot delete properties of non-owned collection', async () => {
+  [
+    {method: 'deleteProperty', methodParams: ['testKey_2']}, // FIXME: the method is gone?
+    {method: 'deleteProperties', methodParams: [['testKey_2']]},
+  ].map(testCase =>  
+    itEth('Cannot delete properties of non-owned collection', async ({helper}) => {
+      caller = await helper.eth.createAccountWithBalance(donor);
+      collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, true);
+      // Caller not an owner and not an admin, so he cannot set properties:
+      // FIXME: non owner and non admin can deleteProperties
+      await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller});
+      await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).call({from: caller})).to.be.rejectedWith('NoPermission');
+      await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
 
-  });
+      // Props have not changed:
+      const expectedProps = tokenProps.map(p => helper.ethProperty.property(p.key, p.value.toString()));
+      const actualProps = await collectionEvm.methods.properties(token.tokenId, []).call();
+      expect(actualProps).to.deep.eq(expectedProps);
+    }));
 
   itEth('Cannot delete non-existing properties', async () => {
 
