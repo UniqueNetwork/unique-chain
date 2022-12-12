@@ -18,6 +18,7 @@ import {expect} from 'chai';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
 import {TCollectionMode} from '../util/playgrounds/types';
+import {Pallets, requirePalletsOrSkip} from '../util';
 
 let donor: IKeyringPair;
   
@@ -253,7 +254,7 @@ async function testCollectionOwnedChanged(helper: EthUniqueHelper, mode: TCollec
   collectionHelper.events.allEvents((_: any, event: any) => {
     ethEvents.push(event);
   });
-  const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionOwnedChanged']}]);
+  const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionOwnerChanged']}]);
   {
     await collection.methods.changeCollectionOwnerCross(new_owner).send({from: owner});
     await helper.wait.newBlocks(1);
@@ -265,7 +266,7 @@ async function testCollectionOwnedChanged(helper: EthUniqueHelper, mode: TCollec
         },
       },
     ]);
-    expect(subEvents).to.be.like([{method: 'CollectionOwnedChanged'}]);
+    expect(subEvents).to.be.like([{method: 'CollectionOwnerChanged'}]);
   }
   unsubscribe();
 }
@@ -401,6 +402,7 @@ async function testTokenPropertySetAndTokenPropertyDeleted(helper: EthUniqueHelp
   }
   {
     await collection.methods.deleteProperties(tokenId, ['A']).send({from: owner});
+    await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
         event: 'TokenChanged',
@@ -437,7 +439,7 @@ describe('[FT] Sync sub & eth events', () => {
     await testCollectionLimitSet(helper, mode);
   });
     
-  itEth('CollectionChanged event for CollectionOwnedChanged', async ({helper}) => {
+  itEth('CollectionChanged event for CollectionOwnerChanged', async ({helper}) => {
     await testCollectionOwnedChanged(helper, mode);
   });
     
@@ -477,7 +479,7 @@ describe('[NFT] Sync sub & eth events', () => {
     await testCollectionLimitSet(helper, mode);
   });
     
-  itEth('CollectionChanged event for CollectionOwnedChanged', async ({helper}) => {
+  itEth('CollectionChanged event for CollectionOwnerChanged', async ({helper}) => {
     await testCollectionOwnedChanged(helper, mode);
   });
     
@@ -496,6 +498,13 @@ describe('[NFT] Sync sub & eth events', () => {
 
 describe('[RFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'rft';
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      const _donor = await privateKey({filename: __filename});
+    });
+  });
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
     await testCollectionCreatedAndDestroy(helper, mode);
@@ -521,7 +530,7 @@ describe('[RFT] Sync sub & eth events', () => {
     await testCollectionLimitSet(helper, mode);
   });
     
-  itEth('CollectionChanged event for CollectionOwnedChanged', async ({helper}) => {
+  itEth('CollectionChanged event for CollectionOwnerChanged', async ({helper}) => {
     await testCollectionOwnedChanged(helper, mode);
   });
     

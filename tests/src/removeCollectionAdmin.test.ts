@@ -51,7 +51,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
     const adminListBeforeAddAdmin = await collection.getAdmins();
     expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
 
-    await expect(collection.removeAdmin(alice, {Substrate: alice.address})).to.be.rejectedWith('common.UserIsNotAdmin');
+    await expect(collection.removeAdmin(alice, {Substrate: alice.address})).to.be.rejectedWith('common.UserIsNotCollectionAdmin');
   });
 });
 

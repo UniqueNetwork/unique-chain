@@ -284,7 +284,7 @@ impl<T: Config> CollectionHandle<T> {
 		self.check_is_internal()?;
 		ensure!(
 			self.collection.sponsorship.pending_sponsor() == Some(sender),
-			Error::<T>::ConfirmUnsetSponsorFail
+			Error::<T>::ConfirmSponsorshipFail
 		);
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sender.clone());
@@ -303,7 +303,7 @@ impl<T: Config> CollectionHandle<T> {
 	/// Remove collection sponsor.
 	pub fn remove_sponsor(&mut self, sender: &T::CrossAccountId) -> DispatchResult {
 		self.check_is_internal()?;
-		self.check_is_owner(sender)?;
+		self.check_is_owner_or_admin(sender)?;
 
 		self.collection.sponsorship = SponsorshipState::Disabled;
 
@@ -420,7 +420,7 @@ impl<T: Config> CollectionHandle<T> {
 		self.check_is_owner(&caller)?;
 		self.collection.owner = new_owner.as_sub().clone();
 
-		<Pallet<T>>::deposit_event(Event::<T>::CollectionOwnedChanged(
+		<Pallet<T>>::deposit_event(Event::<T>::CollectionOwnerChanged(
 			self.id,
 			new_owner.as_sub().clone(),
 		));
@@ -663,7 +663,7 @@ pub mod pallet {
 		),
 
 		/// Collection owned was changed.
-		CollectionOwnedChanged(
+		CollectionOwnerChanged(
 			/// ID of the affected collection.
 			CollectionId,
 			/// New owner address.
@@ -785,10 +785,10 @@ pub mod pallet {
 		CollectionIsInternal,
 
 		/// This address is not set as sponsor, use setCollectionSponsor first.
-		ConfirmUnsetSponsorFail,
+		ConfirmSponsorshipFail,
 
 		/// The user is not an administrator.
-		UserIsNotAdmin,
+		UserIsNotCollectionAdmin,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.
@@ -1578,7 +1578,7 @@ impl<T: Config> Pallet<T> {
 			if admin {
 				return Ok(());
 			} else {
-				ensure!(false, Error::<T>::UserIsNotAdmin);
+				return Err(Error::<T>::UserIsNotCollectionAdmin.into());
 			}
 		}
 		let amount = <AdminAmount<T>>::get(collection.id);
@@ -1591,8 +1591,6 @@ impl<T: Config> Pallet<T> {
 				amount <= Self::collection_admins_limit(),
 				<Error<T>>::CollectionAdminCountExceeded,
 			);
-
-			// =========
 
 			<AdminAmount<T>>::insert(collection.id, amount);
 			<IsAdmin<T>>::insert((collection.id, user), true);
