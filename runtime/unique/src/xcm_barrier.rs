@@ -26,8 +26,11 @@ use xcm_builder::{
 };
 
 use crate::{
-	ParachainInfo, PolkadotXcm,
-	runtime_common::config::xcm::{DenyThenTry, DenyTransact, DenyExchangeWithUnknownLocation},
+	Runtime, ParachainInfo, PolkadotXcm,
+	runtime_common::{
+		config::xcm::{DenyThenTry, DenyTransact, DenyExchangeWithUnknownLocation},
+		xcm::OverridableAllowedLocations,
+	}
 };
 
 match_types! {
@@ -38,7 +41,7 @@ match_types! {
 }
 
 parameter_types! {
-	pub UniqueAllowedLocations: Vec<MultiLocation> = vec![
+	pub UniqueDefaultAllowedLocations: Vec<MultiLocation> = vec![
 		// Self location
 		MultiLocation {
 			parents: 0,
@@ -70,7 +73,9 @@ parameter_types! {
 pub type Barrier = DenyThenTry<
 	(
 		DenyTransact,
-		DenyExchangeWithUnknownLocation<UniqueAllowedLocations>,
+		DenyExchangeWithUnknownLocation<
+			OverridableAllowedLocations<Runtime, UniqueDefaultAllowedLocations>
+		>,
 	),
 	(
 		TakeWeightCredit,

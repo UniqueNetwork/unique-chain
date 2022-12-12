@@ -35,16 +35,21 @@ mod pallet {
 	use super::*;
 	use frame_support::{
 		traits::Get,
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult},
+		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, OptionQuery}, BoundedVec,
 	};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root};
+	use xcm::v1::MultiLocation;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[pallet::constant]
 		type DefaultWeightToFeeCoefficient: Get<u32>;
+
 		#[pallet::constant]
 		type DefaultMinGasPrice: Get<u64>;
+
+		#[pallet::constant]
+		type MaxOverridedAllowedLocations: Get<u32>;
 	}
 
 	#[pallet::storage]
@@ -57,6 +62,12 @@ mod pallet {
 	#[pallet::storage]
 	pub type MinGasPriceOverride<T: Config> =
 		StorageValue<Value = u64, QueryKind = ValueQuery, OnEmpty = T::DefaultMinGasPrice>;
+
+	#[pallet::storage]
+	pub type XcmAllowedLocationsOverride<T: Config> = StorageValue<
+		Value = BoundedVec<MultiLocation, T::MaxOverridedAllowedLocations>,
+		QueryKind = OptionQuery,
+	>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -85,6 +96,16 @@ mod pallet {
 			} else {
 				<MinGasPriceOverride<T>>::kill();
 			}
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_xcm_allowed_locations(
+			origin: OriginFor<T>,
+			locations: Option<BoundedVec<MultiLocation, T::MaxOverridedAllowedLocations>>,
+		) -> DispatchResult {
+			let _sender = ensure_root(origin)?;
+			<XcmAllowedLocationsOverride<T>>::set(locations);
 			Ok(())
 		}
 	}
