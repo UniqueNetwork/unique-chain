@@ -140,7 +140,7 @@ impl EthCrossAccount {
 		}
 	}
 	/// Creates `EthCrossAccount` from substrate account
-	pub fn from_substrate<T>(account_id: &T::AccountId) -> Self
+	pub fn from_sub<T>(account_id: &T::AccountId) -> Self
 	where
 		T: pallet_evm::Config,
 		T::AccountId: AsRef<[u8; 32]>,

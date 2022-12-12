@@ -295,7 +295,7 @@ where
 			None => return Ok(Default::default()),
 		};
 
-		Ok(EthCrossAccount::from_substrate::<T>(&sponsor))
+		Ok(EthCrossAccount::from_sub::<T>(&sponsor))
 	}
 
 	/// Get current collection limits.
