@@ -56,10 +56,8 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const collection = await helper.collection.getData(collectionId);
     expect(collection?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(alice.address));
 
-    const changeAdminTxBob = () => helper.collection.addAdmin(bob, collectionId, {Substrate: bob.address});
-    const changeAdminTxCharlie = () => helper.collection.addAdmin(bob, collectionId, {Substrate: charlie.address});
-    await expect(changeAdminTxCharlie()).to.be.rejectedWith(/common\.NoPermission/);
-    await expect(changeAdminTxBob()).to.be.rejectedWith(/common\.NoPermission/);
+    await expect(helper.collection.addAdmin(bob, collectionId, { Substrate: charlie.address })).to.be.rejectedWith(/common\.NoPermission/);
+    await expect(helper.collection.addAdmin(bob, collectionId, { Substrate: bob.address })).to.be.rejectedWith(/common\.NoPermission/);
 
     const adminListAfterAddAdmin = await helper.collection.getAdmins(collectionId);
     expect(adminListAfterAddAdmin).to.be.not.deep.contains({Substrate: charlie.address});
@@ -75,8 +73,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const adminListAfterAddAdmin = await collection.getAdmins();
     expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: bob.address});
 
-    const changeAdminTxCharlie = () => collection.addAdmin(bob, {Substrate: charlie.address});
-    await expect(changeAdminTxCharlie()).to.be.rejectedWith(/common\.NoPermission/);
+    await expect(collection.addAdmin(bob, { Substrate: charlie.address })).to.be.rejectedWith(/common\.NoPermission/);
 
     const adminListAfterAddNewAdmin = await collection.getAdmins();
     expect(adminListAfterAddNewAdmin).to.be.deep.contains({Substrate: bob.address});
@@ -87,8 +84,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const [alice, bob] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     const collectionId = (1 << 32) - 1;
 
-    const addAdminTx = () => helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
-    await expect(addAdminTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
+    await expect(helper.collection.addAdmin(alice, collectionId, { Substrate: bob.address })).to.be.rejectedWith(/common\.CollectionNotFound/);
 
     // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
     await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
@@ -99,8 +95,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const collection = await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
 
     await collection.burn(alice);
-    const addAdminTx = () => collection.addAdmin(alice, {Substrate: bob.address});
-    await expect(addAdminTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
+    await expect(collection.addAdmin(alice, { Substrate: bob.address })).to.be.rejectedWith(/common\.CollectionNotFound/);
 
     // Verifying that nothing bad happened (network is live, new collections can be created, etc.)
     await helper.nft.mintCollection(alice, {name: 'Collection Name', description: 'Collection Description', tokenPrefix: 'COL'});
@@ -119,7 +114,6 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
       expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: accounts[i].address});
     }
 
-    const addExtraAdminTx = () => collection.addAdmin(alice, {Substrate: accounts[chainAdminLimit].address});
-    await expect(addExtraAdminTx()).to.be.rejectedWith(/common\.CollectionAdminCountExceeded/);
+    await expect(collection.addAdmin(alice, { Substrate: accounts[chainAdminLimit].address })).to.be.rejectedWith(/common\.CollectionAdminCountExceeded/);
   });
 });
