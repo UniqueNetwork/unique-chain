@@ -75,7 +75,10 @@ describe('Pallet presence', () => {
           appPromotion,
         );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
-        requiredPallets.push(refungible);
+        requiredPallets.push(
+          refungible,
+          appPromotion,
+        );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
       }
