@@ -31,11 +31,14 @@ describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
+      const alice = await privateKey('//Alice');
       donor = await privateKey({filename: __filename});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();
       accounts = await helper.arrange.createCrowd(100, 1000n, donor); // create accounts-pool to speed up tests
+      const api = helper.getApi();
+      await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setAppPromotionConfigurationOverride(LOCKING_PERIOD, UNLOCKING_PERIOD, null)));
     });
   });
 

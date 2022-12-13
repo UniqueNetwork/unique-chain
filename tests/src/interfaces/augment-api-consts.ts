@@ -79,6 +79,8 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     configuration: {
+      appPromotionDailyRate: Perbill & AugmentedConst<ApiType>;
+      dayRelayBlocks: u32 & AugmentedConst<ApiType>;
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
       defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
       maxOverridedAllowedLocations: u32 & AugmentedConst<ApiType>;

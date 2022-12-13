@@ -4,10 +4,15 @@ use frame_support::{traits::LockableCurrency, WeakBoundedVec, Parameter, dispatc
 use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBalances};
 use pallet_common::CollectionHandle;
 
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, Perbill};
 use up_data_structs::{CollectionId};
 use sp_std::borrow::ToOwned;
 use pallet_evm_contract_helpers::{Pallet as EvmHelpersPallet, Config as EvmHelpersConfig};
+use pallet_configuration::{AppPromomotionConfigurationOverride};
+use sp_core::Get;
+
+const MAX_NUMBER_PAYOUTS: u8 = 100;
+pub(crate) const DEFAULT_NUMBER_PAYOUTS: u8 = 20;
 
 /// This trait was defined because `LockableCurrency`
 /// has no way to know the state of the lock for an account.
@@ -126,5 +131,26 @@ impl<T: EvmHelpersConfig> ContractHandler for EvmHelpersPallet<T> {
 		contract_address: Self::ContractId,
 	) -> Result<Option<Self::AccountId>, DispatchError> {
 		Ok(Self::get_sponsor(contract_address))
+	}
+}
+pub(crate) struct PalletConfiguration<T: crate::Config> {
+	/// In relay blocks.
+	pub recalculation_interval: T::BlockNumber,
+	/// In parachain blocks.
+	pub pending_interval: T::BlockNumber,
+	/// Value for `RecalculationInterval` based on 0.05% per 24h.
+	pub interval_income: Perbill,
+	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.
+	pub max_stakers_per_calculation: u8,
+}
+impl<T: crate::Config> PalletConfiguration<T> {
+	pub fn get() -> Self {
+		let config = <AppPromomotionConfigurationOverride<T>>::get().unwrap_or_default();
+		Self {
+			recalculation_interval: config.0.unwrap_or(T::RecalculationInterval::get()),
+			pending_interval: config.2.unwrap_or(T::PendingInterval::get()),
+			interval_income: config.1.unwrap_or(T::IntervalIncome::get()),
+			max_stakers_per_calculation: config.3.unwrap_or(MAX_NUMBER_PAYOUTS),
+		}
 	}
 }
