@@ -3430,7 +3430,17 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange';
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsCollection (390) */
+=======
+  /** @name PalletConfigurationError (400) */
+  interface PalletConfigurationError extends Enum {
+    readonly isInconsistentConfiguration: boolean;
+    readonly type: 'InconsistentConfiguration';
+  }
+
+  /** @name UpDataStructsCollection (401) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsCollection extends Struct {
     readonly owner: AccountId32;
     readonly mode: UpDataStructsCollectionMode;
@@ -3443,7 +3453,11 @@ declare module '@polkadot/types/lookup' {
     readonly flags: U8aFixed;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateAccountId32 (391) */
+=======
+  /** @name UpDataStructsSponsorshipStateAccountId32 (402) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsSponsorshipStateAccountId32 extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
@@ -3453,13 +3467,18 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsProperties (393) */
+=======
+  /** @name UpDataStructsProperties (404) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsProperties extends Struct {
     readonly map: UpDataStructsPropertiesMapBoundedVec;
     readonly consumedSpace: u32;
     readonly spaceLimit: u32;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsPropertiesMapBoundedVec (394) */
   interface UpDataStructsPropertiesMapBoundedVec extends BTreeMap<Bytes, Bytes> {}
 
@@ -3467,29 +3486,53 @@ declare module '@polkadot/types/lookup' {
   interface UpDataStructsPropertiesMapPropertyPermission extends BTreeMap<Bytes, UpDataStructsPropertyPermission> {}
 
   /** @name UpDataStructsCollectionStats (406) */
+=======
+  /** @name UpDataStructsPropertiesMapBoundedVec (405) */
+  interface UpDataStructsPropertiesMapBoundedVec extends BTreeMap<Bytes, Bytes> {}
+
+  /** @name UpDataStructsPropertiesMapPropertyPermission (410) */
+  interface UpDataStructsPropertiesMapPropertyPermission extends BTreeMap<Bytes, UpDataStructsPropertyPermission> {}
+
+  /** @name UpDataStructsCollectionStats (417) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsCollectionStats extends Struct {
     readonly created: u32;
     readonly destroyed: u32;
     readonly alive: u32;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsTokenChild (407) */
+=======
+  /** @name UpDataStructsTokenChild (418) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsTokenChild extends Struct {
     readonly token: u32;
     readonly collection: u32;
   }
 
+<<<<<<< HEAD
   /** @name PhantomTypeUpDataStructs (408) */
   interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
 
   /** @name UpDataStructsTokenData (410) */
+=======
+  /** @name PhantomTypeUpDataStructs (419) */
+  interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
+
+  /** @name UpDataStructsTokenData (421) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsTokenData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
     readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
     readonly pieces: u128;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsRpcCollection (412) */
+=======
+  /** @name UpDataStructsRpcCollection (423) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsRpcCollection extends Struct {
     readonly owner: AccountId32;
     readonly mode: UpDataStructsCollectionMode;
@@ -3505,13 +3548,21 @@ declare module '@polkadot/types/lookup' {
     readonly flags: UpDataStructsRpcCollectionFlags;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsRpcCollectionFlags (413) */
+=======
+  /** @name UpDataStructsRpcCollectionFlags (424) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsRpcCollectionFlags extends Struct {
     readonly foreign: bool;
     readonly erc721metadata: bool;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsCollectionCollectionInfo (414) */
+=======
+  /** @name RmrkTraitsCollectionCollectionInfo (425) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsCollectionCollectionInfo extends Struct {
     readonly issuer: AccountId32;
     readonly metadata: Bytes;
@@ -3520,7 +3571,11 @@ declare module '@polkadot/types/lookup' {
     readonly nftsCount: u32;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsNftNftInfo (415) */
+=======
+  /** @name RmrkTraitsNftNftInfo (426) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsNftNftInfo extends Struct {
     readonly owner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
     readonly royalty: Option<RmrkTraitsNftRoyaltyInfo>;
@@ -3529,13 +3584,21 @@ declare module '@polkadot/types/lookup' {
     readonly pending: bool;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsNftRoyaltyInfo (417) */
+=======
+  /** @name RmrkTraitsNftRoyaltyInfo (428) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsNftRoyaltyInfo extends Struct {
     readonly recipient: AccountId32;
     readonly amount: Permill;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsResourceResourceInfo (418) */
+=======
+  /** @name RmrkTraitsResourceResourceInfo (429) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsResourceResourceInfo extends Struct {
     readonly id: u32;
     readonly resource: RmrkTraitsResourceResourceTypes;
@@ -3543,26 +3606,42 @@ declare module '@polkadot/types/lookup' {
     readonly pendingRemoval: bool;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsPropertyPropertyInfo (419) */
+=======
+  /** @name RmrkTraitsPropertyPropertyInfo (430) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsPropertyPropertyInfo extends Struct {
     readonly key: Bytes;
     readonly value: Bytes;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsBaseBaseInfo (420) */
+=======
+  /** @name RmrkTraitsBaseBaseInfo (431) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsBaseBaseInfo extends Struct {
     readonly issuer: AccountId32;
     readonly baseType: Bytes;
     readonly symbol: Bytes;
   }
 
+<<<<<<< HEAD
   /** @name RmrkTraitsNftNftChild (421) */
+=======
+  /** @name RmrkTraitsNftNftChild (432) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface RmrkTraitsNftNftChild extends Struct {
     readonly collectionId: u32;
     readonly nftId: u32;
   }
 
+<<<<<<< HEAD
   /** @name PalletCommonError (423) */
+=======
+  /** @name PalletCommonError (434) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletCommonError extends Enum {
     readonly isCollectionNotFound: boolean;
     readonly isMustBeTokenOwner: boolean;
@@ -3601,7 +3680,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal';
   }
 
+<<<<<<< HEAD
   /** @name PalletFungibleError (425) */
+=======
+  /** @name PalletFungibleError (436) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletFungibleError extends Enum {
     readonly isNotFungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isFungibleItemsHaveNoId: boolean;
@@ -3611,12 +3694,20 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
   }
 
+<<<<<<< HEAD
   /** @name PalletRefungibleItemData (426) */
+=======
+  /** @name PalletRefungibleItemData (437) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletRefungibleItemData extends Struct {
     readonly constData: Bytes;
   }
 
+<<<<<<< HEAD
   /** @name PalletRefungibleError (431) */
+=======
+  /** @name PalletRefungibleError (442) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletRefungibleError extends Enum {
     readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isWrongRefungiblePieces: boolean;
@@ -3626,19 +3717,31 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RepartitionWhileNotOwningAllPieces' | 'RefungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
   }
 
+<<<<<<< HEAD
   /** @name PalletNonfungibleItemData (432) */
+=======
+  /** @name PalletNonfungibleItemData (443) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletNonfungibleItemData extends Struct {
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsPropertyScope (434) */
+=======
+  /** @name UpDataStructsPropertyScope (445) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsPropertyScope extends Enum {
     readonly isNone: boolean;
     readonly isRmrk: boolean;
     readonly type: 'None' | 'Rmrk';
   }
 
+<<<<<<< HEAD
   /** @name PalletNonfungibleError (436) */
+=======
+  /** @name PalletNonfungibleError (447) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletNonfungibleError extends Enum {
     readonly isNotNonfungibleDataUsedToMintFungibleCollectionToken: boolean;
     readonly isNonfungibleItemsHaveNoAmount: boolean;
@@ -3646,7 +3749,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotNonfungibleDataUsedToMintFungibleCollectionToken' | 'NonfungibleItemsHaveNoAmount' | 'CantBurnNftWithChildren';
   }
 
+<<<<<<< HEAD
   /** @name PalletStructureError (437) */
+=======
+  /** @name PalletStructureError (448) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletStructureError extends Enum {
     readonly isOuroborosDetected: boolean;
     readonly isDepthLimit: boolean;
@@ -3655,7 +3762,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'OuroborosDetected' | 'DepthLimit' | 'BreadthLimit' | 'TokenNotFound';
   }
 
+<<<<<<< HEAD
   /** @name PalletRmrkCoreError (438) */
+=======
+  /** @name PalletRmrkCoreError (449) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletRmrkCoreError extends Enum {
     readonly isCorruptedCollectionType: boolean;
     readonly isRmrkPropertyKeyIsTooLong: boolean;
@@ -3679,7 +3790,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CorruptedCollectionType' | 'RmrkPropertyKeyIsTooLong' | 'RmrkPropertyValueIsTooLong' | 'RmrkPropertyIsNotFound' | 'UnableToDecodeRmrkData' | 'CollectionNotEmpty' | 'NoAvailableCollectionId' | 'NoAvailableNftId' | 'CollectionUnknown' | 'NoPermission' | 'NonTransferable' | 'CollectionFullOrLocked' | 'ResourceDoesntExist' | 'CannotSendToDescendentOrSelf' | 'CannotAcceptNonOwnedNft' | 'CannotRejectNonOwnedNft' | 'CannotRejectNonPendingNft' | 'ResourceNotPending' | 'NoAvailableResourceId';
   }
 
+<<<<<<< HEAD
   /** @name PalletRmrkEquipError (440) */
+=======
+  /** @name PalletRmrkEquipError (451) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletRmrkEquipError extends Enum {
     readonly isPermissionError: boolean;
     readonly isNoAvailableBaseId: boolean;
@@ -3691,7 +3806,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'PermissionError' | 'NoAvailableBaseId' | 'NoAvailablePartId' | 'BaseDoesntExist' | 'NeedsDefaultThemeFirst' | 'PartDoesntExist' | 'NoEquippableOnFixedPart';
   }
 
+<<<<<<< HEAD
   /** @name PalletAppPromotionError (446) */
+=======
+  /** @name PalletAppPromotionError (457) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletAppPromotionError extends Enum {
     readonly isAdminNotSet: boolean;
     readonly isNoPermission: boolean;
@@ -3702,7 +3821,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation';
   }
 
+<<<<<<< HEAD
   /** @name PalletForeignAssetsModuleError (447) */
+=======
+  /** @name PalletForeignAssetsModuleError (458) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletForeignAssetsModuleError extends Enum {
     readonly isBadLocation: boolean;
     readonly isMultiLocationExisted: boolean;
@@ -3711,7 +3834,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'BadLocation' | 'MultiLocationExisted' | 'AssetIdNotExists' | 'AssetIdExisted';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmError (450) */
+=======
+  /** @name PalletEvmError (460) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletEvmError extends Enum {
     readonly isBalanceLow: boolean;
     readonly isFeeOverflow: boolean;
@@ -3726,7 +3853,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy';
   }
 
+<<<<<<< HEAD
   /** @name FpRpcTransactionStatus (453) */
+=======
+  /** @name FpRpcTransactionStatus (463) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface FpRpcTransactionStatus extends Struct {
     readonly transactionHash: H256;
     readonly transactionIndex: u32;
@@ -3737,10 +3868,17 @@ declare module '@polkadot/types/lookup' {
     readonly logsBloom: EthbloomBloom;
   }
 
+<<<<<<< HEAD
   /** @name EthbloomBloom (455) */
   interface EthbloomBloom extends U8aFixed {}
 
   /** @name EthereumReceiptReceiptV3 (457) */
+=======
+  /** @name EthbloomBloom (465) */
+  interface EthbloomBloom extends U8aFixed {}
+
+  /** @name EthereumReceiptReceiptV3 (467) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface EthereumReceiptReceiptV3 extends Enum {
     readonly isLegacy: boolean;
     readonly asLegacy: EthereumReceiptEip658ReceiptData;
@@ -3751,7 +3889,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Legacy' | 'Eip2930' | 'Eip1559';
   }
 
+<<<<<<< HEAD
   /** @name EthereumReceiptEip658ReceiptData (458) */
+=======
+  /** @name EthereumReceiptEip658ReceiptData (468) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface EthereumReceiptEip658ReceiptData extends Struct {
     readonly statusCode: u8;
     readonly usedGas: U256;
@@ -3759,14 +3901,22 @@ declare module '@polkadot/types/lookup' {
     readonly logs: Vec<EthereumLog>;
   }
 
+<<<<<<< HEAD
   /** @name EthereumBlock (459) */
+=======
+  /** @name EthereumBlock (469) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface EthereumBlock extends Struct {
     readonly header: EthereumHeader;
     readonly transactions: Vec<EthereumTransactionTransactionV2>;
     readonly ommers: Vec<EthereumHeader>;
   }
 
+<<<<<<< HEAD
   /** @name EthereumHeader (460) */
+=======
+  /** @name EthereumHeader (470) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface EthereumHeader extends Struct {
     readonly parentHash: H256;
     readonly ommersHash: H256;
@@ -3785,24 +3935,39 @@ declare module '@polkadot/types/lookup' {
     readonly nonce: EthereumTypesHashH64;
   }
 
+<<<<<<< HEAD
   /** @name EthereumTypesHashH64 (461) */
   interface EthereumTypesHashH64 extends U8aFixed {}
 
   /** @name PalletEthereumError (466) */
+=======
+  /** @name EthereumTypesHashH64 (471) */
+  interface EthereumTypesHashH64 extends U8aFixed {}
+
+  /** @name PalletEthereumError (476) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletEthereumError extends Enum {
     readonly isInvalidSignature: boolean;
     readonly isPreLogExists: boolean;
     readonly type: 'InvalidSignature' | 'PreLogExists';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmCoderSubstrateError (467) */
+=======
+  /** @name PalletEvmCoderSubstrateError (477) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletEvmCoderSubstrateError extends Enum {
     readonly isOutOfGas: boolean;
     readonly isOutOfFund: boolean;
     readonly type: 'OutOfGas' | 'OutOfFund';
   }
 
+<<<<<<< HEAD
   /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (468) */
+=======
+  /** @name UpDataStructsSponsorshipStateBasicCrossAccountIdRepr (478) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface UpDataStructsSponsorshipStateBasicCrossAccountIdRepr extends Enum {
     readonly isDisabled: boolean;
     readonly isUnconfirmed: boolean;
@@ -3812,7 +3977,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Unconfirmed' | 'Confirmed';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmContractHelpersSponsoringModeT (469) */
+=======
+  /** @name PalletEvmContractHelpersSponsoringModeT (479) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletEvmContractHelpersSponsoringModeT extends Enum {
     readonly isDisabled: boolean;
     readonly isAllowlisted: boolean;
@@ -3820,7 +3989,11 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Disabled' | 'Allowlisted' | 'Generous';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmContractHelpersError (475) */
+=======
+  /** @name PalletEvmContractHelpersError (485) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletEvmContractHelpersError extends Enum {
     readonly isNoPermission: boolean;
     readonly isNoPendingSponsor: boolean;
@@ -3828,24 +4001,39 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NoPermission' | 'NoPendingSponsor' | 'TooManyMethodsHaveSponsoredLimit';
   }
 
+<<<<<<< HEAD
   /** @name PalletEvmMigrationError (476) */
+=======
+  /** @name PalletEvmMigrationError (486) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
     readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating';
   }
 
+<<<<<<< HEAD
   /** @name PalletMaintenanceError (477) */
   type PalletMaintenanceError = Null;
 
   /** @name PalletTestUtilsError (478) */
+=======
+  /** @name PalletMaintenanceError (487) */
+  type PalletMaintenanceError = Null;
+
+  /** @name PalletTestUtilsError (488) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface PalletTestUtilsError extends Enum {
     readonly isTestPalletDisabled: boolean;
     readonly isTriggerRollback: boolean;
     readonly type: 'TestPalletDisabled' | 'TriggerRollback';
   }
 
+<<<<<<< HEAD
   /** @name SpRuntimeMultiSignature (480) */
+=======
+  /** @name SpRuntimeMultiSignature (490) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   interface SpRuntimeMultiSignature extends Enum {
     readonly isEd25519: boolean;
     readonly asEd25519: SpCoreEd25519Signature;
@@ -3856,6 +4044,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
   }
 
+<<<<<<< HEAD
   /** @name SpCoreEd25519Signature (481) */
   interface SpCoreEd25519Signature extends U8aFixed {}
 
@@ -3890,6 +4079,42 @@ declare module '@polkadot/types/lookup' {
   type OpalRuntimeRuntime = Null;
 
   /** @name PalletEthereumFakeTransactionFinalizer (497) */
+=======
+  /** @name SpCoreEd25519Signature (491) */
+  interface SpCoreEd25519Signature extends U8aFixed {}
+
+  /** @name SpCoreSr25519Signature (493) */
+  interface SpCoreSr25519Signature extends U8aFixed {}
+
+  /** @name SpCoreEcdsaSignature (494) */
+  interface SpCoreEcdsaSignature extends U8aFixed {}
+
+  /** @name FrameSystemExtensionsCheckSpecVersion (497) */
+  type FrameSystemExtensionsCheckSpecVersion = Null;
+
+  /** @name FrameSystemExtensionsCheckTxVersion (498) */
+  type FrameSystemExtensionsCheckTxVersion = Null;
+
+  /** @name FrameSystemExtensionsCheckGenesis (499) */
+  type FrameSystemExtensionsCheckGenesis = Null;
+
+  /** @name FrameSystemExtensionsCheckNonce (502) */
+  interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
+
+  /** @name FrameSystemExtensionsCheckWeight (503) */
+  type FrameSystemExtensionsCheckWeight = Null;
+
+  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (504) */
+  type OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
+
+  /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (505) */
+  interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
+
+  /** @name OpalRuntimeRuntime (506) */
+  type OpalRuntimeRuntime = Null;
+
+  /** @name PalletEthereumFakeTransactionFinalizer (507) */
+>>>>>>> 844590cc... refactor: `app-promotion` configuration pallet
   type PalletEthereumFakeTransactionFinalizer = Null;
 
 } // declare module
