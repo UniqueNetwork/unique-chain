@@ -8,4 +8,4 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- The ability to configure pallet `app-promotion` via the `configuration` palette
+- The ability to configure pallet `app-promotion` via the `configuration` pallet.

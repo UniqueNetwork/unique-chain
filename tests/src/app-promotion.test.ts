@@ -42,7 +42,7 @@ describe('App promotion', () => {
       nominal = helper.balance.getOneTokenNominal();
       accounts = await helper.arrange.createCrowd(100, 1000n, donor); // create accounts-pool to speed up tests
       const api = helper.getApi();
-      await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setAppPromotionConfigurationOverride(LOCKING_PERIOD, UNLOCKING_PERIOD, null)));
+      await helper.executeExtrinsic(alice, 'api.tx.sudo.sudo', [api.tx.configuration.setAppPromotionConfigurationOverride({recalculationInterval: LOCKING_PERIOD, pendingInterval: UNLOCKING_PERIOD})], true);
     });
   });
 
