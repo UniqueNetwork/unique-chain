@@ -17,8 +17,9 @@
 import {expect} from 'chai';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
-import {TCollectionMode} from '../util/playgrounds/types';
+import {IEvent, TCollectionMode} from '../util/playgrounds/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
+import {NormalizedEvent} from './util/playgrounds/types';
 
 let donor: IKeyringPair;
   
@@ -27,6 +28,11 @@ before(async function () {
     donor = await privateKey({filename: __filename});
   });
 });
+
+function clearEvents(ethEvents: NormalizedEvent[], subEvents: IEvent[]) {
+  ethEvents.splice(0);
+  subEvents.splice(0);
+}
 
 async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
@@ -44,8 +50,7 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
       },
     ]);
     expect(subEvents).to.be.like([{method: 'CollectionCreated'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
@@ -69,12 +74,12 @@ async function testCollectionPropertySetAndCollectionPropertyDeleted(helper: Eth
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     
+  const ethEvents: any = [];
+  collectionHelper.events.allEvents((_: any, event: any) => {
+    ethEvents.push(event);
+  });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionPropertySet', 'CollectionPropertyDeleted']}]);
   {
-    const ethEvents: any = [];
-    collectionHelper.events.allEvents((_: any, event: any) => {
-      ethEvents.push(event);
-    });
     await collection.methods.setCollectionProperties([{key: 'A', value: [0,1,2,3]}]).send({from:owner});
     await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
@@ -86,13 +91,9 @@ async function testCollectionPropertySetAndCollectionPropertyDeleted(helper: Eth
       },
     ]);
     expect(subEvents).to.be.like([{method: 'CollectionPropertySet'}]);
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
-    const ethEvents: any = [];
-    collectionHelper.events.allEvents((_: any, event: any) => {
-      ethEvents.push(event);
-    });
     await collection.methods.deleteCollectionProperties(['A']).send({from:owner});
     await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
@@ -113,14 +114,14 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-  const eethEvents: any = [];
+  const ethEvents: any = [];
   collectionHelper.events.allEvents((_: any, event: any) => {
-    eethEvents.push(event);
+    ethEvents.push(event);
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['PropertyPermissionSet']}]);
   await collection.methods.setTokenPropertyPermission('testKey', true, true, true).send({from: owner});
   await helper.wait.newBlocks(1);
-  expect(eethEvents).to.be.like([
+  expect(ethEvents).to.be.like([
     {
       event: 'CollectionChanged',
       returnValues: {
@@ -156,8 +157,7 @@ async function testAllowListAddressAddedAndAllowListAddressRemoved(helper: EthUn
       },
     ]);
     expect(subEvents).to.be.like([{method: 'AllowListAddressAdded'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     await collection.methods.removeFromCollectionAllowListCross(user).send({from: owner});
@@ -176,7 +176,7 @@ async function testAllowListAddressAddedAndAllowListAddressRemoved(helper: EthUn
   unsubscribe();
 }
 
-async function testCollectionAdminAddedAndCollectionAdminRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
+async function testCollectionAdminAddedAndRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const user = helper.ethCrossAccount.createAccount();
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
@@ -199,8 +199,7 @@ async function testCollectionAdminAddedAndCollectionAdminRemoved(helper: EthUniq
       },
     ]);
     expect(subEvents).to.be.like([{method: 'CollectionAdminAdded'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     await collection.methods.removeCollectionAdminCross(user).send({from: owner});
@@ -293,8 +292,7 @@ async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TColle
       },
     ]);
     expect(subEvents).to.be.like([{method: 'CollectionPermissionSet'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     await collection.methods.setCollectionAccess(1).send({from: owner});
@@ -312,7 +310,7 @@ async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TColle
   unsubscribe();
 }
 
-async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSponsorRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
+async function testCollectionSponsorSetAndConfirmedAndThenRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const sponsor = await helper.ethCrossAccount.createAccountWithBalance(donor);
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
@@ -337,8 +335,7 @@ async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSpons
       },
     ]);
     expect(subEvents).to.be.like([{method: 'CollectionSponsorSet'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     await collection.methods.confirmCollectionSponsorship().send({from: sponsor.eth});
@@ -352,8 +349,7 @@ async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSpons
       },
     ]);
     expect(subEvents).to.be.like([{method: 'SponsorshipConfirmed'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     await collection.methods.removeCollectionSponsor().send({from: owner});
@@ -371,7 +367,7 @@ async function testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSpons
   unsubscribe();
 }
 
-async function testTokenPropertySetAndTokenPropertyDeleted(helper: EthUniqueHelper, mode: TCollectionMode) {
+async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
@@ -398,8 +394,7 @@ async function testTokenPropertySetAndTokenPropertyDeleted(helper: EthUniqueHelp
       },
     ]);
     expect(subEvents).to.be.like([{method: 'TokenPropertySet'}]);
-    ethEvents.pop();
-    subEvents.pop();
+    clearEvents(ethEvents, subEvents);
   }
   {
     await collection.methods.deleteProperties(tokenId, ['A']).send({from: owner});
@@ -417,7 +412,7 @@ async function testTokenPropertySetAndTokenPropertyDeleted(helper: EthUniqueHelp
   unsubscribe();
 }
 
-describe('[FT] Sync sub & eth events', () => {
+describe.only('[FT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'ft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
@@ -433,7 +428,7 @@ describe('[FT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
-    await testCollectionAdminAddedAndCollectionAdminRemoved(helper, mode);
+    await testCollectionAdminAddedAndRemoved(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionLimitSet', async ({helper}) => {
@@ -449,11 +444,11 @@ describe('[FT] Sync sub & eth events', () => {
   });
 
   itEth('CollectionChanged event for CollectionSponsorSet, SponsorshipConfirmed, CollectionSponsorRemoved', async ({helper}) => {
-    await testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSponsorRemoved(helper, mode);
+    await testCollectionSponsorSetAndConfirmedAndThenRemoved(helper, mode);
   });
 });
 
-describe('[NFT] Sync sub & eth events', () => {
+describe.only('[NFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'nft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
@@ -473,7 +468,7 @@ describe('[NFT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
-    await testCollectionAdminAddedAndCollectionAdminRemoved(helper, mode);
+    await testCollectionAdminAddedAndRemoved(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionLimitSet', async ({helper}) => {
@@ -489,15 +484,15 @@ describe('[NFT] Sync sub & eth events', () => {
   });
 
   itEth('CollectionChanged event for CollectionSponsorSet, SponsorshipConfirmed, CollectionSponsorRemoved', async ({helper}) => {
-    await testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSponsorRemoved(helper, mode);
+    await testCollectionSponsorSetAndConfirmedAndThenRemoved(helper, mode);
   });
      
   itEth('CollectionChanged event for TokenPropertySet, TokenPropertyDeleted', async ({helper}) => {
-    await testTokenPropertySetAndTokenPropertyDeleted(helper, mode);
+    await testTokenPropertySetAndDeleted(helper, mode);
   });
 });
 
-describe('[RFT] Sync sub & eth events', () => {
+describe.only('[RFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'rft';
 
   before(async function() {
@@ -524,7 +519,7 @@ describe('[RFT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
-    await testCollectionAdminAddedAndCollectionAdminRemoved(helper, mode);
+    await testCollectionAdminAddedAndRemoved(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionLimitSet', async ({helper}) => {
@@ -540,10 +535,10 @@ describe('[RFT] Sync sub & eth events', () => {
   });
 
   itEth('CollectionChanged event for CollectionSponsorSet, SponsorshipConfirmed, CollectionSponsorRemoved', async ({helper}) => {
-    await testCollectionSponsorSetAndSponsorshipConfirmedAndCollectionSponsorRemoved(helper, mode);
+    await testCollectionSponsorSetAndConfirmedAndThenRemoved(helper, mode);
   });
      
   itEth('CollectionChanged event for TokenPropertySet, TokenPropertyDeleted', async ({helper}) => {
-    await testTokenPropertySetAndTokenPropertyDeleted(helper, mode);
+    await testTokenPropertySetAndDeleted(helper, mode);
   });
 });
