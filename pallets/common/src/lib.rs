@@ -1583,6 +1583,8 @@ impl<T: Config> Pallet<T> {
 		}
 		let amount = <AdminAmount<T>>::get(collection.id);
 
+		// =========
+
 		if admin {
 			let amount = amount
 				.checked_add(1)
