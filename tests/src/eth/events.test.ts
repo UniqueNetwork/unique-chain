@@ -68,7 +68,7 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
   unsubscribe();
 }
 
-async function testCollectionPropertySetAndCollectionPropertyDeleted(helper: EthUniqueHelper, mode: TCollectionMode) {
+async function testCollectionPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
@@ -420,7 +420,7 @@ describe('[FT] Sync sub & eth events', () => {
   });
 
   itEth('CollectionChanged event for CollectionPropertySet and CollectionPropertyDeleted', async ({helper}) => {
-    await testCollectionPropertySetAndCollectionPropertyDeleted(helper, mode);
+    await testCollectionPropertySetAndDeleted(helper, mode);
   });
     
   itEth('CollectionChanged event for AllowListAddressAdded, AllowListAddressRemoved', async ({helper}) => {
@@ -456,7 +456,7 @@ describe('[NFT] Sync sub & eth events', () => {
   });
 
   itEth('CollectionChanged event for CollectionPropertySet and CollectionPropertyDeleted', async ({helper}) => {
-    await testCollectionPropertySetAndCollectionPropertyDeleted(helper, mode);
+    await testCollectionPropertySetAndDeleted(helper, mode);
   });
     
   itEth('CollectionChanged event for PropertyPermissionSet', async ({helper}) => {
@@ -507,7 +507,7 @@ describe('[RFT] Sync sub & eth events', () => {
   });
 
   itEth('CollectionChanged event for CollectionPropertySet and CollectionPropertyDeleted', async ({helper}) => {
-    await testCollectionPropertySetAndCollectionPropertyDeleted(helper, mode);
+    await testCollectionPropertySetAndDeleted(helper, mode);
   });
     
   itEth('CollectionChanged event for PropertyPermissionSet', async ({helper}) => {
