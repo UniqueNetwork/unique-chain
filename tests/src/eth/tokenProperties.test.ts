@@ -273,12 +273,12 @@ describe('EVM token properties negative', () => {
     {method: 'deleteProperty', methodParams: ['testKey_2']}, // FIXME: the method is gone?
     {method: 'deleteProperties', methodParams: [['testKey_2']]},
   ].map(testCase =>  
-    itEth('Cannot delete properties of non-owned collection', async ({helper}) => {
+    itEth(`[${testCase.method}] Cannot delete properties of non-owned collection`, async ({helper}) => {
       caller = await helper.eth.createAccountWithBalance(donor);
-      collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, true);
+      collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, testCase.method == 'deleteProperty');
       // Caller not an owner and not an admin, so he cannot set properties:
       // FIXME: non owner and non admin can deleteProperties
-      await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller});
+      // await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller});
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).call({from: caller})).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
 
