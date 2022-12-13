@@ -119,4 +119,26 @@ describe('Cannot set invalid collection limits', () => {
       expect(() => collectionEvm.methods
         .setCollectionLimit(CollectionLimits.SponsoredDataSize, true, -1).send()).to.throw('value out-of-bounds');
     }));
+
+  [
+    {case: 'nft' as const, method: 'createNFTCollection' as const},
+    {case: 'rft' as const, method: 'createRFTCollection' as const, requiredPallets: [Pallets.ReFungible]},
+    {case: 'ft' as const, method: 'createFTCollection' as const},
+  ].map(testCase =>
+    itEth.ifWithPallets(`Non-owner and non-admin cannot set collection limits for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const nonOwner = await helper.eth.createAccountWithBalance(donor);
+      const {collectionAddress} = await helper.eth.createCollecion(testCase.method, owner, 'Limits', 'absolutely anything', 'FLO', 18);
+
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      await expect(collectionEvm.methods
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
+        .call({from: nonOwner}))
+        .to.be.rejectedWith('NoPermission');
+
+      await expect(collectionEvm.methods
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
+        .send({from: nonOwner}))
+        .to.be.rejected;
+    }));
 });
