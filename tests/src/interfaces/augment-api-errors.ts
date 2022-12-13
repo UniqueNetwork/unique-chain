@@ -229,6 +229,13 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    configuration: {
+      InconsistentConfiguration: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     cumulusXcm: {
       /**
        * Generic error

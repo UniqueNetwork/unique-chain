@@ -145,12 +145,20 @@ pub(crate) struct PalletConfiguration<T: crate::Config> {
 }
 impl<T: crate::Config> PalletConfiguration<T> {
 	pub fn get() -> Self {
-		let config = <AppPromomotionConfigurationOverride<T>>::get().unwrap_or_default();
+		let config = <AppPromomotionConfigurationOverride<T>>::get();
 		Self {
-			recalculation_interval: config.0.unwrap_or(T::RecalculationInterval::get()),
-			pending_interval: config.2.unwrap_or(T::PendingInterval::get()),
-			interval_income: config.1.unwrap_or(T::IntervalIncome::get()),
-			max_stakers_per_calculation: config.3.unwrap_or(MAX_NUMBER_PAYOUTS),
+			recalculation_interval: config
+				.recalculation_interval
+				.unwrap_or_else(|| T::RecalculationInterval::get()),
+			pending_interval: config
+				.pending_interval
+				.unwrap_or_else(|| T::PendingInterval::get()),
+			interval_income: config
+				.interval_income
+				.unwrap_or_else(|| T::IntervalIncome::get()),
+			max_stakers_per_calculation: config
+				.max_stakers_per_calculation
+				.unwrap_or_else(|| MAX_NUMBER_PAYOUTS),
 		}
 	}
-}
+} 
