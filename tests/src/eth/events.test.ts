@@ -412,7 +412,7 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
   unsubscribe();
 }
 
-describe.only('[FT] Sync sub & eth events', () => {
+describe('[FT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'ft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
@@ -448,7 +448,7 @@ describe.only('[FT] Sync sub & eth events', () => {
   });
 });
 
-describe.only('[NFT] Sync sub & eth events', () => {
+describe('[NFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'nft';
 
   itEth('CollectionCreated and CollectionDestroyed events', async ({helper}) => {
@@ -492,7 +492,7 @@ describe.only('[NFT] Sync sub & eth events', () => {
   });
 });
 
-describe.only('[RFT] Sync sub & eth events', () => {
+describe('[RFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'rft';
 
   before(async function() {
