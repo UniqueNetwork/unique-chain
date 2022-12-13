@@ -51,6 +51,10 @@ mod pallet {
 
 		#[pallet::constant]
 		type MaxOverridedAllowedLocations: Get<u32>;
+		#[pallet::constant]
+		type AppPromotionDailyRate: Get<Perbill>;
+		#[pallet::constant]
+		type DayRelayBlocks: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::storage]
@@ -67,6 +71,17 @@ mod pallet {
 	#[pallet::storage]
 	pub type XcmAllowedLocationsOverride<T: Config> = StorageValue<
 		Value = BoundedVec<MultiLocation, T::MaxOverridedAllowedLocations>,
+		QueryKind = OptionQuery,
+	>;
+
+	#[pallet::storage]
+	pub type AppPromomotionConfigurationOverride<T: Config> = StorageValue<
+		Value = (
+			Option<T::BlockNumber>,
+			Option<Perbill>,
+			Option<T::BlockNumber>,
+			Option<u8>,
+		),
 		QueryKind = OptionQuery,
 	>;
 
@@ -107,6 +122,39 @@ mod pallet {
 		) -> DispatchResult {
 			let _sender = ensure_root(origin)?;
 			<XcmAllowedLocationsOverride<T>>::set(locations);
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_app_promotion_configuration_override(
+			origin: OriginFor<T>,
+			recalculation_interval: Option<T::BlockNumber>,
+			pending_interval: Option<T::BlockNumber>,
+			stakers_payout_limit: Option<u8>,
+		) -> DispatchResult {
+			let _sender = ensure_root(origin)?;
+
+			if recalculation_interval.is_none()
+				&& pending_interval.is_none()
+				&& stakers_payout_limit.is_none()
+			{
+				<AppPromomotionConfigurationOverride<T>>::kill();
+			} else {
+				let mut current_config =
+					<AppPromomotionConfigurationOverride<T>>::take().unwrap_or_default();
+
+				recalculation_interval.map(|b| {
+					current_config.0 = Some(b);
+					current_config.1 = Some(
+						Perbill::from_rational(b, T::DayRelayBlocks::get())
+							* T::AppPromotionDailyRate::get(),
+					)
+				});
+				pending_interval.map(|b| current_config.2 = Some(b));
+				stakers_payout_limit.map(|p| current_config.3 = Some(p));
+				<AppPromomotionConfigurationOverride<T>>::set(Some(current_config));
+			}
+
 			Ok(())
 		}
 	}

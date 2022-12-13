@@ -26,17 +26,6 @@ use up_common::{
 	types::Balance,
 };
 
-#[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
-parameter_types! {
-	pub const AppPromotionId: PalletId = PalletId(*b"appstake");
-	pub const RecalculationInterval: BlockNumber = 20;
-	pub const PendingInterval: BlockNumber = 10;
-	pub const Nominal: Balance = UNIQUE;
-	// pub const Day: BlockNumber = DAYS;
-	pub IntervalIncome: Perbill = Perbill::from_rational(RecalculationInterval::get(), RELAY_DAYS) * Perbill::from_rational(5u32, 10_000);
-}
-
-#[cfg(any(feature = "unique-runtime", feature = "quartz-runtime"))]
 parameter_types! {
 	pub const AppPromotionId: PalletId = PalletId(*b"appstake");
 	pub const RecalculationInterval: BlockNumber = RELAY_DAYS;

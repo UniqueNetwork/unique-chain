@@ -5554,13 +5554,14 @@ dependencies = [
 
 [[package]]
 name = "pallet-app-promotion"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-balances",
  "pallet-common",
+ "pallet-configuration",
  "pallet-evm",
  "pallet-evm-contract-helpers",
  "pallet-evm-migration",
@@ -5814,7 +5815,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-configuration"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "fp-evm",
  "frame-support",
