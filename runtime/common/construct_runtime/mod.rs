@@ -79,7 +79,7 @@ macro_rules! construct_runtime {
                 #[runtimes(opal)]
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
                 #[runtimes(opal)]
