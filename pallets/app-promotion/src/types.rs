@@ -161,4 +161,4 @@ impl<T: crate::Config> PalletConfiguration<T> {
 				.unwrap_or_else(|| MAX_NUMBER_PAYOUTS),
 		}
 	}
-} 
+}
