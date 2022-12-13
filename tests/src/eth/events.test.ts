@@ -243,7 +243,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
   unsubscribe();
 }
 
-async function testCollectionOwnedChanged(helper: EthUniqueHelper, mode: TCollectionMode) {
+async function testCollectionOwnerChanged(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const newOwner = helper.ethCrossAccount.createAccount();
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
@@ -436,7 +436,7 @@ describe('[FT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for CollectionOwnerChanged', async ({helper}) => {
-    await testCollectionOwnedChanged(helper, mode);
+    await testCollectionOwnerChanged(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionPermissionSet', async ({helper}) => {
@@ -476,7 +476,7 @@ describe('[NFT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for CollectionOwnerChanged', async ({helper}) => {
-    await testCollectionOwnedChanged(helper, mode);
+    await testCollectionOwnerChanged(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionPermissionSet', async ({helper}) => {
@@ -527,7 +527,7 @@ describe('[RFT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for CollectionOwnerChanged', async ({helper}) => {
-    await testCollectionOwnedChanged(helper, mode);
+    await testCollectionOwnerChanged(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionPermissionSet', async ({helper}) => {
