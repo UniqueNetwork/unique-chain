@@ -16,8 +16,8 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
-import {ITokenPropertyPermission, TCollectionMode} from '../util/playgrounds/types';
+import {itEth, usingEthPlaygrounds, expect} from './util';
+import {ITokenPropertyPermission} from '../util/playgrounds/types';
 import {Pallets} from '../util';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
 
