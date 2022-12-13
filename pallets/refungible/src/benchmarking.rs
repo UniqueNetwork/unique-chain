@@ -293,15 +293,15 @@ benchmarks! {
 
 	set_allowance_for_all {
 		bench_init!{
-			owner: sub; collection: collection(owner); owner: cross_sub;
-			operator: sub; operator: cross_sub;
+			owner: sub; collection: collection(owner); owner: cross_from_sub;
+			operator: cross_sub;
 		};
 	}: {<Pallet<T>>::set_allowance_for_all(&collection, &owner, &operator, true)}
 
 	allowance_for_all {
 		bench_init!{
-			owner: sub; collection: collection(owner); owner: cross_sub;
-			operator: sub; operator: cross_sub;
+			owner: sub; collection: collection(owner); owner: cross_from_sub;
+			operator: cross_sub;
 		};
 	}: {<Pallet<T>>::allowance_for_all(&collection, &owner, &operator)}
 }
