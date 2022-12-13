@@ -4,7 +4,7 @@
   "description": "Unique Chain Tests",
   "main": "",
   "devDependencies": {
-    "@polkadot/typegen": "9.5.2",
+    "@polkadot/typegen": "9.9.4",
     "@types/chai": "^4.3.3",
     "@types/chai-as-promised": "^7.1.5",
     "@types/chai-like": "^1.1.1",
@@ -114,8 +114,8 @@
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "9.5.2",
-    "@polkadot/util-crypto": "10.1.11",
+    "@polkadot/api": "9.9.4",
+    "@polkadot/util-crypto": "10.2.1",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",

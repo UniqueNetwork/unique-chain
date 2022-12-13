@@ -55,7 +55,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ExistingVestingSchedule: AugmentedError<ApiType>;
       /**
-       * Balance too low to send value
+       * Balance too low to send value.
        **/
       InsufficientBalance: AugmentedError<ApiType>;
       /**
@@ -386,7 +386,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
-       * Setting approval for all is not allowed.
+       * Setting allowance for all is not allowed.
        **/
       SettingAllowanceForAllNotAllowed: AugmentedError<ApiType>;
       /**
