@@ -245,7 +245,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
 
 async function testCollectionOwnedChanged(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const new_owner = helper.ethCrossAccount.createAccount();
+  const newOwner = helper.ethCrossAccount.createAccount();
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
@@ -255,7 +255,7 @@ async function testCollectionOwnedChanged(helper: EthUniqueHelper, mode: TCollec
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionOwnerChanged']}]);
   {
-    await collection.methods.changeCollectionOwnerCross(new_owner).send({from: owner});
+    await collection.methods.changeCollectionOwnerCross(newOwner).send({from: owner});
     await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {
