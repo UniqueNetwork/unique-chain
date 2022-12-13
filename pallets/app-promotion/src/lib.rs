@@ -102,7 +102,9 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm::Config {
+	pub trait Config:
+		frame_system::Config + pallet_evm::Config + pallet_configuration::Config
+	{
 		/// Type to interact with the native token
 		type Currency: ExtendedLockableCurrency<Self::AccountId>
 			+ ReservableCurrency<Self::AccountId>;
@@ -330,6 +332,7 @@ pub mod pallet {
 				amount >= <BalanceOf<T>>::from(100u128) * T::Nominal::get(),
 				ArithmeticError::Underflow
 			);
+			let config = <PalletConfiguration<T>>::get();
 
 			let balance =
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
@@ -351,7 +354,7 @@ pub mod pallet {
 			// Calculation of the number of recalculation periods,
 			// after how much the first interest calculation should be performed for the stake
 			let recalculate_after_interval: T::BlockNumber =
-				if block_number % T::RecalculationInterval::get() == 0u32.into() {
+				if block_number % config.recalculation_interval == 0u32.into() {
 					1u32.into()
 				} else {
 					2u32.into()
@@ -359,9 +362,9 @@ pub mod pallet {
 
 			// Сalculation of the number of the relay block
 			// in which it is necessary to accrue remuneration for the stake.
-			let recalc_block = (block_number / T::RecalculationInterval::get()
+			let recalc_block = (block_number / config.recalculation_interval
 				+ recalculate_after_interval)
-				* T::RecalculationInterval::get();
+				* config.recalculation_interval;
 
 			<Staked<T>>::insert((&staker_id, block_number), {
 				let mut balance_and_recalc_block = <Staked<T>>::get((&staker_id, block_number));
@@ -393,9 +396,10 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::unstake())]
 		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let staker_id = ensure_signed(staker)?;
+			let config = <PalletConfiguration<T>>::get();
 
 			// calculate block number where the sum would be free
-			let block = <frame_system::Pallet<T>>::block_number() + T::PendingInterval::get();
+			let block = <frame_system::Pallet<T>>::block_number() + config.pending_interval;
 
 			let mut pendings = <PendingUnstake<T>>::get(block);
 
@@ -568,15 +572,25 @@ pub mod pallet {
 				admin_id == Admin::<T>::get().ok_or(Error::<T>::AdminNotSet)?,
 				Error::<T>::NoPermission
 			);
+			let config = <PalletConfiguration<T>>::get();
+
+			let mut stakers_number = stakers_number.unwrap_or(DEFAULT_NUMBER_PAYOUTS);
+
+			ensure!(
+				stakers_number <= config.max_stakers_per_calculation,
+				Error::<T>::NoPermission
+			);
 
 			// calculate the number of the current recalculation block,
 			// this is necessary in order to understand which stakers we should calculate interest
-			let current_recalc_block =
-				Self::get_current_recalc_block(T::RelayBlockNumberProvider::current_block_number());
+			let current_recalc_block = Self::get_current_recalc_block(
+				T::RelayBlockNumberProvider::current_block_number(),
+				&config,
+			);
 
 			// calculate the number of the next recalculation block,
 			// this value is set for the stakers to whom the recalculation will be performed
-			let next_recalc_block = current_recalc_block + T::RecalculationInterval::get();
+			let next_recalc_block = current_recalc_block + config.recalculation_interval;
 
 			let mut storage_iterator = Self::get_next_calculated_key()
 				.map_or(Staked::<T>::iter(), |key| Staked::<T>::iter_from(key));
@@ -584,7 +598,6 @@ pub mod pallet {
 			NextCalculatedRecord::<T>::set(None);
 
 			{
-				let mut stakers_number = stakers_number.unwrap_or(20);
 				let last_id = RefCell::new(None);
 				let income_acc = RefCell::new(BalanceOf::<T>::default());
 				let amount_acc = RefCell::new(BalanceOf::<T>::default());
@@ -644,8 +657,8 @@ pub mod pallet {
 							next_recalc_block,
 							amount,
 							((current_recalc_block - next_recalc_block_for_stake)
-								/ T::RecalculationInterval::get())
-							.into() + 1,
+								/ config.recalculation_interval)
+								.into() + 1,
 							&mut *income_acc.borrow_mut(),
 						);
 					}
@@ -810,15 +823,19 @@ impl<T: Config> Pallet<T> {
 	where
 		I: EncodeLike<BalanceOf<T>> + Balance,
 	{
+		let config = <PalletConfiguration<T>>::get();
 		let mut income = base;
 
-		(0..iters).for_each(|_| income += T::IntervalIncome::get() * income);
+		(0..iters).for_each(|_| income += config.interval_income * income);
 
 		income - base
 	}
 
-	fn get_current_recalc_block(current_relay_block: T::BlockNumber) -> T::BlockNumber {
-		(current_relay_block / T::RecalculationInterval::get()) * T::RecalculationInterval::get()
+	fn get_current_recalc_block(
+		current_relay_block: T::BlockNumber,
+		config: &PalletConfiguration<T>,
+	) -> T::BlockNumber {
+		(current_relay_block / config.recalculation_interval) * config.recalculation_interval
 	}
 
 	fn get_next_calculated_key() -> Option<Vec<u8>> {
