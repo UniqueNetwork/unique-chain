@@ -40,7 +40,10 @@ describe('App promotion', () => {
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();
-      accounts = await helper.arrange.createCrowd(100, 1000n, donor); // create accounts-pool to speed up tests
+
+      const accountBalances = new Array(100);
+      accountBalances.fill(1000n);
+      accounts = await helper.arrange.createAccounts(accountBalances, donor); // create accounts-pool to speed up tests
       const api = helper.getApi();
       await helper.executeExtrinsic(alice, 'api.tx.sudo.sudo', [api.tx.configuration.setAppPromotionConfigurationOverride({recalculationInterval: LOCKING_PERIOD, pendingInterval: UNLOCKING_PERIOD})], true);
     });
