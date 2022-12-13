@@ -3,7 +3,7 @@
 
 ### Added
 
-- The ability to configure pallet `app-promotion` via the `configuration` palette
+- The ability to configure pallet `app-promotion` via the `configuration` pallet.
 
 ## [v0.1.1] 2022-08-16
 

@@ -1323,6 +1323,14 @@ export interface PalletCommonEvent extends Enum {
   readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'ApprovedForAll' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet' | 'AllowListAddressAdded' | 'AllowListAddressRemoved' | 'CollectionAdminAdded' | 'CollectionAdminRemoved' | 'CollectionLimitSet' | 'CollectionOwnerChanged' | 'CollectionPermissionSet' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionSponsorRemoved';
 }
 
+/** @name PalletConfigurationAppPromotionConfiguration */
+export interface PalletConfigurationAppPromotionConfiguration extends Struct {
+  readonly recalculationInterval: Option<u32>;
+  readonly pendingInterval: Option<u32>;
+  readonly intervalIncome: Option<Perbill>;
+  readonly maxStakersPerCalculation: Option<u8>;
+}
+
 /** @name PalletConfigurationCall */
 export interface PalletConfigurationCall extends Enum {
   readonly isSetWeightToFeeCoefficientOverride: boolean;
