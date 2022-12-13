@@ -31,7 +31,6 @@ describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
-      const alice = await privateKey('//Alice');
       donor = await privateKey({filename: __filename});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
@@ -40,8 +39,6 @@ describe('App promotion', () => {
       const accountBalances = new Array(100);
       accountBalances.fill(1000n);
       accounts = await helper.arrange.createAccounts(accountBalances, donor); // create accounts-pool to speed up tests
-      const api = helper.getApi();
-      await helper.executeExtrinsic(alice, 'api.tx.sudo.sudo', [api.tx.configuration.setAppPromotionConfigurationOverride({recalculationInterval: LOCKING_PERIOD, pendingInterval: UNLOCKING_PERIOD})], true);
     });
   });
 
