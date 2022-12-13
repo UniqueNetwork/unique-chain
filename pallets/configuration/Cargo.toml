@@ -18,7 +18,7 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.33" }
 fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
 smallvec = "1.6.1"
-xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
+xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.33" }
 
 [features]
 default = ["std"]
