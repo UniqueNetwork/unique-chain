@@ -22,7 +22,7 @@ import {Staker} from './helpers';
   
 async function main() {
   await usingPlaygrounds(async (helper, privateKey) => {
-    const donor = await privateKey({filename: __filename});
+    const donor = await privateKey(config.DONOR);
     // //{STAKER_BASE_SEED}/1 (..2,3,4)
     const mnemonics = Array(config.STAKERS_NUM).fill('').map((_, i) => `${config.STAKER_BASE_SEED}/${i}`);
     const stakers: Staker[] = mnemonics.map(mnemonic => {
@@ -41,14 +41,15 @@ async function main() {
 
     console.log('Sending to stakers...');
     for (const staker of stakers) {
-      const stakerKeyRing = helper.util.fromSeed(staker.mnemonic);
-
-      const balance = await helper.balance.getSubstrate(stakerKeyRing.address);
+      const balance = await helper.balance.getSubstrate(staker.address);
       if (balance === config.INITIAL_BALANCE * config.NOMINAL) continue;
+      
+      const stakerKeyRing = helper.util.fromSeed(staker.mnemonic);
 
       api.tx.balances
         .transfer({Id: stakerKeyRing.address}, config.INITIAL_BALANCE * config.NOMINAL)
-        .signAndSend(donor, {nonce: donorNonce++});
+        .signAndSend(donor, {nonce: donorNonce++})
+        .catch(e => console.log('Some error', e.message));
     }
 
     // 2. Wait all accounts have balance...
@@ -75,8 +76,9 @@ async function main() {
     fs.writeFileSync(config.STAKERS_LOG, JSON.stringify(result));
 
     const errors = result.filter(res => res.errors.length > 0);
+    errors.forEach(e => console.log(e.address));
     if (errors.length > 0) throw Error(`Some accounts were not created: ${errors.length}`);
-  });
+  }, config.OPAL_URL);
 }
 
 main().then(() => console.log('Finished step 1'));

@@ -4,6 +4,7 @@ export const config = {
   // Network params:
   OPAL_URL: 'wss://ws-opal.unique.network',
   NOMINAL: 10n ** 18n,
+  DONOR: '//Alice',
   
   // Stakers params:
   STAKERS_NUM: 8000,
