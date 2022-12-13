@@ -90,8 +90,8 @@ describe('EVM token properties', () => {
     }));
   
   [
-    {mode: 'nft' as const, requiredPallets: [Pallets.ReFungible]},
-    {mode: 'rft' as const, requiredPallets: []},
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase => 
     itEth.ifWithPallets(`Can be multiple set/read for ${testCase.mode}`, testCase.requiredPallets, async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
@@ -132,10 +132,10 @@ describe('EVM token properties', () => {
     }));
   
   [
-    {mode: 'nft' as const, requiredPallets: [Pallets.ReFungible]},
-    {mode: 'rft' as const, requiredPallets: []},
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase => 
-    itEth.ifWithPallets(`Can be deleted fro ${testCase.mode}`, testCase.requiredPallets, async({helper}) => {
+    itEth.ifWithPallets(`Can be deleted for ${testCase.mode}`, testCase.requiredPallets, async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const collection = await helper[testCase.mode].mintCollection(alice, {
         tokenPropertyPermissions: [{
@@ -241,7 +241,6 @@ describe('EVM token properties negative', () => {
       caller = await helper.eth.createAccountWithBalance(donor);
       collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, true);
       // Caller not an owner and not an admin, so he cannot set properties:
-      // FIXME: Can setProperties as non owner and non admin
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).call({from: caller})).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
 
@@ -270,15 +269,13 @@ describe('EVM token properties negative', () => {
     }));
 
   [
-    {method: 'deleteProperty', methodParams: ['testKey_2']}, // FIXME: the method is gone?
+    {method: 'deleteProperty', methodParams: ['testKey_2']},
     {method: 'deleteProperties', methodParams: [['testKey_2']]},
   ].map(testCase =>  
     itEth(`[${testCase.method}] Cannot delete properties of non-owned collection`, async ({helper}) => {
       caller = await helper.eth.createAccountWithBalance(donor);
       collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, testCase.method == 'deleteProperty');
       // Caller not an owner and not an admin, so he cannot set properties:
-      // FIXME: non owner and non admin can deleteProperties
-      // await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller});
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).call({from: caller})).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
 
@@ -287,10 +284,23 @@ describe('EVM token properties negative', () => {
       const actualProps = await collectionEvm.methods.properties(token.tokenId, []).call();
       expect(actualProps).to.deep.eq(expectedProps);
     }));
-
-  itEth('Cannot delete non-existing properties', async () => {
-
-  });
+   
+  [
+    {method: 'deleteProperty', methodParams: ['testKey_3']},
+    {method: 'deleteProperties', methodParams: [['testKey_3']]},
+  ].map(testCase =>  
+    itEth(`[${testCase.method}] Cannot delete non-existing properties`, async ({helper}) => {
+      caller = await helper.eth.createAccountWithBalance(donor);
+      collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, testCase.method == 'deleteProperty');
+      await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller});
+      // Caller cannot delete non-existing properties:
+      await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).call({from: caller})).to.be.rejectedWith('NoPermission');
+      await expect(collectionEvm.methods[testCase.method](token.tokenId, ...testCase.methodParams).send({from: caller})).to.be.rejected;
+      // Props have not changed:
+      const expectedProps = tokenProps.map(p => helper.ethProperty.property(p.key, p.value.toString()));
+      const actualProps = await collectionEvm.methods.properties(token.tokenId, []).call();
+      expect(actualProps).to.deep.eq(expectedProps);
+    }));
 });
 
 
