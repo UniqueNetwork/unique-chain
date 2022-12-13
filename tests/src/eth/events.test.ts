@@ -133,7 +133,7 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
   unsubscribe();
 }
 
-async function testAllowListAddressAddedAndAllowListAddressRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
+async function testAllowListAddressAddedAndRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const user = helper.ethCrossAccount.createAccount();
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
@@ -424,7 +424,7 @@ describe('[FT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for AllowListAddressAdded, AllowListAddressRemoved', async ({helper}) => {
-    await testAllowListAddressAddedAndAllowListAddressRemoved(helper, mode);
+    await testAllowListAddressAddedAndRemoved(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
@@ -464,7 +464,7 @@ describe('[NFT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for AllowListAddressAdded, AllowListAddressRemoved', async ({helper}) => {
-    await testAllowListAddressAddedAndAllowListAddressRemoved(helper, mode);
+    await testAllowListAddressAddedAndRemoved(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
@@ -515,7 +515,7 @@ describe('[RFT] Sync sub & eth events', () => {
   });
     
   itEth('CollectionChanged event for AllowListAddressAdded, AllowListAddressRemoved', async ({helper}) => {
-    await testAllowListAddressAddedAndAllowListAddressRemoved(helper, mode);
+    await testAllowListAddressAddedAndRemoved(helper, mode);
   });
     
   itEth('CollectionChanged event for CollectionAdminAdded, CollectionAdminRemoved', async ({helper}) => {
