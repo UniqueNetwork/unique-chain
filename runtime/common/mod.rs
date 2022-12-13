@@ -21,6 +21,7 @@ pub mod ethereum;
 pub mod instance;
 pub mod maintenance;
 pub mod runtime_apis;
+pub mod xcm;
 
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
