@@ -73,7 +73,7 @@ macro_rules! construct_runtime {
                 Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
                 Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
                 #[runtimes(opal)]
