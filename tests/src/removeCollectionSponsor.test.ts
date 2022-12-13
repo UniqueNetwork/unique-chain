@@ -70,7 +70,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
     await expect(collection.removeSponsor(alice)).to.not.be.rejected;
   });
 
-  itSub('Remove sponsor for a collection with collection admin permissions', async ({helper}) => {
+  itSub('Remove a sponsor from a collection with collection admin permissions', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionSponsor-Neg-1', tokenPrefix: 'RCS'});
     await collection.setSponsor(alice, bob.address);
     await collection.addAdmin(alice, {Substrate: charlie.address});
