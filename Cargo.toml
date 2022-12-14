@@ -1,5 +1,3 @@
-cargo-features = ["workspace-inheritance"]
-
 [workspace]
 resolver = "2"
 members = [
