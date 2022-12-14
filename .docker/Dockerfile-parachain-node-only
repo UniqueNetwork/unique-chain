@@ -84,6 +84,7 @@ COPY --from=builder-unique-current /unique_parachain/target/release/unique-colla
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$NETWORK"-runtime/"$NETWORK"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$NETWORK"-runtime/"$NETWORK"_runtime.compact.compressed.wasm
 
+RUN ls /unique_parachain/polkadot/target/release/wbuild
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/rococo-runtime/rococo_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/rococo-runtime/rococo_runtime.compact.compressed.wasm
 
