@@ -353,14 +353,8 @@ describe('Integration Test: Token Properties', () => {
           : collection.mintToken(alice)
       );
 
-      const getConsumedSpace = async () => {
-        const props = (await helper.getApi().query[testCase.storage].tokenProperties(token.collectionId, token.tokenId)).toJSON();
-        
-        return (props! as any).consumedSpace;
-      };
-
       await token.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
-      const originalSpace = await getConsumedSpace();
+      const originalSpace = await token.getTokenPropertiesConsumedSpace();
       expect(originalSpace).to.be.equal(propDataSize);
 
       const sameSizePropertiesPossibleNum = maxTokenPropertiesSize / propDataSize;
@@ -369,7 +363,7 @@ describe('Integration Test: Token Properties', () => {
       // It will not consume any additional space.
       for (let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
         await token.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
-        const consumedSpace = await getConsumedSpace();
+        const consumedSpace = await token.getTokenPropertiesConsumedSpace();
         expect(consumedSpace).to.be.equal(originalSpace);
       }
     }));
