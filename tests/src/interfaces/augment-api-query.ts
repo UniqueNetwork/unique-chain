@@ -162,6 +162,7 @@ declare module '@polkadot/api-base/types/storage' {
     configuration: {
       minGasPriceOverride: AugmentedQuery<ApiType, () => Observable<u64>, []> & QueryableStorageEntry<ApiType, []>;
       weightToFeeCoefficientOverride: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      xcmAllowedLocationsOverride: AugmentedQuery<ApiType, () => Observable<Option<Vec<XcmV1MultiLocation>>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/

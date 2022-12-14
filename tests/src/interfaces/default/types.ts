@@ -1333,7 +1333,11 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetMinGasPriceOverride: {
     readonly coeff: Option<u64>;
   } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride';
+  readonly isSetXcmAllowedLocations: boolean;
+  readonly asSetXcmAllowedLocations: {
+    readonly locations: Option<Vec<XcmV1MultiLocation>>;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations';
 }
 
 /** @name PalletEthereumCall */
