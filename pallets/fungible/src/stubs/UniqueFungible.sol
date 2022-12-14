@@ -284,19 +284,33 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+<<<<<<< HEAD
 	function collectionNestingRestrictedCollectionIds() public view returns (Tuple26 memory) {
 		require(false, stub_error);
 		dummy;
 		return Tuple26(false, new uint256[](0));
+=======
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple24 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple24(false, new uint256[](0));
+>>>>>>> 09f69700... chore: generate stubs
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
+<<<<<<< HEAD
 	function collectionNestingPermissions() public view returns (Tuple29[] memory) {
 		require(false, stub_error);
 		dummy;
 		return new Tuple29[](0);
+=======
+	function collectionNestingPermissions() public view returns (Tuple27[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new Tuple27[](0);
+>>>>>>> 09f69700... chore: generate stubs
 	}
 
 	/// Set the collection access method.
@@ -476,13 +490,21 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple29 {
+=======
+struct Tuple27 {
+>>>>>>> 09f69700... chore: generate stubs
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple26 {
+=======
+struct Tuple24 {
+>>>>>>> 09f69700... chore: generate stubs
 	bool field_0;
 	uint256[] field_1;
 }

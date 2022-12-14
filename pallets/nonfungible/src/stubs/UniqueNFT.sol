@@ -422,19 +422,33 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+<<<<<<< HEAD
 	function collectionNestingRestrictedCollectionIds() public view returns (Tuple39 memory) {
 		require(false, stub_error);
 		dummy;
 		return Tuple39(false, new uint256[](0));
+=======
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple36 memory) {
+		require(false, stub_error);
+		dummy;
+		return Tuple36(false, new uint256[](0));
+>>>>>>> 09f69700... chore: generate stubs
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
+<<<<<<< HEAD
 	function collectionNestingPermissions() public view returns (Tuple42[] memory) {
 		require(false, stub_error);
 		dummy;
 		return new Tuple42[](0);
+=======
+	function collectionNestingPermissions() public view returns (Tuple39[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new Tuple39[](0);
+>>>>>>> 09f69700... chore: generate stubs
 	}
 
 	/// Set the collection access method.
@@ -608,24 +622,32 @@ struct EthCrossAccount {
 	uint256 sub;
 }
 
-<<<<<<< HEAD
 enum CollectionPermissions {
 	CollectionAdmin,
 	TokenOwner
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple42 {
+=======
+struct Tuple39 {
+>>>>>>> 09f69700... chore: generate stubs
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple39 {
+=======
+struct Tuple36 {
+>>>>>>> 09f69700... chore: generate stubs
 	bool field_0;
 	uint256[] field_1;
 }
 
+<<<<<<< HEAD
 /// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 enum CollectionLimits {
 	/// @dev How many tokens can a user have on one account.
@@ -663,6 +685,8 @@ struct Tuple32 {
 
 =======
 >>>>>>> 0bf15e6f... fixed tests&tuple instead of struct, refactored `refungible` pallet
+=======
+>>>>>>> 09f69700... chore: generate stubs
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f

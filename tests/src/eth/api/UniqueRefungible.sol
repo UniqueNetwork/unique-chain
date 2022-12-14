@@ -287,12 +287,20 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+<<<<<<< HEAD
 	function collectionNestingRestrictedCollectionIds() external view returns (Tuple34 memory);
+=======
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple31 memory);
+>>>>>>> 09f69700... chore: generate stubs
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
+<<<<<<< HEAD
 	function collectionNestingPermissions() external view returns (Tuple37[] memory);
+=======
+	function collectionNestingPermissions() external view returns (Tuple34[] memory);
+>>>>>>> 09f69700... chore: generate stubs
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -406,9 +414,12 @@ struct EthCrossAccount {
 	uint256 sub;
 }
 
-<<<<<<< HEAD
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple37 {
+=======
+struct Tuple34 {
+>>>>>>> 09f69700... chore: generate stubs
 	CollectionPermissions field_0;
 	bool field_1;
 }
@@ -419,11 +430,16 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple34 {
+=======
+struct Tuple31 {
+>>>>>>> 09f69700... chore: generate stubs
 	bool field_0;
 	uint256[] field_1;
 }
 
+<<<<<<< HEAD
 /// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 enum CollectionLimits {
 	/// @dev How many tokens can a user have on one account.
@@ -461,6 +477,8 @@ struct Tuple26 {
 
 =======
 >>>>>>> 0bf15e6f... fixed tests&tuple instead of struct, refactored `refungible` pallet
+=======
+>>>>>>> 09f69700... chore: generate stubs
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
 interface ERC721Metadata is Dummy, ERC165 {
 	// /// @notice A descriptive name for a collection of NFTs in this contract

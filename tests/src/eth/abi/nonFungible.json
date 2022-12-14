@@ -271,7 +271,11 @@
           },
           { "internalType": "bool", "name": "field_1", "type": "bool" }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple42[]",
+=======
+        "internalType": "struct Tuple39[]",
+>>>>>>> 09f69700... chore: generate stubs
         "name": "",
         "type": "tuple[]"
       }
@@ -292,7 +296,11 @@
             "type": "uint256[]"
           }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple39",
+=======
+        "internalType": "struct Tuple36",
+>>>>>>> 09f69700... chore: generate stubs
         "name": "",
         "type": "tuple"
       }

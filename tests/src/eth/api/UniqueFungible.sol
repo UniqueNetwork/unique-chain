@@ -191,12 +191,20 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+<<<<<<< HEAD
 	function collectionNestingRestrictedCollectionIds() external view returns (Tuple24 memory);
+=======
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple22 memory);
+>>>>>>> 09f69700... chore: generate stubs
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
+<<<<<<< HEAD
 	function collectionNestingPermissions() external view returns (Tuple27[] memory);
+=======
+	function collectionNestingPermissions() external view returns (Tuple25[] memory);
+>>>>>>> 09f69700... chore: generate stubs
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -311,7 +319,11 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple27 {
+=======
+struct Tuple25 {
+>>>>>>> 09f69700... chore: generate stubs
 	CollectionPermissions field_0;
 	bool field_1;
 }
@@ -322,7 +334,11 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple24 {
+=======
+struct Tuple22 {
+>>>>>>> 09f69700... chore: generate stubs
 	bool field_0;
 	uint256[] field_1;
 }
