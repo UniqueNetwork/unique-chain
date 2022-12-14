@@ -181,12 +181,12 @@ jobs:
       #     reporter: mochawesome-json
       #     fail-on-error: 'false'
 
-      - name: Run Sequential tests before Node Parachain upgrade
-        if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
-        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
+      # - name: Run Sequential tests before Node Parachain upgrade
+      #   if: success() || failure()
+      #   working-directory: ${{ matrix.mainnet_branch }}/tests
+      #   run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+      #   env:
+      #     RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Sequential Test Report Before Node upgrade
       #   uses: phoenix-actions/test-reporting@v8
@@ -304,12 +304,12 @@ jobs:
       #    reporter: mochawesome-json
       #    fail-on-error: 'false'
 
-      - name: Run Sequential tests after Node Parachain upgrade
-        if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
-        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9933/
+      # - name: Run Sequential tests after Node Parachain upgrade
+      #   if: success() || failure()
+      #   working-directory: ${{ matrix.mainnet_branch }}/tests
+      #   run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+      #   env:
+      #     RPC_URL: http://127.0.0.1:9933/
 
       #- name: Upload Sequential Test Report After Node upgrade
       #  uses: phoenix-actions/test-reporting@v8
