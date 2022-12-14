@@ -25,7 +25,7 @@ describe('Integration Test: Collection Properties', () => {
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({filename: __filename});
-      [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
   
@@ -151,14 +151,8 @@ describe('Integration Test: Collection Properties', () => {
         return `${propDataChar}`.repeat(propDataSize);
       };
 
-      const getConsumedSpace = async () => {
-        const props = (await helper.getApi().query.common.collectionProperties(collection.collectionId)).toJSON();
-        
-        return (props! as any).consumedSpace;
-      };
-
       await collection.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
-      const originalSpace = await getConsumedSpace();
+      const originalSpace = await collection.getPropertiesConsumedSpace();
       expect(originalSpace).to.be.equal(propDataSize);
 
       const sameSizePropertiesPossibleNum = maxCollectionPropertiesSize / propDataSize;
@@ -167,7 +161,7 @@ describe('Integration Test: Collection Properties', () => {
       // It will not consume any additional space.
       for (let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
         await collection.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
-        const consumedSpace = await getConsumedSpace();
+        const consumedSpace = await collection.getPropertiesConsumedSpace();
         expect(consumedSpace).to.be.equal(originalSpace);
       }
     }));
