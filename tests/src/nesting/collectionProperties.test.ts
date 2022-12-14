@@ -131,6 +131,46 @@ describe('Integration Test: Collection Properties', () => {
   itSub.ifWithPallets('Deletes properties of a ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
     await testDeleteProperties(await helper.rft.mintCollection(alice));
   });
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Allows modifying a collection property multiple times (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice);
+
+      const maxCollectionPropertiesSize = 40960;
+
+      const propDataSize = 4096;
+
+      let propDataChar = 'a';
+      const makeNewPropData = () => {
+        propDataChar = String.fromCharCode(propDataChar.charCodeAt(0) + 1);
+        return `${propDataChar}`.repeat(propDataSize);
+      };
+
+      const getConsumedSpace = async () => {
+        const props = (await helper.getApi().query.common.collectionProperties(collection.collectionId)).toJSON();
+        
+        return (props! as any).consumedSpace;
+      };
+
+      await collection.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
+      const originalSpace = await getConsumedSpace();
+      expect(originalSpace).to.be.equal(propDataSize);
+
+      const sameSizePropertiesPossibleNum = maxCollectionPropertiesSize / propDataSize;
+
+      // It is possible to modify a property as many times as needed.
+      // It will not consume any additional space.
+      for (let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
+        await collection.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
+        const consumedSpace = await getConsumedSpace();
+        expect(consumedSpace).to.be.equal(originalSpace);
+      }
+    }));
 });
   
 describe('Negative Integration Test: Collection Properties', () => {
