@@ -322,12 +322,16 @@ class UniqueEventHelper {
     return obj;
   }
 
+  private static toHuman(data: any) {
+    return data && data.toHuman ? data.toHuman() : `${data}`;
+  }
+
   private static extractData(data: any, type: any): any {
-    if(!type) return data.toHuman();
+    if(!type) return this.toHuman(data);
     if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
     if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
-    return data.toHuman();
+    return this.toHuman(data);
   }
 
   public static extractEvents(events: {event: any, phase: any}[]): IEvent[] {
