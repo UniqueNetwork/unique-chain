@@ -255,11 +255,11 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Stores a key for record for which the next revenue recalculation would be performed.
+	/// Stores a key for record for which the revenue recalculation was performed.
 	/// If `None`, then recalculation has not yet been performed or calculations have been completed for all stakers.
 	#[pallet::storage]
 	#[pallet::getter(fn get_next_calculated_record)]
-	pub type NextCalculatedRecord<T: Config> =
+	pub type PreviousCalculatedRecord<T: Config> =
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
 	#[pallet::hooks]
@@ -572,7 +572,7 @@ pub mod pallet {
 			let mut stakers_number = stakers_number.unwrap_or(DEFAULT_NUMBER_PAYOUTS);
 
 			ensure!(
-				stakers_number <= config.max_stakers_per_calculation,
+				stakers_number <= config.max_stakers_per_calculation && stakers_number != 0,
 				Error::<T>::NoPermission
 			);
 
@@ -590,7 +590,7 @@ pub mod pallet {
 			let mut storage_iterator = Self::get_next_calculated_key()
 				.map_or(Staked::<T>::iter(), |key| Staked::<T>::iter_from(key));
 
-			NextCalculatedRecord::<T>::set(None);
+			PreviousCalculatedRecord::<T>::set(None);
 
 			{
 				let last_id = RefCell::new(None);
@@ -635,10 +635,6 @@ pub mod pallet {
 					(amount, next_recalc_block_for_stake),
 				)) = storage_iterator.next()
 				{
-					if stakers_number == 0 {
-						NextCalculatedRecord::<T>::set(Some((current_id, staked_block)));
-						break;
-					}
 					if last_id.borrow().as_ref() != Some(&current_id) {
 						flush_stake()?;
 						*last_id.borrow_mut() = Some(current_id.clone());
@@ -656,6 +652,13 @@ pub mod pallet {
 								.into() + 1,
 							&mut *income_acc.borrow_mut(),
 						);
+					}
+
+					if stakers_number == 0 {
+						if storage_iterator.next().is_some() {
+							PreviousCalculatedRecord::<T>::set(Some((current_id, staked_block)));
+						}
+						break;
 					}
 				}
 				flush_stake()?;
