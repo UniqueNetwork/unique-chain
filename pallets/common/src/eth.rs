@@ -162,3 +162,12 @@ pub enum CollectionPermissions {
 	CollectionAdmin,
 	TokenOwner,
 }
+
+#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[repr(u8)]
+pub enum EthTokenPermissions {
+	#[default]
+	Mutable,
+	TokenOwner,
+	CollectionAdmin,
+}

@@ -32,7 +32,7 @@ describe('EVM token properties', () => {
     });
   });
 
-  itEth('Can be reconfigured', async({helper}) => {
+  itEth.only('Can be reconfigured', async({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
       const collection = await helper.nft.mintCollection(alice);
@@ -41,12 +41,16 @@ describe('EVM token properties', () => {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = helper.ethNativeContract.collection(address, 'nft', caller);
   
-      await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
+      await contract.methods.setTokenPropertyPermissions([['testKey', [[0, mutable], [1, tokenOwner], [2, collectionAdmin]]]]).send({from: caller});
   
       expect(await collection.getPropertyPermissions()).to.be.deep.equal([{
         key: 'testKey',
         permission: {mutable, collectionAdmin, tokenOwner},
       }]);
+
+      expect(await contract.methods.tokenPropertyPermissions().call({from: caller})).to.be.like([
+        ['testKey', [['0', mutable], ['1', tokenOwner], ['2', collectionAdmin]]]
+      ]);
     }
   });
 

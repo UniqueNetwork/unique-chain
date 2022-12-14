@@ -13,22 +13,28 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x91a97a68
+/// @dev the ERC-165 identifier for this interface is 0xde0695c2
 interface TokenProperties is Dummy, ERC165 {
+	// /// @notice Set permissions for token property.
+	// /// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	// /// @param key Property key.
+	// /// @param isMutable Permission to mutate property.
+	// /// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
+	// /// @param tokenOwner Permission to mutate property by token owner if property is mutable.
+	// /// @dev EVM selector for this function is: 0x222d97fa,
+	// ///  or in textual repr: setTokenPropertyPermission(string,bool,bool,bool)
+	// function setTokenPropertyPermission(string memory key, bool isMutable, bool collectionAdmin, bool tokenOwner) external;
+
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
-	/// @param key Property key.
-	/// @param isMutable Permission to mutate property.
-	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
-	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
-	/// @dev EVM selector for this function is: 0x222d97fa,
-	///  or in textual repr: setTokenPropertyPermission(string,bool,bool,bool)
-	function setTokenPropertyPermission(
-		string memory key,
-		bool isMutable,
-		bool collectionAdmin,
-		bool tokenOwner
-	) external;
+	/// @param permissions Permissions for keys.
+	/// @dev EVM selector for this function is: 0xbd92983a,
+	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
+	function setTokenPropertyPermissions(Tuple43[] memory permissions) external;
+
+	/// @dev EVM selector for this function is: 0xf23d7790,
+	///  or in textual repr: tokenPropertyPermissions()
+	function tokenPropertyPermissions() external view returns (Tuple43[] memory);
 
 	// /// @notice Set token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -77,6 +83,24 @@ interface TokenProperties is Dummy, ERC165 {
 struct Property {
 	string key;
 	bytes value;
+}
+
+enum EthTokenPermissions {
+	Mutable,
+	TokenOwner,
+	CollectionAdmin
+}
+
+/// @dev anonymous struct
+struct Tuple43 {
+	string field_0;
+	Tuple41[] field_1;
+}
+
+/// @dev anonymous struct
+struct Tuple41 {
+	EthTokenPermissions field_0;
+	bool field_1;
 }
 
 /// @title A contract that allows you to work with collections.

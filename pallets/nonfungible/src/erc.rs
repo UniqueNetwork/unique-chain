@@ -38,7 +38,7 @@ use sp_std::vec::Vec;
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	eth::EthCrossAccount,
+	eth::{EthCrossAccount, EthTokenPermissions},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -60,6 +60,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
 	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
 	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
+	#[solidity(hide)]
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
@@ -69,10 +70,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_owner: bool,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		<Pallet<T>>::set_property_permission(
+		<Pallet<T>>::set_property_permissions(
 			self,
 			&caller,
-			PropertyKeyPermission {
+			[PropertyKeyPermission {
 				key: <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "too long key")?,
@@ -81,9 +82,79 @@ impl<T: Config> NonfungibleHandle<T> {
 					collection_admin,
 					token_owner,
 				},
-			},
+			}]
+			.into(),
 		)
 		.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Set permissions for token property.
+	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	/// @param permissions Permissions for keys.
+	fn set_token_property_permissions(
+		&mut self,
+		caller: caller,
+		permissions: Vec<(string, Vec<(EthTokenPermissions, bool)>)>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		const PERMISSIONS_FIELDS_COUNT: usize = 3;
+
+		let mut perms = <Vec<_>>::new();
+
+		for (key, pp) in permissions {
+			if pp.len() > PERMISSIONS_FIELDS_COUNT {
+				return Err(alloc::format!(
+					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
+					pp.len(),
+					stringify!(EthTokenPermissions),
+					PERMISSIONS_FIELDS_COUNT
+				)
+				.as_str()
+				.into());
+			}
+
+			let mut token_permission = PropertyPermission {
+				mutable: false,
+				collection_admin: false,
+				token_owner: false,
+			};
+
+			for (perm, value) in pp {
+				match perm {
+					EthTokenPermissions::Mutable => token_permission.mutable = value,
+					EthTokenPermissions::TokenOwner => token_permission.token_owner = value,
+					EthTokenPermissions::CollectionAdmin => {
+						token_permission.collection_admin = value
+					}
+				}
+			}
+
+			perms.push(PropertyKeyPermission {
+				key: <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "too long key")?,
+				permission: token_permission,
+			});
+		}
+
+		<Pallet<T>>::set_property_permissions(self, &caller, perms).map_err(dispatch_to_evm::<T>)
+	}
+
+	fn token_property_permissions(
+		&self,
+	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {
+		let mut res = <Vec<_>>::new();
+		for (key, pp) in <Pallet<T>>::token_property_permission(self.id) {
+			let key = string::from_utf8(key.into_inner()).unwrap();
+			let pp = [
+				(EthTokenPermissions::Mutable, pp.mutable),
+				(EthTokenPermissions::TokenOwner, pp.token_owner),
+				(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
+			]
+			.into();
+			res.push((key, pp));
+		}
+		Ok(res)
 	}
 
 	/// @notice Set token property value.
