@@ -165,6 +165,28 @@ describe('Integration Test: Collection Properties', () => {
         expect(consumedSpace).to.be.equal(originalSpace);
       }
     }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Adding then removing a collection property doesn't change the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice);
+      const originalSpace = await collection.getPropertiesConsumedSpace();
+
+      const propDataSize = 4096;
+      const propData = 'a'.repeat(propDataSize);
+
+      await collection.setProperties(alice, [{key: propKey, value: propData}]);
+      let consumedSpace = await collection.getPropertiesConsumedSpace();
+      expect(consumedSpace).to.be.equal(propDataSize);
+
+      await collection.deleteProperties(alice, [propKey]);
+      consumedSpace = await collection.getPropertiesConsumedSpace();
+      expect(consumedSpace).to.be.equal(originalSpace);
+    }));
 });
   
 describe('Negative Integration Test: Collection Properties', () => {

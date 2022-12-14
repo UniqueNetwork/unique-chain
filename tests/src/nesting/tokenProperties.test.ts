@@ -367,6 +367,40 @@ describe('Integration Test: Token Properties', () => {
         expect(consumedSpace).to.be.equal(originalSpace);
       }
     }));
+
+  [
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Adding then removing a token property doesn't change the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+      const token = await (
+        testCase.pieces
+          ? collection.mintToken(alice, testCase.pieces)
+          : collection.mintToken(alice)
+      );
+      const originalSpace = await token.getTokenPropertiesConsumedSpace();
+
+      const propDataSize = 4096;
+      const propData = 'a'.repeat(propDataSize);
+
+      await token.setProperties(alice, [{key: propKey, value: propData}]);
+      let consumedSpace = await token.getTokenPropertiesConsumedSpace();
+      expect(consumedSpace).to.be.equal(propDataSize);
+
+      await token.deleteProperties(alice, [propKey]);
+      consumedSpace = await token.getTokenPropertiesConsumedSpace();
+      expect(consumedSpace).to.be.equal(originalSpace);
+    }));
 });
 
 describe('Negative Integration Test: Token Properties', () => {
