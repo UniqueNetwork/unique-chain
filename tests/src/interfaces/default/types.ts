@@ -153,14 +153,6 @@ export interface CumulusPalletXcmEvent extends Enum {
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward';
 }
 
-/** @name CumulusPalletXcmOrigin */
-export interface CumulusPalletXcmOrigin extends Enum {
-  readonly isRelay: boolean;
-  readonly isSiblingParachain: boolean;
-  readonly asSiblingParachain: u32;
-  readonly type: 'Relay' | 'SiblingParachain';
-}
-
 /** @name CumulusPalletXcmpQueueCall */
 export interface CumulusPalletXcmpQueueCall extends Enum {
   readonly isServiceOverweight: boolean;
@@ -544,15 +536,6 @@ export interface FrameSupportDispatchPerDispatchClassWeightsPerClass extends Str
   readonly mandatory: FrameSystemLimitsWeightsPerClass;
 }
 
-/** @name FrameSupportDispatchRawOrigin */
-export interface FrameSupportDispatchRawOrigin extends Enum {
-  readonly isRoot: boolean;
-  readonly isSigned: boolean;
-  readonly asSigned: AccountId32;
-  readonly isNone: boolean;
-  readonly type: 'Root' | 'Signed' | 'None';
-}
-
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
 
@@ -724,21 +707,6 @@ export interface FrameSystemPhase extends Enum {
   readonly isFinalization: boolean;
   readonly isInitialization: boolean;
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
-}
-
-/** @name OpalRuntimeOriginCaller */
-export interface OpalRuntimeOriginCaller extends Enum {
-  readonly isSystem: boolean;
-  readonly asSystem: FrameSupportDispatchRawOrigin;
-  readonly isVoid: boolean;
-  readonly asVoid: SpCoreVoid;
-  readonly isPolkadotXcm: boolean;
-  readonly asPolkadotXcm: PalletXcmOrigin;
-  readonly isCumulusXcm: boolean;
-  readonly asCumulusXcm: CumulusPalletXcmOrigin;
-  readonly isEthereum: boolean;
-  readonly asEthereum: PalletEthereumRawOrigin;
-  readonly type: 'System' | 'Void' | 'PolkadotXcm' | 'CumulusXcm' | 'Ethereum';
 }
 
 /** @name OpalRuntimeRuntime */
@@ -1333,7 +1301,25 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetMinGasPriceOverride: {
     readonly coeff: Option<u64>;
   } & Struct;
+<<<<<<< HEAD
   readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride';
+=======
+  readonly isSetXcmAllowedLocations: boolean;
+  readonly asSetXcmAllowedLocations: {
+    readonly locations: Option<Vec<XcmV1MultiLocation>>;
+  } & Struct;
+  readonly isSetAppPromotionConfigurationOverride: boolean;
+  readonly asSetAppPromotionConfigurationOverride: {
+    readonly configuration: PalletConfigurationAppPromotionConfiguration;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations' | 'SetAppPromotionConfigurationOverride';
+}
+
+/** @name PalletConfigurationError */
+export interface PalletConfigurationError extends Enum {
+  readonly isInconsistentConfiguration: boolean;
+  readonly type: 'InconsistentConfiguration';
+>>>>>>> 57a85f52... chore: regenerate stubs & types
 }
 
 /** @name PalletEthereumCall */
@@ -1361,13 +1347,6 @@ export interface PalletEthereumEvent extends Enum {
 
 /** @name PalletEthereumFakeTransactionFinalizer */
 export interface PalletEthereumFakeTransactionFinalizer extends Null {}
-
-/** @name PalletEthereumRawOrigin */
-export interface PalletEthereumRawOrigin extends Enum {
-  readonly isEthereumTransaction: boolean;
-  readonly asEthereumTransaction: H160;
-  readonly type: 'EthereumTransaction';
-}
 
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
@@ -2006,13 +1985,16 @@ export interface PalletTestUtilsCall extends Enum {
     readonly value: u32;
   } & Struct;
   readonly isIncTestValue: boolean;
-  readonly isSelfCancelingInc: boolean;
-  readonly asSelfCancelingInc: {
-    readonly id: U8aFixed;
-    readonly maxTestValue: u32;
-  } & Struct;
   readonly isJustTakeFee: boolean;
+<<<<<<< HEAD
   readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'SelfCancelingInc' | 'JustTakeFee';
+=======
+  readonly isBatchAll: boolean;
+  readonly asBatchAll: {
+    readonly calls: Vec<Call>;
+  } & Struct;
+  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'JustTakeFee' | 'BatchAll';
+>>>>>>> 57a85f52... chore: regenerate stubs & types
 }
 
 /** @name PalletTestUtilsError */
@@ -2310,6 +2292,7 @@ export interface PalletUniqueError extends Enum {
   readonly type: 'CollectionDecimalPointLimitExceeded' | 'ConfirmUnsetSponsorFail' | 'EmptyArgument' | 'RepartitionCalledOnNonRefungibleCollection';
 }
 
+<<<<<<< HEAD
 /** @name PalletUniqueRawEvent */
 export interface PalletUniqueRawEvent extends Enum {
   readonly isCollectionSponsorRemoved: boolean;
@@ -2416,6 +2399,8 @@ export interface PalletUniqueSchedulerScheduledV3 extends Struct {
   readonly origin: OpalRuntimeOriginCaller;
 }
 
+=======
+>>>>>>> 57a85f52... chore: regenerate stubs & types
 /** @name PalletXcmCall */
 export interface PalletXcmCall extends Enum {
   readonly isSend: boolean;
@@ -2531,15 +2516,6 @@ export interface PalletXcmEvent extends Enum {
   readonly isNotifyTargetMigrationFail: boolean;
   readonly asNotifyTargetMigrationFail: ITuple<[XcmVersionedMultiLocation, u64]>;
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail';
-}
-
-/** @name PalletXcmOrigin */
-export interface PalletXcmOrigin extends Enum {
-  readonly isXcm: boolean;
-  readonly asXcm: XcmV1MultiLocation;
-  readonly isResponse: boolean;
-  readonly asResponse: XcmV1MultiLocation;
-  readonly type: 'Xcm' | 'Response';
 }
 
 /** @name PhantomTypeUpDataStructs */
@@ -2761,9 +2737,6 @@ export interface SpCoreEd25519Signature extends U8aFixed {}
 
 /** @name SpCoreSr25519Signature */
 export interface SpCoreSr25519Signature extends U8aFixed {}
-
-/** @name SpCoreVoid */
-export interface SpCoreVoid extends Null {}
 
 /** @name SpRuntimeArithmeticError */
 export interface SpRuntimeArithmeticError extends Enum {

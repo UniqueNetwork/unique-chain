@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/submittable';
 
 import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction } from '@polkadot/api-base/types';
-import type { Bytes, Compact, Option, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Compact, Option, U256, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 <<<<<<< HEAD
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill, Permill, Weight } from '@polkadot/types/interfaces/runtime';
@@ -835,6 +835,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+<<<<<<< HEAD
     scheduler: {
       /**
        * Cancel a named scheduled task.
@@ -858,6 +859,8 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+=======
+>>>>>>> 57a85f52... chore: regenerate stubs & types
     structure: {
       /**
        * Generic tx
@@ -995,7 +998,6 @@ declare module '@polkadot/api-base/types/submittable' {
       enable: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       incTestValue: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       justTakeFee: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
-      selfCancelingInc: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, maxTestValue: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [U8aFixed, u32]>;
       setTestValue: AugmentedSubmittable<(value: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       setTestValueAndRollback: AugmentedSubmittable<(value: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**

@@ -649,6 +649,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+<<<<<<< HEAD
     scheduler: {
       /**
        * Failed to schedule a call
@@ -671,6 +672,8 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+=======
+>>>>>>> 57a85f52... chore: regenerate stubs & types
     structure: {
       /**
        * While nesting, reached the breadth limit of nesting, exceeding the provided budget.
