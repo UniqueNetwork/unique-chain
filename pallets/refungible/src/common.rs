@@ -152,6 +152,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn token_owner() -> Weight {
 		<SelfWeightOf<T>>::token_owner()
 	}
+
+	fn repair_item() -> Weight {
+		<SelfWeightOf<T>>::repair_item()
+	}
 }
 
 fn map_create_data<T: Config>(
@@ -515,6 +519,13 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		<Pallet<T>>::total_pieces(self.id, token)
+	}
+
+	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::repair_item(self, token),
+			<CommonWeights<T>>::repair_item(),
+		)
 	}
 }
 

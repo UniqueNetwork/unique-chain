@@ -54,6 +54,7 @@ pub trait WeightInfo {
 	fn delete_token_properties(b: u32, ) -> Weight;
 	fn repartition_item() -> Weight;
 	fn token_owner() -> Weight;
+	fn repair_item() -> Weight;
 }
 
 /// Weights for pallet_refungible using the Substrate node and recommended hardware.
@@ -259,6 +260,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_ref_time(9_431_000)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
+	// Storage: Refungible TokenProperties (r:1 w:1)
+	fn repair_item() -> Weight {
+		Weight::from_ref_time(5_489_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -462,5 +469,11 @@ impl WeightInfo for () {
 	fn token_owner() -> Weight {
 		Weight::from_ref_time(9_431_000)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+	}
+	// Storage: Refungible TokenProperties (r:1 w:1)
+	fn repair_item() -> Weight {
+		Weight::from_ref_time(5_489_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 }

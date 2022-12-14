@@ -127,6 +127,8 @@ pub mod pallet {
 		FungibleDisallowsNesting,
 		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
+		/// Only a fungible collection could be possibly broken; any fungible token is valid.
+		FungibleTokensAreAlwaysValid,
 	}
 
 	#[pallet::config]

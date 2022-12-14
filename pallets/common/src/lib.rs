@@ -1518,6 +1518,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 
 	/// The price of retrieving token owner
 	fn token_owner() -> Weight;
+
+	/// The price of repairing an item.
+	fn repair_item() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -1825,6 +1828,9 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Get extension for RFT collection.
 	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+
+	/// Repairs a possibly broken item.
+	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo;
 }
 
 /// Extension for RFT collection.
