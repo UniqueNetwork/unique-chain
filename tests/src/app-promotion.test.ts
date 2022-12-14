@@ -37,21 +37,40 @@ describe('App promotion', () => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
       donor = await privateKey({filename: __filename});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
-      palletAdmin = await privateKey('//Alice');
+      palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();
 
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.sudo.sudo', [helper.api!.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})]);
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.sudo.sudo', [helper.api!.tx.configuration
-        .setAppPromotionConfigurationOverride({
-          recalculationInterval: LOCKING_PERIOD,
-          pendingInterval: UNLOCKING_PERIOD})], true);
+      const accountBalances = new Array(100);
+      accountBalances.fill(1000n);
+      accounts = await helper.arrange.createAccounts(accountBalances, donor); // create accounts-pool to speed up tests
     });
   });
 
   describe('stake extrinsic', () => {  
     itSub('should "lock" staking balance, add it to "staked" map, and increase "totalStaked" amount', async ({helper}) => {
-     
-   
+      const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
+      const totalStakedBefore = await helper.staking.getTotalStaked();
+  
+      // Minimum stake amount is 100:
+      await expect(helper.staking.stake(staker, 100n * nominal - 1n)).to.be.rejected;
+      await helper.staking.stake(staker, 100n * nominal);
+  
+      // Staker balance is: miscFrozen: 100, feeFrozen: 100, reserved: 0n...
+      // ...so he can not transfer 900
+      expect (await helper.balance.getSubstrateFull(staker.address)).to.contain({miscFrozen: 100n * nominal, feeFrozen: 100n * nominal, reserved: 0n});
+      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 900n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
+      
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(100n * nominal);
+      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
+      // it is potentially flaky test. Promotion can credited some tokens. Maybe we need to use closeTo? 
+      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + 100n * nominal); // total tokens amount staked in app-promotion increased 
+  
+      
+      await helper.staking.stake(staker, 200n * nominal);
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(300n * nominal);
+      const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      expect(totalStakedPerBlock[0].amount).to.equal(100n * nominal);
+      expect(totalStakedPerBlock[1].amount).to.equal(200n * nominal);
     });
   
     itSub('should allow to create maximum 10 stakes for account', async ({helper}) => {
