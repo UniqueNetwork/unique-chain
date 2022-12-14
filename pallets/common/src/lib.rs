@@ -1815,6 +1815,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 
 	/// The price of setting approval for all
 	fn set_allowance_for_all() -> Weight;
+
+	/// The price of repairing an item.
+	fn repair_item() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -2136,6 +2139,9 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Tells whether the given `owner` approves the `operator`.
 	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
+
+	/// Repairs a possibly broken item.
+	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo;
 }
 
 /// Extension for RFT collection.
