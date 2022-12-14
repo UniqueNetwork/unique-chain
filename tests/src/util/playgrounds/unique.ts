@@ -43,6 +43,8 @@ import {
   IEthCrossAccountId,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import type {Vec} from '@polkadot/types-codec';
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -320,12 +322,16 @@ class UniqueEventHelper {
     return obj;
   }
 
+  private static toHuman(data: any) {
+    return data && data.toHuman ? data.toHuman() : `${data}`;
+  }
+
   private static extractData(data: any, type: any): any {
-    if(!type) return data.toHuman();
+    if(!type) return this.toHuman(data);
     if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
     if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
-    return data.toHuman();
+    return this.toHuman(data);
   }
 
   public static extractEvents(events: {event: any, phase: any}[]): IEvent[] {
@@ -402,6 +408,21 @@ export class ChainHelperBase {
   getApi(): ApiPromise {
     if(this.api === null) throw Error('API not initialized');
     return this.api;
+  }
+
+  async subscribeEvents(expectedEvents: {section: string, names: string[]}[]) {
+    const collectedEvents: IEvent[] = [];
+    const unsubscribe = await this.getApi().query.system.events((events: Vec<FrameSystemEventRecord>) => {
+      const ievents = this.eventHelper.extractEvents(events);
+      ievents.forEach((event) => {
+        expectedEvents.forEach((e => {
+          if (event.section === e.section && e.names.includes(event.method)) {
+            collectedEvents.push(event);
+          }
+        }));
+      });
+    });
+    return {unsubscribe: unsubscribe as any, collectedEvents};
   }
 
   clearChainLog(): void {
@@ -834,7 +855,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorSet');
   }
 
   /**
@@ -852,7 +873,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'SponsorshipConfirmed');
   }
 
   /**
@@ -870,7 +891,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorRemoved');
   }
 
   /**
@@ -897,7 +918,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionLimitSet');
   }
 
   /**
@@ -916,7 +937,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionOwnerChanged');
   }
 
   /**
@@ -935,7 +956,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminAdded');
   }
 
   /**
@@ -954,7 +975,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminRemoved');
   }
 
   /**
@@ -983,7 +1004,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressAdded');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressAdded');
   }
 
   /**
@@ -1001,7 +1022,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressRemoved');
   }
 
   /**
@@ -1020,7 +1041,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPermissionSet');
   }
 
   /**

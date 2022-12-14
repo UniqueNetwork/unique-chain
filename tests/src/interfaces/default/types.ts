@@ -1269,7 +1269,9 @@ export interface PalletCommonError extends Enum {
   readonly isEmptyPropertyKey: boolean;
   readonly isCollectionIsExternal: boolean;
   readonly isCollectionIsInternal: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal';
+  readonly isConfirmSponsorshipFail: boolean;
+  readonly isUserIsNotCollectionAdmin: boolean;
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin';
 }
 
 /** @name PalletCommonEvent */
@@ -1298,7 +1300,27 @@ export interface PalletCommonEvent extends Enum {
   readonly asTokenPropertyDeleted: ITuple<[u32, u32, Bytes]>;
   readonly isPropertyPermissionSet: boolean;
   readonly asPropertyPermissionSet: ITuple<[u32, Bytes]>;
-  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'ApprovedForAll' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet';
+  readonly isAllowListAddressAdded: boolean;
+  readonly asAllowListAddressAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+  readonly isAllowListAddressRemoved: boolean;
+  readonly asAllowListAddressRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+  readonly isCollectionAdminAdded: boolean;
+  readonly asCollectionAdminAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+  readonly isCollectionAdminRemoved: boolean;
+  readonly asCollectionAdminRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
+  readonly isCollectionLimitSet: boolean;
+  readonly asCollectionLimitSet: u32;
+  readonly isCollectionOwnerChanged: boolean;
+  readonly asCollectionOwnerChanged: ITuple<[u32, AccountId32]>;
+  readonly isCollectionPermissionSet: boolean;
+  readonly asCollectionPermissionSet: u32;
+  readonly isCollectionSponsorSet: boolean;
+  readonly asCollectionSponsorSet: ITuple<[u32, AccountId32]>;
+  readonly isSponsorshipConfirmed: boolean;
+  readonly asSponsorshipConfirmed: ITuple<[u32, AccountId32]>;
+  readonly isCollectionSponsorRemoved: boolean;
+  readonly asCollectionSponsorRemoved: u32;
+  readonly type: 'CollectionCreated' | 'CollectionDestroyed' | 'ItemCreated' | 'ItemDestroyed' | 'Transfer' | 'Approved' | 'ApprovedForAll' | 'CollectionPropertySet' | 'CollectionPropertyDeleted' | 'TokenPropertySet' | 'TokenPropertyDeleted' | 'PropertyPermissionSet' | 'AllowListAddressAdded' | 'AllowListAddressRemoved' | 'CollectionAdminAdded' | 'CollectionAdminRemoved' | 'CollectionLimitSet' | 'CollectionOwnerChanged' | 'CollectionPermissionSet' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionSponsorRemoved';
 }
 
 /** @name PalletConfigurationCall */
@@ -1311,7 +1333,11 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetMinGasPriceOverride: {
     readonly coeff: Option<u64>;
   } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride';
+  readonly isSetXcmAllowedLocations: boolean;
+  readonly asSetXcmAllowedLocations: {
+    readonly locations: Option<Vec<XcmV1MultiLocation>>;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations';
 }
 
 /** @name PalletEthereumCall */
@@ -2324,35 +2350,9 @@ export interface PalletUniqueCall extends Enum {
 /** @name PalletUniqueError */
 export interface PalletUniqueError extends Enum {
   readonly isCollectionDecimalPointLimitExceeded: boolean;
-  readonly isConfirmUnsetSponsorFail: boolean;
   readonly isEmptyArgument: boolean;
   readonly isRepartitionCalledOnNonRefungibleCollection: boolean;
-  readonly type: 'CollectionDecimalPointLimitExceeded' | 'ConfirmUnsetSponsorFail' | 'EmptyArgument' | 'RepartitionCalledOnNonRefungibleCollection';
-}
-
-/** @name PalletUniqueRawEvent */
-export interface PalletUniqueRawEvent extends Enum {
-  readonly isCollectionSponsorRemoved: boolean;
-  readonly asCollectionSponsorRemoved: u32;
-  readonly isCollectionAdminAdded: boolean;
-  readonly asCollectionAdminAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-  readonly isCollectionOwnedChanged: boolean;
-  readonly asCollectionOwnedChanged: ITuple<[u32, AccountId32]>;
-  readonly isCollectionSponsorSet: boolean;
-  readonly asCollectionSponsorSet: ITuple<[u32, AccountId32]>;
-  readonly isSponsorshipConfirmed: boolean;
-  readonly asSponsorshipConfirmed: ITuple<[u32, AccountId32]>;
-  readonly isCollectionAdminRemoved: boolean;
-  readonly asCollectionAdminRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-  readonly isAllowListAddressRemoved: boolean;
-  readonly asAllowListAddressRemoved: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-  readonly isAllowListAddressAdded: boolean;
-  readonly asAllowListAddressAdded: ITuple<[u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-  readonly isCollectionLimitSet: boolean;
-  readonly asCollectionLimitSet: u32;
-  readonly isCollectionPermissionSet: boolean;
-  readonly asCollectionPermissionSet: u32;
-  readonly type: 'CollectionSponsorRemoved' | 'CollectionAdminAdded' | 'CollectionOwnedChanged' | 'CollectionSponsorSet' | 'SponsorshipConfirmed' | 'CollectionAdminRemoved' | 'AllowListAddressRemoved' | 'AllowListAddressAdded' | 'CollectionLimitSet' | 'CollectionPermissionSet';
+  readonly type: 'CollectionDecimalPointLimitExceeded' | 'EmptyArgument' | 'RepartitionCalledOnNonRefungibleCollection';
 }
 
 /** @name PalletUniqueSchedulerV2BlockAgenda */

@@ -89,10 +89,9 @@ use up_data_structs::{
 	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
 	MAX_COLLECTION_PROPERTIES_SIZE, COLLECTION_ADMINS_LIMIT, MAX_TOKEN_PROPERTIES_SIZE,
 	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
-	SponsorshipState, CreateCollectionData, CreateItemExData, budget, Property, PropertyKey,
-	PropertyKeyPermission,
+	CreateCollectionData, CreateItemExData, budget, Property, PropertyKey, PropertyKeyPermission,
 };
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::{account::CrossAccountId};
 use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
 	dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
@@ -112,8 +111,6 @@ decl_error! {
 	pub enum Error for Module<T: Config> {
 		/// Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
 		CollectionDecimalPointLimitExceeded,
-		/// This address is not set as sponsor, use setCollectionSponsor first.
-		ConfirmUnsetSponsorFail,
 		/// Length of items properties must be greater than 0.
 		EmptyArgument,
 		/// Repertition is only supported by refungible collection.
@@ -123,9 +120,6 @@ decl_error! {
 
 /// Configuration trait of this pallet.
 pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
-	/// Overarching event type.
-	type RuntimeEvent: From<Event<Self>> + Into<<Self as frame_system::Config>::RuntimeEvent>;
-
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
@@ -134,81 +128,6 @@ pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
 
 	/// Weight info information for extra refungible pallet operations.
 	type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
-}
-
-decl_event! {
-	pub enum Event<T>
-	where
-		<T as frame_system::Config>::AccountId,
-		<T as pallet_evm::Config>::CrossAccountId,
-	{
-		/// Collection sponsor was removed
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		CollectionSponsorRemoved(CollectionId),
-
-		/// Collection admin was added
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * admin: Admin address.
-		CollectionAdminAdded(CollectionId, CrossAccountId),
-
-		/// Collection owned was changed
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * owner: New owner address.
-		CollectionOwnedChanged(CollectionId, AccountId),
-
-		/// Collection sponsor was set
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * owner: New sponsor address.
-		CollectionSponsorSet(CollectionId, AccountId),
-
-		/// New sponsor was confirm
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * sponsor: New sponsor address.
-		SponsorshipConfirmed(CollectionId, AccountId),
-
-		/// Collection admin was removed
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * admin: Removed admin address.
-		CollectionAdminRemoved(CollectionId, CrossAccountId),
-
-		/// Address was removed from the allow list
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * user: Address of the removed account.
-		AllowListAddressRemoved(CollectionId, CrossAccountId),
-
-		/// Address was added to the allow list
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		/// * user: Address of the added account.
-		AllowListAddressAdded(CollectionId, CrossAccountId),
-
-		/// Collection limits were set
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		CollectionLimitSet(CollectionId),
-
-		/// Collection permissions were set
-		///
-		/// # Arguments
-		/// * collection_id: ID of the affected collection.
-		CollectionPermissionSet(CollectionId),
-	}
 }
 
 type SelfWeightOf<T> = <T as Config>::WeightInfo;
@@ -317,9 +236,6 @@ decl_module! {
 
 		#[doc = "Default FT collection limit."]
 		const FT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::Fungible(0));
-
-
-		pub fn deposit_event() = default;
 
 		fn on_initialize(_now: T::BlockNumber) -> Weight {
 			Weight::zero()
@@ -433,11 +349,6 @@ decl_module! {
 				true,
 			)?;
 
-			Self::deposit_event(Event::<T>::AllowListAddressAdded(
-				collection_id,
-				address
-			));
-
 			Ok(())
 		}
 
@@ -466,11 +377,6 @@ decl_module! {
 				false,
 			)?;
 
-			<Pallet<T>>::deposit_event(Event::<T>::AllowListAddressRemoved(
-				collection_id,
-				address
-			));
-
 			Ok(())
 		}
 
@@ -486,20 +392,10 @@ decl_module! {
 		/// * `new_owner`: ID of the account that will become the owner.
 		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
 		pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
-
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
+			let new_owner = T::CrossAccountId::from_sub(new_owner);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
-			target_collection.check_is_owner(&sender)?;
-
-			target_collection.owner = new_owner.clone();
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionOwnedChanged(
-				collection_id,
-				new_owner
-			));
-
-			target_collection.save()
+			target_collection.change_owner(sender, new_owner.clone())
 		}
 
 		/// Add an admin to a collection.
@@ -522,13 +418,6 @@ decl_module! {
 		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminAdded(
-				collection_id,
-				new_admin_id.clone()
-			));
-
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
 		}
 
@@ -550,13 +439,6 @@ decl_module! {
 		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionAdminRemoved(
-				collection_id,
-				account_id.clone()
-			));
-
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
 		}
 
@@ -576,19 +458,8 @@ decl_module! {
 		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
 		pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_owner_or_admin(&sender)?;
-			target_collection.check_is_internal()?;
-
-			target_collection.set_sponsor(new_sponsor.clone())?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorSet(
-				collection_id,
-				new_sponsor
-			));
-
-			target_collection.save()
+			target_collection.set_sponsor(&sender, new_sponsor.clone())
 		}
 
 		/// Confirm own sponsorship of a collection, becoming the sponsor.
@@ -607,20 +478,8 @@ decl_module! {
 		#[weight = <SelfWeightOf<T>>::confirm_sponsorship()]
 		pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
-			ensure!(
-				target_collection.confirm_sponsorship(&sender)?,
-				Error::<T>::ConfirmUnsetSponsorFail
-			);
-
-			<Pallet<T>>::deposit_event(Event::<T>::SponsorshipConfirmed(
-				collection_id,
-				sender
-			));
-
-			target_collection.save()
+			target_collection.confirm_sponsorship(&sender)
 		}
 
 		/// Remove a collection's a sponsor, making everyone pay for their own transactions.
@@ -635,17 +494,8 @@ decl_module! {
 		#[weight = <SelfWeightOf<T>>::remove_collection_sponsor()]
 		pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
-			target_collection.check_is_owner(&sender)?;
-
-			target_collection.sponsorship = SponsorshipState::Disabled;
-
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionSponsorRemoved(
-				collection_id
-			));
-			target_collection.save()
+			target_collection.remove_sponsor(&sender)
 		}
 
 		/// Mint an item within a collection.
@@ -1053,17 +903,7 @@ decl_module! {
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
-			target_collection.check_is_owner_or_admin(&sender)?;
-			let old_limit = &target_collection.limits;
-
-			target_collection.limits = <PalletCommon<T>>::clamp_limits(target_collection.mode.clone(), &old_limit, new_limit)?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionLimitSet(
-				collection_id
-			));
-
-			target_collection.save()
+			<PalletCommon<T>>::update_limits(&sender, &mut target_collection, new_limit)
 		}
 
 		/// Set specific permissions of a collection. Empty, or None fields mean chain default.
@@ -1086,17 +926,11 @@ decl_module! {
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
-			target_collection.check_is_owner_or_admin(&sender)?;
-			let old_limit = &target_collection.permissions;
-
-			target_collection.permissions = <PalletCommon<T>>::clamp_permissions(target_collection.mode.clone(), &old_limit, new_permission)?;
-
-			<Pallet<T>>::deposit_event(Event::<T>::CollectionPermissionSet(
-				collection_id
-			));
-
-			target_collection.save()
+			<PalletCommon<T>>::update_permissions(
+				&sender,
+				&mut target_collection,
+				new_permission
+			)
 		}
 
 		/// Re-partition a refungible token, while owning all of its parts/pieces.
@@ -1163,22 +997,7 @@ impl<T: Config> Pallet<T> {
 	/// * `collection_id`: ID of the modified collection.
 	pub fn force_set_sponsor(sponsor: T::AccountId, collection_id: CollectionId) -> DispatchResult {
 		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		target_collection.check_is_internal()?;
-		target_collection.set_sponsor(sponsor.clone())?;
-
-		Self::deposit_event(Event::<T>::CollectionSponsorSet(
-			collection_id,
-			sponsor.clone(),
-		));
-
-		ensure!(
-			target_collection.confirm_sponsorship(&sponsor)?,
-			Error::<T>::ConfirmUnsetSponsorFail
-		);
-
-		Self::deposit_event(Event::<T>::SponsorshipConfirmed(collection_id, sponsor));
-
-		target_collection.save()
+		target_collection.force_set_sponsor(sponsor.clone())
 	}
 
 	/// Force remove `sponsor` for `collection`.
@@ -1191,12 +1010,7 @@ impl<T: Config> Pallet<T> {
 	/// * `collection_id`: ID of the modified collection.
 	pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
 		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		target_collection.check_is_internal()?;
-		target_collection.sponsorship = SponsorshipState::Disabled;
-
-		Self::deposit_event(Event::<T>::CollectionSponsorRemoved(collection_id));
-
-		target_collection.save()
+		target_collection.force_remove_sponsor()
 	}
 
 	#[inline(always)]
