@@ -16,27 +16,24 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from '../util';
-import {IEvent} from '../util/playgrounds/types';
+import {itSub, usingPlaygrounds, expect} from '../../util';
+import {IEvent} from '../../util/playgrounds/types';
 
-describe('Transfer event ', () => {
+describe('Create Item event ', () => {
   let alice: IKeyringPair;
-  let bob: IKeyringPair;
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({filename: __filename});
-      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
+      [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-
-  itSub('Check event from transfer(): ', async ({helper}) => {
+  itSub('Check event from createItem(): ', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
-    await token.transferFrom(alice, {Substrate: alice.address}, {Substrate: bob.address});
+    await collection.mintToken(alice, {Substrate: alice.address});
     const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
     const eventStrings = event.map(e => `${e.section}.${e.method}`);
 
-    expect(eventStrings).to.contains('common.Transfer');
+    expect(eventStrings).to.contains('common.ItemCreated');
     expect(eventStrings).to.contains('treasury.Deposit');
     expect(eventStrings).to.contains('system.ExtrinsicSuccess');
   });

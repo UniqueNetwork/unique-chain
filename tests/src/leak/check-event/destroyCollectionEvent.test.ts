@@ -16,8 +16,8 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from '../util';
-import {IEvent} from '../util/playgrounds/types';
+import {itSub, usingPlaygrounds, expect} from '../../util';
+import {IEvent} from '../../util/playgrounds/types';
 
 describe('Destroy collection event ', () => {
   let alice: IKeyringPair;

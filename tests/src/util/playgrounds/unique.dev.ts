@@ -230,7 +230,7 @@ class ArrangeGroup {
       let nonce = await this.helper.chain.getNonce(donor.address);
       const tokenNominal = this.helper.balance.getOneTokenNominal();
       for (let i = 0; i < accountsToCreate; i++) {
-        if (i === 500) { // if there are too many accounts to create
+        if (i === 5) { // if there are too many accounts to create
           await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled 
           transactions = []; //
           nonce = await this.helper.chain.getNonce(donor.address); // update nonce 
@@ -258,7 +258,7 @@ class ArrangeGroup {
     
     const crowd: IKeyringPair[] = [];
     // do up to 5 retries
-    for (let index = 0; index < 5 && accountsToCreate !== 0; index++) {
+    for (let index = 0; index < 15 && accountsToCreate !== 0; index++) {
       const asManyAsCan = await createAsManyAsCan();
       crowd.push(...asManyAsCan);
       accountsToCreate -= asManyAsCan.length;

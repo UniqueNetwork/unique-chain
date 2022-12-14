@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets} from './util';
-import {ICollectionCreationOptions, IProperty} from './util/playgrounds/types';
-import {UniqueHelper} from './util/playgrounds/unique';
+import {usingPlaygrounds, expect, itSub, Pallets} from '../util';
+import {ICollectionCreationOptions, IProperty} from '../util/playgrounds/types';
+import {UniqueHelper} from '../util/playgrounds/unique';
 
 async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
   let collection;

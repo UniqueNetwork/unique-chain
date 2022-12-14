@@ -31,7 +31,7 @@
     "setup": "ts-node ./src/util/globalSetup.ts",
     "test": "yarn setup && mocha --timeout 9999999 -r ts-node/register './src/**/*.*test.ts'",
     "testParallelFull": "yarn testParallel && yarn testSequential",
-    "testParallel": "yarn setup && mocha --parallel --timeout 9999999 -r ts-node/register './src/check-event/**/*.test.ts'",
+    "testParallel": "yarn setup && mocha --parallel --timeout 9999999 -r ts-node/register './src/leak/**/*.test.ts'",
     "testSequential": "yarn setup && mocha --timeout 9999999 -r ts-node/register './src/**/*.seqtest.ts'",
     "testStructure": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/nesting/*.*test.ts",
     "testEth": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/**/*.*test.ts'",

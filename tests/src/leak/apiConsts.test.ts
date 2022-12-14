@@ -16,7 +16,7 @@
 
 import {ApiPromise} from '@polkadot/api';
 import {ApiBase} from '@polkadot/api/base';
-import {usingPlaygrounds, itSub, expect} from './util';
+import {usingPlaygrounds, itSub, expect} from '../util';
 
 
 const MAX_COLLECTION_DESCRIPTION_LENGTH = 256n;
