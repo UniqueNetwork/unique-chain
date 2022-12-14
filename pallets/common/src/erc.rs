@@ -36,7 +36,7 @@ use alloc::format;
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
-		EthCrossAccount, convert_cross_account_to_uint256, CollectionPermissions as EvmPermissions,
+		EthCrossAccount, CollectionPermissions as EvmPermissions,
 		CollectionLimits as EvmCollectionLimits,
 	},
 	weights::WeightInfo,

@@ -17,7 +17,6 @@
 import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import exp from 'constants';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
 
@@ -180,9 +179,16 @@ describe('NFT: Plain calls', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiverCross = helper.ethCrossAccount.fromKeyringPair(bob);
     const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-    const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
-      collectionAdmin: true,
-      mutable: true}}; });
+    const permissions: ITokenPropertyPermission[] = properties
+      .map(p => {
+        return {
+          key: p.key, permission: {
+            tokenOwner: true,
+            collectionAdmin: true,
+            mutable: true,
+          },
+        };
+      });
     
     
     const collection = await helper.nft.mintCollection(minter, {
@@ -198,7 +204,7 @@ describe('NFT: Plain calls', () => {
     let tokenId = result.events.Transfer.returnValues.tokenId;
     expect(tokenId).to.be.equal(expectedTokenId);
 
-    const event = result.events.Transfer;
+    let event = result.events.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(bob.address));
@@ -206,10 +212,16 @@ describe('NFT: Plain calls', () => {
     
     expectedTokenId = await contract.methods.nextTokenId().call();
     result = await contract.methods.mintCross(receiverCross, properties).send();
-    tokenId = result.events.Transfer.returnValues.tokenId;
-
-    expect(tokenId).to.be.equal(expectedTokenId);
+    event = result.events.Transfer;
+    expect(event.address).to.be.equal(collectionAddress);
+    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(bob.address));
+    expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
     
+    tokenId = result.events.Transfer.returnValues.tokenId;
+    
+    expect(tokenId).to.be.equal(expectedTokenId);
+
     expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
       .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
   });

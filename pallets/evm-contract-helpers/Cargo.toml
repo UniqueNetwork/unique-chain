@@ -50,6 +50,7 @@ std = [
     "pallet-evm-coder-substrate/std",
     "pallet-evm/std",
     "up-sponsorship/std",
+    "pallet-common/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
-stubgen = ["evm-coder/stubgen"]
+stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]

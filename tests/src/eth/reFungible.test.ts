@@ -17,7 +17,7 @@
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
-import { ITokenPropertyPermission } from '../util/playgrounds/types';
+import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
 describe('Refungible: Information getting', () => {
   let donor: IKeyringPair;
@@ -159,7 +159,7 @@ describe('Refungible: Plain calls', () => {
     let tokenId = result.events.Transfer.returnValues.tokenId;
     expect(tokenId).to.be.equal(expectedTokenId);
 
-    const event = result.events.Transfer;
+    let event = result.events.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(bob.address));
@@ -167,6 +167,12 @@ describe('Refungible: Plain calls', () => {
     
     expectedTokenId = await contract.methods.nextTokenId().call();
     result = await contract.methods.mintCross(receiverCross, properties).send();
+    event = result.events.Transfer;
+    expect(event.address).to.be.equal(collectionAddress);
+    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(bob.address));
+    expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
+    
     tokenId = result.events.Transfer.returnValues.tokenId;
 
     expect(tokenId).to.be.equal(expectedTokenId);

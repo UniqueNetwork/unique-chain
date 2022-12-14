@@ -733,7 +733,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return false;
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to a mint token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	/// @dev EVM selector for this function is: 0x6a627842,
@@ -745,7 +745,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return 0;
 	}
 
-	// /// @notice Function to mint token.
+	// /// @notice Function to a mint token.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
 	// /// @param to The new owner
@@ -979,7 +979,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// 	return false;
 	// }
 
-	/// @notice Function to mint token.
+	/// @notice Function to a mint token.
 	/// @param to The new owner crossAccountId
 	/// @param properties Properties of minted token
 	/// @return uint256 The id of the newly minted token

@@ -53,15 +53,6 @@ pub fn is_collection(address: &H160) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
-/// Convert `CrossAccountId` to `uint256`.
-pub fn convert_cross_account_to_uint256<T: Config>(from: &T::CrossAccountId) -> uint256
-where
-	T::AccountId: AsRef<[u8; 32]>,
-{
-	let slice = from.as_sub().as_ref();
-	uint256::from_big_endian(slice)
-}
-
 /// Convert `uint256` to `CrossAccountId`.
 pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
 where
@@ -71,22 +62,6 @@ where
 	from.to_big_endian(&mut new_admin_arr);
 	let account_id = T::AccountId::from(new_admin_arr);
 	T::CrossAccountId::from_sub(account_id)
-}
-
-/// Convert `CrossAccountId` to `(address, uint256)`.
-pub fn convert_cross_account_to_tuple<T: Config>(
-	cross_account_id: &T::CrossAccountId,
-) -> (address, uint256)
-where
-	T::AccountId: AsRef<[u8; 32]>,
-{
-	if cross_account_id.is_canonical_substrate() {
-		let sub = convert_cross_account_to_uint256::<T>(cross_account_id);
-		(Default::default(), sub)
-	} else {
-		let eth = *cross_account_id.as_eth();
-		(eth, Default::default())
-	}
 }
 
 /// Convert tuple `(address, uint256)` to `CrossAccountId`.
@@ -128,10 +103,7 @@ impl EthCrossAccount {
 		T::AccountId: AsRef<[u8; 32]>,
 	{
 		if cross_account_id.is_canonical_substrate() {
-			Self {
-				eth: Default::default(),
-				sub: convert_cross_account_to_uint256::<T>(cross_account_id),
-			}
+			Self::from_sub::<T>(cross_account_id.as_sub())
 		} else {
 			Self {
 				eth: *cross_account_id.as_eth(),
