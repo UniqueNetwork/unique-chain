@@ -320,6 +320,59 @@ describe('Integration Test: Token Properties', () => {
     expect((await nestedToken.getData())!.properties).to.be.empty;
     expect(await targetToken.getProperties()).to.be.empty;
   });
+
+  [
+    {mode: 'nft' as const, storage: 'nonfungible' as const, pieces: undefined, requiredPallets: []},
+    {mode: 'rft' as const, storage: 'refungible' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Allows modifying a token property multiple times (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+
+      const maxTokenPropertiesSize = 32768;
+
+      const propDataSize = 4096;
+
+      let propDataChar = 'a';
+      const makeNewPropData = () => {
+        propDataChar = String.fromCharCode(propDataChar.charCodeAt(0) + 1);
+        return `${propDataChar}`.repeat(propDataSize);
+      };
+
+      const token = await (
+        testCase.pieces
+          ? collection.mintToken(alice, testCase.pieces)
+          : collection.mintToken(alice)
+      );
+
+      const getConsumedSpace = async () => {
+        const props = (await helper.getApi().query[testCase.storage].tokenProperties(token.collectionId, token.tokenId)).toJSON();
+        
+        return (props! as any).consumedSpace;
+      };
+
+      await token.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
+      const originalSpace = await getConsumedSpace();
+      expect(originalSpace).to.be.equal(propDataSize);
+
+      const sameSizePropertiesPossibleNum = maxTokenPropertiesSize / propDataSize;
+
+      // It is possible to modify a property as many times as needed.
+      // It will not consume any additional space.
+      for (let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
+        await token.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
+        const consumedSpace = await getConsumedSpace();
+        expect(consumedSpace).to.be.equal(originalSpace);
+      }
+    }));
 });
 
 describe('Negative Integration Test: Token Properties', () => {
@@ -476,7 +529,7 @@ describe('Negative Integration Test: Token Properties', () => {
     await testForbidsAddingPropertiesIfPropertyNotDeclared(token, amount);
   });
 
-  async function testForbidsAddingTooManyProperties(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
+  async function testForbidsAddingTooLargeProperties(token: UniqueNFToken | UniqueRFToken, pieces: bigint) {
     const originalSpace = await prepare(token, pieces);
 
     await expect(
@@ -504,15 +557,36 @@ describe('Negative Integration Test: Token Properties', () => {
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
-  itSub('Forbids adding too many properties to a token (NFT)', async ({helper}) =>  {
+  itSub('Forbids adding too large properties to a token (NFT)', async ({helper}) =>  {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
-    await testForbidsAddingTooManyProperties(token, amount);
+    await testForbidsAddingTooLargeProperties(token, amount);
   });
 
-  itSub.ifWithPallets('Forbids adding too many properties to a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
+  itSub.ifWithPallets('Forbids adding too large properties to a token (ReFungible)', [Pallets.ReFungible], async ({helper}) => {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'RFT');
-    await testForbidsAddingTooManyProperties(token, amount);
+    await testForbidsAddingTooLargeProperties(token, amount);
   });
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Forbids adding too many propeties to a token (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const collection = await helper[testCase.mode].mintCollection(alice);
+      const maxPropertiesPerItem = 64;
+
+      for (let i = 0; i < maxPropertiesPerItem; i++) {
+        await collection.setTokenPropertyPermissions(alice, [{
+          key: `${i+1}`,
+          permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
+        }]);
+      }
+
+      await expect(collection.setTokenPropertyPermissions(alice, [{
+        key: `${maxPropertiesPerItem}-th`,
+        permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
+      }])).to.be.rejectedWith(/common\.PropertyLimitReached/);
+    }));
 });
 
 describe('ReFungible token properties permissions tests', () => {
