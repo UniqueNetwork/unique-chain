@@ -133,6 +133,8 @@ describe('Integration Test: Collection Properties', () => {
   });
 
   [
+    // TODO enable properties for FT collection in Substrate (release 040)
+    // {mode: 'ft' as const, requiredPallets: []},
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
@@ -167,6 +169,8 @@ describe('Integration Test: Collection Properties', () => {
     }));
 
   [
+    // TODO enable properties for FT collection in Substrate (release 040)
+    // {mode: 'ft' as const, requiredPallets: []},
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
