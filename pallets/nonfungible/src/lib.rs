@@ -824,17 +824,6 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	/// Set property permissions for the collection.
-	///
-	/// Sender should be the owner or admin of the collection.
-	pub fn set_property_permissions(
-		collection: &CollectionHandle<T>,
-		sender: &T::CrossAccountId,
-		permission: Vec<PropertyKeyPermission>,
-	) -> DispatchResult {
-		<PalletCommon<T>>::set_token_property_permissions(collection, sender, permission)
-	}
-
 	pub fn token_property_permission(collection_id: CollectionId) -> PropertiesPermissionMap {
 		<PalletCommon<T>>::property_permissions(collection_id)
 	}

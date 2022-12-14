@@ -34,7 +34,7 @@ use up_data_structs::{
 	CollectionPropertiesVec,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
@@ -70,10 +70,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_owner: bool,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		<Pallet<T>>::set_property_permissions(
+		<Pallet<T>>::set_token_property_permissions(
 			self,
 			&caller,
-			[PropertyKeyPermission {
+			vec![PropertyKeyPermission {
 				key: <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "too long key")?,
@@ -82,8 +82,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					collection_admin,
 					token_owner,
 				},
-			}]
-			.into(),
+			}],
 		)
 		.map_err(dispatch_to_evm::<T>)
 	}
@@ -137,7 +136,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			});
 		}
 
-		<Pallet<T>>::set_property_permissions(self, &caller, perms).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::set_token_property_permissions(self, &caller, perms)
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	fn token_property_permissions(
