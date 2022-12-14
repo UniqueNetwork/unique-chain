@@ -28,7 +28,7 @@ describe('Integration Test: Token Properties', () => {
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({filename: __filename});
-      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+      [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 100n, 100n], donor);
     });
 
     permissions = [
@@ -400,6 +400,39 @@ describe('Integration Test: Token Properties', () => {
       await token.deleteProperties(alice, [propKey]);
       consumedSpace = await token.getTokenPropertiesConsumedSpace();
       expect(consumedSpace).to.be.equal(originalSpace);
+    }));
+
+  [
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`repair_item preserves valid consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+      const token = await (
+        testCase.pieces
+          ? collection.mintToken(alice, testCase.pieces)
+          : collection.mintToken(alice)
+      );
+
+      const propDataSize = 4096;
+      const propData = 'a'.repeat(propDataSize);
+
+      await token.setProperties(alice, [{key: propKey, value: propData}]);
+      const originalSpace = await token.getTokenPropertiesConsumedSpace();
+      expect(originalSpace).to.be.equal(propDataSize);
+
+      await helper.executeExtrinsic(alice, 'api.tx.unique.repairItem', [token.collectionId, token.tokenId], true);
+      const recomputedSpace = await token.getTokenPropertiesConsumedSpace();
+      expect(recomputedSpace).to.be.equal(originalSpace);
     }));
 });
 

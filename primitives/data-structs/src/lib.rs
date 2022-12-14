@@ -1200,6 +1200,10 @@ impl<Value> PropertiesMap<Value> {
 
 		Ok(())
 	}
+
+	pub fn values(&self) -> impl Iterator<Item = &Value> {
+		self.0.values()
+	}
 }
 
 impl<Value> IntoIterator for PropertiesMap<Value> {
@@ -1271,6 +1275,12 @@ impl Properties {
 	/// Get property with appropriate key.
 	pub fn get(&self, key: &PropertyKey) -> Option<&PropertyValue> {
 		self.map.get(key)
+	}
+
+	/// Recomputes the consumed space for the current properties state.
+	/// Needed to repair a token due to a bug fixed in the [PR #733](https://github.com/UniqueNetwork/unique-chain/pull/773).
+	pub fn recompute_consumed_space(&mut self) {
+		self.consumed_space = self.map.values().map(|value| value.len() as u32).sum();
 	}
 }
 

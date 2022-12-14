@@ -1326,4 +1326,12 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
 	}
+
+	pub fn repair_item(collection: &NonfungibleHandle<T>, token: TokenId) -> DispatchResult {
+		<TokenProperties<T>>::mutate((collection.id, token), |properties| {
+			properties.recompute_consumed_space();
+		});
+
+		Ok(())
+	}
 }

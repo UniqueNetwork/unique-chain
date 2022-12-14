@@ -290,4 +290,12 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
 	}: {<Pallet<T>>::token_owner(collection.id, item)}
+
+	repair_item {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let item = create_max_item(&collection, &owner, [(owner.clone(), 100)])?;
+	}: {<Pallet<T>>::repair_item(&collection, item)?}
 }
