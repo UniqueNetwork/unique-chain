@@ -121,6 +121,7 @@ pub struct EthCrossAccount {
 }
 
 impl EthCrossAccount {
+	/// Converts `CrossAccountId` to `EthCrossAccount` to be correctly usable with Ethereum.
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -139,6 +140,7 @@ impl EthCrossAccount {
 		}
 	}
 
+	/// Converts `EthCrossAccount` to `CrossAccountId` to be correctly usable with Substrate.
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,

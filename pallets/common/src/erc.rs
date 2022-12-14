@@ -676,29 +676,6 @@ where
 	}
 }
 
-/// ### Note
-/// Do not forget to add: `self.consume_store_reads(1)?;`
-fn check_is_owner_or_admin<T: Config>(
-	caller: caller,
-	collection: &CollectionHandle<T>,
-) -> Result<T::CrossAccountId> {
-	let caller = T::CrossAccountId::from_eth(caller);
-	collection
-		.check_is_owner_or_admin(&caller)
-		.map_err(dispatch_to_evm::<T>)?;
-	Ok(caller)
-}
-
-/// ### Note
-/// Do not forget to add: `self.consume_store_writes(1)?;`
-fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
-	collection
-		.check_is_internal()
-		.map_err(dispatch_to_evm::<T>)?;
-	collection.save().map_err(dispatch_to_evm::<T>)?;
-	Ok(())
-}
-
 /// Contains static property keys and values.
 pub mod static_property {
 	use evm_coder::{

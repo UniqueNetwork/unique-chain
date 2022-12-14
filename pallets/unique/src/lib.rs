@@ -74,7 +74,7 @@
 extern crate alloc;
 
 use frame_support::{
-	decl_module, decl_storage, decl_error, decl_event,
+	decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
 	ensure, fail,
 	weights::{Weight},
@@ -91,7 +91,7 @@ use up_data_structs::{
 	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
 	CreateCollectionData, CreateItemExData, budget, Property, PropertyKey, PropertyKeyPermission,
 };
-use pallet_evm::{account::CrossAccountId};
+use pallet_evm::account::CrossAccountId;
 use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
 	dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
@@ -267,6 +267,7 @@ decl_module! {
 		/// to which a token belongs (limit [`MAX_TOKEN_PREFIX_LENGTH`]).
 		/// * `mode`: Type of items stored in the collection and type dependent data.
 		// returns collection ID
+		#[allow(deprecated)]
 		#[weight = <SelfWeightOf<T>>::create_collection()]
 		#[deprecated(note = "`create_collection_ex` is more up-to-date and advanced, prefer it instead")]
 		pub fn create_collection(
