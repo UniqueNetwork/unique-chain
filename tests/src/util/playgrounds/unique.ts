@@ -1100,6 +1100,13 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
     return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
   }
 
+  async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.common.collectionProperties(collectionId)).toJSON();
+        
+    return (props! as any).consumedSpace;
+  }
+
   async getCollectionOptions(collectionId: number) {
     return (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
   }
@@ -3035,6 +3042,10 @@ export class UniqueBaseCollection {
     return await this.helper.collection.getProperties(this.collectionId, propertyKeys);
   }
 
+  async getPropertiesConsumedSpace() {
+    return await this.helper.collection.getPropertiesConsumedSpace(this.collectionId);
+  }
+
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.collection.getTokenNextSponsored(this.collectionId, tokenId, addressObj);
   }
@@ -3158,6 +3169,13 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
   }
 
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
+  }
+
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.nft.transferToken(signer, this.collectionId, tokenId, addressObj);
   }
@@ -3267,6 +3285,13 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.rft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount=1n) {
@@ -3419,6 +3444,10 @@ export class UniqueBaseToken {
 
   async getProperties(propertyKeys?: string[] | null) {
     return await this.collection.getTokenProperties(this.tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace() {
+    return await this.collection.getTokenPropertiesConsumedSpace(this.tokenId);
   }
 
   async setProperties(signer: TSigner, properties: IProperty[]) {

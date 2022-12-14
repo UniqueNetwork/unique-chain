@@ -1461,4 +1461,12 @@ impl<T: Config> Pallet<T> {
 	) -> bool {
 		<CollectionAllowance<T>>::get((collection.id, owner, operator))
 	}
+
+	pub fn repair_item(collection: &RefungibleHandle<T>, token: TokenId) -> DispatchResult {
+		<TokenProperties<T>>::mutate((collection.id, token), |properties| {
+			properties.recompute_consumed_space();
+		});
+
+		Ok(())
+	}
 }
