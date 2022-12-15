@@ -236,4 +236,12 @@ benchmarks! {
 			operator: cross_sub;
 		};
 	}: {<Pallet<T>>::allowance_for_all(&collection, &owner, &operator)}
+
+	repair_item {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let item = create_max_item(&collection, &owner, owner.clone())?;
+	}: {<Pallet<T>>::repair_item(&collection, item)?}
 }

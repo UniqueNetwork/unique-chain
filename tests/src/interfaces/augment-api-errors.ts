@@ -145,6 +145,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * This address is not set as sponsor, use setCollectionSponsor first.
+       **/
+      ConfirmSponsorshipFail: AugmentedError<ApiType>;
+      /**
        * Empty property keys are forbidden
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
@@ -216,6 +220,17 @@ declare module '@polkadot/api-base/types/errors' {
        * User does not satisfy the nesting rule
        **/
       UserIsNotAllowedToNest: AugmentedError<ApiType>;
+      /**
+       * The user is not an administrator.
+       **/
+      UserIsNotCollectionAdmin: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    configuration: {
+      InconsistentConfiguration: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -666,44 +681,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    scheduler: {
-      /**
-       * There is no place for a new task in the agenda
-       **/
-      AgendaIsExhausted: AugmentedError<ApiType>;
-      /**
-       * Failed to schedule a call
-       **/
-      FailedToSchedule: AugmentedError<ApiType>;
-      /**
-       * Attempt to use a non-named function on a named task.
-       **/
-      Named: AugmentedError<ApiType>;
-      /**
-       * Cannot find the scheduled call.
-       **/
-      NotFound: AugmentedError<ApiType>;
-      /**
-       * Scheduled call preimage is not found
-       **/
-      PreimageNotFound: AugmentedError<ApiType>;
-      /**
-       * Scheduled call is corrupted
-       **/
-      ScheduledCallCorrupted: AugmentedError<ApiType>;
-      /**
-       * Given target block number is in the past.
-       **/
-      TargetBlockNumberInPast: AugmentedError<ApiType>;
-      /**
-       * Scheduled call is too big
-       **/
-      TooBigScheduledCall: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     structure: {
       /**
        * While nesting, reached the breadth limit of nesting, exceeding the provided budget.
@@ -845,10 +822,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
-      /**
-       * This address is not set as sponsor, use setCollectionSponsor first.
-       **/
-      ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
       /**
        * Length of items properties must be greater than 0.
        **/

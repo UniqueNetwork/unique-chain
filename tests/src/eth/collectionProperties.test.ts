@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
+import {itEth, usingEthPlaygrounds, expect} from './util';
 import {Pallets} from '../util';
 import {IProperty, ITokenPropertyPermission} from '../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';

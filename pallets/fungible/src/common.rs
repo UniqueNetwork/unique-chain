@@ -111,6 +111,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn set_allowance_for_all() -> Weight {
 		Weight::zero()
 	}
+
+	fn repair_item() -> Weight {
+		Weight::zero()
+	}
 }
 
 /// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallete
@@ -440,5 +444,10 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn allowance_for_all(&self, _owner: T::CrossAccountId, _operator: T::CrossAccountId) -> bool {
 		false
+	}
+
+	/// Repairs a possibly broken item.
+	fn repair_item(&self, _token: TokenId) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::FungibleTokensAreAlwaysValid)
 	}
 }

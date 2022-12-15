@@ -305,7 +305,7 @@ class ArrangeGroup {
 
   calculatePalletAddress(palletId: any) {
     const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
-    return encodeAddress(address);
+    return encodeAddress(address, this.helper.chain.getChainProperties().ss58Format);
   }
 
   makeScheduledIds(num: number): string[] {

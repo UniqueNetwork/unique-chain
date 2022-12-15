@@ -23,6 +23,8 @@ use frame_support::{
 	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
 };
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_arithmetic::traits::{BaseArithmetic, Unsigned};
 use smallvec::smallvec;
 
@@ -51,6 +53,15 @@ mod pallet {
 
 		#[pallet::constant]
 		type MaxOverridedAllowedLocations: Get<u32>;
+		#[pallet::constant]
+		type AppPromotionDailyRate: Get<Perbill>;
+		#[pallet::constant]
+		type DayRelayBlocks: Get<Self::BlockNumber>;
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		InconsistentConfiguration,
 	}
 
 	#[pallet::storage]
@@ -70,6 +81,10 @@ mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	#[pallet::storage]
+	pub type AppPromomotionConfigurationOverride<T: Config> =
+		StorageValue<Value = AppPromotionConfiguration<T::BlockNumber>, QueryKind = ValueQuery>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::DbWeight::get().writes(1))]
@@ -77,7 +92,7 @@ mod pallet {
 			origin: OriginFor<T>,
 			coeff: Option<u32>,
 		) -> DispatchResult {
-			let _sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 			if let Some(coeff) = coeff {
 				<WeightToFeeCoefficientOverride<T>>::set(coeff);
 			} else {
@@ -91,7 +106,7 @@ mod pallet {
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
 		) -> DispatchResult {
-			let _sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 			if let Some(coeff) = coeff {
 				<MinGasPriceOverride<T>>::set(coeff);
 			} else {
@@ -105,8 +120,28 @@ mod pallet {
 			origin: OriginFor<T>,
 			locations: Option<BoundedVec<MultiLocation, T::MaxOverridedAllowedLocations>>,
 		) -> DispatchResult {
-			let _sender = ensure_root(origin)?;
+			ensure_root(origin)?;
 			<XcmAllowedLocationsOverride<T>>::set(locations);
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_app_promotion_configuration_override(
+			origin: OriginFor<T>,
+			mut configuration: AppPromotionConfiguration<T::BlockNumber>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if configuration.interval_income.is_some() {
+				return Err(<Error<T>>::InconsistentConfiguration.into());
+			}
+
+			configuration.interval_income = configuration.recalculation_interval.map(|b| {
+				Perbill::from_rational(b, T::DayRelayBlocks::get())
+					* T::AppPromotionDailyRate::get()
+			});
+
+			<AppPromomotionConfigurationOverride<T>>::set(configuration);
+
 			Ok(())
 		}
 	}
@@ -143,4 +178,16 @@ impl<T: Config> fp_evm::FeeCalculator for FeeCalculator<T> {
 			T::DbWeight::get().reads(1),
 		)
 	}
+}
+
+#[derive(Encode, Decode, Clone, Debug, Default, TypeInfo, MaxEncodedLen, PartialEq, PartialOrd)]
+pub struct AppPromotionConfiguration<BlockNumber> {
+	/// In relay blocks.
+	pub recalculation_interval: Option<BlockNumber>,
+	/// In parachain blocks.
+	pub pending_interval: Option<BlockNumber>,
+	/// Value for `RecalculationInterval` based on 0.05% per 24h.
+	pub interval_income: Option<Perbill>,
+	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.
+	pub max_stakers_per_calculation: Option<u8>,
 }

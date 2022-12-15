@@ -62,7 +62,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		Unique: pallet_unique::{Pallet, Call, Storage, Event<T>},
+		Unique: pallet_unique::{Pallet, Call, Storage},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Common: pallet_common::{Pallet, Storage, Event<T>},
 		Fungible: pallet_fungible::{Pallet, Storage},
@@ -273,7 +273,6 @@ parameter_types! {
 }
 
 impl pallet_unique::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;

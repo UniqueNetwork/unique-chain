@@ -220,6 +220,48 @@
   },
   {
     "inputs": [],
+    "name": "collectionNestingPermissions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionPermissions",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" }
+        ],
+        "internalType": "struct Tuple36[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "collectionNestingRestrictedCollectionIds",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "bool", "name": "field_0", "type": "bool" },
+          {
+            "internalType": "uint256[]",
+            "name": "field_1",
+            "type": "uint256[]"
+          }
+        ],
+        "internalType": "struct Tuple33",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionOwner",
     "outputs": [
       {

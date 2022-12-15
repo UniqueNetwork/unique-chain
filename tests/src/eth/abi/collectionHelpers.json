@@ -5,6 +5,19 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "collectionId",
+        "type": "address"
+      }
+    ],
+    "name": "CollectionChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "owner",
         "type": "address"
       },
@@ -29,6 +42,25 @@
       }
     ],
     "name": "CollectionDestroyed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "collectionId",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokenChanged",
     "type": "event"
   },
   {

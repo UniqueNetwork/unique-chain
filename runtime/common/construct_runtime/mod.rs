@@ -55,10 +55,10 @@ macro_rules! construct_runtime {
 
                 // Unique Pallets
                 Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-                Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
+                Unique: pallet_unique::{Pallet, Call, Storage} = 61,
 
-                #[runtimes(opal)]
-                Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
+                // #[runtimes(opal)]
+                // Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
 
                 Configuration: pallet_configuration::{Pallet, Call, Storage} = 63,
 
@@ -79,7 +79,7 @@ macro_rules! construct_runtime {
                 #[runtimes(opal)]
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
                 #[runtimes(opal)]

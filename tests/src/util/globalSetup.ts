@@ -18,9 +18,13 @@ const globalSetup = async (): Promise<void> => {
           if (!result) Promise.reject();
         });
 
-      // 3. Set up App Promotion admin 
+      // 3. Configure App Promotion 
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
+        // TODO: move to config file
+        const LOCKING_PERIOD = 8n; // 8 blocks of relay
+        const UNLOCKING_PERIOD = 4n; // 4 blocks of parachain
+
         const superuser = await privateKey('//Alice');
         const palletAddress = helper.arrange.calculatePalletAddress('appstake');
         const palletAdmin = await privateKey('//PromotionAdmin');
@@ -29,6 +33,10 @@ const globalSetup = async (): Promise<void> => {
         const nominal = helper.balance.getOneTokenNominal();
         await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 1000n * nominal);
         await helper.balance.transferToSubstrate(superuser, palletAddress, 1000n * nominal);
+        await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
+          .setAppPromotionConfigurationOverride({
+            recalculationInterval: LOCKING_PERIOD,
+            pendingInterval: UNLOCKING_PERIOD})], true);
       }
     } catch (error) {
       console.error(error);

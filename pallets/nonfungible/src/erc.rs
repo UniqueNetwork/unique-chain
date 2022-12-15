@@ -155,7 +155,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			properties.into_iter(),
-			<Pallet<T>>::token_exists(&self, TokenId(token_id)),
+			false,
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)

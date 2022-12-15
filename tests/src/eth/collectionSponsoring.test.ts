@@ -128,7 +128,7 @@ describe('evm collection sponsoring', () => {
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
       expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
       // Account cannot confirm sponsorship if it is not set as a sponsor
-      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
       
       // Sponsor can confirm sponsorship:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
@@ -160,19 +160,18 @@ describe('evm collection sponsoring', () => {
       // User can mint token without balance:
       {
         const result = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
-        const events = helper.eth.normalizeEvents(result.events);
+        const event = helper.eth.normalizeEvents(result.events)
+          .find(event => event.event === 'Transfer');
   
-        expect(events).to.be.deep.equal([
-          {
-            address: collectionAddress,
-            event: 'Transfer',
-            args: {
-              from: '0x0000000000000000000000000000000000000000',
-              to: user,
-              tokenId: '1',
-            },
+        expect(event).to.be.deep.equal({
+          address: collectionAddress,
+          event: 'Transfer',
+          args: {
+            from: '0x0000000000000000000000000000000000000000',
+            to: user,
+            tokenId: '1',
           },
-        ]);
+        });
   
         const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
         const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsorEth));
@@ -258,7 +257,7 @@ describe('evm collection sponsoring', () => {
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsor : sponsorCross).send();
       let collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
-      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
   
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;
@@ -274,20 +273,19 @@ describe('evm collection sponsoring', () => {
       const mintingResult = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
       const tokenId = mintingResult.events.Transfer.returnValues.tokenId;
   
-      const events = helper.eth.normalizeEvents(mintingResult.events);
+      const event = helper.eth.normalizeEvents(mintingResult.events)
+        .find(event => event.event === 'Transfer');
       const address = helper.ethAddress.fromCollectionId(collectionId);
   
-      expect(events).to.be.deep.equal([
-        {
-          address,
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: user,
-            tokenId: '1',
-          },
+      expect(event).to.be.deep.equal({
+        address,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: user,
+          tokenId: '1',
         },
-      ]);
+      });
       expect(await collectionEvm.methods.tokenURI(tokenId).call({from: user})).to.be.equal('Test URI');
   
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
