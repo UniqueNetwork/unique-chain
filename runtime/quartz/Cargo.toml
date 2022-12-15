@@ -82,6 +82,7 @@ try-runtime = [
     'pallet-app-promotion/try-runtime',
     'pallet-foreign-assets/try-runtime',
     'pallet-ethereum/try-runtime',
+    'pallet-evm/try-runtime',
     'pallet-evm-coder-substrate/try-runtime',
     'pallet-evm-contract-helpers/try-runtime',
     'pallet-evm-transaction-payment/try-runtime',
