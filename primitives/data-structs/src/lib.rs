@@ -1310,10 +1310,15 @@ impl TrySetProperty for Properties {
 			return Err(PropertiesError::NoSpaceForProperty);
 		}
 
+		let value_len = value_len as u32;
 		let old_value = self.map.try_scoped_set(scope, key, value)?;
 
-		if old_value.is_none() {
-			self.consumed_space += value_len as u32;
+		let old_value_len = old_value.as_ref().map(|v| v.len() as u32).unwrap_or(0);
+
+		if value_len > old_value_len {
+			self.consumed_space += value_len - old_value_len;
+		} else {
+			self.consumed_space -= old_value_len - value_len;
 		}
 
 		Ok(old_value)
