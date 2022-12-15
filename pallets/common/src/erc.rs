@@ -412,6 +412,7 @@ where
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_collection_limit(
@@ -883,32 +884,4 @@ pub mod static_property {
 			))
 		})
 	}
-}
-
-fn convert_value_limit<V: Into<uint256> + Copy>(
-	limit: EvmCollectionLimits,
-	value: &Option<V>,
-) -> (EvmCollectionLimits, bool, uint256) {
-	value
-		.map(|v| (limit, true, v.into()))
-		.unwrap_or((limit, false, Default::default()))
-}
-
-fn convert_bool_limit(
-	limit: EvmCollectionLimits,
-	value: &Option<bool>,
-) -> (EvmCollectionLimits, bool, uint256) {
-	value
-		.map(|v| {
-			(
-				limit,
-				true,
-				if v {
-					uint256::from(1)
-				} else {
-					Default::default()
-				},
-			)
-		})
-		.unwrap_or((limit, false, Default::default()))
 }
