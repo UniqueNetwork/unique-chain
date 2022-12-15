@@ -45,6 +45,7 @@
     "testNesting": "mocha --timeout 9999999 -r ts-node/register ./**/nest.test.ts",
     "testUnnesting": "mocha --timeout 9999999 -r ts-node/register ./**/unnest.test.ts",
     "testProperties": "mocha --timeout 9999999 -r ts-node/register ./**/collectionProperties.test.ts ./**/tokenProperties.test.ts ./**/getPropertiesRpc.test.ts",
+    "testCollectionProperties": "mocha --timeout 9999999 -r ts-node/register ./**/collectionProperties.test.ts",
     "testMigration": "mocha --timeout 9999999 -r ts-node/register ./**/nesting/migration-check.test.ts",
     "testAddCollectionAdmin": "mocha --timeout 9999999 -r ts-node/register ./**/addCollectionAdmin.test.ts",
     "testSetCollectionLimits": "mocha --timeout 9999999 -r ts-node/register ./**/setCollectionLimits.test.ts",
