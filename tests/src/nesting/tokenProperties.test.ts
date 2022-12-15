@@ -325,7 +325,7 @@ describe('Integration Test: Token Properties', () => {
     {mode: 'nft' as const, storage: 'nonfungible' as const, pieces: undefined, requiredPallets: []},
     {mode: 'rft' as const, storage: 'refungible' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
-    itSub.ifWithPallets(`Allows modifying a token property multiple times (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+    itSub.ifWithPallets(`Allows modifying a token property multiple times with the same size (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
 
       const collection = await helper[testCase.mode].mintCollection(alice, {
@@ -439,7 +439,7 @@ describe('Integration Test: Token Properties', () => {
     {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
     {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
-    itSub.ifWithPallets(`Modifying a token property with different size correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+    itSub.ifWithPallets(`Modifying a token property with different sizes correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
 
       const collection = await helper[testCase.mode].mintCollection(alice, {

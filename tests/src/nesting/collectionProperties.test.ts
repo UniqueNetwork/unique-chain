@@ -198,7 +198,7 @@ describe('Integration Test: Collection Properties', () => {
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
-    itSub.ifWithPallets(`Modifying a collection property with different size correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+    itSub.ifWithPallets(`Modifying a collection property with different sizes correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
 
       const collection = await helper[testCase.mode].mintCollection(alice);
