@@ -434,6 +434,55 @@ describe('Integration Test: Token Properties', () => {
       const recomputedSpace = await token.getTokenPropertiesConsumedSpace();
       expect(recomputedSpace).to.be.equal(originalSpace);
     }));
+
+  [
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Modifying a token property with different size correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+      const token = await (
+        testCase.pieces
+          ? collection.mintToken(alice, testCase.pieces)
+          : collection.mintToken(alice)
+      );
+      const originalSpace = await token.getTokenPropertiesConsumedSpace();
+
+      const initPropDataSize = 4096;
+      const biggerPropDataSize = 5000;
+      const smallerPropDataSize = 4000;
+
+      const initPropData = 'a'.repeat(initPropDataSize);
+      const biggerPropData = 'b'.repeat(biggerPropDataSize);
+      const smallerPropData = 'b'.repeat(smallerPropDataSize);
+
+      let consumedSpace;
+      let expectedConsumedSpaceDiff;
+
+      await token.setProperties(alice, [{key: propKey, value: initPropData}]);
+      consumedSpace = await token.getTokenPropertiesConsumedSpace();
+      expectedConsumedSpaceDiff = initPropDataSize - originalSpace;
+      expect(consumedSpace).to.be.equal(originalSpace + expectedConsumedSpaceDiff);
+
+      await token.setProperties(alice, [{key: propKey, value: biggerPropData}]);
+      consumedSpace = await token.getTokenPropertiesConsumedSpace();
+      expectedConsumedSpaceDiff = biggerPropDataSize - initPropDataSize;
+      expect(consumedSpace).to.be.equal(initPropDataSize + expectedConsumedSpaceDiff);
+
+      await token.setProperties(alice, [{key: propKey, value: smallerPropData}]);
+      consumedSpace = await token.getTokenPropertiesConsumedSpace();
+      expectedConsumedSpaceDiff = biggerPropDataSize - smallerPropDataSize;
+      expect(consumedSpace).to.be.equal(biggerPropDataSize - expectedConsumedSpaceDiff);
+    }));
 });
 
 describe('Negative Integration Test: Token Properties', () => {
