@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {itEth, usingEthPlaygrounds, expect} from './util';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {ITokenPropertyPermission, TCollectionMode} from '../util/playgrounds/types';
 import {Pallets} from '../util';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
 
@@ -32,28 +32,32 @@ describe('EVM token properties', () => {
     });
   });
 
-  itEth('Can be reconfigured', async({helper}) => {
+  [
+    {mode: 'nft'},
+    {mode: 'rft'}
+  ].map(testCase =>
+  itEth(`[${testCase.mode}] Set and get token property permissions`, async({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const caller = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const mode: any = testCase.mode;
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
-      const collection = await helper.nft.mintCollection(alice);
-      await collection.addAdmin(alice, {Ethereum: caller});
+      const {collectionId, collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+      const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
+      await collection.methods.addCollectionAdminCross(caller).send({from: owner});
+
+      await collection.methods.setTokenPropertyPermissions([['testKey', [[0, mutable], [1, tokenOwner], [2, collectionAdmin]]]]).send({from: caller.eth});
       
-      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(address, 'nft', caller);
-  
-      await contract.methods.setTokenPropertyPermissions([['testKey', [[0, mutable], [1, tokenOwner], [2, collectionAdmin]]]]).send({from: caller});
-  
-      expect(await collection.getPropertyPermissions()).to.be.deep.equal([{
+      expect(await helper.nft.getPropertyPermissions(collectionId)).to.be.deep.equal([{
         key: 'testKey',
         permission: {mutable, collectionAdmin, tokenOwner},
       }]);
 
-      expect(await contract.methods.tokenPropertyPermissions().call({from: caller})).to.be.like([
+      expect(await collection.methods.tokenPropertyPermissions().call({from: caller.eth})).to.be.like([
         ['testKey', [['0', mutable], ['1', tokenOwner], ['2', collectionAdmin]]]
       ]);
     }
-  });
+  })
+  );
 
   [
     {

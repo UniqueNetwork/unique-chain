@@ -119,7 +119,7 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
     ethEvents.push(event);
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['PropertyPermissionSet']}]);
-  await collection.methods.setTokenPropertyPermission('testKey', true, true, true).send({from: owner});
+  await collection.methods.setTokenPropertyPermissions([['testKey', [[0, true], [1, true], [2, true]]]]).send({from: owner});
   await helper.wait.newBlocks(1);
   expect(ethEvents).to.be.like([
     {
@@ -374,7 +374,7 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
   const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
   const result = await collection.methods.mint(owner).send({from: owner});
   const tokenId = result.events.Transfer.returnValues.tokenId;
-  await collection.methods.setTokenPropertyPermission('A', true, true, true).send({from: owner});
+  await collection.methods.setTokenPropertyPermissions([['A', [[0, true], [1, true], [2, true]]]]).send({from: owner});
 
 
   const ethEvents: any = [];
