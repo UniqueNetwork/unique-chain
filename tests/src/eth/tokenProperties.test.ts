@@ -33,6 +33,7 @@ describe('EVM token properties', () => {
   });
 
   itEth('Can be reconfigured', async({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
       const collection = await helper.nft.mintCollection(alice);

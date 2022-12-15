@@ -143,6 +143,7 @@ impl<T: Config> RefungibleHandle<T> {
 			.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// @notice Get permissions for token properties.
 	fn token_property_permissions(
 		&self,
 	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {

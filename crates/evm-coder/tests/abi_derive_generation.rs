@@ -740,7 +740,7 @@ mod test_enum {
 	/// Some docs
 	/// At multi
 	/// line
-	#[derive(AbiCoder, Debug, PartialEq, Default)]
+	#[derive(AbiCoder, Debug, PartialEq, Default, Clone, Copy)]
 	#[repr(u8)]
 	enum Color {
 		/// Docs for Red

@@ -140,18 +140,18 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(dispatch_to_evm::<T>)
 	}
 
+	/// @notice Get permissions for token properties.
 	fn token_property_permissions(
 		&self,
 	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {
 		let mut res = <Vec<_>>::new();
 		for (key, pp) in <Pallet<T>>::token_property_permission(self.id) {
 			let key = string::from_utf8(key.into_inner()).unwrap();
-			let pp = [
+			let pp = vec![
 				(EthTokenPermissions::Mutable, pp.mutable),
 				(EthTokenPermissions::TokenOwner, pp.token_owner),
 				(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
-			]
-			.into();
+			];
 			res.push((key, pp));
 		}
 		Ok(res)
