@@ -233,7 +233,7 @@ describe('Integration Test: Maintenance Mode', () => {
     expect(tokenId).to.be.equal('1');
 
     await expect(contract.methods.mintWithTokenURI(receiver, 'Test URI').send())
-      .to.be.rejectedWith(/Returned error: unknown error/);
+      .to.be.rejectedWith(/(Returned error: unknown error)|(submit transaction to pool failed: Pool\(InvalidTransaction\(InvalidTransaction::Call\)\))/);
 
     await expect(contract.methods.ownerOf(tokenId).call()).rejectedWith(/token not found/);
 
