@@ -372,7 +372,7 @@ describe('Sponsoring EVM contracts', () => {
     const originalFlipperBalance = await helper.balance.getEthereum(flipper.options.address);
     expect(originalFlipperBalance).to.be.not.equal('0');
 
-    await expect(flipper.methods.flip().send({from: caller})).to.be.rejectedWith(/Returned error: insufficient funds for gas \* price \+ value/);
+    await expect(flipper.methods.flip().send({from: caller})).to.be.rejectedWith(/(Returned error: insufficient funds for gas \* price \+ value)|(InvalidTransaction::Payment)/);
     expect(await flipper.methods.getValue().call()).to.be.false;
 
     // Balance should be taken from flipper instead of caller
