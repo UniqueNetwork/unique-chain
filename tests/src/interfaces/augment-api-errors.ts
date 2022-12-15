@@ -397,6 +397,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
       /**
+       * Only a fungible collection could be possibly broken; any fungible token is valid.
+       **/
+      FungibleTokensAreAlwaysValid: AugmentedError<ApiType>;
+      /**
        * Not Fungible item data used to mint in Fungible collection.
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
