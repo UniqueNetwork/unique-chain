@@ -20,6 +20,7 @@ import {itEth, usingEthPlaygrounds, expect} from './util';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 import {Pallets} from '../util';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
+import {EthTokenPermissions} from './util/playgrounds/types';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
@@ -36,7 +37,7 @@ describe('EVM token properties', () => {
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
-    itEth.ifWithPallets.only(`[${testCase.mode}] Set and get token property permissions`, testCase.requiredPallets, async({helper}) => {
+    itEth.ifWithPallets(`[${testCase.mode}] Set and get token property permissions`, testCase.requiredPallets, async({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const caller = await helper.ethCrossAccount.createAccountWithBalance(donor);
       for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
@@ -44,7 +45,13 @@ describe('EVM token properties', () => {
         const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
         await collection.methods.addCollectionAdminCross(caller).send({from: owner});
 
-        await collection.methods.setTokenPropertyPermissions([['testKey', [[0, mutable], [1, tokenOwner], [2, collectionAdmin]]]]).send({from: caller.eth});
+        await collection.methods.setTokenPropertyPermissions([
+          ['testKey', [
+            [EthTokenPermissions.Mutable, mutable], 
+            [EthTokenPermissions.TokenOwner, tokenOwner], 
+            [EthTokenPermissions.CollectionAdmin, collectionAdmin]],
+          ],
+        ]).send({from: caller.eth});
       
         expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
           key: 'testKey',
@@ -52,7 +59,11 @@ describe('EVM token properties', () => {
         }]);
 
         expect(await collection.methods.tokenPropertyPermissions().call({from: caller.eth})).to.be.like([
-          ['testKey', [['0', mutable], ['1', tokenOwner], ['2', collectionAdmin]]],
+          ['testKey', [
+            [EthTokenPermissions.Mutable.toString(), mutable], 
+            [EthTokenPermissions.TokenOwner.toString(), tokenOwner], 
+            [EthTokenPermissions.CollectionAdmin.toString(), collectionAdmin]],
+          ],
         ]);
       }
     }));
