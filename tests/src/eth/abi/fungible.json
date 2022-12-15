@@ -208,24 +208,11 @@
   },
   {
     "inputs": [],
-<<<<<<< HEAD
-    "name": "collectionNestingPermissions",
-=======
     "name": "collectionLimits",
->>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
     "outputs": [
       {
         "components": [
           {
-<<<<<<< HEAD
-            "internalType": "enum CollectionPermissions",
-            "name": "field_0",
-            "type": "uint8"
-          },
-          { "internalType": "bool", "name": "field_1", "type": "bool" }
-        ],
-        "internalType": "struct Tuple24[]",
-=======
             "internalType": "enum CollectionLimits",
             "name": "field_0",
             "type": "uint8"
@@ -234,7 +221,6 @@
           { "internalType": "uint256", "name": "field_2", "type": "uint256" }
         ],
         "internalType": "struct Tuple20[]",
->>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
         "name": "",
         "type": "tuple[]"
       }
@@ -244,7 +230,27 @@
   },
   {
     "inputs": [],
-<<<<<<< HEAD
+    "name": "collectionNestingPermissions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionPermissions",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" }
+        ],
+        "internalType": "struct Tuple29[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionNestingRestrictedCollectionIds",
     "outputs": [
       {
@@ -256,7 +262,7 @@
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct Tuple21",
+        "internalType": "struct Tuple26",
         "name": "",
         "type": "tuple"
       }
@@ -266,8 +272,6 @@
   },
   {
     "inputs": [],
-=======
->>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
     "name": "collectionOwner",
     "outputs": [
       {

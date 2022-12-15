@@ -104,11 +104,7 @@ struct Tuple41 {
 }
 
 /// @title A contract that allows you to work with collections.
-<<<<<<< HEAD
-/// @dev the ERC-165 identifier for this interface is 0xb5e1747f
-=======
-/// @dev the ERC-165 identifier for this interface is 0xf8ebdec0
->>>>>>> 32e011ce... added `collectionLimits` function in `Collection` interface,  changed signture for `setCollectionLimit`
+/// @dev the ERC-165 identifier for this interface is 0x81172a75
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -228,6 +224,7 @@ interface Collection is Dummy, ERC165 {
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
 	/// @dev EVM selector for this function is: 0x88150bd0,
 	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
@@ -285,12 +282,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple31 memory);
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple35 memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (Tuple34[] memory);
+	function collectionNestingPermissions() external view returns (Tuple38[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -404,6 +401,23 @@ struct EthCrossAccount {
 	uint256 sub;
 }
 
+/// @dev anonymous struct
+struct Tuple38 {
+	CollectionPermissions field_0;
+	bool field_1;
+}
+
+enum CollectionPermissions {
+	CollectionAdmin,
+	TokenOwner
+}
+
+/// @dev anonymous struct
+struct Tuple35 {
+	bool field_0;
+	uint256[] field_1;
+}
+
 enum CollectionLimits {
 	AccountTokenOwnership,
 	SponsoredDataSize,
@@ -421,23 +435,6 @@ struct Tuple30 {
 	CollectionLimits field_0;
 	bool field_1;
 	uint256 field_2;
-}
-
-/// @dev anonymous struct
-struct Tuple34 {
-	CollectionPermissions field_0;
-	bool field_1;
-}
-
-enum CollectionPermissions {
-	CollectionAdmin,
-	TokenOwner
-}
-
-/// @dev anonymous struct
-struct Tuple31 {
-	bool field_0;
-	uint256[] field_1;
 }
 
 /// @dev anonymous struct
