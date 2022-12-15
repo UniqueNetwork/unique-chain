@@ -121,14 +121,14 @@ describe('Cannot set invalid collection limits', () => {
     }));
 
   [
-    {case: 'nft' as const, method: 'createNFTCollection' as const},
-    {case: 'rft' as const, method: 'createRFTCollection' as const, requiredPallets: [Pallets.ReFungible]},
-    {case: 'ft' as const, method: 'createFTCollection' as const},
+    {case: 'nft' as const, requiredPallets: []},
+    {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {case: 'ft' as const, requiredPallets: []},
   ].map(testCase =>
     itEth.ifWithPallets(`Non-owner and non-admin cannot set collection limits for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const nonOwner = await helper.eth.createAccountWithBalance(donor);
-      const {collectionAddress} = await helper.eth.createCollecion(testCase.method, owner, 'Limits', 'absolutely anything', 'FLO', 18);
+      const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'FLO', 18);
 
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
       await expect(collectionEvm.methods
