@@ -463,7 +463,7 @@ describe('Integration Test: Token Properties', () => {
 
       const initPropData = 'a'.repeat(initPropDataSize);
       const biggerPropData = 'b'.repeat(biggerPropDataSize);
-      const smallerPropData = 'b'.repeat(smallerPropDataSize);
+      const smallerPropData = 'c'.repeat(smallerPropDataSize);
 
       let consumedSpace;
       let expectedConsumedSpaceDiff;
