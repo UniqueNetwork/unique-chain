@@ -26,17 +26,7 @@ export enum SponsoringMode {
   Allowlisted = 1,
   Generous = 2,
 }
-export enum CollectionLimits {
-  AccountTokenOwnership,
-	SponsoredDataSize,
-	SponsoredDataRateLimit,
-	TokenLimit,
-	SponsorTransferTimeout,
-	SponsorApproveTimeout,
-	OwnerCanTransfer,
-	OwnerCanDestroy,
-	TransferEnabled
-}
+
 
 export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair>) => Promise<void>) => {
   const silentConsole = new SilentConsole();

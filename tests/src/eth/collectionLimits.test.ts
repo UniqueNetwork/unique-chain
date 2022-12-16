@@ -1,6 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util';
-import {CollectionLimits, expect, itEth, usingEthPlaygrounds} from './util';
+import {expect, itEth, usingEthPlaygrounds} from './util';
+import {CollectionLimits} from './util/playgrounds/types';
 
 
 describe('Can set collection limits', () => {
@@ -62,15 +63,15 @@ describe('Can set collection limits', () => {
       // Check limits from eth:
       const limitsEvm = await collectionEvm.methods.collectionLimits().call({from: owner});
       expect(limitsEvm).to.have.length(9);
-      expect(limitsEvm[0]).to.deep.eq(['0', true, limits.accountTokenOwnershipLimit.toString()]);
-      expect(limitsEvm[1]).to.deep.eq(['1', true, limits.sponsoredDataSize.toString()]);
-      expect(limitsEvm[2]).to.deep.eq(['2', true, limits.sponsoredDataRateLimit.toString()]);
-      expect(limitsEvm[3]).to.deep.eq(['3', true, limits.tokenLimit.toString()]);
-      expect(limitsEvm[4]).to.deep.eq(['4', true, limits.sponsorTransferTimeout.toString()]);
-      expect(limitsEvm[5]).to.deep.eq(['5', true, limits.sponsorApproveTimeout.toString()]);
-      expect(limitsEvm[6]).to.deep.eq(['6', true, limits.ownerCanTransfer.toString()]);
-      expect(limitsEvm[7]).to.deep.eq(['7', true, limits.ownerCanDestroy.toString()]);
-      expect(limitsEvm[8]).to.deep.eq(['8', true, limits.transfersEnabled.toString()]);
+      expect(limitsEvm[0]).to.deep.eq([CollectionLimits.AccountTokenOwnership.toString(), true, limits.accountTokenOwnershipLimit.toString()]);
+      expect(limitsEvm[1]).to.deep.eq([CollectionLimits.SponsoredDataSize.toString(), true, limits.sponsoredDataSize.toString()]);
+      expect(limitsEvm[2]).to.deep.eq([CollectionLimits.SponsoredDataRateLimit.toString(), true, limits.sponsoredDataRateLimit.toString()]);
+      expect(limitsEvm[3]).to.deep.eq([CollectionLimits.TokenLimit.toString(), true, limits.tokenLimit.toString()]);
+      expect(limitsEvm[4]).to.deep.eq([CollectionLimits.SponsorTransferTimeout.toString(), true, limits.sponsorTransferTimeout.toString()]);
+      expect(limitsEvm[5]).to.deep.eq([CollectionLimits.SponsorApproveTimeout.toString(), true, limits.sponsorApproveTimeout.toString()]);
+      expect(limitsEvm[6]).to.deep.eq([CollectionLimits.OwnerCanTransfer.toString(), true, limits.ownerCanTransfer.toString()]);
+      expect(limitsEvm[7]).to.deep.eq([CollectionLimits.OwnerCanDestroy.toString(), true, limits.ownerCanDestroy.toString()]);
+      expect(limitsEvm[8]).to.deep.eq([CollectionLimits.TransferEnabled.toString(), true, limits.transfersEnabled.toString()]);
     }));
 });
 

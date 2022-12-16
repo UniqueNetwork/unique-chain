@@ -155,6 +155,8 @@ impl EthCrossAccount {
 		}
 	}
 }
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 #[derive(Debug, Default, Clone, Copy, AbiCoder)]
 #[repr(u8)]
 pub enum CollectionLimits {

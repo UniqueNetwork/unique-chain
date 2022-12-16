@@ -358,18 +358,16 @@ where
 			),
 			limits
 				.sponsored_data_rate_limit
-				.map(|limit| {
-					(
-						EvmCollectionLimits::SponsoredDataRateLimit,
-						match limit {
-							SponsoringRateLimit::Blocks(_) => true,
-							_ => false,
-						},
-						match limit {
-							SponsoringRateLimit::Blocks(blocks) => blocks.into(),
-							_ => Default::default(),
-						},
-					)
+				.and_then(|limit| {
+					if let SponsoringRateLimit::Blocks(blocks) = limit {
+						Some((
+							EvmCollectionLimits::SponsoredDataRateLimit,
+							true,
+							blocks.into(),
+						))
+					} else {
+						None
+					}
 				})
 				.unwrap_or((
 					EvmCollectionLimits::SponsoredDataRateLimit,

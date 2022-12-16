@@ -16,10 +16,10 @@
 
 import {expect} from 'chai';
 import {IKeyringPair} from '@polkadot/types/types';
-import {CollectionLimits, EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
 import {IEvent, TCollectionMode} from '../util/playgrounds/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
-import {EthTokenPermissions, NormalizedEvent} from './util/playgrounds/types';
+import {CollectionLimits, EthTokenPermissions, NormalizedEvent} from './util/playgrounds/types';
 
 let donor: IKeyringPair;
   

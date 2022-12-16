@@ -17,7 +17,8 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '../util';
-import {CollectionLimits, expect, itEth, usingEthPlaygrounds} from './util';
+import {expect, itEth, usingEthPlaygrounds} from './util';
+import { CollectionLimits } from './util/playgrounds/types';
 
 const DECIMALS = 18;
 
