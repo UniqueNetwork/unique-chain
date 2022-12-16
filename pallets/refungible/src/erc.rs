@@ -93,6 +93,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
 	/// @param permissions Permissions for keys.
+	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(permissions.len() as u32))]
 	fn set_token_property_permissions(
 		&mut self,
 		caller: caller,
@@ -101,7 +102,7 @@ impl<T: Config> RefungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		const PERMISSIONS_FIELDS_COUNT: usize = 3;
 
-		let mut perms = <Vec<_>>::new();
+		let mut perms = Vec::new();
 
 		for (key, pp) in permissions {
 			if pp.len() > PERMISSIONS_FIELDS_COUNT {
@@ -132,9 +133,7 @@ impl<T: Config> RefungibleHandle<T> {
 			}
 
 			perms.push(PropertyKeyPermission {
-				key: <Vec<u8>>::from(key)
-					.try_into()
-					.map_err(|_| "too long key")?,
+				key: key.into_bytes().try_into().map_err(|_| "too long key")?,
 				permission: token_permission,
 			});
 		}
@@ -147,18 +146,19 @@ impl<T: Config> RefungibleHandle<T> {
 	fn token_property_permissions(
 		&self,
 	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {
-		let mut res = <Vec<_>>::new();
-		for (key, pp) in <Pallet<T>>::token_property_permission(self.id) {
-			let key = string::from_utf8(key.into_inner()).unwrap();
-			let pp = [
-				(EthTokenPermissions::Mutable, pp.mutable),
-				(EthTokenPermissions::TokenOwner, pp.token_owner),
-				(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
-			]
-			.into();
-			res.push((key, pp));
-		}
-		Ok(res)
+		let perms = <Pallet<T>>::token_property_permission(self.id);
+		Ok(perms
+			.into_iter()
+			.map(|(key, pp)| {
+				let key = string::from_utf8(key.into_inner()).expect("Stored key must be valid");
+				let pp = vec![
+					(EthTokenPermissions::Mutable, pp.mutable),
+					(EthTokenPermissions::TokenOwner, pp.token_owner),
+					(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
+				];
+				(key, pp)
+			})
+			.collect())
 	}
 
 	/// @notice Set token property value.
