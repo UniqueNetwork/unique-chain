@@ -106,7 +106,7 @@ parameter_types! {
 impl pallet_configuration::Config for Runtime {
 	type DefaultWeightToFeeCoefficient = ConstU32<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
-	type MaxOverridedAllowedLocations = ConstU32<16>;
+	type MaxXcmAllowedLocations = ConstU32<16>;
 	type AppPromotionDailyRate = AppPromotionDailyRate;
 	type DayRelayBlocks = DayRelayBlocks;
 }

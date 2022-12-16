@@ -103,7 +103,7 @@ use up_data_structs::{
 	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,
 	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission,
 	PropertyKey, PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
-	TokenChild, AuxPropertyValue,
+	TokenChild, AuxPropertyValue, PropertiesPermissionMap,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -824,15 +824,8 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	/// Set property permissions for the collection.
-	///
-	/// Sender should be the owner or admin of the collection.
-	pub fn set_property_permission(
-		collection: &CollectionHandle<T>,
-		sender: &T::CrossAccountId,
-		permission: PropertyKeyPermission,
-	) -> DispatchResult {
-		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
+	pub fn token_property_permission(collection_id: CollectionId) -> PropertiesPermissionMap {
+		<PalletCommon<T>>::property_permissions(collection_id)
 	}
 
 	pub fn check_token_immediate_ownership(

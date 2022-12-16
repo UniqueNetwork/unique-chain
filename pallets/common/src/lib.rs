@@ -1222,7 +1222,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Set scouped collection property.
+	/// Set a scoped collection property, where the scope is a special prefix
+	/// prohibiting a user to change the property.
 	///
 	/// * `collection_id` - ID of the collection for which the property is being set.
 	/// * `scope` - Property scope.
@@ -1240,7 +1241,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Set scouped collection properties.
+	/// Set scoped collection properties, where the scope is a special prefix
+	/// prohibiting a user to change the properties.
 	///
 	/// * `collection_id` - ID of the collection for which the properties is being set.
 	/// * `scope` - Property scope.
