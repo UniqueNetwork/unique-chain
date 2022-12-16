@@ -983,7 +983,7 @@ decl_module! {
 			})
 		}
 
-		/// Repairs a collection's properties if the data was somehow corrupted.
+		/// Repairs a collection if the data was somehow corrupted.
 		///
 		/// # Arguments
 		///
@@ -997,7 +997,7 @@ decl_module! {
 			<PalletCommon<T>>::repair_collection(collection_id)
 		}
 
-		/// Repairs a token's properties if the data was somehow corrupted.
+		/// Repairs a token if the data was somehow corrupted.
 		///
 		/// # Arguments
 		///

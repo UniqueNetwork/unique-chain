@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip} from '../util';
 
-describe('Integration Test: Token Properties', () => {
+describe('Integration Test: Token Properties with sudo', () => {
   let superuser: IKeyringPair;
   let alice: IKeyringPair; // collection owner
 

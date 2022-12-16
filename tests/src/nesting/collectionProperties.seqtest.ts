@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip} from '../util';
 
-describe('Integration Test: Collection Properties', () => {
+describe('Integration Test: Collection Properties with sudo', () => {
   let superuser: IKeyringPair;
   let alice: IKeyringPair;
   
@@ -40,7 +40,7 @@ describe('Integration Test: Collection Properties', () => {
         requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
       });
     });
-    
+
     itSub('Repairing an unbroken collection\'s properties preserves the consumed space', async({helper}) => {
       const properties = [
         {key: 'sea-creatures', value: 'mermaids'},
