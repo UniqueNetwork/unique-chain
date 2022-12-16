@@ -195,7 +195,7 @@ describe('App promotion', () => {
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
     });
   
-    itSub('should keep different unlocking block for each unlocking stake', async ({ helper }) => {
+    itSub('should keep different unlocking block for each unlocking stake', async ({helper}) => {
       const staker = accounts.pop()!;
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstake(staker);
