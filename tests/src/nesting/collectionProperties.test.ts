@@ -18,11 +18,13 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip} from '../util';
 
 describe('Integration Test: Collection Properties', () => {
+  let superuser: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
+      superuser = await privateKey('//Alice');
       const donor = await privateKey({filename: __filename});
       [alice, bob] = await helper.arrange.createAccounts([200n, 10n], donor);
     });
@@ -199,6 +201,23 @@ describe('Integration Test: Collection Properties', () => {
       expectedConsumedSpaceDiff = biggerPropDataSize - smallerPropDataSize;
       expect(consumedSpace).to.be.equal(biggerPropDataSize - expectedConsumedSpaceDiff);
     });
+
+    itSub('Modifying a collection property with different sizes correctly changes the consumed space', async({helper}) => {
+      const properties = [
+        {key: 'sea-creatures', value: 'mermaids'},
+        {key: 'goldenratio', value: '1.6180339887498948482045868343656381177203091798057628621354486227052604628189'},
+      ];
+      const collection = await helper[testSuite.mode].mintCollection(alice, {properties});
+
+      const newProperty = ' '.repeat(4096);
+      await collection.setProperties(alice, [{key: 'space', value: newProperty}]);
+      const originalSpace = await collection.getPropertiesConsumedSpace();
+      expect(originalSpace).to.be.equal(properties[0].value.length + properties[1].value.length + newProperty.length);
+
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.unique.forceRepairCollection', [collection.collectionId], true);
+      const recomputedSpace = await collection.getPropertiesConsumedSpace();
+      expect(recomputedSpace).to.be.equal(originalSpace);
+    });
   }));
 });
   
@@ -313,6 +332,16 @@ describe('Negative Integration Test: Collection Properties', () => {
           `on trying to delete the non-existent badly-named property #${i}`,
         ).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
       }
+    });
+
+    itSub('Modifying a collection property with different sizes correctly changes the consumed space', async({helper}) => {
+      const collection = await helper[testSuite.mode].mintCollection(alice, {properties: [
+        {key: 'sea-creatures', value: 'mermaids'},
+        {key: 'goldenratio', value: '1.6180339887498948482045868343656381177203091798057628621354486227052604628189'},
+      ]});
+
+      await expect(helper.executeExtrinsic(alice, 'api.tx.unique.forceRepairCollection', [collection.collectionId], true))
+        .to.be.rejectedWith(/BadOrigin/);
     });
   }));
 });

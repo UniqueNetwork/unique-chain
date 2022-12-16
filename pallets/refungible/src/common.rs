@@ -157,7 +157,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::set_allowance_for_all()
 	}
 
-	fn repair_item() -> Weight {
+	fn force_repair_item() -> Weight {
 		<SelfWeightOf<T>>::repair_item()
 	}
 }
@@ -544,7 +544,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::repair_item(self, token),
-			<CommonWeights<T>>::repair_item(),
+			<CommonWeights<T>>::force_repair_item(),
 		)
 	}
 }

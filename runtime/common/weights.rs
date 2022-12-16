@@ -125,8 +125,8 @@ where
 		max_weight_of!(set_allowance_for_all())
 	}
 
-	fn repair_item() -> Weight {
-		max_weight_of!(repair_item())
+	fn force_repair_item() -> Weight {
+		max_weight_of!(force_repair_item())
 	}
 }
 
