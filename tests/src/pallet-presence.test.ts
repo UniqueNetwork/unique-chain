@@ -82,6 +82,7 @@ describe('Pallet presence', () => {
         );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
+        requiredPallets.push(foreignAssets);
       }
     });
   });
