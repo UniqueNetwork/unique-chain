@@ -25,6 +25,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+extern crate alloc;
+
 use frame_support::parameter_types;
 
 use sp_version::RuntimeVersion;

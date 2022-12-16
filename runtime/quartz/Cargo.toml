@@ -463,6 +463,7 @@ derivative = "2.2.0"
 pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
@@ -486,10 +487,13 @@ pallet-ethereum = { default-features = false, git = "https://github.com/uniquene
 pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
 fp-self-contained = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.33" }
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = 'polkadot-v0.9.33' }
 pallet-foreign-assets = { default-features = false, path = "../../pallets/foreign-assets" }
 pallet-maintenance = { default-features = false, path = "../../pallets/maintenance" }
+precompile-utils-macro = { path = "../common/ethereum/precompiles/utils/macro" }
+num_enum = { version = "0.5.3", default-features = false }
 
 ################################################################################
 # Other Dependencies
