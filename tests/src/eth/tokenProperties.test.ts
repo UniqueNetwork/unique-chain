@@ -20,6 +20,7 @@ import {itEth, usingEthPlaygrounds, expect} from './util';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 import {Pallets} from '../util';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
+import {EthTokenPermissions} from './util/playgrounds/types';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
@@ -32,23 +33,168 @@ describe('EVM token properties', () => {
     });
   });
 
-  itEth('Can be reconfigured', async({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
-      const collection = await helper.nft.mintCollection(alice);
-      await collection.addAdmin(alice, {Ethereum: caller});
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Set and get token property permissions`, testCase.requiredPallets, async({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const caller = await helper.ethCrossAccount.createAccountWithBalance(donor);
+      for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
+        const {collectionId, collectionAddress} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+        const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+        await collection.methods.addCollectionAdminCross(caller).send({from: owner});
+
+        await collection.methods.setTokenPropertyPermissions([
+          ['testKey', [
+            [EthTokenPermissions.Mutable, mutable], 
+            [EthTokenPermissions.TokenOwner, tokenOwner], 
+            [EthTokenPermissions.CollectionAdmin, collectionAdmin]],
+          ],
+        ]).send({from: caller.eth});
       
-      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(address, 'nft', caller);
-  
-      await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
-  
-      expect(await collection.getPropertyPermissions()).to.be.deep.equal([{
-        key: 'testKey',
-        permission: {mutable, collectionAdmin, tokenOwner},
-      }]);
-    }
-  });
+        expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
+          key: 'testKey',
+          permission: {mutable, collectionAdmin, tokenOwner},
+        }]);
+
+        expect(await collection.methods.tokenPropertyPermissions().call({from: caller.eth})).to.be.like([
+          ['testKey', [
+            [EthTokenPermissions.Mutable.toString(), mutable], 
+            [EthTokenPermissions.TokenOwner.toString(), tokenOwner], 
+            [EthTokenPermissions.CollectionAdmin.toString(), collectionAdmin]],
+          ],
+        ]);
+      }
+    }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Set and get multiple token property permissions as owner`, testCase.requiredPallets, async({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      
+      const {collectionId, collectionAddress} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+
+      await collection.methods.setTokenPropertyPermissions([
+        ['testKey_0', [
+          [EthTokenPermissions.Mutable, true], 
+          [EthTokenPermissions.TokenOwner, true], 
+          [EthTokenPermissions.CollectionAdmin, true]],
+        ],
+        ['testKey_1', [
+          [EthTokenPermissions.Mutable, true], 
+          [EthTokenPermissions.TokenOwner, false], 
+          [EthTokenPermissions.CollectionAdmin, true]],
+        ],
+        ['testKey_2', [
+          [EthTokenPermissions.Mutable, false], 
+          [EthTokenPermissions.TokenOwner, true], 
+          [EthTokenPermissions.CollectionAdmin, false]],
+        ],
+      ]).send({from: owner});
+      
+      expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([
+        {
+          key: 'testKey_0',
+          permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
+        },
+        {
+          key: 'testKey_1',
+          permission: {mutable: true, tokenOwner: false, collectionAdmin: true},
+        },
+        {
+          key: 'testKey_2',
+          permission: {mutable: false, tokenOwner: true, collectionAdmin: false},
+        },
+      ]);
+
+      expect(await collection.methods.tokenPropertyPermissions().call({from: owner})).to.be.like([
+        ['testKey_0', [
+          [EthTokenPermissions.Mutable.toString(), true], 
+          [EthTokenPermissions.TokenOwner.toString(), true], 
+          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+        ],
+        ['testKey_1', [
+          [EthTokenPermissions.Mutable.toString(), true], 
+          [EthTokenPermissions.TokenOwner.toString(), false], 
+          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+        ],
+        ['testKey_2', [
+          [EthTokenPermissions.Mutable.toString(), false], 
+          [EthTokenPermissions.TokenOwner.toString(), true], 
+          [EthTokenPermissions.CollectionAdmin.toString(), false]],
+        ],
+      ]);
+      
+    }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Set and get multiple token property permissions as admin`, testCase.requiredPallets, async({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const caller = await helper.ethCrossAccount.createAccountWithBalance(donor);
+      
+      const {collectionId, collectionAddress} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+      await collection.methods.addCollectionAdminCross(caller).send({from: owner});
+
+      await collection.methods.setTokenPropertyPermissions([
+        ['testKey_0', [
+          [EthTokenPermissions.Mutable, true], 
+          [EthTokenPermissions.TokenOwner, true], 
+          [EthTokenPermissions.CollectionAdmin, true]],
+        ],
+        ['testKey_1', [
+          [EthTokenPermissions.Mutable, true], 
+          [EthTokenPermissions.TokenOwner, false], 
+          [EthTokenPermissions.CollectionAdmin, true]],
+        ],
+        ['testKey_2', [
+          [EthTokenPermissions.Mutable, false], 
+          [EthTokenPermissions.TokenOwner, true], 
+          [EthTokenPermissions.CollectionAdmin, false]],
+        ],
+      ]).send({from: caller.eth});
+      
+      expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([
+        {
+          key: 'testKey_0',
+          permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
+        },
+        {
+          key: 'testKey_1',
+          permission: {mutable: true, tokenOwner: false, collectionAdmin: true},
+        },
+        {
+          key: 'testKey_2',
+          permission: {mutable: false, tokenOwner: true, collectionAdmin: false},
+        },
+      ]);
+
+      expect(await collection.methods.tokenPropertyPermissions().call({from: caller.eth})).to.be.like([
+        ['testKey_0', [
+          [EthTokenPermissions.Mutable.toString(), true], 
+          [EthTokenPermissions.TokenOwner.toString(), true], 
+          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+        ],
+        ['testKey_1', [
+          [EthTokenPermissions.Mutable.toString(), true], 
+          [EthTokenPermissions.TokenOwner.toString(), false], 
+          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+        ],
+        ['testKey_2', [
+          [EthTokenPermissions.Mutable.toString(), false], 
+          [EthTokenPermissions.TokenOwner.toString(), true], 
+          [EthTokenPermissions.CollectionAdmin.toString(), false]],
+        ],
+      ]);
+      
+    }));
 
   [
     {
@@ -301,6 +447,47 @@ describe('EVM token properties negative', () => {
       const actualProps = await collectionEvm.methods.properties(token.tokenId, []).call();
       expect(actualProps).to.deep.eq(expectedProps);
     }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Cant set token property permissions as non owner or admin`, testCase.requiredPallets, async({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const caller = await helper.eth.createAccountWithBalance(donor);
+        
+      const {collectionAddress} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+  
+      await expect(collection.methods.setTokenPropertyPermissions([
+        ['testKey_0', [
+          [EthTokenPermissions.Mutable, true], 
+          [EthTokenPermissions.TokenOwner, true], 
+          [EthTokenPermissions.CollectionAdmin, true]],
+        ],
+      ]).call({from: caller})).to.be.rejectedWith('NoPermission');  
+    }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Cant set token property permissions with invalid character`, testCase.requiredPallets, async({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+        
+      const {collectionAddress} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+  
+      await expect(collection.methods.setTokenPropertyPermissions([
+        // "Space" is invalid character
+        ['testKey 0', [
+          [EthTokenPermissions.Mutable, true], 
+          [EthTokenPermissions.TokenOwner, true], 
+          [EthTokenPermissions.CollectionAdmin, true]],
+        ],
+      ]).call({from: owner})).to.be.rejectedWith('InvalidCharacterInPropertyKey');  
+    }));
+  
 });
 
 

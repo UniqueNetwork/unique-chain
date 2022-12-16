@@ -113,7 +113,7 @@ use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
 	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	PropertyScope, PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
 };
 
 pub use pallet::*;
@@ -1376,6 +1376,10 @@ impl<T: Config> Pallet<T> {
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
+	}
+
+	pub fn token_property_permission(collection_id: CollectionId) -> PropertiesPermissionMap {
+		<PalletCommon<T>>::property_permissions(collection_id)
 	}
 
 	pub fn set_scoped_token_property_permissions(

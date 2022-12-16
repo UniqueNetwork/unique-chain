@@ -697,12 +697,29 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "key", "type": "string" },
-      { "internalType": "bool", "name": "isMutable", "type": "bool" },
-      { "internalType": "bool", "name": "collectionAdmin", "type": "bool" },
-      { "internalType": "bool", "name": "tokenOwner", "type": "bool" }
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          {
+            "components": [
+              {
+                "internalType": "enum EthTokenPermissions",
+                "name": "field_0",
+                "type": "uint8"
+              },
+              { "internalType": "bool", "name": "field_1", "type": "bool" }
+            ],
+            "internalType": "struct Tuple46[]",
+            "name": "field_1",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct Tuple48[]",
+        "name": "permissions",
+        "type": "tuple[]"
+      }
     ],
-    "name": "setTokenPropertyPermission",
+    "name": "setTokenPropertyPermissions",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -739,6 +756,35 @@
     ],
     "name": "tokenOfOwnerByIndex",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokenPropertyPermissions",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "field_0", "type": "string" },
+          {
+            "components": [
+              {
+                "internalType": "enum EthTokenPermissions",
+                "name": "field_0",
+                "type": "uint8"
+              },
+              { "internalType": "bool", "name": "field_1", "type": "bool" }
+            ],
+            "internalType": "struct Tuple46[]",
+            "name": "field_1",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct Tuple48[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },

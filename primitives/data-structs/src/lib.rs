@@ -1010,7 +1010,7 @@ pub type PropertyKey = BoundedBytes<ConstU32<MAX_PROPERTY_KEY_LENGTH>>;
 pub type PropertyValue = BoundedBytes<ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
 
 /// Property permission.
-#[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
+#[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone, Default)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct PropertyPermission {
 	/// Permission to change the property and property permission.
