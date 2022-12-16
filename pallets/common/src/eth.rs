@@ -147,29 +147,41 @@ pub enum CollectionLimits {
 	/// How many tokens can a user have on one account.
 	#[default]
 	AccountTokenOwnership,
+
 	/// How many bytes of data are available for sponsorship.
 	SponsoredDataSize,
+
 	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
 	SponsoredDataRateLimit,
+
 	/// How many tokens can be mined into this collection.
 	TokenLimit,
+
 	/// Timeouts for transfer sponsoring.
 	SponsorTransferTimeout,
+
 	/// Timeout for sponsoring an approval in passed blocks.
 	SponsorApproveTimeout,
+
 	/// Whether the collection owner of the collection can send tokens (which belong to other users).
 	OwnerCanTransfer,
+
 	/// Can the collection owner burn other people's tokens.
 	OwnerCanDestroy,
+
 	/// Is it possible to send tokens from this collection between users.
 	TransferEnabled,
 }
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 #[derive(Default, Debug, Clone, Copy, AbiCoder)]
 #[repr(u8)]
 pub enum CollectionPermissions {
+	/// Owner of token can nest tokens under it.
 	#[default]
-	CollectionAdmin,
 	TokenOwner,
+
+	/// Admin of token collection can nest tokens under token.
+	CollectionAdmin,
 }
 
 /// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.

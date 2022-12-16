@@ -232,7 +232,7 @@
           { "internalType": "bool", "name": "field_1", "type": "bool" },
           { "internalType": "uint256", "name": "field_2", "type": "uint256" }
         ],
-        "internalType": "struct Tuple32[]",
+        "internalType": "struct Tuple34[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -253,11 +253,7 @@
           },
           { "internalType": "bool", "name": "field_1", "type": "bool" }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple41[]",
-=======
-        "internalType": "struct Tuple38[]",
->>>>>>> 09f69700... chore: generate stubs
+        "internalType": "struct Tuple43[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -278,11 +274,7 @@
             "type": "uint256[]"
           }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple38",
-=======
-        "internalType": "struct Tuple35",
->>>>>>> 09f69700... chore: generate stubs
+        "internalType": "struct Tuple40",
         "name": "",
         "type": "tuple"
       }
@@ -752,20 +744,12 @@
               },
               { "internalType": "bool", "name": "field_1", "type": "bool" }
             ],
-<<<<<<< HEAD
-            "internalType": "struct Tuple56[]",
-=======
-            "internalType": "struct Tuple53[]",
->>>>>>> 9e929f90... chore: generate stubs & types
+            "internalType": "struct Tuple58[]",
             "name": "field_1",
             "type": "tuple[]"
           }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple58[]",
-=======
-        "internalType": "struct Tuple55[]",
->>>>>>> 9e929f90... chore: generate stubs & types
+        "internalType": "struct Tuple60[]",
         "name": "permissions",
         "type": "tuple[]"
       }
@@ -835,20 +819,12 @@
               },
               { "internalType": "bool", "name": "field_1", "type": "bool" }
             ],
-<<<<<<< HEAD
-            "internalType": "struct Tuple56[]",
-=======
-            "internalType": "struct Tuple53[]",
->>>>>>> 9e929f90... chore: generate stubs & types
+            "internalType": "struct Tuple58[]",
             "name": "field_1",
             "type": "tuple[]"
           }
         ],
-<<<<<<< HEAD
-        "internalType": "struct Tuple58[]",
-=======
-        "internalType": "struct Tuple55[]",
->>>>>>> 9e929f90... chore: generate stubs & types
+        "internalType": "struct Tuple60[]",
         "name": "",
         "type": "tuple[]"
       }

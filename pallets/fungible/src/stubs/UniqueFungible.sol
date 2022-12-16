@@ -173,10 +173,10 @@ contract Collection is Dummy, ERC165 {
 	/// Return `false` if a limit not set.
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() public view returns (Tuple20[] memory) {
+	function collectionLimits() public view returns (Tuple23[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple20[](0);
+		return new Tuple23[](0);
 	}
 
 	/// Set limits for the collection.
@@ -284,33 +284,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-<<<<<<< HEAD
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple26 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple29 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple26(false, new uint256[](0));
-=======
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple24 memory) {
-		require(false, stub_error);
-		dummy;
-		return Tuple24(false, new uint256[](0));
->>>>>>> 09f69700... chore: generate stubs
+		return Tuple29(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-<<<<<<< HEAD
-	function collectionNestingPermissions() public view returns (Tuple29[] memory) {
+	function collectionNestingPermissions() public view returns (Tuple32[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple29[](0);
-=======
-	function collectionNestingPermissions() public view returns (Tuple27[] memory) {
-		require(false, stub_error);
-		dummy;
-		return new Tuple27[](0);
->>>>>>> 09f69700... chore: generate stubs
+		return new Tuple32[](0);
 	}
 
 	/// Set the collection access method.
@@ -490,21 +476,13 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
-struct Tuple29 {
-=======
-struct Tuple27 {
->>>>>>> 09f69700... chore: generate stubs
+struct Tuple32 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
-struct Tuple26 {
-=======
-struct Tuple24 {
->>>>>>> 09f69700... chore: generate stubs
+struct Tuple29 {
 	bool field_0;
 	uint256[] field_1;
 }
@@ -532,7 +510,7 @@ enum CollectionLimits {
 }
 
 /// @dev anonymous struct
-struct Tuple20 {
+struct Tuple23 {
 	CollectionLimits field_0;
 	bool field_1;
 	uint256 field_2;

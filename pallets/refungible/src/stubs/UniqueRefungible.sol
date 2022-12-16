@@ -42,11 +42,7 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
-<<<<<<< HEAD
-	function setTokenPropertyPermissions(Tuple58[] memory permissions) public {
-=======
-	function setTokenPropertyPermissions(Tuple55[] memory permissions) public {
->>>>>>> 9e929f90... chore: generate stubs & types
+	function setTokenPropertyPermissions(Tuple60[] memory permissions) public {
 		require(false, stub_error);
 		permissions;
 		dummy = 0;
@@ -55,17 +51,10 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
-<<<<<<< HEAD
-	function tokenPropertyPermissions() public view returns (Tuple58[] memory) {
+	function tokenPropertyPermissions() public view returns (Tuple60[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple58[](0);
-=======
-	function tokenPropertyPermissions() public view returns (Tuple55[] memory) {
-		require(false, stub_error);
-		dummy;
-		return new Tuple55[](0);
->>>>>>> 9e929f90... chore: generate stubs & types
+		return new Tuple60[](0);
 	}
 
 	// /// @notice Set token property value.
@@ -155,23 +144,13 @@ enum EthTokenPermissions {
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
+struct Tuple60 {
+	string field_0;
+	Tuple58[] field_1;
+}
+
+/// @dev anonymous struct
 struct Tuple58 {
-	string field_0;
-	Tuple56[] field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple56 {
-=======
-struct Tuple55 {
-	string field_0;
-	Tuple53[] field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple53 {
->>>>>>> 9e929f90... chore: generate stubs & types
 	EthTokenPermissions field_0;
 	bool field_1;
 }
@@ -332,10 +311,10 @@ contract Collection is Dummy, ERC165 {
 	/// Return `false` if a limit not set.
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() public view returns (Tuple32[] memory) {
+	function collectionLimits() public view returns (Tuple34[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple32[](0);
+		return new Tuple34[](0);
 	}
 
 	/// Set limits for the collection.
@@ -443,33 +422,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-<<<<<<< HEAD
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple38 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple40 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple38(false, new uint256[](0));
-=======
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple35 memory) {
-		require(false, stub_error);
-		dummy;
-		return Tuple35(false, new uint256[](0));
->>>>>>> 09f69700... chore: generate stubs
+		return Tuple40(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-<<<<<<< HEAD
-	function collectionNestingPermissions() public view returns (Tuple41[] memory) {
+	function collectionNestingPermissions() public view returns (Tuple43[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple41[](0);
-=======
-	function collectionNestingPermissions() public view returns (Tuple38[] memory) {
-		require(false, stub_error);
-		dummy;
-		return new Tuple38[](0);
->>>>>>> 09f69700... chore: generate stubs
+		return new Tuple43[](0);
 	}
 
 	/// Set the collection access method.
@@ -649,26 +614,17 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
-struct Tuple41 {
-=======
-struct Tuple38 {
->>>>>>> 09f69700... chore: generate stubs
+struct Tuple43 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
-struct Tuple38 {
-=======
-struct Tuple35 {
->>>>>>> 09f69700... chore: generate stubs
+struct Tuple40 {
 	bool field_0;
 	uint256[] field_1;
 }
 
-<<<<<<< HEAD
 /// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 enum CollectionLimits {
 	/// @dev How many tokens can a user have on one account.
@@ -692,20 +648,12 @@ enum CollectionLimits {
 }
 
 /// @dev anonymous struct
-struct Tuple32 {
+struct Tuple34 {
 	CollectionLimits field_0;
 	bool field_1;
 	uint256 field_2;
 }
 
-/// @dev anonymous struct
-struct Tuple31 {
-	address field_0;
-	uint256 field_1;
-}
-
-=======
->>>>>>> 09f69700... chore: generate stubs
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
 contract ERC721Metadata is Dummy, ERC165 {
 	// /// @notice A descriptive name for a collection of NFTs in this contract

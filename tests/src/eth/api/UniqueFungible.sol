@@ -119,7 +119,7 @@ interface Collection is Dummy, ERC165 {
 	/// Return `false` if a limit not set.
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() external view returns (Tuple19[] memory);
+	function collectionLimits() external view returns (Tuple21[] memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -191,20 +191,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-<<<<<<< HEAD
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple24 memory);
-=======
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple22 memory);
->>>>>>> 09f69700... chore: generate stubs
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple26 memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-<<<<<<< HEAD
-	function collectionNestingPermissions() external view returns (Tuple27[] memory);
-=======
-	function collectionNestingPermissions() external view returns (Tuple25[] memory);
->>>>>>> 09f69700... chore: generate stubs
+	function collectionNestingPermissions() external view returns (Tuple29[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -319,11 +311,7 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
-struct Tuple27 {
-=======
-struct Tuple25 {
->>>>>>> 09f69700... chore: generate stubs
+struct Tuple29 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
@@ -334,11 +322,7 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-<<<<<<< HEAD
-struct Tuple24 {
-=======
-struct Tuple22 {
->>>>>>> 09f69700... chore: generate stubs
+struct Tuple26 {
 	bool field_0;
 	uint256[] field_1;
 }
@@ -366,7 +350,7 @@ enum CollectionLimits {
 }
 
 /// @dev anonymous struct
-struct Tuple19 {
+struct Tuple21 {
 	CollectionLimits field_0;
 	bool field_1;
 	uint256 field_2;
