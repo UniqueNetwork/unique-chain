@@ -25,3 +25,14 @@ export enum EthTokenPermissions {
   TokenOwner,
   CollectionAdmin
 }
+export enum CollectionLimits {
+  AccountTokenOwnership,
+	SponsoredDataSize,
+	SponsoredDataRateLimit,
+	TokenLimit,
+	SponsorTransferTimeout,
+	SponsorApproveTimeout,
+	OwnerCanTransfer,
+	OwnerCanDestroy,
+	TransferEnabled
+}

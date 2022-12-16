@@ -208,6 +208,28 @@
   },
   {
     "inputs": [],
+    "name": "collectionLimits",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionLimits",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" },
+          { "internalType": "uint256", "name": "field_2", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple20[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionNestingPermissions",
     "outputs": [
       {
@@ -219,7 +241,7 @@
           },
           { "internalType": "bool", "name": "field_1", "type": "bool" }
         ],
-        "internalType": "struct Tuple24[]",
+        "internalType": "struct Tuple29[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -240,7 +262,7 @@
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct Tuple21",
+        "internalType": "struct Tuple26",
         "name": "",
         "type": "tuple"
       }
@@ -453,7 +475,12 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
+      {
+        "internalType": "enum CollectionLimits",
+        "name": "limit",
+        "type": "uint8"
+      },
+      { "internalType": "bool", "name": "status", "type": "bool" },
       { "internalType": "uint256", "name": "value", "type": "uint256" }
     ],
     "name": "setCollectionLimit",

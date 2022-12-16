@@ -19,7 +19,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
 import {IEvent, TCollectionMode} from '../util/playgrounds/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
-import {EthTokenPermissions, NormalizedEvent} from './util/playgrounds/types';
+import {CollectionLimits, EthTokenPermissions, NormalizedEvent} from './util/playgrounds/types';
 
 let donor: IKeyringPair;
   
@@ -234,7 +234,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionLimitSet']}]);
   {
-    await collection.methods.setCollectionLimit('ownerCanTransfer', 0n).send({from: owner});
+    await collection.methods.setCollectionLimit(CollectionLimits.OwnerCanTransfer, true, 0).send({from: owner});
     await helper.wait.newBlocks(1);
     expect(ethEvents).to.be.like([
       {

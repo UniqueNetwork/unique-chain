@@ -30,11 +30,12 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
-	function setTokenPropertyPermissions(Tuple43[] memory permissions) external;
+	function setTokenPropertyPermissions(Tuple52[] memory permissions) external;
 
+	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
-	function tokenPropertyPermissions() external view returns (Tuple43[] memory);
+	function tokenPropertyPermissions() external view returns (Tuple52[] memory);
 
 	// /// @notice Set token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -85,26 +86,30 @@ struct Property {
 	bytes value;
 }
 
+/// @dev Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
 enum EthTokenPermissions {
+	/// @dev Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
 	Mutable,
+	/// @dev Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
 	TokenOwner,
+	/// @dev Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
 	CollectionAdmin
 }
 
 /// @dev anonymous struct
-struct Tuple43 {
+struct Tuple52 {
 	string field_0;
-	Tuple41[] field_1;
+	Tuple50[] field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple41 {
+struct Tuple50 {
 	EthTokenPermissions field_0;
 	bool field_1;
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xb5e1747f
+/// @dev the ERC-165 identifier for this interface is 0x81172a75
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -195,6 +200,23 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: collectionSponsor()
 	function collectionSponsor() external view returns (Tuple27 memory);
 
+	/// Get current collection limits.
+	///
+	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// Return `false` if a limit not set.
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() external view returns (Tuple30[] memory);
+
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
 	/// @param limit Name of the limit. Valid names:
@@ -207,10 +229,15 @@ interface Collection is Dummy, ERC165 {
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x4ad890a8,
-	///  or in textual repr: setCollectionLimit(string,uint256)
-	function setCollectionLimit(string memory limit, uint256 value) external;
+	/// @dev EVM selector for this function is: 0x88150bd0,
+	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
+	function setCollectionLimit(
+		CollectionLimits limit,
+		bool status,
+		uint256 value
+	) external;
 
 	/// Get contract address.
 	/// @dev EVM selector for this function is: 0xf6b4dfb4,
@@ -260,12 +287,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple31 memory);
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple35 memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (Tuple34[] memory);
+	function collectionNestingPermissions() external view returns (Tuple38[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -380,7 +407,7 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple34 {
+struct Tuple38 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
@@ -391,9 +418,38 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple31 {
+struct Tuple35 {
 	bool field_0;
 	uint256[] field_1;
+}
+
+/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+enum CollectionLimits {
+	/// @dev How many tokens can a user have on one account.
+	AccountTokenOwnership,
+	/// @dev How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+	/// @dev In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+	/// @dev How many tokens can be mined into this collection.
+	TokenLimit,
+	/// @dev Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+	/// @dev Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+	/// @dev Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+	/// @dev Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+	/// @dev Is it possible to send tokens from this collection between users.
+	TransferEnabled
+}
+
+/// @dev anonymous struct
+struct Tuple30 {
+	CollectionLimits field_0;
+	bool field_1;
+	uint256 field_2;
 }
 
 /// @dev anonymous struct
