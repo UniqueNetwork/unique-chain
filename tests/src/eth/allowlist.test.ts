@@ -166,7 +166,7 @@ describe('EVM collection allowlist', () => {
     {mode: 'rft' as const, cross: false, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, cross: false, requiredPallets: []},
   ].map(testCase => 
-    itEth.only(`Non-owner cannot add or remove from collection allowlist ${testCase.cross ? 'cross ' : ''}${testCase.mode}`, async ({helper}) => {
+    itEth(`Non-owner cannot add or remove from collection allowlist ${testCase.cross ? 'cross ' : ''}${testCase.mode}`, async ({helper}) => {
       // Select methods:
       const addToAllowList = testCase.cross ? 'addToCollectionAllowListCross' : 'addToCollectionAllowList';
       const removeFromAllowList = testCase.cross ? 'removeFromCollectionAllowListCross' : 'removeFromCollectionAllowList';

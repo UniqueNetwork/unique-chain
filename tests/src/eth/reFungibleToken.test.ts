@@ -288,7 +288,7 @@ describe('Refungible: Plain calls', () => {
     'transfer',
     'transferCross',
   ].map(testCase => 
-    itEth.only(`Can perform ${testCase}()`, async ({helper}) => {
+    itEth(`Can perform ${testCase}()`, async ({helper}) => {
       const isCross = testCase === 'transferCross';
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiverEth = helper.eth.createAccount();
