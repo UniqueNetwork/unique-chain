@@ -163,11 +163,17 @@ pub enum CollectionPermissions {
 	TokenOwner,
 }
 
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
 #[derive(AbiCoder, Copy, Clone, Default, Debug)]
 #[repr(u8)]
 pub enum EthTokenPermissions {
+	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
 	#[default]
 	Mutable,
+
+	/// Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
 	TokenOwner,
+
+	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
 	CollectionAdmin,
 }
