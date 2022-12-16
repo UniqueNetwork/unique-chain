@@ -83,7 +83,7 @@ declare module '@polkadot/api-base/types/consts' {
       dayRelayBlocks: u32 & AugmentedConst<ApiType>;
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
       defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
-      maxOverridedAllowedLocations: u32 & AugmentedConst<ApiType>;
+      maxXcmAllowedLocations: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

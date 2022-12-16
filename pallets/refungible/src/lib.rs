@@ -113,7 +113,8 @@ use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
 	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap, CreateRefungibleExMultipleOwners,
+	PropertyScope, PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
+	CreateRefungibleExMultipleOwners,
 };
 
 pub use pallet::*;

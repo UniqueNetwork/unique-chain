@@ -30,12 +30,20 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
+<<<<<<< HEAD
 	function setTokenPropertyPermissions(Tuple52[] memory permissions) external;
+=======
+	function setTokenPropertyPermissions(Tuple49[] memory permissions) external;
+>>>>>>> 9e929f90... chore: generate stubs & types
 
 	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
+<<<<<<< HEAD
 	function tokenPropertyPermissions() external view returns (Tuple52[] memory);
+=======
+	function tokenPropertyPermissions() external view returns (Tuple49[] memory);
+>>>>>>> 9e929f90... chore: generate stubs & types
 
 	// /// @notice Set token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -97,6 +105,7 @@ enum EthTokenPermissions {
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple52 {
 	string field_0;
 	Tuple50[] field_1;
@@ -104,6 +113,15 @@ struct Tuple52 {
 
 /// @dev anonymous struct
 struct Tuple50 {
+=======
+struct Tuple49 {
+	string field_0;
+	Tuple47[] field_1;
+}
+
+/// @dev anonymous struct
+struct Tuple47 {
+>>>>>>> 9e929f90... chore: generate stubs & types
 	EthTokenPermissions field_0;
 	bool field_1;
 }

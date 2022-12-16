@@ -752,12 +752,20 @@
               },
               { "internalType": "bool", "name": "field_1", "type": "bool" }
             ],
+<<<<<<< HEAD
             "internalType": "struct Tuple56[]",
+=======
+            "internalType": "struct Tuple53[]",
+>>>>>>> 9e929f90... chore: generate stubs & types
             "name": "field_1",
             "type": "tuple[]"
           }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple58[]",
+=======
+        "internalType": "struct Tuple55[]",
+>>>>>>> 9e929f90... chore: generate stubs & types
         "name": "permissions",
         "type": "tuple[]"
       }
@@ -827,12 +835,20 @@
               },
               { "internalType": "bool", "name": "field_1", "type": "bool" }
             ],
+<<<<<<< HEAD
             "internalType": "struct Tuple56[]",
+=======
+            "internalType": "struct Tuple53[]",
+>>>>>>> 9e929f90... chore: generate stubs & types
             "name": "field_1",
             "type": "tuple[]"
           }
         ],
+<<<<<<< HEAD
         "internalType": "struct Tuple58[]",
+=======
+        "internalType": "struct Tuple55[]",
+>>>>>>> 9e929f90... chore: generate stubs & types
         "name": "",
         "type": "tuple[]"
       }

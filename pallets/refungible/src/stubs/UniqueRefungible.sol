@@ -42,7 +42,11 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
+<<<<<<< HEAD
 	function setTokenPropertyPermissions(Tuple58[] memory permissions) public {
+=======
+	function setTokenPropertyPermissions(Tuple55[] memory permissions) public {
+>>>>>>> 9e929f90... chore: generate stubs & types
 		require(false, stub_error);
 		permissions;
 		dummy = 0;
@@ -51,10 +55,17 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
+<<<<<<< HEAD
 	function tokenPropertyPermissions() public view returns (Tuple58[] memory) {
 		require(false, stub_error);
 		dummy;
 		return new Tuple58[](0);
+=======
+	function tokenPropertyPermissions() public view returns (Tuple55[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new Tuple55[](0);
+>>>>>>> 9e929f90... chore: generate stubs & types
 	}
 
 	// /// @notice Set token property value.
@@ -144,6 +155,7 @@ enum EthTokenPermissions {
 }
 
 /// @dev anonymous struct
+<<<<<<< HEAD
 struct Tuple58 {
 	string field_0;
 	Tuple56[] field_1;
@@ -151,6 +163,15 @@ struct Tuple58 {
 
 /// @dev anonymous struct
 struct Tuple56 {
+=======
+struct Tuple55 {
+	string field_0;
+	Tuple53[] field_1;
+}
+
+/// @dev anonymous struct
+struct Tuple53 {
+>>>>>>> 9e929f90... chore: generate stubs & types
 	EthTokenPermissions field_0;
 	bool field_1;
 }

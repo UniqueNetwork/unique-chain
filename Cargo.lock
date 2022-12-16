@@ -6342,7 +6342,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nonfungible"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "ethereum 0.14.0",
  "evm-coder",
@@ -6501,7 +6501,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-refungible"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "derivative",
  "ethereum 0.14.0",
