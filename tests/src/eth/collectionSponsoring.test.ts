@@ -106,7 +106,7 @@ describe('evm collection sponsoring', () => {
       await collectionEvm.methods.removeCollectionSponsor().send({from: owner});
   
       const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-      expect(sponsorTuple.field_0).to.be.eq('0x0000000000000000000000000000000000000000');
+      expect(sponsorTuple.eth).to.be.eq('0x0000000000000000000000000000000000000000');
     }));
 
   [

@@ -30,12 +30,12 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
-	function setTokenPropertyPermissions(Tuple51[] memory permissions) external;
+	function setTokenPropertyPermissions(Tuple52[] memory permissions) external;
 
 	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
-	function tokenPropertyPermissions() external view returns (Tuple51[] memory);
+	function tokenPropertyPermissions() external view returns (Tuple52[] memory);
 
 	// /// @notice Set token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -97,13 +97,13 @@ enum EthTokenPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple51 {
+struct Tuple52 {
 	string field_0;
-	Tuple49[] field_1;
+	Tuple50[] field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple49 {
+struct Tuple50 {
 	EthTokenPermissions field_0;
 	bool field_1;
 }
@@ -198,7 +198,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple26 memory);
+	function collectionSponsor() external view returns (EthCrossAccount memory);
 
 	/// Get current collection limits.
 	///
@@ -215,7 +215,7 @@ interface Collection is Dummy, ERC165 {
 	/// Return `false` if a limit not set.
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() external view returns (Tuple29[] memory);
+	function collectionLimits() external view returns (Tuple30[] memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -287,12 +287,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple34 memory);
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple35 memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (Tuple37[] memory);
+	function collectionNestingPermissions() external view returns (Tuple38[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -407,7 +407,7 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple37 {
+struct Tuple38 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
@@ -418,7 +418,7 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple34 {
+struct Tuple35 {
 	bool field_0;
 	uint256[] field_1;
 }
@@ -446,16 +446,10 @@ enum CollectionLimits {
 }
 
 /// @dev anonymous struct
-struct Tuple29 {
+struct Tuple30 {
 	CollectionLimits field_0;
 	bool field_1;
 	uint256 field_2;
-}
-
-/// @dev anonymous struct
-struct Tuple26 {
-	address field_0;
-	uint256 field_1;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
@@ -510,14 +504,14 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 	///  or in textual repr: mintingFinished()
 	function mintingFinished() external view returns (bool);
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	/// @dev EVM selector for this function is: 0x6a627842,
 	///  or in textual repr: mint(address)
 	function mint(address to) external returns (uint256);
 
-	// /// @notice Function to mint token.
+	// /// @notice Function to mint a token.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
 	// /// @param to The new owner
@@ -551,7 +545,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x12f7d6c1
+/// @dev the ERC-165 identifier for this interface is 0xabf30dc2
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -662,6 +656,14 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
 	// function mintBulkWithTokenURI(address to, Tuple12[] memory tokens) external returns (bool);
+
+	/// @notice Function to mint a token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0xb904db03,
+	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
+	function mintCross(EthCrossAccount memory to, Property[] memory properties) external returns (uint256);
 
 	/// Returns EVM address for refungible token
 	///

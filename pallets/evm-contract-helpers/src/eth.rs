@@ -25,6 +25,7 @@ use evm_coder::{
 	types::*,
 	ToLog,
 };
+use pallet_common::eth::EthCrossAccount;
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
@@ -174,11 +175,9 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn sponsor(&self, contract_address: address) -> Result<(address, uint256)> {
-		let sponsor =
-			Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?;
-		Ok(pallet_common::eth::convert_cross_account_to_tuple::<T>(
-			&sponsor,
+	fn sponsor(&self, contract_address: address) -> Result<EthCrossAccount> {
+		Ok(EthCrossAccount::from_sub_cross_account::<T>(
+			&Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?,
 		))
 	}
 

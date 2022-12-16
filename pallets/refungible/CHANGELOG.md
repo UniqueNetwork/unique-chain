@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
-## [0.2.10] - 2022-12-16
+## [0.2.11] - 2022-12-16
 
 ### Added
 
@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Hide `setTokenPropertyPermission` function in `TokenProperties` interface.
+
+## [0.2.10] - 2022-12-01
+
+### Added
+
+- The functions `mintCross` to `ERC721UniqueExtensions` interface.
 
 ## [0.2.9] - 2022-11-18
 

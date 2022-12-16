@@ -62,9 +62,9 @@ describe('EVM nesting tests group', () => {
       expect(await contract.methods.collectionNestingRestrictedCollectionIds().call({from: owner})).to.be.like([true, []]);
       await contract.methods.setCollectionNesting(true, [unnsetedCollectionAddress]).send({from: owner});
       expect(await contract.methods.collectionNestingRestrictedCollectionIds().call({from: owner})).to.be.like([true, [unnestedCollsectionId.toString()]]);
-      expect(await contract.methods.collectionNestingPermissions().call({from: owner})).to.be.like([['0', false], ['1', true]]);
+      expect(await contract.methods.collectionNestingPermissions().call({from: owner})).to.be.like([['1', false], ['0', true]]);
       await contract.methods.setCollectionNesting(false).send({from: owner});
-      expect(await contract.methods.collectionNestingPermissions().call({from: owner})).to.be.like([['0', false], ['1', false]]);
+      expect(await contract.methods.collectionNestingPermissions().call({from: owner})).to.be.like([['1', false], ['0', false]]);
     });
     
     itEth('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async ({helper}) => {

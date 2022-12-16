@@ -637,7 +637,7 @@ impl<T: Config> RefungibleHandle<T> {
 		Ok(false)
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	#[weight(<SelfWeightOf<T>>::create_item())]
@@ -650,7 +650,7 @@ impl<T: Config> RefungibleHandle<T> {
 		Ok(token_id)
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @dev `tokenId` should be obtained with `nextTokenId` method,
 	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
@@ -681,7 +681,7 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData::<T::CrossAccountId> {
+			CreateItemData::<T> {
 				users,
 				properties: CollectionPropertiesVec::default(),
 			},
@@ -767,7 +767,7 @@ impl<T: Config> RefungibleHandle<T> {
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
-			CreateItemData::<T::CrossAccountId> { users, properties },
+			CreateItemData::<T> { users, properties },
 			&budget,
 		)
 		.map_err(dispatch_to_evm::<T>)?;
@@ -1048,7 +1048,7 @@ where
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap();
-		let create_item_data = CreateItemData::<T::CrossAccountId> {
+		let create_item_data = CreateItemData::<T> {
 			users,
 			properties: CollectionPropertiesVec::default(),
 		};
@@ -1108,7 +1108,7 @@ where
 				})
 				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
 
-			let create_item_data = CreateItemData::<T::CrossAccountId> {
+			let create_item_data = CreateItemData::<T> {
 				users: users.clone(),
 				properties,
 			};
@@ -1118,6 +1118,60 @@ where
 		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
+	}
+
+	/// @notice Function to mint a token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		properties: Vec<PropertyStruct>,
+	) -> Result<uint256> {
+		let token_id = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?;
+
+		let to = to.into_sub_cross_account::<T>()?;
+
+		let properties = properties
+			.into_iter()
+			.map(|PropertyStruct { key, value }| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?
+			.try_into()
+			.map_err(|_| Error::Revert(alloc::format!("too many properties")))?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let users = [(to, 1)]
+			.into_iter()
+			.collect::<BTreeMap<_, _>>()
+			.try_into()
+			.unwrap();
+		<Pallet<T>>::create_item(
+			self,
+			&caller,
+			CreateItemData::<T> { users, properties },
+			&budget,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(token_id.into())
 	}
 
 	/// Returns EVM address for refungible token

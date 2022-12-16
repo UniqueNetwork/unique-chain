@@ -36,7 +36,7 @@ use alloc::format;
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
-		EthCrossAccount, convert_cross_account_to_uint256, CollectionPermissions as EvmPermissions,
+		EthCrossAccount, CollectionPermissions as EvmPermissions,
 		CollectionLimits as EvmCollectionLimits,
 	},
 	weights::WeightInfo,
@@ -289,20 +289,13 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn collection_sponsor(&self) -> Result<(address, uint256)> {
+	fn collection_sponsor(&self) -> Result<EthCrossAccount> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
 		};
-		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
-		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
-			let sponsor = convert_cross_account_to_uint256::<T>(&sponsor);
-			(Default::default(), sponsor)
-		} else {
-			let sponsor = *sponsor.as_eth();
-			(sponsor, Default::default())
-		};
-		Ok(result)
+
+		Ok(EthCrossAccount::from_sub::<T>(&sponsor))
 	}
 
 	/// Get current collection limits.

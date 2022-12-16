@@ -57,7 +57,7 @@ describe('Fungible: Plain calls', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice, owner] = await helper.arrange.createAccounts([20n, 20n], donor);
+      [alice, owner] = await helper.arrange.createAccounts([30n, 20n], donor);
     });
   });
 
@@ -76,6 +76,25 @@ describe('Fungible: Plain calls', () => {
     expect(event.address).to.equal(collectionAddress);
     expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
     expect(event.returnValues.to).to.equal(receiver);
+    expect(event.returnValues.value).to.equal('100');
+  });
+  
+  
+  itEth('Can perform mintCross()', async ({helper}) => {
+    const receiverCross = helper.ethCrossAccount.fromKeyringPair(owner);
+    const ethOwner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.addAdmin(alice, {Ethereum: ethOwner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', ethOwner);
+
+    const result = await contract.methods.mintCross(receiverCross, 100).send();
+    
+    const event = result.events.Transfer;
+    expect(event.address).to.equal(collectionAddress);
+    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.equal(helper.address.substrateToEth(owner.address));
     expect(event.returnValues.value).to.equal('100');
   });
 

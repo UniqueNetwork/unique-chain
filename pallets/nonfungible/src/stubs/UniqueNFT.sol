@@ -42,7 +42,7 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
-	function setTokenPropertyPermissions(Tuple59[] memory permissions) public {
+	function setTokenPropertyPermissions(Tuple61[] memory permissions) public {
 		require(false, stub_error);
 		permissions;
 		dummy = 0;
@@ -51,10 +51,10 @@ contract TokenProperties is Dummy, ERC165 {
 	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
-	function tokenPropertyPermissions() public view returns (Tuple59[] memory) {
+	function tokenPropertyPermissions() public view returns (Tuple61[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple59[](0);
+		return new Tuple61[](0);
 	}
 
 	// /// @notice Set token property value.
@@ -144,13 +144,13 @@ enum EthTokenPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple59 {
+struct Tuple61 {
 	string field_0;
-	Tuple57[] field_1;
+	Tuple59[] field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple57 {
+struct Tuple59 {
 	EthTokenPermissions field_0;
 	bool field_1;
 }
@@ -290,10 +290,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple30 memory) {
+	function collectionSponsor() public view returns (EthCrossAccount memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple30(0x0000000000000000000000000000000000000000, 0);
+		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Get current collection limits.
@@ -311,10 +311,10 @@ contract Collection is Dummy, ERC165 {
 	/// Return `false` if a limit not set.
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() public view returns (Tuple33[] memory) {
+	function collectionLimits() public view returns (Tuple35[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple33[](0);
+		return new Tuple35[](0);
 	}
 
 	/// Set limits for the collection.
@@ -422,19 +422,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple39 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple41 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple39(false, new uint256[](0));
+		return Tuple41(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() public view returns (Tuple42[] memory) {
+	function collectionNestingPermissions() public view returns (Tuple44[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple42[](0);
+		return new Tuple44[](0);
 	}
 
 	/// Set the collection access method.
@@ -614,13 +614,13 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple42 {
+struct Tuple44 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple39 {
+struct Tuple41 {
 	bool field_0;
 	uint256[] field_1;
 }
@@ -648,16 +648,10 @@ enum CollectionLimits {
 }
 
 /// @dev anonymous struct
-struct Tuple33 {
+struct Tuple35 {
 	CollectionLimits field_0;
 	bool field_1;
 	uint256 field_2;
-}
-
-/// @dev anonymous struct
-struct Tuple30 {
-	address field_0;
-	uint256 field_1;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
@@ -735,7 +729,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return false;
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	/// @dev EVM selector for this function is: 0x6a627842,
@@ -747,7 +741,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return 0;
 	}
 
-	// /// @notice Function to mint token.
+	// /// @notice Function to mint a token.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
 	// /// @param to The new owner
@@ -804,7 +798,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xb74c26b7
+/// @dev the ERC-165 identifier for this interface is 0x0e48fdb4
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -961,6 +955,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy;
 		return 0;
 	}
+
 	// /// @notice Function to mint multiple tokens.
 	// /// @dev `tokenIds` should be an array of consecutive numbers and first number
 	// ///  should be obtained with `nextTokenId` method
@@ -991,6 +986,19 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// 	return false;
 	// }
 
+	/// @notice Function to mint a token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0xb904db03,
+	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
+	function mintCross(EthCrossAccount memory to, Property[] memory properties) public returns (uint256) {
+		require(false, stub_error);
+		to;
+		properties;
+		dummy = 0;
+		return 0;
+	}
 }
 
 /// @dev anonymous struct
