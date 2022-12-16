@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/calls';
 
 import type { ApiTypes, AugmentedCall, DecoratedCallBase } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U256, Vec, bool, u256, u32, u64 } from '@polkadot/types-codec';
+import type { Bytes, Null, Option, Result, U256, Vec, bool, u256, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { CheckInherentsResult, InherentData } from '@polkadot/types/interfaces/blockbuilder';
 import type { BlockHash } from '@polkadot/types/interfaces/chain';
@@ -16,7 +16,6 @@ import type { BlockV2, EthReceiptV3, EthTransactionStatus, TransactionV2 } from 
 import type { EvmAccount, EvmCallInfo, EvmCreateInfo } from '@polkadot/types/interfaces/evm';
 import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
 import type { OpaqueMetadata } from '@polkadot/types/interfaces/metadata';
-import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
 import type { AccountId, Block, H160, H256, Header, Index, KeyTypeId, Permill, SlotDuration } from '@polkadot/types/interfaces/runtime';
 import type { RuntimeVersion } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult, DispatchError } from '@polkadot/types/interfaces/system';
@@ -224,21 +223,6 @@ declare module '@polkadot/api-base/types/calls' {
        * Validate the transaction.
        **/
       validateTransaction: AugmentedCall<ApiType, (source: TransactionSource | 'InBlock' | 'Local' | 'External' | number | Uint8Array, tx: Extrinsic | IExtrinsic | string | Uint8Array, blockHash: BlockHash | string | Uint8Array) => Observable<TransactionValidity>>;
-      /**
-       * Generic call
-       **/
-      [key: string]: DecoratedCallBase<ApiType>;
-    };
-    /** 0x37c8bb1350a9a2a8/2 */
-    transactionPaymentApi: {
-      /**
-       * The transaction fee details
-       **/
-      queryFeeDetails: AugmentedCall<ApiType, (uxt: Extrinsic | IExtrinsic | string | Uint8Array, len: u32 | AnyNumber | Uint8Array) => Observable<FeeDetails>>;
-      /**
-       * The transaction info
-       **/
-      queryInfo: AugmentedCall<ApiType, (uxt: Extrinsic | IExtrinsic | string | Uint8Array, len: u32 | AnyNumber | Uint8Array) => Observable<RuntimeDispatchInfo>>;
       /**
        * Generic call
        **/
