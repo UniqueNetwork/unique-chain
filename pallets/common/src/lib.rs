@@ -1223,7 +1223,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set a scoped collection property, where the scope is a special prefix
-	/// prohibiting a user to change the property.
+	/// prohibiting a user access to change the property directly.
 	///
 	/// * `collection_id` - ID of the collection for which the property is being set.
 	/// * `scope` - Property scope.
@@ -1242,7 +1242,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Set scoped collection properties, where the scope is a special prefix
-	/// prohibiting a user to change the properties.
+	/// prohibiting a user access to change the properties directly.
 	///
 	/// * `collection_id` - ID of the collection for which the properties is being set.
 	/// * `scope` - Property scope.
@@ -1730,6 +1730,15 @@ impl<T: Config> Pallet<T> {
 		);
 		Ok(new_permission)
 	}
+
+	/// Repair possibly broken properties of a collection.
+	pub fn repair_collection(collection_id: CollectionId) -> DispatchResult {
+		CollectionProperties::<T>::mutate(collection_id, |properties| {
+			properties.recompute_consumed_space();
+		});
+
+		Ok(())
+	}
 }
 
 /// Indicates unsupported methods by returning [Error::UnsupportedOperation].
@@ -1819,7 +1828,7 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	fn set_allowance_for_all() -> Weight;
 
 	/// The price of repairing an item.
-	fn repair_item() -> Weight;
+	fn force_repair_item() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.

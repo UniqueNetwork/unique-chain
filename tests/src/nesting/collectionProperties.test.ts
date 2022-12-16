@@ -314,6 +314,16 @@ describe('Negative Integration Test: Collection Properties', () => {
         ).to.be.rejectedWith(/common\.InvalidCharacterInPropertyKey/);
       }
     });
+
+    itSub('Forbids to repair a collection if called with non-sudo', async({helper}) => {
+      const collection = await helper[testSuite.mode].mintCollection(alice, {properties: [
+        {key: 'sea-creatures', value: 'mermaids'},
+        {key: 'goldenratio', value: '1.6180339887498948482045868343656381177203091798057628621354486227052604628189'},
+      ]});
+
+      await expect(helper.executeExtrinsic(alice, 'api.tx.unique.forceRepairCollection', [collection.collectionId], true))
+        .to.be.rejectedWith(/BadOrigin/);
+    });
   }));
 });
   

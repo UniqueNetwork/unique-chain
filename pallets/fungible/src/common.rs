@@ -113,7 +113,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		Weight::zero()
 	}
 
-	fn repair_item() -> Weight {
+	fn force_repair_item() -> Weight {
 		Weight::zero()
 	}
 }

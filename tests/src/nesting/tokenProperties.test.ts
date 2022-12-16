@@ -406,39 +406,6 @@ describe('Integration Test: Token Properties', () => {
     {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
     {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
-    itSub.ifWithPallets(`repair_item preserves valid consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
-      const propKey = 'tok-prop';
-
-      const collection = await helper[testCase.mode].mintCollection(alice, {
-        tokenPropertyPermissions: [
-          {
-            key: propKey,
-            permission: {mutable: true, tokenOwner: true},
-          },
-        ],
-      });
-      const token = await (
-        testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
-          : collection.mintToken(alice)
-      );
-
-      const propDataSize = 4096;
-      const propData = 'a'.repeat(propDataSize);
-
-      await token.setProperties(alice, [{key: propKey, value: propData}]);
-      const originalSpace = await token.getTokenPropertiesConsumedSpace();
-      expect(originalSpace).to.be.equal(propDataSize);
-
-      await helper.executeExtrinsic(alice, 'api.tx.unique.repairItem', [token.collectionId, token.tokenId], true);
-      const recomputedSpace = await token.getTokenPropertiesConsumedSpace();
-      expect(recomputedSpace).to.be.equal(originalSpace);
-    }));
-
-  [
-    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
-  ].map(testCase =>
     itSub.ifWithPallets(`Modifying a token property with different sizes correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
 
@@ -696,6 +663,35 @@ describe('Negative Integration Test: Token Properties', () => {
         key: `${maxPropertiesPerItem}-th`,
         permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
       }])).to.be.rejectedWith(/common\.PropertyLimitReached/);
+    }));
+
+  [
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Forbids force_repair_item from non-sudo (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+      const token = await (
+        testCase.pieces
+          ? collection.mintToken(alice, testCase.pieces)
+          : collection.mintToken(alice)
+      );
+
+      const propDataSize = 4096;
+      const propData = 'a'.repeat(propDataSize);
+      await token.setProperties(alice, [{key: propKey, value: propData}]);
+
+      await expect(helper.executeExtrinsic(alice, 'api.tx.unique.forceRepairItem', [token.collectionId, token.tokenId], true))
+        .to.be.rejectedWith(/BadOrigin/);
     }));
 });
 
