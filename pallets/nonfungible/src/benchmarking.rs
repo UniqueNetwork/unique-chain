@@ -225,15 +225,23 @@ benchmarks! {
 
 	set_allowance_for_all {
 		bench_init!{
-			owner: sub; collection: collection(owner);
-			operator: cross_sub(owner); owner: cross_sub;
+			owner: sub; collection: collection(owner); owner: cross_from_sub;
+			operator: cross_sub;
 		};
 	}: {<Pallet<T>>::set_allowance_for_all(&collection, &owner, &operator, true)}
 
 	allowance_for_all {
 		bench_init!{
-			owner: sub; collection: collection(owner);
-			operator: cross_sub(owner); owner: cross_sub;
+			owner: sub; collection: collection(owner); owner: cross_from_sub;
+			operator: cross_sub;
 		};
 	}: {<Pallet<T>>::allowance_for_all(&collection, &owner, &operator)}
+
+	repair_item {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let item = create_max_item(&collection, &owner, owner.clone())?;
+	}: {<Pallet<T>>::repair_item(&collection, item)?}
 }

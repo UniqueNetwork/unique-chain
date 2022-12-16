@@ -59,6 +59,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param isMutable Permission to mutate property.
 	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
 	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
+	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
@@ -91,6 +92,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param key Property key.
 	/// @param value Property value.
 	#[solidity(hide)]
+	#[weight(<SelfWeightOf<T>>::set_token_properties(1))]
 	fn set_property(
 		&mut self,
 		caller: caller,
@@ -166,6 +168,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	#[solidity(hide)]
+	#[weight(<SelfWeightOf<T>>::delete_token_properties(1))]
 	fn delete_property(&mut self, token_id: uint256, caller: caller, key: string) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -185,6 +188,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
 	/// @param keys Properties key.
+	#[weight(<SelfWeightOf<T>>::delete_token_properties(keys.len() as u32))]
 	fn delete_properties(
 		&mut self,
 		token_id: uint256,

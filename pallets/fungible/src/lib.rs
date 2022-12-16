@@ -129,6 +129,8 @@ pub mod pallet {
 		SettingPropertiesNotAllowed,
 		/// Setting allowance for all is not allowed.
 		SettingAllowanceForAllNotAllowed,
+		/// Only a fungible collection could be possibly broken; any fungible token is valid.
+		FungibleTokensAreAlwaysValid,
 	}
 
 	#[pallet::config]

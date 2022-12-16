@@ -186,11 +186,23 @@ class EthGroup extends EthGroupBase {
     return await this.helper.callRpc('api.rpc.eth.call', [{from: signer, to: contractAddress, data: abi}]);
   }
 
-  async createCollecion(functionName: 'createNFTCollection' | 'createRFTCollection' | 'createFTCollection', signer: string, name: string, description: string, tokenPrefix: string, decimals?: number): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  createCollectionMethodName(mode: TCollectionMode) {
+    switch (mode) {
+      case 'ft':
+        return 'createFTCollection';
+      case 'nft':
+        return 'createNFTCollection';
+      case 'rft':
+        return 'createRFTCollection';
+    }
+  }
+
+  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    const functionName: string = this.createCollectionMethodName(mode);
 
-    const functionParams = functionName === 'createFTCollection' ? [name, decimals, description, tokenPrefix] : [name, description, tokenPrefix];
+    const functionParams = mode === 'ft' ? [name, decimals, description, tokenPrefix] : [name, description, tokenPrefix];
     const result = await collectionHelper.methods[functionName](...functionParams).send({value: Number(collectionCreationPrice)});
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
@@ -201,13 +213,13 @@ class EthGroup extends EthGroupBase {
   }
 
   createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
-    return this.createCollecion('createNFTCollection', signer, name, description, tokenPrefix);
+    return this.createCollection('nft', signer, name, description, tokenPrefix);
   }
 
   async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress, events} = await this.createCollecion('createNFTCollection', signer, name, description, tokenPrefix);
+    const {collectionId, collectionAddress, events} = await this.createCollection('nft', signer, name, description, tokenPrefix);
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 
@@ -215,17 +227,17 @@ class EthGroup extends EthGroupBase {
   }
 
   createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
-    return this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
+    return this.createCollection('rft', signer, name, description, tokenPrefix);
   }
 
   createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
-    return this.createCollecion('createFTCollection', signer, name, description, tokenPrefix, decimals);
+    return this.createCollection('ft', signer, name, description, tokenPrefix, decimals);
   }
 
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress, events} = await this.createCollecion('createRFTCollection', signer, name, description, tokenPrefix);
+    const {collectionId, collectionAddress, events} = await this.createCollection('rft', signer, name, description, tokenPrefix);
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 
@@ -365,6 +377,14 @@ export class EthPropertyGroup extends EthGroupBase {
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthCrossAccountGroup extends EthGroupBase {
+  createAccount(): TEthCrossAccount {
+    return this.fromAddress(this.helper.eth.createAccount());
+  }
+
+  async createAccountWithBalance(donor: IKeyringPair, amount=100n) {
+    return this.fromAddress(await this.helper.eth.createAccountWithBalance(donor, amount));
+  }
+
   fromAddress(address: TEthereumAccount): TEthCrossAccount {
     return {
       eth: address,

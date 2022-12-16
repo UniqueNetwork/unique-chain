@@ -29,10 +29,10 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_std::vec::Vec;
-	use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
+	// use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_unique_scheduler_v2::Config {
+	pub trait Config: frame_system::Config /*+ pallet_unique_scheduler_v2::Config*/ {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The overarching call type.
@@ -108,21 +108,21 @@ pub mod pallet {
 			Self::set_test_value(origin, <TestValue<T>>::get() + 1)
 		}
 
-		#[pallet::weight(10_000)]
-		pub fn self_canceling_inc(
-			origin: OriginFor<T>,
-			id: TaskName,
-			max_test_value: u32,
-		) -> DispatchResult {
-			Self::ensure_origin_and_enabled(origin.clone())?;
-			Self::inc_test_value(origin.clone())?;
+		// #[pallet::weight(10_000)]
+		// pub fn self_canceling_inc(
+		// 	origin: OriginFor<T>,
+		// 	id: TaskName,
+		// 	max_test_value: u32,
+		// ) -> DispatchResult {
+		// 	Self::ensure_origin_and_enabled(origin.clone())?;
+		// 	Self::inc_test_value(origin.clone())?;
 
-			if <TestValue<T>>::get() == max_test_value {
-				SchedulerPallet::<T>::cancel_named(origin, id)?;
-			}
+		// 	if <TestValue<T>>::get() == max_test_value {
+		// 		SchedulerPallet::<T>::cancel_named(origin, id)?;
+		// 	}
 
-			Ok(())
-		}
+		// 	Ok(())
+		// }
 
 		#[pallet::weight(100_000_000)]
 		pub fn just_take_fee(origin: OriginFor<T>) -> DispatchResult {

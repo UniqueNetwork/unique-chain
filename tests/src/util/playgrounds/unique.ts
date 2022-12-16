@@ -43,6 +43,8 @@ import {
   IEthCrossAccountId,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import type {Vec} from '@polkadot/types-codec';
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -406,6 +408,21 @@ export class ChainHelperBase {
   getApi(): ApiPromise {
     if(this.api === null) throw Error('API not initialized');
     return this.api;
+  }
+
+  async subscribeEvents(expectedEvents: {section: string, names: string[]}[]) {
+    const collectedEvents: IEvent[] = [];
+    const unsubscribe = await this.getApi().query.system.events((events: Vec<FrameSystemEventRecord>) => {
+      const ievents = this.eventHelper.extractEvents(events);
+      ievents.forEach((event) => {
+        expectedEvents.forEach((e => {
+          if (event.section === e.section && e.names.includes(event.method)) {
+            collectedEvents.push(event);
+          }
+        }));
+      });
+    });
+    return {unsubscribe: unsubscribe as any, collectedEvents};
   }
 
   clearChainLog(): void {
@@ -838,7 +855,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorSet');
   }
 
   /**
@@ -856,7 +873,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'SponsorshipConfirmed');
   }
 
   /**
@@ -874,7 +891,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorRemoved');
   }
 
   /**
@@ -901,7 +918,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionLimitSet');
   }
 
   /**
@@ -920,7 +937,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionOwnerChanged');
   }
 
   /**
@@ -939,7 +956,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminAdded');
   }
 
   /**
@@ -958,7 +975,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminRemoved');
   }
 
   /**
@@ -987,7 +1004,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressAdded');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressAdded');
   }
 
   /**
@@ -1005,7 +1022,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressRemoved');
   }
 
   /**
@@ -1024,7 +1041,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPermissionSet');
   }
 
   /**
@@ -1081,6 +1098,13 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    */
   async getProperties(collectionId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
     return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
+  }
+
+  async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.common.collectionProperties(collectionId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async getCollectionOptions(collectionId: number) {
@@ -3018,6 +3042,10 @@ export class UniqueBaseCollection {
     return await this.helper.collection.getProperties(this.collectionId, propertyKeys);
   }
 
+  async getPropertiesConsumedSpace() {
+    return await this.helper.collection.getPropertiesConsumedSpace(this.collectionId);
+  }
+
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.collection.getTokenNextSponsored(this.collectionId, tokenId, addressObj);
   }
@@ -3141,6 +3169,13 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
   }
 
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
+  }
+
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.nft.transferToken(signer, this.collectionId, tokenId, addressObj);
   }
@@ -3250,6 +3285,13 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.rft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount=1n) {
@@ -3402,6 +3444,10 @@ export class UniqueBaseToken {
 
   async getProperties(propertyKeys?: string[] | null) {
     return await this.collection.getTokenProperties(this.tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace() {
+    return await this.collection.getTokenPropertiesConsumedSpace(this.tokenId);
   }
 
   async setProperties(signer: TSigner, properties: IProperty[]) {

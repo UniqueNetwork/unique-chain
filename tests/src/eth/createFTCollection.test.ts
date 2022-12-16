@@ -46,7 +46,7 @@ describe('Create FT collection from EVM', () => {
     let data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -69,7 +69,7 @@ describe('Create FT collection from EVM', () => {
     let data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -192,11 +192,11 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'ft', sponsor, true);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -217,11 +217,11 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'ft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });    

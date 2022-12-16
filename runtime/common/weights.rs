@@ -124,6 +124,10 @@ where
 	fn set_allowance_for_all() -> Weight {
 		max_weight_of!(set_allowance_for_all())
 	}
+
+	fn repair_item() -> Weight {
+		max_weight_of!(repair_item())
+	}
 }
 
 #[cfg(feature = "refungible")]

@@ -37,6 +37,10 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+      CheckMaintenance: {
+        extrinsic: {},
+        payload: {},
+      },
       FakeTransactionFinalizer: {
         extrinsic: {},
         payload: {},
