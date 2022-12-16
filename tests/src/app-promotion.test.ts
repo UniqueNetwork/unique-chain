@@ -27,8 +27,8 @@ let nominal: bigint;
 let palletAddress: string;
 let accounts: IKeyringPair[];
 // App promotion periods:
-// LOCKING_PERIOD = 12n; // 8 blocks of relay
-// UNLOCKING_PERIOD = 6n; // 4 blocks of parachain
+// LOCKING_PERIOD = 12 blocks of relay
+// UNLOCKING_PERIOD = 6 blocks of parachain
 
 describe('App promotion', () => {
   before(async function () {
