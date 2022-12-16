@@ -78,6 +78,7 @@ describe('Pallet presence', () => {
         requiredPallets.push(
           refungible,
           appPromotion,
+          foreignAssets,
         );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here

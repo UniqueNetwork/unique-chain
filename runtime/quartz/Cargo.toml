@@ -171,7 +171,7 @@ std = [
     "pallet-maintenance/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-quartz-runtime = ['refungible', 'app-promotion']
+quartz-runtime = ['refungible', 'app-promotion', 'foreign-assets']
 
 refungible = []
 scheduler = []
