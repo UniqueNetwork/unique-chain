@@ -17,6 +17,7 @@
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itEth, usingEthPlaygrounds} from './util';
+import { CollectionLimits } from './util/playgrounds/types';
 
 
 describe('Create NFT collection from EVM', () => {
@@ -207,7 +208,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -232,7 +233,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit('accountTokenOwnershipLimit', '1000')
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
