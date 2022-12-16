@@ -15,7 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from './util';
+import {
+  itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD, UNLOCKING_PERIOD,
+} from './util';
 import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 import {itEth, expect, SponsoringMode} from './eth/util';
 
@@ -24,8 +26,9 @@ let palletAdmin: IKeyringPair;
 let nominal: bigint;
 let palletAddress: string;
 let accounts: IKeyringPair[];
-const LOCKING_PERIOD = 8n; // 8 blocks of relay
-const UNLOCKING_PERIOD = 4n; // 4 blocks of parachain
+// App promotion periods:
+// LOCKING_PERIOD = 12n; // 8 blocks of relay
+// UNLOCKING_PERIOD = 6n; // 4 blocks of parachain
 
 describe('App promotion', () => {
   before(async function () {
@@ -192,7 +195,7 @@ describe('App promotion', () => {
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
     });
   
-    itSub('should keep different unlocking block for each unlocking stake', async ({helper}) => {
+    itSub('should keep different unlocking block for each unlocking stake', async ({ helper }) => {
       const staker = accounts.pop()!;
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstake(staker);

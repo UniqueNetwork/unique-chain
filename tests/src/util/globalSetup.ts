@@ -1,7 +1,9 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND} from './index';
+import {
+  usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD,
+} from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 
@@ -21,10 +23,6 @@ const globalSetup = async (): Promise<void> => {
       // 3. Configure App Promotion 
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
-        // TODO: move to config file
-        const LOCKING_PERIOD = 8n; // 8 blocks of relay
-        const UNLOCKING_PERIOD = 4n; // 4 blocks of parachain
-
         const superuser = await privateKey('//Alice');
         const palletAddress = helper.arrange.calculatePalletAddress('appstake');
         const palletAdmin = await privateKey('//PromotionAdmin');
