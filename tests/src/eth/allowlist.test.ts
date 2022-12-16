@@ -156,25 +156,6 @@ describe('EVM collection allowlist', () => {
       await expect(collectionEvm.methods.transfer(owner, 2).send({from: userEth})).to.be.rejectedWith(/Transaction has been reverted/);
     }));
 
-  // Soft-deprecated
-  itEth('Collection allowlist cannot be added and removed [eth] address by not owner', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const notOwner = await helper.eth.createAccountWithBalance(donor);
-    const user = helper.eth.createAccount();
-    const crossUser = helper.ethCrossAccount.fromAddress(user);
-
-    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
-
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
-    await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
-    await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.true;
-    await expect(collectionEvm.methods.removeFromCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.true;
-  });
-
   [
     // cross-methods
     {mode: 'nft' as const, cross: true, requiredPallets: []},
@@ -185,7 +166,7 @@ describe('EVM collection allowlist', () => {
     {mode: 'rft' as const, cross: false, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, cross: false, requiredPallets: []},
   ].map(testCase => 
-    itEth.only(`Collection allowlist can not be add and remove [cross] address by non-owner for ${testCase.mode}`, async ({helper}) => {
+    itEth.only(`Non-owner cannot add or remove from collection allowlist ${testCase.cross ? 'cross ' : ''}${testCase.mode}`, async ({helper}) => {
       // Select methods:
       const addToAllowList = testCase.cross ? 'addToCollectionAllowListCross' : 'addToCollectionAllowList';
       const removeFromAllowList = testCase.cross ? 'removeFromCollectionAllowListCross' : 'removeFromCollectionAllowList';
