@@ -52,6 +52,11 @@ parameter_types! {
 			parents: 1,
 			interior: Here,
 		},
+		// Statemint/Statemint location
+		MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(1000)),
+		},
 		// Karura/Acala location
 		MultiLocation {
 			parents: 1,
