@@ -87,8 +87,8 @@ export const MINIMUM_DONOR_FUND = 100_000n;
 export const DONOR_FUNDING = 1_000_000n;
 
 // App-promotion periods:
-export const LOCKING_PERIOD = 12n; // 8 blocks of relay
-export const UNLOCKING_PERIOD = 6n; // 4 blocks of parachain
+export const LOCKING_PERIOD = 12n; // 12 blocks of relay
+export const UNLOCKING_PERIOD = 6n; // 6 blocks of parachain
 
 
 export enum Pallets {
