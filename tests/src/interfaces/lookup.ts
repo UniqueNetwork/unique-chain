@@ -2282,7 +2282,10 @@ export default {
         operator: 'PalletEvmAccountBasicCrossAccountIdRepr',
         approve: 'bool',
       },
-      repair_item: {
+      force_repair_collection: {
+        collectionId: 'u32',
+      },
+      force_repair_item: {
         collectionId: 'u32',
         itemId: 'u32'
       }
