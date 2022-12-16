@@ -1,4 +1,10 @@
 <!-- bureaucrate goes here -->
+## [0.1.2] - 2022-12-13
+
+### Added
+
+- The ability to configure pallet `app-promotion` via the `configuration` pallet.
+
 ## [v0.1.1] 2022-08-16
 
 ### Other changes

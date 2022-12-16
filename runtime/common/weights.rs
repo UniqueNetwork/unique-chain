@@ -120,6 +120,10 @@ where
 	fn token_owner() -> Weight {
 		max_weight_of!(token_owner())
 	}
+
+	fn repair_item() -> Weight {
+		max_weight_of!(repair_item())
+	}
 }
 
 #[cfg(feature = "refungible")]

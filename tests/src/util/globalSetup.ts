@@ -1,7 +1,9 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND} from './index';
+import {
+  usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD,
+} from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 
@@ -18,7 +20,7 @@ const globalSetup = async (): Promise<void> => {
           if (!result) Promise.reject();
         });
 
-      // 3. Set up App Promotion admin 
+      // 3. Configure App Promotion 
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
@@ -29,6 +31,10 @@ const globalSetup = async (): Promise<void> => {
         const nominal = helper.balance.getOneTokenNominal();
         await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 1000n * nominal);
         await helper.balance.transferToSubstrate(superuser, palletAddress, 1000n * nominal);
+        await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
+          .setAppPromotionConfigurationOverride({
+            recalculationInterval: LOCKING_PERIOD,
+            pendingInterval: UNLOCKING_PERIOD})], true);
       }
     } catch (error) {
       console.error(error);

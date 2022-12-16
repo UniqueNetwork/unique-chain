@@ -176,7 +176,7 @@ where
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
 
-	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{AppPromotionApiServer, AppPromotion};
 
 	#[cfg(not(feature = "unique-runtime"))]
@@ -236,7 +236,7 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(not(feature = "unique-runtime"))]

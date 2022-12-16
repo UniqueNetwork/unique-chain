@@ -1101,6 +1101,23 @@ decl_module! {
 				}
 			})
 		}
+
+		/// Repairs a broken item
+		///
+		/// # Arguments
+		///
+		/// * `collection_id`: ID of the collection the item belongs to.
+		/// * `item_id`: ID of the item.
+		#[weight = T::CommonWeightInfo::repair_item()]
+		pub fn repair_item(
+			_origin,
+			collection_id: CollectionId,
+			item_id: TokenId,
+		) -> DispatchResultWithPostInfo {
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.repair_item(item_id)
+			})
+		}
 	}
 }
 

@@ -9,7 +9,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-app-promotion'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.1.0'
+version = '0.1.1'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -64,11 +64,12 @@ serde = { default-features = false, features = ['derive'], version = '1.0.130' }
 ################################################################################
 # local dependencies
 
-up-data-structs ={ default-features = false, path = "../../primitives/data-structs" }
-pallet-common ={ default-features = false, path = "../common" }
-pallet-unique ={ default-features = false, path = "../unique" }
-pallet-evm-contract-helpers ={ default-features = false, path = "../evm-contract-helpers" }
-pallet-evm-migration ={ default-features = false, path = "../evm-migration" }
+up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+pallet-common = { default-features = false, path = "../common" }
+pallet-configuration = { default-features = false, path = "../configuration" }
+pallet-unique = { default-features = false, path = "../unique" }
+pallet-evm-contract-helpers = { default-features = false, path = "../evm-contract-helpers" }
+pallet-evm-migration = { default-features = false, path = "../evm-migration" }
 
 # [dev-dependencies]
 
