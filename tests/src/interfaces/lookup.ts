@@ -2280,7 +2280,11 @@ export default {
       set_allowance_for_all: {
         collectionId: 'u32',
         operator: 'PalletEvmAccountBasicCrossAccountIdRepr',
-        approve: 'bool'
+        approve: 'bool',
+      },
+      repair_item: {
+        collectionId: 'u32',
+        itemId: 'u32'
       }
     }
   },
@@ -3209,7 +3213,7 @@ export default {
    * Lookup417: pallet_fungible::pallet::Error<T>
    **/
   PalletFungibleError: {
-    _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingAllowanceForAllNotAllowed']
+    _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingAllowanceForAllNotAllowed', 'FungibleTokensAreAlwaysValid']
   },
   /**
    * Lookup418: pallet_refungible::ItemData

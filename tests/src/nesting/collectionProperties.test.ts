@@ -25,7 +25,7 @@ describe('Integration Test: Collection Properties', () => {
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({filename: __filename});
-      [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([200n, 10n], donor);
     });
   });
   
@@ -138,7 +138,7 @@ describe('Integration Test: Collection Properties', () => {
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
   ].map(testCase =>
-    itSub.ifWithPallets(`Allows modifying a collection property multiple times (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+    itSub.ifWithPallets(`Allows modifying a collection property multiple times with the same size (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
 
       const collection = await helper[testCase.mode].mintCollection(alice);
@@ -190,6 +190,45 @@ describe('Integration Test: Collection Properties', () => {
       await collection.deleteProperties(alice, [propKey]);
       consumedSpace = await collection.getPropertiesConsumedSpace();
       expect(consumedSpace).to.be.equal(originalSpace);
+    }));
+
+  [
+    // TODO enable properties for FT collection in Substrate (release 040)
+    // {mode: 'ft' as const, requiredPallets: []},
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
+  ].map(testCase =>
+    itSub.ifWithPallets(`Modifying a collection property with different sizes correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice);
+      const originalSpace = await collection.getPropertiesConsumedSpace();
+
+      const initPropDataSize = 4096;
+      const biggerPropDataSize = 5000;
+      const smallerPropDataSize = 4000;
+
+      const initPropData = 'a'.repeat(initPropDataSize);
+      const biggerPropData = 'b'.repeat(biggerPropDataSize);
+      const smallerPropData = 'c'.repeat(smallerPropDataSize);
+
+      let consumedSpace;
+      let expectedConsumedSpaceDiff;
+
+      await collection.setProperties(alice, [{key: propKey, value: initPropData}]);
+      consumedSpace = await collection.getPropertiesConsumedSpace();
+      expectedConsumedSpaceDiff = initPropDataSize - originalSpace;
+      expect(consumedSpace).to.be.equal(originalSpace + expectedConsumedSpaceDiff);
+
+      await collection.setProperties(alice, [{key: propKey, value: biggerPropData}]);
+      consumedSpace = await collection.getPropertiesConsumedSpace();
+      expectedConsumedSpaceDiff = biggerPropDataSize - initPropDataSize;
+      expect(consumedSpace).to.be.equal(initPropDataSize + expectedConsumedSpaceDiff);
+
+      await collection.setProperties(alice, [{key: propKey, value: smallerPropData}]);
+      consumedSpace = await collection.getPropertiesConsumedSpace();
+      expectedConsumedSpaceDiff = biggerPropDataSize - smallerPropDataSize;
+      expect(consumedSpace).to.be.equal(biggerPropDataSize - expectedConsumedSpaceDiff);
     }));
 });
   
