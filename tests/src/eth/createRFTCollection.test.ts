@@ -18,7 +18,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
-import { CollectionLimits } from './util/playgrounds/types';
+import {CollectionLimits} from './util/playgrounds/types';
 
 
 describe('Create RFT collection from EVM', () => {

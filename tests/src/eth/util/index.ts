@@ -27,7 +27,6 @@ export enum SponsoringMode {
   Generous = 2,
 }
 
-
 export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair>) => Promise<void>) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
