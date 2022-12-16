@@ -301,9 +301,9 @@ where
 	}
 
 	/// @dev Transfer tokens from one address to another
-	/// @param from address The address which you want to send tokens from
-	/// @param to address The address which you want to transfer to
-	/// @param amount uint256 the amount of tokens to be transferred
+	/// @param from The address which you want to send tokens from
+	/// @param to The address which you want to transfer to
+	/// @param amount the amount of tokens to be transferred
 	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from_cross(
 		&mut self,
