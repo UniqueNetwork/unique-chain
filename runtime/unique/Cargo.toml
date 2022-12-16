@@ -170,7 +170,7 @@ std = [
     "pallet-maintenance/std",
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-unique-runtime = []
+unique-runtime = ['foreign-assets']
 stubgen = ["evm-coder/stubgen"]
 
 refungible = []
