@@ -736,12 +736,12 @@
               },
               { "internalType": "bool", "name": "field_1", "type": "bool" }
             ],
-            "internalType": "struct Tuple46[]",
+            "internalType": "struct Tuple57[]",
             "name": "field_1",
             "type": "tuple[]"
           }
         ],
-        "internalType": "struct Tuple48[]",
+        "internalType": "struct Tuple59[]",
         "name": "permissions",
         "type": "tuple[]"
       }
@@ -802,12 +802,12 @@
               },
               { "internalType": "bool", "name": "field_1", "type": "bool" }
             ],
-            "internalType": "struct Tuple46[]",
+            "internalType": "struct Tuple57[]",
             "name": "field_1",
             "type": "tuple[]"
           }
         ],
-        "internalType": "struct Tuple48[]",
+        "internalType": "struct Tuple59[]",
         "name": "",
         "type": "tuple[]"
       }

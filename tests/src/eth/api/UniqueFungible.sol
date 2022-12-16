@@ -327,15 +327,25 @@ struct Tuple24 {
 	uint256[] field_1;
 }
 
+/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 enum CollectionLimits {
+	/// @dev How many tokens can a user have on one account.
 	AccountTokenOwnership,
+	/// @dev How many bytes of data are available for sponsorship.
 	SponsoredDataSize,
+	/// @dev In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
 	SponsoredDataRateLimit,
+	/// @dev How many tokens can be mined into this collection.
 	TokenLimit,
+	/// @dev Timeouts for transfer sponsoring.
 	SponsorTransferTimeout,
+	/// @dev Timeout for sponsoring an approval in passed blocks.
 	SponsorApproveTimeout,
+	/// @dev Whether the collection owner of the collection can send tokens (which belong to other users).
 	OwnerCanTransfer,
+	/// @dev Can the collection owner burn other people's tokens.
 	OwnerCanDestroy,
+	/// @dev Is it possible to send tokens from this collection between users.
 	TransferEnabled
 }
 
