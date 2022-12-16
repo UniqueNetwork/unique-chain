@@ -1240,38 +1240,14 @@ declare module '@polkadot/types/lookup' {
     readonly data: Bytes;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletEthereumEvent (116) */
-=======
-<<<<<<< HEAD
-  /** @name PalletEthereumEvent (114) */
-=======
-  /** @name PalletEthereumEvent (109) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletEthereumEvent (103) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletEthereumEvent (105) */
   interface PalletEthereumEvent extends Enum {
     readonly isExecuted: boolean;
     readonly asExecuted: ITuple<[H160, H160, H256, EvmCoreErrorExitReason]>;
     readonly type: 'Executed';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitReason (117) */
-=======
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitReason (115) */
-=======
-  /** @name EvmCoreErrorExitReason (110) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name EvmCoreErrorExitReason (104) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name EvmCoreErrorExitReason (106) */
   interface EvmCoreErrorExitReason extends Enum {
     readonly isSucceed: boolean;
     readonly asSucceed: EvmCoreErrorExitSucceed;
@@ -1284,19 +1260,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Succeed' | 'Error' | 'Revert' | 'Fatal';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitSucceed (118) */
-=======
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitSucceed (116) */
-=======
-  /** @name EvmCoreErrorExitSucceed (111) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name EvmCoreErrorExitSucceed (105) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name EvmCoreErrorExitSucceed (107) */
   interface EvmCoreErrorExitSucceed extends Enum {
     readonly isStopped: boolean;
     readonly isReturned: boolean;
@@ -1304,19 +1268,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Stopped' | 'Returned' | 'Suicided';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitError (119) */
-=======
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitError (117) */
-=======
-  /** @name EvmCoreErrorExitError (112) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name EvmCoreErrorExitError (106) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name EvmCoreErrorExitError (108) */
   interface EvmCoreErrorExitError extends Enum {
     readonly isStackUnderflow: boolean;
     readonly isStackOverflow: boolean;
@@ -1337,37 +1289,13 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'StackUnderflow' | 'StackOverflow' | 'InvalidJump' | 'InvalidRange' | 'DesignatedInvalid' | 'CallTooDeep' | 'CreateCollision' | 'CreateContractLimit' | 'OutOfOffset' | 'OutOfGas' | 'OutOfFund' | 'PcUnderflow' | 'CreateEmpty' | 'Other' | 'InvalidCode';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitRevert (122) */
-=======
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitRevert (120) */
-=======
-  /** @name EvmCoreErrorExitRevert (115) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name EvmCoreErrorExitRevert (109) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name EvmCoreErrorExitRevert (111) */
   interface EvmCoreErrorExitRevert extends Enum {
     readonly isReverted: boolean;
     readonly type: 'Reverted';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitFatal (123) */
-=======
-<<<<<<< HEAD
-  /** @name EvmCoreErrorExitFatal (121) */
-=======
-  /** @name EvmCoreErrorExitFatal (116) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name EvmCoreErrorExitFatal (110) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name EvmCoreErrorExitFatal (112) */
   interface EvmCoreErrorExitFatal extends Enum {
     readonly isNotSupported: boolean;
     readonly isUnhandledInterrupt: boolean;
@@ -1378,19 +1306,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NotSupported' | 'UnhandledInterrupt' | 'CallErrorAsFatal' | 'Other';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletEvmContractHelpersEvent (124) */
-=======
-<<<<<<< HEAD
-  /** @name PalletEvmContractHelpersEvent (122) */
-=======
-  /** @name PalletEvmContractHelpersEvent (117) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletEvmContractHelpersEvent (111) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletEvmContractHelpersEvent (113) */
   interface PalletEvmContractHelpersEvent extends Enum {
     readonly isContractSponsorSet: boolean;
     readonly asContractSponsorSet: ITuple<[H160, AccountId32]>;
@@ -1401,63 +1317,20 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ContractSponsorSet' | 'ContractSponsorshipConfirmed' | 'ContractSponsorRemoved';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletMaintenanceEvent (125) */
-=======
-<<<<<<< HEAD
-  /** @name PalletMaintenanceEvent (123) */
-=======
-  /** @name PalletEvmMigrationEvent (118) */
-=======
-  /** @name PalletEvmMigrationEvent (112) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletEvmMigrationEvent (114) */
   interface PalletEvmMigrationEvent extends Enum {
     readonly isTestEvent: boolean;
     readonly type: 'TestEvent';
   }
 
-<<<<<<< HEAD
-  /** @name PalletMaintenanceEvent (119) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletMaintenanceEvent (113) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletMaintenanceEvent (115) */
   interface PalletMaintenanceEvent extends Enum {
     readonly isMaintenanceEnabled: boolean;
     readonly isMaintenanceDisabled: boolean;
     readonly type: 'MaintenanceEnabled' | 'MaintenanceDisabled';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletTestUtilsEvent (126) */
-=======
-<<<<<<< HEAD
-  /** @name PalletTestUtilsEvent (124) */
-=======
-  /** @name PalletTestUtilsEvent (120) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface PalletTestUtilsEvent extends Enum {
-    readonly isValueIsSet: boolean;
-    readonly isShouldRollback: boolean;
-    readonly type: 'ValueIsSet' | 'ShouldRollback';
-  }
-
-<<<<<<< HEAD
-  /** @name FrameSystemPhase (127) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemPhase (125) */
-=======
-  /** @name FrameSystemPhase (121) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemPhase (114) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemPhase (116) */
   interface FrameSystemPhase extends Enum {
     readonly isApplyExtrinsic: boolean;
     readonly asApplyExtrinsic: u32;
@@ -1466,37 +1339,13 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSystemLastRuntimeUpgradeInfo (129) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemLastRuntimeUpgradeInfo (127) */
-=======
-  /** @name FrameSystemLastRuntimeUpgradeInfo (124) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemLastRuntimeUpgradeInfo (117) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemLastRuntimeUpgradeInfo (119) */
   interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
     readonly specVersion: Compact<u32>;
     readonly specName: Text;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSystemCall (130) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemCall (128) */
-=======
-  /** @name FrameSystemCall (125) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemCall (119) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemCall (121) */
   interface FrameSystemCall extends Enum {
     readonly isFillBlock: boolean;
     readonly asFillBlock: {
@@ -1538,57 +1387,21 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'FillBlock' | 'Remark' | 'SetHeapPages' | 'SetCode' | 'SetCodeWithoutChecks' | 'SetStorage' | 'KillStorage' | 'KillPrefix' | 'RemarkWithEvent';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSystemLimitsBlockWeights (135) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemLimitsBlockWeights (133) */
-=======
-  /** @name FrameSystemLimitsBlockWeights (130) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemLimitsBlockWeights (124) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemLimitsBlockWeights (126) */
   interface FrameSystemLimitsBlockWeights extends Struct {
     readonly baseBlock: Weight;
     readonly maxBlock: Weight;
     readonly perClass: FrameSupportDispatchPerDispatchClassWeightsPerClass;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (136) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (134) */
-=======
-  /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (131) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (125) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (127) */
   interface FrameSupportDispatchPerDispatchClassWeightsPerClass extends Struct {
     readonly normal: FrameSystemLimitsWeightsPerClass;
     readonly operational: FrameSystemLimitsWeightsPerClass;
     readonly mandatory: FrameSystemLimitsWeightsPerClass;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSystemLimitsWeightsPerClass (137) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemLimitsWeightsPerClass (135) */
-=======
-  /** @name FrameSystemLimitsWeightsPerClass (132) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemLimitsWeightsPerClass (126) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemLimitsWeightsPerClass (128) */
   interface FrameSystemLimitsWeightsPerClass extends Struct {
     readonly baseExtrinsic: Weight;
     readonly maxExtrinsic: Option<Weight>;
@@ -1596,73 +1409,25 @@ declare module '@polkadot/types/lookup' {
     readonly reserved: Option<Weight>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSystemLimitsBlockLength (139) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemLimitsBlockLength (137) */
-=======
-  /** @name FrameSystemLimitsBlockLength (134) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemLimitsBlockLength (128) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemLimitsBlockLength (130) */
   interface FrameSystemLimitsBlockLength extends Struct {
     readonly max: FrameSupportDispatchPerDispatchClassU32;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSupportDispatchPerDispatchClassU32 (140) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSupportDispatchPerDispatchClassU32 (138) */
-=======
-  /** @name FrameSupportDispatchPerDispatchClassU32 (135) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSupportDispatchPerDispatchClassU32 (129) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSupportDispatchPerDispatchClassU32 (131) */
   interface FrameSupportDispatchPerDispatchClassU32 extends Struct {
     readonly normal: u32;
     readonly operational: u32;
     readonly mandatory: u32;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name SpWeightsRuntimeDbWeight (141) */
-=======
-<<<<<<< HEAD
-  /** @name SpWeightsRuntimeDbWeight (139) */
-=======
-  /** @name SpWeightsRuntimeDbWeight (136) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name SpWeightsRuntimeDbWeight (130) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name SpWeightsRuntimeDbWeight (132) */
   interface SpWeightsRuntimeDbWeight extends Struct {
     readonly read: u64;
     readonly write: u64;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name SpVersionRuntimeVersion (142) */
-=======
-<<<<<<< HEAD
-  /** @name SpVersionRuntimeVersion (140) */
-=======
-  /** @name SpVersionRuntimeVersion (137) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name SpVersionRuntimeVersion (131) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name SpVersionRuntimeVersion (133) */
   interface SpVersionRuntimeVersion extends Struct {
     readonly specName: Text;
     readonly implName: Text;
@@ -1674,19 +1439,7 @@ declare module '@polkadot/types/lookup' {
     readonly stateVersion: u8;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSystemError (147) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSystemError (145) */
-=======
-  /** @name FrameSystemError (142) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSystemError (136) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name FrameSystemError (138) */
   interface FrameSystemError extends Enum {
     readonly isInvalidSpecName: boolean;
     readonly isSpecVersionNeedsToIncrease: boolean;
@@ -1697,19 +1450,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'InvalidSpecName' | 'SpecVersionNeedsToIncrease' | 'FailedToExtractRuntimeVersion' | 'NonDefaultComposite' | 'NonZeroRefCount' | 'CallFiltered';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2PersistedValidationData (148) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2PersistedValidationData (146) */
-=======
-  /** @name PolkadotPrimitivesV2PersistedValidationData (143) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotPrimitivesV2PersistedValidationData (137) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotPrimitivesV2PersistedValidationData (139) */
   interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
     readonly parentHead: Bytes;
     readonly relayParentNumber: u32;
@@ -1717,54 +1458,18 @@ declare module '@polkadot/types/lookup' {
     readonly maxPovSize: u32;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2UpgradeRestriction (151) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2UpgradeRestriction (149) */
-=======
-  /** @name PolkadotPrimitivesV2UpgradeRestriction (146) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotPrimitivesV2UpgradeRestriction (140) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotPrimitivesV2UpgradeRestriction (142) */
   interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
     readonly isPresent: boolean;
     readonly type: 'Present';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name SpTrieStorageProof (152) */
-=======
-<<<<<<< HEAD
-  /** @name SpTrieStorageProof (150) */
-=======
-  /** @name SpTrieStorageProof (147) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name SpTrieStorageProof (141) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name SpTrieStorageProof (143) */
   interface SpTrieStorageProof extends Struct {
     readonly trieNodes: BTreeSet<Bytes>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (154) */
-=======
-<<<<<<< HEAD
-  /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (152) */
-=======
-  /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (149) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (143) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot (145) */
   interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
     readonly dmqMqcHead: H256;
     readonly relayDispatchQueueSize: ITuple<[u32, u32]>;
@@ -1772,19 +1477,7 @@ declare module '@polkadot/types/lookup' {
     readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2AbridgedHrmpChannel (157) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2AbridgedHrmpChannel (155) */
-=======
-  /** @name PolkadotPrimitivesV2AbridgedHrmpChannel (152) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotPrimitivesV2AbridgedHrmpChannel (146) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotPrimitivesV2AbridgedHrmpChannel (148) */
   interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
     readonly maxCapacity: u32;
     readonly maxTotalSize: u32;
@@ -1794,19 +1487,7 @@ declare module '@polkadot/types/lookup' {
     readonly mqcHead: Option<H256>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2AbridgedHostConfiguration (158) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotPrimitivesV2AbridgedHostConfiguration (156) */
-=======
-  /** @name PolkadotPrimitivesV2AbridgedHostConfiguration (153) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotPrimitivesV2AbridgedHostConfiguration (147) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotPrimitivesV2AbridgedHostConfiguration (149) */
   interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
     readonly maxCodeSize: u32;
     readonly maxHeadDataSize: u32;
@@ -1819,37 +1500,13 @@ declare module '@polkadot/types/lookup' {
     readonly validationUpgradeDelay: u32;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotCorePrimitivesOutboundHrmpMessage (164) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotCorePrimitivesOutboundHrmpMessage (162) */
-=======
-  /** @name PolkadotCorePrimitivesOutboundHrmpMessage (159) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotCorePrimitivesOutboundHrmpMessage (153) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotCorePrimitivesOutboundHrmpMessage (155) */
   interface PolkadotCorePrimitivesOutboundHrmpMessage extends Struct {
     readonly recipient: u32;
     readonly data: Bytes;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name CumulusPalletParachainSystemCall (165) */
-=======
-<<<<<<< HEAD
-  /** @name CumulusPalletParachainSystemCall (163) */
-=======
-  /** @name CumulusPalletParachainSystemCall (160) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name CumulusPalletParachainSystemCall (154) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name CumulusPalletParachainSystemCall (156) */
   interface CumulusPalletParachainSystemCall extends Enum {
     readonly isSetValidationData: boolean;
     readonly asSetValidationData: {
@@ -1870,19 +1527,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'SetValidationData' | 'SudoSendUpwardMessage' | 'AuthorizeUpgrade' | 'EnactAuthorizedUpgrade';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name CumulusPrimitivesParachainInherentParachainInherentData (166) */
-=======
-<<<<<<< HEAD
-  /** @name CumulusPrimitivesParachainInherentParachainInherentData (164) */
-=======
-  /** @name CumulusPrimitivesParachainInherentParachainInherentData (161) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name CumulusPrimitivesParachainInherentParachainInherentData (155) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name CumulusPrimitivesParachainInherentParachainInherentData (157) */
   interface CumulusPrimitivesParachainInherentParachainInherentData extends Struct {
     readonly validationData: PolkadotPrimitivesV2PersistedValidationData;
     readonly relayChainState: SpTrieStorageProof;
@@ -1890,55 +1535,19 @@ declare module '@polkadot/types/lookup' {
     readonly horizontalMessages: BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotCorePrimitivesInboundDownwardMessage (168) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotCorePrimitivesInboundDownwardMessage (166) */
-=======
-  /** @name PolkadotCorePrimitivesInboundDownwardMessage (163) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotCorePrimitivesInboundDownwardMessage (157) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotCorePrimitivesInboundDownwardMessage (159) */
   interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
     readonly sentAt: u32;
     readonly msg: Bytes;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PolkadotCorePrimitivesInboundHrmpMessage (171) */
-=======
-<<<<<<< HEAD
-  /** @name PolkadotCorePrimitivesInboundHrmpMessage (169) */
-=======
-  /** @name PolkadotCorePrimitivesInboundHrmpMessage (166) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PolkadotCorePrimitivesInboundHrmpMessage (160) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PolkadotCorePrimitivesInboundHrmpMessage (162) */
   interface PolkadotCorePrimitivesInboundHrmpMessage extends Struct {
     readonly sentAt: u32;
     readonly data: Bytes;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name CumulusPalletParachainSystemError (174) */
-=======
-<<<<<<< HEAD
-  /** @name CumulusPalletParachainSystemError (172) */
-=======
-  /** @name CumulusPalletParachainSystemError (169) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name CumulusPalletParachainSystemError (163) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name CumulusPalletParachainSystemError (165) */
   interface CumulusPalletParachainSystemError extends Enum {
     readonly isOverlappingUpgrades: boolean;
     readonly isProhibitedByPolkadot: boolean;
@@ -1951,38 +1560,14 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'OverlappingUpgrades' | 'ProhibitedByPolkadot' | 'TooBig' | 'ValidationDataNotAvailable' | 'HostConfigurationNotAvailable' | 'NotScheduled' | 'NothingAuthorized' | 'Unauthorized';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletBalancesBalanceLock (176) */
-=======
-<<<<<<< HEAD
-  /** @name PalletBalancesBalanceLock (174) */
-=======
-  /** @name PalletBalancesBalanceLock (171) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletBalancesBalanceLock (165) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletBalancesBalanceLock (167) */
   interface PalletBalancesBalanceLock extends Struct {
     readonly id: U8aFixed;
     readonly amount: u128;
     readonly reasons: PalletBalancesReasons;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletBalancesReasons (177) */
-=======
-<<<<<<< HEAD
-  /** @name PalletBalancesReasons (175) */
-=======
-  /** @name PalletBalancesReasons (172) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletBalancesReasons (166) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletBalancesReasons (168) */
   interface PalletBalancesReasons extends Enum {
     readonly isFee: boolean;
     readonly isMisc: boolean;
@@ -1990,56 +1575,20 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Fee' | 'Misc' | 'All';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletBalancesReserveData (180) */
-=======
-<<<<<<< HEAD
-  /** @name PalletBalancesReserveData (178) */
-=======
-  /** @name PalletBalancesReserveData (175) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletBalancesReserveData (169) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletBalancesReserveData (171) */
   interface PalletBalancesReserveData extends Struct {
     readonly id: U8aFixed;
     readonly amount: u128;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletBalancesReleases (182) */
-=======
-<<<<<<< HEAD
-  /** @name PalletBalancesReleases (180) */
-=======
-  /** @name PalletBalancesReleases (177) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletBalancesReleases (171) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletBalancesReleases (173) */
   interface PalletBalancesReleases extends Enum {
     readonly isV100: boolean;
     readonly isV200: boolean;
     readonly type: 'V100' | 'V200';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletBalancesCall (183) */
-=======
-<<<<<<< HEAD
-  /** @name PalletBalancesCall (181) */
-=======
-  /** @name PalletBalancesCall (178) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletBalancesCall (172) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletBalancesCall (174) */
   interface PalletBalancesCall extends Enum {
     readonly isTransfer: boolean;
     readonly asTransfer: {
@@ -2076,19 +1625,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Transfer' | 'SetBalance' | 'ForceTransfer' | 'TransferKeepAlive' | 'TransferAll' | 'ForceUnreserve';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletBalancesError (186) */
-=======
-<<<<<<< HEAD
-  /** @name PalletBalancesError (184) */
-=======
-  /** @name PalletBalancesError (181) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletBalancesError (175) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletBalancesError (177) */
   interface PalletBalancesError extends Enum {
     readonly isVestingBalance: boolean;
     readonly isLiquidityRestrictions: boolean;
@@ -2101,19 +1638,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'VestingBalance' | 'LiquidityRestrictions' | 'InsufficientBalance' | 'ExistentialDeposit' | 'KeepAlive' | 'ExistingVestingSchedule' | 'DeadAccount' | 'TooManyReserves';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletTimestampCall (188) */
-=======
-<<<<<<< HEAD
-  /** @name PalletTimestampCall (186) */
-=======
-  /** @name PalletTimestampCall (183) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletTimestampCall (177) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletTimestampCall (179) */
   interface PalletTimestampCall extends Enum {
     readonly isSet: boolean;
     readonly asSet: {
@@ -2122,38 +1647,14 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Set';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletTransactionPaymentReleases (190) */
-=======
-<<<<<<< HEAD
-  /** @name PalletTransactionPaymentReleases (188) */
-=======
-  /** @name PalletTransactionPaymentReleases (185) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletTransactionPaymentReleases (179) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletTransactionPaymentReleases (181) */
   interface PalletTransactionPaymentReleases extends Enum {
     readonly isV1Ancient: boolean;
     readonly isV2: boolean;
     readonly type: 'V1Ancient' | 'V2';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletTreasuryProposal (191) */
-=======
-<<<<<<< HEAD
-  /** @name PalletTreasuryProposal (189) */
-=======
-  /** @name PalletTreasuryProposal (186) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletTreasuryProposal (180) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletTreasuryProposal (182) */
   interface PalletTreasuryProposal extends Struct {
     readonly proposer: AccountId32;
     readonly value: u128;
@@ -2161,19 +1662,7 @@ declare module '@polkadot/types/lookup' {
     readonly bond: u128;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletTreasuryCall (194) */
-=======
-<<<<<<< HEAD
-  /** @name PalletTreasuryCall (192) */
-=======
-  /** @name PalletTreasuryCall (189) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletTreasuryCall (183) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletTreasuryCall (185) */
   interface PalletTreasuryCall extends Enum {
     readonly isProposeSpend: boolean;
     readonly asProposeSpend: {
@@ -2200,31 +1689,10 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ProposeSpend' | 'RejectProposal' | 'ApproveProposal' | 'Spend' | 'RemoveApproval';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name FrameSupportPalletId (197) */
+  /** @name FrameSupportPalletId (188) */
   interface FrameSupportPalletId extends U8aFixed {}
 
-  /** @name PalletTreasuryError (198) */
-=======
-<<<<<<< HEAD
-  /** @name FrameSupportPalletId (195) */
-  interface FrameSupportPalletId extends U8aFixed {}
-
-  /** @name PalletTreasuryError (196) */
-=======
-  /** @name FrameSupportPalletId (192) */
-  interface FrameSupportPalletId extends U8aFixed {}
-
-  /** @name PalletTreasuryError (193) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name FrameSupportPalletId (186) */
-  interface FrameSupportPalletId extends U8aFixed {}
-
-  /** @name PalletTreasuryError (187) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletTreasuryError (189) */
   interface PalletTreasuryError extends Enum {
     readonly isInsufficientProposersBalance: boolean;
     readonly isInvalidIndex: boolean;
@@ -2234,19 +1702,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'InsufficientProposersBalance' | 'InvalidIndex' | 'TooManyApprovals' | 'InsufficientPermission' | 'ProposalNotApproved';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletSudoCall (199) */
-=======
-<<<<<<< HEAD
-  /** @name PalletSudoCall (197) */
-=======
-  /** @name PalletSudoCall (194) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletSudoCall (188) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletSudoCall (190) */
   interface PalletSudoCall extends Enum {
     readonly isSudo: boolean;
     readonly asSudo: {
@@ -2269,19 +1725,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Sudo' | 'SudoUncheckedWeight' | 'SetKey' | 'SudoAs';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name OrmlVestingModuleCall (201) */
-=======
-<<<<<<< HEAD
-  /** @name OrmlVestingModuleCall (199) */
-=======
-  /** @name OrmlVestingModuleCall (196) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name OrmlVestingModuleCall (190) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name OrmlVestingModuleCall (192) */
   interface OrmlVestingModuleCall extends Enum {
     readonly isClaim: boolean;
     readonly isVestedTransfer: boolean;
@@ -2301,19 +1745,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Claim' | 'VestedTransfer' | 'UpdateVestingSchedules' | 'ClaimFor';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name OrmlXtokensModuleCall (203) */
-=======
-<<<<<<< HEAD
-  /** @name OrmlXtokensModuleCall (201) */
-=======
-  /** @name OrmlXtokensModuleCall (198) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name OrmlXtokensModuleCall (192) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name OrmlXtokensModuleCall (194) */
   interface OrmlXtokensModuleCall extends Enum {
     readonly isTransfer: boolean;
     readonly asTransfer: {
@@ -2360,19 +1792,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Transfer' | 'TransferMultiasset' | 'TransferWithFee' | 'TransferMultiassetWithFee' | 'TransferMulticurrencies' | 'TransferMultiassets';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmVersionedMultiAsset (204) */
-=======
-<<<<<<< HEAD
-  /** @name XcmVersionedMultiAsset (202) */
-=======
-  /** @name XcmVersionedMultiAsset (199) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmVersionedMultiAsset (193) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmVersionedMultiAsset (195) */
   interface XcmVersionedMultiAsset extends Enum {
     readonly isV0: boolean;
     readonly asV0: XcmV0MultiAsset;
@@ -2381,19 +1801,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'V0' | 'V1';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name OrmlTokensModuleCall (207) */
-=======
-<<<<<<< HEAD
-  /** @name OrmlTokensModuleCall (205) */
-=======
-  /** @name OrmlTokensModuleCall (202) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name OrmlTokensModuleCall (196) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name OrmlTokensModuleCall (198) */
   interface OrmlTokensModuleCall extends Enum {
     readonly isTransfer: boolean;
     readonly asTransfer: {
@@ -2430,19 +1838,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Transfer' | 'TransferAll' | 'TransferKeepAlive' | 'ForceTransfer' | 'SetBalance';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name CumulusPalletXcmpQueueCall (208) */
-=======
-<<<<<<< HEAD
-  /** @name CumulusPalletXcmpQueueCall (206) */
-=======
-  /** @name CumulusPalletXcmpQueueCall (203) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name CumulusPalletXcmpQueueCall (197) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name CumulusPalletXcmpQueueCall (199) */
   interface CumulusPalletXcmpQueueCall extends Enum {
     readonly isServiceOverweight: boolean;
     readonly asServiceOverweight: {
@@ -2478,19 +1874,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ServiceOverweight' | 'SuspendXcmExecution' | 'ResumeXcmExecution' | 'UpdateSuspendThreshold' | 'UpdateDropThreshold' | 'UpdateResumeThreshold' | 'UpdateThresholdWeight' | 'UpdateWeightRestrictDecay' | 'UpdateXcmpMaxIndividualWeight';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletXcmCall (209) */
-=======
-<<<<<<< HEAD
-  /** @name PalletXcmCall (207) */
-=======
-  /** @name PalletXcmCall (204) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletXcmCall (198) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletXcmCall (200) */
   interface PalletXcmCall extends Enum {
     readonly isSend: boolean;
     readonly asSend: {
@@ -2552,19 +1936,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Send' | 'TeleportAssets' | 'ReserveTransferAssets' | 'Execute' | 'ForceXcmVersion' | 'ForceDefaultXcmVersion' | 'ForceSubscribeVersionNotify' | 'ForceUnsubscribeVersionNotify' | 'LimitedReserveTransferAssets' | 'LimitedTeleportAssets';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmVersionedXcm (210) */
-=======
-<<<<<<< HEAD
-  /** @name XcmVersionedXcm (208) */
-=======
-  /** @name XcmVersionedXcm (205) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmVersionedXcm (199) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmVersionedXcm (201) */
   interface XcmVersionedXcm extends Enum {
     readonly isV0: boolean;
     readonly asV0: XcmV0Xcm;
@@ -2575,19 +1947,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'V0' | 'V1' | 'V2';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmV0Xcm (211) */
-=======
-<<<<<<< HEAD
-  /** @name XcmV0Xcm (209) */
-=======
-  /** @name XcmV0Xcm (206) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmV0Xcm (200) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmV0Xcm (202) */
   interface XcmV0Xcm extends Enum {
     readonly isWithdrawAsset: boolean;
     readonly asWithdrawAsset: {
@@ -2650,19 +2010,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'WithdrawAsset' | 'ReserveAssetDeposit' | 'TeleportAsset' | 'QueryResponse' | 'TransferAsset' | 'TransferReserveAsset' | 'Transact' | 'HrmpNewChannelOpenRequest' | 'HrmpChannelAccepted' | 'HrmpChannelClosing' | 'RelayedFrom';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmV0Order (213) */
-=======
-<<<<<<< HEAD
-  /** @name XcmV0Order (211) */
-=======
-  /** @name XcmV0Order (208) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmV0Order (202) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmV0Order (204) */
   interface XcmV0Order extends Enum {
     readonly isNull: boolean;
     readonly isDepositAsset: boolean;
@@ -2710,38 +2058,14 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Null' | 'DepositAsset' | 'DepositReserveAsset' | 'ExchangeAsset' | 'InitiateReserveWithdraw' | 'InitiateTeleport' | 'QueryHolding' | 'BuyExecution';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmV0Response (215) */
-=======
-<<<<<<< HEAD
-  /** @name XcmV0Response (213) */
-=======
-  /** @name XcmV0Response (210) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmV0Response (204) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmV0Response (206) */
   interface XcmV0Response extends Enum {
     readonly isAssets: boolean;
     readonly asAssets: Vec<XcmV0MultiAsset>;
     readonly type: 'Assets';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmV1Xcm (216) */
-=======
-<<<<<<< HEAD
-  /** @name XcmV1Xcm (214) */
-=======
-  /** @name XcmV1Xcm (211) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmV1Xcm (205) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmV1Xcm (207) */
   interface XcmV1Xcm extends Enum {
     readonly isWithdrawAsset: boolean;
     readonly asWithdrawAsset: {
@@ -2810,19 +2134,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'WithdrawAsset' | 'ReserveAssetDeposited' | 'ReceiveTeleportedAsset' | 'QueryResponse' | 'TransferAsset' | 'TransferReserveAsset' | 'Transact' | 'HrmpNewChannelOpenRequest' | 'HrmpChannelAccepted' | 'HrmpChannelClosing' | 'RelayedFrom' | 'SubscribeVersion' | 'UnsubscribeVersion';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmV1Order (218) */
-=======
-<<<<<<< HEAD
-  /** @name XcmV1Order (216) */
-=======
-  /** @name XcmV1Order (213) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmV1Order (207) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmV1Order (209) */
   interface XcmV1Order extends Enum {
     readonly isNoop: boolean;
     readonly isDepositAsset: boolean;
@@ -2872,19 +2184,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Noop' | 'DepositAsset' | 'DepositReserveAsset' | 'ExchangeAsset' | 'InitiateReserveWithdraw' | 'InitiateTeleport' | 'QueryHolding' | 'BuyExecution';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name XcmV1Response (220) */
-=======
-<<<<<<< HEAD
-  /** @name XcmV1Response (218) */
-=======
-  /** @name XcmV1Response (215) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name XcmV1Response (209) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name XcmV1Response (211) */
   interface XcmV1Response extends Enum {
     readonly isAssets: boolean;
     readonly asAssets: XcmV1MultiassetMultiAssets;
@@ -2893,31 +2193,10 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Assets' | 'Version';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name CumulusPalletXcmCall (234) */
+  /** @name CumulusPalletXcmCall (226) */
   type CumulusPalletXcmCall = Null;
 
-  /** @name CumulusPalletDmpQueueCall (235) */
-=======
-<<<<<<< HEAD
-  /** @name CumulusPalletXcmCall (232) */
-  type CumulusPalletXcmCall = Null;
-
-  /** @name CumulusPalletDmpQueueCall (233) */
-=======
-  /** @name CumulusPalletXcmCall (229) */
-  type CumulusPalletXcmCall = Null;
-
-  /** @name CumulusPalletDmpQueueCall (230) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name CumulusPalletXcmCall (224) */
-  type CumulusPalletXcmCall = Null;
-
-  /** @name CumulusPalletDmpQueueCall (225) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name CumulusPalletDmpQueueCall (227) */
   interface CumulusPalletDmpQueueCall extends Enum {
     readonly isServiceOverweight: boolean;
     readonly asServiceOverweight: {
@@ -2927,19 +2206,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ServiceOverweight';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletInflationCall (236) */
-=======
-<<<<<<< HEAD
-  /** @name PalletInflationCall (234) */
-=======
-  /** @name PalletInflationCall (231) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletInflationCall (226) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletInflationCall (228) */
   interface PalletInflationCall extends Enum {
     readonly isStartInflation: boolean;
     readonly asStartInflation: {
@@ -2948,19 +2215,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'StartInflation';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletUniqueCall (237) */
-=======
-<<<<<<< HEAD
-  /** @name PalletUniqueCall (235) */
-=======
-  /** @name PalletUniqueCall (232) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletUniqueCall (227) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletUniqueCall (229) */
   interface PalletUniqueCall extends Enum {
     readonly isCreateCollection: boolean;
     readonly asCreateCollection: {
@@ -3123,19 +2378,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'RepairItem';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCollectionMode (242) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCollectionMode (240) */
-=======
-  /** @name UpDataStructsCollectionMode (237) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCollectionMode (232) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCollectionMode (234) */
   interface UpDataStructsCollectionMode extends Enum {
     readonly isNft: boolean;
     readonly isFungible: boolean;
@@ -3144,19 +2387,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Nft' | 'Fungible' | 'ReFungible';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateCollectionData (243) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateCollectionData (241) */
-=======
-  /** @name UpDataStructsCreateCollectionData (238) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateCollectionData (233) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateCollectionData (235) */
   interface UpDataStructsCreateCollectionData extends Struct {
     readonly mode: UpDataStructsCollectionMode;
     readonly access: Option<UpDataStructsAccessMode>;
@@ -3170,38 +2401,14 @@ declare module '@polkadot/types/lookup' {
     readonly properties: Vec<UpDataStructsProperty>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsAccessMode (245) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsAccessMode (243) */
-=======
-  /** @name UpDataStructsAccessMode (240) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsAccessMode (235) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsAccessMode (237) */
   interface UpDataStructsAccessMode extends Enum {
     readonly isNormal: boolean;
     readonly isAllowList: boolean;
     readonly type: 'Normal' | 'AllowList';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCollectionLimits (247) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCollectionLimits (245) */
-=======
-  /** @name UpDataStructsCollectionLimits (242) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCollectionLimits (237) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCollectionLimits (239) */
   interface UpDataStructsCollectionLimits extends Struct {
     readonly accountTokenOwnershipLimit: Option<u32>;
     readonly sponsoredDataSize: Option<u32>;
@@ -3214,19 +2421,7 @@ declare module '@polkadot/types/lookup' {
     readonly transfersEnabled: Option<bool>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsSponsoringRateLimit (249) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsSponsoringRateLimit (247) */
-=======
-  /** @name UpDataStructsSponsoringRateLimit (244) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsSponsoringRateLimit (239) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsSponsoringRateLimit (241) */
   interface UpDataStructsSponsoringRateLimit extends Enum {
     readonly isSponsoringDisabled: boolean;
     readonly isBlocks: boolean;
@@ -3234,124 +2429,43 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'SponsoringDisabled' | 'Blocks';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCollectionPermissions (252) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCollectionPermissions (250) */
-=======
-  /** @name UpDataStructsCollectionPermissions (247) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCollectionPermissions (242) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCollectionPermissions (244) */
   interface UpDataStructsCollectionPermissions extends Struct {
     readonly access: Option<UpDataStructsAccessMode>;
     readonly mintMode: Option<bool>;
     readonly nesting: Option<UpDataStructsNestingPermissions>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsNestingPermissions (254) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsNestingPermissions (252) */
-=======
-  /** @name UpDataStructsNestingPermissions (249) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsNestingPermissions (244) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsNestingPermissions (246) */
   interface UpDataStructsNestingPermissions extends Struct {
     readonly tokenOwner: bool;
     readonly collectionAdmin: bool;
     readonly restricted: Option<UpDataStructsOwnerRestrictedSet>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsOwnerRestrictedSet (256) */
+  /** @name UpDataStructsOwnerRestrictedSet (248) */
   interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
 
-  /** @name UpDataStructsPropertyKeyPermission (261) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsOwnerRestrictedSet (254) */
-  interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
-
-  /** @name UpDataStructsPropertyKeyPermission (259) */
-=======
-  /** @name UpDataStructsOwnerRestrictedSet (251) */
-  interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
-
-  /** @name UpDataStructsPropertyKeyPermission (256) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsOwnerRestrictedSet (246) */
-  interface UpDataStructsOwnerRestrictedSet extends BTreeSet<u32> {}
-
-  /** @name UpDataStructsPropertyKeyPermission (251) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsPropertyKeyPermission (253) */
   interface UpDataStructsPropertyKeyPermission extends Struct {
     readonly key: Bytes;
     readonly permission: UpDataStructsPropertyPermission;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsPropertyPermission (262) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsPropertyPermission (260) */
-=======
-  /** @name UpDataStructsPropertyPermission (257) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsPropertyPermission (252) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsPropertyPermission (254) */
   interface UpDataStructsPropertyPermission extends Struct {
     readonly mutable: bool;
     readonly collectionAdmin: bool;
     readonly tokenOwner: bool;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsProperty (265) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsProperty (263) */
-=======
-  /** @name UpDataStructsProperty (260) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsProperty (255) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsProperty (257) */
   interface UpDataStructsProperty extends Struct {
     readonly key: Bytes;
     readonly value: Bytes;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateItemData (268) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateItemData (266) */
-=======
-  /** @name UpDataStructsCreateItemData (263) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateItemData (258) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateItemData (260) */
   interface UpDataStructsCreateItemData extends Enum {
     readonly isNft: boolean;
     readonly asNft: UpDataStructsCreateNftData;
@@ -3362,71 +2476,23 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Nft' | 'Fungible' | 'ReFungible';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateNftData (269) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateNftData (267) */
-=======
-  /** @name UpDataStructsCreateNftData (264) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateNftData (259) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateNftData (261) */
   interface UpDataStructsCreateNftData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateFungibleData (270) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateFungibleData (268) */
-=======
-  /** @name UpDataStructsCreateFungibleData (265) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateFungibleData (260) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateFungibleData (262) */
   interface UpDataStructsCreateFungibleData extends Struct {
     readonly value: u128;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateReFungibleData (271) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateReFungibleData (269) */
-=======
-  /** @name UpDataStructsCreateReFungibleData (266) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateReFungibleData (261) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateReFungibleData (263) */
   interface UpDataStructsCreateReFungibleData extends Struct {
     readonly pieces: u128;
     readonly properties: Vec<UpDataStructsProperty>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateItemExData (274) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateItemExData (272) */
-=======
-  /** @name UpDataStructsCreateItemExData (269) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateItemExData (264) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateItemExData (266) */
   interface UpDataStructsCreateItemExData extends Enum {
     readonly isNft: boolean;
     readonly asNft: Vec<UpDataStructsCreateNftExData>;
@@ -3439,117 +2505,26 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Nft' | 'Fungible' | 'RefungibleMultipleItems' | 'RefungibleMultipleOwners';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateNftExData (276) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateNftExData (274) */
-=======
-  /** @name UpDataStructsCreateNftExData (271) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateNftExData (266) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateNftExData (268) */
   interface UpDataStructsCreateNftExData extends Struct {
     readonly properties: Vec<UpDataStructsProperty>;
     readonly owner: PalletEvmAccountBasicCrossAccountIdRepr;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateRefungibleExSingleOwner (283) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateRefungibleExSingleOwner (281) */
-=======
-  /** @name UpDataStructsCreateRefungibleExSingleOwner (278) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateRefungibleExSingleOwner (273) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateRefungibleExSingleOwner (275) */
   interface UpDataStructsCreateRefungibleExSingleOwner extends Struct {
     readonly user: PalletEvmAccountBasicCrossAccountIdRepr;
     readonly pieces: u128;
     readonly properties: Vec<UpDataStructsProperty>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateRefungibleExMultipleOwners (285) */
-=======
-<<<<<<< HEAD
-  /** @name UpDataStructsCreateRefungibleExMultipleOwners (283) */
-=======
-  /** @name UpDataStructsCreateRefungibleExMultipleOwners (280) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name UpDataStructsCreateRefungibleExMultipleOwners (275) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name UpDataStructsCreateRefungibleExMultipleOwners (277) */
   interface UpDataStructsCreateRefungibleExMultipleOwners extends Struct {
     readonly users: BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>;
     readonly properties: Vec<UpDataStructsProperty>;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletUniqueSchedulerCall (286) */
-=======
-<<<<<<< HEAD
-  /** @name PalletUniqueSchedulerCall (284) */
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface PalletUniqueSchedulerCall extends Enum {
-    readonly isScheduleNamed: boolean;
-    readonly asScheduleNamed: {
-      readonly id: U8aFixed;
-      readonly when: u32;
-      readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-      readonly priority: Option<u8>;
-      readonly call: FrameSupportScheduleMaybeHashed;
-    } & Struct;
-    readonly isCancelNamed: boolean;
-    readonly asCancelNamed: {
-      readonly id: U8aFixed;
-    } & Struct;
-    readonly isScheduleNamedAfter: boolean;
-    readonly asScheduleNamedAfter: {
-      readonly id: U8aFixed;
-      readonly after: u32;
-      readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-      readonly priority: Option<u8>;
-      readonly call: FrameSupportScheduleMaybeHashed;
-    } & Struct;
-    readonly isChangeNamedPriority: boolean;
-    readonly asChangeNamedPriority: {
-      readonly id: U8aFixed;
-      readonly priority: u8;
-    } & Struct;
-    readonly type: 'ScheduleNamed' | 'CancelNamed' | 'ScheduleNamedAfter' | 'ChangeNamedPriority';
-  }
-
-  /** @name FrameSupportScheduleMaybeHashed (289) */
-  interface FrameSupportScheduleMaybeHashed extends Enum {
-    readonly isValue: boolean;
-    readonly asValue: Call;
-    readonly isHash: boolean;
-    readonly asHash: H256;
-    readonly type: 'Value' | 'Hash';
-  }
-
-<<<<<<< HEAD
-  /** @name PalletConfigurationCall (290) */
-=======
-  /** @name PalletConfigurationCall (288) */
-=======
-  /** @name PalletConfigurationCall (281) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletConfigurationCall (276) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletConfigurationCall (278) */
   interface PalletConfigurationCall extends Enum {
     readonly isSetWeightToFeeCoefficientOverride: boolean;
     readonly asSetWeightToFeeCoefficientOverride: {
@@ -3559,24 +2534,6 @@ declare module '@polkadot/types/lookup' {
     readonly asSetMinGasPriceOverride: {
       readonly coeff: Option<u64>;
     } & Struct;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride';
-  }
-
-  /** @name PalletTemplateTransactionPaymentCall (292) */
-  type PalletTemplateTransactionPaymentCall = Null;
-
-  /** @name PalletStructureCall (293) */
-  type PalletStructureCall = Null;
-
-<<<<<<< HEAD
-  /** @name PalletRmrkCoreCall (294) */
-=======
-  /** @name PalletRmrkCoreCall (292) */
-=======
-=======
->>>>>>> ec6ecdbe... chore: regenerate types
     readonly isSetXcmAllowedLocations: boolean;
     readonly asSetXcmAllowedLocations: {
       readonly locations: Option<Vec<XcmV1MultiLocation>>;
@@ -3588,7 +2545,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations' | 'SetAppPromotionConfigurationOverride';
   }
 
-  /** @name PalletConfigurationAppPromotionConfiguration (281) */
+  /** @name PalletConfigurationAppPromotionConfiguration (283) */
   interface PalletConfigurationAppPromotionConfiguration extends Struct {
     readonly recalculationInterval: Option<u32>;
     readonly pendingInterval: Option<u32>;
@@ -3596,328 +2553,13 @@ declare module '@polkadot/types/lookup' {
     readonly maxStakersPerCalculation: Option<u8>;
   }
 
-  /** @name PalletTemplateTransactionPaymentCall (284) */
+  /** @name PalletTemplateTransactionPaymentCall (286) */
   type PalletTemplateTransactionPaymentCall = Null;
 
-  /** @name PalletStructureCall (285) */
+  /** @name PalletStructureCall (287) */
   type PalletStructureCall = Null;
 
-<<<<<<< HEAD
-  /** @name PalletRmrkCoreCall (291) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface PalletRmrkCoreCall extends Enum {
-    readonly isCreateCollection: boolean;
-    readonly asCreateCollection: {
-      readonly metadata: Bytes;
-      readonly max: Option<u32>;
-      readonly symbol: Bytes;
-    } & Struct;
-    readonly isDestroyCollection: boolean;
-    readonly asDestroyCollection: {
-      readonly collectionId: u32;
-    } & Struct;
-    readonly isChangeCollectionIssuer: boolean;
-    readonly asChangeCollectionIssuer: {
-      readonly collectionId: u32;
-      readonly newIssuer: MultiAddress;
-    } & Struct;
-    readonly isLockCollection: boolean;
-    readonly asLockCollection: {
-      readonly collectionId: u32;
-    } & Struct;
-    readonly isMintNft: boolean;
-    readonly asMintNft: {
-      readonly owner: Option<AccountId32>;
-      readonly collectionId: u32;
-      readonly recipient: Option<AccountId32>;
-      readonly royaltyAmount: Option<Permill>;
-      readonly metadata: Bytes;
-      readonly transferable: bool;
-      readonly resources: Option<Vec<RmrkTraitsResourceResourceTypes>>;
-    } & Struct;
-    readonly isBurnNft: boolean;
-    readonly asBurnNft: {
-      readonly collectionId: u32;
-      readonly nftId: u32;
-      readonly maxBurns: u32;
-    } & Struct;
-    readonly isSend: boolean;
-    readonly asSend: {
-      readonly rmrkCollectionId: u32;
-      readonly rmrkNftId: u32;
-      readonly newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
-    } & Struct;
-    readonly isAcceptNft: boolean;
-    readonly asAcceptNft: {
-      readonly rmrkCollectionId: u32;
-      readonly rmrkNftId: u32;
-      readonly newOwner: RmrkTraitsNftAccountIdOrCollectionNftTuple;
-    } & Struct;
-    readonly isRejectNft: boolean;
-    readonly asRejectNft: {
-      readonly rmrkCollectionId: u32;
-      readonly rmrkNftId: u32;
-    } & Struct;
-    readonly isAcceptResource: boolean;
-    readonly asAcceptResource: {
-      readonly rmrkCollectionId: u32;
-      readonly rmrkNftId: u32;
-      readonly resourceId: u32;
-    } & Struct;
-    readonly isAcceptResourceRemoval: boolean;
-    readonly asAcceptResourceRemoval: {
-      readonly rmrkCollectionId: u32;
-      readonly rmrkNftId: u32;
-      readonly resourceId: u32;
-    } & Struct;
-    readonly isSetProperty: boolean;
-    readonly asSetProperty: {
-      readonly rmrkCollectionId: Compact<u32>;
-      readonly maybeNftId: Option<u32>;
-      readonly key: Bytes;
-      readonly value: Bytes;
-    } & Struct;
-    readonly isSetPriority: boolean;
-    readonly asSetPriority: {
-      readonly rmrkCollectionId: u32;
-      readonly rmrkNftId: u32;
-      readonly priorities: Vec<u32>;
-    } & Struct;
-    readonly isAddBasicResource: boolean;
-    readonly asAddBasicResource: {
-      readonly rmrkCollectionId: u32;
-      readonly nftId: u32;
-      readonly resource: RmrkTraitsResourceBasicResource;
-    } & Struct;
-    readonly isAddComposableResource: boolean;
-    readonly asAddComposableResource: {
-      readonly rmrkCollectionId: u32;
-      readonly nftId: u32;
-      readonly resource: RmrkTraitsResourceComposableResource;
-    } & Struct;
-    readonly isAddSlotResource: boolean;
-    readonly asAddSlotResource: {
-      readonly rmrkCollectionId: u32;
-      readonly nftId: u32;
-      readonly resource: RmrkTraitsResourceSlotResource;
-    } & Struct;
-    readonly isRemoveResource: boolean;
-    readonly asRemoveResource: {
-      readonly rmrkCollectionId: u32;
-      readonly nftId: u32;
-      readonly resourceId: u32;
-    } & Struct;
-    readonly type: 'CreateCollection' | 'DestroyCollection' | 'ChangeCollectionIssuer' | 'LockCollection' | 'MintNft' | 'BurnNft' | 'Send' | 'AcceptNft' | 'RejectNft' | 'AcceptResource' | 'AcceptResourceRemoval' | 'SetProperty' | 'SetPriority' | 'AddBasicResource' | 'AddComposableResource' | 'AddSlotResource' | 'RemoveResource';
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceResourceTypes (300) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceResourceTypes (298) */
-=======
-  /** @name RmrkTraitsResourceResourceTypes (297) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsResourceResourceTypes extends Enum {
-    readonly isBasic: boolean;
-    readonly asBasic: RmrkTraitsResourceBasicResource;
-    readonly isComposable: boolean;
-    readonly asComposable: RmrkTraitsResourceComposableResource;
-    readonly isSlot: boolean;
-    readonly asSlot: RmrkTraitsResourceSlotResource;
-    readonly type: 'Basic' | 'Composable' | 'Slot';
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceBasicResource (302) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceBasicResource (300) */
-=======
-  /** @name RmrkTraitsResourceBasicResource (299) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsResourceBasicResource extends Struct {
-    readonly src: Option<Bytes>;
-    readonly metadata: Option<Bytes>;
-    readonly license: Option<Bytes>;
-    readonly thumb: Option<Bytes>;
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceComposableResource (304) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceComposableResource (302) */
-=======
-  /** @name RmrkTraitsResourceComposableResource (301) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsResourceComposableResource extends Struct {
-    readonly parts: Vec<u32>;
-    readonly base: u32;
-    readonly src: Option<Bytes>;
-    readonly metadata: Option<Bytes>;
-    readonly license: Option<Bytes>;
-    readonly thumb: Option<Bytes>;
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceSlotResource (305) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsResourceSlotResource (303) */
-=======
-  /** @name RmrkTraitsResourceSlotResource (302) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsResourceSlotResource extends Struct {
-    readonly base: u32;
-    readonly src: Option<Bytes>;
-    readonly metadata: Option<Bytes>;
-    readonly slot: u32;
-    readonly license: Option<Bytes>;
-    readonly thumb: Option<Bytes>;
-  }
-
-<<<<<<< HEAD
-  /** @name PalletRmrkEquipCall (308) */
-=======
-<<<<<<< HEAD
-  /** @name PalletRmrkEquipCall (306) */
-=======
-  /** @name PalletRmrkEquipCall (305) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface PalletRmrkEquipCall extends Enum {
-    readonly isCreateBase: boolean;
-    readonly asCreateBase: {
-      readonly baseType: Bytes;
-      readonly symbol: Bytes;
-      readonly parts: Vec<RmrkTraitsPartPartType>;
-    } & Struct;
-    readonly isThemeAdd: boolean;
-    readonly asThemeAdd: {
-      readonly baseId: u32;
-      readonly theme: RmrkTraitsTheme;
-    } & Struct;
-    readonly isEquippable: boolean;
-    readonly asEquippable: {
-      readonly baseId: u32;
-      readonly slotId: u32;
-      readonly equippables: RmrkTraitsPartEquippableList;
-    } & Struct;
-    readonly type: 'CreateBase' | 'ThemeAdd' | 'Equippable';
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartPartType (311) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartPartType (309) */
-=======
-  /** @name RmrkTraitsPartPartType (308) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsPartPartType extends Enum {
-    readonly isFixedPart: boolean;
-    readonly asFixedPart: RmrkTraitsPartFixedPart;
-    readonly isSlotPart: boolean;
-    readonly asSlotPart: RmrkTraitsPartSlotPart;
-    readonly type: 'FixedPart' | 'SlotPart';
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartFixedPart (313) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartFixedPart (311) */
-=======
-  /** @name RmrkTraitsPartFixedPart (310) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsPartFixedPart extends Struct {
-    readonly id: u32;
-    readonly z: u32;
-    readonly src: Bytes;
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartSlotPart (314) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartSlotPart (312) */
-=======
-  /** @name RmrkTraitsPartSlotPart (311) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsPartSlotPart extends Struct {
-    readonly id: u32;
-    readonly equippable: RmrkTraitsPartEquippableList;
-    readonly src: Bytes;
-    readonly z: u32;
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartEquippableList (315) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsPartEquippableList (313) */
-=======
-  /** @name RmrkTraitsPartEquippableList (312) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsPartEquippableList extends Enum {
-    readonly isAll: boolean;
-    readonly isEmpty: boolean;
-    readonly isCustom: boolean;
-    readonly asCustom: Vec<u32>;
-    readonly type: 'All' | 'Empty' | 'Custom';
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsTheme (317) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsTheme (315) */
-=======
-  /** @name RmrkTraitsTheme (314) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsTheme extends Struct {
-    readonly name: Bytes;
-    readonly properties: Vec<RmrkTraitsThemeThemeProperty>;
-    readonly inherit: bool;
-  }
-
-<<<<<<< HEAD
-  /** @name RmrkTraitsThemeThemeProperty (319) */
-=======
-<<<<<<< HEAD
-  /** @name RmrkTraitsThemeThemeProperty (317) */
-=======
-  /** @name RmrkTraitsThemeThemeProperty (316) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-  interface RmrkTraitsThemeThemeProperty extends Struct {
-    readonly key: Bytes;
-    readonly value: Bytes;
-  }
-
-<<<<<<< HEAD
-  /** @name PalletAppPromotionCall (321) */
-=======
-<<<<<<< HEAD
-  /** @name PalletAppPromotionCall (319) */
-=======
-  /** @name PalletAppPromotionCall (318) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletAppPromotionCall (286) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletAppPromotionCall (288) */
   interface PalletAppPromotionCall extends Enum {
     readonly isSetAdminAddress: boolean;
     readonly asSetAdminAddress: {
@@ -3951,19 +2593,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'SetAdminAddress' | 'Stake' | 'Unstake' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorContract' | 'StopSponsoringContract' | 'PayoutStakers';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletForeignAssetsModuleCall (322) */
-=======
-<<<<<<< HEAD
-  /** @name PalletForeignAssetsModuleCall (320) */
-=======
-  /** @name PalletForeignAssetsModuleCall (319) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletForeignAssetsModuleCall (287) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletForeignAssetsModuleCall (289) */
   interface PalletForeignAssetsModuleCall extends Enum {
     readonly isRegisterForeignAsset: boolean;
     readonly asRegisterForeignAsset: {
@@ -3980,19 +2610,7 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'RegisterForeignAsset' | 'UpdateForeignAsset';
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  /** @name PalletEvmCall (323) */
-=======
-<<<<<<< HEAD
-  /** @name PalletEvmCall (321) */
-=======
-  /** @name PalletEvmCall (320) */
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-  /** @name PalletEvmCall (288) */
->>>>>>> ec6ecdbe... chore: regenerate types
+  /** @name PalletEvmCall (290) */
   interface PalletEvmCall extends Enum {
     readonly isWithdraw: boolean;
     readonly asWithdraw: {

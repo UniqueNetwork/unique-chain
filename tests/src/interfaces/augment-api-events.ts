@@ -6,17 +6,7 @@
 import '@polkadot/api-base/types/events';
 
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import type { Bytes, Null, Option, Result, U256, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
-=======
-import type { Bytes, Null, Option, Result, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
-<<<<<<< HEAD
->>>>>>> 394f6563... chore: regenerate stubs & types
-import type { ITuple } from '@polkadot/types-codec/types';
-=======
-import type { Bytes, Null, Option, Result, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
->>>>>>> ec6ecdbe... chore: regenerate types
+import type { Bytes, Null, Option, Result, U256, U8aFixed, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H160, H256, Weight } from '@polkadot/types/interfaces/runtime';
 import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportDispatchDispatchInfo, FrameSupportTokensMiscBalanceStatus, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, SpRuntimeDispatchError, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 

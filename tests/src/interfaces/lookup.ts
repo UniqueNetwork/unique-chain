@@ -1097,19 +1097,7 @@ export default {
     data: 'Bytes'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup116: pallet_ethereum::pallet::Event
-=======
-<<<<<<< HEAD
-   * Lookup114: pallet_ethereum::pallet::Event
-=======
-   * Lookup109: pallet_ethereum::pallet::Event
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup103: pallet_ethereum::pallet::Event
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup105: pallet_ethereum::pallet::Event
    **/
   PalletEthereumEvent: {
     _enum: {
@@ -1117,19 +1105,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup117: evm_core::error::ExitReason
-=======
-<<<<<<< HEAD
-   * Lookup115: evm_core::error::ExitReason
-=======
-   * Lookup110: evm_core::error::ExitReason
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup104: evm_core::error::ExitReason
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup106: evm_core::error::ExitReason
    **/
   EvmCoreErrorExitReason: {
     _enum: {
@@ -1140,37 +1116,13 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup118: evm_core::error::ExitSucceed
-=======
-<<<<<<< HEAD
-   * Lookup116: evm_core::error::ExitSucceed
-=======
-   * Lookup111: evm_core::error::ExitSucceed
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup105: evm_core::error::ExitSucceed
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup107: evm_core::error::ExitSucceed
    **/
   EvmCoreErrorExitSucceed: {
     _enum: ['Stopped', 'Returned', 'Suicided']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup119: evm_core::error::ExitError
-=======
-<<<<<<< HEAD
-   * Lookup117: evm_core::error::ExitError
-=======
-   * Lookup112: evm_core::error::ExitError
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup106: evm_core::error::ExitError
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup108: evm_core::error::ExitError
    **/
   EvmCoreErrorExitError: {
     _enum: {
@@ -1192,37 +1144,13 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup122: evm_core::error::ExitRevert
-=======
-<<<<<<< HEAD
-   * Lookup120: evm_core::error::ExitRevert
-=======
-   * Lookup115: evm_core::error::ExitRevert
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup109: evm_core::error::ExitRevert
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup111: evm_core::error::ExitRevert
    **/
   EvmCoreErrorExitRevert: {
     _enum: ['Reverted']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup123: evm_core::error::ExitFatal
-=======
-<<<<<<< HEAD
-   * Lookup121: evm_core::error::ExitFatal
-=======
-   * Lookup116: evm_core::error::ExitFatal
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup110: evm_core::error::ExitFatal
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup112: evm_core::error::ExitFatal
    **/
   EvmCoreErrorExitFatal: {
     _enum: {
@@ -1233,19 +1161,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup124: pallet_evm_contract_helpers::pallet::Event<T>
-=======
-<<<<<<< HEAD
-   * Lookup122: pallet_evm_contract_helpers::pallet::Event<T>
-=======
-   * Lookup117: pallet_evm_contract_helpers::pallet::Event<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup111: pallet_evm_contract_helpers::pallet::Event<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup113: pallet_evm_contract_helpers::pallet::Event<T>
    **/
   PalletEvmContractHelpersEvent: {
     _enum: {
@@ -1255,61 +1171,19 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup125: pallet_maintenance::pallet::Event<T>
-=======
-<<<<<<< HEAD
-   * Lookup123: pallet_maintenance::pallet::Event<T>
-=======
-   * Lookup118: pallet_evm_migration::pallet::Event<T>
-=======
-   * Lookup112: pallet_evm_migration::pallet::Event<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup114: pallet_evm_migration::pallet::Event<T>
    **/
   PalletEvmMigrationEvent: {
     _enum: ['TestEvent']
   },
   /**
-<<<<<<< HEAD
-   * Lookup119: pallet_maintenance::pallet::Event<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup113: pallet_maintenance::pallet::Event<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup115: pallet_maintenance::pallet::Event<T>
    **/
   PalletMaintenanceEvent: {
     _enum: ['MaintenanceEnabled', 'MaintenanceDisabled']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup126: pallet_test_utils::pallet::Event<T>
-=======
-<<<<<<< HEAD
-   * Lookup124: pallet_test_utils::pallet::Event<T>
-=======
-   * Lookup120: pallet_test_utils::pallet::Event<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  PalletTestUtilsEvent: {
-    _enum: ['ValueIsSet', 'ShouldRollback']
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup127: frame_system::Phase
-=======
-<<<<<<< HEAD
-   * Lookup125: frame_system::Phase
-=======
-   * Lookup121: frame_system::Phase
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup114: frame_system::Phase
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup116: frame_system::Phase
    **/
   FrameSystemPhase: {
     _enum: {
@@ -1319,38 +1193,14 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup129: frame_system::LastRuntimeUpgradeInfo
-=======
-<<<<<<< HEAD
-   * Lookup127: frame_system::LastRuntimeUpgradeInfo
-=======
-   * Lookup124: frame_system::LastRuntimeUpgradeInfo
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup117: frame_system::LastRuntimeUpgradeInfo
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup119: frame_system::LastRuntimeUpgradeInfo
    **/
   FrameSystemLastRuntimeUpgradeInfo: {
     specVersion: 'Compact<u32>',
     specName: 'Text'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup130: frame_system::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup128: frame_system::pallet::Call<T>
-=======
-   * Lookup125: frame_system::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup119: frame_system::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup121: frame_system::pallet::Call<T>
    **/
   FrameSystemCall: {
     _enum: {
@@ -1388,19 +1238,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup135: frame_system::limits::BlockWeights
-=======
-<<<<<<< HEAD
-   * Lookup133: frame_system::limits::BlockWeights
-=======
-   * Lookup130: frame_system::limits::BlockWeights
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup124: frame_system::limits::BlockWeights
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup126: frame_system::limits::BlockWeights
    **/
   FrameSystemLimitsBlockWeights: {
     baseBlock: 'Weight',
@@ -1408,19 +1246,7 @@ export default {
     perClass: 'FrameSupportDispatchPerDispatchClassWeightsPerClass'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup136: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
-=======
-<<<<<<< HEAD
-   * Lookup134: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
-=======
-   * Lookup131: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup125: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup127: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
    **/
   FrameSupportDispatchPerDispatchClassWeightsPerClass: {
     normal: 'FrameSystemLimitsWeightsPerClass',
@@ -1428,19 +1254,7 @@ export default {
     mandatory: 'FrameSystemLimitsWeightsPerClass'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup137: frame_system::limits::WeightsPerClass
-=======
-<<<<<<< HEAD
-   * Lookup135: frame_system::limits::WeightsPerClass
-=======
-   * Lookup132: frame_system::limits::WeightsPerClass
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup126: frame_system::limits::WeightsPerClass
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup128: frame_system::limits::WeightsPerClass
    **/
   FrameSystemLimitsWeightsPerClass: {
     baseExtrinsic: 'Weight',
@@ -1449,37 +1263,13 @@ export default {
     reserved: 'Option<Weight>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup139: frame_system::limits::BlockLength
-=======
-<<<<<<< HEAD
-   * Lookup137: frame_system::limits::BlockLength
-=======
-   * Lookup134: frame_system::limits::BlockLength
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup128: frame_system::limits::BlockLength
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup130: frame_system::limits::BlockLength
    **/
   FrameSystemLimitsBlockLength: {
     max: 'FrameSupportDispatchPerDispatchClassU32'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup140: frame_support::dispatch::PerDispatchClass<T>
-=======
-<<<<<<< HEAD
-   * Lookup138: frame_support::dispatch::PerDispatchClass<T>
-=======
-   * Lookup135: frame_support::dispatch::PerDispatchClass<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup129: frame_support::dispatch::PerDispatchClass<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup131: frame_support::dispatch::PerDispatchClass<T>
    **/
   FrameSupportDispatchPerDispatchClassU32: {
     normal: 'u32',
@@ -1487,38 +1277,14 @@ export default {
     mandatory: 'u32'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup141: sp_weights::RuntimeDbWeight
-=======
-<<<<<<< HEAD
-   * Lookup139: sp_weights::RuntimeDbWeight
-=======
-   * Lookup136: sp_weights::RuntimeDbWeight
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup130: sp_weights::RuntimeDbWeight
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup132: sp_weights::RuntimeDbWeight
    **/
   SpWeightsRuntimeDbWeight: {
     read: 'u64',
     write: 'u64'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup142: sp_version::RuntimeVersion
-=======
-<<<<<<< HEAD
-   * Lookup140: sp_version::RuntimeVersion
-=======
-   * Lookup137: sp_version::RuntimeVersion
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup131: sp_version::RuntimeVersion
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup133: sp_version::RuntimeVersion
    **/
   SpVersionRuntimeVersion: {
     specName: 'Text',
@@ -1531,37 +1297,13 @@ export default {
     stateVersion: 'u8'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup147: frame_system::pallet::Error<T>
-=======
-<<<<<<< HEAD
-   * Lookup145: frame_system::pallet::Error<T>
-=======
-   * Lookup142: frame_system::pallet::Error<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup136: frame_system::pallet::Error<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup138: frame_system::pallet::Error<T>
    **/
   FrameSystemError: {
     _enum: ['InvalidSpecName', 'SpecVersionNeedsToIncrease', 'FailedToExtractRuntimeVersion', 'NonDefaultComposite', 'NonZeroRefCount', 'CallFiltered']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup148: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
-=======
-<<<<<<< HEAD
-   * Lookup146: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
-=======
-   * Lookup143: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup137: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup139: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
    **/
   PolkadotPrimitivesV2PersistedValidationData: {
     parentHead: 'Bytes',
@@ -1570,55 +1312,19 @@ export default {
     maxPovSize: 'u32'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup151: polkadot_primitives::v2::UpgradeRestriction
-=======
-<<<<<<< HEAD
-   * Lookup149: polkadot_primitives::v2::UpgradeRestriction
-=======
-   * Lookup146: polkadot_primitives::v2::UpgradeRestriction
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup140: polkadot_primitives::v2::UpgradeRestriction
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup142: polkadot_primitives::v2::UpgradeRestriction
    **/
   PolkadotPrimitivesV2UpgradeRestriction: {
     _enum: ['Present']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup152: sp_trie::storage_proof::StorageProof
-=======
-<<<<<<< HEAD
-   * Lookup150: sp_trie::storage_proof::StorageProof
-=======
-   * Lookup147: sp_trie::storage_proof::StorageProof
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup141: sp_trie::storage_proof::StorageProof
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup143: sp_trie::storage_proof::StorageProof
    **/
   SpTrieStorageProof: {
     trieNodes: 'BTreeSet<Bytes>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup154: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
-=======
-<<<<<<< HEAD
-   * Lookup152: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
-=======
-   * Lookup149: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup143: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup145: cumulus_pallet_parachain_system::relay_state_snapshot::MessagingStateSnapshot
    **/
   CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: {
     dmqMqcHead: 'H256',
@@ -1627,19 +1333,7 @@ export default {
     egressChannels: 'Vec<(u32,PolkadotPrimitivesV2AbridgedHrmpChannel)>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup157: polkadot_primitives::v2::AbridgedHrmpChannel
-=======
-<<<<<<< HEAD
-   * Lookup155: polkadot_primitives::v2::AbridgedHrmpChannel
-=======
-   * Lookup152: polkadot_primitives::v2::AbridgedHrmpChannel
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup146: polkadot_primitives::v2::AbridgedHrmpChannel
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup148: polkadot_primitives::v2::AbridgedHrmpChannel
    **/
   PolkadotPrimitivesV2AbridgedHrmpChannel: {
     maxCapacity: 'u32',
@@ -1650,19 +1344,7 @@ export default {
     mqcHead: 'Option<H256>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup158: polkadot_primitives::v2::AbridgedHostConfiguration
-=======
-<<<<<<< HEAD
-   * Lookup156: polkadot_primitives::v2::AbridgedHostConfiguration
-=======
-   * Lookup153: polkadot_primitives::v2::AbridgedHostConfiguration
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup147: polkadot_primitives::v2::AbridgedHostConfiguration
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup149: polkadot_primitives::v2::AbridgedHostConfiguration
    **/
   PolkadotPrimitivesV2AbridgedHostConfiguration: {
     maxCodeSize: 'u32',
@@ -1676,38 +1358,14 @@ export default {
     validationUpgradeDelay: 'u32'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup164: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
-=======
-<<<<<<< HEAD
-   * Lookup162: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
-=======
-   * Lookup159: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup153: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup155: polkadot_core_primitives::OutboundHrmpMessage<polkadot_parachain::primitives::Id>
    **/
   PolkadotCorePrimitivesOutboundHrmpMessage: {
     recipient: 'u32',
     data: 'Bytes'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup165: cumulus_pallet_parachain_system::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup163: cumulus_pallet_parachain_system::pallet::Call<T>
-=======
-   * Lookup160: cumulus_pallet_parachain_system::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup154: cumulus_pallet_parachain_system::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup156: cumulus_pallet_parachain_system::pallet::Call<T>
    **/
   CumulusPalletParachainSystemCall: {
     _enum: {
@@ -1726,19 +1384,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup166: cumulus_primitives_parachain_inherent::ParachainInherentData
-=======
-<<<<<<< HEAD
-   * Lookup164: cumulus_primitives_parachain_inherent::ParachainInherentData
-=======
-   * Lookup161: cumulus_primitives_parachain_inherent::ParachainInherentData
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup155: cumulus_primitives_parachain_inherent::ParachainInherentData
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup157: cumulus_primitives_parachain_inherent::ParachainInherentData
    **/
   CumulusPrimitivesParachainInherentParachainInherentData: {
     validationData: 'PolkadotPrimitivesV2PersistedValidationData',
@@ -1747,75 +1393,27 @@ export default {
     horizontalMessages: 'BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup168: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
-=======
-<<<<<<< HEAD
-   * Lookup166: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
-=======
-   * Lookup163: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup157: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup159: polkadot_core_primitives::InboundDownwardMessage<BlockNumber>
    **/
   PolkadotCorePrimitivesInboundDownwardMessage: {
     sentAt: 'u32',
     msg: 'Bytes'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup171: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
-=======
-<<<<<<< HEAD
-   * Lookup169: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
-=======
-   * Lookup166: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup160: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup162: polkadot_core_primitives::InboundHrmpMessage<BlockNumber>
    **/
   PolkadotCorePrimitivesInboundHrmpMessage: {
     sentAt: 'u32',
     data: 'Bytes'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup174: cumulus_pallet_parachain_system::pallet::Error<T>
-=======
-<<<<<<< HEAD
-   * Lookup172: cumulus_pallet_parachain_system::pallet::Error<T>
-=======
-   * Lookup169: cumulus_pallet_parachain_system::pallet::Error<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup163: cumulus_pallet_parachain_system::pallet::Error<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup165: cumulus_pallet_parachain_system::pallet::Error<T>
    **/
   CumulusPalletParachainSystemError: {
     _enum: ['OverlappingUpgrades', 'ProhibitedByPolkadot', 'TooBig', 'ValidationDataNotAvailable', 'HostConfigurationNotAvailable', 'NotScheduled', 'NothingAuthorized', 'Unauthorized']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup176: pallet_balances::BalanceLock<Balance>
-=======
-<<<<<<< HEAD
-   * Lookup174: pallet_balances::BalanceLock<Balance>
-=======
-   * Lookup171: pallet_balances::BalanceLock<Balance>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup165: pallet_balances::BalanceLock<Balance>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup167: pallet_balances::BalanceLock<Balance>
    **/
   PalletBalancesBalanceLock: {
     id: '[u8;8]',
@@ -1823,74 +1421,26 @@ export default {
     reasons: 'PalletBalancesReasons'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup177: pallet_balances::Reasons
-=======
-<<<<<<< HEAD
-   * Lookup175: pallet_balances::Reasons
-=======
-   * Lookup172: pallet_balances::Reasons
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup166: pallet_balances::Reasons
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup168: pallet_balances::Reasons
    **/
   PalletBalancesReasons: {
     _enum: ['Fee', 'Misc', 'All']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup180: pallet_balances::ReserveData<ReserveIdentifier, Balance>
-=======
-<<<<<<< HEAD
-   * Lookup178: pallet_balances::ReserveData<ReserveIdentifier, Balance>
-=======
-   * Lookup175: pallet_balances::ReserveData<ReserveIdentifier, Balance>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup169: pallet_balances::ReserveData<ReserveIdentifier, Balance>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup171: pallet_balances::ReserveData<ReserveIdentifier, Balance>
    **/
   PalletBalancesReserveData: {
     id: '[u8;16]',
     amount: 'u128'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup182: pallet_balances::Releases
-=======
-<<<<<<< HEAD
-   * Lookup180: pallet_balances::Releases
-=======
-   * Lookup177: pallet_balances::Releases
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup171: pallet_balances::Releases
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup173: pallet_balances::Releases
    **/
   PalletBalancesReleases: {
     _enum: ['V1_0_0', 'V2_0_0']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup183: pallet_balances::pallet::Call<T, I>
-=======
-<<<<<<< HEAD
-   * Lookup181: pallet_balances::pallet::Call<T, I>
-=======
-   * Lookup178: pallet_balances::pallet::Call<T, I>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup172: pallet_balances::pallet::Call<T, I>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup174: pallet_balances::pallet::Call<T, I>
    **/
   PalletBalancesCall: {
     _enum: {
@@ -1923,37 +1473,13 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup186: pallet_balances::pallet::Error<T, I>
-=======
-<<<<<<< HEAD
-   * Lookup184: pallet_balances::pallet::Error<T, I>
-=======
-   * Lookup181: pallet_balances::pallet::Error<T, I>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup175: pallet_balances::pallet::Error<T, I>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup177: pallet_balances::pallet::Error<T, I>
    **/
   PalletBalancesError: {
     _enum: ['VestingBalance', 'LiquidityRestrictions', 'InsufficientBalance', 'ExistentialDeposit', 'KeepAlive', 'ExistingVestingSchedule', 'DeadAccount', 'TooManyReserves']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup188: pallet_timestamp::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup186: pallet_timestamp::pallet::Call<T>
-=======
-   * Lookup183: pallet_timestamp::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup177: pallet_timestamp::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup179: pallet_timestamp::pallet::Call<T>
    **/
   PalletTimestampCall: {
     _enum: {
@@ -1963,37 +1489,13 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup190: pallet_transaction_payment::Releases
-=======
-<<<<<<< HEAD
-   * Lookup188: pallet_transaction_payment::Releases
-=======
-   * Lookup185: pallet_transaction_payment::Releases
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup179: pallet_transaction_payment::Releases
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup181: pallet_transaction_payment::Releases
    **/
   PalletTransactionPaymentReleases: {
     _enum: ['V1Ancient', 'V2']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup191: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
-=======
-<<<<<<< HEAD
-   * Lookup189: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
-=======
-   * Lookup186: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup180: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup182: pallet_treasury::Proposal<sp_core::crypto::AccountId32, Balance>
    **/
   PalletTreasuryProposal: {
     proposer: 'AccountId32',
@@ -2002,19 +1504,7 @@ export default {
     bond: 'u128'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup194: pallet_treasury::pallet::Call<T, I>
-=======
-<<<<<<< HEAD
-   * Lookup192: pallet_treasury::pallet::Call<T, I>
-=======
-   * Lookup189: pallet_treasury::pallet::Call<T, I>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup183: pallet_treasury::pallet::Call<T, I>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup185: pallet_treasury::pallet::Call<T, I>
    **/
   PalletTreasuryCall: {
     _enum: {
@@ -2038,53 +1528,17 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup197: frame_support::PalletId
+   * Lookup188: frame_support::PalletId
    **/
   FrameSupportPalletId: '[u8;8]',
   /**
-   * Lookup198: pallet_treasury::pallet::Error<T, I>
-=======
-<<<<<<< HEAD
-   * Lookup195: frame_support::PalletId
-   **/
-  FrameSupportPalletId: '[u8;8]',
-  /**
-   * Lookup196: pallet_treasury::pallet::Error<T, I>
-=======
-   * Lookup192: frame_support::PalletId
-   **/
-  FrameSupportPalletId: '[u8;8]',
-  /**
-   * Lookup193: pallet_treasury::pallet::Error<T, I>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup186: frame_support::PalletId
-   **/
-  FrameSupportPalletId: '[u8;8]',
-  /**
-   * Lookup187: pallet_treasury::pallet::Error<T, I>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup189: pallet_treasury::pallet::Error<T, I>
    **/
   PalletTreasuryError: {
     _enum: ['InsufficientProposersBalance', 'InvalidIndex', 'TooManyApprovals', 'InsufficientPermission', 'ProposalNotApproved']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup199: pallet_sudo::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup197: pallet_sudo::pallet::Call<T>
-=======
-   * Lookup194: pallet_sudo::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup188: pallet_sudo::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup190: pallet_sudo::pallet::Call<T>
    **/
   PalletSudoCall: {
     _enum: {
@@ -2108,19 +1562,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup201: orml_vesting::module::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup199: orml_vesting::module::Call<T>
-=======
-   * Lookup196: orml_vesting::module::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup190: orml_vesting::module::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup192: orml_vesting::module::Call<T>
    **/
   OrmlVestingModuleCall: {
     _enum: {
@@ -2139,19 +1581,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup203: orml_xtokens::module::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup201: orml_xtokens::module::Call<T>
-=======
-   * Lookup198: orml_xtokens::module::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup192: orml_xtokens::module::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup194: orml_xtokens::module::Call<T>
    **/
   OrmlXtokensModuleCall: {
     _enum: {
@@ -2194,19 +1624,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup204: xcm::VersionedMultiAsset
-=======
-<<<<<<< HEAD
-   * Lookup202: xcm::VersionedMultiAsset
-=======
-   * Lookup199: xcm::VersionedMultiAsset
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup193: xcm::VersionedMultiAsset
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup195: xcm::VersionedMultiAsset
    **/
   XcmVersionedMultiAsset: {
     _enum: {
@@ -2215,19 +1633,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup207: orml_tokens::module::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup205: orml_tokens::module::Call<T>
-=======
-   * Lookup202: orml_tokens::module::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup196: orml_tokens::module::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup198: orml_tokens::module::Call<T>
    **/
   OrmlTokensModuleCall: {
     _enum: {
@@ -2261,19 +1667,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup208: cumulus_pallet_xcmp_queue::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup206: cumulus_pallet_xcmp_queue::pallet::Call<T>
-=======
-   * Lookup203: cumulus_pallet_xcmp_queue::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup197: cumulus_pallet_xcmp_queue::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup199: cumulus_pallet_xcmp_queue::pallet::Call<T>
    **/
   CumulusPalletXcmpQueueCall: {
     _enum: {
@@ -2322,19 +1716,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup209: pallet_xcm::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup207: pallet_xcm::pallet::Call<T>
-=======
-   * Lookup204: pallet_xcm::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup198: pallet_xcm::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup200: pallet_xcm::pallet::Call<T>
    **/
   PalletXcmCall: {
     _enum: {
@@ -2388,19 +1770,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup210: xcm::VersionedXcm<RuntimeCall>
-=======
-<<<<<<< HEAD
-   * Lookup208: xcm::VersionedXcm<RuntimeCall>
-=======
-   * Lookup205: xcm::VersionedXcm<RuntimeCall>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup199: xcm::VersionedXcm<RuntimeCall>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup201: xcm::VersionedXcm<RuntimeCall>
    **/
   XcmVersionedXcm: {
     _enum: {
@@ -2410,19 +1780,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup211: xcm::v0::Xcm<RuntimeCall>
-=======
-<<<<<<< HEAD
-   * Lookup209: xcm::v0::Xcm<RuntimeCall>
-=======
-   * Lookup206: xcm::v0::Xcm<RuntimeCall>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup200: xcm::v0::Xcm<RuntimeCall>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup202: xcm::v0::Xcm<RuntimeCall>
    **/
   XcmV0Xcm: {
     _enum: {
@@ -2476,19 +1834,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup213: xcm::v0::order::Order<RuntimeCall>
-=======
-<<<<<<< HEAD
-   * Lookup211: xcm::v0::order::Order<RuntimeCall>
-=======
-   * Lookup208: xcm::v0::order::Order<RuntimeCall>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup202: xcm::v0::order::Order<RuntimeCall>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup204: xcm::v0::order::Order<RuntimeCall>
    **/
   XcmV0Order: {
     _enum: {
@@ -2531,19 +1877,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup215: xcm::v0::Response
-=======
-<<<<<<< HEAD
-   * Lookup213: xcm::v0::Response
-=======
-   * Lookup210: xcm::v0::Response
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup204: xcm::v0::Response
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup206: xcm::v0::Response
    **/
   XcmV0Response: {
     _enum: {
@@ -2551,19 +1885,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup216: xcm::v1::Xcm<RuntimeCall>
-=======
-<<<<<<< HEAD
-   * Lookup214: xcm::v1::Xcm<RuntimeCall>
-=======
-   * Lookup211: xcm::v1::Xcm<RuntimeCall>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup205: xcm::v1::Xcm<RuntimeCall>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup207: xcm::v1::Xcm<RuntimeCall>
    **/
   XcmV1Xcm: {
     _enum: {
@@ -2622,19 +1944,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup218: xcm::v1::order::Order<RuntimeCall>
-=======
-<<<<<<< HEAD
-   * Lookup216: xcm::v1::order::Order<RuntimeCall>
-=======
-   * Lookup213: xcm::v1::order::Order<RuntimeCall>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup207: xcm::v1::order::Order<RuntimeCall>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup209: xcm::v1::order::Order<RuntimeCall>
    **/
   XcmV1Order: {
     _enum: {
@@ -2679,19 +1989,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup220: xcm::v1::Response
-=======
-<<<<<<< HEAD
-   * Lookup218: xcm::v1::Response
-=======
-   * Lookup215: xcm::v1::Response
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup209: xcm::v1::Response
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup211: xcm::v1::Response
    **/
   XcmV1Response: {
     _enum: {
@@ -2700,35 +1998,11 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup234: cumulus_pallet_xcm::pallet::Call<T>
+   * Lookup226: cumulus_pallet_xcm::pallet::Call<T>
    **/
   CumulusPalletXcmCall: 'Null',
   /**
-   * Lookup235: cumulus_pallet_dmp_queue::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup232: cumulus_pallet_xcm::pallet::Call<T>
-   **/
-  CumulusPalletXcmCall: 'Null',
-  /**
-   * Lookup233: cumulus_pallet_dmp_queue::pallet::Call<T>
-=======
-   * Lookup229: cumulus_pallet_xcm::pallet::Call<T>
-   **/
-  CumulusPalletXcmCall: 'Null',
-  /**
-   * Lookup230: cumulus_pallet_dmp_queue::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup224: cumulus_pallet_xcm::pallet::Call<T>
-   **/
-  CumulusPalletXcmCall: 'Null',
-  /**
-   * Lookup225: cumulus_pallet_dmp_queue::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup227: cumulus_pallet_dmp_queue::pallet::Call<T>
    **/
   CumulusPalletDmpQueueCall: {
     _enum: {
@@ -2739,19 +2013,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup236: pallet_inflation::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup234: pallet_inflation::pallet::Call<T>
-=======
-   * Lookup231: pallet_inflation::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup226: pallet_inflation::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup228: pallet_inflation::pallet::Call<T>
    **/
   PalletInflationCall: {
     _enum: {
@@ -2761,19 +2023,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup237: pallet_unique::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup235: pallet_unique::Call<T>
-=======
-   * Lookup232: pallet_unique::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup227: pallet_unique::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup229: pallet_unique::Call<T>
    **/
   PalletUniqueCall: {
     _enum: {
@@ -2909,19 +2159,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup242: up_data_structs::CollectionMode
-=======
-<<<<<<< HEAD
-   * Lookup240: up_data_structs::CollectionMode
-=======
-   * Lookup237: up_data_structs::CollectionMode
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup232: up_data_structs::CollectionMode
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup234: up_data_structs::CollectionMode
    **/
   UpDataStructsCollectionMode: {
     _enum: {
@@ -2931,19 +2169,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup243: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
-=======
-<<<<<<< HEAD
-   * Lookup241: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
-=======
-   * Lookup238: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup233: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup235: up_data_structs::CreateCollectionData<sp_core::crypto::AccountId32>
    **/
   UpDataStructsCreateCollectionData: {
     mode: 'UpDataStructsCollectionMode',
@@ -2958,37 +2184,13 @@ export default {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup245: up_data_structs::AccessMode
-=======
-<<<<<<< HEAD
-   * Lookup243: up_data_structs::AccessMode
-=======
-   * Lookup240: up_data_structs::AccessMode
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup235: up_data_structs::AccessMode
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup237: up_data_structs::AccessMode
    **/
   UpDataStructsAccessMode: {
     _enum: ['Normal', 'AllowList']
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup247: up_data_structs::CollectionLimits
-=======
-<<<<<<< HEAD
-   * Lookup245: up_data_structs::CollectionLimits
-=======
-   * Lookup242: up_data_structs::CollectionLimits
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup237: up_data_structs::CollectionLimits
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup239: up_data_structs::CollectionLimits
    **/
   UpDataStructsCollectionLimits: {
     accountTokenOwnershipLimit: 'Option<u32>',
@@ -3002,19 +2204,7 @@ export default {
     transfersEnabled: 'Option<bool>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup249: up_data_structs::SponsoringRateLimit
-=======
-<<<<<<< HEAD
-   * Lookup247: up_data_structs::SponsoringRateLimit
-=======
-   * Lookup244: up_data_structs::SponsoringRateLimit
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup239: up_data_structs::SponsoringRateLimit
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup241: up_data_structs::SponsoringRateLimit
    **/
   UpDataStructsSponsoringRateLimit: {
     _enum: {
@@ -3023,19 +2213,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup252: up_data_structs::CollectionPermissions
-=======
-<<<<<<< HEAD
-   * Lookup250: up_data_structs::CollectionPermissions
-=======
-   * Lookup247: up_data_structs::CollectionPermissions
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup242: up_data_structs::CollectionPermissions
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup244: up_data_structs::CollectionPermissions
    **/
   UpDataStructsCollectionPermissions: {
     access: 'Option<UpDataStructsAccessMode>',
@@ -3043,19 +2221,7 @@ export default {
     nesting: 'Option<UpDataStructsNestingPermissions>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup254: up_data_structs::NestingPermissions
-=======
-<<<<<<< HEAD
-   * Lookup252: up_data_structs::NestingPermissions
-=======
-   * Lookup249: up_data_structs::NestingPermissions
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup244: up_data_structs::NestingPermissions
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup246: up_data_structs::NestingPermissions
    **/
   UpDataStructsNestingPermissions: {
     tokenOwner: 'bool',
@@ -3063,54 +2229,18 @@ export default {
     restricted: 'Option<UpDataStructsOwnerRestrictedSet>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup256: up_data_structs::OwnerRestrictedSet
+   * Lookup248: up_data_structs::OwnerRestrictedSet
    **/
   UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
   /**
-   * Lookup261: up_data_structs::PropertyKeyPermission
-=======
-<<<<<<< HEAD
-   * Lookup254: up_data_structs::OwnerRestrictedSet
-   **/
-  UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
-  /**
-   * Lookup259: up_data_structs::PropertyKeyPermission
-=======
-   * Lookup251: up_data_structs::OwnerRestrictedSet
-   **/
-  UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
-  /**
-   * Lookup256: up_data_structs::PropertyKeyPermission
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup246: up_data_structs::OwnerRestrictedSet
-   **/
-  UpDataStructsOwnerRestrictedSet: 'BTreeSet<u32>',
-  /**
-   * Lookup251: up_data_structs::PropertyKeyPermission
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup253: up_data_structs::PropertyKeyPermission
    **/
   UpDataStructsPropertyKeyPermission: {
     key: 'Bytes',
     permission: 'UpDataStructsPropertyPermission'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup262: up_data_structs::PropertyPermission
-=======
-<<<<<<< HEAD
-   * Lookup260: up_data_structs::PropertyPermission
-=======
-   * Lookup257: up_data_structs::PropertyPermission
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup252: up_data_structs::PropertyPermission
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup254: up_data_structs::PropertyPermission
    **/
   UpDataStructsPropertyPermission: {
     mutable: 'bool',
@@ -3118,38 +2248,14 @@ export default {
     tokenOwner: 'bool'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup265: up_data_structs::Property
-=======
-<<<<<<< HEAD
-   * Lookup263: up_data_structs::Property
-=======
-   * Lookup260: up_data_structs::Property
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup255: up_data_structs::Property
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup257: up_data_structs::Property
    **/
   UpDataStructsProperty: {
     key: 'Bytes',
     value: 'Bytes'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup268: up_data_structs::CreateItemData
-=======
-<<<<<<< HEAD
-   * Lookup266: up_data_structs::CreateItemData
-=======
-   * Lookup263: up_data_structs::CreateItemData
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup258: up_data_structs::CreateItemData
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup260: up_data_structs::CreateItemData
    **/
   UpDataStructsCreateItemData: {
     _enum: {
@@ -3159,74 +2265,26 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup269: up_data_structs::CreateNftData
-=======
-<<<<<<< HEAD
-   * Lookup267: up_data_structs::CreateNftData
-=======
-   * Lookup264: up_data_structs::CreateNftData
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup259: up_data_structs::CreateNftData
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup261: up_data_structs::CreateNftData
    **/
   UpDataStructsCreateNftData: {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup270: up_data_structs::CreateFungibleData
-=======
-<<<<<<< HEAD
-   * Lookup268: up_data_structs::CreateFungibleData
-=======
-   * Lookup265: up_data_structs::CreateFungibleData
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup260: up_data_structs::CreateFungibleData
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup262: up_data_structs::CreateFungibleData
    **/
   UpDataStructsCreateFungibleData: {
     value: 'u128'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup271: up_data_structs::CreateReFungibleData
-=======
-<<<<<<< HEAD
-   * Lookup269: up_data_structs::CreateReFungibleData
-=======
-   * Lookup266: up_data_structs::CreateReFungibleData
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup261: up_data_structs::CreateReFungibleData
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup263: up_data_structs::CreateReFungibleData
    **/
   UpDataStructsCreateReFungibleData: {
     pieces: 'u128',
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup274: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-<<<<<<< HEAD
-   * Lookup272: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-   * Lookup269: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup264: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup266: up_data_structs::CreateItemExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateItemExData: {
     _enum: {
@@ -3237,38 +2295,14 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup276: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-<<<<<<< HEAD
-   * Lookup274: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-   * Lookup271: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup266: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup268: up_data_structs::CreateNftExData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateNftExData: {
     properties: 'Vec<UpDataStructsProperty>',
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup283: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-<<<<<<< HEAD
-   * Lookup281: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-   * Lookup278: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup273: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup275: up_data_structs::CreateRefungibleExSingleOwner<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateRefungibleExSingleOwner: {
     user: 'PalletEvmAccountBasicCrossAccountIdRepr',
@@ -3276,79 +2310,14 @@ export default {
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup285: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-<<<<<<< HEAD
-   * Lookup283: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
-=======
-   * Lookup280: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup275: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup277: up_data_structs::CreateRefungibleExMultipleOwners<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsCreateRefungibleExMultipleOwners: {
     users: 'BTreeMap<PalletEvmAccountBasicCrossAccountIdRepr, u128>',
     properties: 'Vec<UpDataStructsProperty>'
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup286: pallet_unique_scheduler::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup284: pallet_unique_scheduler::pallet::Call<T>
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  PalletUniqueSchedulerCall: {
-    _enum: {
-      schedule_named: {
-        id: '[u8;16]',
-        when: 'u32',
-        maybePeriodic: 'Option<(u32,u32)>',
-        priority: 'Option<u8>',
-        call: 'FrameSupportScheduleMaybeHashed',
-      },
-      cancel_named: {
-        id: '[u8;16]',
-      },
-      schedule_named_after: {
-        id: '[u8;16]',
-        after: 'u32',
-        maybePeriodic: 'Option<(u32,u32)>',
-        priority: 'Option<u8>',
-        call: 'FrameSupportScheduleMaybeHashed',
-      },
-      change_named_priority: {
-        id: '[u8;16]',
-        priority: 'u8'
-      }
-    }
-  },
-  /**
-   * Lookup289: frame_support::traits::schedule::MaybeHashed<opal_runtime::RuntimeCall, primitive_types::H256>
-   **/
-  FrameSupportScheduleMaybeHashed: {
-    _enum: {
-      Value: 'Call',
-      Hash: 'H256'
-    }
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup290: pallet_configuration::pallet::Call<T>
-=======
-   * Lookup288: pallet_configuration::pallet::Call<T>
-=======
-   * Lookup281: pallet_configuration::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup276: pallet_configuration::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup278: pallet_configuration::pallet::Call<T>
    **/
   PalletConfigurationCall: {
     _enum: {
@@ -3367,29 +2336,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup292: pallet_template_transaction_payment::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup290: pallet_template_transaction_payment::Call<T>
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  PalletTemplateTransactionPaymentCall: 'Null',
-  /**
-   * Lookup293: pallet_structure::pallet::Call<T>
-   **/
-  PalletStructureCall: 'Null',
-  /**
-<<<<<<< HEAD
-   * Lookup294: pallet_rmrk_core::pallet::Call<T>
-=======
-   * Lookup292: pallet_rmrk_core::pallet::Call<T>
-=======
-   * Lookup286: pallet_configuration::AppPromotionConfiguration<BlockNumber>
-=======
-   * Lookup281: pallet_configuration::AppPromotionConfiguration<BlockNumber>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup283: pallet_configuration::AppPromotionConfiguration<BlockNumber>
    **/
   PalletConfigurationAppPromotionConfiguration: {
     recalculationInterval: 'Option<u32>',
@@ -3398,321 +2345,15 @@ export default {
     maxStakersPerCalculation: 'Option<u8>'
   },
   /**
-   * Lookup284: pallet_template_transaction_payment::Call<T>
+   * Lookup286: pallet_template_transaction_payment::Call<T>
    **/
   PalletTemplateTransactionPaymentCall: 'Null',
   /**
-   * Lookup285: pallet_structure::pallet::Call<T>
+   * Lookup287: pallet_structure::pallet::Call<T>
    **/
   PalletStructureCall: 'Null',
   /**
-<<<<<<< HEAD
-   * Lookup291: pallet_rmrk_core::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  PalletRmrkCoreCall: {
-    _enum: {
-      create_collection: {
-        metadata: 'Bytes',
-        max: 'Option<u32>',
-        symbol: 'Bytes',
-      },
-      destroy_collection: {
-        collectionId: 'u32',
-      },
-      change_collection_issuer: {
-        collectionId: 'u32',
-        newIssuer: 'MultiAddress',
-      },
-      lock_collection: {
-        collectionId: 'u32',
-      },
-      mint_nft: {
-        owner: 'Option<AccountId32>',
-        collectionId: 'u32',
-        recipient: 'Option<AccountId32>',
-        royaltyAmount: 'Option<Permill>',
-        metadata: 'Bytes',
-        transferable: 'bool',
-        resources: 'Option<Vec<RmrkTraitsResourceResourceTypes>>',
-      },
-      burn_nft: {
-        collectionId: 'u32',
-        nftId: 'u32',
-        maxBurns: 'u32',
-      },
-      send: {
-        rmrkCollectionId: 'u32',
-        rmrkNftId: 'u32',
-        newOwner: 'RmrkTraitsNftAccountIdOrCollectionNftTuple',
-      },
-      accept_nft: {
-        rmrkCollectionId: 'u32',
-        rmrkNftId: 'u32',
-        newOwner: 'RmrkTraitsNftAccountIdOrCollectionNftTuple',
-      },
-      reject_nft: {
-        rmrkCollectionId: 'u32',
-        rmrkNftId: 'u32',
-      },
-      accept_resource: {
-        rmrkCollectionId: 'u32',
-        rmrkNftId: 'u32',
-        resourceId: 'u32',
-      },
-      accept_resource_removal: {
-        rmrkCollectionId: 'u32',
-        rmrkNftId: 'u32',
-        resourceId: 'u32',
-      },
-      set_property: {
-        rmrkCollectionId: 'Compact<u32>',
-        maybeNftId: 'Option<u32>',
-        key: 'Bytes',
-        value: 'Bytes',
-      },
-      set_priority: {
-        rmrkCollectionId: 'u32',
-        rmrkNftId: 'u32',
-        priorities: 'Vec<u32>',
-      },
-      add_basic_resource: {
-        rmrkCollectionId: 'u32',
-        nftId: 'u32',
-        resource: 'RmrkTraitsResourceBasicResource',
-      },
-      add_composable_resource: {
-        rmrkCollectionId: 'u32',
-        nftId: 'u32',
-        resource: 'RmrkTraitsResourceComposableResource',
-      },
-      add_slot_resource: {
-        rmrkCollectionId: 'u32',
-        nftId: 'u32',
-        resource: 'RmrkTraitsResourceSlotResource',
-      },
-      remove_resource: {
-        rmrkCollectionId: 'u32',
-        nftId: 'u32',
-        resourceId: 'u32'
-      }
-    }
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup300: rmrk_traits::resource::ResourceTypes<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup298: rmrk_traits::resource::ResourceTypes<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup297: rmrk_traits::resource::ResourceTypes<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsResourceResourceTypes: {
-    _enum: {
-      Basic: 'RmrkTraitsResourceBasicResource',
-      Composable: 'RmrkTraitsResourceComposableResource',
-      Slot: 'RmrkTraitsResourceSlotResource'
-    }
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup302: rmrk_traits::resource::BasicResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup300: rmrk_traits::resource::BasicResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup299: rmrk_traits::resource::BasicResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsResourceBasicResource: {
-    src: 'Option<Bytes>',
-    metadata: 'Option<Bytes>',
-    license: 'Option<Bytes>',
-    thumb: 'Option<Bytes>'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup304: rmrk_traits::resource::ComposableResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup302: rmrk_traits::resource::ComposableResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup301: rmrk_traits::resource::ComposableResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsResourceComposableResource: {
-    parts: 'Vec<u32>',
-    base: 'u32',
-    src: 'Option<Bytes>',
-    metadata: 'Option<Bytes>',
-    license: 'Option<Bytes>',
-    thumb: 'Option<Bytes>'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup305: rmrk_traits::resource::SlotResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup303: rmrk_traits::resource::SlotResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup302: rmrk_traits::resource::SlotResource<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsResourceSlotResource: {
-    base: 'u32',
-    src: 'Option<Bytes>',
-    metadata: 'Option<Bytes>',
-    slot: 'u32',
-    license: 'Option<Bytes>',
-    thumb: 'Option<Bytes>'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup308: pallet_rmrk_equip::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup306: pallet_rmrk_equip::pallet::Call<T>
-=======
-   * Lookup305: pallet_rmrk_equip::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  PalletRmrkEquipCall: {
-    _enum: {
-      create_base: {
-        baseType: 'Bytes',
-        symbol: 'Bytes',
-        parts: 'Vec<RmrkTraitsPartPartType>',
-      },
-      theme_add: {
-        baseId: 'u32',
-        theme: 'RmrkTraitsTheme',
-      },
-      equippable: {
-        baseId: 'u32',
-        slotId: 'u32',
-        equippables: 'RmrkTraitsPartEquippableList'
-      }
-    }
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup311: rmrk_traits::part::PartType<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup309: rmrk_traits::part::PartType<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup308: rmrk_traits::part::PartType<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsPartPartType: {
-    _enum: {
-      FixedPart: 'RmrkTraitsPartFixedPart',
-      SlotPart: 'RmrkTraitsPartSlotPart'
-    }
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup313: rmrk_traits::part::FixedPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup311: rmrk_traits::part::FixedPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup310: rmrk_traits::part::FixedPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsPartFixedPart: {
-    id: 'u32',
-    z: 'u32',
-    src: 'Bytes'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup314: rmrk_traits::part::SlotPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup312: rmrk_traits::part::SlotPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup311: rmrk_traits::part::SlotPart<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsPartSlotPart: {
-    id: 'u32',
-    equippable: 'RmrkTraitsPartEquippableList',
-    src: 'Bytes',
-    z: 'u32'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup315: rmrk_traits::part::EquippableList<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup313: rmrk_traits::part::EquippableList<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup312: rmrk_traits::part::EquippableList<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsPartEquippableList: {
-    _enum: {
-      All: 'Null',
-      Empty: 'Null',
-      Custom: 'Vec<u32>'
-    }
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup317: rmrk_traits::theme::Theme<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>, S>>
-=======
-<<<<<<< HEAD
-   * Lookup315: rmrk_traits::theme::Theme<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>, S>>
-=======
-   * Lookup314: rmrk_traits::theme::Theme<sp_core::bounded::bounded_vec::BoundedVec<T, S>, sp_core::bounded::bounded_vec::BoundedVec<rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsTheme: {
-    name: 'Bytes',
-    properties: 'Vec<RmrkTraitsThemeThemeProperty>',
-    inherit: 'bool'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup319: rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-<<<<<<< HEAD
-   * Lookup317: rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
-=======
-   * Lookup316: rmrk_traits::theme::ThemeProperty<sp_core::bounded::bounded_vec::BoundedVec<T, S>>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-   **/
-  RmrkTraitsThemeThemeProperty: {
-    key: 'Bytes',
-    value: 'Bytes'
-  },
-  /**
-<<<<<<< HEAD
-   * Lookup321: pallet_app_promotion::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup319: pallet_app_promotion::pallet::Call<T>
-=======
-   * Lookup318: pallet_app_promotion::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup286: pallet_app_promotion::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup288: pallet_app_promotion::pallet::Call<T>
    **/
   PalletAppPromotionCall: {
     _enum: {
@@ -3741,19 +2382,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup322: pallet_foreign_assets::module::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup320: pallet_foreign_assets::module::Call<T>
-=======
-   * Lookup319: pallet_foreign_assets::module::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup287: pallet_foreign_assets::module::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup289: pallet_foreign_assets::module::Call<T>
    **/
   PalletForeignAssetsModuleCall: {
     _enum: {
@@ -3770,19 +2399,7 @@ export default {
     }
   },
   /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Lookup323: pallet_evm::pallet::Call<T>
-=======
-<<<<<<< HEAD
-   * Lookup321: pallet_evm::pallet::Call<T>
-=======
-   * Lookup320: pallet_evm::pallet::Call<T>
->>>>>>> 57a85f52... chore: regenerate stubs & types
->>>>>>> 394f6563... chore: regenerate stubs & types
-=======
-   * Lookup288: pallet_evm::pallet::Call<T>
->>>>>>> ec6ecdbe... chore: regenerate types
+   * Lookup290: pallet_evm::pallet::Call<T>
    **/
   PalletEvmCall: {
     _enum: {
