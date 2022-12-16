@@ -52,7 +52,7 @@ mod pallet {
 		type DefaultMinGasPrice: Get<u64>;
 
 		#[pallet::constant]
-		type MaxOverridedAllowedLocations: Get<u32>;
+		type MaxXcmAllowedLocations: Get<u32>;
 		#[pallet::constant]
 		type AppPromotionDailyRate: Get<Perbill>;
 		#[pallet::constant]
@@ -77,7 +77,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type XcmAllowedLocationsOverride<T: Config> = StorageValue<
-		Value = BoundedVec<MultiLocation, T::MaxOverridedAllowedLocations>,
+		Value = BoundedVec<MultiLocation, T::MaxXcmAllowedLocations>,
 		QueryKind = OptionQuery,
 	>;
 
@@ -118,7 +118,7 @@ mod pallet {
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_xcm_allowed_locations(
 			origin: OriginFor<T>,
-			locations: Option<BoundedVec<MultiLocation, T::MaxOverridedAllowedLocations>>,
+			locations: Option<BoundedVec<MultiLocation, T::MaxXcmAllowedLocations>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			<XcmAllowedLocationsOverride<T>>::set(locations);
