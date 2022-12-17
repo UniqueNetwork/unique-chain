@@ -13,7 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xb5e1747f
+/// @dev the ERC-165 identifier for this interface is 0x81172a75
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -102,7 +102,24 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple8 memory);
+	function collectionSponsor() external view returns (EthCrossAccount memory);
+
+	/// Get current collection limits.
+	///
+	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// Return `false` if a limit not set.
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() external view returns (Tuple21[] memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
@@ -116,10 +133,15 @@ interface Collection is Dummy, ERC165 {
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x4ad890a8,
-	///  or in textual repr: setCollectionLimit(string,uint256)
-	function setCollectionLimit(string memory limit, uint256 value) external;
+	/// @dev EVM selector for this function is: 0x88150bd0,
+	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
+	function setCollectionLimit(
+		CollectionLimits limit,
+		bool status,
+		uint256 value
+	) external;
 
 	/// Get contract address.
 	/// @dev EVM selector for this function is: 0xf6b4dfb4,
@@ -169,12 +191,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple20 memory);
+	function collectionNestingRestrictedCollectionIds() external view returns (Tuple26 memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (Tuple23[] memory);
+	function collectionNestingPermissions() external view returns (Tuple29[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -289,7 +311,7 @@ struct EthCrossAccount {
 }
 
 /// @dev anonymous struct
-struct Tuple23 {
+struct Tuple29 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
@@ -300,9 +322,38 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple20 {
+struct Tuple26 {
 	bool field_0;
 	uint256[] field_1;
+}
+
+/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+enum CollectionLimits {
+	/// @dev How many tokens can a user have on one account.
+	AccountTokenOwnership,
+	/// @dev How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+	/// @dev In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+	/// @dev How many tokens can be mined into this collection.
+	TokenLimit,
+	/// @dev Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+	/// @dev Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+	/// @dev Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+	/// @dev Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+	/// @dev Is it possible to send tokens from this collection between users.
+	TransferEnabled
+}
+
+/// @dev anonymous struct
+struct Tuple21 {
+	CollectionLimits field_0;
+	bool field_1;
+	uint256 field_2;
 }
 
 /// @dev Property struct
@@ -311,12 +362,16 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x5b7038cf
+/// @dev the ERC-165 identifier for this interface is 0x7dee5997
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
 	///  or in textual repr: description()
 	function description() external view returns (string memory);
+
+	/// @dev EVM selector for this function is: 0x269e6158,
+	///  or in textual repr: mintCross((address,uint256),uint256)
+	function mintCross(EthCrossAccount memory to, uint256 amount) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
@@ -344,7 +399,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple8[] memory amounts) external returns (bool);
+	function mintBulk(Tuple9[] memory amounts) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
@@ -360,7 +415,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple8 {
+struct Tuple9 {
 	address field_0;
 	uint256 field_1;
 }

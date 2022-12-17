@@ -564,7 +564,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `stakers_number`: the number of stakers for which recalculation will be performed
-		#[pallet::weight(<T as Config>::WeightInfo::payout_stakers(stakers_number.unwrap_or(20) as u32))]
+		#[pallet::weight(<T as Config>::WeightInfo::payout_stakers(stakers_number.unwrap_or(DEFAULT_NUMBER_PAYOUTS) as u32))]
 		pub fn payout_stakers(admin: OriginFor<T>, stakers_number: Option<u8>) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
 

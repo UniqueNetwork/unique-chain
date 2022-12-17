@@ -157,7 +157,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::set_allowance_for_all()
 	}
 
-	fn repair_item() -> Weight {
+	fn force_repair_item() -> Weight {
 		<SelfWeightOf<T>>::repair_item()
 	}
 }
@@ -165,9 +165,9 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 fn map_create_data<T: Config>(
 	data: up_data_structs::CreateItemData,
 	to: &T::CrossAccountId,
-) -> Result<CreateItemData<T::CrossAccountId>, DispatchError> {
+) -> Result<CreateItemData<T>, DispatchError> {
 	match data {
-		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateItemData {
+		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateItemData::<T> {
 			users: {
 				let mut out = BTreeMap::new();
 				out.insert(to.clone(), data.pieces);
@@ -230,7 +230,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			CreateItemExData::RefungibleMultipleOwners(CreateRefungibleExMultipleOwners {
 				users,
 				properties,
-			}) => vec![CreateItemData { users, properties }],
+			}) => vec![CreateItemData::<T> { users, properties }],
 			CreateItemExData::RefungibleMultipleItems(r) => r
 				.into_inner()
 				.into_iter()
@@ -239,7 +239,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 					     user,
 					     pieces,
 					     properties,
-					 }| CreateItemData {
+					 }| CreateItemData::<T> {
 						users: BTreeMap::from([(user, pieces)])
 							.try_into()
 							.expect("limit >= 1"),
@@ -544,7 +544,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::repair_item(self, token),
-			<CommonWeights<T>>::repair_item(),
+			<CommonWeights<T>>::force_repair_item(),
 		)
 	}
 }

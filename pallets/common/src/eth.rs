@@ -53,15 +53,6 @@ pub fn is_collection(address: &H160) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
-/// Convert `CrossAccountId` to `uint256`.
-pub fn convert_cross_account_to_uint256<T: Config>(from: &T::CrossAccountId) -> uint256
-where
-	T::AccountId: AsRef<[u8; 32]>,
-{
-	let slice = from.as_sub().as_ref();
-	uint256::from_big_endian(slice)
-}
-
 /// Convert `uint256` to `CrossAccountId`.
 pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
 where
@@ -73,46 +64,6 @@ where
 	T::CrossAccountId::from_sub(account_id)
 }
 
-/// Convert `CrossAccountId` to `(address, uint256)`.
-pub fn convert_cross_account_to_tuple<T: Config>(
-	cross_account_id: &T::CrossAccountId,
-) -> (address, uint256)
-where
-	T::AccountId: AsRef<[u8; 32]>,
-{
-	if cross_account_id.is_canonical_substrate() {
-		let sub = convert_cross_account_to_uint256::<T>(cross_account_id);
-		(Default::default(), sub)
-	} else {
-		let eth = *cross_account_id.as_eth();
-		(eth, Default::default())
-	}
-}
-
-/// Convert tuple `(address, uint256)` to `CrossAccountId`.
-///
-/// If `address` in the tuple has *default* value, then the canonical form is substrate,
-/// if `uint256` has *default* value, then the ethereum form is canonical,
-/// if both values are *default* or *non default*, then this is considered an invalid address and `Error` is returned.
-pub fn convert_tuple_to_cross_account<T: Config>(
-	eth_cross_account_id: (address, uint256),
-) -> evm_coder::execution::Result<T::CrossAccountId>
-where
-	T::AccountId: From<[u8; 32]>,
-{
-	if eth_cross_account_id == Default::default() {
-		Err("All fields of cross account is zeroed".into())
-	} else if eth_cross_account_id.0 == Default::default() {
-		Ok(convert_uint256_to_cross_account::<T>(
-			eth_cross_account_id.1,
-		))
-	} else if eth_cross_account_id.1 == Default::default() {
-		Ok(T::CrossAccountId::from_eth(eth_cross_account_id.0))
-	} else {
-		Err("All fields of cross account is non zeroed".into())
-	}
-}
-
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct EthCrossAccount {
@@ -121,16 +72,14 @@ pub struct EthCrossAccount {
 }
 
 impl EthCrossAccount {
+	/// Converts `CrossAccountId` to `EthCrossAccountId`
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
 		T::AccountId: AsRef<[u8; 32]>,
 	{
 		if cross_account_id.is_canonical_substrate() {
-			Self {
-				eth: Default::default(),
-				sub: convert_cross_account_to_uint256::<T>(cross_account_id),
-			}
+			Self::from_sub::<T>(cross_account_id.as_sub())
 		} else {
 			Self {
 				eth: *cross_account_id.as_eth(),
@@ -138,7 +87,18 @@ impl EthCrossAccount {
 			}
 		}
 	}
-
+	/// Creates `EthCrossAccount` from substrate account
+	pub fn from_sub<T>(account_id: &T::AccountId) -> Self
+	where
+		T: pallet_evm::Config,
+		T::AccountId: AsRef<[u8; 32]>,
+	{
+		Self {
+			eth: Default::default(),
+			sub: uint256::from_big_endian(account_id.as_ref()),
+		}
+	}
+	/// Converts `EthCrossAccount` to `CrossAccountId`
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,
@@ -155,10 +115,62 @@ impl EthCrossAccount {
 		}
 	}
 }
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+#[derive(Debug, Default, Clone, Copy, AbiCoder)]
+#[repr(u8)]
+pub enum CollectionLimits {
+	/// How many tokens can a user have on one account.
+	#[default]
+	AccountTokenOwnership,
+
+	/// How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+
+	/// How many tokens can be mined into this collection.
+	TokenLimit,
+
+	/// Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+
+	/// Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+
+	/// Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+
+	/// Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+
+	/// Is it possible to send tokens from this collection between users.
+	TransferEnabled,
+}
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 #[derive(Default, Debug, Clone, Copy, AbiCoder)]
 #[repr(u8)]
 pub enum CollectionPermissions {
+	/// Owner of token can nest tokens under it.
 	#[default]
-	CollectionAdmin,
 	TokenOwner,
+
+	/// Admin of token collection can nest tokens under token.
+	CollectionAdmin,
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
+#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[repr(u8)]
+pub enum EthTokenPermissions {
+	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
+	#[default]
+	Mutable,
+
+	/// Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
+	TokenOwner,
+
+	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
+	CollectionAdmin,
 }

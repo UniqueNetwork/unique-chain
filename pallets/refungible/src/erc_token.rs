@@ -19,11 +19,6 @@
 //! Provides ERC-20 standart support implementation and EVM API for unique extensions for Refungible Pallet.
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
-extern crate alloc;
-
-#[cfg(not(feature = "std"))]
-use alloc::format;
-
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
@@ -35,7 +30,7 @@ use evm_coder::{
 use pallet_common::{
 	CommonWeightInfo,
 	erc::{CommonEvmHandler, PrecompileResult},
-	eth::collection_id_to_address,
+	eth::{collection_id_to_address, EthCrossAccount},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
@@ -199,7 +194,10 @@ impl<T: Config> RefungibleTokenHandle<T> {
 }
 
 #[solidity_interface(name = ERC20UniqueExtensions)]
-impl<T: Config> RefungibleTokenHandle<T> {
+impl<T: Config> RefungibleTokenHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
 	/// @param from The account whose tokens will be burnt.
@@ -218,6 +216,51 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		Ok(true)
 	}
 
+	/// @dev Function that burns an amount of the token of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
+	#[weight(<SelfWeightOf<T>>::burn_from())]
+	fn burn_from_cross(
+		&mut self,
+		caller: caller,
+		from: EthCrossAccount,
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = from.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::burn_from(self, &caller, &from, self.1, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
+	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
+	/// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+	/// race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+	/// https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+	/// @param spender The crossaccount which will spend the funds.
+	/// @param amount The amount of tokens to be spent.
+	#[weight(<SelfWeightOf<T>>::approve())]
+	fn approve_cross(
+		&mut self,
+		caller: caller,
+		spender: EthCrossAccount,
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let spender = spender.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+
+		<Pallet<T>>::set_allowance(self, &caller, &spender, self.1, amount)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
 	/// @dev Function that changes total amount of the tokens.
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
 	/// @param amount New total amount of the tokens.
@@ -227,6 +270,53 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
 		<Pallet<T>>::repartition(self, &caller, self.1, amount).map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	/// @dev Transfer token for a specified address
+	/// @param to The crossaccount to transfer to.
+	/// @param amount The amount to be transferred.
+	#[weight(<CommonWeights<T>>::transfer())]
+	fn transfer_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::transfer(self, &caller, &to, self.1, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
+	/// @dev Transfer tokens from one address to another
+	/// @param from The address which you want to send tokens from
+	/// @param to The address which you want to transfer to
+	/// @param amount the amount of tokens to be transferred
+	#[weight(<CommonWeights<T>>::transfer_from())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: caller,
+		from: EthCrossAccount,
+		to: EthCrossAccount,
+		amount: uint256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, self.1, amount, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }

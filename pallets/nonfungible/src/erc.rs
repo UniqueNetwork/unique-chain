@@ -34,11 +34,11 @@ use up_data_structs::{
 	CollectionPropertiesVec,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_std::vec::Vec;
+use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	eth::EthCrossAccount,
+	eth::{EthCrossAccount, EthTokenPermissions},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -60,6 +60,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
 	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
 	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
+	#[solidity(hide)]
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
@@ -69,10 +70,10 @@ impl<T: Config> NonfungibleHandle<T> {
 		token_owner: bool,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		<Pallet<T>>::set_property_permission(
+		<Pallet<T>>::set_token_property_permissions(
 			self,
 			&caller,
-			PropertyKeyPermission {
+			vec![PropertyKeyPermission {
 				key: <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "too long key")?,
@@ -81,9 +82,76 @@ impl<T: Config> NonfungibleHandle<T> {
 					collection_admin,
 					token_owner,
 				},
-			},
+			}],
 		)
 		.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Set permissions for token property.
+	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	/// @param permissions Permissions for keys.
+	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(permissions.len() as u32))]
+	fn set_token_property_permissions(
+		&mut self,
+		caller: caller,
+		permissions: Vec<(string, Vec<(EthTokenPermissions, bool)>)>,
+	) -> Result<()> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		const PERMISSIONS_FIELDS_COUNT: usize = 3;
+
+		let mut perms = Vec::new();
+
+		for (key, pp) in permissions {
+			if pp.len() > PERMISSIONS_FIELDS_COUNT {
+				return Err(alloc::format!(
+					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
+					pp.len(),
+					stringify!(EthTokenPermissions),
+					PERMISSIONS_FIELDS_COUNT
+				)
+				.as_str()
+				.into());
+			}
+
+			let mut token_permission = PropertyPermission::default();
+
+			for (perm, value) in pp {
+				match perm {
+					EthTokenPermissions::Mutable => token_permission.mutable = value,
+					EthTokenPermissions::TokenOwner => token_permission.token_owner = value,
+					EthTokenPermissions::CollectionAdmin => {
+						token_permission.collection_admin = value
+					}
+				}
+			}
+
+			perms.push(PropertyKeyPermission {
+				key: key.into_bytes().try_into().map_err(|_| "too long key")?,
+				permission: token_permission,
+			});
+		}
+
+		<Pallet<T>>::set_token_property_permissions(self, &caller, perms)
+			.map_err(dispatch_to_evm::<T>)
+	}
+
+	/// @notice Get permissions for token properties.
+	fn token_property_permissions(
+		&self,
+	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {
+		let perms = <Pallet<T>>::token_property_permission(self.id);
+		Ok(perms
+			.into_iter()
+			.map(|(key, pp)| {
+				let key = string::from_utf8(key.into_inner()).expect("Stored key must be valid");
+				let pp = vec![
+					(EthTokenPermissions::Mutable, pp.mutable),
+					(EthTokenPermissions::TokenOwner, pp.token_owner),
+					(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
+				];
+				(key, pp)
+			})
+			.collect())
 	}
 
 	/// @notice Set token property value.
@@ -537,7 +605,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(false)
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	#[weight(<SelfWeightOf<T>>::create_item())]
@@ -550,7 +618,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(token_id)
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @dev `tokenId` should be obtained with `nextTokenId` method,
 	///  unlike standard, you can't specify it manually
 	/// @param to The new owner
@@ -1000,6 +1068,58 @@ where
 		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
+	}
+
+	/// @notice Function to mint a token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint_cross(
+		&mut self,
+		caller: caller,
+		to: EthCrossAccount,
+		properties: Vec<PropertyStruct>,
+	) -> Result<uint256> {
+		let token_id = <TokensMinted<T>>::get(self.id)
+			.checked_add(1)
+			.ok_or("item id overflow")?;
+
+		let to = to.into_sub_cross_account::<T>()?;
+
+		let properties = properties
+			.into_iter()
+			.map(|PropertyStruct { key, value }| {
+				let key = <Vec<u8>>::from(key)
+					.try_into()
+					.map_err(|_| "key too large")?;
+
+				let value = value.0.try_into().map_err(|_| "value too large")?;
+
+				Ok(Property { key, value })
+			})
+			.collect::<Result<Vec<_>>>()?
+			.try_into()
+			.map_err(|_| Error::Revert(alloc::format!("too many properties")))?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		<Pallet<T>>::create_item(
+			self,
+			&caller,
+			CreateItemData::<T> {
+				properties,
+				owner: to,
+			},
+			&budget,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(token_id.into())
 	}
 }
 

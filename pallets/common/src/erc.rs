@@ -36,7 +36,8 @@ use alloc::format;
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
-		EthCrossAccount, convert_cross_account_to_uint256, CollectionPermissions as EvmPermissions,
+		EthCrossAccount, CollectionPermissions as EvmPermissions,
+		CollectionLimits as EvmCollectionLimits,
 	},
 	weights::WeightInfo,
 };
@@ -288,20 +289,106 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn collection_sponsor(&self) -> Result<(address, uint256)> {
+	fn collection_sponsor(&self) -> Result<EthCrossAccount> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
 		};
-		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
-		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
-			let sponsor = convert_cross_account_to_uint256::<T>(&sponsor);
-			(Default::default(), sponsor)
-		} else {
-			let sponsor = *sponsor.as_eth();
-			(sponsor, Default::default())
+
+		Ok(EthCrossAccount::from_sub::<T>(&sponsor))
+	}
+
+	/// Get current collection limits.
+	///
+	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// Return `false` if a limit not set.
+	fn collection_limits(&self) -> Result<Vec<(EvmCollectionLimits, bool, uint256)>> {
+		let convert_value_limit = |limit: EvmCollectionLimits,
+		                           value: Option<u32>|
+		 -> (EvmCollectionLimits, bool, uint256) {
+			value
+				.map(|v| (limit, true, v.into()))
+				.unwrap_or((limit, false, Default::default()))
 		};
-		Ok(result)
+
+		let convert_bool_limit = |limit: EvmCollectionLimits,
+		                          value: Option<bool>|
+		 -> (EvmCollectionLimits, bool, uint256) {
+			value
+				.map(|v| {
+					(
+						limit,
+						true,
+						if v {
+							uint256::from(1)
+						} else {
+							Default::default()
+						},
+					)
+				})
+				.unwrap_or((limit, false, Default::default()))
+		};
+
+		let limits = &self.collection.limits;
+
+		Ok(vec![
+			convert_value_limit(
+				EvmCollectionLimits::AccountTokenOwnership,
+				limits.account_token_ownership_limit,
+			),
+			convert_value_limit(
+				EvmCollectionLimits::SponsoredDataSize,
+				limits.sponsored_data_size,
+			),
+			limits
+				.sponsored_data_rate_limit
+				.and_then(|limit| {
+					if let SponsoringRateLimit::Blocks(blocks) = limit {
+						Some((
+							EvmCollectionLimits::SponsoredDataRateLimit,
+							true,
+							blocks.into(),
+						))
+					} else {
+						None
+					}
+				})
+				.unwrap_or((
+					EvmCollectionLimits::SponsoredDataRateLimit,
+					false,
+					Default::default(),
+				)),
+			convert_value_limit(EvmCollectionLimits::TokenLimit, limits.token_limit),
+			convert_value_limit(
+				EvmCollectionLimits::SponsorTransferTimeout,
+				limits.sponsor_transfer_timeout,
+			),
+			convert_value_limit(
+				EvmCollectionLimits::SponsorApproveTimeout,
+				limits.sponsor_approve_timeout,
+			),
+			convert_bool_limit(
+				EvmCollectionLimits::OwnerCanTransfer,
+				limits.owner_can_transfer,
+			),
+			convert_bool_limit(
+				EvmCollectionLimits::OwnerCanDestroy,
+				limits.owner_can_destroy,
+			),
+			convert_bool_limit(
+				EvmCollectionLimits::TransferEnabled,
+				limits.transfers_enabled,
+			),
+		])
 	}
 
 	/// Set limits for the collection.
@@ -316,10 +403,21 @@ where
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint256) -> Result<void> {
+	fn set_collection_limit(
+		&mut self,
+		caller: caller,
+		limit: EvmCollectionLimits,
+		status: bool,
+		value: uint256,
+	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
+
+		if !status {
+			return Err(Error::Revert("user can't disable limits".into()));
+		}
 
 		let value = value
 			.try_into()
@@ -338,35 +436,35 @@ where
 
 		let mut limits = self.limits.clone();
 
-		match limit.as_str() {
-			"accountTokenOwnershipLimit" => {
+		match limit {
+			EvmCollectionLimits::AccountTokenOwnership => {
 				limits.account_token_ownership_limit = Some(value);
 			}
-			"sponsoredDataSize" => {
+			EvmCollectionLimits::SponsoredDataSize => {
 				limits.sponsored_data_size = Some(value);
 			}
-			"sponsoredDataRateLimit" => {
+			EvmCollectionLimits::SponsoredDataRateLimit => {
 				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(value));
 			}
-			"tokenLimit" => {
+			EvmCollectionLimits::TokenLimit => {
 				limits.token_limit = Some(value);
 			}
-			"sponsorTransferTimeout" => {
+			EvmCollectionLimits::SponsorTransferTimeout => {
 				limits.sponsor_transfer_timeout = Some(value);
 			}
-			"sponsorApproveTimeout" => {
+			EvmCollectionLimits::SponsorApproveTimeout => {
 				limits.sponsor_approve_timeout = Some(value);
 			}
-			"ownerCanTransfer" => {
+			EvmCollectionLimits::OwnerCanTransfer => {
 				limits.owner_can_transfer = Some(convert_value_to_bool()?);
 			}
-			"ownerCanDestroy" => {
+			EvmCollectionLimits::OwnerCanDestroy => {
 				limits.owner_can_destroy = Some(convert_value_to_bool()?);
 			}
-			"transfersEnabled" => {
+			EvmCollectionLimits::TransferEnabled => {
 				limits.transfers_enabled = Some(convert_value_to_bool()?);
 			}
-			_ => return Err(Error::Revert(format!("unknown limit \"{}\"", limit))),
+			_ => return Err(Error::Revert(format!("unknown limit \"{:?}\"", limit))),
 		}
 
 		let caller = T::CrossAccountId::from_eth(caller);

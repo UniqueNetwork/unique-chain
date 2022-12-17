@@ -113,7 +113,8 @@ use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
 	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	PropertyScope, PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
+	CreateRefungibleExMultipleOwners,
 };
 
 pub use pallet::*;
@@ -124,13 +125,8 @@ pub mod erc;
 pub mod erc_token;
 pub mod weights;
 
-#[derive(Derivative, Clone)]
-pub struct CreateItemData<CrossAccountId> {
-	#[derivative(Debug(format_with = "bounded::map_debug"))]
-	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub properties: CollectionPropertiesVec,
-}
+pub type CreateItemData<T> =
+	CreateRefungibleExMultipleOwners<<T as pallet_evm::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
@@ -913,7 +909,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T::CrossAccountId>>,
+		data: Vec<CreateItemData<T>>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
@@ -1259,7 +1255,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateItemData<T::CrossAccountId>,
+		data: CreateItemData<T>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
@@ -1376,6 +1372,10 @@ impl<T: Config> Pallet<T> {
 		property_permissions: Vec<PropertyKeyPermission>,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
+	}
+
+	pub fn token_property_permission(collection_id: CollectionId) -> PropertiesPermissionMap {
+		<PalletCommon<T>>::property_permissions(collection_id)
 	}
 
 	pub fn set_scoped_token_property_permissions(

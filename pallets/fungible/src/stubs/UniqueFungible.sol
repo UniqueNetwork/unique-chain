@@ -18,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xb5e1747f
+/// @dev the ERC-165 identifier for this interface is 0x81172a75
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -152,10 +152,31 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple8 memory) {
+	function collectionSponsor() public view returns (EthCrossAccount memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple8(0x0000000000000000000000000000000000000000, 0);
+		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	/// Get current collection limits.
+	///
+	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// Return `false` if a limit not set.
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() public view returns (Tuple23[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new Tuple23[](0);
 	}
 
 	/// Set limits for the collection.
@@ -170,12 +191,18 @@ contract Collection is Dummy, ERC165 {
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x4ad890a8,
-	///  or in textual repr: setCollectionLimit(string,uint256)
-	function setCollectionLimit(string memory limit, uint256 value) public {
+	/// @dev EVM selector for this function is: 0x88150bd0,
+	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
+	function setCollectionLimit(
+		CollectionLimits limit,
+		bool status,
+		uint256 value
+	) public {
 		require(false, stub_error);
 		limit;
+		status;
 		value;
 		dummy = 0;
 	}
@@ -257,19 +284,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple21 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple29 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple21(false, new uint256[](0));
+		return Tuple29(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() public view returns (Tuple24[] memory) {
+	function collectionNestingPermissions() public view returns (Tuple32[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple24[](0);
+		return new Tuple32[](0);
 	}
 
 	/// Set the collection access method.
@@ -449,15 +476,44 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple24 {
+struct Tuple32 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple21 {
+struct Tuple29 {
 	bool field_0;
 	uint256[] field_1;
+}
+
+/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+enum CollectionLimits {
+	/// @dev How many tokens can a user have on one account.
+	AccountTokenOwnership,
+	/// @dev How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+	/// @dev In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+	/// @dev How many tokens can be mined into this collection.
+	TokenLimit,
+	/// @dev Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+	/// @dev Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+	/// @dev Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+	/// @dev Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+	/// @dev Is it possible to send tokens from this collection between users.
+	TransferEnabled
+}
+
+/// @dev anonymous struct
+struct Tuple23 {
+	CollectionLimits field_0;
+	bool field_1;
+	uint256 field_2;
 }
 
 /// @dev Property struct
@@ -466,7 +522,7 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x5b7038cf
+/// @dev the ERC-165 identifier for this interface is 0x7dee5997
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
@@ -475,6 +531,16 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy;
 		return "";
+	}
+
+	/// @dev EVM selector for this function is: 0x269e6158,
+	///  or in textual repr: mintCross((address,uint256),uint256)
+	function mintCross(EthCrossAccount memory to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
+		dummy = 0;
+		return false;
 	}
 
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
@@ -521,7 +587,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple8[] memory amounts) public returns (bool) {
+	function mintBulk(Tuple9[] memory amounts) public returns (bool) {
 		require(false, stub_error);
 		amounts;
 		dummy = 0;
@@ -555,7 +621,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple8 {
+struct Tuple9 {
 	address field_0;
 	uint256 field_1;
 }
