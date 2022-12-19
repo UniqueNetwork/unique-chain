@@ -174,7 +174,7 @@ function linearRegression(points: { x: Fract, y: Fract }[]) {
 
 const hypothesisLinear = (a: Fract, b: Fract) => (x: Fract) => rpn(x, a, '*', b, '+');
 
-function error(points: { x: Fract, y: Fract }[], hypothesis: (a: Fract) => Fract) {
+function _error(points: { x: Fract, y: Fract }[], hypothesis: (a: Fract) => Fract) {
   return points.map(p => {
     const v = hypothesis(p.x);
     const vv = p.y;
@@ -218,7 +218,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
   const {a, b} = linearRegression(dataPoints);
 
   const hyp = hypothesisLinear(a, b);
-  console.log(`\t[NFT transfer] Error: ${error(dataPoints, hyp).toNumber()}`);
+  // console.log(`\t[NFT transfer] Error: ${_error(dataPoints, hyp).toNumber()}`);
 
   // 0.1 UNQ
   const perfectValue = hyp(rpn(new Fract(helper.balance.getOneTokenNominal()), new Fract(1n, 10n), '*'));
@@ -276,7 +276,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   const {a, b} = linearRegression(dataPoints);
 
   const hyp = hypothesisLinear(a, b);
-  console.log(`\t[ETH NFT transfer] Error: ${error(dataPoints, hyp).toNumber()}`);
+  // console.log(`\t[ETH NFT transfer] Error: ${_error(dataPoints, hyp).toNumber()}`);
 
   // 0.15 UNQ
   const perfectValue = hyp(rpn(new Fract(helper.balance.getOneTokenNominal()), new Fract(15n, 100n), '*'));
