@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds, expect} from './util';
 
-describe.only('Eth fees are correct', () => {
+describe('Eth fees are correct', () => {
   let donor: IKeyringPair;
   let minter: IKeyringPair;
   let alice: IKeyringPair;
