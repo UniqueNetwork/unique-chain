@@ -72,26 +72,26 @@ function rpn(...ops: (Op)[]) {
     } else if (op === '+') {
       if (stack.length < 2)
         throw new Error('stack underflow');
-      const a = stack.pop()!;
       const b = stack.pop()!;
+      const a = stack.pop()!;
       stack.push(a.plus(b));
     } else if (op === '*') {
       if (stack.length < 2)
         throw new Error('stack underflow');
-      const a = stack.pop()!;
       const b = stack.pop()!;
+      const a = stack.pop()!;
       stack.push(a.mul(b));
     } else if (op === '-') {
       if (stack.length < 2)
         throw new Error('stack underflow');
-      const a = stack.pop()!;
       const b = stack.pop()!;
+      const a = stack.pop()!;
       stack.push(a.minus(b));
     } else if (op === '/') {
       if (stack.length < 2)
         throw new Error('stack underflow');
-      const a = stack.pop()!;
       const b = stack.pop()!;
+      const a = stack.pop()!;
       stack.push(a.div(b));
     } else if (op === 'dup') {
       if (stack.length < 1)
