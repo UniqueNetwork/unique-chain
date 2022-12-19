@@ -16,17 +16,17 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
-  yarn-dev:
-    uses: ./.github/workflows/yarn-dev.yml
+  # yarn-dev:
+  #   uses: ./.github/workflows/yarn-dev.yml
 
-  unit-test:
-    uses: ./.github/workflows/unit-test.yml
+  # unit-test:
+  #   uses: ./.github/workflows/unit-test.yml
 
-  node-only-update:
-    uses: ./.github/workflows/node-only-update.yml
+  # node-only-update:
+  #   uses: ./.github/workflows/node-only-update.yml
 
-  forkless:
-    uses: ./.github/workflows/forkless.yml
+  # forkless:
+  #   uses: ./.github/workflows/forkless.yml
 
   # canary:
   #   uses: ./.github/workflows/canary.yml
