@@ -126,14 +126,9 @@ function linearRegression(points: { x: Fract, y: Fract }[]) {
 
   const nb = new Fract(BigInt(n));
 
-  // This is a workaround to beat the lack of precision of the `Number` type.
-  // We divide `BigInt`s. But since it is an integer division, we should take care of the precision on our own.
-  // After the division we can convert the result back to the `Number` and then we set the correct precision.
-  // It is crucial to have the correct slope for the regression line.
-
   const a = rpn(
     [nb, sumxy, '*', sumx, sumy, '*', '-'],
-    [nb, sumx, '*', sumx, sumx, '*', '-'],
+    [nb, sumx2, '*', sumx, sumx, '*', '-'],
     '/',
   );
   const b = rpn(
