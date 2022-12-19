@@ -1,63 +1,161 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util';
 
-function linearRegression(points: { x: bigint, y: bigint }[]) {
-  let sumxy = 0n;
-  let sumx = 0n;
-  let sumy = 0n;
-  let sumx2 = 0n;
+class Fract {
+  static ZERO = new Fract(0n);
+  constructor(public readonly a: bigint, public readonly b: bigint = 1n) {
+    if (b === 0n) throw new Error('division by zero');
+    if (b < 0n) throw new Error('missing normalization');
+  }
+
+  mul(other: Fract) {
+    return new Fract(this.a * other.a, this.b * other.b);
+  }
+
+  div(other: Fract) {
+    return this.mul(other.inv());
+  }
+
+  plus(other: Fract) {
+    return new Fract(this.a * other.b + other.a * this.b, this.b * other.b);
+  }
+
+  minus(other: Fract) {
+    return this.plus(other.neg());
+  }
+
+  neg() {
+    return new Fract(-this.a, this.b);
+  }
+  inv() {
+    return new Fract(this.b, this.a);
+  }
+
+  toBigInt() {
+    return this.a / this.b;
+  }
+
+  lt(other: Fract) {
+    return this.a * other.b < other.a * this.b;
+  }
+  eq(other: Fract) {
+    return this.a * other.b === other.a * this.b;
+  }
+
+  sqrt() {
+    if (this.a < 0n) {
+      throw 'square root of negative numbers is not supported';
+    }
+
+    if (this.lt(new Fract(2n))) {
+      return this;
+    }
+
+    function newtonIteration(n: Fract, x0: Fract): Fract {
+      const x1 = rpn(n, x0, '/', x0, '+', new Fract(2n), '/');
+      if (x0.eq(x1) || x0.eq(x1.minus(new Fract(1n)))) {
+        return x0;
+      }
+      return newtonIteration(n, x1);
+    }
+
+    return newtonIteration(this, new Fract(1n));
+  }
+}
+
+type Op = Fract | '+' | '-' | '*' | '/' | 'dup' | Op[];
+function rpn(...ops: (Op)[]) {
+  const stack: Fract[] = [];
+  for (const op of ops) {
+    if (op instanceof Fract) {
+      stack.push(op);
+    } else if (op === '+') {
+      if (stack.length < 2)
+        throw new Error('stack underflow');
+      const a = stack.pop()!;
+      const b = stack.pop()!;
+      stack.push(a.plus(b));
+    } else if (op === '*') {
+      if (stack.length < 2)
+        throw new Error('stack underflow');
+      const a = stack.pop()!;
+      const b = stack.pop()!;
+      stack.push(a.mul(b));
+    } else if (op === '-') {
+      if (stack.length < 2)
+        throw new Error('stack underflow');
+      const a = stack.pop()!;
+      const b = stack.pop()!;
+      stack.push(a.minus(b));
+    } else if (op === '/') {
+      if (stack.length < 2)
+        throw new Error('stack underflow');
+      const a = stack.pop()!;
+      const b = stack.pop()!;
+      stack.push(a.div(b));
+    } else if (op === 'dup') {
+      if (stack.length < 1)
+        throw new Error('stack underflow');
+      const a = stack.pop()!;
+      stack.push(a);
+      stack.push(a);
+    } else if (Array.isArray(op)) {
+      stack.push(rpn(...op));
+    } else {
+      throw new Error(`unknown operand: ${op}`);
+    }
+  }
+  if (stack.length != 1)
+    throw new Error('one element should be left on stack');
+  return stack[0]!;
+}
+
+function linearRegression(points: { x: Fract, y: Fract }[]) {
+  let sumxy = Fract.ZERO;
+  let sumx = Fract.ZERO;
+  let sumy = Fract.ZERO;
+  let sumx2 = Fract.ZERO;
   const n = points.length;
   for (let i = 0; i < n; i++) {
     const p = points[i];
-    sumxy += p.x * p.y;
-    sumx += p.x;
-    sumy += p.y;
-    sumx2 += p.x * p.x;
+    sumxy = rpn(p.x, p.y, '*', sumxy, '+');
+    sumx = sumx.plus(p.x);
+    sumy = sumy.plus(p.y);
+    sumx2 = rpn(p.x, p.x, '*', sumx2, '+');
   }
 
-  const nb = BigInt(n);
-
-  const precision = 100000000n;
+  const nb = new Fract(BigInt(n));
 
   // This is a workaround to beat the lack of precision of the `Number` type.
   // We divide `BigInt`s. But since it is an integer division, we should take care of the precision on our own.
   // After the division we can convert the result back to the `Number` and then we set the correct precision.
   // It is crucial to have the correct slope for the regression line.
-  const a = Number((precision * (nb * sumxy - sumx * sumy)) / (nb * sumx2 - sumx * sumx)) / Number(precision);
-  const b = (Number(sumy) - a * Number(sumx)) / Number(nb);
+
+  const a = rpn(
+    [nb, sumxy, '*', sumx, sumy, '*', '-'],
+    [nb, sumx, '*', sumx, sumx, '*', '-'],
+    '/',
+  );
+  const b = rpn(
+    [sumy, a, sumx, '*', '-'],
+    nb,
+    '/',
+  );
 
   return {a, b};
 }
 
+const hypothesisLinear = (a: Fract, b: Fract) => (x: Fract) => rpn(x, a, '*', b, '+');
+
 // JS has no builtin function to calculate sqrt of bigint
 // https://stackoverflow.com/a/53684036/6190169
-function sqrt(value: bigint) {
-  if (value < 0n) {
-    throw 'square root of negative numbers is not supported';
-  }
-
-  if (value < 2n) {
-    return value;
-  }
-
-  function newtonIteration(n: bigint, x0: bigint): bigint {
-    const x1 = ((n / x0) + x0) >> 1n;
-    if (x0 === x1 || x0 === (x1 - 1n)) {
-      return x0;
-    }
-    return newtonIteration(n, x1);
-  }
-
-  return newtonIteration(value, 1n);
-}
-
-function _error(points: { x: bigint, y: bigint }[], hypothesis: (a: bigint) => bigint) {
-  return sqrt(points.map(p => {
+function error(points: { x: Fract, y: Fract }[], hypothesis: (a: Fract) => Fract) {
+  return points.map(p => {
     const v = hypothesis(p.x);
     const vv = p.y;
 
-    return (v - vv) ** 2n;
-  }).reduce((a, b) => a + b, 0n) / BigInt(points.length));
+    return rpn(v, vv, '-', 'dup', '*');
+  }).reduce((a, b) => a.plus(b), Fract.ZERO).sqrt().div(new Fract(BigInt(points.length)));
 }
 
 async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
@@ -80,7 +178,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
   for (let i = -5; i < 5; i++) {
     await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(base + base / 1000n * BigInt(i))));
 
-    const coefficient = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt();
+    const coefficient = new Fract((await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt());
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
     const token = await collection.mintToken(alice, {Substrate: alice.address});
 
@@ -88,16 +186,18 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    const transferPrice = aliceBalanceBefore - aliceBalanceAfter;
+    const transferPrice = new Fract(aliceBalanceBefore - aliceBalanceAfter);
 
     dataPoints.push({x: transferPrice, y: coefficient});
   }
   const {a, b} = linearRegression(dataPoints);
 
-  // console.log(`Error: ${error(dataPoints, x => a*x+b)}`);
+  const hyp = hypothesisLinear(a, b);
+  console.log(`Error: ${error(dataPoints, hyp)}`);
 
-  const perfectValue = BigInt(Math.ceil(a * Number(helper.balance.getOneTokenNominal()) / 10 + b));
-  await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(perfectValue.toString())));
+  // 0.1 UNQ
+  const perfectValue = hyp(rpn(new Fract(helper.balance.getOneTokenNominal()), new Fract(1n, 10n), '*'));
+  await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(perfectValue.toBigInt())));
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
@@ -136,25 +236,26 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const gasPriceStr = '0x' + gasPrice.toString(16);
     await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(gasPrice)));
 
-    const coefficient = (await api.query.configuration.minGasPriceOverride() as any).toBigInt();
+    const coefficient = new Fract((await api.query.configuration.minGasPriceOverride() as any).toBigInt());
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
     const token = await collection.mintToken(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const transferPrice = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS}));
+    const transferPrice = new Fract(await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS})));
 
     dataPoints.push({x: transferPrice, y: coefficient});
   }
 
   const {a, b} = linearRegression(dataPoints);
 
-  // console.log(`Error: ${error(dataPoints, x => a*x+b)}`);
+  const hyp = hypothesisLinear(a, b);
+  console.log(`Error: ${error(dataPoints, hyp)}`);
 
-  // * 0.15 = * 10000 / 66666
-  const perfectValue = BigInt(Math.ceil(a * Number(helper.balance.getOneTokenNominal() * 1000000n / 6666666n) + b));
-  await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(perfectValue.toString())));
+  // 0.15 UNQ
+  const perfectValue = hyp(rpn(new Fract(helper.balance.getOneTokenNominal()), new Fract(15n, 100n), '*'));
+  await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(perfectValue.toBigInt())));
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
