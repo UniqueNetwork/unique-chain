@@ -20,15 +20,33 @@ import path from 'path';
 
 function main() {
   const balances = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'balances.json')).toString());
+  const LOWER = 100300375300000000000n;
+  const UPPER = 100312000000000000000n;
+  // const UPPER = 100350525400000000000n;
   
   // Get accounts with a
-  // balances.forEach((balance: any) => {
-  //   if (balance.stakes.length === 1) {
-  //     if(BigInt(balance.stakes[0].amount) - 100050000000000000000n > 2500000000000000n) console.log(balance.address, balance.stakes[0].amount);
-  //     // if(BigInt(balance?.stakes[0].amount) - 100050000000000000000n < 0n) console.log(balance.address, balance.stakes[0].amount);
-  //   }
-  // });
+  balances.forEach((balance: any) => {
+    if (balance.stakes.length === 1) {
+      // if(BigInt(balance.stakes[0].amount) < LOWER) console.log(balance.address, balance.stakes[0].amount);
+      if(BigInt(balance?.stakes[0].amount) > UPPER) console.log(balance.address, balance.stakes[0].amount);
+    } else {
+      console.log('balance.stakes.length !== 1', balance.address);
+    }
+  });
 
 }
+
+function calculateIncome(base: bigint, iter = 0, calcPeriod = 4n): bigint {
+  const DAY = 7200n;
+  const ACCURACY = 1_000_000_000n;
+  // 5n / 10_000n = 0.05% p/day
+  const income = base + base * (ACCURACY * (calcPeriod * 5n) / (10_000n * DAY)) / ACCURACY ;
+  
+  if (iter > 1) {
+    return calculateIncome(income, iter - 1, calcPeriod);
+  } else return income;
+}
+
+// console.log(calculateIncome(100n * (10n**18n), 1, 96550n));
 
 main();
