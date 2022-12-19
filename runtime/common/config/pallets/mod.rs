@@ -25,7 +25,7 @@ use crate::{
 	},
 	Runtime, RuntimeEvent, RuntimeCall, Balances,
 };
-use frame_support::traits::ConstU64;
+use frame_support::traits::{ConstU32, ConstU64};
 use up_common::{
 	types::{AccountId, Balance, BlockNumber},
 	constants::*,

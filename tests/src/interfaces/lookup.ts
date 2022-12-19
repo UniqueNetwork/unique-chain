@@ -2282,7 +2282,10 @@ export default {
         operator: 'PalletEvmAccountBasicCrossAccountIdRepr',
         approve: 'bool',
       },
-      repair_item: {
+      force_repair_collection: {
+        collectionId: 'u32',
+      },
+      force_repair_item: {
         collectionId: 'u32',
         itemId: 'u32'
       }
@@ -2452,7 +2455,7 @@ export default {
   PalletConfigurationCall: {
     _enum: {
       set_weight_to_fee_coefficient_override: {
-        coeff: 'Option<u32>',
+        coeff: 'Option<u64>',
       },
       set_min_gas_price_override: {
         coeff: 'Option<u64>',
@@ -2468,23 +2471,11 @@ export default {
   /**
    * Lookup286: pallet_configuration::AppPromotionConfiguration<BlockNumber>
    **/
-<<<<<<< HEAD
   PalletConfigurationAppPromotionConfiguration: {
     recalculationInterval: 'Option<u32>',
     pendingInterval: 'Option<u32>',
     intervalIncome: 'Option<Perbill>',
     maxStakersPerCalculation: 'Option<u8>'
-=======
-  PalletConfigurationCall: {
-    _enum: {
-      set_weight_to_fee_coefficient_override: {
-        coeff: 'Option<u64>',
-      },
-      set_min_gas_price_override: {
-        coeff: 'Option<u64>'
-      }
-    }
->>>>>>> chore: regenerate types
   },
   /**
    * Lookup289: pallet_template_transaction_payment::Call<T>

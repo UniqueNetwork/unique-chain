@@ -217,12 +217,8 @@ declare module '@polkadot/api-base/types/submittable' {
     configuration: {
       setAppPromotionConfigurationOverride: AugmentedSubmittable<(configuration: PalletConfigurationAppPromotionConfiguration | { recalculationInterval?: any; pendingInterval?: any; intervalIncome?: any; maxStakersPerCalculation?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletConfigurationAppPromotionConfiguration]>;
       setMinGasPriceOverride: AugmentedSubmittable<(coeff: Option<u64> | null | Uint8Array | u64 | AnyNumber) => SubmittableExtrinsic<ApiType>, [Option<u64>]>;
-<<<<<<< HEAD
-      setWeightToFeeCoefficientOverride: AugmentedSubmittable<(coeff: Option<u32> | null | Uint8Array | u32 | AnyNumber) => SubmittableExtrinsic<ApiType>, [Option<u32>]>;
-      setXcmAllowedLocations: AugmentedSubmittable<(locations: Option<Vec<XcmV1MultiLocation>> | null | Uint8Array | Vec<XcmV1MultiLocation> | (XcmV1MultiLocation | { parents?: any; interior?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Option<Vec<XcmV1MultiLocation>>]>;
-=======
       setWeightToFeeCoefficientOverride: AugmentedSubmittable<(coeff: Option<u64> | null | Uint8Array | u64 | AnyNumber) => SubmittableExtrinsic<ApiType>, [Option<u64>]>;
->>>>>>> chore: regenerate types
+      setXcmAllowedLocations: AugmentedSubmittable<(locations: Option<Vec<XcmV1MultiLocation>> | null | Uint8Array | Vec<XcmV1MultiLocation> | (XcmV1MultiLocation | { parents?: any; interior?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Option<Vec<XcmV1MultiLocation>>]>;
       /**
        * Generic tx
        **/
@@ -1436,6 +1432,23 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       destroyCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
       /**
+       * Repairs a collection if the data was somehow corrupted.
+       * 
+       * # Arguments
+       * 
+       * * `collection_id`: ID of the collection to repair.
+       **/
+      forceRepairCollection: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32]>;
+      /**
+       * Repairs a token if the data was somehow corrupted.
+       * 
+       * # Arguments
+       * 
+       * * `collection_id`: ID of the collection the item belongs to.
+       * * `item_id`: ID of the item.
+       **/
+      forceRepairItem: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32]>;
+      /**
        * Remove admin of a collection.
        * 
        * An admin address can remove itself. List of admins may become empty,
@@ -1478,15 +1491,6 @@ declare module '@polkadot/api-base/types/submittable' {
        * * `address`: ID of the address to be removed from the allowlist.
        **/
       removeFromAllowList: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, address: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, PalletEvmAccountBasicCrossAccountIdRepr]>;
-      /**
-       * Repairs a broken item
-       * 
-       * # Arguments
-       * 
-       * * `collection_id`: ID of the collection the item belongs to.
-       * * `item_id`: ID of the item.
-       **/
-      repairItem: AugmentedSubmittable<(collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u32]>;
       /**
        * Re-partition a refungible token, while owning all of its parts/pieces.
        * 
