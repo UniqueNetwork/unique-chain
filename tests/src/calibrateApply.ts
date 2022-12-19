@@ -1,6 +1,6 @@
 import {readFile, writeFile} from 'fs/promises';
 import path from 'path';
-import usingApi from './substrate/substrate-api';
+import usingApi from './.outdated/substrate/substrate-api';
 
 const formatNumber = (num: string): string => num.split('').reverse().join('').replace(/([0-9]{3})/g, '$1_').split('').reverse().join('').replace(/^_/, '');
 
