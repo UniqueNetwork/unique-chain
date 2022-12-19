@@ -98,7 +98,7 @@ describe('EVM collection allowlist', () => {
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase => 
-    itEth(`Collection allowlist can be added and removed by [cross] address for ${testCase.mode}`, async ({helper}) => {
+    itEth.ifWithPallets(`Collection allowlist can be added and removed by [cross] address for ${testCase.mode}`, testCase.requiredPallets, async ({helper}) => {
       const owner = (await helper.eth.createAccountWithBalance(donor)).toLowerCase();
       const [userSub] = await helper.arrange.createAccounts([10n], donor);
       const userEth = await helper.eth.createAccountWithBalance(donor);
@@ -166,7 +166,7 @@ describe('EVM collection allowlist', () => {
     {mode: 'rft' as const, cross: false, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, cross: false, requiredPallets: []},
   ].map(testCase => 
-    itEth(`Non-owner cannot add or remove from collection allowlist ${testCase.cross ? 'cross ' : ''}${testCase.mode}`, async ({helper}) => {
+    itEth.ifWithPallets(`Non-owner cannot add or remove from collection allowlist ${testCase.cross ? 'cross ' : ''}${testCase.mode}`, testCase.requiredPallets, async ({helper}) => {
       // Select methods:
       const addToAllowList = testCase.cross ? 'addToCollectionAllowListCross' : 'addToCollectionAllowList';
       const removeFromAllowList = testCase.cross ? 'removeFromCollectionAllowListCross' : 'removeFromCollectionAllowList';
