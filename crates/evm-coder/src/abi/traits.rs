@@ -10,6 +10,9 @@ pub trait AbiType {
 	/// Signature for Etherium ABI.
 	const SIGNATURE: SignatureUnit;
 
+	/// Count of enum variants or struct fields.
+	const FIELDS_COUNT: usize;
+
 	/// Signature as str.
 	fn as_str() -> &'static str {
 		from_utf8(&Self::SIGNATURE.data[..Self::SIGNATURE.len]).expect("bad utf-8")

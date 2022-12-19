@@ -47,10 +47,11 @@ pub fn impl_enum_from_u8<'a>(
 	)
 }
 
-pub fn impl_enum_abi_type(name: &syn::Ident) -> proc_macro2::TokenStream {
+pub fn impl_enum_abi_type(name: &syn::Ident, option_count: usize) -> proc_macro2::TokenStream {
 	quote! {
 		impl ::evm_coder::abi::AbiType for #name {
 			const SIGNATURE: ::evm_coder::custom_signature::SignatureUnit = <u8 as ::evm_coder::abi::AbiType>::SIGNATURE;
+			const FIELDS_COUNT: usize = #option_count;
 
 			fn is_dynamic() -> bool {
 				<u8 as ::evm_coder::abi::AbiType>::is_dynamic()

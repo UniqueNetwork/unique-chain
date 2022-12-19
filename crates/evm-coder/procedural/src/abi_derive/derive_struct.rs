@@ -100,10 +100,12 @@ pub fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream
 pub fn impl_struct_abi_type(
 	name: &syn::Ident,
 	tuple_type: proc_macro2::TokenStream,
+	fields_count: usize,
 ) -> proc_macro2::TokenStream {
 	quote! {
 		impl ::evm_coder::abi::AbiType for #name {
 			const SIGNATURE: ::evm_coder::custom_signature::SignatureUnit = <#tuple_type as ::evm_coder::abi::AbiType>::SIGNATURE;
+			const FIELDS_COUNT: usize = #fields_count;
 			fn is_dynamic() -> bool {
 				<#tuple_type as ::evm_coder::abi::AbiType>::is_dynamic()
 			}

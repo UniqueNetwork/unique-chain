@@ -164,6 +164,50 @@ struct TypeStruct3DerivedMixedParam {
 	}
 
 	#[test]
+	fn impl_abi_type_fields_count() {
+		assert_eq!(
+			<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			1
+		);
+		assert_eq!(
+			<TypeStruct1DynamicParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			1
+		);
+		assert_eq!(
+			<TypeStruct2SimpleParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			2
+		);
+		assert_eq!(
+			<TypeStruct2DynamicParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			2
+		);
+		assert_eq!(
+			<TypeStruct2MixedParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			2
+		);
+		assert_eq!(
+			<TypeStruct1DerivedSimpleParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			1
+		);
+		assert_eq!(
+			<TypeStruct2DerivedSimpleParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			2
+		);
+		assert_eq!(
+			<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			2
+		);
+		assert_eq!(
+			<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			2
+		);
+		assert_eq!(
+			<TypeStruct3DerivedMixedParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
+			3
+		);
+	}
+
+	#[test]
 	fn impl_abi_type_is_dynamic() {
 		assert_eq!(
 			<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::is_dynamic(),
