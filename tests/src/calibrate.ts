@@ -9,7 +9,7 @@ class Fract {
   }
 
   mul(other: Fract) {
-    return new Fract(this.a * other.a, this.b * other.b);
+    return new Fract(this.a * other.a, this.b * other.b).optimize();
   }
 
   div(other: Fract) {
@@ -17,7 +17,10 @@ class Fract {
   }
 
   plus(other: Fract) {
-    return new Fract(this.a * other.b + other.a * this.b, this.b * other.b);
+    if (this.b === other.b) {
+      return new Fract(this.a + other.a, this.b);
+    }
+    return new Fract(this.a * other.b + other.a * this.b, this.b * other.b).optimize();
   }
 
   minus(other: Fract) {
@@ -28,11 +31,40 @@ class Fract {
     return new Fract(-this.a, this.b);
   }
   inv() {
-    return new Fract(this.b, this.a);
+    if (this.a < 0) {
+      return new Fract(-this.b, -this.a);
+    } else {
+      return new Fract(this.b, this.a);
+    }
+  }
+
+  optimize() {
+    function gcd(x: bigint, y: bigint) {
+      if (x < 0n)
+        x = -x;
+      if (y < 0n)
+        y = -y;
+      while(y) {
+        const t = y;
+        y = x % y;
+        x = t;
+      }
+      return x;
+    }
+    const v = gcd(this.a, this.b);
+    return new Fract(this.a / v, this.b / v);
   }
 
   toBigInt() {
     return this.a / this.b;
+  }
+  toNumber() {
+    const v = this.optimize();
+    return Number(v.a) / Number(v.b);
+  }
+  toString() {
+    const v = this.optimize();
+    return `${v.a} / ${v.b}`;
   }
 
   lt(other: Fract) {
@@ -142,8 +174,6 @@ function linearRegression(points: { x: Fract, y: Fract }[]) {
 
 const hypothesisLinear = (a: Fract, b: Fract) => (x: Fract) => rpn(x, a, '*', b, '+');
 
-// JS has no builtin function to calculate sqrt of bigint
-// https://stackoverflow.com/a/53684036/6190169
 function error(points: { x: Fract, y: Fract }[], hypothesis: (a: Fract) => Fract) {
   return points.map(p => {
     const v = hypothesis(p.x);
@@ -165,7 +195,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    console.log(`\t[NFT Transfer] Original price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
+    console.log(`\t[NFT transfer] Original price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 
   const api = helper.getApi();
@@ -188,7 +218,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
   const {a, b} = linearRegression(dataPoints);
 
   const hyp = hypothesisLinear(a, b);
-  console.log(`Error: ${error(dataPoints, hyp)}`);
+  console.log(`\t[NFT transfer] Error: ${error(dataPoints, hyp).toNumber()}`);
 
   // 0.1 UNQ
   const perfectValue = hyp(rpn(new Fract(helper.balance.getOneTokenNominal()), new Fract(1n, 10n), '*'));
@@ -201,7 +231,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
 
-    console.log(`\t[NFT Transfer] Calibrated price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
+    console.log(`\t[NFT transfer] Calibrated price: ${Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
 }
 
@@ -246,7 +276,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   const {a, b} = linearRegression(dataPoints);
 
   const hyp = hypothesisLinear(a, b);
-  console.log(`Error: ${error(dataPoints, hyp)}`);
+  console.log(`\t[ETH NFT transfer] Error: ${error(dataPoints, hyp).toNumber()}`);
 
   // 0.15 UNQ
   const perfectValue = hyp(rpn(new Fract(helper.balance.getOneTokenNominal()), new Fract(15n, 100n), '*'));
