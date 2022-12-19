@@ -176,7 +176,7 @@ where
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
 
-	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{AppPromotionApiServer, AppPromotion};
 
 	#[cfg(not(feature = "unique-runtime"))]
@@ -216,6 +216,7 @@ where
 
 	let overrides = overrides_handle::<_, _, R>(client.clone());
 
+	let execute_gas_limit_multiplier = 10;
 	io.merge(
 		Eth::new(
 			client.clone(),
@@ -230,13 +231,14 @@ where
 			block_data_cache.clone(),
 			fee_history_cache,
 			fee_history_limit,
+			execute_gas_limit_multiplier,
 		)
 		.into_rpc(),
 	)?;
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	#[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(not(feature = "unique-runtime"))]

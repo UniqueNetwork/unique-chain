@@ -55,7 +55,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ExistingVestingSchedule: AugmentedError<ApiType>;
       /**
-       * Balance too low to send value
+       * Balance too low to send value.
        **/
       InsufficientBalance: AugmentedError<ApiType>;
       /**
@@ -145,6 +145,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * This address is not set as sponsor, use setCollectionSponsor first.
+       **/
+      ConfirmSponsorshipFail: AugmentedError<ApiType>;
+      /**
        * Empty property keys are forbidden
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
@@ -217,6 +221,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       UserIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
+       * The user is not an administrator.
+       **/
+      UserIsNotCollectionAdmin: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    configuration: {
+      InconsistentConfiguration: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -265,6 +280,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FeeOverflow: AugmentedError<ApiType>;
       /**
+       * Gas limit is too high.
+       **/
+      GasLimitTooHigh: AugmentedError<ApiType>;
+      /**
+       * Gas limit is too low.
+       **/
+      GasLimitTooLow: AugmentedError<ApiType>;
+      /**
        * Gas price is too low.
        **/
       GasPriceTooLow: AugmentedError<ApiType>;
@@ -276,6 +299,14 @@ declare module '@polkadot/api-base/types/errors' {
        * Calculating total payment overflowed
        **/
       PaymentOverflow: AugmentedError<ApiType>;
+      /**
+       * EVM reentrancy
+       **/
+      Reentrancy: AugmentedError<ApiType>;
+      /**
+       * Undefined error.
+       **/
+      Undefined: AugmentedError<ApiType>;
       /**
        * Withdraw fee failed
        **/
@@ -321,6 +352,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AccountNotEmpty: AugmentedError<ApiType>;
       /**
+       * Failed to decode event bytes
+       **/
+      BadEvent: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -362,13 +397,27 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
       /**
+       * Only a fungible collection could be possibly broken; any fungible token is valid.
+       **/
+      FungibleTokensAreAlwaysValid: AugmentedError<ApiType>;
+      /**
        * Not Fungible item data used to mint in Fungible collection.
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
       /**
+       * Setting allowance for all is not allowed.
+       **/
+      SettingAllowanceForAllNotAllowed: AugmentedError<ApiType>;
+      /**
        * Setting item properties is not allowed.
        **/
       SettingPropertiesNotAllowed: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    maintenance: {
       /**
        * Generic error
        **/
@@ -702,6 +751,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    testUtils: {
+      TestPalletDisabled: AugmentedError<ApiType>;
+      TriggerRollback: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     tokens: {
       /**
        * Cannot convert Amount into Balance type
@@ -769,10 +826,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
-      /**
-       * This address is not set as sponsor, use setCollectionSponsor first.
-       **/
-      ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
       /**
        * Length of items properties must be greater than 0.
        **/

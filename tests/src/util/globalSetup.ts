@@ -1,7 +1,9 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND} from './index';
+import {
+  usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD,
+} from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 
@@ -9,13 +11,16 @@ import {promises as fs} from 'fs';
 const globalSetup = async (): Promise<void> => {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
-      // 1. Create donors for test files
+      // 1. Wait node producing blocks
+      await helper.wait.newBlocks(1, 600_000);
+
+      // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
           if (!result) Promise.reject();
         });
 
-      // 2. Set up App Promotion admin 
+      // 3. Configure App Promotion 
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
@@ -26,6 +31,10 @@ const globalSetup = async (): Promise<void> => {
         const nominal = helper.balance.getOneTokenNominal();
         await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 1000n * nominal);
         await helper.balance.transferToSubstrate(superuser, palletAddress, 1000n * nominal);
+        await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
+          .setAppPromotionConfigurationOverride({
+            recalculationInterval: LOCKING_PERIOD,
+            pendingInterval: UNLOCKING_PERIOD})], true);
       }
     } catch (error) {
       console.error(error);
@@ -90,7 +99,7 @@ const fundFilenames = async () => {
   });
 };
 
-const fundFilenamesWithRetries = async (retriesLeft: number): Promise<boolean> => {
+const fundFilenamesWithRetries = (retriesLeft: number): Promise<boolean> => {
   if (retriesLeft <= 0) return Promise.resolve(false);
   return fundFilenames()
     .then(() => Promise.resolve(true))

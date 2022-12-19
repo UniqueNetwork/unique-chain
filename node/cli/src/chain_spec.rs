@@ -67,7 +67,7 @@ pub enum RuntimeId {
 }
 
 #[cfg(not(feature = "unique-runtime"))]
-/// PARA_ID for Opal/Quartz
+/// PARA_ID for Opal/Sapphire/Quartz
 const PARA_ID: u32 = 2095;
 
 #[cfg(feature = "unique-runtime")]
@@ -90,7 +90,11 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 			return RuntimeId::Quartz;
 		}
 
-		if self.id().starts_with("opal") || self.id() == "dev" || self.id() == "local_testnet" {
+		if self.id().starts_with("opal")
+			|| self.id().starts_with("sapphire")
+			|| self.id() == "dev"
+			|| self.id() == "local_testnet"
+		{
 			return RuntimeId::Opal;
 		}
 

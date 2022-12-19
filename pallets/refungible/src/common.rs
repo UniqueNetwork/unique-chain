@@ -152,14 +152,22 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn token_owner() -> Weight {
 		<SelfWeightOf<T>>::token_owner()
 	}
+
+	fn set_allowance_for_all() -> Weight {
+		<SelfWeightOf<T>>::set_allowance_for_all()
+	}
+
+	fn force_repair_item() -> Weight {
+		<SelfWeightOf<T>>::repair_item()
+	}
 }
 
 fn map_create_data<T: Config>(
 	data: up_data_structs::CreateItemData,
 	to: &T::CrossAccountId,
-) -> Result<CreateItemData<T::CrossAccountId>, DispatchError> {
+) -> Result<CreateItemData<T>, DispatchError> {
 	match data {
-		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateItemData {
+		up_data_structs::CreateItemData::ReFungible(data) => Ok(CreateItemData::<T> {
 			users: {
 				let mut out = BTreeMap::new();
 				out.insert(to.clone(), data.pieces);
@@ -222,7 +230,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			CreateItemExData::RefungibleMultipleOwners(CreateRefungibleExMultipleOwners {
 				users,
 				properties,
-			}) => vec![CreateItemData { users, properties }],
+			}) => vec![CreateItemData::<T> { users, properties }],
 			CreateItemExData::RefungibleMultipleItems(r) => r
 				.into_inner()
 				.into_iter()
@@ -231,7 +239,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 					     user,
 					     pieces,
 					     properties,
-					 }| CreateItemData {
+					 }| CreateItemData::<T> {
 						users: BTreeMap::from([(user, pieces)])
 							.try_into()
 							.expect("limit >= 1"),
@@ -515,6 +523,29 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		<Pallet<T>>::total_pieces(self.id, token)
+	}
+
+	fn set_allowance_for_all(
+		&self,
+		owner: T::CrossAccountId,
+		operator: T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::set_allowance_for_all(self, &owner, &operator, approve),
+			<CommonWeights<T>>::set_allowance_for_all(),
+		)
+	}
+
+	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool {
+		<Pallet<T>>::allowance_for_all(self, &owner, &operator)
+	}
+
+	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::repair_item(self, token),
+			<CommonWeights<T>>::force_repair_item(),
+		)
 	}
 }
 

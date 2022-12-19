@@ -7,7 +7,9 @@ services:
       dockerfile: .docker/Dockerfile-chain-dev-unit
       args:
         - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
-        - "FEATURE={{ FEATURE }}"
+        - "NETWORK={{ NETWORK }}"
+    image: node-dev
+    container_name: node-dev        
     logging:
       options:
         max-size: "1m"

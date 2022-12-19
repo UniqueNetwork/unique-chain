@@ -1,0 +1,63 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837012/Code+style+testing
+# Nested workflow for checks related to formatting Rust code 
+
+name: codestyle
+
+# Triger: only call from main workflow(re-usable workflows)
+on:
+  workflow_call:
+
+jobs:
+  rustfmt:
+    runs-on: [ self-hosted-ci ]
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}            
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            default: true
+            target: wasm32-unknown-unknown
+            components: rustfmt, clippy
+      - name: Run cargo fmt
+        run: cargo fmt -- --check   # In that mode it returns only exit code.
+      - name: Cargo fmt state
+        if: success()
+        run: echo "Nothing to do. Command 'cargo fmt -- --check' returned exit code 0."
+
+  yarn_eslint:
+    runs-on: [ self-hosted-ci ]
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}            
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install modules
+        run: cd tests && yarn
+      - name: Run ESLint
+        run: cd tests && yarn eslint --ext .ts,.js src/
+
+  clippy:
+    if: ${{ false }}
+    runs-on: [ self-hosted-ci ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install substrate dependencies
+        run: sudo apt-get install libssl-dev pkg-config libclang-dev clang protobuf-compiler
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            default: true
+            target: wasm32-unknown-unknown
+            components: rustfmt, clippy
+      - name: Run cargo check
+        run: cargo clippy -- -Dwarnings

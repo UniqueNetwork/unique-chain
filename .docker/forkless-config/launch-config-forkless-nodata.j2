@@ -88,7 +88,7 @@
         {
             "bin": "/unique-chain/current/release/unique-collator",
             "upgradeBin": "/unique-chain/target/release/unique-collator",
-            "upgradeWasm": "/unique-chain/target/release/wbuild/{{ FEATURE }}/{{ RUNTIME }}_runtime.compact.compressed.wasm",
+            "upgradeWasm": "/unique-chain/target/release/wbuild/{{ NETWORK }}-runtime/{{ NETWORK }}_runtime.compact.compressed.wasm",
             "id": "1000",
             "balance": "1000000000000000000000000",
             "nodes": [
@@ -101,8 +101,12 @@
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace",
-                        "--ws-max-connections=1000"
+                        "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
+                        "--ws-max-connections=1000",
+                        "--",
+                        "--port=31335",
+                        "--ws-port=9745",
+                        "--rpc-port=9734"
                     ]
                 },
                 {
@@ -114,8 +118,12 @@
                         "--rpc-cors=all",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-                        "-lxcm=trace",
-                        "--ws-max-connections=1000"
+                        "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
+                        "--ws-max-connections=1000",
+                        "--",
+                        "--port=31337",
+                        "--ws-port=9747",
+                        "--rpc-port=9737"                        
                     ]
                 }
             ]

@@ -13,7 +13,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "mocha"
     ],
     "rules": {
         "indent": [
@@ -42,6 +43,10 @@
                 "avoidEscape": true
             }
         ],
+        "require-await": 2,
+        "mocha/no-async-describe": "error",
+        "mocha/no-nested-tests": "error",
+        "mocha/no-synchronous-tests": "error",
         "semi": [
             "error",
             "always"

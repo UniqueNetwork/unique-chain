@@ -8,8 +8,8 @@ import '@polkadot/api-base/types/consts';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { H160, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, UpDataStructsCollectionLimits, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
@@ -70,13 +70,30 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       collectionCreationPrice: u128 & AugmentedConst<ApiType>;
       /**
+       * Address under which the CollectionHelper contract would be available.
+       **/
+      contractAddress: H160 & AugmentedConst<ApiType>;
+      /**
        * Generic const
        **/
       [key: string]: Codec;
     };
     configuration: {
+      appPromotionDailyRate: Perbill & AugmentedConst<ApiType>;
+      dayRelayBlocks: u32 & AugmentedConst<ApiType>;
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
       defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
+      maxXcmAllowedLocations: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    evmContractHelpers: {
+      /**
+       * Address, under which magic contract will be available
+       **/
+      contractAddress: H160 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -212,6 +229,64 @@ declare module '@polkadot/api-base/types/consts' {
        * Period between successive spends.
        **/
       spendPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    unique: {
+      /**
+       * Maximum admins per collection.
+       **/
+      collectionAdminsLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Default FT collection limit.
+       **/
+      ftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
+      /**
+       * Maximal length of a collection description.
+       **/
+      maxCollectionDescriptionLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal length of a collection name.
+       **/
+      maxCollectionNameLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum size for all collection properties.
+       **/
+      maxCollectionPropertiesSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * A maximum number of token properties.
+       **/
+      maxPropertiesPerItem: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal length of a property key.
+       **/
+      maxPropertyKeyLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal length of a property value.
+       **/
+      maxPropertyValueLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximal length of a token prefix.
+       **/
+      maxTokenPrefixLength: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum size of all token properties.
+       **/
+      maxTokenPropertiesSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * A maximum number of levels of depth in the token nesting tree.
+       **/
+      nestingBudget: u32 & AugmentedConst<ApiType>;
+      /**
+       * Default NFT collection limit.
+       **/
+      nftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
+      /**
+       * Default RFT collection limit.
+       **/
+      rftDefaultCollectionLimits: UpDataStructsCollectionLimits & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

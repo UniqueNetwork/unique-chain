@@ -1,0 +1,340 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837028/Nodes+only+update
+# Node only update with restart polkadot-launch process.
+
+name: nodes-only update
+
+# Triger: only call from main workflow(re-usable workflows)
+on:
+  workflow_call:
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  nodes-execution-matrix:
+
+    name: execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v3
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
+
+
+
+  nodes-only-update:
+    needs: nodes-execution-matrix
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci,large]
+
+    timeout-minutes: 2880           # 48 hours for execution jobs.
+
+    name: ${{ matrix.network }}
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.nodes-execution-matrix.outputs.matrix)}}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-node.j2
+          output_file: .docker/docker-compose.node.${{ matrix.network }}.yml
+          variables: |
+            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
+            POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
+            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
+            NETWORK=${{ matrix.network }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
+
+      - name: Generate launch-config-forkless-nodata.json
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/forkless-config/launch-config-forkless-nodata.j2
+          output_file: .docker/launch-config-forkless-nodata.json
+          variables: |
+            NETWORK=${{ matrix.network }}
+
+      - name: Show launch-config-forkless configuration
+        run: cat .docker/launch-config-forkless-nodata.json
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose.node.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate --timeout 300
+
+      #  🚀 POLKADOT LAUNCH COMPLETE 🚀
+      - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
+        if: success()
+        run: |
+          counter=160
+          function check_container_status {
+                docker inspect -f {{.State.Running}} node-parachain
+          }
+          function do_docker_logs {
+                docker logs --details node-parachain  2>&1
+          }
+          function is_started {
+                if [ "$(check_container_status)" == "true" ]; then
+                        echo "Container: node-parachain RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
+                                echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
+                                return 0
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
+                else
+                        echo "Container node-parachain NOT RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
+                fi
+          echo "something goes wrong"
+          exit 1
+          }
+          while ! is_started; do
+                echo "Waiting for special message in log files "
+                sleep 30s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                         continue
+                else
+                         break
+                fi
+          done
+          echo "Halting script"
+          exit 0
+        shell: bash
+
+      - name: Checkout at '${{ matrix.mainnet_branch }}' branch
+        uses: actions/checkout@master
+        with:
+          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
+          path: ${{ matrix.mainnet_branch }}
+
+      - name: Run Parallel tests before Node Parachain upgrade
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      # - name: Upload Parallel Test Report Before Node upgrade
+      #   uses: phoenix-actions/test-reporting@v8
+      #   id: test-parallel-report-before
+      #   if: success() || failure()    # run this step even if previous step failed
+      #   with:
+      #     name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+      #     reporter: mochawesome-json
+      #     fail-on-error: 'false'
+
+      - name: Run Sequential tests before Node Parachain upgrade
+        if: success() || failure()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      # - name: Upload Sequential Test Report Before Node upgrade
+      #   uses: phoenix-actions/test-reporting@v8
+      #   id: test-sequential-report-before
+      #   if: success() || failure()    # run this step even if previous step failed
+      #   with:
+      #     name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+      #     reporter: mochawesome-json
+      #     fail-on-error: 'false'
+
+      - name: Send SIGUSR1 to polkadot-launch process
+        if: success() || failure()
+        run: |
+          #Get PID of polkadot-launch
+          ContainerID=$(docker ps -aqf "name=node-parachain")
+          PID=$(docker exec node-parachain pidof 'polkadot-launch')
+          sleep 30s
+          echo -e "\n"
+          echo -e "Restart polkadot-launch process: $PID\n"
+          docker exec node-parachain kill -SIGUSR1 ${PID}
+          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
+          sleep 60s
+          echo -e "Show logs of node-parachain container.\n"          
+          docker logs ${ContainerID}
+
+      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
+        if: failure()                   # run this step only at failure
+        run: |
+          docker exec node-parachain tail -n 1000 /polkadot-launch/9944.log
+          docker exec node-parachain tail -n 1000 /polkadot-launch/9945.log
+          docker exec node-parachain tail -n 1000 /polkadot-launch/alice.log
+
+      - name: copy chain log files from container to the host
+        if: success() || failure()    # run this step even if previous step failed
+        run: |
+          mkdir -p /tmp/node-only-update
+          docker cp node-parachain:/polkadot-launch/9944.log /tmp/node-only-update/
+          docker cp node-parachain:/polkadot-launch/9945.log /tmp/node-only-update/
+          docker cp node-parachain:/polkadot-launch/alice.log /tmp/node-only-update/
+
+      - name: Upload chain log files
+        if: success() || failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: node-only-update-chain-logs
+          path: /tmp/node-only-update/
+          if-no-files-found: warn
+
+      - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
+        if: success()
+        run: |
+          counter=160
+          function check_container_status {
+                docker inspect -f {{.State.Running}} node-parachain
+          }
+          function do_docker_logs {
+                docker logs --details node-parachain  2>&1
+          }
+          function is_started {
+                if [ "$(check_container_status)" == "true" ]; then
+                        echo "Container: node-parachain RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ ${DOCKER_LOGS} = *"All parachain collators restarted with the new binaries."* ]];then
+                                echo "🌗 All parachain collators restarted with the new binaries."
+                                return 0
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
+                else
+                        echo "Container node-parachain NOT RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
+                fi
+          echo "something goes wrong"
+          exit 1
+          }
+          while ! is_started; do
+                echo "Waiting for special message in log files "
+                sleep 30s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                         continue
+                else
+                         break
+                fi
+          done
+          echo "Halting script"
+          exit 0
+        shell: bash
+
+      - name: Run Parallel tests after Node Parachain upgrade
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()    # run this step even if previous step failed
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      #- name: Test Report Parallel After Node upgrade
+      #  uses: phoenix-actions/test-reporting@v8
+      #  id: test-report-parallel-after
+      #  if: success() || failure()    # run this step even if previous step failed
+      #  with:
+      #    name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+      #    reporter: mochawesome-json
+      #    fail-on-error: 'false'
+
+      - name: Run Sequential tests after Node Parachain upgrade
+        if: success() || failure()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      #- name: Upload Sequential Test Report After Node upgrade
+      #  uses: phoenix-actions/test-reporting@v8
+      #  id: test-sequential-report-after
+      #  if: success() || failure()    # run this step even if previous step failed
+      #  with:
+      #    name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
+      #    reporter: mochawesome-json
+      #    fail-on-error: 'false'
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a
+
+      - name: Remove repo at the end
+        if: always()                   # run this step always
+        run: |
+          ls -ls ./

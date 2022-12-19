@@ -178,7 +178,7 @@ pub use property::*;
 
 use RmrkProperty::*;
 
-/// Maximum number of levels of depth in the token nesting tree.
+/// A maximum number of levels of depth in the token nesting tree.
 pub const NESTING_BUDGET: u32 = 5;
 
 type PendingTarget = (CollectionId, TokenId);
@@ -190,11 +190,13 @@ type BasesMap = BTreeMap<RmrkBaseId, u32>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use pallet_evm::account;
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_common::Config + pallet_nonfungible::Config + account::Config
+		frame_system::Config
+		+ pallet_common::Config
+		+ pallet_nonfungible::Config
+		+ pallet_evm::Config
 	{
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;

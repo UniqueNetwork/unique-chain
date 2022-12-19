@@ -80,11 +80,11 @@
 
 use core::ops::Deref;
 use evm_coder::ToLog;
-use frame_support::{ensure};
+use frame_support::ensure;
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionFlags, TokenId, CreateCollectionData,
-	mapping::TokenAddressMapping, budget::Budget,
+	mapping::TokenAddressMapping, budget::Budget, PropertyKey, Property,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
@@ -106,7 +106,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = (<T as pallet_evm::account::Config>::CrossAccountId, u128);
+pub type CreateItemData<T> = (<T as pallet_evm::Config>::CrossAccountId, u128);
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
@@ -127,6 +127,10 @@ pub mod pallet {
 		FungibleDisallowsNesting,
 		/// Setting item properties is not allowed.
 		SettingPropertiesNotAllowed,
+		/// Setting allowance for all is not allowed.
+		SettingAllowanceForAllNotAllowed,
+		/// Only a fungible collection could be possibly broken; any fungible token is valid.
+		FungibleTokensAreAlwaysValid,
 	}
 
 	#[pallet::config]
@@ -256,7 +260,25 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	///Checks if collection has tokens. Return `true` if it has.
+	/// Add properties to the collection.
+	pub fn set_collection_properties(
+		collection: &FungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		properties: Vec<Property>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
+	}
+
+	/// Delete properties of the collection, associated with the provided keys.
+	pub fn delete_collection_properties(
+		collection: &FungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
+	) -> DispatchResult {
+		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+	}
+
+	/// Checks if collection has tokens. Return `true` if it has.
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
 		<TotalSupply<T>>::get(collection_id) != 0
 	}
@@ -379,7 +401,7 @@ impl<T: Config> Pallet<T> {
 		let balance_from = <Balance<T>>::get((collection.id, from))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
-		let balance_to = if from != to {
+		let balance_to = if from != to && amount != 0 {
 			Some(
 				<Balance<T>>::get((collection.id, to))
 					.checked_add(amount)
@@ -391,16 +413,17 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
-			to,
-			collection.id,
-			TokenId::default(),
-			nesting_budget,
-		)?;
-
 		if let Some(balance_to) = balance_to {
-			// from != to
+			// from != to && amount != 0
+
+			<PalletStructure<T>>::nest_if_sent_to_token(
+				from.clone(),
+				to,
+				collection.id,
+				TokenId::default(),
+				nesting_budget,
+			)?;
+
 			if balance_from == 0 {
 				<Balance<T>>::remove((collection.id, from));
 				<PalletStructure<T>>::unnest_if_nested(from, collection.id, TokenId::default());

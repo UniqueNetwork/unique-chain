@@ -186,17 +186,17 @@ describe('Negative integration test: ext. createItem():', () => {
 
   itSub('Regular user cannot create new item in NFT collection', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = async () => collection.mintToken(bob, {Substrate: bob.address});
+    const mintTx = () => collection.mintToken(bob, {Substrate: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
   itSub('Regular user cannot create new item in Fungible collection', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
-    const mintTx = async () => collection.mint(bob, 10n, {Substrate: bob.address});
+    const mintTx = () => collection.mint(bob, 10n, {Substrate: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
   itSub.ifWithPallets('Regular user cannot create new item in ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = async () => collection.mintToken(bob, 100n, {Substrate: bob.address});
+    const mintTx = () => collection.mintToken(bob, 100n, {Substrate: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
@@ -204,7 +204,7 @@ describe('Negative integration test: ext. createItem():', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
       tokenPropertyPermissions: [{key: 'k', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}],
     });
-    const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -212,13 +212,13 @@ describe('Negative integration test: ext. createItem():', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
       tokenPropertyPermissions: [{key: 'k', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
     });
-    const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Adding property without access rights', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -231,7 +231,7 @@ describe('Negative integration test: ext. createItem():', () => {
 
 
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, props);
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, props);
     await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
@@ -242,7 +242,7 @@ describe('Negative integration test: ext. createItem():', () => {
         {key: 'k2', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
       ],
     });
-    const mintTx = async () => collection.mintToken(alice, {Substrate: bob.address}, [
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [
       {key: 'k1', value: 'vvvvvv'.repeat(5000)},
       {key: 'k2', value: 'vvv'.repeat(5000)},
     ]);

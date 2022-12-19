@@ -122,6 +122,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
     });
   });
 
+
   itSub('[nft] Transfer with not existed collection_id', async ({helper}) => {
     const collectionId = (1 << 32) - 1;
     await expect(helper.nft.transferToken(alice, collectionId, 1, {Substrate: bob.address}))
@@ -189,6 +190,25 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-Neg-2-RFT', description: '', tokenPrefix: 'T'});
     await expect(collection.transferToken(alice, 1, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.TokenValueTooLow/);
+  });
+
+  itSub('Zero transfer NFT', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'Transfer-Neg-3-NFT', description: '', tokenPrefix: 'T'});
+    const tokenAlice = await collection.mintToken(alice, {Substrate: alice.address});
+    const tokenBob = await collection.mintToken(alice, {Substrate: bob.address});
+    // 1. Zero transfer of own tokens allowed:
+    await helper.executeExtrinsic(alice, 'api.tx.unique.transfer', [{Substrate: bob.address}, collection.collectionId, tokenAlice.tokenId, 0]);
+    // 2. Zero transfer of non-owned tokens not allowed:
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transfer', [{Substrate: alice.address}, collection.collectionId, tokenBob.tokenId, 0])).to.be.rejectedWith('common.NoPermission');
+    // 3. Zero transfer of non-existing tokens not allowed:
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transfer', [{Substrate: alice.address}, collection.collectionId, 10, 0])).to.be.rejectedWith('common.TokenNotFound');
+    expect(await tokenAlice.getOwner()).to.deep.eq({Substrate: alice.address});
+    expect(await tokenBob.getOwner()).to.deep.eq({Substrate: bob.address});
+    // 4. Storage is not corrupted:
+    await tokenAlice.transfer(alice, {Substrate: bob.address});
+    await tokenBob.transfer(bob, {Substrate: alice.address});
+    expect(await tokenAlice.getOwner()).to.deep.eq({Substrate: bob.address});
+    expect(await tokenBob.getOwner()).to.deep.eq({Substrate: alice.address});
   });
 
   itSub('[nft] Transfer with deleted item_id', async ({helper}) => {

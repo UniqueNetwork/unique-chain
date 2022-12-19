@@ -45,6 +45,7 @@ pub trait WeightInfo {
 	fn remove_collection_sponsor() -> Weight;
 	fn set_transfers_enabled_flag() -> Weight;
 	fn set_collection_limits() -> Weight;
+	fn force_repair_collection() -> Weight;
 }
 
 /// Weights for pallet_unique using the Substrate node and recommended hardware.
@@ -139,6 +140,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
+	// Storage: Common CollectionProperties (r:1 w:1)
+	fn force_repair_collection() -> Weight {
+		Weight::from_ref_time(5_701_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -229,6 +236,12 @@ impl WeightInfo for () {
 	// Storage: Common CollectionById (r:1 w:1)
 	fn set_collection_limits() -> Weight {
 		Weight::from_ref_time(18_166_000)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Common CollectionProperties (r:1 w:1)
+	fn force_repair_collection() -> Weight {
+		Weight::from_ref_time(5_701_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

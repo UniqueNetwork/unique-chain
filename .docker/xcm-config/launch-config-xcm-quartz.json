@@ -90,6 +90,7 @@
                     "rpcPort": 9933,
                     "name": "alice",
                     "flags": [
+                       "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
                        "--unsafe-rpc-external",
                        "--unsafe-ws-external"
 		    ]
@@ -101,6 +102,11 @@
             "id": "2000",
             "chain":  "karura-dev",
             "balance": "1000000000000000000000",
+            "chainInitializer": [
+                "chainql",
+                "-e",
+                "(import '${spec}') {id+: '-local'}"
+            ],	              
             "nodes": [
                 {
                     "wsPort": 9946,

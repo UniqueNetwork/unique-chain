@@ -70,6 +70,13 @@ export interface ICrossAccountIdLower {
   ethereum?: TEthereumAccount;
 }
 
+export interface IEthCrossAccountId {
+  0: TEthereumAccount;
+  1: TSubstrateAccount;
+  eth: TEthereumAccount;
+  sub: TSubstrateAccount;
+}
+
 export interface ICollectionLimits {
   accountTokenOwnershipLimit?: number | null;
   sponsoredDataSize?: number | null;
@@ -165,6 +172,7 @@ export interface IStakingInfo {
 }
 
 export interface ISchedulerOptions {
+  scheduledId?: string,
   priority?: number,
   periodic?: {
     period: number,
@@ -217,3 +225,4 @@ export type TSiblingNetworkds = 'moonbeam' | 'moonriver' | 'acala' | 'karura' | 
 export type TRelayNetworks = 'rococo' | 'westend';
 export type TNetworks = TUniqueNetworks | TSiblingNetworkds | TRelayNetworks;
 export type TSigner = IKeyringPair; // | 'string'
+export type TCollectionMode = 'nft' | 'rft' | 'ft';

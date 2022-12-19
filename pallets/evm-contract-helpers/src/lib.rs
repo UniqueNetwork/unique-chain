@@ -41,12 +41,13 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::account::Config
+		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_evm::Config
 	{
 		/// Overarching event type.
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Address, under which magic contract will be available
+		#[pallet::constant]
 		type ContractAddress: Get<H160>;
 
 		/// In case of enabled sponsoring, but no sponsoring rate limit set,
@@ -172,7 +173,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub fn deposit_event)]
+	#[pallet::generate_deposit(fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Contract sponsor was set.
 		ContractSponsorSet(
@@ -350,6 +351,7 @@ pub mod pallet {
 		pub fn sponsoring_mode(contract: H160) -> SponsoringModeT {
 			<SponsoringMode<T>>::get(contract)
 				.or_else(|| {
+					#[allow(deprecated)]
 					<SelfSponsoring<T>>::get(contract).then(|| SponsoringModeT::Allowlisted)
 				})
 				.unwrap_or_default()
@@ -362,6 +364,7 @@ pub mod pallet {
 			} else {
 				<SponsoringMode<T>>::insert(contract, mode);
 			}
+			#[allow(deprecated)]
 			<SelfSponsoring<T>>::remove(contract)
 		}
 
@@ -424,6 +427,7 @@ impl SponsoringModeT {
 			_ => return None,
 		})
 	}
+	#[allow(dead_code)]
 	fn to_eth(self) -> u8 {
 		match self {
 			SponsoringModeT::Disabled => 0,

@@ -16,6 +16,7 @@
 
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
+#![macro_use]
 #![cfg_attr(not(feature = "std"), no_std)]
 #[cfg(not(feature = "std"))]
 extern crate alloc;
@@ -26,6 +27,8 @@ pub mod abi;
 pub use events::{ToLog, ToTopic};
 use execution::DispatchInfo;
 pub mod execution;
+#[macro_use]
+pub mod custom_signature;
 
 /// Derives call enum implementing [`crate::Callable`], [`crate::Weighted`]
 /// and [`crate::Call`] from impl block.
@@ -90,6 +93,8 @@ pub use evm_coder_procedural::solidity_interface;
 pub use evm_coder_procedural::solidity;
 /// See [`solidity_interface`]
 pub use evm_coder_procedural::weight;
+pub use evm_coder_procedural::AbiCoder;
+pub use sha3_const;
 
 /// Derives [`ToLog`] for enum
 ///
@@ -104,7 +109,17 @@ pub use evm_coder_procedural::ToLog;
 #[doc(hidden)]
 pub mod events;
 #[doc(hidden)]
+#[cfg(feature = "stubgen")]
 pub mod solidity;
+
+/// Sealed traits.
+pub mod sealed {
+	/// Not every type should be directly placed in vec.
+	/// Vec encoding is not memory efficient, as every item will be padded
+	/// to 32 bytes.
+	/// Instead you should use specialized types (`bytes` in case of `Vec<u8>`)
+	pub trait CanBePlacedInVec {}
+}
 
 /// Solidity type definitions (aliases from solidity name to rust type)
 /// To be used in [`solidity_interface`] definitions, to make sure there is no
@@ -117,23 +132,22 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 
 	pub type address = H160;
-
 	pub type uint8 = u8;
 	pub type uint16 = u16;
 	pub type uint32 = u32;
 	pub type uint64 = u64;
 	pub type uint128 = u128;
 	pub type uint256 = U256;
-
 	pub type bytes4 = [u8; 4];
-
 	pub type topic = H256;
 
 	#[cfg(not(feature = "std"))]
 	pub type string = ::alloc::string::String;
 	#[cfg(feature = "std")]
 	pub type string = ::std::string::String;
-	pub type bytes = Vec<u8>;
+
+	#[derive(Default, Debug, PartialEq, Eq, Clone)]
+	pub struct bytes(pub Vec<u8>);
 
 	/// Solidity doesn't have `void` type, however we have special implementation
 	/// for empty tuple return type
@@ -156,6 +170,37 @@ pub mod types {
 		/// Contract should reject payment, if target call is not payable,
 		/// and there is no `receiver()` function defined.
 		pub value: U256,
+	}
+
+	impl From<Vec<u8>> for bytes {
+		fn from(src: Vec<u8>) -> Self {
+			Self(src)
+		}
+	}
+
+	#[allow(clippy::from_over_into)]
+	impl Into<Vec<u8>> for bytes {
+		fn into(self) -> Vec<u8> {
+			self.0
+		}
+	}
+
+	impl bytes {
+		#[must_use]
+		pub fn len(&self) -> usize {
+			self.0.len()
+		}
+
+		#[must_use]
+		pub fn is_empty(&self) -> bool {
+			self.len() == 0
+		}
+	}
+
+	#[derive(Debug, Default)]
+	pub struct Property {
+		pub key: string,
+		pub value: bytes,
 	}
 }
 
@@ -213,7 +258,7 @@ impl Call for ERC165Call {
 			return Ok(None);
 		}
 		Ok(Some(Self::SupportsInterface {
-			interface_id: input.abi_read()?,
+			interface_id: types::bytes4::abi_read(input)?,
 		}))
 	}
 }
@@ -226,6 +271,7 @@ impl Call for ERC165Call {
 #[macro_export]
 macro_rules! generate_stubgen {
 	($name:ident, $decl:ty, $is_impl:literal) => {
+		#[cfg(feature = "stubgen")]
 		#[test]
 		#[ignore]
 		fn $name() {

@@ -26,8 +26,11 @@ use xcm_builder::{
 };
 
 use crate::{
-	ParachainInfo, PolkadotXcm,
-	runtime_common::config::xcm::{DenyThenTry, DenyTransact, DenyExchangeWithUnknownLocation},
+	Runtime, ParachainInfo, PolkadotXcm,
+	runtime_common::{
+		config::xcm::{DenyThenTry, DenyTransact, DenyExchangeWithUnknownLocation},
+		xcm::OverridableAllowedLocations,
+	},
 };
 
 match_types! {
@@ -38,7 +41,7 @@ match_types! {
 }
 
 parameter_types! {
-	pub QuartzAllowedLocations: Vec<MultiLocation> = vec![
+	pub QuartzDefaultAllowedLocations: Vec<MultiLocation> = vec![
 		// Self location
 		MultiLocation {
 			parents: 0,
@@ -48,6 +51,11 @@ parameter_types! {
 		MultiLocation {
 			parents: 1,
 			interior: Here,
+		},
+		// Statemint/Statemint location
+		MultiLocation {
+			parents: 1,
+			interior: X1(Parachain(1000)),
 		},
 		// Karura/Acala location
 		MultiLocation {
@@ -70,7 +78,9 @@ parameter_types! {
 pub type Barrier = DenyThenTry<
 	(
 		DenyTransact,
-		DenyExchangeWithUnknownLocation<QuartzAllowedLocations>,
+		DenyExchangeWithUnknownLocation<
+			OverridableAllowedLocations<Runtime, QuartzDefaultAllowedLocations>,
+		>,
 	),
 	(
 		TakeWeightCredit,

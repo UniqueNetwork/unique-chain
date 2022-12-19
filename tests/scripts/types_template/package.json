@@ -1,0 +1,22 @@
+{
+  "name": "TODO",
+  "private": true,
+  "version": "TODO",
+  "main": "index.js",
+  "repository": "git@github.com:UniqueNetwork/unique-types-js.git",
+  "homepage": "https://unique.network/",
+  "license": "MIT",
+  "scripts": {
+    "prepublish": "tsc -d"
+  },
+  "peerDependencies": {
+    "@polkadot/api": "TODO",
+    "@polkadot/types": "TODO"
+  },
+  "devDependencies": {
+    "@polkadot/api": "TODO",
+    "@polkadot/types": "TODO",
+    "ts-node": "TODO",
+    "typescript": "TODO"
+  }
+}

@@ -187,6 +187,10 @@ macro_rules! impl_common_runtime_apis {
                 fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
                 }
+
+		        fn allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool, DispatchError> {
+                    dispatch_unique_runtime!(collection.allowance_for_all(owner, operator))
+                }
             }
 
             impl app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId> for Runtime {
@@ -482,6 +486,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let is_transactional = false;
+                    let validate = false;
                     <Runtime as pallet_evm::Config>::Runner::call(
                         CrossAccountId::from_eth(from),
                         to,
@@ -493,6 +498,7 @@ macro_rules! impl_common_runtime_apis {
                         nonce,
                         access_list.unwrap_or_default(),
                         is_transactional,
+                        validate,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -518,6 +524,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let is_transactional = false;
+                    let validate = false;
                     <Runtime as pallet_evm::Config>::Runner::create(
                         CrossAccountId::from_eth(from),
                         data,
@@ -528,6 +535,7 @@ macro_rules! impl_common_runtime_apis {
                         nonce,
                         access_list.unwrap_or_default(),
                         is_transactional,
+                        validate,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -676,23 +684,26 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
+
+                    #[cfg(feature = "app-promotion")]
                     list_benchmark!(list, extra, pallet_app_promotion, AppPromotion);
+
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "refungible")]
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
 
-                    // #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
-                    // list_benchmark!(list, extra, pallet_unique_scheduler, Scheduler);
+                    #[cfg(feature = "scheduler")]
+                    list_benchmark!(list, extra, pallet_unique_scheduler_v2, Scheduler);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "foreign-assets")]
                     list_benchmark!(list, extra, pallet_foreign_assets, ForeignAssets);
 
 
@@ -736,23 +747,26 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
+
+                    #[cfg(feature = "app-promotion")]
                     add_benchmark!(params, batches, pallet_app_promotion, AppPromotion);
+
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "refungible")]
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
 
-                    // #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
-                    // add_benchmark!(params, batches, pallet_unique_scheduler, Scheduler);
+                    #[cfg(feature = "scheduler")]
+                    add_benchmark!(params, batches, pallet_unique_scheduler_v2, Scheduler);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "foreign-assets")]
                     add_benchmark!(params, batches, pallet_foreign_assets, ForeignAssets);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);

@@ -1,0 +1,23 @@
+version: "3.5"
+
+services:
+  try-runtime:
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile-try-runtime
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "NETWORK={{ NETWORK }}"
+        - "REPLICA_FROM={{ REPLICA_FROM }}"      
+    image: try-runtime
+    container_name: try-runtime
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"

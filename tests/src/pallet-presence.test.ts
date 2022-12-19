@@ -47,6 +47,7 @@ const requiredPallets = [
   'configuration',
   'tokens',
   'xtokens',
+  'maintenance',
 ];
 
 // Pallets that depend on consensus and governance configuration
@@ -62,38 +63,43 @@ describe('Pallet presence', () => {
       const chain = await helper.callRpc('api.rpc.system.chain', []);
 
       const refungible = 'refungible';
-      // const scheduler = 'scheduler';
       const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
       const collatorSelection = ['authorship', 'session', 'collatorselection'];
+      const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(
           refungible,
-          // scheduler,
           foreignAssets,
           appPromotion,
+          testUtils,
           ...rmrkPallets,
           ...collatorSelection,
         );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
-        requiredPallets.push(refungible);
+        requiredPallets.push(
+          refungible,
+          appPromotion,
+          foreignAssets,
+        );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
+        requiredPallets.push(foreignAssets);
       }
     });
   });
 
-  itSub('Required pallets are present', async ({helper}) => {
+  itSub('Required pallets are present', ({helper}) => {
     expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets]);
   });
 
-  itSub('Governance and consensus pallets are present', async ({helper}) => {
+  itSub('Governance and consensus pallets are present', ({helper}) => {
     expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets]);
   });
 
-  itSub('No extra pallets are included', async ({helper}) => {
+  itSub('No extra pallets are included', ({helper}) => {
     expect(helper.fetchAllPalletNames().sort()).to.be.deep.equal([...requiredPallets, ...consensusPallets].sort());
   });
 });

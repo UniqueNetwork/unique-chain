@@ -246,6 +246,16 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token_id: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<String>>;
+
+	/// Get whether an operator is approved by a given owner.
+	#[method(name = "unique_allowanceForAll")]
+	fn allowance_for_all(
+		&self,
+		collection: CollectionId,
+		owner: CrossAccountId,
+		operator: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<bool>;
 }
 
 mod app_promotion_unique_rpc {
@@ -545,24 +555,31 @@ where
 		keys: Option<Vec<String>>
 	) -> Vec<PropertyKeyPermission>, unique_api);
 
-	pass_method!(token_data(
-		collection: CollectionId,
-		token_id: TokenId,
+	pass_method!(
+		token_data(
+			collection: CollectionId,
+			token_id: TokenId,
 
-		#[map(|keys| string_keys_to_bytes_keys(keys))]
-		keys: Option<Vec<String>>,
-	) -> TokenData<CrossAccountId>, unique_api);
+			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			keys: Option<Vec<String>>,
+		) -> TokenData<CrossAccountId>, unique_api;
+		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| value.into()
+	);
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowed(collection: CollectionId, user: CrossAccountId) -> bool, unique_api);
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId, unique_api);
-	pass_method!(collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api);
+	pass_method!(
+		collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api;
+		changed_in 3, collection_by_id_before_version_3(collection) => |value| value.map(|coll| coll.into())
+	);
 	pass_method!(collection_stats() -> CollectionStats, unique_api);
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<String> => |o| o.map(|number| number.to_string()) , unique_api);
 	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
+	pass_method!(allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> bool, unique_api);
 }
 
 impl<C, Block, BlockNumber, CrossAccountId, AccountId>

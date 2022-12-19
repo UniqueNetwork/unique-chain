@@ -33,6 +33,7 @@ use up_common::{
 use up_data_structs::{
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 };
+use sp_arithmetic::Perbill;
 
 #[cfg(feature = "rmrk")]
 pub mod rmrk;
@@ -96,13 +97,24 @@ impl pallet_inflation::Config for Runtime {
 }
 
 impl pallet_unique::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
 }
 
+parameter_types! {
+	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
+}
 impl pallet_configuration::Config for Runtime {
 	type DefaultWeightToFeeCoefficient = ConstU32<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
+	type MaxXcmAllowedLocations = ConstU32<16>;
+	type AppPromotionDailyRate = AppPromotionDailyRate;
+	type DayRelayBlocks = DayRelayBlocks;
+}
+
+impl pallet_maintenance::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_maintenance::weights::SubstrateWeight<Self>;
 }

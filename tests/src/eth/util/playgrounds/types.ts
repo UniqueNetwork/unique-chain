@@ -13,3 +13,26 @@ export type NormalizedEvent = {
   event: string,
   args: { [key: string]: string }
 };
+export interface TEthCrossAccount {
+  readonly eth: string,
+  readonly sub: string | Uint8Array,
+}
+
+export type EthProperty = string[];
+
+export enum EthTokenPermissions {
+  Mutable,
+  TokenOwner,
+  CollectionAdmin
+}
+export enum CollectionLimits {
+  AccountTokenOwnership,
+	SponsoredDataSize,
+	SponsoredDataRateLimit,
+	TokenLimit,
+	SponsorTransferTimeout,
+	SponsorApproveTimeout,
+	OwnerCanTransfer,
+	OwnerCanDestroy,
+	TransferEnabled
+}

@@ -56,7 +56,7 @@ describe('Integration Test changeCollectionOwner(collection_id, new_owner) speci
 
     await collection.changeOwner(alice, bob.address);
 
-    const changeOwnerTx = async () => collection.changeOwner(alice, alice.address);
+    const changeOwnerTx = () => collection.changeOwner(alice, alice.address);
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.NoPermission/);
 
     const afterChanging = await helper.collection.getData(collection.collectionId);
@@ -115,20 +115,20 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
 
   itSub('Not owner can\'t change owner.', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const changeOwnerTx = async () => collection.changeOwner(bob, bob.address);
+    const changeOwnerTx = () => collection.changeOwner(bob, bob.address);
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Collection admin can\'t change owner.', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.addAdmin(alice, {Substrate: bob.address});
-    const changeOwnerTx = async () => collection.changeOwner(bob, bob.address);
+    const changeOwnerTx = () => collection.changeOwner(bob, bob.address);
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Can\'t change owner of a non-existing collection.', async ({helper}) => {
     const collectionId = (1 << 32) - 1;
-    const changeOwnerTx = async () => helper.collection.changeOwner(bob, collectionId, bob.address);
+    const changeOwnerTx = () => helper.collection.changeOwner(bob, collectionId, bob.address);
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
@@ -136,17 +136,17 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.changeOwner(alice, bob.address);
 
-    const changeOwnerTx = async () => collection.changeOwner(alice, alice.address);
+    const changeOwnerTx = () => collection.changeOwner(alice, alice.address);
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.NoPermission/);
 
     const afterChanging = await helper.collection.getData(collection.collectionId);
     expect(afterChanging?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(bob.address));
 
-    const setSponsorTx = async () => collection.setSponsor(alice, charlie.address);
-    const confirmSponsorshipTx = async () => collection.confirmSponsorship(alice);
-    const removeSponsorTx = async () => collection.removeSponsor(alice);
+    const setSponsorTx = () => collection.setSponsor(alice, charlie.address);
+    const confirmSponsorshipTx = () => collection.confirmSponsorship(alice);
+    const removeSponsorTx = () => collection.removeSponsor(alice);
     await expect(setSponsorTx()).to.be.rejectedWith(/common\.NoPermission/);
-    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
+    await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
     await expect(removeSponsorTx()).to.be.rejectedWith(/common\.NoPermission/);
 
     const limits = {
@@ -157,13 +157,13 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
       ownerCanTransfer: true,
     };
 
-    const setLimitsTx = async () => collection.setLimits(alice, limits);
+    const setLimitsTx = () => collection.setLimits(alice, limits);
     await expect(setLimitsTx()).to.be.rejectedWith(/common\.NoPermission/);
 
-    const setPermissionTx = async () => collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    const setPermissionTx = () => collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await expect(setPermissionTx()).to.be.rejectedWith(/common\.NoPermission/);
 
-    const burnTx = async () => collection.burn(alice);
+    const burnTx = () => collection.burn(alice);
     await expect(burnTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 });

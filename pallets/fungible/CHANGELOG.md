@@ -2,19 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- bureaucrate goes here -->
+
+## [0.1.9] - 2022-12-01
+
+### Added
+
+- The functions `mintCross` to `ERC20UniqueExtensions` interface.
+
+## [0.1.8] - 2022-11-18
+
+### Added
+
+- The function `description` to `ERC20UniqueExtensions` interface.
+
+## [0.1.7] - 2022-11-14
+
+### Changed
+
+- Added `transfer_cross` in eth functions.
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
+
+## [0.1.6] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
 
 ## [0.1.5] - 2022-08-29
 
 ### Added
 
- - Implementation of `mint` and `mint_bulk` methods for ERC20 API.
+- Implementation of `mint` and `mint_bulk` methods for ERC20 API.
 
 ## [v0.1.4] - 2022-08-24
 
 ### Change
- - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
 
-<!-- bureaucrate goes here -->
+- Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
+
 ## [v0.1.3] 2022-08-16
 
 ### Other changes
@@ -38,11 +67,11 @@ Upstream-Change: https://github.com/paritytech/substrate/pull/11490
 
 ### Fixed
 
- - Issue with ItemCreated event containing total supply of tokens instead minted amount
+- Issue with ItemCreated event containing total supply of tokens instead minted amount
 
 ## [0.1.1] - 2022-07-14
 
 ### Added
 
- - Implementation of RPC method `token_owners` returning 10 owners in no particular order.
-    This was an internal request to improve the web interface and support fractionalization event.
+- Implementation of RPC method `token_owners` returning 10 owners in no particular order.
+  This was an internal request to improve the web interface and support fractionalization event.

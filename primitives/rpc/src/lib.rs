@@ -16,9 +16,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use up_data_structs::{
 	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData, TokenChild,
+	PropertyKeyPermission, TokenData, TokenChild, RpcCollectionVersion1, TokenDataVersion1,
 };
 
 use sp_std::vec::Vec;
@@ -28,15 +30,12 @@ use sp_runtime::DispatchError;
 type Result<T> = core::result::Result<T, DispatchError>;
 
 sp_api::decl_runtime_apis! {
-	#[api_version(2)]
+	#[api_version(3)]
 	/// Trait for generate rpc.
 	pub trait UniqueApi<CrossAccountId, AccountId> where
 		AccountId: Decode,
 		CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
 	{
-		#[changed_in(2)]
-		fn token_owner(collection: CollectionId, token: TokenId) -> Result<CrossAccountId>;
-
 		/// Get number of tokens in collection owned by account.
 		fn account_tokens(collection: CollectionId, account: CrossAccountId) -> Result<Vec<TokenId>>;
 
@@ -78,6 +77,13 @@ sp_api::decl_runtime_apis! {
 			keys: Option<Vec<Vec<u8>>>
 		) -> Result<TokenData<CrossAccountId>>;
 
+		#[changed_in(3)]
+		fn token_data(
+			collection: CollectionId,
+			token_id: TokenId,
+			keys: Option<Vec<Vec<u8>>>
+		) -> Result<TokenDataVersion1<CrossAccountId>>;
+
 		/// Total number of tokens in collection.
 		fn total_supply(collection: CollectionId) -> Result<u32>;
 
@@ -110,6 +116,9 @@ sp_api::decl_runtime_apis! {
 		/// Get collection by id.
 		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>>;
 
+		#[changed_in(3)]
+		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollectionVersion1<AccountId>>>;
+
 		/// Get collection stats.
 		fn collection_stats() -> Result<CollectionStats>;
 
@@ -123,5 +132,8 @@ sp_api::decl_runtime_apis! {
 		fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Result<Option<u128>>;
 
 		fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec<CrossAccountId>>;
+
+		/// Get whether an operator is approved by a given owner.
+		fn allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool>;
 	}
 }

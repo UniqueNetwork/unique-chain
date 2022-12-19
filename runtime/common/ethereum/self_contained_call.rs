@@ -17,9 +17,9 @@
 use sp_core::H160;
 use sp_runtime::{
 	traits::{Dispatchable, DispatchInfoOf, PostDispatchInfoOf},
-	transaction_validity::{TransactionValidityError, TransactionValidity},
+	transaction_validity::{TransactionValidityError, TransactionValidity, InvalidTransaction},
 };
-use crate::{RuntimeOrigin, RuntimeCall};
+use crate::{RuntimeOrigin, RuntimeCall, Maintenance};
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	type SignedInfo = H160;
@@ -33,7 +33,15 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 
 	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) => call.check_self_contained(),
+			RuntimeCall::Ethereum(call) => {
+				if Maintenance::is_enabled() {
+					Some(Err(TransactionValidityError::Invalid(
+						InvalidTransaction::Call,
+					)))
+				} else {
+					call.check_self_contained()
+				}
+			}
 			_ => None,
 		}
 	}
@@ -45,7 +53,15 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 		len: usize,
 	) -> Option<TransactionValidity> {
 		match self {
-			RuntimeCall::Ethereum(call) => call.validate_self_contained(info, dispatch_info, len),
+			RuntimeCall::Ethereum(call) => {
+				if Maintenance::is_enabled() {
+					Some(Err(TransactionValidityError::Invalid(
+						InvalidTransaction::Call,
+					)))
+				} else {
+					call.validate_self_contained(info, dispatch_info, len)
+				}
+			}
 			_ => None,
 		}
 	}
@@ -53,9 +69,13 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	fn pre_dispatch_self_contained(
 		&self,
 		info: &Self::SignedInfo,
+		dispatch_info: &DispatchInfoOf<RuntimeCall>,
+		len: usize,
 	) -> Option<Result<(), TransactionValidityError>> {
 		match self {
-			RuntimeCall::Ethereum(call) => call.pre_dispatch_self_contained(info),
+			RuntimeCall::Ethereum(call) => {
+				call.pre_dispatch_self_contained(info, dispatch_info, len)
+			}
 			_ => None,
 		}
 	}

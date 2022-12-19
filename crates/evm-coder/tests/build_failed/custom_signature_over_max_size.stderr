@@ -1,0 +1,21 @@
+warning: unused import: `make_signature`
+ --> tests/build_failed/custom_signature_over_max_size.rs:5:2
+  |
+5 |     make_signature,
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0080]: evaluation of `<std::vec::Vec<MaxSize> as Name>::SIGNATURE` failed
+  --> tests/build_failed/custom_signature_over_max_size.rs:19:3
+   |
+19 |         evm_coder::make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ index out of bounds: the length is 256 but the index is 256
+   |
+   = note: this error originates in the macro `$crate::make_signature` which comes from the expansion of the macro `evm_coder::make_signature` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0080]: evaluation of constant value failed
+  --> tests/build_failed/custom_signature_over_max_size.rs:30:29
+   |
+30 | const NAME: SignatureUnit = <Vec<MaxSize>>::SIGNATURE;
+   |                             ^^^^^^^^^^^^^^^^^^^^^^^^^ referenced constant has errors

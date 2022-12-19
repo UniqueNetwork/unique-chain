@@ -30,7 +30,7 @@ describe('Integration Test ext. Allow list tests', () => {
     });
   });
 
-  describe('Positive', async () => {
+  describe('Positive', () => {
     itSub('Owner can add address to allow list', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       // allow list does not need to be enabled to add someone in advance
@@ -58,7 +58,7 @@ describe('Integration Test ext. Allow list tests', () => {
     });
   });
 
-  describe('Negative', async () => {
+  describe('Negative', () => {
     itSub('Nobody can add address to allow list of non-existing collection', async ({helper}) => {
       const collectionId = (1<<32) - 1;
       await expect(helper.nft.addToAllowList(bob, collectionId, {Substrate: charlie.address}))
@@ -92,7 +92,7 @@ describe('Integration Test ext. Remove from Allow List', () => {
     });
   });
 
-  describe('Positive', async () => {
+  describe('Positive', () => {
     itSub('Owner can remove address from allow list', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: bob.address});
@@ -128,7 +128,7 @@ describe('Integration Test ext. Remove from Allow List', () => {
     });
   });
 
-  describe('Negative', async () => {
+  describe('Negative', () => {
     itSub('Non-privileged user cannot remove address from allow list', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
@@ -168,7 +168,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
     });
   });
 
-  describe('Positive', async () => {
+  describe('Positive', () => {
     itSub('If Public Access mode is set to AllowList, tokens can be transferred to a allowlisted address with transfer.', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -219,7 +219,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
     });
   });
 
-  describe('Negative', async () => {
+  describe('Negative', () => {
     itSub('If Public Access mode is set to AllowList, tokens can\'t be transferred from a non-allowlisted address with transfer or transferFrom. Test1', async ({helper}) => {
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
       const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: alice.address});
@@ -303,7 +303,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
     {access: 'AllowList', mintMode: true},
   ];
 
-  const testPermissionSuite = async (permissions: ICollectionPermissions) => {
+  const testPermissionSuite = (permissions: ICollectionPermissions) => {
     const allowlistedMintingShouldFail = !permissions.mintMode!;
 
     const appropriateRejectionMessage = permissions.mintMode! ? /common\.AddressNotInAllowlist/ : /common\.PublicMintingNotAllowed/;
@@ -323,8 +323,8 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
     );
 
 
-    describe(`Public Access Mode = ${permissions.access}, Mint Mode = ${permissions.mintMode}`, async () => {
-      describe('Positive', async () => {
+    describe(`Public Access Mode = ${permissions.access}, Mint Mode = ${permissions.mintMode}`, () => {
+      describe('Positive', () => {
         itSub('With the condtions above, tokens can be created by owner', async ({helper}) => {
           const collection = await helper.nft.mintCollection(alice, {});
           await collection.setPermissions(alice, permissions);
@@ -341,7 +341,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
         if (!allowlistedMintingShouldFail) allowlistedMintingTest();
       });
 
-      describe('Negative', async () => {
+      describe('Negative', () => {
         itSub('With the condtions above, tokens can\'t be created by non-priviliged non-allow-listed address', async ({helper}) => {
           const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
           await collection.setPermissions(alice, permissions);

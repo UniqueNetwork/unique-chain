@@ -7,9 +7,44 @@
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
-import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} from '@polkadot/util-crypto';
+import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
-import {IApiListeners, IBlock, IEvent, IChainProperties, ICollectionCreationOptions, ICollectionLimits, ICollectionPermissions, ICrossAccountId, ICrossAccountIdLower, ILogger, INestingPermissions, IProperty, IStakingInfo, ISchedulerOptions, ISubstrateBalance, IToken, ITokenPropertyPermission, ITransactionResult, IUniqueHelperLog, TApiAllowedListeners, TEthereumAccount, TSigner, TSubstrateAccount, IForeignAssetMetadata, TNetworks, MoonbeamAssetInfo, DemocracyStandardAccountVote, AcalaAssetMetadata} from './types';
+import {hexToU8a} from '@polkadot/util/hex';
+import {u8aConcat} from '@polkadot/util/u8a';
+import {
+  IApiListeners,
+  IBlock,
+  IEvent,
+  IChainProperties,
+  ICollectionCreationOptions,
+  ICollectionLimits,
+  ICollectionPermissions,
+  ICrossAccountId,
+  ICrossAccountIdLower,
+  ILogger,
+  INestingPermissions,
+  IProperty,
+  IStakingInfo,
+  ISchedulerOptions,
+  ISubstrateBalance,
+  IToken,
+  ITokenPropertyPermission,
+  ITransactionResult,
+  IUniqueHelperLog,
+  TApiAllowedListeners,
+  TEthereumAccount,
+  TSigner,
+  TSubstrateAccount,
+  TNetworks,
+  IForeignAssetMetadata,
+  AcalaAssetMetadata,
+  MoonbeamAssetInfo,
+  DemocracyStandardAccountVote,
+  IEthCrossAccountId,
+} from './types';
+import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import type {Vec} from '@polkadot/types-codec';
+import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -38,7 +73,7 @@ export class CrossAccountId implements ICrossAccountId {
   static withNormalizedSubstrate(address: TSubstrateAccount, ss58Format = 42): CrossAccountId {
     return new CrossAccountId({Substrate: CrossAccountId.normalizeSubstrateAddress(address, ss58Format)});
   }
-  
+
   withNormalizedSubstrate(ss58Format = 42): CrossAccountId {
     if (this.Substrate) return CrossAccountId.withNormalizedSubstrate(this.Substrate, ss58Format);
     return this;
@@ -61,7 +96,7 @@ export class CrossAccountId implements ICrossAccountId {
     if (this.Ethereum) return new CrossAccountId({Substrate: CrossAccountId.translateEthToSub(this.Ethereum, ss58Format)});
     return this;
   }
-  
+
   toLowerCase(): CrossAccountId {
     if (this.Substrate) this.Substrate = this.Substrate.toLowerCase();
     if (this.Ethereum) this.Ethereum = this.Ethereum.toLowerCase();
@@ -161,7 +196,7 @@ class UniqueUtil {
   }
 
   static extractTokensFromCreationResult(creationResult: ITransactionResult): {
-    success: boolean, 
+    success: boolean,
     tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
   } {
     if (creationResult.status !== this.transactionStatus.SUCCESS) {
@@ -185,7 +220,7 @@ class UniqueUtil {
   }
 
   static extractTokensFromBurnResult(burnResult: ITransactionResult): {
-    success: boolean, 
+    success: boolean,
     tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
   } {
     if (burnResult.status !== this.transactionStatus.SUCCESS) {
@@ -256,7 +291,7 @@ class UniqueUtil {
   static bigIntToDecimals(number: bigint, decimals = 18) {
     const numberStr = number.toString();
     const dotPos = numberStr.length - decimals;
-  
+
     if (dotPos <= 0) {
       return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
     } else {
@@ -286,13 +321,17 @@ class UniqueEventHelper {
 
     return obj;
   }
-  
+
+  private static toHuman(data: any) {
+    return data && data.toHuman ? data.toHuman() : `${data}`;
+  }
+
   private static extractData(data: any, type: any): any {
-    if(!type) return data.toHuman();
+    if(!type) return this.toHuman(data);
     if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
     if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
-    return data.toHuman();
+    return this.toHuman(data);
   }
 
   public static extractEvents(events: {event: any, phase: any}[]): IEvent[] {
@@ -369,6 +408,21 @@ export class ChainHelperBase {
   getApi(): ApiPromise {
     if(this.api === null) throw Error('API not initialized');
     return this.api;
+  }
+
+  async subscribeEvents(expectedEvents: {section: string, names: string[]}[]) {
+    const collectedEvents: IEvent[] = [];
+    const unsubscribe = await this.getApi().query.system.events((events: Vec<FrameSystemEventRecord>) => {
+      const ievents = this.eventHelper.extractEvents(events);
+      ievents.forEach((event) => {
+        expectedEvents.forEach((e => {
+          if (event.section === e.section && e.names.includes(event.method)) {
+            collectedEvents.push(event);
+          }
+        }));
+      });
+    });
+    return {unsubscribe: unsubscribe as any, collectedEvents};
   }
 
   clearChainLog(): void {
@@ -530,6 +584,26 @@ export class ChainHelperBase {
         reject(e);
       }
     });
+  }
+
+  async getPaymentInfo(signer: TSigner, tx: any, len: number | null) {
+    const api = this.getApi();
+    const signingInfo = await api.derive.tx.signingInfo(signer.address);
+
+    // We need to sign the tx because
+    // unsigned transactions does not have an inclusion fee
+    tx.sign(signer, {
+      blockHash: api.genesisHash,
+      genesisHash: api.genesisHash,
+      runtimeVersion: api.runtimeVersion,
+      nonce: signingInfo.nonce,
+    });
+
+    if (len === null) {
+      return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()])) as RuntimeDispatchInfo;
+    } else {
+      return (await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
+    }
   }
 
   constructApiCall(apiCall: string, params: any[]) {
@@ -781,7 +855,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorSet');
   }
 
   /**
@@ -799,7 +873,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'SponsorshipConfirmed');
   }
 
   /**
@@ -817,7 +891,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorRemoved');
   }
 
   /**
@@ -844,7 +918,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionLimitSet');
   }
 
   /**
@@ -863,7 +937,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionOwnerChanged');
   }
 
   /**
@@ -882,7 +956,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminAdded');
   }
 
   /**
@@ -901,12 +975,12 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminRemoved');
   }
 
   /**
    * Check if user is in allow list.
-   * 
+   *
    * @param collectionId ID of collection
    * @param user Account to check
    * @example await getAdmins(1)
@@ -930,7 +1004,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressAdded');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressAdded');
   }
 
   /**
@@ -948,7 +1022,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'AllowListAddressRemoved');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressRemoved');
   }
 
   /**
@@ -967,7 +1041,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet');
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPermissionSet');
   }
 
   /**
@@ -1016,7 +1090,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
 
   /**
    * Get collection properties.
-   * 
+   *
    * @param collectionId ID of collection
    * @param propertyKeys optionally filter the returned properties to only these keys
    * @example getProperties(1219, ['location', 'date', 'time', 'isParadise']);
@@ -1024,6 +1098,13 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    */
   async getProperties(collectionId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
     return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
+  }
+
+  async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.common.collectionProperties(collectionId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async getCollectionOptions(collectionId: number) {
@@ -1237,8 +1318,8 @@ class NFTnRFT extends CollectionGroup {
     if (tokenData === null || tokenData.owner === null) return null;
     const owner = {} as any;
     for (const key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate' 
-        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key]) 
+      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate'
+        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key])
         : tokenData.owner[key];
     }
     tokenData.normalizedOwner = CrossAccountId.fromLowerCaseKeys(owner);
@@ -1268,7 +1349,7 @@ class NFTnRFT extends CollectionGroup {
 
   /**
    * Get token property permissions.
-   * 
+   *
    * @param collectionId ID of collection
    * @param propertyKeys optionally filter the returned property permissions to only these keys
    * @example getPropertyPermissions(1219, ['location', 'date', 'time', 'isParadise']);
@@ -1300,7 +1381,7 @@ class NFTnRFT extends CollectionGroup {
 
   /**
    * Get properties, metadata assigned to a token.
-   * 
+   *
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param propertyKeys optionally filter the returned properties to only these keys
@@ -1359,6 +1440,32 @@ class NFTnRFT extends CollectionGroup {
 
   getTokenObject(_collectionId: number, _tokenId: number): any {
     return null;
+  }
+
+  /**
+   * Tells whether the given `owner` approves the `operator`.
+   * @param collectionId ID of collection
+   * @param owner owner address
+   * @param operator operator addrees
+   * @returns true if operator is enabled
+   */
+  async allowanceForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean> {
+    return (await this.helper.callRpc('api.rpc.unique.allowanceForAll', [collectionId, owner, operator])).toJSON();
+  }
+
+  /** Sets or unsets the approval of a given operator.
+   *  The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
+   *  @param operator Operator
+   *  @param approved Should operator status be granted or revoked?
+   *  @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async setAllowanceForAll(signer: TSigner, collectionId: number, operator: ICrossAccountId, approved: boolean): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.setAllowanceForAll', [collectionId, operator, approved],
+      true,
+    );
+    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'ApprovedForAll');
   }
 }
 
@@ -1627,7 +1734,7 @@ class NFTGroup extends NFTnRFT {
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId) {
+  approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, 1n);
   }
 }
@@ -1820,7 +1927,7 @@ class RFTGroup extends NFTnRFT {
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5GHoZe9c73RYbVzq..."}, "", 10000n);
    * @returns true if the token success, otherwise false
    */
-  async approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
+  approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
     return super.approveToken(signer, collectionId, tokenId, toAddressObj, amount);
   }
 
@@ -2032,7 +2139,7 @@ class FTGroup extends CollectionGroup {
    * @example approveTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq..."}, 1000n)
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=1n) {
+  approveTokens(signer: IKeyringPair, collectionId: number, toAddressObj: ICrossAccountId, amount=1n) {
     return super.approveToken(signer, collectionId, 0, toAddressObj, amount);
   }
 
@@ -2043,7 +2150,7 @@ class FTGroup extends CollectionGroup {
    * @param toAddressObj the address approved for the transfer of tokens on behalf of the owner
    * @returns number of tokens approved for the transfer
    */
-  async getApprovedTokens(collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
+  getApprovedTokens(collectionId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId) {
     return super.getTokenApprovedPieces(collectionId, 0, toAddressObj, fromAddressObj);
   }
 }
@@ -2135,8 +2242,8 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
         };
       }
     });
-    const isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from 
-      && this.helper.address.normalizeSubstrate(address) === transfer.to 
+    const isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from
+      && this.helper.address.normalizeSubstrate(address) === transfer.to
       && BigInt(amount) === transfer.amount;
     return isSuccess;
   }
@@ -2184,8 +2291,8 @@ class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
         };
       }
     });
-    const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from 
-      && address === transfer.to 
+    const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from
+      && address === transfer.to
       && BigInt(amount) === transfer.amount;
     return isSuccess;
   }
@@ -2220,7 +2327,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example getSubstrate("5GrwvaEF5zXb26Fz...")
    * @returns amount of tokens on address
    */
-  async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
+  getSubstrate(address: TSubstrateAccount): Promise<bigint> {
     return this.subBalanceGroup.getSubstrate(address);
   }
 
@@ -2229,7 +2336,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param address substrate address
    * @returns
    */
-  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
+  getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
     return this.subBalanceGroup.getSubstrateFull(address);
   }
 
@@ -2239,7 +2346,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example getEthereum("0x9F0583DbB855d...")
    * @returns amount of tokens on address
    */
-  async getEthereum(address: TEthereumAccount): Promise<bigint> {
+  getEthereum(address: TEthereumAccount): Promise<bigint> {
     return this.ethBalanceGroup.getEthereum(address);
   }
 
@@ -2251,8 +2358,27 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @example transferToSubstrate(aliceKeyring, "5GrwvaEF5zXb26Fz...", 100_000_000_000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
+  transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     return this.subBalanceGroup.transferToSubstrate(signer, address, amount);
+  }
+
+  async forceTransferToSubstrate(signer: TSigner, from: TSubstrateAccount, to: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.forceTransfer', [from, to, amount], true);
+
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'balances') && (method === 'Transfer')) {
+        transfer = {
+          from: this.helper.address.normalizeSubstrate(data[0]),
+          to: this.helper.address.normalizeSubstrate(data[1]),
+          amount: BigInt(data[2]),
+        };
+      }
+    });
+    let isSuccess = this.helper.address.normalizeSubstrate(from) === transfer.from;
+    isSuccess = isSuccess && this.helper.address.normalizeSubstrate(to) === transfer.to;
+    isSuccess = isSuccess && BigInt(amount) === transfer.amount;
+    return isSuccess;
   }
 }
 
@@ -2297,6 +2423,73 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    */
   substrateToEth(subAddress: TSubstrateAccount): TEthereumAccount {
     return CrossAccountId.translateSubToEth(subAddress);
+  }
+
+  /**
+   * Encode key to substrate address
+   * @param key key for encoding address
+   * @param ss58Format prefix for encoding to the address of the corresponding network
+   * @returns encoded substrate address
+   */
+  encodeSubstrateAddress (key: Uint8Array | string | bigint, ss58Format = 42): string {
+    const u8a :Uint8Array = typeof key === 'string'
+      ? hexToU8a(key)
+      : typeof key === 'bigint'
+        ? hexToU8a(key.toString(16))
+        : key;
+  
+    if (ss58Format < 0 || ss58Format > 16383 || [46, 47].includes(ss58Format)) {
+      throw new Error(`ss58Format is not valid, received ${typeof ss58Format} "${ss58Format}"`);
+    }
+  
+    const allowedDecodedLengths = [1, 2, 4, 8, 32, 33];
+    if (!allowedDecodedLengths.includes(u8a.length)) {
+      throw new Error(`key length is not valid, received ${u8a.length}, valid values are ${allowedDecodedLengths.join(', ')}`);
+    }
+  
+    const u8aPrefix = ss58Format < 64
+      ? new Uint8Array([ss58Format])
+      : new Uint8Array([
+        ((ss58Format & 0xfc) >> 2) | 0x40,
+        (ss58Format >> 8) | ((ss58Format & 0x03) << 6),
+      ]);
+
+    const input = u8aConcat(u8aPrefix, u8a);
+  
+    return base58Encode(u8aConcat(
+      input,
+      blake2AsU8a(input).subarray(0, [32, 33].includes(u8a.length) ? 2 : 1),
+    ));
+  }
+
+  /**
+   * Restore substrate address from bigint representation
+   * @param number decimal representation of substrate address
+   * @returns substrate address
+   */
+  restoreCrossAccountFromBigInt(number: bigint): TSubstrateAccount {
+    if (this.helper.api === null) {
+      throw 'Not connected';
+    }
+    const res = this.helper.api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
+    if (res === undefined || res === null) {
+      throw 'Restore address error';
+    }
+    return res.toString();
+  }
+
+  /**
+   * Convert etherium cross account id to substrate cross account id
+   * @param ethCrossAccount etherium cross account
+   * @returns substrate cross account id
+   */
+  convertCrossAccountFromEthCrossAccount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
+    if (ethCrossAccount.sub === '0') {
+      return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
+    }
+    
+    const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.sub));
+    return {Substrate: ss58};
   }
 
   paraSiblingSovereignAccount(paraid: number) {
@@ -2364,7 +2557,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
     const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
     return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => {
-      return { 
+      return {
         block: block.toBigInt(),
         amount: amount.toBigInt(),
       };
@@ -2402,7 +2595,7 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
     super(helper);
   }
 
-  async cancelScheduled(signer: TSigner, scheduledId: string) {
+  cancelScheduled(signer: TSigner, scheduledId: string) {
     return this.helper.executeExtrinsic(
       signer,
       'api.tx.scheduler.cancelNamed',
@@ -2411,7 +2604,7 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
     );
   }
 
-  async changePriority(signer: TSigner, scheduledId: string, priority: number) {
+  changePriority(signer: TSigner, scheduledId: string, priority: number) {
     return this.helper.executeExtrinsic(
       signer,
       'api.tx.scheduler.changeNamedPriority',
@@ -2421,24 +2614,21 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    return this.schedule<T>('scheduleNamed', scheduledId, executionBlockNumber, options);
+    return this.schedule<T>('schedule', executionBlockNumber, options);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    return this.schedule<T>('scheduleNamedAfter', scheduledId, blocksBeforeExecution, options);
+    return this.schedule<T>('scheduleAfter', blocksBeforeExecution, options);
   }
 
   schedule<T extends UniqueHelper>(
-    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
-    scheduledId: string,
+    scheduleFn: 'schedule' | 'scheduleAfter',
     blocksNum: number,
     options: ISchedulerOptions = {},
   ) {
@@ -2446,7 +2636,6 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
     const ScheduledHelperType = ScheduledUniqueHelper(this.helper.helperBase);
     return this.helper.clone(ScheduledHelperType, {
       scheduleFn,
-      scheduledId,
       blocksNum,
       options,
     }) as T;
@@ -2735,16 +2924,14 @@ export class AcalaHelper extends XcmChainHelper {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
   return class extends Base {
-    scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter';
-    scheduledId: string;
+    scheduleFn: 'schedule' | 'scheduleAfter';
     blocksNum: number;
     options: ISchedulerOptions;
 
     constructor(...args: any[]) {
       const logger = args[0] as ILogger;
       const options = args[1] as {
-        scheduleFn: 'scheduleNamed' | 'scheduleNamedAfter',
-        scheduledId: string,
+        scheduleFn: 'schedule' | 'scheduleAfter',
         blocksNum: number,
         options: ISchedulerOptions
       };
@@ -2752,25 +2939,42 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
       super(logger);
 
       this.scheduleFn = options.scheduleFn;
-      this.scheduledId = options.scheduledId;
       this.blocksNum = options.blocksNum;
       this.options = options.options;
     }
 
     executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
       const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
-      const extrinsic = 'api.tx.scheduler.' +  this.scheduleFn;
+      
+      const mandatorySchedArgs = [
+        this.blocksNum,
+        this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
+        this.options.priority ?? null,
+        scheduledTx,
+      ];
+      
+      let schedArgs;
+      let scheduleFn;
+
+      if (this.options.scheduledId) {
+        schedArgs = [this.options.scheduledId!, ...mandatorySchedArgs];
+
+        if (this.scheduleFn == 'schedule') {
+          scheduleFn = 'scheduleNamed';
+        } else if (this.scheduleFn == 'scheduleAfter') {
+          scheduleFn = 'scheduleNamedAfter';
+        }
+      } else {
+        schedArgs = mandatorySchedArgs;
+        scheduleFn = this.scheduleFn;
+      }
+
+      const extrinsic = 'api.tx.scheduler.' +  scheduleFn;
 
       return super.executeExtrinsic(
         sender,
         extrinsic,
-        [
-          this.scheduledId,
-          this.blocksNum,
-          this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
-          this.options.priority ?? null,
-          {Value: scheduledTx},
-        ],
+        schedArgs,
         expectSuccess,
       );
     }
@@ -2791,7 +2995,6 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       expectSuccess?: boolean,
     ): Promise<ITransactionResult> {
       const call = this.constructApiCall(extrinsic, params);
-
       return super.executeExtrinsic(
         sender,
         'api.tx.sudo.sudo',
@@ -2837,6 +3040,10 @@ export class UniqueBaseCollection {
 
   async getProperties(propertyKeys?: string[] | null) {
     return await this.helper.collection.getProperties(this.collectionId, propertyKeys);
+  }
+
+  async getPropertiesConsumedSpace() {
+    return await this.helper.collection.getPropertiesConsumedSpace(this.collectionId);
   }
 
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
@@ -2908,20 +3115,18 @@ export class UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueBaseCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueBaseCollection(this.collectionId, scheduledHelper);
   }
 
@@ -2962,6 +3167,13 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
 
   async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.nft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
@@ -3017,20 +3229,18 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueNFTCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueNFTCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3075,6 +3285,13 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.rft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount=1n) {
@@ -3122,20 +3339,18 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueRFTCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueRFTCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3191,20 +3406,18 @@ export class UniqueFTCollection extends UniqueBaseCollection {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueFTCollection(this.collectionId, scheduledHelper);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledHelper = this.helper.scheduler.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueFTCollection(this.collectionId, scheduledHelper);
   }
 
@@ -3233,6 +3446,10 @@ export class UniqueBaseToken {
     return await this.collection.getTokenProperties(this.tokenId, propertyKeys);
   }
 
+  async getTokenPropertiesConsumedSpace() {
+    return await this.collection.getTokenPropertiesConsumedSpace(this.tokenId);
+  }
+
   async setProperties(signer: TSigner, properties: IProperty[]) {
     return await this.collection.setTokenProperties(signer, this.tokenId, properties);
   }
@@ -3250,20 +3467,18 @@ export class UniqueBaseToken {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledCollection = this.collection.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueBaseToken(this.tokenId, scheduledCollection);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledCollection = this.collection.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueBaseToken(this.tokenId, scheduledCollection);
   }
 
@@ -3330,20 +3545,18 @@ export class UniqueNFToken extends UniqueBaseToken {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledCollection = this.collection.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueNFToken(this.tokenId, scheduledCollection);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledCollection = this.collection.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueNFToken(this.tokenId, scheduledCollection);
   }
 
@@ -3405,20 +3618,18 @@ export class UniqueRFToken extends UniqueBaseToken {
   }
 
   scheduleAt<T extends UniqueHelper>(
-    scheduledId: string,
     executionBlockNumber: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAt<T>(scheduledId, executionBlockNumber, options);
+    const scheduledCollection = this.collection.scheduleAt<T>(executionBlockNumber, options);
     return new UniqueRFToken(this.tokenId, scheduledCollection);
   }
 
   scheduleAfter<T extends UniqueHelper>(
-    scheduledId: string,
     blocksBeforeExecution: number,
     options: ISchedulerOptions = {},
   ) {
-    const scheduledCollection = this.collection.scheduleAfter<T>(scheduledId, blocksBeforeExecution, options);
+    const scheduledCollection = this.collection.scheduleAfter<T>(blocksBeforeExecution, options);
     return new UniqueRFToken(this.tokenId, scheduledCollection);
   }
 
