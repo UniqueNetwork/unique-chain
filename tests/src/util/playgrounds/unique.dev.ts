@@ -131,6 +131,10 @@ export class DevWestmintHelper extends WestmintHelper {
   }
 }
 
+export class DevStatemineHelper extends DevWestmintHelper {}
+
+export class DevStatemintHelper extends DevWestmintHelper {}
+
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;

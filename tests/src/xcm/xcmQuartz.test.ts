@@ -18,19 +18,405 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
 import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds} from '../util';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds} from '../util';
 
 const QUARTZ_CHAIN = 2095;
+const STATEMINE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const MOONRIVER_CHAIN = 2023;
 
+const STATEMINE_PALLET_INSTANCE = 50;
+
 const relayUrl = config.relayUrl;
+const statemineUrl = config.statemineUrl;
 const karuraUrl = config.karuraUrl;
 const moonriverUrl = config.moonriverUrl;
 
+const STATEMINE_DECIMALS = 12;
 const KARURA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
+
+const USDT_ASSET_ID = 100;
+const USDT_ASSET_METADATA_DECIMALS = 18;
+const USDT_ASSET_METADATA_NAME = 'USDT';
+const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
+const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
+
+describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  
+  let balanceStmnBefore: bigint;
+  let balanceStmnAfter: bigint;
+
+  let balanceQuartzBefore: bigint;
+  let balanceQuartzAfter: bigint;
+  let balanceQuartzFinal: bigint;
+
+  let balanceBobBefore: bigint;
+  let balanceBobAfter: bigint;
+  let balanceBobFinal: bigint;
+
+  let balanceBobRelayTokenBefore: bigint;
+  let balanceBobRelayTokenAfter: bigint;
+
+
+  before(async () => {
+    await usingPlaygrounds(async (_helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      bob = await privateKey('//Bob'); // funds donor
+    });
+
+    await usingStateminePlaygrounds(statemineUrl, async (helper) => {
+      // 350.00 (three hundred fifty) DOT
+      const fundingAmount = 3_500_000_000_000n; 
+
+      await helper.assets.create(
+        alice,
+        USDT_ASSET_ID,
+        alice.address,
+        USDT_ASSET_METADATA_MINIMAL_BALANCE,
+      );
+      await helper.assets.setMetadata(
+        alice,
+        USDT_ASSET_ID,
+        USDT_ASSET_METADATA_NAME,
+        USDT_ASSET_METADATA_DESCRIPTION,
+        USDT_ASSET_METADATA_DECIMALS,
+      );
+      await helper.assets.mint(
+        alice,
+        USDT_ASSET_ID,
+        alice.address,
+        TRANSFER_AMOUNT,
+      );
+
+      // funding parachain sovereing account (Parachain: 2095)
+      const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(QUARTZ_CHAIN);
+      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, fundingAmount);
+    });
+
+
+    await usingPlaygrounds(async (helper) => {
+      const location = {
+        V1: {
+          parents: 1,
+          interior: {X3: [
+            {
+              Parachain: STATEMINE_CHAIN,
+            },
+            {
+              PalletInstance: STATEMINE_PALLET_INSTANCE,
+            },
+            {
+              GeneralIndex: USDT_ASSET_ID,
+            },
+          ]},
+        },
+      };
+
+      const metadata =
+      {
+        name: USDT_ASSET_ID,
+        symbol: USDT_ASSET_METADATA_NAME,
+        decimals: USDT_ASSET_METADATA_DECIMALS,
+        minimalBalance: USDT_ASSET_METADATA_MINIMAL_BALANCE,
+      };
+      await helper.getSudo().foreignAssets.register(alice, alice.address, location, metadata);
+      balanceQuartzBefore = await helper.balance.getSubstrate(alice.address);
+    });
+
+
+    // Providing the relay currency to the unique sender account
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: 'Here',
+              },
+            },
+            fun: {
+              Fungible: TRANSFER_AMOUNT,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+      const weightLimit = 5_000_000_000;
+
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
+    });
+  
+  });
+
+  itSub('Should connect and send USDT from Statemine to Quartz', async ({helper}) => {
+    await usingStateminePlaygrounds(statemineUrl, async (helper) => {
+      const dest = {
+        V1: {
+          parents: 1,
+          interior: {X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: {
+                  X2: [
+                    {
+                      PalletInstance: STATEMINE_PALLET_INSTANCE,
+                    },
+                    {
+                      GeneralIndex: USDT_ASSET_ID,
+                    }, 
+                  ]},
+              },
+            },
+            fun: {
+              Fungible: TRANSFER_AMOUNT,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+      const weightLimit = 5000000000;
+
+      balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, weightLimit);
+
+      balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
+
+      // common good parachain take commission in it native token
+      console.log(
+        '[Quartz -> Statemine] transaction fees on Statemine: %s WND',
+        helper.util.bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, STATEMINE_DECIMALS),
+      );
+      expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
+
+    });
+
+
+    // ensure that asset has been delivered
+    await helper.wait.newBlocks(3);
+
+    // expext collection id will be with id 1
+    const free = await helper.ft.getBalance(1, {Substrate: alice.address});
+
+    balanceQuartzAfter = await helper.balance.getSubstrate(alice.address);
+
+    // commission has not paid in USDT token
+    expect(free == TRANSFER_AMOUNT).to.be.true;
+    console.log(
+      '[Quartz -> Statemine] transaction fees on Quartz: %s USDT',
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free),
+    );
+    // ... and parachain native token
+    expect(balanceQuartzAfter == balanceQuartzBefore).to.be.true;
+    console.log(
+      '[Quartz -> Statemine] transaction fees on Quartz: %s WND',
+      helper.util.bigIntToDecimals(balanceQuartzAfter - balanceQuartzBefore, STATEMINE_DECIMALS),
+    );    
+  });
+
+  itSub('Should connect and send USDT from Quartz to Statemine back', async ({helper}) => {
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {X2: [
+          {
+            Parachain: STATEMINE_CHAIN,
+          },
+          {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          },
+        ]},
+      },
+    };
+
+    const currencies: [any, bigint][] = [
+      [
+        {
+          ForeignAssetId: 0,
+        },
+        //10_000_000_000_000_000n,
+        TRANSFER_AMOUNT,
+      ], 
+      [
+        {
+          NativeAssetId: 'Parent',
+        },
+        400_000_000_000_000n,
+      ],
+    ];
+
+    const feeItem = 1;
+    const destWeight = 500000000000;
+
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, destWeight);
+    
+    // the commission has been paid in parachain native token
+    balanceQuartzFinal = await helper.balance.getSubstrate(alice.address);
+    expect(balanceQuartzAfter > balanceQuartzFinal).to.be.true;
+
+    await usingStateminePlaygrounds(statemineUrl, async (helper) => {
+      await helper.wait.newBlocks(3);
+      
+      // The USDT token never paid fees. Its amount not changed from begin value.
+      // Also check that xcm transfer has been succeeded 
+      expect((await helper.assets.account(USDT_ASSET_ID, alice.address))! == TRANSFER_AMOUNT).to.be.true;
+    });
+  });
+
+  itSub('Should connect and send Relay token to Quartz', async ({helper}) => {
+    balanceBobBefore = await helper.balance.getSubstrate(bob.address);
+    balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+
+    // Providing the relay currency to the unique sender account
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: bob.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: 'Here',
+              },
+            },
+            fun: {
+              Fungible: TRANSFER_AMOUNT,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+      const weightLimit = 5_000_000_000;
+
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, weightLimit);
+    });
+  
+    await helper.wait.newBlocks(3);
+
+    balanceBobAfter = await helper.balance.getSubstrate(bob.address);  
+    balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+
+    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT - balanceBobRelayTokenBefore; 
+    console.log(
+      '[Relay (Westend) -> Quartz] transaction fees: %s QTZ',
+      helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
+    );
+    console.log(
+      '[Relay (Westend) -> Quartz] transaction fees: %s WND',
+      helper.util.bigIntToDecimals(wndFee, STATEMINE_DECIMALS),
+    );
+    expect(balanceBobBefore == balanceBobAfter).to.be.true;
+    expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
+  });
+
+  itSub('Should connect and send Relay token back', async ({helper}) => {
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {X2: [
+          {
+            Parachain: STATEMINE_CHAIN,
+          },
+          {
+            AccountId32: {
+              network: 'Any',
+              id: bob.addressRaw,
+            },
+          },
+        ]},
+      },
+    };
+
+    const currencies: any = [
+      [
+        {
+          NativeAssetId: 'Parent',
+        },
+        TRANSFER_AMOUNT,
+      ],
+    ];
+
+    const feeItem = 0;
+    const destWeight = 500000000000;
+
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, destWeight);
+
+    balanceBobFinal = await helper.balance.getSubstrate(bob.address);
+    console.log('[Relay (Westend) to Quartz] transaction fees: %s QTZ', balanceBobAfter - balanceBobFinal);
+  });
+});
 
 describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
@@ -249,7 +635,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
               },
             },
             fun: {
-              Fungible: 50_000_000_000_000_000n,
+              Fungible: TRANSFER_AMOUNT,
             },
           },
         ],
