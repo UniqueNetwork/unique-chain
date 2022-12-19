@@ -138,42 +138,6 @@ impl<T: AbiType> AbiType for Vec<T> {
 	}
 }
 
-impl sealed::CanBePlacedInVec for Property {}
-
-impl AbiType for Property {
-	const SIGNATURE: SignatureUnit = make_signature!(new fixed("(string,bytes)"));
-	const FIELDS_COUNT: usize = 2;
-
-	fn is_dynamic() -> bool {
-		string::is_dynamic() || bytes::is_dynamic()
-	}
-
-	fn size() -> usize {
-		<string as AbiType>::size() + <bytes as AbiType>::size()
-	}
-}
-
-impl AbiRead for Property {
-	fn abi_read(reader: &mut AbiReader) -> Result<Property> {
-		let size = if !Property::is_dynamic() {
-			Some(<Property as AbiType>::size())
-		} else {
-			None
-		};
-		let mut subresult = reader.subresult(size)?;
-		let key = <string>::abi_read(&mut subresult)?;
-		let value = <bytes>::abi_read(&mut subresult)?;
-
-		Ok(Property { key, value })
-	}
-}
-
-impl AbiWrite for Property {
-	fn abi_write(&self, writer: &mut AbiWriter) {
-		(&self.key, &self.value).abi_write(writer);
-	}
-}
-
 impl<T: AbiWrite + AbiType> AbiWrite for Vec<T> {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		let is_dynamic = T::is_dynamic();

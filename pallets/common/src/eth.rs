@@ -116,6 +116,15 @@ impl EthCrossAccount {
 	}
 }
 
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
+#[derive(Debug, Default, AbiCoder)]
+pub struct Property {
+	/// Property key.
+	pub key: evm_coder::types::string,
+	/// Property value.
+	pub value: evm_coder::types::bytes,
+}
+
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 #[derive(Debug, Default, Clone, Copy, AbiCoder)]
 #[repr(u8)]

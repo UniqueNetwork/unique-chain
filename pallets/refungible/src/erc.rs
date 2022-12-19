@@ -27,13 +27,13 @@ use core::{
 };
 use evm_coder::{
 	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	types::Property as PropertyStruct, weight,
+	weight,
 };
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	eth::{EthCrossAccount, EthTokenPermissions},
+	eth::{Property as PropertyStruct, EthCrossAccount, EthTokenPermissions},
 	Error as CommonError,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};

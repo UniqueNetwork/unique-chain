@@ -21,7 +21,6 @@ use evm_coder::{
 	abi::AbiType,
 	solidity_interface, solidity, ToLog,
 	types::*,
-	types::Property as PropertyStruct,
 	execution::{Result, Error},
 	weight,
 };
@@ -36,7 +35,7 @@ use alloc::format;
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
-		EthCrossAccount, CollectionPermissions as EvmPermissions,
+		Property as PropertyStruct, EthCrossAccount, CollectionPermissions as EvmPermissions,
 		CollectionLimits as EvmCollectionLimits,
 	},
 	weights::WeightInfo,

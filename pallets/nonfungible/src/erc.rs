@@ -26,7 +26,7 @@ use core::{
 };
 use evm_coder::{
 	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	types::Property as PropertyStruct, weight,
+	weight,
 };
 use frame_support::BoundedVec;
 use up_data_structs::{
@@ -38,7 +38,7 @@ use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	eth::{EthCrossAccount, EthTokenPermissions},
+	eth::{Property as PropertyStruct, EthCrossAccount, EthTokenPermissions},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -97,17 +97,15 @@ impl<T: Config> NonfungibleHandle<T> {
 		permissions: Vec<(string, Vec<(EthTokenPermissions, bool)>)>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		const PERMISSIONS_FIELDS_COUNT: usize = 3;
-
 		let mut perms = Vec::new();
 
 		for (key, pp) in permissions {
-			if pp.len() > PERMISSIONS_FIELDS_COUNT {
+			if pp.len() > EthTokenPermissions::FIELDS_COUNT {
 				return Err(alloc::format!(
 					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
 					pp.len(),
 					stringify!(EthTokenPermissions),
-					PERMISSIONS_FIELDS_COUNT
+					EthTokenPermissions::FIELDS_COUNT
 				)
 				.as_str()
 				.into());
