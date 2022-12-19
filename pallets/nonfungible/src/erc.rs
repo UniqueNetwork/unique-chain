@@ -38,7 +38,7 @@ use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	eth::{Property as PropertyStruct, EthCrossAccount, EthTokenPermissions},
+	eth::{Property as PropertyStruct, EthCrossAccount},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -94,40 +94,12 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn set_token_property_permissions(
 		&mut self,
 		caller: caller,
-		permissions: Vec<(string, Vec<(EthTokenPermissions, bool)>)>,
+		permissions: Vec<pallet_common::eth::TokenPropertyPermission>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let mut perms = Vec::new();
-
-		for (key, pp) in permissions {
-			if pp.len() > EthTokenPermissions::FIELDS_COUNT {
-				return Err(alloc::format!(
-					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
-					pp.len(),
-					stringify!(EthTokenPermissions),
-					EthTokenPermissions::FIELDS_COUNT
-				)
-				.as_str()
-				.into());
-			}
-
-			let mut token_permission = PropertyPermission::default();
-
-			for (perm, value) in pp {
-				match perm {
-					EthTokenPermissions::Mutable => token_permission.mutable = value,
-					EthTokenPermissions::TokenOwner => token_permission.token_owner = value,
-					EthTokenPermissions::CollectionAdmin => {
-						token_permission.collection_admin = value
-					}
-				}
-			}
-
-			perms.push(PropertyKeyPermission {
-				key: key.into_bytes().try_into().map_err(|_| "too long key")?,
-				permission: token_permission,
-			});
-		}
+		let perms = pallet_common::eth::TokenPropertyPermission::into_property_key_permissions(
+			permissions,
+		)?;
 
 		<Pallet<T>>::set_token_property_permissions(self, &caller, perms)
 			.map_err(dispatch_to_evm::<T>)
@@ -136,19 +108,11 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Get permissions for token properties.
 	fn token_property_permissions(
 		&self,
-	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {
+	) -> Result<Vec<pallet_common::eth::TokenPropertyPermission>> {
 		let perms = <Pallet<T>>::token_property_permission(self.id);
 		Ok(perms
 			.into_iter()
-			.map(|(key, pp)| {
-				let key = string::from_utf8(key.into_inner()).expect("Stored key must be valid");
-				let pp = vec![
-					(EthTokenPermissions::Mutable, pp.mutable),
-					(EthTokenPermissions::TokenOwner, pp.token_owner),
-					(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
-				];
-				(key, pp)
-			})
+			.map(pallet_common::eth::TokenPropertyPermission::from)
 			.collect())
 	}
 

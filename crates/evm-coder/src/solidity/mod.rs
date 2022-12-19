@@ -76,7 +76,8 @@ impl TypeCollector {
 		self.anonymous.borrow_mut().insert(names, id);
 		format!("Tuple{}", id)
 	}
-	pub fn collect_struct<T: StructCollect>(&self) -> String {
+	pub fn collect_struct<T: StructCollect + SolidityType>(&self) -> String {
+		let _names = T::names(self);
 		self.collect(<T as StructCollect>::declaration());
 		<T as StructCollect>::name()
 	}

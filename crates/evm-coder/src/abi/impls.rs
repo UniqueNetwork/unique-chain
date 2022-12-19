@@ -184,6 +184,11 @@ impl<T: AbiWrite> AbiWrite for ResultWithPostInfo<T> {
 	}
 }
 
+macro_rules! count {
+    () => (0usize);
+    ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
+}
+
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
 		impl<$($ident: AbiType,)+> AbiType for ($($ident,)+)
@@ -198,7 +203,7 @@ macro_rules! impl_tuples {
                 shift_left(1)
                 fixed(")")
             );
-			const FIELDS_COUNT: usize = 0 $(+ {let _ = <$ident as AbiType>::FIELDS_COUNT; 1})+;
+			const FIELDS_COUNT: usize = count!($($ident)*);
 
 			fn is_dynamic() -> bool {
 				false

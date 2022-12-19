@@ -470,9 +470,12 @@ struct EthCrossAccount {
 	uint256 sub;
 }
 
+/// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 enum CollectionPermissions {
-	CollectionAdmin,
-	TokenOwner
+	/// @dev Owner of token can nest tokens under it.
+	TokenOwner,
+	/// @dev Admin of token collection can nest tokens under token.
+	CollectionAdmin
 }
 
 /// @dev anonymous struct
@@ -516,9 +519,11 @@ struct Tuple23 {
 	uint256 field_2;
 }
 
-/// @dev Property struct
+/// @dev Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
+	/// @dev Property key.
 	string key;
+	/// @dev Property value.
 	bytes value;
 }
 

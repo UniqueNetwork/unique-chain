@@ -86,6 +86,21 @@ pub fn impl_enum_abi_write(name: &syn::Ident) -> proc_macro2::TokenStream {
 	)
 }
 
+pub fn impl_enum_solidity_type<'a>(name: &syn::Ident) -> proc_macro2::TokenStream {
+	quote! {
+		#[cfg(feature = "stubgen")]
+		impl ::evm_coder::solidity::SolidityType for #name {
+			fn names(tc: &::evm_coder::solidity::TypeCollector) -> Vec<String> {
+				Vec::new()
+			}
+
+			fn len() -> usize {
+				1
+			}
+		}
+	}
+}
+
 pub fn impl_enum_solidity_type_name(name: &syn::Ident) -> proc_macro2::TokenStream {
 	quote!(
 		#[cfg(feature = "stubgen")]

@@ -734,22 +734,22 @@
     "inputs": [
       {
         "components": [
-          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "string", "name": "key", "type": "string" },
           {
             "components": [
               {
                 "internalType": "enum EthTokenPermissions",
-                "name": "field_0",
+                "name": "code",
                 "type": "uint8"
               },
-              { "internalType": "bool", "name": "field_1", "type": "bool" }
+              { "internalType": "bool", "name": "value", "type": "bool" }
             ],
-            "internalType": "struct Tuple58[]",
-            "name": "field_1",
+            "internalType": "struct PropertyPermission[]",
+            "name": "permissions",
             "type": "tuple[]"
           }
         ],
-        "internalType": "struct Tuple60[]",
+        "internalType": "struct TokenPropertyPermission[]",
         "name": "permissions",
         "type": "tuple[]"
       }
@@ -809,22 +809,22 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "string", "name": "field_0", "type": "string" },
+          { "internalType": "string", "name": "key", "type": "string" },
           {
             "components": [
               {
                 "internalType": "enum EthTokenPermissions",
-                "name": "field_0",
+                "name": "code",
                 "type": "uint8"
               },
-              { "internalType": "bool", "name": "field_1", "type": "bool" }
+              { "internalType": "bool", "name": "value", "type": "bool" }
             ],
-            "internalType": "struct Tuple58[]",
-            "name": "field_1",
+            "internalType": "struct PropertyPermission[]",
+            "name": "permissions",
             "type": "tuple[]"
           }
         ],
-        "internalType": "struct Tuple60[]",
+        "internalType": "struct TokenPropertyPermission[]",
         "name": "",
         "type": "tuple[]"
       }

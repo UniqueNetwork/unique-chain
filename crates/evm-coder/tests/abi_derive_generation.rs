@@ -100,6 +100,15 @@ struct TypeStruct3DerivedMixedParam {
 	}
 
 	#[test]
+	#[cfg(feature = "stubgen")]
+	fn struct_collect_vec() {
+		assert_eq!(
+			<Vec<u8> as ::evm_coder::solidity::StructCollect>::name(),
+			"uint8[]"
+		);
+	}
+
+	#[test]
 	fn impl_abi_type_signature() {
 		assert_eq!(
 			<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::SIGNATURE

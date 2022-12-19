@@ -16,6 +16,7 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
+use sp_std::{vec, vec::Vec};
 use evm_coder::{
 	AbiCoder,
 	types::{uint256, address},
@@ -182,4 +183,103 @@ pub enum EthTokenPermissions {
 
 	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
 	CollectionAdmin,
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
+#[derive(Debug, Default, AbiCoder)]
+pub struct PropertyPermission {
+	/// TokenPermission field.
+	code: EthTokenPermissions,
+	/// TokenPermission value.
+	value: bool,
+}
+
+impl PropertyPermission {
+	pub fn into_vec(pp: up_data_structs::PropertyPermission) -> Vec<Self> {
+		vec![
+			PropertyPermission {
+				code: EthTokenPermissions::Mutable,
+				value: pp.mutable,
+			},
+			PropertyPermission {
+				code: EthTokenPermissions::TokenOwner,
+				value: pp.token_owner,
+			},
+			PropertyPermission {
+				code: EthTokenPermissions::CollectionAdmin,
+				value: pp.collection_admin,
+			},
+		]
+	}
+
+	pub fn from_vec(permission: Vec<Self>) -> up_data_structs::PropertyPermission {
+		let mut token_permission = up_data_structs::PropertyPermission::default();
+
+		for PropertyPermission { code, value } in permission {
+			match code {
+				EthTokenPermissions::Mutable => token_permission.mutable = value,
+				EthTokenPermissions::TokenOwner => token_permission.token_owner = value,
+				EthTokenPermissions::CollectionAdmin => token_permission.collection_admin = value,
+			}
+		}
+		token_permission
+	}
+}
+
+/// Ethereum representation of Token Property Permissions.
+#[derive(Debug, Default, AbiCoder)]
+pub struct TokenPropertyPermission {
+	/// Token property key.
+	key: evm_coder::types::string,
+	/// Token property permissions.
+	permissions: Vec<PropertyPermission>,
+}
+
+impl
+	From<(
+		up_data_structs::PropertyKey,
+		up_data_structs::PropertyPermission,
+	)> for TokenPropertyPermission
+{
+	fn from(
+		value: (
+			up_data_structs::PropertyKey,
+			up_data_structs::PropertyPermission,
+		),
+	) -> Self {
+		let (key, permission) = value;
+		let key = evm_coder::types::string::from_utf8(key.into_inner())
+			.expect("Stored key must be valid");
+		let permissions = PropertyPermission::into_vec(permission);
+		Self { key, permissions }
+	}
+}
+
+impl TokenPropertyPermission {
+	pub fn into_property_key_permissions(
+		permissions: Vec<TokenPropertyPermission>,
+	) -> evm_coder::execution::Result<Vec<up_data_structs::PropertyKeyPermission>> {
+		let mut perms = Vec::new();
+
+		for TokenPropertyPermission { key, permissions } in permissions {
+			if permissions.len() > <EthTokenPermissions as evm_coder::abi::AbiType>::FIELDS_COUNT {
+				return Err(alloc::format!(
+					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
+					permissions.len(),
+					stringify!(EthTokenPermissions),
+					<EthTokenPermissions as evm_coder::abi::AbiType>::FIELDS_COUNT
+				)
+				.as_str()
+				.into());
+			}
+
+			let token_permission = PropertyPermission::from_vec(permissions);
+
+			perms.push(up_data_structs::PropertyKeyPermission {
+				key: key.into_bytes().try_into().map_err(|_| "too long key")?,
+				permission: token_permission,
+			});
+		}
+		Ok(perms)
+	}
 }

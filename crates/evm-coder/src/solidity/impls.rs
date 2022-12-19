@@ -74,6 +74,16 @@ impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T>
 	}
 }
 
+impl<T: StructCollect + sealed::CanBePlacedInVec> StructCollect for Vec<T> {
+	fn name() -> String {
+		<T as StructCollect>::name() + "[]"
+	}
+
+	fn declaration() -> String {
+		unimplemented!("Vectors have not declarations.")
+	}
+}
+
 macro_rules! count {
     () => (0usize);
     ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
@@ -131,60 +141,3 @@ impl_tuples! {A B C D E F G}
 impl_tuples! {A B C D E F G H}
 impl_tuples! {A B C D E F G H I}
 impl_tuples! {A B C D E F G H I J}
-
-impl StructCollect for Property {
-	fn name() -> String {
-		"Property".into()
-	}
-
-	fn declaration() -> String {
-		use std::fmt::Write;
-
-		let mut str = String::new();
-		writeln!(str, "/// @dev Property struct").unwrap();
-		writeln!(str, "struct {} {{", Self::name()).unwrap();
-		writeln!(str, "\tstring key;").unwrap();
-		writeln!(str, "\tbytes value;").unwrap();
-		writeln!(str, "}}").unwrap();
-		str
-	}
-}
-
-impl SolidityTypeName for Property {
-	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}", tc.collect_struct::<Self>())
-	}
-
-	fn is_simple() -> bool {
-		false
-	}
-
-	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
-		write!(writer, "{}(", tc.collect_struct::<Self>())?;
-		address::solidity_default(writer, tc)?;
-		write!(writer, ",")?;
-		uint256::solidity_default(writer, tc)?;
-		write!(writer, ")")
-	}
-}
-
-impl SolidityType for Property {
-	fn names(tc: &TypeCollector) -> Vec<string> {
-		let mut collected = Vec::with_capacity(Self::len());
-		{
-			let mut out = string::new();
-			string::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		{
-			let mut out = string::new();
-			bytes::solidity_name(&mut out, tc).expect("no fmt error");
-			collected.push(out);
-		}
-		collected
-	}
-
-	fn len() -> usize {
-		2
-	}
-}

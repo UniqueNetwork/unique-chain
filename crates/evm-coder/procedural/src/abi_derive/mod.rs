@@ -86,6 +86,7 @@ fn expand_enum(
 	let abi_type = impl_enum_abi_type(name, option_count);
 	let abi_read = impl_enum_abi_read(name);
 	let abi_write = impl_enum_abi_write(name);
+	let solidity_type = impl_enum_solidity_type(name);
 	let solidity_type_name = impl_enum_solidity_type_name(name);
 	let solidity_struct_collect = impl_enum_solidity_struct_collect(
 		name,
@@ -102,6 +103,7 @@ fn expand_enum(
 		#abi_type
 		#abi_read
 		#abi_write
+		#solidity_type
 		#solidity_type_name
 		#solidity_struct_collect
 	})

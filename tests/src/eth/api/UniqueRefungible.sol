@@ -30,12 +30,12 @@ interface TokenProperties is Dummy, ERC165 {
 	/// @param permissions Permissions for keys.
 	/// @dev EVM selector for this function is: 0xbd92983a,
 	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
-	function setTokenPropertyPermissions(Tuple52[] memory permissions) external;
+	function setTokenPropertyPermissions(TokenPropertyPermission[] memory permissions) external;
 
 	/// @notice Get permissions for token properties.
 	/// @dev EVM selector for this function is: 0xf23d7790,
 	///  or in textual repr: tokenPropertyPermissions()
-	function tokenPropertyPermissions() external view returns (Tuple52[] memory);
+	function tokenPropertyPermissions() external view returns (TokenPropertyPermission[] memory);
 
 	// /// @notice Set token property value.
 	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
@@ -80,10 +80,28 @@ interface TokenProperties is Dummy, ERC165 {
 	function property(uint256 tokenId, string memory key) external view returns (bytes memory);
 }
 
-/// @dev Property struct
+/// @dev Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
+	/// @dev Property key.
 	string key;
+	/// @dev Property value.
 	bytes value;
+}
+
+/// @dev Ethereum representation of Token Property Permissions.
+struct TokenPropertyPermission {
+	/// @dev Token property key.
+	string key;
+	/// @dev Token property permissions.
+	PropertyPermission[] permissions;
+}
+
+/// @dev Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
+struct PropertyPermission {
+	/// @dev TokenPermission field.
+	EthTokenPermissions code;
+	/// @dev TokenPermission value.
+	bool value;
 }
 
 /// @dev Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
@@ -94,18 +112,6 @@ enum EthTokenPermissions {
 	TokenOwner,
 	/// @dev Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
 	CollectionAdmin
-}
-
-/// @dev anonymous struct
-struct Tuple52 {
-	string field_0;
-	Tuple50[] field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple50 {
-	EthTokenPermissions field_0;
-	bool field_1;
 }
 
 /// @title A contract that allows you to work with collections.
@@ -412,9 +418,12 @@ struct Tuple38 {
 	bool field_1;
 }
 
+/// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 enum CollectionPermissions {
-	CollectionAdmin,
-	TokenOwner
+	/// @dev Owner of token can nest tokens under it.
+	TokenOwner,
+	/// @dev Admin of token collection can nest tokens under token.
+	CollectionAdmin
 }
 
 /// @dev anonymous struct
