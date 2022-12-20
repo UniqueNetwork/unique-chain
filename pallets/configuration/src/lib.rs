@@ -25,12 +25,14 @@ use frame_support::{
 };
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_arithmetic::traits::{BaseArithmetic, Unsigned};
+use sp_arithmetic::{
+	per_things::{Perbill, PerThing},
+	traits::{BaseArithmetic, Unsigned},
+};
 use smallvec::smallvec;
 
 pub use pallet::*;
 use sp_core::U256;
-use sp_runtime::Perbill;
 
 #[pallet]
 mod pallet {
@@ -46,8 +48,7 @@ mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[pallet::constant]
-		type DefaultWeightToFeeCoefficient: Get<u32>;
-
+		type DefaultWeightToFeeCoefficient: Get<u64>;
 		#[pallet::constant]
 		type DefaultMinGasPrice: Get<u64>;
 
@@ -66,7 +67,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type WeightToFeeCoefficientOverride<T: Config> = StorageValue<
-		Value = u32,
+		Value = u64,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultWeightToFeeCoefficient,
 	>;
@@ -90,7 +91,7 @@ mod pallet {
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_weight_to_fee_coefficient_override(
 			origin: OriginFor<T>,
-			coeff: Option<u32>,
+			coeff: Option<u64>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			if let Some(coeff) = coeff {
@@ -156,14 +157,17 @@ pub struct WeightToFee<T, B>(PhantomData<(T, B)>);
 impl<T, B> WeightToFeePolynomial for WeightToFee<T, B>
 where
 	T: Config,
-	B: BaseArithmetic + From<u32> + Copy + Unsigned,
+	B: BaseArithmetic + From<u32> + From<u64> + Copy + Unsigned,
 {
 	type Balance = B;
 
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 		smallvec!(WeightToFeeCoefficient {
-			coeff_integer: <WeightToFeeCoefficientOverride<T>>::get().into(),
-			coeff_frac: Perbill::zero(),
+			coeff_integer: (<WeightToFeeCoefficientOverride<T>>::get() / Perbill::ACCURACY as u64)
+				.into(),
+			coeff_frac: Perbill::from_parts(
+				(<WeightToFeeCoefficientOverride<T>>::get() % Perbill::ACCURACY as u64) as u32
+			),
 			negative: false,
 			degree: 1,
 		})

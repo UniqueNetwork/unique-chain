@@ -2517,12 +2517,16 @@ declare module '@polkadot/types/lookup' {
       readonly operator: PalletEvmAccountBasicCrossAccountIdRepr;
       readonly approve: bool;
     } & Struct;
-    readonly isRepairItem: boolean;
-    readonly asRepairItem: {
+    readonly isForceRepairCollection: boolean;
+    readonly asForceRepairCollection: {
+      readonly collectionId: u32;
+    } & Struct;
+    readonly isForceRepairItem: boolean;
+    readonly asForceRepairItem: {
       readonly collectionId: u32;
       readonly itemId: u32;
     } & Struct;
-    readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll' | 'RepairItem';
+    readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll' | 'ForceRepairCollection' | 'ForceRepairItem';
   }
 
   /** @name UpDataStructsCollectionMode (237) */
@@ -2675,7 +2679,7 @@ declare module '@polkadot/types/lookup' {
   interface PalletConfigurationCall extends Enum {
     readonly isSetWeightToFeeCoefficientOverride: boolean;
     readonly asSetWeightToFeeCoefficientOverride: {
-      readonly coeff: Option<u32>;
+      readonly coeff: Option<u64>;
     } & Struct;
     readonly isSetMinGasPriceOverride: boolean;
     readonly asSetMinGasPriceOverride: {

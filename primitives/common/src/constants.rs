@@ -43,10 +43,10 @@ pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u32 = /*<weight2fee>*/175_199_920/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_083_524_944_487_510/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_014_919_410_810/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_014_919_313_914/*</mingasprice>*/;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
@@ -60,5 +60,5 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
 	.set_proof_size(MAX_POV_SIZE as u64);
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE;
+	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE / 2;
 }

@@ -9,9 +9,9 @@ import type {
   RmrkTraitsNftNftChild as NftChild,
   RmrkTraitsTheme as Theme,
   RmrkTraitsPropertyPropertyInfo as Property,
-} from '../../interfaces/default/types'; // '@polkadot/types/lookup';
-import '../../interfaces/augment-api';
-import '../../interfaces/augment-api-query';
+} from '../../../interfaces/default/types'; // '@polkadot/types/lookup';
+import '../../../interfaces/augment-api';
+import '../../../interfaces/augment-api-query';
 import privateKey from '../../substrate/privateKey';
 
 export type NftIdTuple = [number, number];
