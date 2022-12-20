@@ -8,9 +8,6 @@ name = 'up-common'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
 version.workspace = true
 
-[package.metadata.deppatcher.originals.dependencies]
-cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.36" }
-
 [features]
 default = ['std']
 std = [
