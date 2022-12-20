@@ -88,6 +88,7 @@ mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_weight_to_fee_coefficient_override(
 			origin: OriginFor<T>,
@@ -102,6 +103,7 @@ mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_min_gas_price_override(
 			origin: OriginFor<T>,
@@ -116,6 +118,7 @@ mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_xcm_allowed_locations(
 			origin: OriginFor<T>,
@@ -126,6 +129,7 @@ mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_app_promotion_configuration_override(
 			origin: OriginFor<T>,

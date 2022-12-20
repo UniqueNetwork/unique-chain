@@ -301,6 +301,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `admin`: account of the new admin.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
@@ -319,6 +320,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `amount`: in native tokens.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
@@ -393,6 +395,7 @@ pub mod pallet {
 		/// Moves the sum of all stakes to the `reserved` state.
 		/// After the end of `PendingInterval` this sum becomes completely
 		/// free for further use.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::unstake())]
 		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let staker_id = ensure_signed(staker)?;
@@ -454,6 +457,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection that will be sponsored by `pallet_id`
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::sponsor_collection())]
 		pub fn sponsor_collection(
 			admin: OriginFor<T>,
@@ -479,6 +483,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection that is sponsored by `pallet_id`
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::stop_sponsoring_collection())]
 		pub fn stop_sponsoring_collection(
 			admin: OriginFor<T>,
@@ -508,6 +513,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `contract_id`: the contract address that will be sponsored by `pallet_id`
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::sponsor_contract())]
 		pub fn sponsor_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -534,6 +540,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `contract_id`: the contract address that is sponsored by `pallet_id`
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::stop_sponsoring_contract())]
 		pub fn stop_sponsoring_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -564,6 +571,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `stakers_number`: the number of stakers for which recalculation will be performed
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as Config>::WeightInfo::payout_stakers(stakers_number.unwrap_or(DEFAULT_NUMBER_PAYOUTS) as u32))]
 		pub fn payout_stakers(admin: OriginFor<T>, stakers_number: Option<u8>) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;

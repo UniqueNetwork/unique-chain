@@ -17,7 +17,7 @@
 use sp_runtime::Perbill;
 use frame_support::{
 	parameter_types,
-	weights::{Weight, constants::WEIGHT_PER_SECOND},
+	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 };
 use cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE;
 use crate::types::{BlockNumber, Balance};
@@ -55,9 +55,9 @@ pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// by  Operational  extrinsics.
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 2 seconds of compute with a 6 second average block time.
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
-	.saturating_div(2)
-	.set_proof_size(MAX_POV_SIZE as u64);
+pub const MAXIMUM_BLOCK_WEIGHT: Weight =
+	Weight::from_ref_time(WEIGHT_REF_TIME_PER_SECOND.saturating_div(2))
+		.set_proof_size(MAX_POV_SIZE as u64);
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE / 2;

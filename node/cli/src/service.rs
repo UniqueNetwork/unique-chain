@@ -58,6 +58,7 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 use sc_client_api::BlockchainEvents;
+use sc_consensus::ImportQueue;
 
 use polkadot_service::CollatorPair;
 
@@ -335,17 +336,21 @@ async fn build_relay_chain_interface(
 	Arc<(dyn RelayChainInterface + 'static)>,
 	Option<CollatorPair>,
 )> {
-	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) => {
-			build_minimal_relay_chain_node(polkadot_config, task_manager, relay_chain_url).await
-		}
-		None => build_inprocess_relay_chain(
+	if collator_options.relay_chain_rpc_urls.is_empty() {
+		build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
 			hwbench,
-		),
+		)
+	} else {
+		build_minimal_relay_chain_node(
+			polkadot_config,
+			task_manager,
+			collator_options.relay_chain_rpc_urls,
+		)
+		.await
 	}
 }
 
@@ -447,7 +452,7 @@ where
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
+	let import_queue_service = params.import_queue.service();
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -455,7 +460,7 @@ where
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-			import_queue: import_queue.clone(),
+			import_queue: params.import_queue,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
@@ -580,7 +585,7 @@ where
 			task_manager: &mut task_manager,
 			spawner,
 			parachain_consensus,
-			import_queue,
+			import_queue: import_queue_service,
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_interface,
 			relay_chain_slot_duration,
@@ -593,7 +598,7 @@ where
 			announce_block,
 			task_manager: &mut task_manager,
 			para_id: id,
-			import_queue,
+			import_queue: import_queue_service,
 			relay_chain_interface,
 			relay_chain_slot_duration,
 		};
