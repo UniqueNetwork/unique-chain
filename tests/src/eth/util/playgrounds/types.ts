@@ -25,6 +25,7 @@ export enum TokenPermissionField {
   TokenOwner,
   CollectionAdmin
 }
+
 export enum CollectionLimitField {
   AccountTokenOwnership,
 	SponsoredDataSize,
@@ -37,8 +38,8 @@ export enum CollectionLimitField {
 	TransferEnabled
 }
 
-export interface EthCollectionLimit {
+export interface CollectionLimit {
   field: CollectionLimitField,
   status: boolean,
-  value: bigint,
+  value: bigint | number,
 }

@@ -69,7 +69,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x766c4f37,
 	///  or in textual repr: sponsor(address)
-	function sponsor(address contractAddress) external view returns (EthCrossAccount memory);
+	function sponsor(address contractAddress) external view returns (CrossAccount memory);
 
 	/// Check tat contract has confirmed sponsor.
 	///
@@ -172,7 +172,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 }
 
 /// @dev Cross account struct
-struct EthCrossAccount {
+struct CrossAccount {
 	address eth;
 	uint256 sub;
 }

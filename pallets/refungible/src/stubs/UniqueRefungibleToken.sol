@@ -58,7 +58,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(EthCrossAccount memory from, uint256 amount) public returns (bool) {
+	function burnFromCross(CrossAccount memory from, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		amount;
@@ -75,7 +75,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount of tokens to be spent.
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(EthCrossAccount memory spender, uint256 amount) public returns (bool) {
+	function approveCross(CrossAccount memory spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
 		amount;
@@ -100,7 +100,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount to be transferred.
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(EthCrossAccount memory to, uint256 amount) public returns (bool) {
+	function transferCross(CrossAccount memory to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
 		amount;
@@ -115,8 +115,8 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		EthCrossAccount memory from,
-		EthCrossAccount memory to,
+		CrossAccount memory from,
+		CrossAccount memory to,
 		uint256 amount
 	) public returns (bool) {
 		require(false, stub_error);
@@ -129,7 +129,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev Cross account struct
-struct EthCrossAccount {
+struct CrossAccount {
 	address eth;
 	uint256 sub;
 }

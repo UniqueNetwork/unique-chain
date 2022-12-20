@@ -30,7 +30,7 @@ use evm_coder::{
 use pallet_common::{
 	CommonWeightInfo,
 	erc::{CommonEvmHandler, PrecompileResult},
-	eth::{collection_id_to_address, EthCrossAccount},
+	eth::collection_id_to_address,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
@@ -224,7 +224,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
+		from: pallet_common::eth::CrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -250,7 +250,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		spender: EthCrossAccount,
+		spender: pallet_common::eth::CrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -280,7 +280,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
+		to: pallet_common::eth::CrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -303,8 +303,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
-		to: EthCrossAccount,
+		from: pallet_common::eth::CrossAccount,
+		to: pallet_common::eth::CrossAccount,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);

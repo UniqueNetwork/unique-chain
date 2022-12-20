@@ -35,8 +35,7 @@ use alloc::format;
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
-		Property as PropertyStruct, EthCrossAccount, CollectionPermissions as EvmPermissions,
-		CollectionLimitField as EvmCollectionLimits, self,
+		CollectionPermissions as EvmPermissions, CollectionLimitField as EvmCollectionLimits, self,
 	},
 	weights::WeightInfo,
 };
@@ -122,13 +121,13 @@ where
 	fn set_collection_properties(
 		&mut self,
 		caller: caller,
-		properties: Vec<PropertyStruct>,
+		properties: Vec<eth::Property>,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let properties = properties
 			.into_iter()
-			.map(|PropertyStruct { key, value }| {
+			.map(|eth::Property { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -196,7 +195,7 @@ where
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -218,7 +217,7 @@ where
 				let key =
 					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
 				let value = bytes(p.value.to_vec());
-				Ok(PropertyStruct { key, value })
+				Ok(eth::Property { key, value })
 			})
 			.collect::<Result<Vec<_>>>()?;
 		Ok(properties)
@@ -248,7 +247,7 @@ where
 	fn set_collection_sponsor_cross(
 		&mut self,
 		caller: caller,
-		sponsor: EthCrossAccount,
+		sponsor: eth::CrossAccount,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -288,13 +287,13 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn collection_sponsor(&self) -> Result<EthCrossAccount> {
+	fn collection_sponsor(&self) -> Result<eth::CrossAccount> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
 		};
 
-		Ok(EthCrossAccount::from_sub::<T>(&sponsor))
+		Ok(eth::CrossAccount::from_sub::<T>(&sponsor))
 	}
 
 	/// Get current collection limits.
@@ -377,7 +376,7 @@ where
 	fn add_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		new_admin: EthCrossAccount,
+		new_admin: eth::CrossAccount,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
@@ -392,7 +391,7 @@ where
 	fn remove_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		admin: EthCrossAccount,
+		admin: eth::CrossAccount,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
@@ -534,7 +533,7 @@ where
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	fn allowlisted_cross(&self, user: EthCrossAccount) -> Result<bool> {
+	fn allowlisted_cross(&self, user: eth::CrossAccount) -> Result<bool> {
 		let user = user.into_sub_cross_account::<T>()?;
 		Ok(Pallet::<T>::allowed(self.id, user))
 	}
@@ -558,7 +557,7 @@ where
 	fn add_to_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: EthCrossAccount,
+		user: eth::CrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -587,7 +586,7 @@ where
 	fn remove_from_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: EthCrossAccount,
+		user: eth::CrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -625,7 +624,7 @@ where
 	///
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
-	fn is_owner_or_admin_cross(&self, user: EthCrossAccount) -> Result<bool> {
+	fn is_owner_or_admin_cross(&self, user: eth::CrossAccount) -> Result<bool> {
 		let user = user.into_sub_cross_account::<T>()?;
 		Ok(self.is_owner_or_admin(&user))
 	}
@@ -646,8 +645,8 @@ where
 	///
 	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_owner(&self) -> Result<EthCrossAccount> {
-		Ok(EthCrossAccount::from_sub_cross_account::<T>(
+	fn collection_owner(&self) -> Result<eth::CrossAccount> {
+		Ok(eth::CrossAccount::from_sub_cross_account::<T>(
 			&T::CrossAccountId::from_sub(self.owner.clone()),
 		))
 	}
@@ -670,9 +669,9 @@ where
 	///
 	/// @return Vector of tuples with admins address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_admins(&self) -> Result<Vec<EthCrossAccount>> {
+	fn collection_admins(&self) -> Result<Vec<eth::CrossAccount>> {
 		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
-			.map(|(admin, _)| EthCrossAccount::from_sub_cross_account::<T>(&admin))
+			.map(|(admin, _)| eth::CrossAccount::from_sub_cross_account::<T>(&admin))
 			.collect();
 		Ok(result)
 	}
@@ -684,7 +683,7 @@ where
 	fn change_collection_owner_cross(
 		&mut self,
 		caller: caller,
-		new_owner: EthCrossAccount,
+		new_owner: eth::CrossAccount,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -693,29 +692,6 @@ where
 		self.change_owner(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
-}
-
-/// ### Note
-/// Do not forget to add: `self.consume_store_reads(1)?;`
-fn check_is_owner_or_admin<T: Config>(
-	caller: caller,
-	collection: &CollectionHandle<T>,
-) -> Result<T::CrossAccountId> {
-	let caller = T::CrossAccountId::from_eth(caller);
-	collection
-		.check_is_owner_or_admin(&caller)
-		.map_err(dispatch_to_evm::<T>)?;
-	Ok(caller)
-}
-
-/// ### Note
-/// Do not forget to add: `self.consume_store_writes(1)?;`
-fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
-	collection
-		.check_is_internal()
-		.map_err(dispatch_to_evm::<T>)?;
-	collection.save().map_err(dispatch_to_evm::<T>)?;
-	Ok(())
 }
 
 /// Contains static property keys and values.

@@ -68,13 +68,13 @@ where
 
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
-pub struct EthCrossAccount {
+pub struct CrossAccount {
 	pub(crate) eth: address,
 	pub(crate) sub: uint256,
 }
 
-impl EthCrossAccount {
-	/// Converts `CrossAccountId` to `EthCrossAccountId`
+impl CrossAccount {
+	/// Converts `CrossAccountId` to [`CrossAccount`]
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -89,7 +89,7 @@ impl EthCrossAccount {
 			}
 		}
 	}
-	/// Creates `EthCrossAccount` from substrate account
+	/// Creates [`CrossAccount`] from substrate account
 	pub fn from_sub<T>(account_id: &T::AccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -100,7 +100,7 @@ impl EthCrossAccount {
 			sub: uint256::from_big_endian(account_id.as_ref()),
 		}
 	}
-	/// Converts `EthCrossAccount` to `CrossAccountId`
+	/// Converts [`CrossAccount`] to `CrossAccountId`
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,
@@ -127,7 +127,7 @@ pub struct Property {
 	pub value: evm_coder::types::bytes,
 }
 
-/// [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
 #[derive(Debug, Default, Clone, Copy, AbiCoder)]
 #[repr(u8)]
 pub enum CollectionLimitField {
@@ -160,6 +160,7 @@ pub enum CollectionLimitField {
 	TransferEnabled,
 }
 
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
@@ -168,6 +169,7 @@ pub struct CollectionLimit {
 }
 
 impl CollectionLimit {
+	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and int value.
 	pub fn from_int(field: CollectionLimitField, value: u32) -> Self {
 		Self {
 			field,
@@ -176,6 +178,7 @@ impl CollectionLimit {
 		}
 	}
 
+	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and optional int value.
 	pub fn from_opt_int(field: CollectionLimitField, value: Option<u32>) -> Self {
 		value
 			.map(|v| Self {
@@ -190,6 +193,7 @@ impl CollectionLimit {
 			})
 	}
 
+	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and bool value.
 	pub fn from_opt_bool(field: CollectionLimitField, value: Option<bool>) -> Self {
 		value
 			.map(|v| Self {
@@ -306,6 +310,7 @@ pub struct PropertyPermission {
 }
 
 impl PropertyPermission {
+	/// Make vector of [`PropertyPermission`] from [`up_data_structs::PropertyPermission`].
 	pub fn into_vec(pp: up_data_structs::PropertyPermission) -> Vec<Self> {
 		vec![
 			PropertyPermission {
@@ -323,6 +328,7 @@ impl PropertyPermission {
 		]
 	}
 
+	/// Make [`up_data_structs::PropertyPermission`] from vector of [`PropertyPermission`].
 	pub fn from_vec(permission: Vec<Self>) -> up_data_structs::PropertyPermission {
 		let mut token_permission = up_data_structs::PropertyPermission::default();
 
@@ -367,6 +373,7 @@ impl
 }
 
 impl TokenPropertyPermission {
+	/// Convert vector of [`TokenPropertyPermission`] into vector of [`up_data_structs::PropertyKeyPermission`].
 	pub fn into_property_key_permissions(
 		permissions: Vec<TokenPropertyPermission>,
 	) -> evm_coder::execution::Result<Vec<up_data_structs::PropertyKeyPermission>> {

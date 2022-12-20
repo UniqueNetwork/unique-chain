@@ -87,7 +87,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "newAdmin",
         "type": "tuple"
       }
@@ -104,7 +104,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "user",
         "type": "tuple"
       }
@@ -121,7 +121,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "user",
         "type": "tuple"
       }
@@ -148,7 +148,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "approved",
         "type": "tuple"
       },
@@ -184,7 +184,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "from",
         "type": "tuple"
       },
@@ -202,7 +202,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "newOwner",
         "type": "tuple"
       }
@@ -221,7 +221,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount[]",
+        "internalType": "struct CrossAccount[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -309,7 +309,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "",
         "type": "tuple"
       }
@@ -352,7 +352,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "",
         "type": "tuple"
       }
@@ -385,7 +385,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "",
         "type": "tuple"
       }
@@ -459,7 +459,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "user",
         "type": "tuple"
       }
@@ -483,7 +483,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "to",
         "type": "tuple"
       },
@@ -579,7 +579,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "admin",
         "type": "tuple"
       }
@@ -603,7 +603,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "user",
         "type": "tuple"
       }
@@ -727,7 +727,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "sponsor",
         "type": "tuple"
       }
@@ -881,7 +881,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "to",
         "type": "tuple"
       },
@@ -910,7 +910,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "from",
         "type": "tuple"
       },
@@ -919,7 +919,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAccount",
         "name": "to",
         "type": "tuple"
       },

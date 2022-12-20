@@ -180,7 +180,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
-	function setCollectionSponsorCross(EthCrossAccount memory sponsor) external;
+	function setCollectionSponsorCross(CrossAccount memory sponsor) external;
 
 	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
@@ -204,7 +204,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (EthCrossAccount memory);
+	function collectionSponsor() external view returns (CrossAccount memory);
 
 	/// Get current collection limits.
 	///
@@ -229,13 +229,13 @@ interface Collection is Dummy, ERC165 {
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
-	function addCollectionAdminCross(EthCrossAccount memory newAdmin) external;
+	function addCollectionAdminCross(CrossAccount memory newAdmin) external;
 
 	/// Remove collection admin.
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
-	function removeCollectionAdminCross(EthCrossAccount memory admin) external;
+	function removeCollectionAdminCross(CrossAccount memory admin) external;
 
 	// /// Add collection admin.
 	// /// @param newAdmin Address of the added administrator.
@@ -288,7 +288,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param user User address to check.
 	/// @dev EVM selector for this function is: 0x91b6df49,
 	///  or in textual repr: allowlistedCross((address,uint256))
-	function allowlistedCross(EthCrossAccount memory user) external view returns (bool);
+	function allowlistedCross(CrossAccount memory user) external view returns (bool);
 
 	// /// Add the user to the allowed list.
 	// ///
@@ -302,7 +302,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
-	function addToCollectionAllowListCross(EthCrossAccount memory user) external;
+	function addToCollectionAllowListCross(CrossAccount memory user) external;
 
 	// /// Remove the user from the allowed list.
 	// ///
@@ -316,7 +316,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
-	function removeFromCollectionAllowListCross(EthCrossAccount memory user) external;
+	function removeFromCollectionAllowListCross(CrossAccount memory user) external;
 
 	/// Switch permission for minting.
 	///
@@ -339,7 +339,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
-	function isOwnerOrAdminCross(EthCrossAccount memory user) external view returns (bool);
+	function isOwnerOrAdminCross(CrossAccount memory user) external view returns (bool);
 
 	/// Returns collection type
 	///
@@ -354,7 +354,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() external view returns (EthCrossAccount memory);
+	function collectionOwner() external view returns (CrossAccount memory);
 
 	// /// Changes collection owner to another account
 	// ///
@@ -370,7 +370,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() external view returns (EthCrossAccount[] memory);
+	function collectionAdmins() external view returns (CrossAccount[] memory);
 
 	/// Changes collection owner to another account
 	///
@@ -378,11 +378,11 @@ interface Collection is Dummy, ERC165 {
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0x6496c497,
 	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
-	function changeCollectionOwnerCross(EthCrossAccount memory newOwner) external;
+	function changeCollectionOwnerCross(CrossAccount memory newOwner) external;
 }
 
 /// @dev Cross account struct
-struct EthCrossAccount {
+struct CrossAccount {
 	address eth;
 	uint256 sub;
 }
@@ -407,13 +407,14 @@ struct Tuple35 {
 	uint256[] field_1;
 }
 
+/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 struct CollectionLimit {
 	CollectionLimitField field;
 	bool status;
 	uint256 value;
 }
 
-/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
 enum CollectionLimitField {
 	/// @dev How many tokens can a user have on one account.
 	AccountTokenOwnership,
@@ -550,7 +551,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId Id for the token.
 	/// @dev EVM selector for this function is: 0x2b29dace,
 	///  or in textual repr: crossOwnerOf(uint256)
-	function crossOwnerOf(uint256 tokenId) external view returns (EthCrossAccount memory);
+	function crossOwnerOf(uint256 tokenId) external view returns (CrossAccount memory);
 
 	/// Returns the token properties.
 	///
@@ -579,7 +580,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId The RFT to transfer
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(EthCrossAccount memory to, uint256 tokenId) external;
+	function transferCross(CrossAccount memory to, uint256 tokenId) external;
 
 	/// @notice Transfer ownership of an RFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
@@ -590,8 +591,8 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		EthCrossAccount memory from,
-		EthCrossAccount memory to,
+		CrossAccount memory from,
+		CrossAccount memory to,
 		uint256 tokenId
 	) external;
 
@@ -615,7 +616,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId The RFT to transfer
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(EthCrossAccount memory from, uint256 tokenId) external;
+	function burnFromCross(CrossAccount memory from, uint256 tokenId) external;
 
 	/// @notice Returns next free RFT ID.
 	/// @dev EVM selector for this function is: 0x75794a3c,
@@ -646,7 +647,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @return uint256 The id of the newly minted token
 	/// @dev EVM selector for this function is: 0xb904db03,
 	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
-	function mintCross(EthCrossAccount memory to, Property[] memory properties) external returns (uint256);
+	function mintCross(CrossAccount memory to, Property[] memory properties) external returns (uint256);
 
 	/// Returns EVM address for refungible token
 	///

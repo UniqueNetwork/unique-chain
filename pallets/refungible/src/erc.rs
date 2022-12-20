@@ -33,7 +33,6 @@ use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	eth::{Property as PropertyStruct, EthCrossAccount},
 	Error as CommonError,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
@@ -163,7 +162,7 @@ impl<T: Config> RefungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		token_id: uint256,
-		properties: Vec<PropertyStruct>,
+		properties: Vec<pallet_common::eth::Property>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -174,7 +173,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 		let properties = properties
 			.into_iter()
-			.map(|PropertyStruct { key, value }| {
+			.map(|pallet_common::eth::Property { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -797,9 +796,9 @@ where
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
-	fn cross_owner_of(&self, token_id: uint256) -> Result<EthCrossAccount> {
+	fn cross_owner_of(&self, token_id: uint256) -> Result<pallet_common::eth::CrossAccount> {
 		Self::token_owner(&self, token_id.try_into()?)
-			.map(|o| EthCrossAccount::from_sub_cross_account::<T>(&o))
+			.map(|o| pallet_common::eth::CrossAccount::from_sub_cross_account::<T>(&o))
 			.ok_or(Error::Revert("key too large".into()))
 	}
 
@@ -808,7 +807,11 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
+	fn properties(
+		&self,
+		token_id: uint256,
+		keys: Vec<string>,
+	) -> Result<Vec<pallet_common::eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -828,7 +831,7 @@ where
 			let key = string::from_utf8(p.key.to_vec())
 				.map_err(|e| Error::Revert(alloc::format!("{}", e)))?;
 			let value = bytes(p.value.to_vec());
-			Ok(PropertyStruct { key, value })
+			Ok(pallet_common::eth::Property { key, value })
 		})
 		.collect::<Result<Vec<_>>>()
 	}
@@ -865,7 +868,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
+		to: pallet_common::eth::CrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -893,8 +896,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
-		to: EthCrossAccount,
+		from: pallet_common::eth::CrossAccount,
+		to: pallet_common::eth::CrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -949,7 +952,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
+		from: pallet_common::eth::CrossAccount,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1086,8 +1089,8 @@ where
 	fn mint_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
-		properties: Vec<PropertyStruct>,
+		to: pallet_common::eth::CrossAccount,
+		properties: Vec<pallet_common::eth::Property>,
 	) -> Result<uint256> {
 		let token_id = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -1097,7 +1100,7 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|PropertyStruct { key, value }| {
+			.map(|pallet_common::eth::Property { key, value }| {
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
