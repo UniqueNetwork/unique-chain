@@ -19,35 +19,25 @@ import fs from 'fs';
 import path from 'path';
 import {usingPlaygrounds} from '../../util';
 import {config} from './config';
-import {Staker} from './helpers';
+import {deserializeStaker, serializeStaker, StakedBalance, Staker} from './helpers';
 
 async function main() {
   await usingPlaygrounds(async (helper) => {
     const STEP = 'STEP5';
     const stakers: Staker[] = JSON.parse(fs.readFileSync(config.STAKERS_LOG).toString());
+
     
-    const result: any = [];
+    const result: StakedBalance[] = [];
     const getBalances = stakers.map(async staker => {
       console.log(staker.address);
       const stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       const balances = await helper.balance.getSubstrateFull(staker.address);
 
-      const stringifiedStakes = stakes.map(s => {
-        return {
-        block: s.block.toString(),
-        amount: s.amount.toString(),
-      };
-    });
-
       result.push({
         address: staker.address,
-        stakes: stringifiedStakes,
-        balance: {
-          free: balances.free.toString(),
-          feeFrozen: balances.feeFrozen.toString(),
-          miscFrozen: balances.miscFrozen.toString(),
-          reserved: balances.reserved.toString(),
-        },
+        mnemonic: staker.mnemonic,
+        stakes,
+        balance: balances,
       });
     });
 
@@ -55,7 +45,7 @@ async function main() {
 
     fs.writeFileSync(
       path.resolve(__dirname, 'balances.json'),
-      JSON.stringify(result),
+      JSON.stringify(result.map(serializeStaker)),
     );
 
   }, config.OPAL_URL); 

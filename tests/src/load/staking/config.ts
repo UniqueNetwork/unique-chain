@@ -13,4 +13,5 @@ export const config = {
   // Log files:
   STAKER_BASE_SEED: '//AppPromotion',
   STAKERS_LOG: path.resolve(__dirname, 'stakers.json'),
+  BALANCE_LOG: path.resolve(__dirname, 'balance.json'),
 };

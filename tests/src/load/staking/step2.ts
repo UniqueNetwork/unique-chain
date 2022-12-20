@@ -17,11 +17,12 @@
 import fs from 'fs';
 import {usingPlaygrounds} from '../../util';
 import {config} from './config';
-import {Staker} from './helpers';
+import {StakedBalance, Staker} from './helpers';
 
 async function main() {
   await usingPlaygrounds(async (helper) => {
     const STEP = 'STEP2';
+    // const stakers: StakedBalance[] = JSON.parse(fs.readFileSync(config.BALANCE_LOG).toString());
     const stakers: Staker[] = JSON.parse(fs.readFileSync(config.STAKERS_LOG).toString());
       
     // 1. All stakers stake simultaneously:

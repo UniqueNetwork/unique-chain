@@ -17,21 +17,23 @@
 
 import fs from 'fs';
 import path from 'path';
+import {deserializeStaker, StakedBalance} from './helpers';
 
 function main() {
-  const balances = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'balances.json')).toString());
-  const LOWER = 100300375300000000000n;
-  const UPPER = 100312000000000000000n;
+  const balances: StakedBalance[] = JSON
+    .parse(fs.readFileSync(path.resolve(__dirname, 'balances.json')).toString())
+    .map(deserializeStaker);
+  const LOWER = 200350525400000000000n;
+  const UPPER = 200363000000000000000n;
   // const UPPER = 100350525400000000000n;
   
   // Get accounts with a
-  balances.forEach((balance: any) => {
-    if (balance.stakes.length === 1) {
-      // if(BigInt(balance.stakes[0].amount) < LOWER) console.log(balance.address, balance.stakes[0].amount);
-      if(BigInt(balance?.stakes[0].amount) > UPPER) console.log(balance.address, balance.stakes[0].amount);
-    } else {
-      console.log('balance.stakes.length !== 1', balance.address);
-    }
+  balances.forEach((balance) => {
+    console.log(balance.address, balance.stakes.length);
+
+    // expect(balance.balance.miscFrozen).to.eq(balance.balance.feeFrozen);
+    // expect(balance.balance.miscFrozen - LOWER > 0n).to.be.true;
+    // expect(balance.balance.miscFrozen - UPPER < 0n).to.be.true;
   });
 
 }
