@@ -233,7 +233,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionLimitSet']}]);
   {
-    await collection.methods.setCollectionLimit({field: CollectionLimitField.OwnerCanTransfer, status: true, value: 0}).send({from: owner});
+    await collection.methods.setCollectionLimit({field: CollectionLimitField.OwnerCanTransfer, value: {status: true, value: 0}}).send({from: owner});
     await helper.wait.newBlocks(1);
     expect(ethEvents).to.containSubset([
       {

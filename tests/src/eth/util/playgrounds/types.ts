@@ -13,6 +13,12 @@ export type NormalizedEvent = {
   event: string,
   args: { [key: string]: string }
 };
+
+export interface OptionUint {
+  status: boolean,
+  value: bigint,
+}
+
 export interface TEthCrossAccount {
   readonly eth: string,
   readonly sub: string | Uint8Array,
@@ -40,6 +46,5 @@ export enum CollectionLimitField {
 
 export interface CollectionLimit {
   field: CollectionLimitField,
-  status: boolean,
-  value: bigint | number,
+  value: OptionUint,
 }

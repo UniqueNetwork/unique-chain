@@ -197,7 +197,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, status: true, value: 1000})
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -222,7 +222,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, status: true, value: 1000})
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });    

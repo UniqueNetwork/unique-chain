@@ -66,6 +66,56 @@ where
 	T::CrossAccountId::from_sub(account_id)
 }
 
+/// Ethereum representation of Optional value with uint256.
+#[derive(Debug, Default, AbiCoder)]
+pub struct OptionUint {
+	status: bool,
+	value: uint256,
+}
+
+impl From<u32> for OptionUint {
+	fn from(value: u32) -> Self {
+		Self {
+			status: true,
+			value: uint256::from(value),
+		}
+	}
+}
+
+impl From<Option<u32>> for OptionUint {
+	fn from(value: Option<u32>) -> Self {
+		match value {
+			Some(value) => Self {
+				status: true,
+				value: value.into(),
+			},
+			None => Self {
+				status: false,
+				value: Default::default(),
+			},
+		}
+	}
+}
+
+impl From<Option<bool>> for OptionUint {
+	fn from(value: Option<bool>) -> Self {
+		match value {
+			Some(value) => Self {
+				status: true,
+				value: if value {
+					uint256::from(1)
+				} else {
+					Default::default()
+				},
+			},
+			None => Self {
+				status: false,
+				value: Default::default(),
+			},
+		}
+	}
+}
+
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAccount {
@@ -164,8 +214,7 @@ pub enum CollectionLimitField {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
-	status: bool,
-	value: uint256,
+	value: OptionUint,
 }
 
 impl CollectionLimit {
@@ -173,43 +222,24 @@ impl CollectionLimit {
 	pub fn from_int(field: CollectionLimitField, value: u32) -> Self {
 		Self {
 			field,
-			status: true,
 			value: value.into(),
 		}
 	}
 
 	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and optional int value.
 	pub fn from_opt_int(field: CollectionLimitField, value: Option<u32>) -> Self {
-		value
-			.map(|v| Self {
-				field,
-				status: true,
-				value: v.into(),
-			})
-			.unwrap_or(Self {
-				field,
-				status: false,
-				value: Default::default(),
-			})
+		Self {
+			field,
+			value: value.into(),
+		}
 	}
 
 	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and bool value.
 	pub fn from_opt_bool(field: CollectionLimitField, value: Option<bool>) -> Self {
-		value
-			.map(|v| Self {
-				field,
-				status: true,
-				value: if v {
-					uint256::from(1)
-				} else {
-					Default::default()
-				},
-			})
-			.unwrap_or(Self {
-				field,
-				status: false,
-				value: Default::default(),
-			})
+		Self {
+			field,
+			value: value.into(),
+		}
 	}
 }
 
@@ -217,14 +247,14 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 	type Error = evm_coder::execution::Error;
 
 	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
-		if !self.status {
+		if !self.value.status {
 			return Err(Self::Error::Revert("user can't disable limits".into()));
 		}
 
-		let value = self.value.try_into().map_err(|error| {
+		let value = self.value.value.try_into().map_err(|error| {
 			Self::Error::Revert(format!(
 				"can't convert value to u32 \"{}\" because: \"{error}\"",
-				self.value
+				self.value.value
 			))
 		})?;
 

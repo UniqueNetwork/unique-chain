@@ -208,7 +208,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, status: true, value: 1000})
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -233,7 +233,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, status: true, value: 1000})
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });

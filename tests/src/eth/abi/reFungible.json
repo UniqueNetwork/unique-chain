@@ -229,8 +229,15 @@
             "name": "field",
             "type": "uint8"
           },
-          { "internalType": "bool", "name": "status", "type": "bool" },
-          { "internalType": "uint256", "name": "value", "type": "uint256" }
+          {
+            "components": [
+              { "internalType": "bool", "name": "status", "type": "bool" },
+              { "internalType": "uint256", "name": "value", "type": "uint256" }
+            ],
+            "internalType": "struct OptionUint",
+            "name": "value",
+            "type": "tuple"
+          }
         ],
         "internalType": "struct CollectionLimit[]",
         "name": "",
@@ -253,7 +260,7 @@
           },
           { "internalType": "bool", "name": "field_1", "type": "bool" }
         ],
-        "internalType": "struct Tuple44[]",
+        "internalType": "struct Tuple47[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -274,7 +281,7 @@
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct Tuple41",
+        "internalType": "struct Tuple44",
         "name": "",
         "type": "tuple"
       }
@@ -644,8 +651,15 @@
             "name": "field",
             "type": "uint8"
           },
-          { "internalType": "bool", "name": "status", "type": "bool" },
-          { "internalType": "uint256", "name": "value", "type": "uint256" }
+          {
+            "components": [
+              { "internalType": "bool", "name": "status", "type": "bool" },
+              { "internalType": "uint256", "name": "value", "type": "uint256" }
+            ],
+            "internalType": "struct OptionUint",
+            "name": "value",
+            "type": "tuple"
+          }
         ],
         "internalType": "struct CollectionLimit",
         "name": "limit",
