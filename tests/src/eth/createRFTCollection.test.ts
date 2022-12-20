@@ -18,7 +18,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
-import {CollectionLimits} from './util/playgrounds/types';
+import {CollectionLimitField} from './util/playgrounds/types';
 
 
 describe('Create RFT collection from EVM', () => {
@@ -240,7 +240,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, status: true, value: 1000})
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -265,7 +265,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     }
     {
       await expect(peasantCollection.methods
-        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, status: true, value: 1000})
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });

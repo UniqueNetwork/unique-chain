@@ -213,14 +213,14 @@
       {
         "components": [
           {
-            "internalType": "enum CollectionLimits",
-            "name": "field_0",
+            "internalType": "enum CollectionLimitField",
+            "name": "field",
             "type": "uint8"
           },
-          { "internalType": "bool", "name": "field_1", "type": "bool" },
-          { "internalType": "uint256", "name": "field_2", "type": "uint256" }
+          { "internalType": "bool", "name": "status", "type": "bool" },
+          { "internalType": "uint256", "name": "value", "type": "uint256" }
         ],
-        "internalType": "struct Tuple23[]",
+        "internalType": "struct CollectionLimit[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -241,7 +241,7 @@
           },
           { "internalType": "bool", "name": "field_1", "type": "bool" }
         ],
-        "internalType": "struct Tuple32[]",
+        "internalType": "struct Tuple33[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -262,7 +262,7 @@
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct Tuple29",
+        "internalType": "struct Tuple30",
         "name": "",
         "type": "tuple"
       }
@@ -494,12 +494,19 @@
   {
     "inputs": [
       {
-        "internalType": "enum CollectionLimits",
+        "components": [
+          {
+            "internalType": "enum CollectionLimitField",
+            "name": "field",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "status", "type": "bool" },
+          { "internalType": "uint256", "name": "value", "type": "uint256" }
+        ],
+        "internalType": "struct CollectionLimit",
         "name": "limit",
-        "type": "uint8"
-      },
-      { "internalType": "bool", "name": "status", "type": "bool" },
-      { "internalType": "uint256", "name": "value", "type": "uint256" }
+        "type": "tuple"
+      }
     ],
     "name": "setCollectionLimit",
     "outputs": [],

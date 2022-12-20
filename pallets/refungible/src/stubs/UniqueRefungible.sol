@@ -146,13 +146,13 @@ struct TokenPropertyPermission {
 /// @dev Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
 struct PropertyPermission {
 	/// @dev TokenPermission field.
-	EthTokenPermissions code;
+	TokenPermissionField code;
 	/// @dev TokenPermission value.
 	bool value;
 }
 
 /// @dev Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
-enum EthTokenPermissions {
+enum TokenPermissionField {
 	/// @dev Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
 	Mutable,
 	/// @dev Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
@@ -162,7 +162,7 @@ enum EthTokenPermissions {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x81172a75
+/// @dev the ERC-165 identifier for this interface is 0x23201442
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -304,50 +304,23 @@ contract Collection is Dummy, ERC165 {
 
 	/// Get current collection limits.
 	///
-	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// Return `false` if a limit not set.
+	/// @return Array of collection limits
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() public view returns (Tuple34[] memory) {
+	function collectionLimits() public view returns (CollectionLimit[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple34[](0);
+		return new CollectionLimit[](0);
 	}
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param status enable\disable limit. Works only with `true`.
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x88150bd0,
-	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
-	function setCollectionLimit(
-		CollectionLimits limit,
-		bool status,
-		uint256 value
-	) public {
+	/// @param limit Some limit.
+	/// @dev EVM selector for this function is: 0x2a2235e7,
+	///  or in textual repr: setCollectionLimit((uint8,bool,uint256))
+	function setCollectionLimit(CollectionLimit memory limit) public {
 		require(false, stub_error);
 		limit;
-		status;
-		value;
 		dummy = 0;
 	}
 
@@ -428,19 +401,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple40 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (Tuple41 memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple40(false, new uint256[](0));
+		return Tuple41(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() public view returns (Tuple43[] memory) {
+	function collectionNestingPermissions() public view returns (Tuple44[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple43[](0);
+		return new Tuple44[](0);
 	}
 
 	/// Set the collection access method.
@@ -623,19 +596,25 @@ enum CollectionPermissions {
 }
 
 /// @dev anonymous struct
-struct Tuple43 {
+struct Tuple44 {
 	CollectionPermissions field_0;
 	bool field_1;
 }
 
 /// @dev anonymous struct
-struct Tuple40 {
+struct Tuple41 {
 	bool field_0;
 	uint256[] field_1;
 }
 
+struct CollectionLimit {
+	CollectionLimitField field;
+	bool status;
+	uint256 value;
+}
+
 /// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
-enum CollectionLimits {
+enum CollectionLimitField {
 	/// @dev How many tokens can a user have on one account.
 	AccountTokenOwnership,
 	/// @dev How many bytes of data are available for sponsorship.
@@ -654,13 +633,6 @@ enum CollectionLimits {
 	OwnerCanDestroy,
 	/// @dev Is it possible to send tokens from this collection between users.
 	TransferEnabled
-}
-
-/// @dev anonymous struct
-struct Tuple34 {
-	CollectionLimits field_0;
-	bool field_1;
-	uint256 field_2;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f

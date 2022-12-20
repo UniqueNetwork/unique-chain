@@ -20,12 +20,12 @@ export interface TEthCrossAccount {
 
 export type EthProperty = string[];
 
-export enum EthTokenPermissions {
+export enum TokenPermissionField {
   Mutable,
   TokenOwner,
   CollectionAdmin
 }
-export enum CollectionLimits {
+export enum CollectionLimitField {
   AccountTokenOwnership,
 	SponsoredDataSize,
 	SponsoredDataRateLimit,
@@ -35,4 +35,10 @@ export enum CollectionLimits {
 	OwnerCanTransfer,
 	OwnerCanDestroy,
 	TransferEnabled
+}
+
+export interface EthCollectionLimit {
+  field: CollectionLimitField,
+  status: boolean,
+  value: bigint,
 }

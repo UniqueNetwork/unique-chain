@@ -16,6 +16,7 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
+use alloc::format;
 use sp_std::{vec, vec::Vec};
 use evm_coder::{
 	AbiCoder,
@@ -129,7 +130,7 @@ pub struct Property {
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
 #[derive(Debug, Default, Clone, Copy, AbiCoder)]
 #[repr(u8)]
-pub enum CollectionLimits {
+pub enum CollectionLimitField {
 	/// How many tokens can a user have on one account.
 	#[default]
 	AccountTokenOwnership,
@@ -158,6 +159,116 @@ pub enum CollectionLimits {
 	/// Is it possible to send tokens from this collection between users.
 	TransferEnabled,
 }
+
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionLimit {
+	field: CollectionLimitField,
+	status: bool,
+	value: uint256,
+}
+
+impl CollectionLimit {
+	pub fn from_int(field: CollectionLimitField, value: u32) -> Self {
+		Self {
+			field,
+			status: true,
+			value: value.into(),
+		}
+	}
+
+	pub fn from_opt_int(field: CollectionLimitField, value: Option<u32>) -> Self {
+		value
+			.map(|v| Self {
+				field,
+				status: true,
+				value: v.into(),
+			})
+			.unwrap_or(Self {
+				field,
+				status: false,
+				value: Default::default(),
+			})
+	}
+
+	pub fn from_opt_bool(field: CollectionLimitField, value: Option<bool>) -> Self {
+		value
+			.map(|v| Self {
+				field,
+				status: true,
+				value: if v {
+					uint256::from(1)
+				} else {
+					Default::default()
+				},
+			})
+			.unwrap_or(Self {
+				field,
+				status: false,
+				value: Default::default(),
+			})
+	}
+}
+
+impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
+	type Error = evm_coder::execution::Error;
+
+	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
+		if !self.status {
+			return Err(Self::Error::Revert("user can't disable limits".into()));
+		}
+
+		let value = self.value.try_into().map_err(|error| {
+			Self::Error::Revert(format!(
+				"can't convert value to u32 \"{}\" because: \"{error}\"",
+				self.value
+			))
+		})?;
+
+		let convert_value_to_bool = || match value {
+			0 => Ok(false),
+			1 => Ok(true),
+			_ => {
+				return Err(Self::Error::Revert(format!(
+					"can't convert value to boolean \"{value}\""
+				)))
+			}
+		};
+
+		let mut limits = up_data_structs::CollectionLimits::default();
+		match self.field {
+			CollectionLimitField::AccountTokenOwnership => {
+				limits.account_token_ownership_limit = Some(value);
+			}
+			CollectionLimitField::SponsoredDataSize => {
+				limits.sponsored_data_size = Some(value);
+			}
+			CollectionLimitField::SponsoredDataRateLimit => {
+				limits.sponsored_data_rate_limit =
+					Some(up_data_structs::SponsoringRateLimit::Blocks(value));
+			}
+			CollectionLimitField::TokenLimit => {
+				limits.token_limit = Some(value);
+			}
+			CollectionLimitField::SponsorTransferTimeout => {
+				limits.sponsor_transfer_timeout = Some(value);
+			}
+			CollectionLimitField::SponsorApproveTimeout => {
+				limits.sponsor_approve_timeout = Some(value);
+			}
+			CollectionLimitField::OwnerCanTransfer => {
+				limits.owner_can_transfer = Some(convert_value_to_bool()?);
+			}
+			CollectionLimitField::OwnerCanDestroy => {
+				limits.owner_can_destroy = Some(convert_value_to_bool()?);
+			}
+			CollectionLimitField::TransferEnabled => {
+				limits.transfers_enabled = Some(convert_value_to_bool()?);
+			}
+		};
+		Ok(limits)
+	}
+}
+
 /// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 #[derive(Default, Debug, Clone, Copy, AbiCoder)]
 #[repr(u8)]
@@ -173,7 +284,7 @@ pub enum CollectionPermissions {
 /// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
 #[derive(AbiCoder, Copy, Clone, Default, Debug)]
 #[repr(u8)]
-pub enum EthTokenPermissions {
+pub enum TokenPermissionField {
 	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
 	#[default]
 	Mutable,
@@ -189,7 +300,7 @@ pub enum EthTokenPermissions {
 #[derive(Debug, Default, AbiCoder)]
 pub struct PropertyPermission {
 	/// TokenPermission field.
-	code: EthTokenPermissions,
+	code: TokenPermissionField,
 	/// TokenPermission value.
 	value: bool,
 }
@@ -198,15 +309,15 @@ impl PropertyPermission {
 	pub fn into_vec(pp: up_data_structs::PropertyPermission) -> Vec<Self> {
 		vec![
 			PropertyPermission {
-				code: EthTokenPermissions::Mutable,
+				code: TokenPermissionField::Mutable,
 				value: pp.mutable,
 			},
 			PropertyPermission {
-				code: EthTokenPermissions::TokenOwner,
+				code: TokenPermissionField::TokenOwner,
 				value: pp.token_owner,
 			},
 			PropertyPermission {
-				code: EthTokenPermissions::CollectionAdmin,
+				code: TokenPermissionField::CollectionAdmin,
 				value: pp.collection_admin,
 			},
 		]
@@ -217,9 +328,9 @@ impl PropertyPermission {
 
 		for PropertyPermission { code, value } in permission {
 			match code {
-				EthTokenPermissions::Mutable => token_permission.mutable = value,
-				EthTokenPermissions::TokenOwner => token_permission.token_owner = value,
-				EthTokenPermissions::CollectionAdmin => token_permission.collection_admin = value,
+				TokenPermissionField::Mutable => token_permission.mutable = value,
+				TokenPermissionField::TokenOwner => token_permission.token_owner = value,
+				TokenPermissionField::CollectionAdmin => token_permission.collection_admin = value,
 			}
 		}
 		token_permission
@@ -262,12 +373,12 @@ impl TokenPropertyPermission {
 		let mut perms = Vec::new();
 
 		for TokenPropertyPermission { key, permissions } in permissions {
-			if permissions.len() > <EthTokenPermissions as evm_coder::abi::AbiType>::FIELDS_COUNT {
+			if permissions.len() > <TokenPermissionField as evm_coder::abi::AbiType>::FIELDS_COUNT {
 				return Err(alloc::format!(
 					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
 					permissions.len(),
 					stringify!(EthTokenPermissions),
-					<EthTokenPermissions as evm_coder::abi::AbiType>::FIELDS_COUNT
+					<TokenPermissionField as evm_coder::abi::AbiType>::FIELDS_COUNT
 				)
 				.as_str()
 				.into());

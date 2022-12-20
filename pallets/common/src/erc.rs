@@ -36,7 +36,7 @@ use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
 	eth::{
 		Property as PropertyStruct, EthCrossAccount, CollectionPermissions as EvmPermissions,
-		CollectionLimits as EvmCollectionLimits,
+		CollectionLimitField as EvmCollectionLimits, self,
 	},
 	weights::WeightInfo,
 };
@@ -299,52 +299,16 @@ where
 
 	/// Get current collection limits.
 	///
-	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// Return `false` if a limit not set.
-	fn collection_limits(&self) -> Result<Vec<(EvmCollectionLimits, bool, uint256)>> {
-		let convert_value_limit = |limit: EvmCollectionLimits,
-		                           value: Option<u32>|
-		 -> (EvmCollectionLimits, bool, uint256) {
-			value
-				.map(|v| (limit, true, v.into()))
-				.unwrap_or((limit, false, Default::default()))
-		};
-
-		let convert_bool_limit = |limit: EvmCollectionLimits,
-		                          value: Option<bool>|
-		 -> (EvmCollectionLimits, bool, uint256) {
-			value
-				.map(|v| {
-					(
-						limit,
-						true,
-						if v {
-							uint256::from(1)
-						} else {
-							Default::default()
-						},
-					)
-				})
-				.unwrap_or((limit, false, Default::default()))
-		};
-
+	/// @return Array of collection limits
+	fn collection_limits(&self) -> Result<Vec<eth::CollectionLimit>> {
 		let limits = &self.collection.limits;
 
 		Ok(vec![
-			convert_value_limit(
+			eth::CollectionLimit::from_opt_int(
 				EvmCollectionLimits::AccountTokenOwnership,
 				limits.account_token_ownership_limit,
 			),
-			convert_value_limit(
+			eth::CollectionLimit::from_opt_int(
 				EvmCollectionLimits::SponsoredDataSize,
 				limits.sponsored_data_size,
 			),
@@ -352,38 +316,36 @@ where
 				.sponsored_data_rate_limit
 				.and_then(|limit| {
 					if let SponsoringRateLimit::Blocks(blocks) = limit {
-						Some((
+						Some(eth::CollectionLimit::from_int(
 							EvmCollectionLimits::SponsoredDataRateLimit,
-							true,
-							blocks.into(),
+							blocks,
 						))
 					} else {
 						None
 					}
 				})
-				.unwrap_or((
+				.unwrap_or(eth::CollectionLimit::from_int(
 					EvmCollectionLimits::SponsoredDataRateLimit,
-					false,
 					Default::default(),
 				)),
-			convert_value_limit(EvmCollectionLimits::TokenLimit, limits.token_limit),
-			convert_value_limit(
+			eth::CollectionLimit::from_opt_int(EvmCollectionLimits::TokenLimit, limits.token_limit),
+			eth::CollectionLimit::from_opt_int(
 				EvmCollectionLimits::SponsorTransferTimeout,
 				limits.sponsor_transfer_timeout,
 			),
-			convert_value_limit(
+			eth::CollectionLimit::from_opt_int(
 				EvmCollectionLimits::SponsorApproveTimeout,
 				limits.sponsor_approve_timeout,
 			),
-			convert_bool_limit(
+			eth::CollectionLimit::from_opt_bool(
 				EvmCollectionLimits::OwnerCanTransfer,
 				limits.owner_can_transfer,
 			),
-			convert_bool_limit(
+			eth::CollectionLimit::from_opt_bool(
 				EvmCollectionLimits::OwnerCanDestroy,
 				limits.owner_can_destroy,
 			),
-			convert_bool_limit(
+			eth::CollectionLimit::from_opt_bool(
 				EvmCollectionLimits::TransferEnabled,
 				limits.transfers_enabled,
 			),
@@ -392,82 +354,17 @@ where
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param status enable\disable limit. Works only with `true`.
-	/// @param value Value of the limit.
+	/// @param limit Some limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_collection_limit(
 		&mut self,
 		caller: caller,
-		limit: EvmCollectionLimits,
-		status: bool,
-		value: uint256,
+		limit: eth::CollectionLimit,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		if !status {
-			return Err(Error::Revert("user can't disable limits".into()));
-		}
-
-		let value = value
-			.try_into()
-			.map_err(|_| Error::Revert(format!("can't convert value to u32 \"{}\"", value)))?;
-
-		let convert_value_to_bool = || match value {
-			0 => Ok(false),
-			1 => Ok(true),
-			_ => {
-				return Err(Error::Revert(format!(
-					"can't convert value to boolean \"{}\"",
-					value
-				)))
-			}
-		};
-
-		let mut limits = self.limits.clone();
-
-		match limit {
-			EvmCollectionLimits::AccountTokenOwnership => {
-				limits.account_token_ownership_limit = Some(value);
-			}
-			EvmCollectionLimits::SponsoredDataSize => {
-				limits.sponsored_data_size = Some(value);
-			}
-			EvmCollectionLimits::SponsoredDataRateLimit => {
-				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(value));
-			}
-			EvmCollectionLimits::TokenLimit => {
-				limits.token_limit = Some(value);
-			}
-			EvmCollectionLimits::SponsorTransferTimeout => {
-				limits.sponsor_transfer_timeout = Some(value);
-			}
-			EvmCollectionLimits::SponsorApproveTimeout => {
-				limits.sponsor_approve_timeout = Some(value);
-			}
-			EvmCollectionLimits::OwnerCanTransfer => {
-				limits.owner_can_transfer = Some(convert_value_to_bool()?);
-			}
-			EvmCollectionLimits::OwnerCanDestroy => {
-				limits.owner_can_destroy = Some(convert_value_to_bool()?);
-			}
-			EvmCollectionLimits::TransferEnabled => {
-				limits.transfers_enabled = Some(convert_value_to_bool()?);
-			}
-			_ => return Err(Error::Revert(format!("unknown limit \"{:?}\"", limit))),
-		}
-
 		let caller = T::CrossAccountId::from_eth(caller);
-		<Pallet<T>>::update_limits(&caller, self, limits).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::update_limits(&caller, self, limit.try_into()?).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get contract address.
