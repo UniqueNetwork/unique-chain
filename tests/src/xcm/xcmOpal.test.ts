@@ -147,9 +147,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const feeAssetItem = 0;
-      const weightLimit = 5_000_000_000;
 
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
     });
   
   });
@@ -202,10 +201,9 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const feeAssetItem = 0;
-      const weightLimit = 5000000000;
 
       balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
-      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, weightLimit);
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, {Unlimited: null});
 
       balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -276,9 +274,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     ];
 
     const feeItem = 1;
-    const destWeight = 500000000000;
 
-    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, destWeight);
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, {Unlimited: null});
     
     // the commission has been paid in parachain native token
     balanceOpalFinal = await helper.balance.getSubstrate(alice.address);
@@ -339,9 +336,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const feeAssetItem = 0;
-      const weightLimit = 5_000_000_000;
 
-      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, weightLimit);
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
     });
   
     await helper.wait.newBlocks(3);
@@ -390,9 +386,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     ];
 
     const feeItem = 0;
-    const destWeight = 500000000000;
 
-    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, destWeight);
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
     console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobFinal);
