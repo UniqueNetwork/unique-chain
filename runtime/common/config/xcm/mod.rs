@@ -179,15 +179,15 @@ impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> 
 		// Check if deposit or transfer belongs to allowed parachains
 		let mut allowed = allowed_locations.contains(origin);
 
-		message.0.iter().for_each(|inst| match inst {
-			DepositReserveAsset { dest: dst, .. } => {
-				allowed |= allowed_locations.contains(dst);
-			}
-			TransferReserveAsset { dest: dst, .. } => {
-				allowed |= allowed_locations.contains(dst);
-			}
-			_ => {}
-		});
+		// message.0.iter().for_each(|inst| match inst {
+		// 	DepositReserveAsset { dest: dst, .. } => {
+		// 		allowed |= allowed_locations.contains(dst);
+		// 	}
+		// 	TransferReserveAsset { dest: dst, .. } => {
+		// 		allowed |= allowed_locations.contains(dst);
+		// 	}
+		// 	_ => {}
+		// });
 
 		if allowed {
 			return Ok(());
