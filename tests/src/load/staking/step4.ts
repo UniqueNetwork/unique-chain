@@ -19,6 +19,7 @@ import {usingPlaygrounds} from '../../util';
 import {config} from './config';
 import {Staker} from './helpers';
 
+// UNSTAKING SCRIPT
 async function main() {
   await usingPlaygrounds(async (helper) => {
     const STEP = 'STEP4';
@@ -29,6 +30,7 @@ async function main() {
   
     console.log('Stakers starting unstake...');
     for (const staker of stakers) {
+      console.log(staker.mnemonic);
       if (staker.errors.length > 0) continue;
       const stakerKeyRing = helper.util.fromSeed(staker.mnemonic);
       unStakingTxs.push(helper.staking
@@ -41,7 +43,7 @@ async function main() {
           staker.errors.push(message);
         }));
 
-      if (unStakingTxs.length >= 800) {
+      if (unStakingTxs.length >= 3) {
         await Promise.allSettled(unStakingTxs);
         unStakingTxs = [];
       }
@@ -55,7 +57,7 @@ async function main() {
     const errors = stakers.filter(staker => staker.errors.find(e => e.search(STEP)));
     errors.forEach(e => console.log(e.address));
     if (errors.length > 0) throw Error(`Some accounts were unable to stake: ${errors.length}`);
-  }); 
+  }, config.OPAL_URL); 
 }
 
 main().then(() => console.log('Finished step 2'));
