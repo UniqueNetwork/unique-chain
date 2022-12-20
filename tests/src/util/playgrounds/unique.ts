@@ -2740,21 +2740,72 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     this.palletName = palletName;
   }
 
-  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, {Limited: weightLimit}], true);
+  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+  }
+
+  async teleportAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
+  }
+
+  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint) {
+    const destination = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            Parachain: destinationParaId,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: targetAccount,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V1: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: amount,
+          },
+        },
+      ],
+    };
+
+    const feeAssetItem = 0;
+
+    await this.teleportAssets(signer, destination, beneficiary, assets, feeAssetItem);
   }
 }
 
 class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
-  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: number) {
+  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transfer', [currencyId, amount, destination, destWeight], true);
   }
 
-  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: number) {
+  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
   }
 
-  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: number) {
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
   }
 }
