@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
-import {ApiBase} from '@polkadot/api/base';
 import {usingPlaygrounds, itSub, expect} from './util';
 
 

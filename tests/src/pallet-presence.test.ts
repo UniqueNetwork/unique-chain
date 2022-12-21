@@ -63,7 +63,6 @@ describe('Pallet presence', () => {
       const chain = await helper.callRpc('api.rpc.system.chain', []);
 
       const refungible = 'refungible';
-      const scheduler = 'scheduler';
       const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
@@ -72,17 +71,20 @@ describe('Pallet presence', () => {
       if (chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(
           refungible,
-          // scheduler,
           foreignAssets,
           appPromotion,
           testUtils,
-          scheduler,
           ...rmrkPallets,
         );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
-        requiredPallets.push(refungible);
+        requiredPallets.push(
+          refungible,
+          appPromotion,
+          foreignAssets,
+        );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
+        requiredPallets.push(foreignAssets);
       }
     });
   });

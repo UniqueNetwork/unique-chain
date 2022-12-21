@@ -8,7 +8,7 @@ import {
 import {IKeyringPair} from '@polkadot/types/types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import '../../interfaces/augment-api';
+import '../../../interfaces/augment-api';
 import privateKey from '../../substrate/privateKey';
 import {executeTransaction} from '../../substrate/substrate-api';
 import {

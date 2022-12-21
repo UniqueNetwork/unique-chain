@@ -1,7 +1,7 @@
 import {executeTransaction} from '../substrate/substrate-api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, expect, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../util';
-import {UniqueHelper} from '../util/playgrounds/unique';
+import {itSub, expect, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../../util';
+import {UniqueHelper} from '../../util/playgrounds/unique';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;

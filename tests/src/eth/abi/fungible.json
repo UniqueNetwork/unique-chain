@@ -208,6 +208,70 @@
   },
   {
     "inputs": [],
+    "name": "collectionLimits",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionLimits",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" },
+          { "internalType": "uint256", "name": "field_2", "type": "uint256" }
+        ],
+        "internalType": "struct Tuple23[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "collectionNestingPermissions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionPermissions",
+            "name": "field_0",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "field_1", "type": "bool" }
+        ],
+        "internalType": "struct Tuple32[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "collectionNestingRestrictedCollectionIds",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "bool", "name": "field_0", "type": "bool" },
+          {
+            "internalType": "uint256[]",
+            "name": "field_1",
+            "type": "uint256[]"
+          }
+        ],
+        "internalType": "struct Tuple29",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionOwner",
     "outputs": [
       {
@@ -255,10 +319,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct Tuple8",
+        "internalType": "struct EthCrossAccount",
         "name": "",
         "type": "tuple"
       }
@@ -344,12 +408,30 @@
           { "internalType": "address", "name": "field_0", "type": "address" },
           { "internalType": "uint256", "name": "field_1", "type": "uint256" }
         ],
-        "internalType": "struct Tuple8[]",
+        "internalType": "struct Tuple9[]",
         "name": "amounts",
         "type": "tuple[]"
       }
     ],
     "name": "mintBulk",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct EthCrossAccount",
+        "name": "to",
+        "type": "tuple"
+      },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "mintCross",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -411,7 +493,12 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
+      {
+        "internalType": "enum CollectionLimits",
+        "name": "limit",
+        "type": "uint8"
+      },
+      { "internalType": "bool", "name": "status", "type": "bool" },
       { "internalType": "uint256", "name": "value", "type": "uint256" }
     ],
     "name": "setCollectionLimit",

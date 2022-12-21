@@ -26,7 +26,7 @@ use evm_coder::{
 	weight,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
 	SponsoringRateLimit, SponsorshipState,
@@ -35,7 +35,10 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{EthCrossAccount, convert_cross_account_to_uint256},
+	eth::{
+		EthCrossAccount, CollectionPermissions as EvmPermissions,
+		CollectionLimits as EvmCollectionLimits,
+	},
 	weights::WeightInfo,
 };
 
@@ -57,6 +60,21 @@ pub enum CollectionHelpersEvents {
 		/// Collection ID.
 		#[indexed]
 		collection_id: address,
+	},
+	/// The collection has been changed.
+	CollectionChanged {
+		/// Collection ID.
+		#[indexed]
+		collection_id: address,
+	},
+
+	/// The token has been changed.
+	TokenChanged {
+		/// Collection ID.
+		#[indexed]
+		collection_id: address,
+		/// Token ID.
+		token_id: uint256,
 	},
 }
 
@@ -216,12 +234,11 @@ where
 	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
-		self.set_sponsor(sponsor.as_sub().clone())
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
+		self.set_sponsor(&caller, sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Set the sponsor of the collection.
@@ -236,12 +253,11 @@ where
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let sponsor = sponsor.into_sub_cross_account::<T>()?;
-		self.set_sponsor(sponsor.as_sub().clone())
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
+		self.set_sponsor(&caller, sponsor.as_sub().clone())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Whether there is a pending sponsor.
@@ -259,40 +275,120 @@ where
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		if !self
-			.confirm_sponsorship(caller.as_sub())
-			.map_err(dispatch_to_evm::<T>)?
-		{
-			return Err("caller is not set as sponsor".into());
-		}
-		save(self)
+		self.confirm_sponsorship(caller.as_sub())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Remove collection sponsor.
 	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
-		check_is_owner_or_admin(caller, self)?;
-		self.remove_sponsor().map_err(dispatch_to_evm::<T>)?;
-		save(self)
+		let caller = T::CrossAccountId::from_eth(caller);
+		self.remove_sponsor(&caller).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn collection_sponsor(&self) -> Result<(address, uint256)> {
+	fn collection_sponsor(&self) -> Result<EthCrossAccount> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
 		};
-		let sponsor = T::CrossAccountId::from_sub(sponsor.clone());
-		let result: (address, uint256) = if sponsor.is_canonical_substrate() {
-			let sponsor = convert_cross_account_to_uint256::<T>(&sponsor);
-			(Default::default(), sponsor)
-		} else {
-			let sponsor = *sponsor.as_eth();
-			(sponsor, Default::default())
+
+		Ok(EthCrossAccount::from_sub::<T>(&sponsor))
+	}
+
+	/// Get current collection limits.
+	///
+	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
+	/// 	"accountTokenOwnershipLimit",
+	/// 	"sponsoredDataSize",
+	/// 	"sponsoredDataRateLimit",
+	/// 	"tokenLimit",
+	/// 	"sponsorTransferTimeout",
+	/// 	"sponsorApproveTimeout"
+	///  	"ownerCanTransfer",
+	/// 	"ownerCanDestroy",
+	/// 	"transfersEnabled"
+	/// Return `false` if a limit not set.
+	fn collection_limits(&self) -> Result<Vec<(EvmCollectionLimits, bool, uint256)>> {
+		let convert_value_limit = |limit: EvmCollectionLimits,
+		                           value: Option<u32>|
+		 -> (EvmCollectionLimits, bool, uint256) {
+			value
+				.map(|v| (limit, true, v.into()))
+				.unwrap_or((limit, false, Default::default()))
 		};
-		Ok(result)
+
+		let convert_bool_limit = |limit: EvmCollectionLimits,
+		                          value: Option<bool>|
+		 -> (EvmCollectionLimits, bool, uint256) {
+			value
+				.map(|v| {
+					(
+						limit,
+						true,
+						if v {
+							uint256::from(1)
+						} else {
+							Default::default()
+						},
+					)
+				})
+				.unwrap_or((limit, false, Default::default()))
+		};
+
+		let limits = &self.collection.limits;
+
+		Ok(vec![
+			convert_value_limit(
+				EvmCollectionLimits::AccountTokenOwnership,
+				limits.account_token_ownership_limit,
+			),
+			convert_value_limit(
+				EvmCollectionLimits::SponsoredDataSize,
+				limits.sponsored_data_size,
+			),
+			limits
+				.sponsored_data_rate_limit
+				.and_then(|limit| {
+					if let SponsoringRateLimit::Blocks(blocks) = limit {
+						Some((
+							EvmCollectionLimits::SponsoredDataRateLimit,
+							true,
+							blocks.into(),
+						))
+					} else {
+						None
+					}
+				})
+				.unwrap_or((
+					EvmCollectionLimits::SponsoredDataRateLimit,
+					false,
+					Default::default(),
+				)),
+			convert_value_limit(EvmCollectionLimits::TokenLimit, limits.token_limit),
+			convert_value_limit(
+				EvmCollectionLimits::SponsorTransferTimeout,
+				limits.sponsor_transfer_timeout,
+			),
+			convert_value_limit(
+				EvmCollectionLimits::SponsorApproveTimeout,
+				limits.sponsor_approve_timeout,
+			),
+			convert_bool_limit(
+				EvmCollectionLimits::OwnerCanTransfer,
+				limits.owner_can_transfer,
+			),
+			convert_bool_limit(
+				EvmCollectionLimits::OwnerCanDestroy,
+				limits.owner_can_destroy,
+			),
+			convert_bool_limit(
+				EvmCollectionLimits::TransferEnabled,
+				limits.transfers_enabled,
+			),
+		])
 	}
 
 	/// Set limits for the collection.
@@ -307,10 +403,21 @@ where
 	///  	"ownerCanTransfer",
 	/// 	"ownerCanDestroy",
 	/// 	"transfersEnabled"
+	/// @param status enable\disable limit. Works only with `true`.
 	/// @param value Value of the limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_int_limit(&mut self, caller: caller, limit: string, value: uint256) -> Result<void> {
+	fn set_collection_limit(
+		&mut self,
+		caller: caller,
+		limit: EvmCollectionLimits,
+		status: bool,
+		value: uint256,
+	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
+
+		if !status {
+			return Err(Error::Revert("user can't disable limits".into()));
+		}
 
 		let value = value
 			.try_into()
@@ -327,42 +434,41 @@ where
 			}
 		};
 
-		check_is_owner_or_admin(caller, self)?;
 		let mut limits = self.limits.clone();
 
-		match limit.as_str() {
-			"accountTokenOwnershipLimit" => {
+		match limit {
+			EvmCollectionLimits::AccountTokenOwnership => {
 				limits.account_token_ownership_limit = Some(value);
 			}
-			"sponsoredDataSize" => {
+			EvmCollectionLimits::SponsoredDataSize => {
 				limits.sponsored_data_size = Some(value);
 			}
-			"sponsoredDataRateLimit" => {
+			EvmCollectionLimits::SponsoredDataRateLimit => {
 				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(value));
 			}
-			"tokenLimit" => {
+			EvmCollectionLimits::TokenLimit => {
 				limits.token_limit = Some(value);
 			}
-			"sponsorTransferTimeout" => {
+			EvmCollectionLimits::SponsorTransferTimeout => {
 				limits.sponsor_transfer_timeout = Some(value);
 			}
-			"sponsorApproveTimeout" => {
+			EvmCollectionLimits::SponsorApproveTimeout => {
 				limits.sponsor_approve_timeout = Some(value);
 			}
-			"ownerCanTransfer" => {
+			EvmCollectionLimits::OwnerCanTransfer => {
 				limits.owner_can_transfer = Some(convert_value_to_bool()?);
 			}
-			"ownerCanDestroy" => {
+			EvmCollectionLimits::OwnerCanDestroy => {
 				limits.owner_can_destroy = Some(convert_value_to_bool()?);
 			}
-			"transfersEnabled" => {
+			EvmCollectionLimits::TransferEnabled => {
 				limits.transfers_enabled = Some(convert_value_to_bool()?);
 			}
-			_ => return Err(Error::Revert(format!("unknown limit \"{}\"", limit))),
+			_ => return Err(Error::Revert(format!("unknown limit \"{:?}\"", limit))),
 		}
-		self.limits = <Pallet<T>>::clamp_limits(self.mode.clone(), &self.limits, limits)
-			.map_err(dispatch_to_evm::<T>)?;
-		save(self)
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		<Pallet<T>>::update_limits(&caller, self, limits).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get contract address.
@@ -377,7 +483,7 @@ where
 		caller: caller,
 		new_admin: EthCrossAccount,
 	) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = new_admin.into_sub_cross_account::<T>()?;
@@ -392,7 +498,7 @@ where
 		caller: caller,
 		admin: EthCrossAccount,
 	) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = admin.into_sub_cross_account::<T>()?;
@@ -404,7 +510,7 @@ where
 	/// @param newAdmin Address of the added administrator.
 	#[solidity(hide)]
 	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_admin = T::CrossAccountId::from_eth(new_admin);
@@ -417,7 +523,7 @@ where
 	/// @param admin Address of the removed administrator.
 	#[solidity(hide)]
 	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
-		self.consume_store_writes(2)?;
+		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let admin = T::CrossAccountId::from_eth(admin);
@@ -432,7 +538,7 @@ where
 	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let mut permissions = self.collection.permissions.clone();
 		let mut nesting = permissions.nesting().clone();
@@ -440,14 +546,7 @@ where
 		nesting.restricted = None;
 		permissions.nesting = Some(nesting);
 
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Toggle accessibility of collection nesting.
@@ -466,7 +565,7 @@ where
 		if collections.is_empty() {
 			return Err("no addresses provided".into());
 		}
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 
 		let mut permissions = self.collection.permissions.clone();
 		match enable {
@@ -491,16 +590,32 @@ where
 			}
 		};
 
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
+	/// Returns nesting for a collection
+	#[solidity(rename_selector = "collectionNestingRestrictedCollectionIds")]
+	fn collection_nesting_restricted_ids(&self) -> Result<(bool, Vec<uint256>)> {
+		let nesting = self.collection.permissions.nesting();
+
+		Ok((
+			nesting.token_owner,
+			nesting
+				.restricted
+				.clone()
+				.map(|b| b.0.into_inner().iter().map(|id| id.0.into()).collect())
+				.unwrap_or_default(),
+		))
+	}
+
+	/// Returns permissions for a collection
+	fn collection_nesting_permissions(&self) -> Result<Vec<(EvmPermissions, bool)>> {
+		let nesting = self.collection.permissions.nesting();
+		Ok(vec![
+			(EvmPermissions::CollectionAdmin, nesting.collection_admin),
+			(EvmPermissions::TokenOwner, nesting.token_owner),
+		])
+	}
 	/// Set the collection access method.
 	/// @param mode Access mode
 	/// 	0 for Normal
@@ -508,7 +623,7 @@ where
 	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 		let permissions = CollectionPermissions {
 			access: Some(match mode {
 				0 => AccessMode::Normal,
@@ -517,14 +632,7 @@ where
 			}),
 			..Default::default()
 		};
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Checks that user allowed to operate with collection.
@@ -599,19 +707,12 @@ where
 	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		check_is_owner_or_admin(caller, self)?;
+		let caller = T::CrossAccountId::from_eth(caller);
 		let permissions = CollectionPermissions {
 			mint_mode: Some(mode),
 			..Default::default()
 		};
-		self.collection.permissions = <Pallet<T>>::clamp_permissions(
-			self.collection.mode.clone(),
-			&self.collection.permissions,
-			permissions,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
-
-		save(self)
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Check that account is the owner or admin of the collection
@@ -665,7 +766,7 @@ where
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = T::CrossAccountId::from_eth(new_owner);
-		self.set_owner_internal(caller, new_owner)
+		self.change_owner(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -693,7 +794,7 @@ where
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let new_owner = new_owner.into_sub_cross_account::<T>()?;
-		self.set_owner_internal(caller, new_owner)
+		self.change_owner(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
 }

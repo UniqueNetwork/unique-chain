@@ -174,6 +174,19 @@ where
 			.collect::<string>())
 	}
 
+	#[weight(<SelfWeightOf<T>>::create_item())]
+	fn mint_cross(&mut self, caller: caller, to: EthCrossAccount, amount: uint256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
 	#[weight(<SelfWeightOf<T>>::approve())]
 	fn approve_cross(
 		&mut self,

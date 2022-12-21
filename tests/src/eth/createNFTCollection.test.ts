@@ -17,6 +17,7 @@
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itEth, usingEthPlaygrounds} from './util';
+import { CollectionLimits } from './util/playgrounds/types';
 
 
 describe('Create NFT collection from EVM', () => {
@@ -86,7 +87,7 @@ describe('Create NFT collection from EVM', () => {
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -109,7 +110,7 @@ describe('Create NFT collection from EVM', () => {
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
@@ -118,56 +119,6 @@ describe('Create NFT collection from EVM', () => {
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
     
     expect(await sponsorCollection.methods.description().call()).to.deep.equal(description);
-  });
-
-  itEth('Set limits', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'FLO');
-    const limits = {
-      accountTokenOwnershipLimit: 1000,
-      sponsoredDataSize: 1024,
-      sponsoredDataRateLimit: 30,
-      tokenLimit: 1000000,
-      sponsorTransferTimeout: 6,
-      sponsorApproveTimeout: 6,
-      ownerCanTransfer: 0,
-      ownerCanDestroy: 0,
-      transfersEnabled: 0,
-    };
-    
-    const expectedLimits = {
-      accountTokenOwnershipLimit: 1000,
-      sponsoredDataSize: 1024,
-      sponsoredDataRateLimit: 30,
-      tokenLimit: 1000000,
-      sponsorTransferTimeout: 6,
-      sponsorApproveTimeout: 6,
-      ownerCanTransfer: false,
-      ownerCanDestroy: false,
-      transfersEnabled: false,
-    };
-
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await collection.methods.setCollectionLimit('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
-    await collection.methods.setCollectionLimit('sponsoredDataSize', limits.sponsoredDataSize).send();
-    await collection.methods.setCollectionLimit('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
-    await collection.methods.setCollectionLimit('tokenLimit', limits.tokenLimit).send();
-    await collection.methods.setCollectionLimit('sponsorTransferTimeout', limits.sponsorTransferTimeout).send();
-    await collection.methods.setCollectionLimit('sponsorApproveTimeout', limits.sponsorApproveTimeout).send();
-    await collection.methods.setCollectionLimit('ownerCanTransfer', limits.ownerCanTransfer).send();
-    await collection.methods.setCollectionLimit('ownerCanDestroy', limits.ownerCanDestroy).send();
-    await collection.methods.setCollectionLimit('transfersEnabled', limits.transfersEnabled).send();
-
-    const data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.limits.accountTokenOwnershipLimit).to.be.eq(expectedLimits.accountTokenOwnershipLimit);
-    expect(data.raw.limits.sponsoredDataSize).to.be.eq(expectedLimits.sponsoredDataSize);
-    expect(data.raw.limits.sponsoredDataRateLimit.blocks).to.be.eq(expectedLimits.sponsoredDataRateLimit);
-    expect(data.raw.limits.tokenLimit).to.be.eq(expectedLimits.tokenLimit);
-    expect(data.raw.limits.sponsorTransferTimeout).to.be.eq(expectedLimits.sponsorTransferTimeout);
-    expect(data.raw.limits.sponsorApproveTimeout).to.be.eq(expectedLimits.sponsorApproveTimeout);
-    expect(data.raw.limits.ownerCanTransfer).to.be.eq(expectedLimits.ownerCanTransfer);
-    expect(data.raw.limits.ownerCanDestroy).to.be.eq(expectedLimits.ownerCanDestroy);
-    expect(data.raw.limits.transfersEnabled).to.be.eq(expectedLimits.transfersEnabled);
   });
 
   itEth('Collection address exist', async ({helper}) => {
@@ -253,11 +204,11 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
@@ -278,32 +229,13 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('caller is not set as sponsor');
+        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
       await expect(malfeasantCollection.methods
-        .setCollectionLimit('account_token_ownership_limit', '1000')
+        .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
     }
-  });
-
-  itEth('(!negative test!) Set limits', async ({helper}) => {
-    const invalidLimits = {
-      accountTokenOwnershipLimit: BigInt(Number.MAX_SAFE_INTEGER),
-      transfersEnabled: 3,
-    };
-
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
-    await expect(collectionEvm.methods
-      .setCollectionLimit(Object.keys(invalidLimits)[0], invalidLimits.accountTokenOwnershipLimit)
-      .call()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
-    
-    await expect(collectionEvm.methods
-      .setCollectionLimit(Object.keys(invalidLimits)[1], invalidLimits.transfersEnabled)
-      .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
   });
 
   itEth('destroyCollection', async ({helper}) => {
