@@ -170,7 +170,8 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		let properties = properties
 			.into_iter()
-			.map(|pallet_common::eth::Property { key, value }| {
+			.map(|property| {
+				let (key, value) = property.take_key_value();
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -796,7 +797,7 @@ where
 			let key = string::from_utf8(p.key.to_vec())
 				.map_err(|e| Error::Revert(alloc::format!("{}", e)))?;
 			let value = bytes(p.value.to_vec());
-			Ok(pallet_common::eth::Property { key, value })
+			Ok(pallet_common::eth::Property::new(key, value))
 		})
 		.collect::<Result<Vec<_>>>()
 	}
@@ -1054,7 +1055,8 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|pallet_common::eth::Property { key, value }| {
+			.map(|property| {
+				let (key, value) = property.take_key_value();
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;

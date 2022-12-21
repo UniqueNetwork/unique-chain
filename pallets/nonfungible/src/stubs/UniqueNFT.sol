@@ -129,9 +129,7 @@ contract TokenProperties is Dummy, ERC165 {
 
 /// @dev Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
-	/// @dev Property key.
 	string key;
-	/// @dev Property value.
 	bytes value;
 }
 

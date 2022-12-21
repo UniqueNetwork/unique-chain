@@ -171,10 +171,18 @@ impl CrossAccount {
 /// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 #[derive(Debug, Default, AbiCoder)]
 pub struct Property {
-	/// Property key.
-	pub key: evm_coder::types::string,
-	/// Property value.
-	pub value: evm_coder::types::bytes,
+	key: evm_coder::types::string,
+	value: evm_coder::types::bytes,
+}
+
+impl Property {
+	pub fn new(key: evm_coder::types::string, value: evm_coder::types::bytes) -> Self {
+		Self { key, value }
+	}
+
+	pub fn take_key_value(self) -> (evm_coder::types::string, evm_coder::types::bytes) {
+		(self.key, self.value)
+	}
 }
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.

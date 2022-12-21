@@ -33,9 +33,7 @@ use up_data_structs::{
 use alloc::format;
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{CollectionLimitField as EvmCollectionLimits, self},
-	weights::WeightInfo,
+	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf, eth, weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.
@@ -125,7 +123,8 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|eth::Property { key, value }| {
+			.map(|property| {
+				let (key, value) = property.take_key_value();
 				let key = <Vec<u8>>::from(key)
 					.try_into()
 					.map_err(|_| "key too large")?;
@@ -215,7 +214,7 @@ where
 				let key =
 					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
 				let value = bytes(p.value.to_vec());
-				Ok(eth::Property { key, value })
+				Ok(eth::Property::new(key, value))
 			})
 			.collect::<Result<Vec<_>>>()?;
 		Ok(properties)
@@ -302,11 +301,11 @@ where
 
 		Ok(vec![
 			eth::CollectionLimit::from_opt_int(
-				EvmCollectionLimits::AccountTokenOwnership,
+				eth::CollectionLimitField::AccountTokenOwnership,
 				limits.account_token_ownership_limit,
 			),
 			eth::CollectionLimit::from_opt_int(
-				EvmCollectionLimits::SponsoredDataSize,
+				eth::CollectionLimitField::SponsoredDataSize,
 				limits.sponsored_data_size,
 			),
 			limits
@@ -314,7 +313,7 @@ where
 				.and_then(|limit| {
 					if let SponsoringRateLimit::Blocks(blocks) = limit {
 						Some(eth::CollectionLimit::from_int(
-							EvmCollectionLimits::SponsoredDataRateLimit,
+							eth::CollectionLimitField::SponsoredDataRateLimit,
 							blocks,
 						))
 					} else {
@@ -322,28 +321,31 @@ where
 					}
 				})
 				.unwrap_or(eth::CollectionLimit::from_int(
-					EvmCollectionLimits::SponsoredDataRateLimit,
+					eth::CollectionLimitField::SponsoredDataRateLimit,
 					Default::default(),
 				)),
-			eth::CollectionLimit::from_opt_int(EvmCollectionLimits::TokenLimit, limits.token_limit),
 			eth::CollectionLimit::from_opt_int(
-				EvmCollectionLimits::SponsorTransferTimeout,
+				eth::CollectionLimitField::TokenLimit,
+				limits.token_limit,
+			),
+			eth::CollectionLimit::from_opt_int(
+				eth::CollectionLimitField::SponsorTransferTimeout,
 				limits.sponsor_transfer_timeout,
 			),
 			eth::CollectionLimit::from_opt_int(
-				EvmCollectionLimits::SponsorApproveTimeout,
+				eth::CollectionLimitField::SponsorApproveTimeout,
 				limits.sponsor_approve_timeout,
 			),
 			eth::CollectionLimit::from_opt_bool(
-				EvmCollectionLimits::OwnerCanTransfer,
+				eth::CollectionLimitField::OwnerCanTransfer,
 				limits.owner_can_transfer,
 			),
 			eth::CollectionLimit::from_opt_bool(
-				EvmCollectionLimits::OwnerCanDestroy,
+				eth::CollectionLimitField::OwnerCanDestroy,
 				limits.owner_can_destroy,
 			),
 			eth::CollectionLimit::from_opt_bool(
-				EvmCollectionLimits::TransferEnabled,
+				eth::CollectionLimitField::TransferEnabled,
 				limits.transfers_enabled,
 			),
 		])
