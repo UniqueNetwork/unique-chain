@@ -150,9 +150,11 @@ describe('Refungible: Plain calls', () => {
       const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
 
       const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
+      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {
+        tokenOwner: false,
         collectionAdmin: true,
-        mutable: true}}; });
+        mutable: false}};
+      });
     
     
       const collection = await helper.rft.mintCollection(minter, {

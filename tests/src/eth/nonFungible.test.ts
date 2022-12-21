@@ -194,9 +194,9 @@ describe('NFT: Plain calls', () => {
         .map(p => {
           return {
             key: p.key, permission: {
-              tokenOwner: true,
+              tokenOwner: false,
               collectionAdmin: true,
-              mutable: true,
+              mutable: false,
             },
           };
         });
@@ -482,6 +482,7 @@ describe('NFT: Plain calls', () => {
     expect(await token2.doesExist()).to.be.false;
   });
 
+  // TODO combine all approve tests in one place
   itEth('Can perform approveCross()', async ({helper}) => {
     // arrange: create accounts
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
@@ -528,6 +529,17 @@ describe('NFT: Plain calls', () => {
     // Ethereum address can transferFromCross approved tokens:
     await collectionEvm.methods.transferFromCross(ownerCross, receiverCrossEth, token2.tokenId).send({from: receiverEth});
     expect(await helper.nft.getTokenOwner(collection.collectionId, token2.tokenId)).to.deep.eq({Ethereum: receiverEth.toLowerCase()});
+  });
+
+  itEth('Non-owner and non admin cannot approveCross', async ({helper}) => {
+    const nonOwner = await helper.eth.createAccountWithBalance(donor);
+    const nonOwnerCross = helper.ethCrossAccount.fromAddress(nonOwner);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const collectionEvm = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const token = await collection.mintToken(minter, {Ethereum: owner});
+
+    await expect(collectionEvm.methods.approveCross(nonOwnerCross, token.tokenId).call({from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
   });
 
   itEth('Can reaffirm approved address', async ({helper}) => {

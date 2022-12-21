@@ -186,6 +186,68 @@ describe('Fungible: Plain calls', () => {
     }
   });
 
+  itEth('Can perform approveCross()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = helper.eth.createAccount();
+    const spenderSub = (await helper.arrange.createAccounts([1n], donor))[0];
+    const spenderCrossEth = helper.ethCrossAccount.fromAddress(spender);
+    const spenderCrossSub = helper.ethCrossAccount.fromKeyringPair(spenderSub);
+    
+
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, 200n, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    {
+      const result = await contract.methods.approveCross(spenderCrossEth, 100).send({from: owner});
+      const event = result.events.Approval;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.owner).to.be.equal(owner);
+      expect(event.returnValues.spender).to.be.equal(spender);
+      expect(event.returnValues.value).to.be.equal('100');
+    }
+
+    {
+      const allowance = await contract.methods.allowance(owner, spender).call();
+      expect(+allowance).to.equal(100);
+    }
+    
+    
+    {
+      const result = await contract.methods.approveCross(spenderCrossSub, 100).send({from: owner});
+      const event = result.events.Approval;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.owner).to.be.equal(owner);
+      expect(event.returnValues.spender).to.be.equal(helper.address.substrateToEth(spenderSub.address));
+      expect(event.returnValues.value).to.be.equal('100');
+    }
+
+    {
+      const allowance = await collection.getApprovedTokens({Ethereum: owner}, {Substrate: spenderSub.address});
+      expect(allowance).to.equal(100n);
+    }
+  
+    {
+      //TO-DO expect with future allowanceCross(owner, spenderCrossEth).call()
+    }
+  });
+
+  itEth('Non-owner and non admin cannot approveCross', async ({helper}) => {
+    const nonOwner = await helper.eth.createAccountWithBalance(donor);
+    const nonOwnerCross = helper.ethCrossAccount.fromAddress(nonOwner);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.ft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    await collection.mint(alice, 100n, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    await expect(collectionEvm.methods.approveCross(nonOwnerCross, 20).call({from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
+  });
+
+
   itEth('Can perform burnFromCross()', async ({helper}) => {
     const sender = await helper.eth.createAccountWithBalance(donor, 100n);
 

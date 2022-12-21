@@ -207,7 +207,20 @@ describe('Refungible: Plain calls', () => {
       //TO-DO expect with future allowanceCross(owner, spenderCrossEth).call()
     }
   });
-  
+
+  itEth('Non-owner and non admin cannot approveCross', async ({helper}) => {
+    const nonOwner = await helper.eth.createAccountWithBalance(donor);
+    const nonOwnerCross = helper.ethCrossAccount.fromAddress(nonOwner);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.rft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    const token = await collection.mintToken(alice, 100n, {Ethereum: owner});
+
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const tokenEvm = helper.ethNativeContract.rftToken(tokenAddress, owner);
+
+    await expect(tokenEvm.methods.approveCross(nonOwnerCross, 20).call({from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
+  });
+
   [
     'transferFrom',
     'transferFromCross',
