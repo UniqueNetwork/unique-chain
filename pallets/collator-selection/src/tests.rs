@@ -73,10 +73,7 @@ fn it_should_add_invulnerables() {
 
 		// cannot set invulnerables without associated validator keys
 		assert_noop!(
-			CollatorSelection::add_invulnerable(
-				RuntimeOrigin::signed(RootAccount::get()),
-				7
-			),
+			CollatorSelection::add_invulnerable(RuntimeOrigin::signed(RootAccount::get()), 7),
 			Error::<Test>::ValidatorNotRegistered
 		);
 	});
@@ -108,11 +105,8 @@ fn it_should_remove_invulnerables() {
 
 		// cannot remove an invulnerable if there would be 0 invulnerables.
 		assert_noop!(
-			CollatorSelection::add_invulnerable(
-				RuntimeOrigin::signed(RootAccount::get()), 
-				1
-			),
-			Error::<Test>::NotInvulnerable
+			CollatorSelection::remove_invulnerable(RuntimeOrigin::signed(RootAccount::get()), 1),
+			Error::<Test>::TooFewInvulnerables
 		);
 	});
 }

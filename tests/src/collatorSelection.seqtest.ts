@@ -64,6 +64,10 @@ describe('Integration Test: Collator Selection', () => {
     
     before(async function() {  
       await usingPlaygrounds(async (helper, privateKey) => {
+        // todo:collator see again if blocks start to be finalized in dev mode 
+        // Skip the collator block production in dev mode, since the blocks are sealed automatically.
+        if (await helper.arrange.isDevNode()) this.skip();
+
         alice = await privateKey('//Alice');
         bob = await privateKey('//Bob');
         charlie = await privateKey('//Charlie');
@@ -141,7 +145,7 @@ describe('Integration Test: Collator Selection', () => {
   
     after(async () => {
       await usingPlaygrounds(async (helper) => {
-        if (helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
+        if (await helper.arrange.isDevNode()) return;
 
         let nonce = await helper.chain.getNonce(superuser.address);
         await Promise.all([
@@ -161,7 +165,7 @@ describe('Integration Test: Collator Selection', () => {
   // todo:collator make sure that there is enough session time for a set of tests
   // 28 non-functioning collators, teehee.
 
-  describe.skip('Addition and removal of invulnerables', () => {
+  describe('Addition and removal of invulnerables', () => {
     before(async function() {
       await resetInvulnerables();
     });
@@ -261,7 +265,14 @@ describe('Integration Test: Collator Selection', () => {
         expect(await helper.collatorSelection.getInvulnerables()).to.have.all.members(invulnerables);
       });
     });
+  
+    after(async () => {
+      // eslint-disable-next-line require-await
+      await usingPlaygrounds(async (helper) => {
+        if (helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
     
-    // todo:collator after
+        // todo:collator after
+      });
+    });
   });
 });
