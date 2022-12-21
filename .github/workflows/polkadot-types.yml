@@ -29,12 +29,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - network: sapphire
-            usage: "--sapphire"
-          - network: "opal"
-            usage: ""
-          - network: "quartz"
-            usage: ""
+          # - network: sapphire
+          #   usage: "--sapphire"
+          # - network: "opal"
+          #   usage: ""
+          # - network: "quartz"
+          #   usage: ""
           - network: "unique"
             usage: ""
 
@@ -81,13 +81,13 @@ jobs:
         env:
           RPC_URL: http://127.0.0.1:9933/
 
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+      # - name: Stop running containers
+      #   if: always()                   # run this step always
+      #   run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker builder prune -f -a
-          docker system prune -f
-          docker image prune -f -a
+      # - name: Remove builder cache
+      #   if: always()                   # run this step always
+      #   run: |
+      #     docker builder prune -f -a
+      #     docker system prune -f
+      #     docker image prune -f -a
