@@ -613,68 +613,6 @@ describe('App promotion', () => {
   
       expect(totalBalanceBefore).to.be.equal(totalBalanceAfter);
     });
-
-    itSub('e2e: should not be credited for vested balance', async ({helper}) => {
-      const [staker, sender] = [accounts.pop()!, accounts.pop()!];
-      const VESTED_TRANSFER = 300n * nominal;
-      const STAKE = 100n * nominal;
-      // Arrange: Staker has frozen vested transfer of VESTED_TRANSFER tokens
-      await helper.balance.vestedTransfer(sender, staker.address, {start: 1000n, period: 10n, periodCount: 1n, perPeriod: VESTED_TRANSFER});
-      // Arrange: Staker has frozen stake of 100 tokens
-      await helper.staking.stake(staker, STAKE);
-      let [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-
-      // Assert: Staker's full balance inludes vested transfer and staked amount
-      const stakerBalanceBefore = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalanceBefore).to.contain({miscFrozen: VESTED_TRANSFER + STAKE, feeFrozen: VESTED_TRANSFER + STAKE, reserved: 0n});
-      expect(stakerBalanceBefore.free / nominal).to.eq(1299n);
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: STAKE, reasons: 'All'}, {id: 'ormlvest', amount: VESTED_TRANSFER, reasons: 'All'}]);
-
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
-      await helper.admin.payoutStakers(palletAdmin, 100);
-      // Assert: Staker got reward only for {STAKE} staked tokens
-      [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      const income = calculateIncome(STAKE);
-      expect(stake.amount).to.be.equal(income);
-      // Assert: Frozen balance increased on {income} amount
-      const stakerBalanceAfterReward = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalanceAfterReward).to.contain({miscFrozen: VESTED_TRANSFER + income, feeFrozen: VESTED_TRANSFER + income, reserved: 0n});
-      expect(stakerBalanceAfterReward.free > stakerBalanceBefore.free).to.be.true;
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: income, reasons: 'All'}, {id: 'ormlvest', amount: VESTED_TRANSFER, reasons: 'All'}]);
-
-      // Act: Staker can claim:
-      await helper.balance.claim(staker);
-      // Assert: Staker's frozen balance reduced on {VESTED_TRANSFER} amount
-      const stakerBalanceAfterClaim = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalanceAfterClaim).to.contain({miscFrozen: income, feeFrozen: income, reserved: 0n});
-      expect(stakerBalanceAfterClaim.free).to.eq(stakerBalanceAfterReward.free);
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: income, reasons: 'All'}]);
-
-      // Act: Staker receives another vested transfer
-      await helper.balance.vestedTransfer(sender, staker.address, {start: 1000n, period: 10n, periodCount: 1n, perPeriod: VESTED_TRANSFER});
-      // Assert: vested transfer included in balance
-      const stakerBalanceAfterSecondVestedTransfer = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalanceAfterSecondVestedTransfer).to.contain({miscFrozen: VESTED_TRANSFER + income, feeFrozen: VESTED_TRANSFER + income, reserved: 0n});
-      expect(stakerBalanceAfterSecondVestedTransfer.free / nominal).to.eq(1599n);
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: income, reasons: 'All'}, {id: 'ormlvest', amount: VESTED_TRANSFER, reasons: 'All'}]);
-
-      // Act: Staker can unstake
-      await helper.staking.unstake(staker);
-      // Assert: Staker's frozen balance reduced on {income} amount
-      const stakerBalanceAfterUnstake = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalanceAfterUnstake).to.contain({miscFrozen: VESTED_TRANSFER, feeFrozen: VESTED_TRANSFER, reserved: income});
-      expect(stakerBalanceAfterUnstake.free / nominal).to.eq(1599n);
-      // FIXME: should remove app staking instantly or after unlocking period ends?
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: income, reasons: 'All'}, {id: 'ormlvest', amount: VESTED_TRANSFER, reasons: 'All'}]);
-      
-      // Assert: Balance after unstaking period ends
-      const [pendingUnstake] = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});  
-      await helper.wait.forParachainBlockNumber(pendingUnstake.block);
-      const stakerBalanceAfterUnstakeFinished = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalanceAfterUnstakeFinished).to.contain({miscFrozen: VESTED_TRANSFER, feeFrozen: VESTED_TRANSFER, reserved: 0n});
-      expect(stakerBalanceAfterUnstakeFinished.free > stakerBalanceAfterUnstake.free).to.be.true;
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'ormlvest', amount: VESTED_TRANSFER, reasons: 'All'}]);
-    });
     
     itSub('should bring compound interest', async ({helper}) => {
       const staker = accounts.pop()!;
