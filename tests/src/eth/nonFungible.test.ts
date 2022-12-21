@@ -175,55 +175,82 @@ describe('NFT: Plain calls', () => {
     // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
   });
   
-  itEth('Can perform mintCross()', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const receiverCross = helper.ethCrossAccount.fromKeyringPair(bob);
-    const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-    const permissions: ITokenPropertyPermission[] = properties
-      .map(p => {
-        return {
-          key: p.key, permission: {
-            tokenOwner: true,
-            collectionAdmin: true,
-            mutable: true,
-          },
-        };
+  // TODO combine all minting tests in one place
+  [
+    'substrate' as const,
+    'ethereum' as const,
+  ].map(testCase => {
+    itEth(`Can perform mintCross() for ${testCase} address`, async ({helper}) => {
+      const collectionAdmin = await helper.eth.createAccountWithBalance(donor);
+
+      const receiverEth = helper.eth.createAccount();
+      const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
+      const receiverSub = bob;
+      const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
+
+      // const receiverCross = helper.ethCrossAccount.fromKeyringPair(bob);
+      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
+      const permissions: ITokenPropertyPermission[] = properties
+        .map(p => {
+          return {
+            key: p.key, permission: {
+              tokenOwner: true,
+              collectionAdmin: true,
+              mutable: true,
+            },
+          };
+        });
+    
+    
+      const collection = await helper.nft.mintCollection(minter, {
+        tokenPrefix: 'ethp',
+        tokenPropertyPermissions: permissions,
       });
+      await collection.addAdmin(minter, {Ethereum: collectionAdmin});
     
+      const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', collectionAdmin, true);
+      let expectedTokenId = await contract.methods.nextTokenId().call();
+      let result = await contract.methods.mintCross(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, []).send();
+      let tokenId = result.events.Transfer.returnValues.tokenId;
+      expect(tokenId).to.be.equal(expectedTokenId);
+
+      let event = result.events.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
+      expect(event.returnValues.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
+      expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
     
-    const collection = await helper.nft.mintCollection(minter, {
-      tokenPrefix: 'ethp',
-      tokenPropertyPermissions: permissions,
+      expectedTokenId = await contract.methods.nextTokenId().call();
+      result = await contract.methods.mintCross(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, properties).send();
+      event = result.events.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
+      expect(event.returnValues.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
+      expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
+    
+      tokenId = result.events.Transfer.returnValues.tokenId;
+    
+      expect(tokenId).to.be.equal(expectedTokenId);
+
+      expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
+        .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
+      
+      expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
+        .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.toLowerCase()} : {Substrate: receiverSub.address});
     });
-    await collection.addAdmin(minter, {Ethereum: caller});
-    
+  });
+
+  itEth('Non-owner and non admin cannot mintCross', async ({helper}) => {
+    const nonOwner = await helper.eth.createAccountWithBalance(donor);
+    const nonOwnerCross = helper.ethCrossAccount.fromAddress(nonOwner);
+
+    const collection = await helper.nft.mintCollection(minter);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', caller, true);
-    let expectedTokenId = await contract.methods.nextTokenId().call();
-    let result = await contract.methods.mintCross(receiverCross, []).send();
-    let tokenId = result.events.Transfer.returnValues.tokenId;
-    expect(tokenId).to.be.equal(expectedTokenId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    let event = result.events.Transfer;
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(bob.address));
-    expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
-    
-    expectedTokenId = await contract.methods.nextTokenId().call();
-    result = await contract.methods.mintCross(receiverCross, properties).send();
-    event = result.events.Transfer;
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(bob.address));
-    expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
-    
-    tokenId = result.events.Transfer.returnValues.tokenId;
-    
-    expect(tokenId).to.be.equal(expectedTokenId);
-
-    expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
-      .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
+    await expect(collectionEvm.methods.mintCross(nonOwnerCross, []).call({from: nonOwner}))
+      .to.be.rejectedWith('PublicMintingNotAllowed');
   });
   
   //TODO: CORE-302 add eth methods
