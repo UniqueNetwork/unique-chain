@@ -555,7 +555,7 @@ pub mod pallet {
 
 						T::Currency::resolve_creating(&T::TreasuryAccountId::get(), imbalance);
 
-						// Self::deposit_event(Event::CandidateSlashed(who.clone()));
+					// Self::deposit_event(Event::CandidateSlashed(who.clone()));
 					} else {
 						//T::Currency::unreserve(who, deposit);
 						deposit_returned = deposit;

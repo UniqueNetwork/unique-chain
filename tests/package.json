@@ -85,7 +85,7 @@
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
     "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
-    "testCollatorSelection": "mocha --timeout 9999999 -r ts-node/register ./**/collatorSelection.test.ts",
+    "testCollatorSelection": "mocha --timeout 9999999 -r ts-node/register ./**/collatorSelection.*test.ts",
     "testEnableDisableTransfers": "mocha --timeout 9999999 -r ts-node/register ./**/enableDisableTransfer.test.ts",
     "testLimits": "mocha --timeout 9999999 -r ts-node/register ./**/limits.test.ts",
     "testEthCreateNFTCollection": "mocha --timeout 9999999 -r ts-node/register ./**/eth/createNFTCollection.test.ts",

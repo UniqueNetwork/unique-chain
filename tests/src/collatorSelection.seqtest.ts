@@ -47,33 +47,28 @@ async function resetInvulnerables() {
 describe('Integration Test: Collator Selection', () => {
   let superuser: IKeyringPair;
 
-  // These are the default invulnerables, and should return to be invulnerables after this suite.
-  let alice: IKeyringPair;
-  let bob: IKeyringPair;
-
-  let charlie: IKeyringPair;
-  let dave: IKeyringPair;
-  //let eve: IKeyringPair;
-
   before(async function() {  
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
-
-      //todo:collator
-      //const donor = await privateKey({filename: __filename});
-      //[charlie, dave] = await helper.arrange.createAccounts([100n, 100n], donor);
-      alice = await privateKey('//Alice');
-      bob = await privateKey('//Bob');
-      charlie = await privateKey('//Charlie');
-      dave = await privateKey('//Dave');
-
       superuser = await privateKey('//Alice');
     });
   });
 
   describe('Dynamic shuffling of collators', () => {
+    // These two are the default invulnerables, and should return to be invulnerables after this suite.
+    let alice: IKeyringPair;
+    let bob: IKeyringPair;
+
+    let charlie: IKeyringPair;
+    let dave: IKeyringPair;
+    
     before(async function() {  
-      await usingPlaygrounds(async (helper) => {
+      await usingPlaygrounds(async (helper, privateKey) => {
+        alice = await privateKey('//Alice');
+        bob = await privateKey('//Bob');
+        charlie = await privateKey('//Charlie');
+        dave = await privateKey('//Dave');
+
         expect((await helper.collatorSelection.setOwnKeys(charlie))
           .status.toLowerCase()).to.be.equal('success');
         expect((await helper.collatorSelection.setOwnKeys(dave))
@@ -81,17 +76,18 @@ describe('Integration Test: Collator Selection', () => {
   
         // todo:collator check necessity + add RPC for invulnerables / just improve in general
         // validators = await helper.callRpc('api.query.session.validators');
-        const invulnerables = await helper.callRpc('api.query.collatorSelection.invulnerables');
+        const invulnerables = await helper.collatorSelection.getInvulnerables();
         if (!invulnerables.includes(alice.address) || !invulnerables.includes(bob.address) || invulnerables.length != 2) {
           console.warn('Alice and Bob are not the invulnerables! Reinstating them back. ' 
             + 'Current invulnerables\' size: ' + invulnerables.length);
           
+          let nonce = await helper.chain.getNonce(superuser.address);
           await Promise.all([
-            helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [alice.address], true, {nonce: 0}),
-            helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [bob.address], true, {nonce: 1}),
+            helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [alice.address], true, {nonce: nonce++}),
+            helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [bob.address], true, {nonce: nonce++}),
           ]);
   
-          let nonce = 0;
+          nonce = await helper.chain.getNonce(superuser.address);
           await Promise.all(invulnerables.map((invulnerable: any) => {
             if (invulnerable == alice.address || invulnerable == bob.address) return new Promise((res) => res);
             return helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerable], true, {nonce: nonce++});
@@ -101,17 +97,19 @@ describe('Integration Test: Collator Selection', () => {
     });
   
     itSub('Change invulnerables and make sure they start producing blocks', async ({helper}) => {
+      let nonce = await helper.chain.getNonce(superuser.address);
       await expect(Promise.all([
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [charlie.address], true, {nonce: 0}),
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [dave.address], true, {nonce: 1}),
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [charlie.address], true, {nonce: nonce++}),
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [dave.address], true, {nonce: nonce++}),
       ])).to.be.fulfilled;
   
+      nonce = await helper.chain.getNonce(superuser.address);
       await expect(Promise.all([
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [alice.address], true, {nonce: 0}),
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [bob.address], true, {nonce: 1}),
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [alice.address], true, {nonce: nonce++}),
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [bob.address], true, {nonce: nonce++}),
       ])).to.be.fulfilled;
   
-      const newInvulnerables = await helper.callRpc('api.query.collatorSelection.invulnerables');
+      const newInvulnerables = await helper.collatorSelection.getInvulnerables();
       expect(newInvulnerables).to.contain(charlie.address).and.contain(dave.address).and.be.length(2);
   
       const expectedSessionIndex = (await helper.callRpc('api.query.session.currentIndex')).toNumber() + 2;
@@ -122,13 +120,8 @@ describe('Integration Test: Collator Selection', () => {
       while (currentSessionIndex < expectedSessionIndex) {
         // eslint-disable-next-line no-async-promise-executor
         currentSessionIndex = await expect(helper.wait.withTimeout(new Promise(async (resolve) => {
-          //todo:collator
-          console.log('starting wait...');
-          console.time('ein');
           await helper.wait.newBlocks(1);
-          console.timeLog('ein');
           const res = (await helper.callRpc('api.query.session.currentIndex')).toNumber();
-          console.timeEnd('ein');
           resolve(res);
         }), 24000, 'The chain has stopped producing blocks!')).to.be.fulfilled;
       }
@@ -150,14 +143,16 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper) => {
         if (helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
 
+        let nonce = await helper.chain.getNonce(superuser.address);
         await Promise.all([
-          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [alice.address], true, {nonce: 0}),
-          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [bob.address], true, {nonce: 1}),
+          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [alice.address], true, {nonce: nonce++}),
+          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [bob.address], true, {nonce: nonce++}),
         ]);
   
+        nonce = await helper.chain.getNonce(superuser.address);
         await Promise.all([
-          await helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [charlie.address], true, {nonce: 0}),
-          await helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [dave.address], true, {nonce: 1}),
+          await helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [charlie.address], true, {nonce: nonce++}),
+          await helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [dave.address], true, {nonce: nonce++}),
         ]);
       });
     });
@@ -166,7 +161,7 @@ describe('Integration Test: Collator Selection', () => {
   // todo:collator make sure that there is enough session time for a set of tests
   // 28 non-functioning collators, teehee.
 
-  describe('Addition and removal of invulnerables', () => {
+  describe.skip('Addition and removal of invulnerables', () => {
     before(async function() {
       await resetInvulnerables();
     });
@@ -248,11 +243,11 @@ describe('Integration Test: Collator Selection', () => {
       });
 
       itSub('Forbids a non-sudo to add an invulnerable', async ({helper}) => {
-        const [account] = await helper.arrange.createAccounts([10n], bob);
+        const [account] = await helper.arrange.createAccounts([10n], superuser);
         const invulnerables = await helper.collatorSelection.getInvulnerables();
 
         await helper.collatorSelection.setOwnKeys(account);
-        await expect(helper.collatorSelection.addInvulnerable(bob, account.address))
+        await expect(helper.collatorSelection.addInvulnerable(superuser, account.address))
           .to.be.rejectedWith(/BadOrigin/);
 
         const newInvulnerables = await helper.collatorSelection.getInvulnerables();

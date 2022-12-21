@@ -50,30 +50,69 @@ fn basic_setup_works() {
 	});
 }
 
+// todo:collator add more tests later
+
 #[test]
-fn it_should_set_invulnerables() {
+fn it_should_add_invulnerables() {
 	new_test_ext().execute_with(|| {
-		let new_set = vec![1, 2, 3, 4];
-		assert_ok!(CollatorSelection::set_invulnerables(
+		assert_ok!(CollatorSelection::add_invulnerable(
 			RuntimeOrigin::signed(RootAccount::get()),
-			new_set.clone()
+			1
 		));
-		assert_eq!(CollatorSelection::invulnerables(), new_set);
+		assert_ok!(CollatorSelection::add_invulnerable(
+			RuntimeOrigin::signed(RootAccount::get()),
+			2
+		));
+		assert_eq!(CollatorSelection::invulnerables(), vec![1, 2]);
 
 		// cannot set with non-root.
 		assert_noop!(
-			CollatorSelection::set_invulnerables(RuntimeOrigin::signed(1), new_set.clone()),
+			CollatorSelection::add_invulnerable(RuntimeOrigin::signed(1), 3),
 			BadOrigin
 		);
 
 		// cannot set invulnerables without associated validator keys
-		let invulnerables = vec![7];
 		assert_noop!(
-			CollatorSelection::set_invulnerables(
+			CollatorSelection::add_invulnerable(
 				RuntimeOrigin::signed(RootAccount::get()),
-				invulnerables.clone()
+				7
 			),
 			Error::<Test>::ValidatorNotRegistered
+		);
+	});
+}
+
+#[test]
+fn it_should_remove_invulnerables() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(CollatorSelection::add_invulnerable(
+			RuntimeOrigin::signed(RootAccount::get()),
+			1
+		));
+		assert_ok!(CollatorSelection::add_invulnerable(
+			RuntimeOrigin::signed(RootAccount::get()),
+			2
+		));
+
+		// cannot remove with non-root.
+		assert_noop!(
+			CollatorSelection::remove_invulnerable(RuntimeOrigin::signed(1), 3),
+			BadOrigin
+		);
+
+		assert_ok!(CollatorSelection::remove_invulnerable(
+			RuntimeOrigin::signed(RootAccount::get()),
+			2
+		));
+		assert_eq!(CollatorSelection::invulnerables(), vec![1]);
+
+		// cannot remove an invulnerable if there would be 0 invulnerables.
+		assert_noop!(
+			CollatorSelection::add_invulnerable(
+				RuntimeOrigin::signed(RootAccount::get()), 
+				1
+			),
+			Error::<Test>::NotInvulnerable
 		);
 	});
 }
@@ -404,6 +443,7 @@ fn kick_mechanism() {
 			deposit: 10,
 		};
 		assert_eq!(CollatorSelection::candidates(), vec![collator]);
+		assert_eq!(CollatorSelection::kick_threshold(), 1);
 		assert_eq!(CollatorSelection::last_authored_block(4), 20);
 		initialize_to_block(30);
 		// 3 gets kicked after 1 session delay
@@ -457,6 +497,7 @@ fn cannot_set_genesis_value_twice() {
 	let collator_selection = collator_selection::GenesisConfig::<Test> {
 		desired_candidates: 2,
 		candidacy_bond: 10,
+		kick_threshold: 1,
 		invulnerables,
 	};
 	// collator selection must be initialized before session.
