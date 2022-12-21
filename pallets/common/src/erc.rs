@@ -34,9 +34,7 @@ use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{
-		CollectionPermissions as EvmPermissions, CollectionLimitField as EvmCollectionLimits, self,
-	},
+	eth::{CollectionLimitField as EvmCollectionLimits, self},
 	weights::WeightInfo,
 };
 
@@ -490,10 +488,10 @@ where
 
 	/// Returns nesting for a collection
 	#[solidity(rename_selector = "collectionNestingRestrictedCollectionIds")]
-	fn collection_nesting_restricted_ids(&self) -> Result<(bool, Vec<uint256>)> {
+	fn collection_nesting_restricted_ids(&self) -> Result<eth::CollectionNesting> {
 		let nesting = self.collection.permissions.nesting();
 
-		Ok((
+		Ok(eth::CollectionNesting::new(
 			nesting.token_owner,
 			nesting
 				.restricted
@@ -504,11 +502,17 @@ where
 	}
 
 	/// Returns permissions for a collection
-	fn collection_nesting_permissions(&self) -> Result<Vec<(EvmPermissions, bool)>> {
+	fn collection_nesting_permissions(&self) -> Result<Vec<eth::CollectionNestingPermission>> {
 		let nesting = self.collection.permissions.nesting();
 		Ok(vec![
-			(EvmPermissions::CollectionAdmin, nesting.collection_admin),
-			(EvmPermissions::TokenOwner, nesting.token_owner),
+			eth::CollectionNestingPermission::new(
+				eth::CollectionPermissionField::CollectionAdmin,
+				nesting.collection_admin,
+			),
+			eth::CollectionNestingPermission::new(
+				eth::CollectionPermissionField::TokenOwner,
+				nesting.token_owner,
+			),
 		])
 	}
 	/// Set the collection access method.

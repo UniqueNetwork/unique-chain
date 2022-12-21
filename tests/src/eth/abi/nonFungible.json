@@ -272,13 +272,13 @@
       {
         "components": [
           {
-            "internalType": "enum CollectionPermissions",
-            "name": "field_0",
+            "internalType": "enum CollectionPermissionField",
+            "name": "field",
             "type": "uint8"
           },
-          { "internalType": "bool", "name": "field_1", "type": "bool" }
+          { "internalType": "bool", "name": "value", "type": "bool" }
         ],
-        "internalType": "struct Tuple48[]",
+        "internalType": "struct CollectionNestingPermission[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -292,14 +292,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "bool", "name": "field_0", "type": "bool" },
-          {
-            "internalType": "uint256[]",
-            "name": "field_1",
-            "type": "uint256[]"
-          }
+          { "internalType": "bool", "name": "token_owner", "type": "bool" },
+          { "internalType": "uint256[]", "name": "ids", "type": "uint256[]" }
         ],
-        "internalType": "struct Tuple45",
+        "internalType": "struct CollectionNesting",
         "name": "",
         "type": "tuple"
       }

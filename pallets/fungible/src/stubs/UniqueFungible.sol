@@ -257,19 +257,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple33 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (CollectionNesting memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple33(false, new uint256[](0));
+		return CollectionNesting(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() public view returns (Tuple36[] memory) {
+	function collectionNestingPermissions() public view returns (CollectionNestingPermission[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple36[](0);
+		return new CollectionNestingPermission[](0);
 	}
 
 	/// Set the collection access method.
@@ -443,24 +443,24 @@ struct CrossAccount {
 	uint256 sub;
 }
 
+/// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+struct CollectionNestingPermission {
+	CollectionPermissionField field;
+	bool value;
+}
+
 /// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
-enum CollectionPermissions {
+enum CollectionPermissionField {
 	/// @dev Owner of token can nest tokens under it.
 	TokenOwner,
 	/// @dev Admin of token collection can nest tokens under token.
 	CollectionAdmin
 }
 
-/// @dev anonymous struct
-struct Tuple36 {
-	CollectionPermissions field_0;
-	bool field_1;
-}
-
-/// @dev anonymous struct
-struct Tuple33 {
-	bool field_0;
-	uint256[] field_1;
+/// @dev Nested collections.
+struct CollectionNesting {
+	bool token_owner;
+	uint256[] ids;
 }
 
 /// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
@@ -469,6 +469,7 @@ struct CollectionLimit {
 	OptionUint value;
 }
 
+/// @dev Ethereum representation of Optional value with uint256.
 struct OptionUint {
 	bool status;
 	uint256 value;

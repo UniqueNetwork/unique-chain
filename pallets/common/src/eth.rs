@@ -306,7 +306,7 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 /// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 #[derive(Default, Debug, Clone, Copy, AbiCoder)]
 #[repr(u8)]
-pub enum CollectionPermissions {
+pub enum CollectionPermissionField {
 	/// Owner of token can nest tokens under it.
 	#[default]
 	TokenOwner,
@@ -429,5 +429,33 @@ impl TokenPropertyPermission {
 			});
 		}
 		Ok(perms)
+	}
+}
+
+/// Nested collections.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionNesting {
+	token_owner: bool,
+	ids: Vec<uint256>,
+}
+
+impl CollectionNesting {
+	/// Create [`CollectionNesting`].
+	pub fn new(token_owner: bool, ids: Vec<uint256>) -> Self {
+		Self { token_owner, ids }
+	}
+}
+
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionNestingPermission {
+	field: CollectionPermissionField,
+	value: bool,
+}
+
+impl CollectionNestingPermission {
+	/// Create [`CollectionNestingPermission`].
+	pub fn new(field: CollectionPermissionField, value: bool) -> Self {
+		Self { field, value }
 	}
 }

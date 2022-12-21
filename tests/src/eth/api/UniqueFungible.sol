@@ -166,12 +166,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple28 memory);
+	function collectionNestingRestrictedCollectionIds() external view returns (CollectionNesting memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (Tuple31[] memory);
+	function collectionNestingPermissions() external view returns (CollectionNestingPermission[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -285,24 +285,24 @@ struct CrossAccount {
 	uint256 sub;
 }
 
-/// @dev anonymous struct
-struct Tuple31 {
-	CollectionPermissions field_0;
-	bool field_1;
+/// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+struct CollectionNestingPermission {
+	CollectionPermissionField field;
+	bool value;
 }
 
 /// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
-enum CollectionPermissions {
+enum CollectionPermissionField {
 	/// @dev Owner of token can nest tokens under it.
 	TokenOwner,
 	/// @dev Admin of token collection can nest tokens under token.
 	CollectionAdmin
 }
 
-/// @dev anonymous struct
-struct Tuple28 {
-	bool field_0;
-	uint256[] field_1;
+/// @dev Nested collections.
+struct CollectionNesting {
+	bool token_owner;
+	uint256[] ids;
 }
 
 /// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
@@ -311,6 +311,7 @@ struct CollectionLimit {
 	OptionUint value;
 }
 
+/// @dev Ethereum representation of Optional value with uint256.
 struct OptionUint {
 	bool status;
 	uint256 value;
