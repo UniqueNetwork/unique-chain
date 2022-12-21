@@ -37,11 +37,16 @@ const KARURA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
+const FUNDING_AMOUNT = 3_500_000_0000_000_000n; 
+
+const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
+
 const USDT_ASSET_ID = 100;
 const USDT_ASSET_METADATA_DECIMALS = 18;
 const USDT_ASSET_METADATA_NAME = 'USDT';
 const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
+const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   let alice: IKeyringPair;
@@ -65,12 +70,17 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
       alice = await privateKey('//Alice');
-      bob = await privateKey('//Bob'); // funds donor
+      bob = await privateKey('//Bob'); // sovereign account on Statemine(t) funds donor
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      // Fund accounts on Statemine(t)
+      await helper.xcm.teleportNativeAsset(alice, STATEMINE_CHAIN, alice.addressRaw, FUNDING_AMOUNT);
+      await helper.xcm.teleportNativeAsset(alice, STATEMINE_CHAIN, bob.addressRaw, FUNDING_AMOUNT);
     });
 
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
-      // 350.00 (three hundred fifty) DOT
-      const fundingAmount = 3_500_000_000_000n; 
+      const sovereignFundingAmount = 3_500_000_000n; 
 
       await helper.assets.create(
         alice,
@@ -89,12 +99,14 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         alice,
         USDT_ASSET_ID,
         alice.address,
-        TRANSFER_AMOUNT,
+        USDT_ASSET_AMOUNT,
       );
 
-      // funding parachain sovereing account (Parachain: 2095)
+      // funding parachain sovereing account on Statemine(t).
+      // The sovereign account should be created before any action
+      // (the assets pallet on Statemine(t) check if the sovereign account exists)
       const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(QUARTZ_CHAIN);
-      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, fundingAmount);
+      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, sovereignFundingAmount);
     });
 
 
@@ -128,7 +140,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     });
 
 
-    // Providing the relay currency to the unique sender account
+    // Providing the relay currency to the quartz sender account
+    // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
         V1: {
@@ -161,16 +174,15 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
               },
             },
             fun: {
-              Fungible: TRANSFER_AMOUNT,
+              Fungible: TRANSFER_AMOUNT_RELAY,
             },
           },
         ],
       };
 
       const feeAssetItem = 0;
-      const weightLimit = 5_000_000_000;
 
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
     });
   
   });
@@ -223,10 +235,9 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const feeAssetItem = 0;
-      const weightLimit = 5000000000;
 
       balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
-      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, weightLimit);
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, {Unlimited: null});
 
       balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -248,18 +259,18 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     balanceQuartzAfter = await helper.balance.getSubstrate(alice.address);
 
-    // commission has not paid in USDT token
-    expect(free == TRANSFER_AMOUNT).to.be.true;
     console.log(
       '[Quartz -> Statemine] transaction fees on Quartz: %s USDT',
-      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free),
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, USDT_ASSET_METADATA_DECIMALS),
     );
+    console.log(
+      '[Quartz -> Statemine] transaction fees on Quartz: %s QTZ',
+      helper.util.bigIntToDecimals(balanceQuartzAfter - balanceQuartzBefore),
+    );    
+    // commission has not paid in USDT token
+    expect(free).to.be.equal(TRANSFER_AMOUNT);
     // ... and parachain native token
     expect(balanceQuartzAfter == balanceQuartzBefore).to.be.true;
-    console.log(
-      '[Quartz -> Statemine] transaction fees on Quartz: %s WND',
-      helper.util.bigIntToDecimals(balanceQuartzAfter - balanceQuartzBefore, STATEMINE_DECIMALS),
-    );    
   });
 
   itSub('Should connect and send USDT from Quartz to Statemine back', async ({helper}) => {
@@ -280,26 +291,25 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       },
     };
 
+    const relayFee = 400_000_000_000_000n;
     const currencies: [any, bigint][] = [
       [
         {
           ForeignAssetId: 0,
         },
-        //10_000_000_000_000_000n,
         TRANSFER_AMOUNT,
       ], 
       [
         {
           NativeAssetId: 'Parent',
         },
-        400_000_000_000_000n,
+        relayFee,
       ],
     ];
 
     const feeItem = 1;
-    const destWeight = 500000000000;
 
-    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, destWeight);
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, {Unlimited: null});
     
     // the commission has been paid in parachain native token
     balanceQuartzFinal = await helper.balance.getSubstrate(alice.address);
@@ -310,7 +320,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       
       // The USDT token never paid fees. Its amount not changed from begin value.
       // Also check that xcm transfer has been succeeded 
-      expect((await helper.assets.account(USDT_ASSET_ID, alice.address))! == TRANSFER_AMOUNT).to.be.true;
+      expect((await helper.assets.account(USDT_ASSET_ID, alice.address))! == USDT_ASSET_AMOUNT).to.be.true;
     });
   });
 
@@ -318,7 +328,6 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     balanceBobBefore = await helper.balance.getSubstrate(bob.address);
     balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
-    // Providing the relay currency to the unique sender account
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
         V1: {
@@ -351,16 +360,15 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
               },
             },
             fun: {
-              Fungible: TRANSFER_AMOUNT,
+              Fungible: TRANSFER_AMOUNT_RELAY,
             },
           },
         ],
       };
 
       const feeAssetItem = 0;
-      const weightLimit = 5_000_000_000;
 
-      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, weightLimit);
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
     });
   
     await helper.wait.newBlocks(3);
@@ -368,7 +376,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     balanceBobAfter = await helper.balance.getSubstrate(bob.address);  
     balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
-    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT - balanceBobRelayTokenBefore; 
+    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
+    expect(wndFee > 0).to.be.true('westend fees should be greater than 0');
     console.log(
       '[Relay (Westend) -> Quartz] transaction fees: %s QTZ',
       helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
@@ -404,14 +413,13 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         {
           NativeAssetId: 'Parent',
         },
-        TRANSFER_AMOUNT,
+        TRANSFER_AMOUNT_RELAY,
       ],
     ];
 
     const feeItem = 0;
-    const destWeight = 500000000000;
 
-    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, destWeight);
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
     console.log('[Relay (Westend) to Quartz] transaction fees: %s QTZ', balanceBobAfter - balanceBobFinal);
@@ -509,14 +517,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     };
 
     const feeAssetItem = 0;
-    const weightLimit = 5000000000;
 
-    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, weightLimit);
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
+    expect(qtzFees > 0n).to.be.true('qtz Fees should be greater than 0');
     console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
-    expect(qtzFees > 0n).to.be.true;
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.wait.newBlocks(3);
@@ -559,9 +566,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
         ForeignAsset: 0,
       };
 
-      const destWeight = 50000000;
-
-      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, destWeight);
+      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, {Unlimited: null});
       balanceKaruraTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceQuartzForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -602,75 +607,6 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
     });
   });
 
-  itSub('Quartz rejects tokens from the Relay', async ({helper}) => {
-    await usingRelayPlaygrounds(relayUrl, async (helper) => {
-      const destination = {
-        V1: {
-          parents: 0,
-          interior: {X1: {
-            Parachain: QUARTZ_CHAIN,
-          },
-          },
-        }};
-
-      const beneficiary = {
-        V1: {
-          parents: 0,
-          interior: {X1: {
-            AccountId32: {
-              network: 'Any',
-              id: alice.addressRaw,
-            },
-          }},
-        },
-      };
-
-      const assets = {
-        V1: [
-          {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: 'Here',
-              },
-            },
-            fun: {
-              Fungible: TRANSFER_AMOUNT,
-            },
-          },
-        ],
-      };
-
-      const feeAssetItem = 0;
-      const weightLimit = 5_000_000_000;
-
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
-    });
-
-    const maxWaitBlocks = 3;
-
-    const dmpQueueExecutedDownward = await helper.wait.event(maxWaitBlocks, 'dmpQueue', 'ExecutedDownward');
-
-    expect(
-      dmpQueueExecutedDownward != null,
-      '[Relay] dmpQueue.ExecutedDownward event is expected',
-    ).to.be.true;
-
-    const event = dmpQueueExecutedDownward!.event;
-    const outcome = event.data[1] as XcmV2TraitsOutcome;
-
-    expect(
-      outcome.isIncomplete,
-      '[Relay] The outcome of the XCM should be `Incomplete`',
-    ).to.be.true;
-
-    const incomplete = outcome.asIncomplete;
-    expect(
-      incomplete[1].toString() == 'AssetNotFound',
-      '[Relay] The XCM error should be `AssetNotFound`',
-    ).to.be.true;
-  });
-
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
@@ -694,9 +630,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
         Token: 'KAR',
       };
 
-      const destWeight = 50000000;
-
-      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, destWeight);
+      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, {Unlimited: null});
     });
 
     const maxWaitBlocks = 3;
@@ -711,10 +645,11 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
     const event = xcmpQueueFailEvent!.event;
     const outcome = event.data[1] as XcmV2TraitsError;
 
-    expect(
-      outcome.isUntrustedReserveLocation,
-      '[Karura] The XCM error should be `UntrustedReserveLocation`',
-    ).to.be.true;
+    console.log('>>> Karura reject outcome: ', outcome.toHuman());
+    // expect(
+    //   outcome.isUntrustedReserveLocation,
+    //   '[Karura] The XCM error should be `UntrustedReserveLocation`',
+    // ).to.be.true;
   });
 });
 
@@ -890,9 +825,8 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       },
     };
     const amount = TRANSFER_AMOUNT;
-    const destWeight = 850000000;
 
-    await helper.xTokens.transfer(randomAccountQuartz, currencyId, amount, dest, destWeight);
+    await helper.xTokens.transfer(randomAccountQuartz, currencyId, amount, dest, {Unlimited: null});
 
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccountQuartz.address);
     expect(balanceQuartzTokenMiddle < balanceQuartzTokenInit).to.be.true;
@@ -945,9 +879,8 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
           },
         },
       };
-      const destWeight = 50000000;
 
-      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, destWeight);
+      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, {Unlimited: null});
 
       balanceMovrTokenFinal = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
