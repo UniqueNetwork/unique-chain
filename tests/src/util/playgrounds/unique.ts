@@ -11,6 +11,7 @@ import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, b
 import {IKeyringPair} from '@polkadot/types/types';
 import {hexToU8a} from '@polkadot/util/hex';
 import {u8aConcat} from '@polkadot/util/u8a';
+import {BN} from '@polkadot/util/bn';
 import {
   IApiListeners,
   IBlock,
@@ -2642,6 +2643,37 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
+class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
+  //todo:collator documentation
+  setKeys(signer: TSigner, key: string) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.session.setKeys', 
+      [
+        key,
+        '0x0',
+      ],
+      true,
+    );
+  }
+
+  setOwnKeys(signer: TSigner) {
+    return this.setKeys(signer, '0x' + Buffer.from(signer.addressRaw).toString('hex'));
+  }
+
+  addInvulnerable(signer: TSigner, address: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.addInvulnerable', [address]);
+  }
+
+  removeInvulnerable(signer: TSigner, address: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.removeInvulnerable', [address]);
+  }
+
+  async getInvulnerables() {
+    return (await this.helper.callRpc('api.query.collatorSelection.invulnerables')).map((x: any) => x.toHuman());
+  }
+}
+
 class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
   async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
     await this.helper.executeExtrinsic(
@@ -2808,6 +2840,7 @@ export class UniqueHelper extends ChainHelperBase {
   ft: FTGroup;
   staking: StakingGroup;
   scheduler: SchedulerGroup;
+  collatorSelection: CollatorSelectionGroup;
   foreignAssets: ForeignAssetsGroup;
   xcm: XcmGroup<UniqueHelper>;
   xTokens: XTokensGroup<UniqueHelper>;
@@ -2823,6 +2856,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.ft = new FTGroup(this);
     this.staking = new StakingGroup(this);
     this.scheduler = new SchedulerGroup(this);
+    this.collatorSelection = new CollatorSelectionGroup(this);
     this.foreignAssets = new ForeignAssetsGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.xTokens = new XTokensGroup(this);
@@ -2988,19 +3022,32 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       super(...args);
     }
 
-    executeExtrinsic (
+    async executeExtrinsic(
       sender: IKeyringPair,
       extrinsic: string,
       params: any[],
       expectSuccess?: boolean,
+      options: Partial<SignerOptions>|null = null,
     ): Promise<ITransactionResult> {
       const call = this.constructApiCall(extrinsic, params);
-      return super.executeExtrinsic(
+      const result = await super.executeExtrinsic(
         sender,
         'api.tx.sudo.sudo',
         [call],
         expectSuccess,
+        options,
       );
+
+      if (result.status === 'Fail') return result;
+
+      const data = this.eventHelper.extractEvents(result.result.events).find(x => x.section == 'sudo')?.data[0];
+      if (data.err) {
+        const error = data.err.module;
+        // todo:collator
+        const metaError = super.getApi()?.registry.findMetaError({index: new BN(error.index), error: new BN(9)});
+        throw new Error(`${data.err.module.error} ${metaError.section}.${metaError.name}`);
+      }
+      return result;
     }
   };
 }

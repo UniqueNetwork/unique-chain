@@ -18,12 +18,13 @@ use frame_support::{parameter_types, PalletId};
 use frame_system::EnsureRoot;
 use crate::{
 	AccountId, BlockNumber, Runtime, RuntimeEvent, Balances, Aura, Session, SessionKeys,
-	CollatorSelection,
+	CollatorSelection, config::pallets::TreasuryAccountId,
 };
+use sp_runtime::Perbill;
 use up_common::constants::*;
 
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = HOURS;
+	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
 	pub const SessionOffset: BlockNumber = 0;
 }
 
@@ -54,9 +55,10 @@ impl pallet_authorship::Config for Runtime {
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 1000;
-	pub const MinCandidates: u32 = 5;
-	pub const MaxInvulnerables: u32 = 100;
+	pub const MaxCandidates: u32 = 30; // todo:collator 30 collator slots - 3 planned invulnerables
+	pub const MinCandidates: u32 = 1;
+	pub const MaxInvulnerables: u32 = 30;
+	pub const SlashRatio: Perbill = Perbill::from_percent(100);
 }
 
 impl pallet_collator_selection::Config for Runtime {
@@ -64,13 +66,13 @@ impl pallet_collator_selection::Config for Runtime {
 	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.
 	type UpdateOrigin = EnsureRoot<AccountId>;
+	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
 	type MaxInvulnerables = MaxInvulnerables;
 	// todo:collator kick threshold should be in storage and configured only by root -- or rather UpdateOrigin
-	// Should be a multiple of session or things will get inconsistent.
-	type KickThreshold = SessionPeriod;
+	type SlashRatio = SlashRatio;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;

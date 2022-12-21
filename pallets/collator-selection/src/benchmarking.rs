@@ -112,8 +112,13 @@ fn register_validators<T: Config + session::Config>(count: u32) -> Vec<T::Accoun
 }
 
 fn register_candidates<T: Config>(count: u32) {
-	let candidates = (0..count).map(|c| account("candidate", c, SEED)).collect::<Vec<_>>();
-	assert!(<CandidacyBond<T>>::get() > 0u32.into(), "Bond cannot be zero!");
+	let candidates = (0..count)
+		.map(|c| account("candidate", c, SEED))
+		.collect::<Vec<_>>();
+	assert!(
+		<CandidacyBond<T>>::get() > 0u32.into(),
+		"Bond cannot be zero!"
+	);
 
 	for who in candidates {
 		T::Currency::make_free_balance_be(&who, <CandidacyBond<T>>::get() * 2u32.into());
@@ -200,7 +205,8 @@ benchmarks! {
 		whitelist!(leaving);
 	}: _(RawOrigin::Signed(leaving.clone()))
 	verify {
-		assert_last_event::<T>(Event::CandidateRemoved{account_id: leaving}.into());
+		// todo:collator verify these
+		assert_last_event::<T>(Event::CandidateRemoved{account_id: leaving, deposit_returned: bond / 2u32.into() }.into());
 	}
 
 	// worse case is paying a non-existing candidate account.
@@ -272,4 +278,8 @@ benchmarks! {
 	}
 }
 
-impl_benchmark_test_suite!(CollatorSelection, crate::mock::new_test_ext(), crate::mock::Test,);
+impl_benchmark_test_suite!(
+	CollatorSelection,
+	crate::mock::new_test_ext(),
+	crate::mock::Test,
+);

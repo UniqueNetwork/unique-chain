@@ -30,6 +30,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// todo:collator documentation
 //! Collator Selection pallet.
 //!
 //! A pallet to manage collators in a parachain.
@@ -109,7 +110,10 @@ pub mod pallet {
 	};
 	use frame_system::{pallet_prelude::*, Config as SystemConfig};
 	use pallet_session::SessionManager;
-	use sp_runtime::traits::Convert;
+	use sp_runtime::{
+		Perbill,
+		traits::{One, Convert},
+	};
 	use sp_staking::SessionIndex;
 
 	type BalanceOf<T> =
@@ -136,6 +140,9 @@ pub mod pallet {
 		/// Origin that can dictate updating parameters of this pallet.
 		type UpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
+		/// Account Identifier that holds the chain's treasury.
+		type TreasuryAccountId: Get<Self::AccountId>;
+
 		/// Account Identifier from which the internal Pot is generated.
 		type PotId: Get<PalletId>;
 
@@ -152,8 +159,8 @@ pub mod pallet {
 		/// Maximum number of invulnerables. This is enforced in code.
 		type MaxInvulnerables: Get<u32>;
 
-		// Will be kicked if block is not produced in threshold.
-		type KickThreshold: Get<Self::BlockNumber>;
+		/// If kicked, how much of the collator's deposit will be slashed and sent to the slash destination.
+		type SlashRatio: Get<Perbill>;
 
 		/// A stable ID for a validator.
 		type ValidatorId: Member + Parameter;
@@ -200,6 +207,13 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// Collator will be kicked if it does not produce a block within the threshold (does not apply to invulnerables).
+	///
+	/// Should be a multiple of session or things will get inconsistent. todo:collator reword?
+	#[pallet::storage]
+	#[pallet::getter(fn kick_threshold)]
+	pub type KickThreshold<T: Config> = StorageValue<_, T::BlockNumber, ValueQuery>;
+
 	/// Last block authored by collator.
 	#[pallet::storage]
 	#[pallet::getter(fn last_authored_block)]
@@ -224,6 +238,7 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub invulnerables: Vec<T::AccountId>,
 		pub candidacy_bond: BalanceOf<T>,
+		pub kick_threshold: T::BlockNumber,
 		pub desired_candidates: u32,
 	}
 
@@ -233,6 +248,7 @@ pub mod pallet {
 			Self {
 				invulnerables: Default::default(),
 				candidacy_bond: Default::default(),
+				kick_threshold: T::BlockNumber::one(),
 				desired_candidates: Default::default(),
 			}
 		}
@@ -241,8 +257,10 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			let duplicate_invulnerables =
-				self.invulnerables.iter().collect::<std::collections::BTreeSet<_>>();
+			let duplicate_invulnerables = self
+				.invulnerables
+				.iter()
+				.collect::<std::collections::BTreeSet<_>>();
 			assert!(
 				duplicate_invulnerables.len() == self.invulnerables.len(),
 				"duplicate invulnerables in genesis."
@@ -258,6 +276,7 @@ pub mod pallet {
 
 			<DesiredCandidates<T>>::put(&self.desired_candidates);
 			<CandidacyBond<T>>::put(&self.candidacy_bond);
+			<KickThreshold<T>>::put(&self.kick_threshold);
 			<Invulnerables<T>>::put(bounded_invulnerables);
 		}
 	}
@@ -265,11 +284,29 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		NewInvulnerables { invulnerables: Vec<T::AccountId> },
-		NewDesiredCandidates { desired_candidates: u32 },
-		NewCandidacyBond { bond_amount: BalanceOf<T> },
-		CandidateAdded { account_id: T::AccountId, deposit: BalanceOf<T> },
-		CandidateRemoved { account_id: T::AccountId },
+		NewDesiredCandidates {
+			desired_candidates: u32,
+		},
+		NewCandidacyBond {
+			bond_amount: BalanceOf<T>,
+		},
+		NewKickThreshold {
+			length_in_blocks: T::BlockNumber,
+		},
+		InvulnerableAdded {
+			invulnerable: T::AccountId,
+		},
+		InvulnerableRemoved {
+			invulnerable: T::AccountId,
+		},
+		CandidateAdded {
+			account_id: T::AccountId,
+			deposit: BalanceOf<T>,
+		},
+		CandidateRemoved {
+			account_id: T::AccountId,
+			deposit_returned: BalanceOf<T>,
+		},
 	}
 
 	// Errors inform users that something went wrong.
@@ -289,8 +326,12 @@ pub mod pallet {
 		NotCandidate,
 		/// Too many invulnerables
 		TooManyInvulnerables,
+		/// Too few invulnerables
+		TooFewInvulnerables,
 		/// User is already an Invulnerable
 		AlreadyInvulnerable,
+		/// User is not an Invulnerable
+		NotInvulnerable,
 		/// Account has no associated validator ID
 		NoAssociatedValidatorId,
 		/// Validator ID is not yet registered
@@ -302,30 +343,58 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Set the list of invulnerable (fixed) collators.
-		#[pallet::weight(T::WeightInfo::set_invulnerables(new.len() as u32))]
-		pub fn set_invulnerables(
+		/// Add a collator to the list of invulnerable (fixed) collators.
+		#[pallet::weight(T::WeightInfo::set_invulnerables(1 as u32))] // todo:collator weight
+		pub fn add_invulnerable(
 			origin: OriginFor<T>,
-			new: Vec<T::AccountId>,
+			new: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateOrigin::ensure_origin(origin)?;
-			let bounded_invulnerables = BoundedVec::<_, T::MaxInvulnerables>::try_from(new)
-				.map_err(|_| Error::<T>::TooManyInvulnerables)?;
 
-			// check if the invulnerables have associated validator keys before they are set
-			for account_id in bounded_invulnerables.iter() {
-				let validator_key = T::ValidatorIdOf::convert(account_id.clone())
-					.ok_or(Error::<T>::NoAssociatedValidatorId)?;
-				ensure!(
-					T::ValidatorRegistration::is_registered(&validator_key),
-					Error::<T>::ValidatorNotRegistered
-				);
+			// check if the new invulnerable has associated validator keys before it is added
+			let validator_key = T::ValidatorIdOf::convert(new.clone())
+				.ok_or(Error::<T>::NoAssociatedValidatorId)?;
+			ensure!(
+				T::ValidatorRegistration::is_registered(&validator_key),
+				Error::<T>::ValidatorNotRegistered
+			);
+			// ensure!(!Self::invulnerables().contains(&new), Error::<T>::AlreadyInvulnerable);
+			if Self::invulnerables().contains(&new) {
+				return Ok(().into());
 			}
 
-			<Invulnerables<T>>::put(&bounded_invulnerables);
-			Self::deposit_event(Event::NewInvulnerables {
-				invulnerables: bounded_invulnerables.to_vec(),
-			});
+			<Invulnerables<T>>::try_append(new.clone())
+				.map_err(|_| Error::<T>::TooManyInvulnerables)?;
+			Self::deposit_event(Event::InvulnerableAdded { invulnerable: new });
+			Ok(().into())
+		}
+
+		/// Remove a collator from the list of invulnerable (fixed) collators.
+		#[pallet::weight(T::WeightInfo::set_invulnerables(1))] // todo:collator weight
+		pub fn remove_invulnerable(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			T::UpdateOrigin::ensure_origin(origin)?;
+
+			// let index = Self::invulnerables().into_iter().position(|r| r == who).ok_or(Error::<T>::NotInvulnerable)?;
+			<Invulnerables<T>>::try_mutate(|invulnerables| -> DispatchResult {
+				if invulnerables.len() <= 1 {
+					return Err(Error::<T>::TooFewInvulnerables.into());
+				}
+
+				let index = invulnerables
+					.into_iter()
+					.position(|r| *r == who)
+					.ok_or(Error::<T>::NotInvulnerable)?;
+				invulnerables.remove(index);
+				Ok(())
+			})?;
+			/*let bounded_invulnerables = BoundedVec::<_, T::MaxInvulnerables>::try_from(new)
+				.map_err(|_| Error::<T>::TooManyInvulnerables)?;
+
+			<Invulnerables<T>>::put(&bounded_invulnerables);*/
+			Self::deposit_event(Event::InvulnerableRemoved { invulnerable: who });
 			Ok(().into())
 		}
 
@@ -343,7 +412,9 @@ pub mod pallet {
 				log::warn!("max > T::MaxCandidates; you might need to run benchmarks again");
 			}
 			<DesiredCandidates<T>>::put(&max);
-			Self::deposit_event(Event::NewDesiredCandidates { desired_candidates: max });
+			Self::deposit_event(Event::NewDesiredCandidates {
+				desired_candidates: max,
+			});
 			Ok(().into())
 		}
 
@@ -359,6 +430,22 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Set the length of the kick threshold.
+		/// Note that if the length is not a multiple of the session period, it might get inconsistent.
+		#[pallet::weight(T::WeightInfo::set_candidacy_bond())] // todo:collator weight
+		pub fn set_kick_threshold(
+			origin: OriginFor<T>,
+			kick_threshold: T::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			T::UpdateOrigin::ensure_origin(origin)?;
+			// todo:collator insert something to guarantee consistency?
+			<KickThreshold<T>>::put(kick_threshold);
+			Self::deposit_event(Event::NewKickThreshold {
+				length_in_blocks: kick_threshold,
+			});
+			Ok(().into())
+		}
+
 		/// Register this account as a collator candidate. The account must (a) already have
 		/// registered session keys and (b) be able to reserve the `CandidacyBond`.
 		///
@@ -369,8 +456,15 @@ pub mod pallet {
 
 			// ensure we are below limit.
 			let length = <Candidates<T>>::decode_len().unwrap_or_default();
-			ensure!((length as u32) < Self::desired_candidates(), Error::<T>::TooManyCandidates);
-			ensure!(!Self::invulnerables().contains(&who), Error::<T>::AlreadyInvulnerable);
+			ensure!(
+				(length as u32) < Self::desired_candidates(),
+				Error::<T>::TooManyCandidates
+			);
+			// todo:collator really need it?
+			ensure!(
+				!Self::invulnerables().contains(&who),
+				Error::<T>::AlreadyInvulnerable
+			);
 
 			let validator_key = T::ValidatorIdOf::convert(who.clone())
 				.ok_or(Error::<T>::NoAssociatedValidatorId)?;
@@ -381,7 +475,10 @@ pub mod pallet {
 
 			let deposit = Self::candidacy_bond();
 			// First authored block is current block plus kick threshold to handle session delay
-			let incoming = CandidateInfo { who: who.clone(), deposit };
+			let incoming = CandidateInfo {
+				who: who.clone(),
+				deposit,
+			};
 
 			let current_count =
 				<Candidates<T>>::try_mutate(|candidates| -> Result<usize, DispatchError> {
@@ -389,16 +486,21 @@ pub mod pallet {
 						Err(Error::<T>::AlreadyCandidate)?
 					} else {
 						T::Currency::reserve(&who, deposit)?;
-						candidates.try_push(incoming).map_err(|_| Error::<T>::TooManyCandidates)?;
+						candidates
+							.try_push(incoming)
+							.map_err(|_| Error::<T>::TooManyCandidates)?;
 						<LastAuthoredBlock<T>>::insert(
 							who.clone(),
-							frame_system::Pallet::<T>::block_number() + T::KickThreshold::get(),
+							frame_system::Pallet::<T>::block_number() + Self::kick_threshold(),
 						);
 						Ok(candidates.len())
 					}
 				})?;
 
-			Self::deposit_event(Event::CandidateAdded { account_id: who, deposit });
+			Self::deposit_event(Event::CandidateAdded {
+				account_id: who,
+				deposit,
+			});
 			Ok(Some(T::WeightInfo::register_as_candidate(current_count as u32)).into())
 		}
 
@@ -411,11 +513,12 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCandidates::get()))]
 		pub fn leave_intent(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			// todo:collator invulnerables and candidates should count against min candidates together
 			ensure!(
 				Self::candidates().len() as u32 > T::MinCandidates::get(),
 				Error::<T>::TooFewCandidates
 			);
-			let current_count = Self::try_remove_candidate(&who)?;
+			let current_count = Self::try_remove_candidate(&who, false)?;
 
 			Ok(Some(T::WeightInfo::leave_intent(current_count as u32)).into())
 		}
@@ -427,8 +530,12 @@ pub mod pallet {
 			T::PotId::get().into_account_truncating()
 		}
 
-		/// Removes a candidate if they exist and sends them back their deposit
-		fn try_remove_candidate(who: &T::AccountId) -> Result<usize, DispatchError> {
+		/// Removes a candidate if they exist and sends them back their deposit, optionally slashed.
+		fn try_remove_candidate(
+			who: &T::AccountId,
+			should_slash: bool,
+		) -> Result<usize, DispatchError> {
+			let mut deposit_returned = BalanceOf::<T>::default();
 			let current_count =
 				<Candidates<T>>::try_mutate(|candidates| -> Result<usize, DispatchError> {
 					let index = candidates
@@ -436,11 +543,33 @@ pub mod pallet {
 						.position(|candidate| candidate.who == *who)
 						.ok_or(Error::<T>::NotCandidate)?;
 					let candidate = candidates.remove(index);
-					T::Currency::unreserve(who, candidate.deposit);
+					let deposit = candidate.deposit;
+
+					if should_slash {
+						let slashed = T::SlashRatio::get() * deposit;
+						let remaining = deposit - slashed;
+
+						let (imbalance, _) = T::Currency::slash_reserved(who, slashed);
+						//T::Currency::unreserve(who, remaining);
+						deposit_returned = remaining;
+
+						T::Currency::resolve_creating(&T::TreasuryAccountId::get(), imbalance);
+
+						// Self::deposit_event(Event::CandidateSlashed(who.clone()));
+					} else {
+						//T::Currency::unreserve(who, deposit);
+						deposit_returned = deposit;
+					}
+
+					T::Currency::unreserve(who, deposit_returned);
+					// candidates.remove(index);
 					<LastAuthoredBlock<T>>::remove(who.clone());
 					Ok(candidates.len())
 				})?;
-			Self::deposit_event(Event::CandidateRemoved { account_id: who.clone() });
+			Self::deposit_event(Event::CandidateRemoved {
+				account_id: who.clone(),
+				deposit_returned,
+			});
 			Ok(current_count)
 		}
 
@@ -456,12 +585,12 @@ pub mod pallet {
 		}
 
 		/// Kicks out candidates that did not produce a block in the kick threshold
-		/// and refund their deposits.
+		/// and **confiscates** their deposits to the treasury.
 		pub fn kick_stale_candidates(
 			candidates: BoundedVec<CandidateInfo<T::AccountId, BalanceOf<T>>, T::MaxCandidates>,
 		) -> BoundedVec<T::AccountId, T::MaxCandidates> {
 			let now = frame_system::Pallet::<T>::block_number();
-			let kick_threshold = T::KickThreshold::get();
+			let kick_threshold = Self::kick_threshold();
 			candidates
 				.into_iter()
 				.filter_map(|c| {
@@ -472,7 +601,7 @@ pub mod pallet {
 					{
 						Some(c.who)
 					} else {
-						let outcome = Self::try_remove_candidate(&c.who);
+						let outcome = Self::try_remove_candidate(&c.who, true);
 						if let Err(why) = outcome {
 							log::warn!("Failed to remove candidate {:?}", why);
 							debug_assert!(false, "failed to remove candidate {:?}", why);
