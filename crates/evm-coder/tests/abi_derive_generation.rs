@@ -204,7 +204,7 @@ struct TypeStruct3DerivedMixedParam {
 		);
 		assert_eq!(
 			<TypeStruct1DerivedDynamicParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
-			2
+			1
 		);
 		assert_eq!(
 			<TypeStruct2DerivedDynamicParam as evm_coder::abi::AbiType>::FIELDS_COUNT,
