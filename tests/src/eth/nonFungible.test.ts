@@ -402,6 +402,8 @@ describe('NFT: Plain calls', () => {
         },
       });
     }
+
+    expect(await helper.nft.doesTokenExist(collection.collectionId, token.tokenId)).to.be.false;
   });
   
   itEth('Can perform transfer with ApprovalForAll', async ({helper}) => {
