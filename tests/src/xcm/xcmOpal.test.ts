@@ -225,18 +225,19 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     balanceOpalAfter = await helper.balance.getSubstrate(alice.address);
 
-    // commission has not paid in USDT token
-    expect(free == TRANSFER_AMOUNT).to.be.true;
     console.log(
       'Opal to Westmint transaction fees on Opal: %s USDT',
-      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free),
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, ASSET_METADATA_DECIMALS),
     );
+    console.log(
+      'Opal to Westmint transaction fees on Opal: %s OPL',
+      helper.util.bigIntToDecimals(balanceOpalAfter - balanceOpalBefore),
+    );
+
+    // commission has not paid in USDT token
+    expect(free == TRANSFER_AMOUNT).to.be.true;
     // ... and parachain native token
     expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
-    console.log(
-      'Opal to Westmint transaction fees on Opal: %s WND',
-      helper.util.bigIntToDecimals(balanceOpalAfter - balanceOpalBefore, WESTMINT_DECIMALS),
-    );    
   });
 
   itSub('Should connect and send USDT from Unique to Statemine back', async ({helper}) => {
