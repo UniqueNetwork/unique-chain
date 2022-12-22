@@ -6,6 +6,9 @@ DIR=$(realpath $(dirname "$0"))
 TEMPLATE=$DIR/types_template
 GIT_REPO=git@github.com:UniqueNetwork/unique-types-js.git
 
+git config user.name "Unique"
+git config user.email "github-actions@usetech.com"
+
 . $DIR/functions.sh
 
 usage() {
