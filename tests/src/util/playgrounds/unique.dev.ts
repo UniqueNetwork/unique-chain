@@ -150,6 +150,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
+    options.notePreimagePallet = options.notePreimagePallet ?? 'democracy';
 
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
@@ -157,7 +158,12 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
   }
 }
 
-export class DevMoonriverHelper extends DevMoonbeamHelper {}
+export class DevMoonriverHelper extends DevMoonbeamHelper {
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
+    super(logger, options);
+  }
+}
 
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;

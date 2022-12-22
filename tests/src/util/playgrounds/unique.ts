@@ -2874,8 +2874,15 @@ class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
 }
 
 class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
+  notePreimagePallet: string;
+
+  constructor(helper: MoonbeamHelper, options: {[key: string]: any} = {}) {
+    super(helper);
+    this.notePreimagePallet = options.notePreimagePallet;
+  }
+
   async notePreimage(signer: TSigner, encodedProposal: string) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [encodedProposal], true);
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.notePreimagePallet}.notePreimage`, [encodedProposal], true);
   }
 
   externalProposeMajority(proposal: any) {
@@ -3013,7 +3020,7 @@ export class MoonbeamHelper extends XcmChainHelper {
     this.assetManager = new MoonbeamAssetManagerGroup(this);
     this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
-    this.democracy = new MoonbeamDemocracyGroup(this);
+    this.democracy = new MoonbeamDemocracyGroup(this, options);
     this.collective = {
       council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
       techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),
