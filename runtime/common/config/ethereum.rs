@@ -1,14 +1,16 @@
 use sp_core::{U256, H160};
 use frame_support::{
-	weights::{Weight, constants::WEIGHT_PER_SECOND},
+	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 	traits::{FindAuthor},
 	parameter_types, ConsensusEngineId,
 };
 use sp_runtime::{RuntimeAppPublic, Perbill};
 use crate::{
 	runtime_common::{
-		dispatch::CollectionDispatchT, ethereum::sponsoring::EvmSponsorshipHandler,
-		config::sponsoring::DefaultSponsoringRateLimit, DealWithFees,
+		config::sponsoring::DefaultSponsoringRateLimit,
+		DealWithFees,
+		dispatch::CollectionDispatchT,
+		ethereum::{precompiles::UniquePrecompiles, sponsoring::EvmSponsorshipHandler},
 	},
 	Runtime, Aura, Balances, RuntimeEvent, ChainId,
 };
@@ -21,9 +23,9 @@ pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 // (contract, which only writes a lot of data),
 // approximating on top of our real store write weight
 parameter_types! {
-	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND.ref_time() / <Runtime as frame_system::Config>::DbWeight::get().write;
+	pub const WritesPerSecond: u64 = WEIGHT_REF_TIME_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
 	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
-	pub const WeightTimePerGas: u64 = WEIGHT_PER_SECOND.ref_time() / GasPerSecond::get();
+	pub const WeightTimePerGas: u64 = WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
 
 	pub const WeightPerGas: Weight = Weight::from_ref_time(WeightTimePerGas::get());
 }
@@ -34,6 +36,7 @@ parameter_types! {
 const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from((NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightTimePerGas::get()).ref_time());
+	pub PrecompilesValue: UniquePrecompiles<Runtime> = UniquePrecompiles::<_>::new();
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -62,8 +65,8 @@ impl pallet_evm::Config for Runtime {
 	type CallOrigin = EnsureAddressTruncated<Self>;
 	type WithdrawOrigin = EnsureAddressTruncated<Self>;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
+	type PrecompilesType = UniquePrecompiles<Self>;
+	type PrecompilesValue = PrecompilesValue;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type OnMethodCall = (

@@ -16,6 +16,9 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
+  yarn-dev:
+    uses: ./.github/workflows/yarn-dev.yml
+
   unit-test:
     uses: ./.github/workflows/unit-test.yml
 

@@ -574,6 +574,8 @@ macro_rules! impl_common_runtime_apis {
                 fn elasticity() -> Option<Permill> {
                     None
                 }
+
+                fn gas_limit_multiplier_support() {}
             }
 
             impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
@@ -684,23 +686,26 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
+
+                    #[cfg(feature = "app-promotion")]
                     list_benchmark!(list, extra, pallet_app_promotion, AppPromotion);
+
                     list_benchmark!(list, extra, pallet_fungible, Fungible);
                     list_benchmark!(list, extra, pallet_nonfungible, Nonfungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "refungible")]
                     list_benchmark!(list, extra, pallet_refungible, Refungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "scheduler")]
                     list_benchmark!(list, extra, pallet_unique_scheduler_v2, Scheduler);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "foreign-assets")]
                     list_benchmark!(list, extra, pallet_foreign_assets, ForeignAssets);
 
 
@@ -744,23 +749,26 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
+
+                    #[cfg(feature = "app-promotion")]
                     add_benchmark!(params, batches, pallet_app_promotion, AppPromotion);
+
                     add_benchmark!(params, batches, pallet_fungible, Fungible);
                     add_benchmark!(params, batches, pallet_nonfungible, Nonfungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "refungible")]
                     add_benchmark!(params, batches, pallet_refungible, Refungible);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "scheduler")]
                     add_benchmark!(params, batches, pallet_unique_scheduler_v2, Scheduler);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "rmrk")]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
 
-                    #[cfg(not(any(feature = "unique-runtime", feature = "quartz-runtime")))]
+                    #[cfg(feature = "foreign-assets")]
                     add_benchmark!(params, batches, pallet_foreign_assets, ForeignAssets);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);

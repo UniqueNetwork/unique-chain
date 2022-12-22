@@ -82,7 +82,7 @@ Note: checkout this project and all related projects (see below) in the sibling 
 
 ```
 git clone https://github.com/UniqueNetwork/polkadot-launch.git
-git checkout feature/runtime-upgrade-testing
+git checkout unique-network
 ```
 
 ### Build relay
@@ -90,7 +90,7 @@ git checkout feature/runtime-upgrade-testing
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.33
+git checkout release-v0.9.36
 cargo build --release
 ```
 

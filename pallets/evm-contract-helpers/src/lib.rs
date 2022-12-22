@@ -19,6 +19,7 @@
 #![warn(missing_docs)]
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use evm_coder::AbiCoder;
 pub use pallet::*;
 pub use eth::*;
 use scale_info::TypeInfo;
@@ -407,7 +408,10 @@ pub mod pallet {
 }
 
 /// Available contract sponsoring modes
-#[derive(Encode, Decode, PartialEq, TypeInfo, MaxEncodedLen, Default)]
+#[derive(
+	Encode, Decode, Debug, PartialEq, TypeInfo, MaxEncodedLen, Default, AbiCoder, Clone, Copy,
+)]
+#[repr(u8)]
 pub enum SponsoringModeT {
 	/// Sponsoring is disabled
 	#[default]
@@ -416,23 +420,4 @@ pub enum SponsoringModeT {
 	Allowlisted,
 	/// All users will be sponsored
 	Generous,
-}
-
-impl SponsoringModeT {
-	fn from_eth(v: u8) -> Option<Self> {
-		Some(match v {
-			0 => Self::Disabled,
-			1 => Self::Allowlisted,
-			2 => Self::Generous,
-			_ => return None,
-		})
-	}
-	#[allow(dead_code)]
-	fn to_eth(self) -> u8 {
-		match self {
-			SponsoringModeT::Disabled => 0,
-			SponsoringModeT::Allowlisted => 1,
-			SponsoringModeT::Generous => 2,
-		}
-	}
 }

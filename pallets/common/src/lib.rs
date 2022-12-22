@@ -1222,7 +1222,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Set scouped collection property.
+	/// Set a scoped collection property, where the scope is a special prefix
+	/// prohibiting a user access to change the property directly.
 	///
 	/// * `collection_id` - ID of the collection for which the property is being set.
 	/// * `scope` - Property scope.
@@ -1240,7 +1241,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Set scouped collection properties.
+	/// Set scoped collection properties, where the scope is a special prefix
+	/// prohibiting a user access to change the properties directly.
 	///
 	/// * `collection_id` - ID of the collection for which the properties is being set.
 	/// * `scope` - Property scope.
@@ -1728,6 +1730,15 @@ impl<T: Config> Pallet<T> {
 		);
 		Ok(new_permission)
 	}
+
+	/// Repair possibly broken properties of a collection.
+	pub fn repair_collection(collection_id: CollectionId) -> DispatchResult {
+		CollectionProperties::<T>::mutate(collection_id, |properties| {
+			properties.recompute_consumed_space();
+		});
+
+		Ok(())
+	}
 }
 
 /// Indicates unsupported methods by returning [Error::UnsupportedOperation].
@@ -1815,6 +1826,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 
 	/// The price of setting approval for all
 	fn set_allowance_for_all() -> Weight;
+
+	/// The price of repairing an item.
+	fn force_repair_item() -> Weight;
 }
 
 /// Weight info extension trait for refungible pallet.
@@ -2136,6 +2150,9 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Tells whether the given `owner` approves the `operator`.
 	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool;
+
+	/// Repairs a possibly broken item.
+	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo;
 }
 
 /// Extension for RFT collection.

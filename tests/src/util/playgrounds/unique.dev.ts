@@ -118,7 +118,16 @@ export class DevUniqueHelper extends UniqueHelper {
   }
 }
 
-export class DevRelayHelper extends RelayHelper {}
+export class DevRelayHelper extends RelayHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevRelayHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
 
 export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;
@@ -131,12 +140,17 @@ export class DevWestmintHelper extends WestmintHelper {
   }
 }
 
+export class DevStatemineHelper extends DevWestmintHelper {}
+
+export class DevStatemintHelper extends DevWestmintHelper {}
+
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
+    options.notePreimagePallet = options.notePreimagePallet ?? 'democracy';
 
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
@@ -144,7 +158,12 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
   }
 }
 
-export class DevMoonriverHelper extends DevMoonbeamHelper {}
+export class DevMoonriverHelper extends DevMoonbeamHelper {
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
+    super(logger, options);
+  }
+}
 
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
@@ -305,7 +324,7 @@ class ArrangeGroup {
 
   calculatePalletAddress(palletId: any) {
     const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
-    return encodeAddress(address);
+    return encodeAddress(address, this.helper.chain.getChainProperties().ss58Format);
   }
 
   makeScheduledIds(num: number): string[] {

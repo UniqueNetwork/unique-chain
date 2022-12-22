@@ -229,6 +229,13 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    configuration: {
+      InconsistentConfiguration: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     cumulusXcm: {
       /**
        * Generic error
@@ -296,6 +303,10 @@ declare module '@polkadot/api-base/types/errors' {
        * EVM reentrancy
        **/
       Reentrancy: AugmentedError<ApiType>;
+      /**
+       * EIP-3607,
+       **/
+      TransactionMustComeFromEOA: AugmentedError<ApiType>;
       /**
        * Undefined error.
        **/
@@ -389,6 +400,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
        **/
       FungibleItemsHaveNoId: AugmentedError<ApiType>;
+      /**
+       * Only a fungible collection could be possibly broken; any fungible token is valid.
+       **/
+      FungibleTokensAreAlwaysValid: AugmentedError<ApiType>;
       /**
        * Not Fungible item data used to mint in Fungible collection.
        **/

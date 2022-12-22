@@ -87,7 +87,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "newAdmin",
         "type": "tuple"
       }
@@ -104,7 +104,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "user",
         "type": "tuple"
       }
@@ -121,7 +121,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "user",
         "type": "tuple"
       }
@@ -166,7 +166,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "from",
         "type": "tuple"
       },
@@ -184,7 +184,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "newOwner",
         "type": "tuple"
       }
@@ -203,7 +203,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount[]",
+        "internalType": "struct CrossAddress[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -220,18 +220,47 @@
   },
   {
     "inputs": [],
+    "name": "collectionLimits",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionLimitField",
+            "name": "field",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              { "internalType": "bool", "name": "status", "type": "bool" },
+              { "internalType": "uint256", "name": "value", "type": "uint256" }
+            ],
+            "internalType": "struct OptionUint",
+            "name": "value",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct CollectionLimit[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "collectionNestingPermissions",
     "outputs": [
       {
         "components": [
           {
-            "internalType": "enum CollectionPermissions",
-            "name": "field_0",
+            "internalType": "enum CollectionPermissionField",
+            "name": "field",
             "type": "uint8"
           },
-          { "internalType": "bool", "name": "field_1", "type": "bool" }
+          { "internalType": "bool", "name": "value", "type": "bool" }
         ],
-        "internalType": "struct Tuple36[]",
+        "internalType": "struct CollectionNestingPermission[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -245,14 +274,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "bool", "name": "field_0", "type": "bool" },
-          {
-            "internalType": "uint256[]",
-            "name": "field_1",
-            "type": "uint256[]"
-          }
+          { "internalType": "bool", "name": "token_owner", "type": "bool" },
+          { "internalType": "uint256[]", "name": "ids", "type": "uint256[]" }
         ],
-        "internalType": "struct Tuple33",
+        "internalType": "struct CollectionNesting",
         "name": "",
         "type": "tuple"
       }
@@ -269,7 +294,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "",
         "type": "tuple"
       }
@@ -309,10 +334,10 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct Tuple29",
+        "internalType": "struct CrossAddress",
         "name": "",
         "type": "tuple"
       }
@@ -345,7 +370,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "",
         "type": "tuple"
       }
@@ -419,7 +444,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "user",
         "type": "tuple"
       }
@@ -432,6 +457,32 @@
   {
     "inputs": [{ "internalType": "address", "name": "to", "type": "address" }],
     "name": "mint",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct CrossAddress",
+        "name": "to",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          { "internalType": "string", "name": "key", "type": "string" },
+          { "internalType": "bytes", "name": "value", "type": "bytes" }
+        ],
+        "internalType": "struct Property[]",
+        "name": "properties",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "mintCross",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -513,7 +564,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "admin",
         "type": "tuple"
       }
@@ -537,7 +588,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "user",
         "type": "tuple"
       }
@@ -589,8 +640,27 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "limit", "type": "string" },
-      { "internalType": "uint256", "name": "value", "type": "uint256" }
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionLimitField",
+            "name": "field",
+            "type": "uint8"
+          },
+          {
+            "components": [
+              { "internalType": "bool", "name": "status", "type": "bool" },
+              { "internalType": "uint256", "name": "value", "type": "uint256" }
+            ],
+            "internalType": "struct OptionUint",
+            "name": "value",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct CollectionLimit",
+        "name": "limit",
+        "type": "tuple"
+      }
     ],
     "name": "setCollectionLimit",
     "outputs": [],
@@ -649,7 +719,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "sponsor",
         "type": "tuple"
       }
@@ -679,12 +749,29 @@
   },
   {
     "inputs": [
-      { "internalType": "string", "name": "key", "type": "string" },
-      { "internalType": "bool", "name": "isMutable", "type": "bool" },
-      { "internalType": "bool", "name": "collectionAdmin", "type": "bool" },
-      { "internalType": "bool", "name": "tokenOwner", "type": "bool" }
+      {
+        "components": [
+          { "internalType": "string", "name": "key", "type": "string" },
+          {
+            "components": [
+              {
+                "internalType": "enum TokenPermissionField",
+                "name": "code",
+                "type": "uint8"
+              },
+              { "internalType": "bool", "name": "value", "type": "bool" }
+            ],
+            "internalType": "struct PropertyPermission[]",
+            "name": "permissions",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct TokenPropertyPermission[]",
+        "name": "permissions",
+        "type": "tuple[]"
+      }
     ],
-    "name": "setTokenPropertyPermission",
+    "name": "setTokenPropertyPermissions",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -734,6 +821,35 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "tokenPropertyPermissions",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "key", "type": "string" },
+          {
+            "components": [
+              {
+                "internalType": "enum TokenPermissionField",
+                "name": "code",
+                "type": "uint8"
+              },
+              { "internalType": "bool", "name": "value", "type": "bool" }
+            ],
+            "internalType": "struct PropertyPermission[]",
+            "name": "permissions",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct TokenPropertyPermission[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
@@ -766,7 +882,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "to",
         "type": "tuple"
       },
@@ -795,7 +911,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "from",
         "type": "tuple"
       },
@@ -804,7 +920,7 @@
           { "internalType": "address", "name": "eth", "type": "address" },
           { "internalType": "uint256", "name": "sub", "type": "uint256" }
         ],
-        "internalType": "struct EthCrossAccount",
+        "internalType": "struct CrossAddress",
         "name": "to",
         "type": "tuple"
       },

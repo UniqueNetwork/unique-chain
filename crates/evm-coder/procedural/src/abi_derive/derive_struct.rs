@@ -1,5 +1,6 @@
 use super::extract_docs;
 use quote::quote;
+use syn::Field;
 
 pub fn tuple_type<'a>(
 	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
@@ -87,10 +88,6 @@ pub fn map_field_to_type(field: &syn::Field) -> &syn::Type {
 	&field.ty
 }
 
-pub fn map_field_to_doc(field: &syn::Field) -> syn::Result<Vec<proc_macro2::TokenStream>> {
-	extract_docs(&field.attrs, true)
-}
-
 pub fn impl_can_be_placed_in_vec(ident: &syn::Ident) -> proc_macro2::TokenStream {
 	quote! {
 		impl ::evm_coder::sealed::CanBePlacedInVec for #ident {}
@@ -147,27 +144,44 @@ pub fn impl_struct_abi_write(
 
 pub fn impl_struct_solidity_type<'a>(
 	name: &syn::Ident,
-	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
-	params_count: usize,
+	docs: Vec<String>,
+	fields: impl Iterator<Item = &'a Field> + Clone,
 ) -> proc_macro2::TokenStream {
-	let len = proc_macro2::Literal::usize_suffixed(params_count);
+	let solidity_name = name.to_string();
+	let solidity_fields = fields.enumerate().map(|(i, f)| {
+		let name = f
+			.ident
+			.as_ref()
+			.map(|i| i.to_string())
+			.unwrap_or_else(|| format!("field_{i}"));
+		let ty = &f.ty;
+		let docs = extract_docs(&f.attrs).expect("TODO: handle bad docs");
+		quote! {
+			SolidityStructField::<#ty> {
+				docs: &[#(#docs),*],
+				name: #name,
+				ty: ::core::marker::PhantomData,
+			}
+		}
+	});
 	quote! {
 		#[cfg(feature = "stubgen")]
-		impl ::evm_coder::solidity::SolidityType for #name {
-			fn names(tc: &::evm_coder::solidity::TypeCollector) -> Vec<String> {
-				let mut collected =
-					Vec::with_capacity(<Self as ::evm_coder::solidity::SolidityType>::len());
-				#({
-					let mut out = String::new();
-					<#field_types as ::evm_coder::solidity::SolidityTypeName>::solidity_name(&mut out, tc)
-						.expect("no fmt error");
-					collected.push(out);
-				})*
-				collected
-			}
-
-			fn len() -> usize {
-				#len
+		impl ::evm_coder::solidity::SolidityStructTy for #name {
+			/// Generate solidity definitions for methods described in this struct
+			fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector) -> String {
+				use evm_coder::solidity::*;
+				use core::fmt::Write;
+				let interface = SolidityStruct {
+					docs: &[#(#docs),*],
+					name: #solidity_name,
+					fields: (#(
+						#solidity_fields,
+					)*),
+				};
+				let mut out = String::new();
+				let _ = interface.format(&mut out, tc);
+				tc.collect(out);
+				#solidity_name.to_string()
 			}
 		}
 	}
@@ -214,47 +228,4 @@ pub fn impl_struct_solidity_type_name<'a>(
 			}
 		}
 	}
-}
-
-pub fn impl_struct_solidity_struct_collect<'a>(
-	name: &syn::Ident,
-	field_names: impl Iterator<Item = proc_macro2::Ident> + Clone,
-	field_types: impl Iterator<Item = &'a syn::Type> + Clone,
-	field_docs: impl Iterator<Item = syn::Result<Vec<proc_macro2::TokenStream>>> + Clone,
-	docs: &[proc_macro2::TokenStream],
-) -> syn::Result<proc_macro2::TokenStream> {
-	let string_name = name.to_string();
-	let name_type = field_names
-		.into_iter()
-		.zip(field_types)
-		.zip(field_docs)
-		.map(|((name, ty), doc)| {
-			let field_docs = doc.expect("Doc parse error");
-			let name = format!("{}", name);
-			quote!(
-				#(#field_docs)*
-				write!(str, "\t{} ", <#ty as ::evm_coder::solidity::StructCollect>::name()).unwrap();
-				writeln!(str, "{};", #name).unwrap();
-			)
-		});
-
-	Ok(quote! {
-		#[cfg(feature = "stubgen")]
-		impl ::evm_coder::solidity::StructCollect for #name {
-			fn name() -> String {
-				#string_name.into()
-			}
-
-			fn declaration() -> String {
-				use std::fmt::Write;
-
-				let mut str = String::new();
-				#(#docs)*
-				writeln!(str, "struct {} {{", Self::name()).unwrap();
-				#(#name_type)*
-				writeln!(str, "}}").unwrap();
-				str
-			}
-		}
-	})
 }

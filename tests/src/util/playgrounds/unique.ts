@@ -1100,6 +1100,13 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
     return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
   }
 
+  async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.common.collectionProperties(collectionId)).toJSON();
+        
+    return (props! as any).consumedSpace;
+  }
+
   async getCollectionOptions(collectionId: number) {
     return (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
   }
@@ -2193,6 +2200,15 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
   }
 
   /**
+   * Get latest relay block
+   * @returns {number} relay block
+   */
+  async getRelayBlockNumber(): Promise<bigint> {
+    const blockNumber = (await this.helper.callRpc('api.query.parachainSystem.validationData')).toJSON().relayParentNumber;
+    return BigInt(blockNumber);
+  }
+
+  /**
    * Get account nonce
    * @param address substrate address
    * @example getNonce("5GrwvaEF5zXb26Fz...");
@@ -2249,6 +2265,11 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
     const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
     return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
+  }
+
+  async getLocked(address: TSubstrateAccount): Promise<[{id: string, amount: bigint, reason: string}]> {
+    const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
+    return locks.map((lock: any) => {return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons};});
   }
 }
 
@@ -2334,6 +2355,15 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 
   /**
+   * Get locked balances
+   * @param address substrate address
+   * @returns locked balances with reason via api.query.balances.locks
+   */
+  getLocked(address: TSubstrateAccount) {
+    return this.subBalanceGroup.getLocked(address);
+  }
+
+  /**
    * Get ethereum address balance
    * @param address ethereum address
    * @example getEthereum("0x9F0583DbB855d...")
@@ -2372,6 +2402,52 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     isSuccess = isSuccess && this.helper.address.normalizeSubstrate(to) === transfer.to;
     isSuccess = isSuccess && BigInt(amount) === transfer.amount;
     return isSuccess;
+  }
+
+  /**
+   * Transfer tokens with the unlock period
+   * @param signer signers Keyring
+   * @param address Substrate address of recipient
+   * @param schedule Schedule params
+   * @example vestedTransfer(signer, recepient.address, 20000, 100, 10, 50 * nominal); // total amount of vested tokens will be 100 * 50 = 5000
+   */
+  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: {start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}): Promise<void> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, schedule]);
+    const event = result.result.events
+      .find(e => e.event.section === 'vesting' &&
+            e.event.method === 'VestingScheduleAdded' &&
+            e.event.data[0].toHuman() === signer.address);
+    if (!event) throw Error('Cannot find transfer in events');
+  }
+
+  /**
+   * Get schedule for recepient of vested transfer
+   * @param address Substrate address of recipient
+   * @returns 
+   */
+  async getVestingSchedules(address: TSubstrateAccount): Promise<{start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}[]> {
+    const schedule = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])).toJSON();
+    return schedule.map((schedule: any) => {
+      return {
+        start: BigInt(schedule.start),
+        period: BigInt(schedule.period),
+        periodCount: BigInt(schedule.periodCount),
+        perPeriod: BigInt(schedule.perPeriod),
+      };
+    });
+  }
+
+  /**
+   * Claim vested tokens
+   * @param signer signers Keyring
+   */
+  async claim(signer: TSigner) {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.claim', []);
+    const event = result.result.events
+      .find(e => e.event.section === 'vesting' &&
+            e.event.method === 'Claimed' &&
+            e.event.data[0].toHuman() === signer.address);
+    if (!event) throw Error('Cannot find claim in events');
   }
 }
 
@@ -2664,21 +2740,72 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     this.palletName = palletName;
   }
 
-  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, {Limited: weightLimit}], true);
+  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+  }
+
+  async teleportAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
+  }
+
+  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint) {
+    const destination = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            Parachain: destinationParaId,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: targetAccount,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V1: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: amount,
+          },
+        },
+      ],
+    };
+
+    const feeAssetItem = 0;
+
+    await this.teleportAssets(signer, destination, beneficiary, assets, feeAssetItem);
   }
 }
 
 class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
-  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: number) {
+  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transfer', [currencyId, amount, destination, destWeight], true);
   }
 
-  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: number) {
+  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
   }
 
-  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: number) {
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
   }
 }
@@ -2747,12 +2874,19 @@ class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
 }
 
 class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
-  async notePreimage(signer: TSigner, encodedProposal: string) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.notePreimage', [encodedProposal], true);
+  notePreimagePallet: string;
+
+  constructor(helper: MoonbeamHelper, options: {[key: string]: any} = {}) {
+    super(helper);
+    this.notePreimagePallet = options.notePreimagePallet;
   }
 
-  externalProposeMajority(proposalHash: string) {
-    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposalHash]);
+  async notePreimage(signer: TSigner, encodedProposal: string) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.notePreimagePallet}.notePreimage`, [encodedProposal], true);
+  }
+
+  externalProposeMajority(proposal: any) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposal]);
   }
 
   fastTrack(proposalHash: string, votingPeriod: number, delayPeriod: number) {
@@ -2781,7 +2915,7 @@ class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
   }
 
-  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: number, lengthBound: number) {
+  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
   }
 
@@ -2841,11 +2975,13 @@ export class XcmChainHelper extends ChainHelperBase {
 }
 
 export class RelayHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<RelayHelper>;
   xcm: XcmGroup<RelayHelper>;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger, options.helperBase ?? RelayHelper);
 
+    this.balance = new SubstrateBalanceGroup(this);
     this.xcm = new XcmGroup(this, 'xcmPallet');
   }
 }
@@ -2884,7 +3020,7 @@ export class MoonbeamHelper extends XcmChainHelper {
     this.assetManager = new MoonbeamAssetManagerGroup(this);
     this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
-    this.democracy = new MoonbeamDemocracyGroup(this);
+    this.democracy = new MoonbeamDemocracyGroup(this, options);
     this.collective = {
       council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
       techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),
@@ -3035,6 +3171,10 @@ export class UniqueBaseCollection {
     return await this.helper.collection.getProperties(this.collectionId, propertyKeys);
   }
 
+  async getPropertiesConsumedSpace() {
+    return await this.helper.collection.getPropertiesConsumedSpace(this.collectionId);
+  }
+
   async getTokenNextSponsored(tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.collection.getTokenNextSponsored(this.collectionId, tokenId, addressObj);
   }
@@ -3158,6 +3298,13 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
   }
 
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
+  }
+
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
     return await this.helper.nft.transferToken(signer, this.collectionId, tokenId, addressObj);
   }
@@ -3267,6 +3414,13 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenProperties(tokenId: number, propertyKeys?: string[] | null) {
     return await this.helper.rft.getTokenProperties(this.collectionId, tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
+    const api = this.helper.getApi();
+    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+        
+    return (props! as any).consumedSpace;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount=1n) {
@@ -3419,6 +3573,10 @@ export class UniqueBaseToken {
 
   async getProperties(propertyKeys?: string[] | null) {
     return await this.collection.getTokenProperties(this.tokenId, propertyKeys);
+  }
+
+  async getTokenPropertiesConsumedSpace() {
+    return await this.collection.getTokenPropertiesConsumedSpace(this.tokenId);
   }
 
   async setProperties(signer: TSigner, properties: IProperty[]) {

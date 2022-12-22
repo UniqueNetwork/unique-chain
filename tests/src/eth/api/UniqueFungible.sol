@@ -13,7 +13,7 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xb5e1747f
+/// @dev the ERC-165 identifier for this interface is 0x2a14cfd1
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -78,7 +78,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
-	function setCollectionSponsorCross(EthCrossAccount memory sponsor) external;
+	function setCollectionSponsorCross(CrossAddress memory sponsor) external;
 
 	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
@@ -102,24 +102,21 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple8 memory);
+	function collectionSponsor() external view returns (CrossAddress memory);
+
+	/// Get current collection limits.
+	///
+	/// @return Array of collection limits
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() external view returns (CollectionLimit[] memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x4ad890a8,
-	///  or in textual repr: setCollectionLimit(string,uint256)
-	function setCollectionLimit(string memory limit, uint256 value) external;
+	/// @param limit Some limit.
+	/// @dev EVM selector for this function is: 0x2316ee74,
+	///  or in textual repr: setCollectionLimit((uint8,(bool,uint256)))
+	function setCollectionLimit(CollectionLimit memory limit) external;
 
 	/// Get contract address.
 	/// @dev EVM selector for this function is: 0xf6b4dfb4,
@@ -130,13 +127,13 @@ interface Collection is Dummy, ERC165 {
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
-	function addCollectionAdminCross(EthCrossAccount memory newAdmin) external;
+	function addCollectionAdminCross(CrossAddress memory newAdmin) external;
 
 	/// Remove collection admin.
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
-	function removeCollectionAdminCross(EthCrossAccount memory admin) external;
+	function removeCollectionAdminCross(CrossAddress memory admin) external;
 
 	// /// Add collection admin.
 	// /// @param newAdmin Address of the added administrator.
@@ -169,12 +166,12 @@ interface Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (Tuple20 memory);
+	function collectionNestingRestrictedCollectionIds() external view returns (CollectionNesting memory);
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (Tuple23[] memory);
+	function collectionNestingPermissions() external view returns (CollectionNestingPermission[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -189,7 +186,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param user User address to check.
 	/// @dev EVM selector for this function is: 0x91b6df49,
 	///  or in textual repr: allowlistedCross((address,uint256))
-	function allowlistedCross(EthCrossAccount memory user) external view returns (bool);
+	function allowlistedCross(CrossAddress memory user) external view returns (bool);
 
 	// /// Add the user to the allowed list.
 	// ///
@@ -203,7 +200,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
-	function addToCollectionAllowListCross(EthCrossAccount memory user) external;
+	function addToCollectionAllowListCross(CrossAddress memory user) external;
 
 	// /// Remove the user from the allowed list.
 	// ///
@@ -217,7 +214,7 @@ interface Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
-	function removeFromCollectionAllowListCross(EthCrossAccount memory user) external;
+	function removeFromCollectionAllowListCross(CrossAddress memory user) external;
 
 	/// Switch permission for minting.
 	///
@@ -240,7 +237,7 @@ interface Collection is Dummy, ERC165 {
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
-	function isOwnerOrAdminCross(EthCrossAccount memory user) external view returns (bool);
+	function isOwnerOrAdminCross(CrossAddress memory user) external view returns (bool);
 
 	/// Returns collection type
 	///
@@ -255,7 +252,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() external view returns (EthCrossAccount memory);
+	function collectionOwner() external view returns (CrossAddress memory);
 
 	// /// Changes collection owner to another account
 	// ///
@@ -271,7 +268,7 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() external view returns (EthCrossAccount[] memory);
+	function collectionAdmins() external view returns (CrossAddress[] memory);
 
 	/// Changes collection owner to another account
 	///
@@ -279,48 +276,89 @@ interface Collection is Dummy, ERC165 {
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0x6496c497,
 	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
-	function changeCollectionOwnerCross(EthCrossAccount memory newOwner) external;
+	function changeCollectionOwnerCross(CrossAddress memory newOwner) external;
 }
 
-/// @dev Cross account struct
-struct EthCrossAccount {
+/// Cross account struct
+struct CrossAddress {
 	address eth;
 	uint256 sub;
 }
 
-/// @dev anonymous struct
-struct Tuple23 {
-	CollectionPermissions field_0;
-	bool field_1;
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+struct CollectionNestingPermission {
+	CollectionPermissionField field;
+	bool value;
 }
 
-enum CollectionPermissions {
-	CollectionAdmin,
-	TokenOwner
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
+enum CollectionPermissionField {
+	/// Owner of token can nest tokens under it.
+	TokenOwner,
+	/// Admin of token collection can nest tokens under token.
+	CollectionAdmin
 }
 
-/// @dev anonymous struct
-struct Tuple20 {
-	bool field_0;
-	uint256[] field_1;
+/// Nested collections.
+struct CollectionNesting {
+	bool token_owner;
+	uint256[] ids;
 }
 
-/// @dev Property struct
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+struct CollectionLimit {
+	CollectionLimitField field;
+	OptionUint value;
+}
+
+/// Ethereum representation of Optional value with uint256.
+struct OptionUint {
+	bool status;
+	uint256 value;
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
+enum CollectionLimitField {
+	/// How many tokens can a user have on one account.
+	AccountTokenOwnership,
+	/// How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+	/// How many tokens can be mined into this collection.
+	TokenLimit,
+	/// Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+	/// Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+	/// Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+	/// Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+	/// Is it possible to send tokens from this collection between users.
+	TransferEnabled
+}
+
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
 	string key;
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x5b7038cf
+/// @dev the ERC-165 identifier for this interface is 0x7dee5997
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
 	///  or in textual repr: description()
 	function description() external view returns (string memory);
 
+	/// @dev EVM selector for this function is: 0x269e6158,
+	///  or in textual repr: mintCross((address,uint256),uint256)
+	function mintCross(CrossAddress memory to, uint256 amount) external returns (bool);
+
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(EthCrossAccount memory spender, uint256 amount) external returns (bool);
+	function approveCross(CrossAddress memory spender, uint256 amount) external returns (bool);
 
 	// /// Burn tokens from account
 	// /// @dev Function that burns an `amount` of the tokens of a given account,
@@ -338,29 +376,29 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(EthCrossAccount memory from, uint256 amount) external returns (bool);
+	function burnFromCross(CrossAddress memory from, uint256 amount) external returns (bool);
 
 	/// Mint tokens for multiple accounts.
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple8[] memory amounts) external returns (bool);
+	function mintBulk(Tuple9[] memory amounts) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(EthCrossAccount memory to, uint256 amount) external returns (bool);
+	function transferCross(CrossAddress memory to, uint256 amount) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		EthCrossAccount memory from,
-		EthCrossAccount memory to,
+		CrossAddress memory from,
+		CrossAddress memory to,
 		uint256 amount
 	) external returns (bool);
 }
 
 /// @dev anonymous struct
-struct Tuple8 {
+struct Tuple9 {
 	address field_0;
 	uint256 field_1;
 }

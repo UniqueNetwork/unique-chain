@@ -19,13 +19,13 @@ import {ApiOptions, ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
 import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
 import {EventRecord} from '@polkadot/types/interfaces/system/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import config from '../config';
-import '../interfaces/augment-api-events';
-import * as defs from '../interfaces/definitions';
+import config from '../../config';
+import '../../interfaces/augment-api-events';
+import * as defs from '../../interfaces/definitions';
 import privateKey from './privateKey';
 import promisifySubstrate from './promisify-substrate';
 
-import {SilentConsole} from '../util/playgrounds/unique.dev';
+import {SilentConsole} from '../../util/playgrounds/unique.dev';
 
 
 

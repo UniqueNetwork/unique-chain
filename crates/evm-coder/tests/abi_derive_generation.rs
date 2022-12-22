@@ -74,32 +74,6 @@ mod test_struct {
 	}
 
 	#[test]
-	#[cfg(feature = "stubgen")]
-	fn struct_collect_type_struct3_derived_mixed_param() {
-		assert_eq!(
-			<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
-			"TypeStruct3DerivedMixedParam"
-		);
-		similar_asserts::assert_eq!(
-			<TypeStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::declaration(),
-			r#"/// @dev Some docs
-/// At multi
-/// line
-struct TypeStruct3DerivedMixedParam {
-	/// @dev Docs for A
-	/// multi
-	/// line
-	TypeStruct1SimpleParam _a;
-	/// @dev Docs for B
-	TypeStruct2DynamicParam _b;
-	/// @dev Docs for C
-	TypeStruct2MixedParam _c;
-}
-"#
-		);
-	}
-
-	#[test]
 	fn impl_abi_type_signature() {
 		assert_eq!(
 			<TypeStruct1SimpleParam as evm_coder::abi::AbiType>::SIGNATURE
@@ -292,31 +266,6 @@ struct TypeStruct3DerivedMixedParam {
 		/// Docs for C
 		TupleStruct2MixedParam,
 	);
-
-	#[test]
-	#[cfg(feature = "stubgen")]
-	fn struct_collect_tuple_struct3_derived_mixed_param() {
-		assert_eq!(
-			<TupleStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::name(),
-			"TupleStruct3DerivedMixedParam"
-		);
-		similar_asserts::assert_eq!(
-			<TupleStruct3DerivedMixedParam as ::evm_coder::solidity::StructCollect>::declaration(),
-			r#"/// @dev Some docs
-/// At multi
-/// line
-struct TupleStruct3DerivedMixedParam {
-	/// @dev Docs for A
-	/// multi
-	/// line
-	TupleStruct1SimpleParam field0;
-	TupleStruct2DynamicParam field1;
-	/// @dev Docs for C
-	TupleStruct2MixedParam field2;
-}
-"#
-		);
-	}
 
 	#[test]
 	fn impl_abi_type_signature_same_for_structs() {
@@ -740,7 +689,7 @@ mod test_enum {
 	/// Some docs
 	/// At multi
 	/// line
-	#[derive(AbiCoder, Debug, PartialEq, Default)]
+	#[derive(AbiCoder, Debug, PartialEq, Default, Clone, Copy)]
 	#[repr(u8)]
 	enum Color {
 		/// Docs for Red
@@ -812,30 +761,5 @@ mod test_enum {
 				<Color as evm_coder::abi::AbiRead>::abi_read(&mut decoder).unwrap();
 			assert_eq!(restored_enum_data, Color::Green);
 		}
-	}
-
-	#[test]
-	#[cfg(feature = "stubgen")]
-	fn struct_collect_enum() {
-		assert_eq!(
-			<Color as ::evm_coder::solidity::StructCollect>::name(),
-			"Color"
-		);
-		similar_asserts::assert_eq!(
-			<Color as ::evm_coder::solidity::StructCollect>::declaration(),
-			r#"/// @dev Some docs
-/// At multi
-/// line
-enum Color {
-	/// @dev Docs for Red
-	/// multi
-	/// line
-	Red,
-	Green,
-	/// @dev Docs for Blue
-	Blue
-}
-"#
-		);
 	}
 }

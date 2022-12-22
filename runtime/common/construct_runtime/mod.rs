@@ -79,10 +79,10 @@ macro_rules! construct_runtime {
                 #[runtimes(opal)]
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz, unique)]
                 ForeignAssets: pallet_foreign_assets::{Pallet, Call, Storage, Event<T>} = 80,
 
                 // Frontier

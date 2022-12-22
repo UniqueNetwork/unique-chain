@@ -82,7 +82,7 @@ use frame_support::{
 	BoundedVec,
 };
 use scale_info::TypeInfo;
-use frame_system::{self as system, ensure_signed};
+use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
@@ -980,6 +980,38 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			dispatch_tx::<T, _>(collection_id, |d| {
 				d.set_allowance_for_all(sender, operator, approve)
+			})
+		}
+
+		/// Repairs a collection if the data was somehow corrupted.
+		///
+		/// # Arguments
+		///
+		/// * `collection_id`: ID of the collection to repair.
+		#[weight = <SelfWeightOf<T>>::force_repair_collection()]
+		pub fn force_repair_collection(
+			origin,
+			collection_id: CollectionId,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			<PalletCommon<T>>::repair_collection(collection_id)
+		}
+
+		/// Repairs a token if the data was somehow corrupted.
+		///
+		/// # Arguments
+		///
+		/// * `collection_id`: ID of the collection the item belongs to.
+		/// * `item_id`: ID of the item.
+		#[weight = T::CommonWeightInfo::force_repair_item()]
+		pub fn force_repair_item(
+			origin,
+			collection_id: CollectionId,
+			item_id: TokenId,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.repair_item(item_id)
 			})
 		}
 	}

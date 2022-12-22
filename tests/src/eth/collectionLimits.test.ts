@@ -1,6 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
+import {CollectionLimitField} from './util/playgrounds/types';
 
 
 describe('Can set collection limits', () => {
@@ -31,7 +32,7 @@ describe('Can set collection limits', () => {
         ownerCanDestroy: 0,
         transfersEnabled: 0,
       };
-      
+
       const expectedLimits = {
         accountTokenOwnershipLimit: 1000,
         sponsoredDataSize: 1024,
@@ -43,21 +44,34 @@ describe('Can set collection limits', () => {
         ownerCanDestroy: false,
         transfersEnabled: false,
       };
-     
-      const collection = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
-      await collection.methods.setCollectionLimit('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
-      await collection.methods.setCollectionLimit('sponsoredDataSize', limits.sponsoredDataSize).send();
-      await collection.methods.setCollectionLimit('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
-      await collection.methods.setCollectionLimit('tokenLimit', limits.tokenLimit).send();
-      await collection.methods.setCollectionLimit('sponsorTransferTimeout', limits.sponsorTransferTimeout).send();
-      await collection.methods.setCollectionLimit('sponsorApproveTimeout', limits.sponsorApproveTimeout).send();
-      await collection.methods.setCollectionLimit('ownerCanTransfer', limits.ownerCanTransfer).send();
-      await collection.methods.setCollectionLimit('ownerCanDestroy', limits.ownerCanDestroy).send();
-      await collection.methods.setCollectionLimit('transfersEnabled', limits.transfersEnabled).send();
-      
+
+      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: limits.accountTokenOwnershipLimit}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: limits.sponsoredDataSize}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.SponsoredDataRateLimit, value: {status: true, value: limits.sponsoredDataRateLimit}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.TokenLimit, value: {status: true, value: limits.tokenLimit}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.SponsorTransferTimeout, value: {status: true, value: limits.sponsorTransferTimeout}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.SponsorApproveTimeout, value: {status: true, value: limits.sponsorApproveTimeout}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.OwnerCanTransfer, value: {status: true, value: limits.ownerCanTransfer}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.OwnerCanDestroy, value: {status: true, value: limits.ownerCanDestroy}}).send();
+      await collectionEvm.methods.setCollectionLimit({field: CollectionLimitField.TransferEnabled, value: {status: true, value: limits.transfersEnabled}}).send();
+
+      // Check limits from sub:
       const data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.limits).to.deep.eq(expectedLimits);
       expect(await helper.collection.getEffectiveLimits(collectionId)).to.deep.eq(expectedLimits);
+      // Check limits from eth:
+      const limitsEvm = await collectionEvm.methods.collectionLimits().call({from: owner});
+      expect(limitsEvm).to.have.length(9);
+      expect(limitsEvm[0]).to.deep.eq([CollectionLimitField.AccountTokenOwnership.toString(), [true, limits.accountTokenOwnershipLimit.toString()]]);
+      expect(limitsEvm[1]).to.deep.eq([CollectionLimitField.SponsoredDataSize.toString(), [true, limits.sponsoredDataSize.toString()]]);
+      expect(limitsEvm[2]).to.deep.eq([CollectionLimitField.SponsoredDataRateLimit.toString(), [true, limits.sponsoredDataRateLimit.toString()]]);
+      expect(limitsEvm[3]).to.deep.eq([CollectionLimitField.TokenLimit.toString(), [true, limits.tokenLimit.toString()]]);
+      expect(limitsEvm[4]).to.deep.eq([CollectionLimitField.SponsorTransferTimeout.toString(), [true, limits.sponsorTransferTimeout.toString()]]);
+      expect(limitsEvm[5]).to.deep.eq([CollectionLimitField.SponsorApproveTimeout.toString(), [true, limits.sponsorApproveTimeout.toString()]]);
+      expect(limitsEvm[6]).to.deep.eq([CollectionLimitField.OwnerCanTransfer.toString(), [true, limits.ownerCanTransfer.toString()]]);
+      expect(limitsEvm[7]).to.deep.eq([CollectionLimitField.OwnerCanDestroy.toString(), [true, limits.ownerCanDestroy.toString()]]);
+      expect(limitsEvm[8]).to.deep.eq([CollectionLimitField.TransferEnabled.toString(), [true, limits.transfersEnabled.toString()]]);
     }));
 });
 
@@ -83,18 +97,49 @@ describe('Cannot set invalid collection limits', () => {
 
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'ISNI', 18);
-      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+
+      // Cannot set non-existing limit
       await expect(collectionEvm.methods
-        .setCollectionLimit('badLimit', '1')
-        .call()).to.be.rejectedWith('unknown limit "badLimit"');
-      
+        .setCollectionLimit({field: 9, value: {status: true, value: 1}})
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimitField"');
+
+      // Cannot disable limits
       await expect(collectionEvm.methods
-        .setCollectionLimit(Object.keys(invalidLimits)[0], invalidLimits.accountTokenOwnershipLimit)
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 200}})
+        .call()).to.be.rejectedWith('user can\'t disable limits');
+
+      await expect(collectionEvm.methods
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: invalidLimits.accountTokenOwnershipLimit}})
         .call()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
-      
+
       await expect(collectionEvm.methods
-        .setCollectionLimit(Object.keys(invalidLimits)[1], invalidLimits.transfersEnabled)
+        .setCollectionLimit({field: CollectionLimitField.TransferEnabled, value: {status: true, value: 3}})
         .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
+
+      expect(() => collectionEvm.methods
+        .setCollectionLimit({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: -1}}).send()).to.throw('value out-of-bounds');
+    }));
+
+  [
+    {case: 'nft' as const, requiredPallets: []},
+    {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {case: 'ft' as const, requiredPallets: []},
+  ].map(testCase =>
+    itEth.ifWithPallets(`Non-owner and non-admin cannot set collection limits for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const nonOwner = await helper.eth.createAccountWithBalance(donor);
+      const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'FLO', 18);
+
+      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      await expect(collectionEvm.methods
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
+        .call({from: nonOwner}))
+        .to.be.rejectedWith('NoPermission');
+
+      await expect(collectionEvm.methods
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
+        .send({from: nonOwner}))
+        .to.be.rejected;
     }));
 });
-  
