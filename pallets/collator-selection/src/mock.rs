@@ -264,7 +264,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.collect::<Vec<_>>();
 	let collator_selection = collator_selection::GenesisConfig::<Test> {
 		desired_candidates: 2,
-		candidacy_bond: 10,
+		license_bond: 10,
 		kick_threshold: 1,
 		invulnerables,
 	};

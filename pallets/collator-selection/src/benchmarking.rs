@@ -116,12 +116,12 @@ fn register_candidates<T: Config>(count: u32) {
 		.map(|c| account("candidate", c, SEED))
 		.collect::<Vec<_>>();
 	assert!(
-		<CandidacyBond<T>>::get() > 0u32.into(),
+		<LicenseBond<T>>::get() > 0u32.into(),
 		"Bond cannot be zero!"
 	);
 
 	for who in candidates {
-		T::Currency::make_free_balance_be(&who, <CandidacyBond<T>>::get() * 2u32.into());
+		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
 		<CollatorSelection<T>>::register_as_candidate(RawOrigin::Signed(who).into()).unwrap();
 	}
 }
@@ -154,16 +154,16 @@ benchmarks! {
 		assert_last_event::<T>(Event::NewDesiredCandidates{desired_candidates: max}.into());
 	}
 
-	set_candidacy_bond {
+	set_license_bond {
 		let bond_amount: BalanceOf<T> = T::Currency::minimum_balance() * 10u32.into();
 		let origin = T::UpdateOrigin::successful_origin();
 	}: {
 		assert_ok!(
-			<CollatorSelection<T>>::set_candidacy_bond(origin, bond_amount.clone())
+			<CollatorSelection<T>>::set_license_bond(origin, bond_amount.clone())
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::NewCandidacyBond{bond_amount}.into());
+		assert_last_event::<T>(Event::NewLicenseBond{bond_amount}.into());
 	}
 
 	// worse case is when we have all the max-candidate slots filled except one, and we fill that
@@ -171,7 +171,7 @@ benchmarks! {
 	register_as_candidate {
 		let c in 1 .. T::MaxCandidates::get();
 
-		<CandidacyBond<T>>::put(T::Currency::minimum_balance());
+		<LicenseBond<T>>::put(T::Currency::minimum_balance());
 		<DesiredCandidates<T>>::put(c + 1);
 
 		register_validators::<T>(c);
@@ -195,7 +195,7 @@ benchmarks! {
 	// worse case is the last candidate leaving.
 	leave_intent {
 		let c in (T::MinCandidates::get() + 1) .. T::MaxCandidates::get();
-		<CandidacyBond<T>>::put(T::Currency::minimum_balance());
+		<LicenseBond<T>>::put(T::Currency::minimum_balance());
 		<DesiredCandidates<T>>::put(c);
 
 		register_validators::<T>(c);
@@ -211,7 +211,7 @@ benchmarks! {
 
 	// worse case is paying a non-existing candidate account.
 	note_author {
-		<CandidacyBond<T>>::put(T::Currency::minimum_balance());
+		<LicenseBond<T>>::put(T::Currency::minimum_balance());
 		T::Currency::make_free_balance_be(
 			&<CollatorSelection<T>>::account_id(),
 			T::Currency::minimum_balance() * 4u32.into(),
@@ -233,7 +233,7 @@ benchmarks! {
 		let r in 1 .. T::MaxCandidates::get();
 		let c in 1 .. T::MaxCandidates::get();
 
-		<CandidacyBond<T>>::put(T::Currency::minimum_balance());
+		<LicenseBond<T>>::put(T::Currency::minimum_balance());
 		<DesiredCandidates<T>>::put(c);
 		frame_system::Pallet::<T>::set_block_number(0u32.into());
 

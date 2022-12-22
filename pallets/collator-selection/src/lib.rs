@@ -181,7 +181,7 @@ pub mod pallet {
 	#[derive(
 		PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo, MaxEncodedLen,
 	)]
-	pub struct CandidateInfo<AccountId, Balance> {
+	pub struct LicenseInfo<AccountId, Balance> {
 		/// Account identifier.
 		pub who: AccountId,
 		/// Reserved deposit.
@@ -198,12 +198,18 @@ pub mod pallet {
 	pub type Invulnerables<T: Config> =
 		StorageValue<_, BoundedVec<T::AccountId, T::MaxInvulnerables>, ValueQuery>;
 
+	/// The (community) collation license holders.
+	#[pallet::storage]
+	#[pallet::getter(fn licenses)]
+	pub type Licenses<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>, ValueQuery>;
+
 	/// The (community, limited) collation candidates.
 	#[pallet::storage]
 	#[pallet::getter(fn candidates)]
 	pub type Candidates<T: Config> = StorageValue<
 		_,
-		BoundedVec<CandidateInfo<T::AccountId, BalanceOf<T>>, T::MaxCandidates>,
+		BoundedVec<T::AccountId, T::MaxCandidates>, //LicenseInfo<T::AccountId, BalanceOf<T>>, T::MaxCandidates>, // license ID?
 		ValueQuery,
 	>;
 
@@ -231,13 +237,13 @@ pub mod pallet {
 	///
 	/// When a collator calls `leave_intent` they immediately receive the deposit back.
 	#[pallet::storage]
-	#[pallet::getter(fn candidacy_bond)]
-	pub type CandidacyBond<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
+	#[pallet::getter(fn license_bond)]
+	pub type LicenseBond<T> = StorageValue<_, BalanceOf<T>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub invulnerables: Vec<T::AccountId>,
-		pub candidacy_bond: BalanceOf<T>,
+		pub license_bond: BalanceOf<T>,
 		pub kick_threshold: T::BlockNumber,
 		pub desired_candidates: u32,
 	}
@@ -247,7 +253,7 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				invulnerables: Default::default(),
-				candidacy_bond: Default::default(),
+				license_bond: Default::default(),
 				kick_threshold: T::BlockNumber::one(),
 				desired_candidates: Default::default(),
 			}
@@ -275,7 +281,7 @@ pub mod pallet {
 			);
 
 			<DesiredCandidates<T>>::put(&self.desired_candidates);
-			<CandidacyBond<T>>::put(&self.candidacy_bond);
+			<LicenseBond<T>>::put(&self.license_bond);
 			<KickThreshold<T>>::put(&self.kick_threshold);
 			<Invulnerables<T>>::put(bounded_invulnerables);
 		}
@@ -287,7 +293,7 @@ pub mod pallet {
 		NewDesiredCandidates {
 			desired_candidates: u32,
 		},
-		NewCandidacyBond {
+		NewLicenseBond {
 			bond_amount: BalanceOf<T>,
 		},
 		NewKickThreshold {
@@ -299,13 +305,19 @@ pub mod pallet {
 		InvulnerableRemoved {
 			invulnerable: T::AccountId,
 		},
-		CandidateAdded {
+		LicenseObtained {
 			account_id: T::AccountId,
 			deposit: BalanceOf<T>,
 		},
-		CandidateRemoved {
+		LicenseForfeited {
 			account_id: T::AccountId,
 			deposit_returned: BalanceOf<T>,
+		},
+		CandidateAdded {
+			account_id: T::AccountId,
+		},
+		CandidateRemoved {
+			account_id: T::AccountId,
 		},
 	}
 
@@ -320,6 +332,10 @@ pub mod pallet {
 		Unknown,
 		/// Permission issue
 		Permission,
+		/// User already holds license to collate
+		AlreadyLicenseHolder,
+		/// User does not hold a license to collate
+		NoLicense,
 		/// User is already a candidate
 		AlreadyCandidate,
 		/// User is not a candidate
@@ -362,6 +378,9 @@ pub mod pallet {
 			if Self::invulnerables().contains(&new) {
 				return Ok(().into());
 			}
+
+			// todo:collator check license holders, release moneys, promotion!
+			// force_release_license? Error::<T>::lreadyLicenseHolder?
 
 			<Invulnerables<T>>::try_append(new.clone())
 				.map_err(|_| Error::<T>::TooManyInvulnerables)?;
@@ -419,20 +438,20 @@ pub mod pallet {
 		}
 
 		/// Set the candidacy bond amount.
-		#[pallet::weight(T::WeightInfo::set_candidacy_bond())]
-		pub fn set_candidacy_bond(
+		#[pallet::weight(T::WeightInfo::set_license_bond())]
+		pub fn set_license_bond(
 			origin: OriginFor<T>,
 			bond: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateOrigin::ensure_origin(origin)?;
-			<CandidacyBond<T>>::put(&bond);
-			Self::deposit_event(Event::NewCandidacyBond { bond_amount: bond });
+			<LicenseBond<T>>::put(&bond);
+			Self::deposit_event(Event::NewLicenseBond { bond_amount: bond });
 			Ok(().into())
 		}
 
 		/// Set the length of the kick threshold.
 		/// Note that if the length is not a multiple of the session period, it might get inconsistent.
-		#[pallet::weight(T::WeightInfo::set_candidacy_bond())] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::set_license_bond())] // todo:collator weight
 		pub fn set_kick_threshold(
 			origin: OriginFor<T>,
 			kick_threshold: T::BlockNumber,
@@ -446,21 +465,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Register this account as a collator candidate. The account must (a) already have
-		/// registered session keys and (b) be able to reserve the `CandidacyBond`.
+		/// Purchase a license on block collation for this account.
+		/// It does not make it a collator candidate, use `onboard` afterward. The account must
+		/// (a) already have registered session keys and (b) be able to reserve the `LicenseBond`.
 		///
 		/// This call is not available to `Invulnerable` collators.
-		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCandidates::get()))]
-		pub fn register_as_candidate(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCandidates::get()))] // todo:collator weight
+		pub fn get_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			// register_as_candidate
 			let who = ensure_signed(origin)?;
 
-			// ensure we are below limit.
-			let length = <Candidates<T>>::decode_len().unwrap_or_default();
-			ensure!(
-				(length as u32) < Self::desired_candidates(),
-				Error::<T>::TooManyCandidates
-			);
-			// todo:collator really need it?
+			if Licenses::<T>::contains_key(&who) {
+				return Ok(().into());
+			}
+
 			ensure!(
 				!Self::invulnerables().contains(&who),
 				Error::<T>::AlreadyInvulnerable
@@ -473,21 +491,81 @@ pub mod pallet {
 				Error::<T>::ValidatorNotRegistered
 			);
 
-			let deposit = Self::candidacy_bond();
+			let deposit = Self::license_bond();
 			// First authored block is current block plus kick threshold to handle session delay
-			let incoming = CandidateInfo {
+			/*let incoming = LicenseInfo {
 				who: who.clone(),
 				deposit,
-			};
+			};*/
+
+			T::Currency::reserve(&who, deposit)?;
+			Licenses::<T>::insert(who.clone(), deposit);
+
+			/*let current_count =
+			<Licenses<T>>::try_mutate(|licenses| -> Result<usize, DispatchError> {
+				if T::OriginPrivilegeCmp::cmp_privilege(&origin, &scheduled.origin) {
+					return Err(BadOrigin.into());
+				}
+				if candidates.iter().any(|candidate| *candidate == who) {
+					Err(Error::<T>::AlreadyLicenseHolder)?
+				} else {
+					T::Currency::reserve(&who, deposit)?;
+					candidates
+						.try_push(incoming)
+						.map_err(|_| Error::<T>::TooManyCandidates)?;
+					<LastAuthoredBlock<T>>::insert(
+						who.clone(),
+						frame_system::Pallet::<T>::block_number() + Self::kick_threshold(),
+					);
+					Ok(candidates.len())
+				}
+			})?;*/
+
+			Self::deposit_event(Event::LicenseObtained {
+				account_id: who,
+				deposit,
+			});
+			Ok(().into()) // Some(T::WeightInfo::register_as_candidate(current_count as u32)).into())
+		}
+
+		/// Register this account as a candidate for collators for next sessions.
+		/// The account must already hold a license, and cannot offboard immediately during a session.
+		///
+		/// This call is not available to `Invulnerable` collators.
+		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCandidates::get()))] // todo:collator weight
+		pub fn onboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			// register_as_candidate
+			let who = ensure_signed(origin)?;
+
+			// ensure the user obtained the license.
+			ensure!(Licenses::<T>::contains_key(&who), Error::<T>::NoLicense);
+			// ensure we are below limit.
+			let length = <Candidates<T>>::decode_len().unwrap_or_default();
+			ensure!(
+				(length as u32) < Self::desired_candidates(),
+				Error::<T>::TooManyCandidates
+			);
+			// todo:collator really need it?
+			ensure!(
+				!Self::invulnerables().contains(&who),
+				Error::<T>::AlreadyInvulnerable
+			);
+
+			let deposit = Self::license_bond();
+			// First authored block is current block plus kick threshold to handle session delay
+			/*let incoming = LicenseInfo {
+				who: who.clone(),
+				deposit,
+			};*/
 
 			let current_count =
 				<Candidates<T>>::try_mutate(|candidates| -> Result<usize, DispatchError> {
-					if candidates.iter().any(|candidate| candidate.who == who) {
+					if candidates.iter().any(|candidate| *candidate == who) {
 						Err(Error::<T>::AlreadyCandidate)?
 					} else {
 						T::Currency::reserve(&who, deposit)?;
 						candidates
-							.try_push(incoming)
+							.try_push(who.clone())
 							.map_err(|_| Error::<T>::TooManyCandidates)?;
 						<LastAuthoredBlock<T>>::insert(
 							who.clone(),
@@ -497,30 +575,58 @@ pub mod pallet {
 					}
 				})?;
 
-			Self::deposit_event(Event::CandidateAdded {
-				account_id: who,
-				deposit,
-			});
+			Self::deposit_event(Event::CandidateAdded { account_id: who });
 			Ok(Some(T::WeightInfo::register_as_candidate(current_count as u32)).into())
 		}
 
 		/// Deregister `origin` as a collator candidate. Note that the collator can only leave on
-		/// session change. The `CandidacyBond` will be unreserved immediately.
+		/// session change. The license to `onboard` later at any other time will remain.
 		///
-		/// This call will fail if the total number of candidates would drop below `MinCandidates`.
-		///
-		/// This call is not available to `Invulnerable` collators.
-		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCandidates::get()))]
-		pub fn leave_intent(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		/// This call will fail if the total number of candidates would drop below `MinCandidates`. todo:collator maybe not
+		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCandidates::get()))] // todo:collator weight
+		pub fn offboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			// leave_intent
 			let who = ensure_signed(origin)?;
 			// todo:collator invulnerables and candidates should count against min candidates together
 			ensure!(
 				Self::candidates().len() as u32 > T::MinCandidates::get(),
 				Error::<T>::TooFewCandidates
 			);
-			let current_count = Self::try_remove_candidate(&who, false)?;
+			let current_count = Self::try_remove_candidate(&who)?;
 
 			Ok(Some(T::WeightInfo::leave_intent(current_count as u32)).into())
+		}
+
+		/// Forfeit `origin`'s own license. The `LicenseBond` will be unreserved immediately.
+		///
+		/// This call is not available to `Invulnerable` collators.
+		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCandidates::get()))] // todo:collator weight
+		pub fn release_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			// leave_intent
+			let who = ensure_signed(origin)?;
+			// let current_count = Self::try_remove_candidate(&who, false)?;
+			Self::try_release_license(&who, false)?;
+
+			Ok(().into())
+		}
+
+		/// Force deregister `origin` as a collator candidate as a governing authority, and revoke its license.
+		/// Note that the collator can only leave on session change.
+		/// The `LicenseBond` will be unreserved and returned immediately.
+		///
+		/// This call is not available to `Invulnerable` collators.
+		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCandidates::get()))] // todo:collator weight
+		pub fn force_release_license(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			// leave_intent
+			T::UpdateOrigin::ensure_origin(origin)?;
+
+			let current_count = Self::try_remove_candidate(&who)?;
+			Self::try_release_license(&who, false)?;
+
+			Ok(Some(T::WeightInfo::leave_intent(current_count as u32)).into()) // todo:collator weight
 		}
 	}
 
@@ -530,21 +636,29 @@ pub mod pallet {
 			T::PotId::get().into_account_truncating()
 		}
 
-		/// Removes a candidate if they exist and sends them back their deposit, optionally slashed.
-		fn try_remove_candidate(
-			who: &T::AccountId,
-			should_slash: bool,
-		) -> Result<usize, DispatchError> {
-			let mut deposit_returned = BalanceOf::<T>::default();
+		/// Removes a candidate from the collator pool for the next session if they exist.
+		fn try_remove_candidate(who: &T::AccountId) -> Result<usize, DispatchError> {
 			let current_count =
 				<Candidates<T>>::try_mutate(|candidates| -> Result<usize, DispatchError> {
 					let index = candidates
 						.iter()
-						.position(|candidate| candidate.who == *who)
+						.position(|candidate| *candidate == *who)
 						.ok_or(Error::<T>::NotCandidate)?;
-					let candidate = candidates.remove(index);
-					let deposit = candidate.deposit;
+					candidates.remove(index);
+					<LastAuthoredBlock<T>>::remove(who.clone());
+					Ok(candidates.len())
+				})?;
+			Self::deposit_event(Event::CandidateRemoved {
+				account_id: who.clone(),
+			});
+			Ok(current_count)
+		}
 
+		/// Removes a candidate if they exist and sends them back their deposit, optionally slashed.
+		fn try_release_license(who: &T::AccountId, should_slash: bool) -> DispatchResult {
+			let mut deposit_returned = BalanceOf::<T>::default();
+			Licenses::<T>::try_mutate_exists(&who, |deposit| -> DispatchResult {
+				if let Some(deposit) = deposit.take() {
 					if should_slash {
 						let slashed = T::SlashRatio::get() * deposit;
 						let remaining = deposit - slashed;
@@ -554,23 +668,22 @@ pub mod pallet {
 						deposit_returned = remaining;
 
 						T::Currency::resolve_creating(&T::TreasuryAccountId::get(), imbalance);
-
-					// Self::deposit_event(Event::CandidateSlashed(who.clone()));
 					} else {
 						//T::Currency::unreserve(who, deposit);
 						deposit_returned = deposit;
 					}
 
 					T::Currency::unreserve(who, deposit_returned);
-					// candidates.remove(index);
-					<LastAuthoredBlock<T>>::remove(who.clone());
-					Ok(candidates.len())
-				})?;
-			Self::deposit_event(Event::CandidateRemoved {
+					Ok(())
+				} else {
+					Err(Error::<T>::NoLicense.into())
+				}
+			})?;
+			Self::deposit_event(Event::LicenseForfeited {
 				account_id: who.clone(),
 				deposit_returned,
 			});
-			Ok(current_count)
+			Ok(())
 		}
 
 		/// Assemble the current set of candidates and invulnerables into the next collator set.
@@ -587,24 +700,30 @@ pub mod pallet {
 		/// Kicks out candidates that did not produce a block in the kick threshold
 		/// and **confiscates** their deposits to the treasury.
 		pub fn kick_stale_candidates(
-			candidates: BoundedVec<CandidateInfo<T::AccountId, BalanceOf<T>>, T::MaxCandidates>,
+			candidates: BoundedVec<T::AccountId, T::MaxCandidates>, //LicenseInfo<T::AccountId, BalanceOf<T>>
 		) -> BoundedVec<T::AccountId, T::MaxCandidates> {
 			let now = frame_system::Pallet::<T>::block_number();
 			let kick_threshold = Self::kick_threshold();
 			candidates
 				.into_iter()
 				.filter_map(|c| {
-					let last_block = <LastAuthoredBlock<T>>::get(c.who.clone());
+					let last_block = <LastAuthoredBlock<T>>::get(c.clone());
 					let since_last = now.saturating_sub(last_block);
 					if since_last < kick_threshold ||
 						Self::candidates().len() as u32 <= T::MinCandidates::get()
 					{
-						Some(c.who)
+						Some(c)
 					} else {
-						let outcome = Self::try_remove_candidate(&c.who, true);
+						let outcome = Self::try_remove_candidate(&c);
 						if let Err(why) = outcome {
 							log::warn!("Failed to remove candidate {:?}", why);
 							debug_assert!(false, "failed to remove candidate {:?}", why);
+							return None;
+						}
+						let outcome = Self::try_release_license(&c, true);
+						if let Err(why) = outcome {
+							log::warn!("Failed to release license {:?}", why);
+							debug_assert!(false, "failed to release license {:?}", why);
 						}
 						None
 					}

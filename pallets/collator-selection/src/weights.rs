@@ -46,7 +46,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn set_invulnerables(_b: u32) -> Weight;
 	fn set_desired_candidates() -> Weight;
-	fn set_candidacy_bond() -> Weight;
+	fn set_license_bond() -> Weight;
 	fn register_as_candidate(_c: u32) -> Weight;
 	fn leave_intent(_c: u32) -> Weight;
 	fn note_author() -> Weight;
@@ -65,7 +65,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn set_desired_candidates() -> Weight {
 		Weight::from_ref_time(16_363_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	fn set_candidacy_bond() -> Weight {
+	fn set_license_bond() -> Weight {
 		Weight::from_ref_time(16_840_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn register_as_candidate(c: u32) -> Weight {
@@ -112,7 +112,7 @@ impl WeightInfo for () {
 		Weight::from_ref_time(16_363_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	fn set_candidacy_bond() -> Weight {
+	fn set_license_bond() -> Weight {
 		Weight::from_ref_time(16_840_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

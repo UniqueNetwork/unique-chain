@@ -31,7 +31,7 @@
 // limitations under the License.
 
 use crate as collator_selection;
-use crate::{mock::*, CandidateInfo, Error};
+use crate::{mock::*, LicenseInfo, Error};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, GenesisBuild, OnInitialize},
@@ -43,7 +43,7 @@ use sp_runtime::traits::BadOrigin;
 fn basic_setup_works() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(CollatorSelection::desired_candidates(), 2);
-		assert_eq!(CollatorSelection::candidacy_bond(), 10);
+		assert_eq!(CollatorSelection::license_bond(), 10);
 
 		assert!(CollatorSelection::candidates().is_empty());
 		assert_eq!(CollatorSelection::invulnerables(), vec![1, 2]);
@@ -133,21 +133,21 @@ fn set_desired_candidates_works() {
 }
 
 #[test]
-fn set_candidacy_bond() {
+fn set_license_bond() {
 	new_test_ext().execute_with(|| {
 		// given
-		assert_eq!(CollatorSelection::candidacy_bond(), 10);
+		assert_eq!(CollatorSelection::license_bond(), 10);
 
 		// can set
-		assert_ok!(CollatorSelection::set_candidacy_bond(
+		assert_ok!(CollatorSelection::set_license_bond(
 			RuntimeOrigin::signed(RootAccount::get()),
 			7
 		));
-		assert_eq!(CollatorSelection::candidacy_bond(), 7);
+		assert_eq!(CollatorSelection::license_bond(), 7);
 
 		// rejects bad origin.
 		assert_noop!(
-			CollatorSelection::set_candidacy_bond(RuntimeOrigin::signed(1), 8),
+			CollatorSelection::set_license_bond(RuntimeOrigin::signed(1), 8),
 			BadOrigin
 		);
 	});
@@ -227,7 +227,7 @@ fn cannot_register_dupe_candidate() {
 		assert_ok!(CollatorSelection::register_as_candidate(
 			RuntimeOrigin::signed(3)
 		));
-		let addition = CandidateInfo {
+		let addition = LicenseInfo {
 			who: 3,
 			deposit: 10,
 		};
@@ -267,7 +267,7 @@ fn register_as_candidate_works() {
 	new_test_ext().execute_with(|| {
 		// given
 		assert_eq!(CollatorSelection::desired_candidates(), 2);
-		assert_eq!(CollatorSelection::candidacy_bond(), 10);
+		assert_eq!(CollatorSelection::license_bond(), 10);
 		assert_eq!(CollatorSelection::candidates(), Vec::new());
 		assert_eq!(CollatorSelection::invulnerables(), vec![1, 2]);
 
@@ -331,7 +331,7 @@ fn authorship_event_handler() {
 		// triggers `note_author`
 		Authorship::on_initialize(1);
 
-		let collator = CandidateInfo {
+		let collator = LicenseInfo {
 			who: 4,
 			deposit: 10,
 		};
@@ -361,7 +361,7 @@ fn fees_edgecases() {
 		// triggers `note_author`
 		Authorship::on_initialize(1);
 
-		let collator = CandidateInfo {
+		let collator = LicenseInfo {
 			who: 4,
 			deposit: 10,
 		};
@@ -432,7 +432,7 @@ fn kick_mechanism() {
 		assert_eq!(CollatorSelection::candidates().len(), 1);
 		// 3 will be kicked after 1 session delay
 		assert_eq!(SessionHandlerCollators::get(), vec![1, 2, 3, 4]);
-		let collator = CandidateInfo {
+		let collator = LicenseInfo {
 			who: 4,
 			deposit: 10,
 		};
@@ -465,7 +465,7 @@ fn should_not_kick_mechanism_too_few() {
 		assert_eq!(CollatorSelection::candidates().len(), 1);
 		// 3 will be kicked after 1 session delay
 		assert_eq!(SessionHandlerCollators::get(), vec![1, 2, 3, 5]);
-		let collator = CandidateInfo {
+		let collator = LicenseInfo {
 			who: 5,
 			deposit: 10,
 		};
@@ -490,7 +490,7 @@ fn cannot_set_genesis_value_twice() {
 
 	let collator_selection = collator_selection::GenesisConfig::<Test> {
 		desired_candidates: 2,
-		candidacy_bond: 10,
+		license_bond: 10,
 		kick_threshold: 1,
 		invulnerables,
 	};
