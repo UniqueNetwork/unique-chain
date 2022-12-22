@@ -54,7 +54,7 @@ branch = "unique-polkadot-v0.9.36"
 [dependencies.cumulus-primitives-core]
 default-features = false
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.pallet-evm]
 default-features = false

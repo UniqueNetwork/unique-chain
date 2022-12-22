@@ -182,47 +182,47 @@ branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-client-consensus-aura]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-client-consensus-common]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-client-collator]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-client-cli]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-client-network]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-primitives-core]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-primitives-parachain-inherent]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-client-service]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-relay-chain-interface]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-relay-chain-inprocess-interface]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 [dependencies.cumulus-relay-chain-minimal-node]
 git = "https://github.com/paritytech/cumulus"
-branch = "draft-polkadot-v0.9.36"
+branch = "polkadot-v0.9.36"
 
 ################################################################################
 # Polkadot dependencies
