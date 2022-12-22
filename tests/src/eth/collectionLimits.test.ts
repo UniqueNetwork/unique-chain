@@ -102,7 +102,7 @@ describe('Cannot set invalid collection limits', () => {
       // Cannot set non-existing limit
       await expect(collectionEvm.methods
         .setCollectionLimit({field: 9, value: {status: true, value: 1}})
-        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimits"');
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimitField"');
 
       // Cannot disable limits
       await expect(collectionEvm.methods
