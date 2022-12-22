@@ -161,8 +161,7 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
-		Pallet::<T>::location_to_currency_ids(multi_location)
-			.map(|id| AssetIds::ForeignAssetId(id))
+		Pallet::<T>::location_to_currency_ids(multi_location).map(|id| AssetIds::ForeignAssetId(id))
 	}
 }
 
