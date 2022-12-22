@@ -31,6 +31,7 @@ const ASSET_METADATA_NAME = 'USDT';
 const ASSET_METADATA_DESCRIPTION = 'USDT';
 const ASSET_METADATA_MINIMAL_BALANCE = 1n;
 
+const RELAY_DECIMALS = 12;
 const WESTMINT_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
@@ -209,7 +210,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       // common good parachain take commission in it native token
       console.log(
-        'Opal to Westmint transaction fees on Westmint: %s WND',
+        '[Westmint -> Opal] transaction fees on Westmint: %s WND',
         helper.util.bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, WESTMINT_DECIMALS),
       );
       expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
@@ -226,11 +227,11 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     balanceOpalAfter = await helper.balance.getSubstrate(alice.address);
 
     console.log(
-      'Opal to Westmint transaction fees on Opal: %s USDT',
+      '[Westmint -> Opal] transaction fees on Opal: %s USDT',
       helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, ASSET_METADATA_DECIMALS),
     );
     console.log(
-      'Opal to Westmint transaction fees on Opal: %s OPL',
+      '[Westmint -> Opal] transaction fees on Opal: %s OPL',
       helper.util.bigIntToDecimals(balanceOpalAfter - balanceOpalBefore),
     );
 
@@ -360,20 +361,23 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   });
 
   itSub('Should connect and send Relay token back', async ({helper}) => {
+    let relayTokenBalanceBefore: bigint;
+    let relayTokenBalanceAfter: bigint;
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      relayTokenBalanceBefore = await helper.balance.getSubstrate(bob.address);
+    });
+
     const destination = {
       V1: {
         parents: 1,
-        interior: {X2: [
-          {
-            Parachain: STATEMINE_CHAIN,
-          },
-          {
+        interior: {
+          X1:{
             AccountId32: {
               network: 'Any',
               id: bob.addressRaw,
             },
           },
-        ]},
+        },
       },
     };
 
@@ -391,6 +395,15 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
-    console.log('Relay (Westend) to Opal transaction fees: %s OPL', balanceBobAfter - balanceBobFinal);
+    console.log('[Opal -> Relay (Westend)] transaction fees: %s OPL',  helper.util.bigIntToDecimals(balanceBobAfter - balanceBobFinal));
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.wait.newBlocks(10);
+      relayTokenBalanceAfter = await helper.balance.getSubstrate(bob.address);
+
+      const diff = relayTokenBalanceAfter - relayTokenBalanceBefore;
+      console.log('[Opal -> Relay (Westend)] actually delivered: %s WND', helper.util.bigIntToDecimals(diff, RELAY_DECIMALS));
+      expect(diff > 0, 'Relay tokens was not delivered back').to.be.true;
+    });
   });
 });
