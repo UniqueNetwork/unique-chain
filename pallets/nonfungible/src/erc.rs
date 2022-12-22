@@ -26,7 +26,7 @@ use core::{
 };
 use evm_coder::{
 	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	types::Property as PropertyStruct, weight,
+	weight,
 };
 use frame_support::BoundedVec;
 use up_data_structs::{
@@ -38,7 +38,7 @@ use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	eth::{EthCrossAccount, EthTokenPermissions},
+	eth,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -94,63 +94,21 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn set_token_property_permissions(
 		&mut self,
 		caller: caller,
-		permissions: Vec<(string, Vec<(EthTokenPermissions, bool)>)>,
+		permissions: Vec<eth::TokenPropertyPermission>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		const PERMISSIONS_FIELDS_COUNT: usize = 3;
-
-		let mut perms = Vec::new();
-
-		for (key, pp) in permissions {
-			if pp.len() > PERMISSIONS_FIELDS_COUNT {
-				return Err(alloc::format!(
-					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
-					pp.len(),
-					stringify!(EthTokenPermissions),
-					PERMISSIONS_FIELDS_COUNT
-				)
-				.as_str()
-				.into());
-			}
-
-			let mut token_permission = PropertyPermission::default();
-
-			for (perm, value) in pp {
-				match perm {
-					EthTokenPermissions::Mutable => token_permission.mutable = value,
-					EthTokenPermissions::TokenOwner => token_permission.token_owner = value,
-					EthTokenPermissions::CollectionAdmin => {
-						token_permission.collection_admin = value
-					}
-				}
-			}
-
-			perms.push(PropertyKeyPermission {
-				key: key.into_bytes().try_into().map_err(|_| "too long key")?,
-				permission: token_permission,
-			});
-		}
+		let perms = eth::TokenPropertyPermission::into_property_key_permissions(permissions)?;
 
 		<Pallet<T>>::set_token_property_permissions(self, &caller, perms)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// @notice Get permissions for token properties.
-	fn token_property_permissions(
-		&self,
-	) -> Result<Vec<(string, Vec<(EthTokenPermissions, bool)>)>> {
+	fn token_property_permissions(&self) -> Result<Vec<eth::TokenPropertyPermission>> {
 		let perms = <Pallet<T>>::token_property_permission(self.id);
 		Ok(perms
 			.into_iter()
-			.map(|(key, pp)| {
-				let key = string::from_utf8(key.into_inner()).expect("Stored key must be valid");
-				let pp = vec![
-					(EthTokenPermissions::Mutable, pp.mutable),
-					(EthTokenPermissions::TokenOwner, pp.token_owner),
-					(EthTokenPermissions::CollectionAdmin, pp.collection_admin),
-				];
-				(key, pp)
-			})
+			.map(eth::TokenPropertyPermission::from)
 			.collect())
 	}
 
@@ -198,7 +156,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		token_id: uint256,
-		properties: Vec<PropertyStruct>,
+		properties: Vec<eth::Property>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -209,15 +167,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		let properties = properties
 			.into_iter()
-			.map(|PropertyStruct { key, value }| {
-				let key = <Vec<u8>>::from(key)
-					.try_into()
-					.map_err(|_| "key too large")?;
-
-				let value = value.0.try_into().map_err(|_| "value too large")?;
-
-				Ok(Property { key, value })
-			})
+			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 
 		<Pallet<T>>::set_token_properties(
@@ -800,9 +750,9 @@ where
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
-	fn cross_owner_of(&self, token_id: uint256) -> Result<EthCrossAccount> {
+	fn cross_owner_of(&self, token_id: uint256) -> Result<eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
-			.map(|o| EthCrossAccount::from_sub_cross_account::<T>(&o))
+			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
 			.ok_or(Error::Revert("key too large".into()))
 	}
 
@@ -811,7 +761,7 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
+	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -827,12 +777,7 @@ where
 			if keys.is_empty() { None } else { Some(keys) },
 		)
 		.into_iter()
-		.map(|p| {
-			let key = string::from_utf8(p.key.to_vec())
-				.map_err(|e| Error::Revert(alloc::format!("{}", e)))?;
-			let value = bytes(p.value.to_vec());
-			Ok(PropertyStruct { key, value })
-		})
+		.map(eth::Property::try_from)
 		.collect::<Result<Vec<_>>>()
 	}
 
@@ -846,7 +791,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		approved: EthCrossAccount,
+		approved: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -885,7 +830,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
+		to: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -909,8 +854,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
-		to: EthCrossAccount,
+		from: eth::CrossAddress,
+		to: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -956,7 +901,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
+		from: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1078,8 +1023,8 @@ where
 	fn mint_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
-		properties: Vec<PropertyStruct>,
+		to: eth::CrossAddress,
+		properties: Vec<eth::Property>,
 	) -> Result<uint256> {
 		let token_id = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -1089,15 +1034,7 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|PropertyStruct { key, value }| {
-				let key = <Vec<u8>>::from(key)
-					.try_into()
-					.map_err(|_| "key too large")?;
-
-				let value = value.0.try_into().map_err(|_| "value too large")?;
-
-				Ok(Property { key, value })
-			})
+			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?
 			.try_into()
 			.map_err(|_| Error::Revert(alloc::format!("too many properties")))?;

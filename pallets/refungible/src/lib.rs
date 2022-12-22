@@ -92,12 +92,8 @@ use crate::erc::ERC721Events;
 
 use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
-use derivative::Derivative;
 use evm_coder::ToLog;
-use frame_support::{
-	BoundedBTreeMap, BoundedVec, ensure, fail, storage::with_transaction, transactional,
-	pallet_prelude::ConstU32,
-};
+use frame_support::{BoundedVec, ensure, fail, storage::with_transaction, transactional};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
@@ -110,11 +106,10 @@ use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
-	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
-	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
-	CreateRefungibleExMultipleOwners,
+	AccessMode, budget::Budget, CollectionId, CollectionFlags, CreateCollectionData,
+	CustomDataLimit, mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
+	PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue, TokenId,
+	TrySetProperty, PropertiesPermissionMap, CreateRefungibleExMultipleOwners,
 };
 
 pub use pallet::*;

@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract, TEthCrossAccount, NormalizedEvent, EthProperty} from './types';
+import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../abi/collectionHelpers.json';
@@ -435,7 +435,7 @@ export class EthPropertyGroup extends EthGroupBase {
 export type EthUniqueHelperConstructor = new (...args: any[]) => EthUniqueHelper;
 
 export class EthCrossAccountGroup extends EthGroupBase {
-  createAccount(): TEthCrossAccount {
+  createAccount(): CrossAddress {
     return this.fromAddress(this.helper.eth.createAccount());
   }
 
@@ -443,14 +443,14 @@ export class EthCrossAccountGroup extends EthGroupBase {
     return this.fromAddress(await this.helper.eth.createAccountWithBalance(donor, amount));
   }
 
-  fromAddress(address: TEthereumAccount): TEthCrossAccount {
+  fromAddress(address: TEthereumAccount): CrossAddress {
     return {
       eth: address,
       sub: '0',
     };
   }
 
-  fromKeyringPair(keyring: IKeyringPair): TEthCrossAccount {
+  fromKeyringPair(keyring: IKeyringPair): CrossAddress {
     return {
       eth: '0x0000000000000000000000000000000000000000',
       sub: keyring.addressRaw,

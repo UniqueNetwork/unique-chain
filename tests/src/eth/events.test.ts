@@ -19,7 +19,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
 import {IEvent, TCollectionMode} from '../util/playgrounds/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
-import {CollectionLimits, EthTokenPermissions, NormalizedEvent} from './util/playgrounds/types';
+import {CollectionLimitField, TokenPermissionField, NormalizedEvent} from './util/playgrounds/types';
 
 let donor: IKeyringPair;
 
@@ -121,9 +121,9 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['PropertyPermissionSet']}]);
   await collection.methods.setTokenPropertyPermissions([
     ['A', [
-      [EthTokenPermissions.Mutable, true],
-      [EthTokenPermissions.TokenOwner, true],
-      [EthTokenPermissions.CollectionAdmin, true]],
+      [TokenPermissionField.Mutable, true],
+      [TokenPermissionField.TokenOwner, true],
+      [TokenPermissionField.CollectionAdmin, true]],
     ],
   ]).send({from: owner});
   await helper.wait.newBlocks(1);
@@ -233,7 +233,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
   });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionLimitSet']}]);
   {
-    await collection.methods.setCollectionLimit(CollectionLimits.OwnerCanTransfer, true, 0).send({from: owner});
+    await collection.methods.setCollectionLimit({field: CollectionLimitField.OwnerCanTransfer, value: {status: true, value: 0}}).send({from: owner});
     await helper.wait.newBlocks(1);
     expect(ethEvents).to.containSubset([
       {
@@ -379,9 +379,9 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
   const tokenId = result.events.Transfer.returnValues.tokenId;
   await collection.methods.setTokenPropertyPermissions([
     ['A', [
-      [EthTokenPermissions.Mutable, true],
-      [EthTokenPermissions.TokenOwner, true],
-      [EthTokenPermissions.CollectionAdmin, true]],
+      [TokenPermissionField.Mutable, true],
+      [TokenPermissionField.TokenOwner, true],
+      [TokenPermissionField.CollectionAdmin, true]],
     ],
   ]).send({from: owner});
 

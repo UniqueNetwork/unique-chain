@@ -16,6 +16,8 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
+use alloc::format;
+use sp_std::{vec, vec::Vec};
 use evm_coder::{
 	AbiCoder,
 	types::{uint256, address},
@@ -64,15 +66,78 @@ where
 	T::CrossAccountId::from_sub(account_id)
 }
 
+/// Ethereum representation of Optional value with uint256.
+#[derive(Debug, Default, AbiCoder)]
+pub struct OptionUint {
+	status: bool,
+	value: uint256,
+}
+
+impl From<u32> for OptionUint {
+	fn from(value: u32) -> Self {
+		Self {
+			status: true,
+			value: uint256::from(value),
+		}
+	}
+}
+
+impl From<Option<u32>> for OptionUint {
+	fn from(value: Option<u32>) -> Self {
+		match value {
+			Some(value) => Self {
+				status: true,
+				value: value.into(),
+			},
+			None => Self {
+				status: false,
+				value: Default::default(),
+			},
+		}
+	}
+}
+
+impl From<bool> for OptionUint {
+	fn from(value: bool) -> Self {
+		Self {
+			status: true,
+			value: if value {
+				uint256::from(1)
+			} else {
+				Default::default()
+			},
+		}
+	}
+}
+
+impl From<Option<bool>> for OptionUint {
+	fn from(value: Option<bool>) -> Self {
+		match value {
+			Some(value) => Self::from(value),
+			None => Self {
+				status: false,
+				value: Default::default(),
+			},
+		}
+	}
+}
+
+/// Ethereum representation of Optional value with CrossAddress.
+#[derive(Debug, Default, AbiCoder)]
+pub struct OptionCrossAddress {
+	pub status: bool,
+	pub value: CrossAddress,
+}
+
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
-pub struct EthCrossAccount {
+pub struct CrossAddress {
 	pub(crate) eth: address,
 	pub(crate) sub: uint256,
 }
 
-impl EthCrossAccount {
-	/// Converts `CrossAccountId` to `EthCrossAccountId`
+impl CrossAddress {
+	/// Converts `CrossAccountId` to [`CrossAddress`]
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -87,7 +152,7 @@ impl EthCrossAccount {
 			}
 		}
 	}
-	/// Creates `EthCrossAccount` from substrate account
+	/// Creates [`CrossAddress`] from substrate account
 	pub fn from_sub<T>(account_id: &T::AccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -98,7 +163,7 @@ impl EthCrossAccount {
 			sub: uint256::from_big_endian(account_id.as_ref()),
 		}
 	}
-	/// Converts `EthCrossAccount` to `CrossAccountId`
+	/// Converts [`CrossAddress`] to `CrossAccountId`
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,
@@ -116,10 +181,42 @@ impl EthCrossAccount {
 	}
 }
 
-/// [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
+#[derive(Debug, Default, AbiCoder)]
+pub struct Property {
+	key: evm_coder::types::string,
+	value: evm_coder::types::bytes,
+}
+
+impl TryFrom<up_data_structs::Property> for Property {
+	type Error = evm_coder::execution::Error;
+
+	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
+		let key = evm_coder::types::string::from_utf8(from.key.into())
+			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
+		let value = evm_coder::types::bytes(from.value.to_vec());
+		Ok(Property { key, value })
+	}
+}
+
+impl TryInto<up_data_structs::Property> for Property {
+	type Error = evm_coder::execution::Error;
+
+	fn try_into(self) -> Result<up_data_structs::Property, Self::Error> {
+		let key = <Vec<u8>>::from(self.key)
+			.try_into()
+			.map_err(|_| "key too large")?;
+
+		let value = self.value.0.try_into().map_err(|_| "value too large")?;
+
+		Ok(up_data_structs::Property { key, value })
+	}
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
 #[derive(Debug, Default, Clone, Copy, AbiCoder)]
 #[repr(u8)]
-pub enum CollectionLimits {
+pub enum CollectionLimitField {
 	/// How many tokens can a user have on one account.
 	#[default]
 	AccountTokenOwnership,
@@ -148,10 +245,91 @@ pub enum CollectionLimits {
 	/// Is it possible to send tokens from this collection between users.
 	TransferEnabled,
 }
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionLimit {
+	field: CollectionLimitField,
+	value: OptionUint,
+}
+
+impl CollectionLimit {
+	/// Create [`CollectionLimit`] from field and value.
+	pub fn new<T>(field: CollectionLimitField, value: T) -> Self
+	where
+		OptionUint: From<T>,
+	{
+		Self {
+			field,
+			value: value.into(),
+		}
+	}
+	/// Whether the field contains a value.
+	pub fn has_value(&self) -> bool {
+		self.value.status
+	}
+}
+
+impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
+	type Error = evm_coder::execution::Error;
+
+	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
+		let value = self.value.value.try_into().map_err(|error| {
+			Self::Error::Revert(format!(
+				"can't convert value to u32 \"{}\" because: \"{error}\"",
+				self.value.value
+			))
+		})?;
+
+		let convert_value_to_bool = || match value {
+			0 => Ok(false),
+			1 => Ok(true),
+			_ => {
+				return Err(Self::Error::Revert(format!(
+					"can't convert value to boolean \"{value}\""
+				)))
+			}
+		};
+
+		let mut limits = up_data_structs::CollectionLimits::default();
+		match self.field {
+			CollectionLimitField::AccountTokenOwnership => {
+				limits.account_token_ownership_limit = Some(value);
+			}
+			CollectionLimitField::SponsoredDataSize => {
+				limits.sponsored_data_size = Some(value);
+			}
+			CollectionLimitField::SponsoredDataRateLimit => {
+				limits.sponsored_data_rate_limit =
+					Some(up_data_structs::SponsoringRateLimit::Blocks(value));
+			}
+			CollectionLimitField::TokenLimit => {
+				limits.token_limit = Some(value);
+			}
+			CollectionLimitField::SponsorTransferTimeout => {
+				limits.sponsor_transfer_timeout = Some(value);
+			}
+			CollectionLimitField::SponsorApproveTimeout => {
+				limits.sponsor_approve_timeout = Some(value);
+			}
+			CollectionLimitField::OwnerCanTransfer => {
+				limits.owner_can_transfer = Some(convert_value_to_bool()?);
+			}
+			CollectionLimitField::OwnerCanDestroy => {
+				limits.owner_can_destroy = Some(convert_value_to_bool()?);
+			}
+			CollectionLimitField::TransferEnabled => {
+				limits.transfers_enabled = Some(convert_value_to_bool()?);
+			}
+		};
+		Ok(limits)
+	}
+}
+
 /// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 #[derive(Default, Debug, Clone, Copy, AbiCoder)]
 #[repr(u8)]
-pub enum CollectionPermissions {
+pub enum CollectionPermissionField {
 	/// Owner of token can nest tokens under it.
 	#[default]
 	TokenOwner,
@@ -163,7 +341,7 @@ pub enum CollectionPermissions {
 /// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
 #[derive(AbiCoder, Copy, Clone, Default, Debug)]
 #[repr(u8)]
-pub enum EthTokenPermissions {
+pub enum TokenPermissionField {
 	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
 	#[default]
 	Mutable,
@@ -173,4 +351,123 @@ pub enum EthTokenPermissions {
 
 	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
 	CollectionAdmin,
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
+#[derive(Debug, Default, AbiCoder)]
+pub struct PropertyPermission {
+	/// TokenPermission field.
+	code: TokenPermissionField,
+	/// TokenPermission value.
+	value: bool,
+}
+
+impl PropertyPermission {
+	/// Make vector of [`PropertyPermission`] from [`up_data_structs::PropertyPermission`].
+	pub fn into_vec(pp: up_data_structs::PropertyPermission) -> Vec<Self> {
+		vec![
+			PropertyPermission {
+				code: TokenPermissionField::Mutable,
+				value: pp.mutable,
+			},
+			PropertyPermission {
+				code: TokenPermissionField::TokenOwner,
+				value: pp.token_owner,
+			},
+			PropertyPermission {
+				code: TokenPermissionField::CollectionAdmin,
+				value: pp.collection_admin,
+			},
+		]
+	}
+
+	/// Make [`up_data_structs::PropertyPermission`] from vector of [`PropertyPermission`].
+	pub fn from_vec(permission: Vec<Self>) -> up_data_structs::PropertyPermission {
+		let mut token_permission = up_data_structs::PropertyPermission::default();
+
+		for PropertyPermission { code, value } in permission {
+			match code {
+				TokenPermissionField::Mutable => token_permission.mutable = value,
+				TokenPermissionField::TokenOwner => token_permission.token_owner = value,
+				TokenPermissionField::CollectionAdmin => token_permission.collection_admin = value,
+			}
+		}
+		token_permission
+	}
+}
+
+/// Ethereum representation of Token Property Permissions.
+#[derive(Debug, Default, AbiCoder)]
+pub struct TokenPropertyPermission {
+	/// Token property key.
+	key: evm_coder::types::string,
+	/// Token property permissions.
+	permissions: Vec<PropertyPermission>,
+}
+
+impl
+	From<(
+		up_data_structs::PropertyKey,
+		up_data_structs::PropertyPermission,
+	)> for TokenPropertyPermission
+{
+	fn from(
+		value: (
+			up_data_structs::PropertyKey,
+			up_data_structs::PropertyPermission,
+		),
+	) -> Self {
+		let (key, permission) = value;
+		let key = evm_coder::types::string::from_utf8(key.into_inner())
+			.expect("Stored key must be valid");
+		let permissions = PropertyPermission::into_vec(permission);
+		Self { key, permissions }
+	}
+}
+
+impl TokenPropertyPermission {
+	/// Convert vector of [`TokenPropertyPermission`] into vector of [`up_data_structs::PropertyKeyPermission`].
+	pub fn into_property_key_permissions(
+		permissions: Vec<TokenPropertyPermission>,
+	) -> evm_coder::execution::Result<Vec<up_data_structs::PropertyKeyPermission>> {
+		let mut perms = Vec::new();
+
+		for TokenPropertyPermission { key, permissions } in permissions {
+			let token_permission = PropertyPermission::from_vec(permissions);
+
+			perms.push(up_data_structs::PropertyKeyPermission {
+				key: key.into_bytes().try_into().map_err(|_| "too long key")?,
+				permission: token_permission,
+			});
+		}
+		Ok(perms)
+	}
+}
+
+/// Nested collections.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionNesting {
+	token_owner: bool,
+	ids: Vec<uint256>,
+}
+
+impl CollectionNesting {
+	/// Create [`CollectionNesting`].
+	pub fn new(token_owner: bool, ids: Vec<uint256>) -> Self {
+		Self { token_owner, ids }
+	}
+}
+
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionNestingPermission {
+	field: CollectionPermissionField,
+	value: bool,
+}
+
+impl CollectionNestingPermission {
+	/// Create [`CollectionNestingPermission`].
+	pub fn new(field: CollectionPermissionField, value: bool) -> Self {
+		Self { field, value }
+	}
 }
