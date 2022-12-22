@@ -28,7 +28,7 @@ describe('Vesting', () => {
     });
   });
 
-  itSub.only('can perform vestedTransfer and claim tokens', async ({helper}) => {
+  itSub('can perform vestedTransfer and claim tokens', async ({helper}) => {
     // arrange
     const [sender, recepient] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const currentRelayBlock = await helper.chain.getRelayBlockNumber();
