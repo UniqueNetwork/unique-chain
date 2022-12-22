@@ -147,7 +147,7 @@ describe('Create RFT collection from EVM', () => {
       .to.be.true;
 
     // check collectionOwner:
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
     const collectionOwner = await collectionEvm.methods.collectionOwner().call();
     expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner));
   });
