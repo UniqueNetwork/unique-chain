@@ -37,11 +37,11 @@ describe('EVM sponsoring', () => {
 
     const flipper = await helper.eth.deployFlipper(owner);
 
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
     await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
-    
+
     await helpers.methods.setSponsor(flipper.options.address, sponsor).send({from: owner});
     await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
 
@@ -71,7 +71,7 @@ describe('EVM sponsoring', () => {
 
     const collector = await helper.eth.deployCollectorContract(owner);
 
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     await helpers.methods.toggleAllowlist(collector.options.address, true).send({from: owner});
     await helpers.methods.toggleAllowed(collector.options.address, caller, true).send({from: owner});

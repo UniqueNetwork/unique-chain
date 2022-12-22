@@ -165,7 +165,7 @@ describe('EVM Migrations', () => {
     const collection = await helper.nft.mintCollection(superuser);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const caller = await helper.eth.createAccountWithBalance(superuser);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {

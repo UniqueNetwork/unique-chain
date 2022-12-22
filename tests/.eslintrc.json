@@ -10,7 +10,8 @@
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 11,
-        "sourceType": "module"
+        "sourceType": "module",
+        "project": "**/tsconfig.json"
     },
     "plugins": [
         "@typescript-eslint",
@@ -24,6 +25,7 @@
                 "SwitchCase": 1
             }
         ],
+        "no-trailing-spaces": "warn",
         "function-call-argument-newline": [
             "error",
             "consistent"

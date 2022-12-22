@@ -55,6 +55,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::enable())]
 		pub fn enable(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -66,6 +67,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::disable())]
 		pub fn disable(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;

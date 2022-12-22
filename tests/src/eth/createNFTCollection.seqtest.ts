@@ -37,7 +37,7 @@ describe('Create NFT collection from EVM', () => {
     // todo:playgrounds this might fail when in async environment.
     const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
     const {collectionId, collectionAddress, events} = await helper.eth.createNFTCollection(owner, name, description, prefix);
-    
+
     expect(events).to.be.deep.equal([
       {
         address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
@@ -48,7 +48,7 @@ describe('Create NFT collection from EVM', () => {
         },
       },
     ]);
-    
+
     const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
     const collection = helper.nft.getCollectionObject(collectionId);
@@ -72,7 +72,7 @@ describe('Create NFT collection from EVM', () => {
 
     const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
     const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
 
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)

@@ -32,7 +32,7 @@ describe('Can set collection limits', () => {
         ownerCanDestroy: 0,
         transfersEnabled: 0,
       };
-      
+
       const expectedLimits = {
         accountTokenOwnershipLimit: 1000,
         sponsoredDataSize: 1024,
@@ -44,8 +44,8 @@ describe('Can set collection limits', () => {
         ownerCanDestroy: false,
         transfersEnabled: false,
       };
-     
-      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+
+      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
       await collectionEvm.methods.setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, limits.accountTokenOwnershipLimit).send();
       await collectionEvm.methods.setCollectionLimit(CollectionLimits.SponsoredDataSize, true, limits.sponsoredDataSize).send();
       await collectionEvm.methods.setCollectionLimit(CollectionLimits.SponsoredDataRateLimit, true, limits.sponsoredDataRateLimit).send();
@@ -55,7 +55,7 @@ describe('Can set collection limits', () => {
       await collectionEvm.methods.setCollectionLimit(CollectionLimits.OwnerCanTransfer, true, limits.ownerCanTransfer).send();
       await collectionEvm.methods.setCollectionLimit(CollectionLimits.OwnerCanDestroy, true, limits.ownerCanDestroy).send();
       await collectionEvm.methods.setCollectionLimit(CollectionLimits.TransferEnabled, true, limits.transfersEnabled).send();
-      
+
       // Check limits from sub:
       const data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.limits).to.deep.eq(expectedLimits);
@@ -97,13 +97,13 @@ describe('Cannot set invalid collection limits', () => {
 
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'ISNI', 18);
-      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
 
       // Cannot set non-existing limit
       await expect(collectionEvm.methods
         .setCollectionLimit(9, true, 1)
-        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimits"');      
-        
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimits"');
+
       // Cannot disable limits
       await expect(collectionEvm.methods
         .setCollectionLimit(CollectionLimits.AccountTokenOwnership, false, 200)
@@ -112,7 +112,7 @@ describe('Cannot set invalid collection limits', () => {
       await expect(collectionEvm.methods
         .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, invalidLimits.accountTokenOwnershipLimit)
         .call()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
- 
+
       await expect(collectionEvm.methods
         .setCollectionLimit(CollectionLimits.TransferEnabled, true, 3)
         .call()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
@@ -131,7 +131,7 @@ describe('Cannot set invalid collection limits', () => {
       const nonOwner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'FLO', 18);
 
-      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
       await expect(collectionEvm.methods
         .setCollectionLimit(CollectionLimits.AccountTokenOwnership, true, 1000)
         .call({from: nonOwner}))
