@@ -77,17 +77,18 @@ jobs:
         working-directory: tests
         run: |
           yarn install
+          /bin/bash ./scripts/wait_for_first_block.sh
           /bin/bash ./scripts/generate_types_package.sh --release ${{ matrix.usage }}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
-      # - name: Stop running containers
-      #   if: always()                   # run this step always
-      #   run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
-      # - name: Remove builder cache
-      #   if: always()                   # run this step always
-      #   run: |
-      #     docker builder prune -f -a
-      #     docker system prune -f
-      #     docker image prune -f -a
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
+          docker image prune -f -a
