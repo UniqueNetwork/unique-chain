@@ -1,20 +1,52 @@
 use quote::quote;
 
+use super::extract_docs;
+
 pub fn impl_solidity_option<'a>(
+	docs: Vec<String>,
 	name: &proc_macro2::Ident,
-	enum_options: impl Iterator<Item = &'a syn::Ident>,
+	enum_options: impl Iterator<Item = &'a syn::Variant> + Clone,
 ) -> proc_macro2::TokenStream {
-	let enum_options = enum_options.map(|opt| {
+	let variant_names = enum_options.clone().map(|opt| {
+		let opt = &opt.ident;
 		let s = name.to_string() + "." + opt.to_string().as_str();
 		let as_string = proc_macro2::Literal::string(s.as_str());
 		quote!(#name::#opt => #as_string,)
 	});
+	let solidity_name = name.to_string();
+
+	let solidity_fields = enum_options.map(|v| {
+		let docs = extract_docs(&v.attrs).expect("TODO: handle bad docs");
+		let name = v.ident.to_string();
+		quote! {
+			SolidityEnumVariant {
+				docs: &[#(#docs),*],
+				name: #name,
+			}
+		}
+	});
+
 	quote!(
 		#[cfg(feature = "stubgen")]
-		impl ::evm_coder::solidity::SolidityEnum for #name {
+		impl ::evm_coder::solidity::SolidityEnumTy for #name {
+			fn generate_solidity_interface(tc: &evm_coder::solidity::TypeCollector) -> String {
+				use evm_coder::solidity::*;
+				use core::fmt::Write;
+				let interface = SolidityEnum {
+					docs: &[#(#docs),*],
+					name: #solidity_name,
+					fields: &[#(
+						#solidity_fields,
+					)*],
+				};
+				let mut out = String::new();
+				let _ = interface.format(&mut out, tc);
+				tc.collect(out);
+				#solidity_name.to_string()
+			}
 			fn solidity_option(&self) -> &str {
 				match self {
-					#(#enum_options)*
+					#(#variant_names)*
 				}
 			}
 		}
@@ -23,11 +55,12 @@ pub fn impl_solidity_option<'a>(
 
 pub fn impl_enum_from_u8<'a>(
 	name: &proc_macro2::Ident,
-	enum_options: impl Iterator<Item = &'a syn::Ident>,
+	enum_options: impl Iterator<Item = &'a syn::Variant>,
 ) -> proc_macro2::TokenStream {
 	let error_str = format!("Value not convertible into enum \"{name}\"");
 	let error_str = proc_macro2::Literal::string(&error_str);
 	let enum_options = enum_options.enumerate().map(|(i, opt)| {
+		let opt = &opt.ident;
 		let n = proc_macro2::Literal::u8_suffixed(i as u8);
 		quote! {#n => Ok(#name::#opt),}
 	});
@@ -93,7 +126,7 @@ pub fn impl_enum_solidity_type_name(name: &syn::Ident) -> proc_macro2::TokenStre
 				writer: &mut impl ::core::fmt::Write,
 				tc: &::evm_coder::solidity::TypeCollector,
 			) -> ::core::fmt::Result {
-				write!(writer, "{}", tc.collect_struct::<Self>())
+				write!(writer, "{}", tc.collect_enum::<Self>())
 			}
 
 			fn is_simple() -> bool {
@@ -104,49 +137,7 @@ pub fn impl_enum_solidity_type_name(name: &syn::Ident) -> proc_macro2::TokenStre
 				writer: &mut impl ::core::fmt::Write,
 				tc: &::evm_coder::solidity::TypeCollector,
 			) -> ::core::fmt::Result {
-				write!(writer, "{}", <#name as ::evm_coder::solidity::SolidityEnum>::solidity_option(&<#name>::default()))
-			}
-		}
-	)
-}
-
-pub fn impl_enum_solidity_struct_collect<'a>(
-	name: &syn::Ident,
-	enum_options: impl Iterator<Item = &'a syn::Ident>,
-	option_count: usize,
-	enum_options_docs: impl Iterator<Item = syn::Result<Vec<proc_macro2::TokenStream>>>,
-	docs: &[proc_macro2::TokenStream],
-) -> proc_macro2::TokenStream {
-	let string_name = name.to_string();
-	let enum_options = enum_options
-		.zip(enum_options_docs)
-		.enumerate()
-		.map(|(i, (opt, doc))| {
-			let opt = proc_macro2::Literal::string(opt.to_string().as_str());
-			let doc = doc.expect("Doc parsing error");
-			let comma = if i != option_count - 1 { "," } else { "" };
-			quote! {
-				#(#doc)*
-				writeln!(str, "\t{}{}", #opt, #comma).expect("Enum format option");
-			}
-		});
-
-	quote!(
-		#[cfg(feature = "stubgen")]
-		impl ::evm_coder::solidity::StructCollect for #name {
-			fn name() -> String {
-				#string_name.into()
-			}
-
-			fn declaration() -> String {
-				use std::fmt::Write;
-
-				let mut str = String::new();
-				#(#docs)*
-				writeln!(str, "enum {} {{", <Self as ::evm_coder::solidity::StructCollect>::name()).unwrap();
-				#(#enum_options)*
-				writeln!(str, "}}").unwrap();
-				str
+				write!(writer, "{}", <#name as ::evm_coder::solidity::SolidityEnumTy>::solidity_option(&<#name>::default()))
 			}
 		}
 	)

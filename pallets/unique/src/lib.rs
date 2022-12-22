@@ -74,7 +74,7 @@
 extern crate alloc;
 
 use frame_support::{
-	decl_module, decl_storage, decl_error, decl_event,
+	decl_module, decl_storage, decl_error,
 	dispatch::DispatchResult,
 	ensure, fail,
 	weights::{Weight},

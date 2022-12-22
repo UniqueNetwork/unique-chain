@@ -69,7 +69,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x766c4f37,
 	///  or in textual repr: sponsor(address)
-	function sponsor(address contractAddress) external view returns (EthCrossAccount memory);
+	function sponsor(address contractAddress) external view returns (OptionCrossAddress memory);
 
 	/// Check tat contract has confirmed sponsor.
 	///
@@ -93,7 +93,7 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 
 	/// @dev EVM selector for this function is: 0xfde8a560,
 	///  or in textual repr: setSponsoringMode(address,uint8)
-	function setSponsoringMode(address contractAddress, uint8 mode) external;
+	function setSponsoringMode(address contractAddress, SponsoringModeT mode) external;
 
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
@@ -171,8 +171,24 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	function toggleAllowlist(address contractAddress, bool enabled) external;
 }
 
-/// @dev Cross account struct
-struct EthCrossAccount {
+/// Available contract sponsoring modes
+enum SponsoringModeT {
+	/// Sponsoring is disabled
+	Disabled,
+	/// Only users from allowlist will be sponsored
+	Allowlisted,
+	/// All users will be sponsored
+	Generous
+}
+
+/// Ethereum representation of Optional value with CrossAddress.
+struct OptionCrossAddress {
+	bool status;
+	CrossAddress value;
+}
+
+/// Cross account struct
+struct CrossAddress {
 	address eth;
 	uint256 sub;
 }

@@ -21,7 +21,6 @@ use evm_coder::{
 	abi::AbiType,
 	solidity_interface, solidity, ToLog,
 	types::*,
-	types::Property as PropertyStruct,
 	execution::{Result, Error},
 	weight,
 };
@@ -31,15 +30,9 @@ use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
 	SponsoringRateLimit, SponsorshipState,
 };
-use alloc::format;
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf,
-	eth::{
-		EthCrossAccount, CollectionPermissions as EvmPermissions,
-		CollectionLimits as EvmCollectionLimits,
-	},
-	weights::WeightInfo,
+	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf, eth, weights::WeightInfo,
 };
 
 /// Events for ethereum collection helper.
@@ -123,21 +116,13 @@ where
 	fn set_collection_properties(
 		&mut self,
 		caller: caller,
-		properties: Vec<PropertyStruct>,
+		properties: Vec<eth::Property>,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let properties = properties
 			.into_iter()
-			.map(|PropertyStruct { key, value }| {
-				let key = <Vec<u8>>::from(key)
-					.try_into()
-					.map_err(|_| "key too large")?;
-
-				let value = value.0.try_into().map_err(|_| "value too large")?;
-
-				Ok(Property { key, value })
-			})
+			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 
 		<Pallet<T>>::set_collection_properties(self, &caller, properties)
@@ -197,7 +182,7 @@ where
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<PropertyStruct>> {
+	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -215,12 +200,7 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|p| {
-				let key =
-					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
-				let value = bytes(p.value.to_vec());
-				Ok(PropertyStruct { key, value })
-			})
+			.map(Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 		Ok(properties)
 	}
@@ -249,7 +229,7 @@ where
 	fn set_collection_sponsor_cross(
 		&mut self,
 		caller: caller,
-		sponsor: EthCrossAccount,
+		sponsor: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -289,103 +269,65 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn collection_sponsor(&self) -> Result<EthCrossAccount> {
+	fn collection_sponsor(&self) -> Result<eth::CrossAddress> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
 		};
 
-		Ok(EthCrossAccount::from_sub::<T>(&sponsor))
+		Ok(eth::CrossAddress::from_sub::<T>(&sponsor))
 	}
 
 	/// Get current collection limits.
 	///
-	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// Return `false` if a limit not set.
-	fn collection_limits(&self) -> Result<Vec<(EvmCollectionLimits, bool, uint256)>> {
-		let convert_value_limit = |limit: EvmCollectionLimits,
-		                           value: Option<u32>|
-		 -> (EvmCollectionLimits, bool, uint256) {
-			value
-				.map(|v| (limit, true, v.into()))
-				.unwrap_or((limit, false, Default::default()))
-		};
-
-		let convert_bool_limit = |limit: EvmCollectionLimits,
-		                          value: Option<bool>|
-		 -> (EvmCollectionLimits, bool, uint256) {
-			value
-				.map(|v| {
-					(
-						limit,
-						true,
-						if v {
-							uint256::from(1)
-						} else {
-							Default::default()
-						},
-					)
-				})
-				.unwrap_or((limit, false, Default::default()))
-		};
-
+	/// @return Array of collection limits
+	fn collection_limits(&self) -> Result<Vec<eth::CollectionLimit>> {
 		let limits = &self.collection.limits;
 
 		Ok(vec![
-			convert_value_limit(
-				EvmCollectionLimits::AccountTokenOwnership,
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::AccountTokenOwnership,
 				limits.account_token_ownership_limit,
 			),
-			convert_value_limit(
-				EvmCollectionLimits::SponsoredDataSize,
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::SponsoredDataSize,
 				limits.sponsored_data_size,
 			),
 			limits
 				.sponsored_data_rate_limit
 				.and_then(|limit| {
 					if let SponsoringRateLimit::Blocks(blocks) = limit {
-						Some((
-							EvmCollectionLimits::SponsoredDataRateLimit,
-							true,
-							blocks.into(),
+						Some(eth::CollectionLimit::new::<u32>(
+							eth::CollectionLimitField::SponsoredDataRateLimit,
+							blocks,
 						))
 					} else {
 						None
 					}
 				})
-				.unwrap_or((
-					EvmCollectionLimits::SponsoredDataRateLimit,
-					false,
+				.unwrap_or(eth::CollectionLimit::new::<u32>(
+					eth::CollectionLimitField::SponsoredDataRateLimit,
 					Default::default(),
 				)),
-			convert_value_limit(EvmCollectionLimits::TokenLimit, limits.token_limit),
-			convert_value_limit(
-				EvmCollectionLimits::SponsorTransferTimeout,
+			eth::CollectionLimit::new(eth::CollectionLimitField::TokenLimit, limits.token_limit),
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::SponsorTransferTimeout,
 				limits.sponsor_transfer_timeout,
 			),
-			convert_value_limit(
-				EvmCollectionLimits::SponsorApproveTimeout,
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::SponsorApproveTimeout,
 				limits.sponsor_approve_timeout,
 			),
-			convert_bool_limit(
-				EvmCollectionLimits::OwnerCanTransfer,
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::OwnerCanTransfer,
 				limits.owner_can_transfer,
 			),
-			convert_bool_limit(
-				EvmCollectionLimits::OwnerCanDestroy,
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::OwnerCanDestroy,
 				limits.owner_can_destroy,
 			),
-			convert_bool_limit(
-				EvmCollectionLimits::TransferEnabled,
+			eth::CollectionLimit::new(
+				eth::CollectionLimitField::TransferEnabled,
 				limits.transfers_enabled,
 			),
 		])
@@ -393,82 +335,21 @@ where
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param status enable\disable limit. Works only with `true`.
-	/// @param value Value of the limit.
+	/// @param limit Some limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
 	fn set_collection_limit(
 		&mut self,
 		caller: caller,
-		limit: EvmCollectionLimits,
-		status: bool,
-		value: uint256,
+		limit: eth::CollectionLimit,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
-		if !status {
+		if !limit.has_value() {
 			return Err(Error::Revert("user can't disable limits".into()));
 		}
 
-		let value = value
-			.try_into()
-			.map_err(|_| Error::Revert(format!("can't convert value to u32 \"{}\"", value)))?;
-
-		let convert_value_to_bool = || match value {
-			0 => Ok(false),
-			1 => Ok(true),
-			_ => {
-				return Err(Error::Revert(format!(
-					"can't convert value to boolean \"{}\"",
-					value
-				)))
-			}
-		};
-
-		let mut limits = self.limits.clone();
-
-		match limit {
-			EvmCollectionLimits::AccountTokenOwnership => {
-				limits.account_token_ownership_limit = Some(value);
-			}
-			EvmCollectionLimits::SponsoredDataSize => {
-				limits.sponsored_data_size = Some(value);
-			}
-			EvmCollectionLimits::SponsoredDataRateLimit => {
-				limits.sponsored_data_rate_limit = Some(SponsoringRateLimit::Blocks(value));
-			}
-			EvmCollectionLimits::TokenLimit => {
-				limits.token_limit = Some(value);
-			}
-			EvmCollectionLimits::SponsorTransferTimeout => {
-				limits.sponsor_transfer_timeout = Some(value);
-			}
-			EvmCollectionLimits::SponsorApproveTimeout => {
-				limits.sponsor_approve_timeout = Some(value);
-			}
-			EvmCollectionLimits::OwnerCanTransfer => {
-				limits.owner_can_transfer = Some(convert_value_to_bool()?);
-			}
-			EvmCollectionLimits::OwnerCanDestroy => {
-				limits.owner_can_destroy = Some(convert_value_to_bool()?);
-			}
-			EvmCollectionLimits::TransferEnabled => {
-				limits.transfers_enabled = Some(convert_value_to_bool()?);
-			}
-			_ => return Err(Error::Revert(format!("unknown limit \"{:?}\"", limit))),
-		}
-
 		let caller = T::CrossAccountId::from_eth(caller);
-		<Pallet<T>>::update_limits(&caller, self, limits).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::update_limits(&caller, self, limit.try_into()?).map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get contract address.
@@ -481,7 +362,7 @@ where
 	fn add_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		new_admin: EthCrossAccount,
+		new_admin: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
@@ -496,7 +377,7 @@ where
 	fn remove_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		admin: EthCrossAccount,
+		admin: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
@@ -595,10 +476,10 @@ where
 
 	/// Returns nesting for a collection
 	#[solidity(rename_selector = "collectionNestingRestrictedCollectionIds")]
-	fn collection_nesting_restricted_ids(&self) -> Result<(bool, Vec<uint256>)> {
+	fn collection_nesting_restricted_ids(&self) -> Result<eth::CollectionNesting> {
 		let nesting = self.collection.permissions.nesting();
 
-		Ok((
+		Ok(eth::CollectionNesting::new(
 			nesting.token_owner,
 			nesting
 				.restricted
@@ -609,11 +490,17 @@ where
 	}
 
 	/// Returns permissions for a collection
-	fn collection_nesting_permissions(&self) -> Result<Vec<(EvmPermissions, bool)>> {
+	fn collection_nesting_permissions(&self) -> Result<Vec<eth::CollectionNestingPermission>> {
 		let nesting = self.collection.permissions.nesting();
 		Ok(vec![
-			(EvmPermissions::CollectionAdmin, nesting.collection_admin),
-			(EvmPermissions::TokenOwner, nesting.token_owner),
+			eth::CollectionNestingPermission::new(
+				eth::CollectionPermissionField::CollectionAdmin,
+				nesting.collection_admin,
+			),
+			eth::CollectionNestingPermission::new(
+				eth::CollectionPermissionField::TokenOwner,
+				nesting.token_owner,
+			),
 		])
 	}
 	/// Set the collection access method.
@@ -638,7 +525,7 @@ where
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	fn allowlisted_cross(&self, user: EthCrossAccount) -> Result<bool> {
+	fn allowlisted_cross(&self, user: eth::CrossAddress) -> Result<bool> {
 		let user = user.into_sub_cross_account::<T>()?;
 		Ok(Pallet::<T>::allowed(self.id, user))
 	}
@@ -662,7 +549,7 @@ where
 	fn add_to_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: EthCrossAccount,
+		user: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -691,7 +578,7 @@ where
 	fn remove_from_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: EthCrossAccount,
+		user: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -729,7 +616,7 @@ where
 	///
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
-	fn is_owner_or_admin_cross(&self, user: EthCrossAccount) -> Result<bool> {
+	fn is_owner_or_admin_cross(&self, user: eth::CrossAddress) -> Result<bool> {
 		let user = user.into_sub_cross_account::<T>()?;
 		Ok(self.is_owner_or_admin(&user))
 	}
@@ -750,8 +637,8 @@ where
 	///
 	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_owner(&self) -> Result<EthCrossAccount> {
-		Ok(EthCrossAccount::from_sub_cross_account::<T>(
+	fn collection_owner(&self) -> Result<eth::CrossAddress> {
+		Ok(eth::CrossAddress::from_sub_cross_account::<T>(
 			&T::CrossAccountId::from_sub(self.owner.clone()),
 		))
 	}
@@ -774,9 +661,9 @@ where
 	///
 	/// @return Vector of tuples with admins address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_admins(&self) -> Result<Vec<EthCrossAccount>> {
+	fn collection_admins(&self) -> Result<Vec<eth::CrossAddress>> {
 		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
-			.map(|(admin, _)| EthCrossAccount::from_sub_cross_account::<T>(&admin))
+			.map(|(admin, _)| eth::CrossAddress::from_sub_cross_account::<T>(&admin))
 			.collect();
 		Ok(result)
 	}
@@ -788,7 +675,7 @@ where
 	fn change_collection_owner_cross(
 		&mut self,
 		caller: caller,
-		new_owner: EthCrossAccount,
+		new_owner: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -797,29 +684,6 @@ where
 		self.change_owner(caller, new_owner)
 			.map_err(dispatch_to_evm::<T>)
 	}
-}
-
-/// ### Note
-/// Do not forget to add: `self.consume_store_reads(1)?;`
-fn check_is_owner_or_admin<T: Config>(
-	caller: caller,
-	collection: &CollectionHandle<T>,
-) -> Result<T::CrossAccountId> {
-	let caller = T::CrossAccountId::from_eth(caller);
-	collection
-		.check_is_owner_or_admin(&caller)
-		.map_err(dispatch_to_evm::<T>)?;
-	Ok(caller)
-}
-
-/// ### Note
-/// Do not forget to add: `self.consume_store_writes(1)?;`
-fn save<T: Config>(collection: &CollectionHandle<T>) -> Result<void> {
-	collection
-		.check_is_internal()
-		.map_err(dispatch_to_evm::<T>)?;
-	collection.save().map_err(dispatch_to_evm::<T>)?;
-	Ok(())
 }
 
 /// Contains static property keys and values.
