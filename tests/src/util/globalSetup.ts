@@ -17,7 +17,7 @@ const globalSetup = async (): Promise<void> => {
       // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
-          if (!result) Promise.reject();
+          if (!result) throw Error('Some problems with fundFilenamesWithRetries');
         });
 
       // 3. Configure App Promotion
@@ -38,7 +38,7 @@ const globalSetup = async (): Promise<void> => {
       }
     } catch (error) {
       console.error(error);
-      Promise.reject();
+      throw Error('Error during globalSetup');
     }
   });
 };
