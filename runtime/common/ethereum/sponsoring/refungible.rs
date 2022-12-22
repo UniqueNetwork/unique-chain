@@ -233,15 +233,16 @@ mod erc721 {
 			| TokenContractAddress { .. } => None,
 
 			// Not sponsored
-			BurnFrom { .. } | BurnFromCross { .. } | MintBulk { .. } | MintBulkWithTokenUri { .. } => None,
+			BurnFrom { .. }
+			| BurnFromCross { .. }
+			| MintBulk { .. }
+			| MintBulkWithTokenUri { .. } => None,
 
-			MintCross { .. } => {
-				withdraw_create_item::<T>(
-					&collection,
-					&who,
-					&CreateItemData::NFT(CreateNftData::default()),
-				)
-			}
+			MintCross { .. } => withdraw_create_item::<T>(
+				&collection,
+				&who,
+				&CreateItemData::NFT(CreateNftData::default()),
+			),
 
 			TransferCross { token_id, .. }
 			| TransferFromCross { token_id, .. }
