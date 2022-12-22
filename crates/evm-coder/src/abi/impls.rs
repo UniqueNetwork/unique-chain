@@ -181,11 +181,6 @@ impl<T: AbiWrite> AbiWrite for ResultWithPostInfo<T> {
 	}
 }
 
-macro_rules! count {
-    () => (0usize);
-    ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
-}
-
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
 		impl<$($ident: AbiType,)+> AbiType for ($($ident,)+)

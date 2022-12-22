@@ -223,10 +223,18 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "address", "name": "eth", "type": "address" },
-          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+          { "internalType": "bool", "name": "status", "type": "bool" },
+          {
+            "components": [
+              { "internalType": "address", "name": "eth", "type": "address" },
+              { "internalType": "uint256", "name": "sub", "type": "uint256" }
+            ],
+            "internalType": "struct CrossAddress",
+            "name": "value",
+            "type": "tuple"
+          }
         ],
-        "internalType": "struct CrossAddress",
+        "internalType": "struct OptionCrossAddress",
         "name": "",
         "type": "tuple"
       }

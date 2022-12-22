@@ -96,11 +96,11 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x766c4f37,
 	///  or in textual repr: sponsor(address)
-	function sponsor(address contractAddress) public view returns (CrossAddress memory) {
+	function sponsor(address contractAddress) public view returns (OptionCrossAddress memory) {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
-		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
+		return OptionCrossAddress(false, CrossAddress(0x0000000000000000000000000000000000000000, 0));
 	}
 
 	/// Check tat contract has confirmed sponsor.
@@ -269,4 +269,10 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 struct CrossAddress {
 	address eth;
 	uint256 sub;
+}
+
+/// @dev Ethereum representation of Optional value with CrossAddress.
+struct OptionCrossAddress {
+	bool status;
+	CrossAddress value;
 }

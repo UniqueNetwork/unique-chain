@@ -42,7 +42,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
 
     // 1.1 Can get sponsor using methods.sponsor:
-    const actualSponsor = await helpers.methods.sponsor(flipper.options.address).call();
+    const actualSponsorOpt = await helpers.methods.sponsor(flipper.options.address).call();
+    expect(actualSponsorOpt.status).to.be.true;
+    const actualSponsor = actualSponsorOpt.value;
     expect(actualSponsor.eth).to.eq(flipper.options.address);
     expect(actualSponsor.sub).to.eq('0');
 
@@ -151,7 +153,9 @@ describe('Sponsoring EVM contracts', () => {
     expect(await helpers.methods.hasSponsor(flipper.options.address).call()).to.be.true;
 
     // 1.1 Can get sponsor using methods.sponsor:
-    const actualSponsor = await helpers.methods.sponsor(flipper.options.address).call();
+    const actualSponsorOpt = await helpers.methods.sponsor(flipper.options.address).call();
+    expect(actualSponsorOpt.status).to.be.true;
+    const actualSponsor = actualSponsorOpt.value;
     expect(actualSponsor.eth).to.eq(sponsor);
     expect(actualSponsor.sub).to.eq('0');
 
