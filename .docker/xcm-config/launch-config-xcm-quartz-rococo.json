@@ -155,8 +155,7 @@
                     "name": "alice",
                     "flags": [
                        "--unsafe-rpc-external",
-                       "--unsafe-ws-external",
-                       "-lxcm=trace"
+                       "--unsafe-ws-external"
                     ]
                 }
             ]
