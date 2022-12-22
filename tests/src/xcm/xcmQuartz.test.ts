@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
-import {XcmV2TraitsOutcome, XcmV2TraitsError} from '../interfaces';
+import {XcmV2TraitsError} from '../interfaces';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds} from '../util';
 
 const QUARTZ_CHAIN = 2095;
@@ -645,11 +645,10 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
     const event = xcmpQueueFailEvent!.event;
     const outcome = event.data[1] as XcmV2TraitsError;
 
-    console.log('>>> Karura reject outcome: ', outcome.toHuman());
-    // expect(
-    //   outcome.isUntrustedReserveLocation,
-    //   '[Karura] The XCM error should be `UntrustedReserveLocation`',
-    // ).to.be.true;
+    expect(
+      outcome.isFailedToTransactAsset,
+      '[Karura] The XCM error should be `FailedToTransactAsset`',
+    ).to.be.true;
   });
 });
 
