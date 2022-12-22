@@ -2875,11 +2875,11 @@ class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
 
 class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
   async notePreimage(signer: TSigner, encodedProposal: string) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.notePreimage', [encodedProposal], true);
+    await this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [encodedProposal], true);
   }
 
-  externalProposeMajority(proposalHash: string) {
-    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposalHash]);
+  externalProposeMajority(proposal: any) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposal]);
   }
 
   fastTrack(proposalHash: string, votingPeriod: number, delayPeriod: number) {
@@ -2908,7 +2908,7 @@ class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
   }
 
-  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: number, lengthBound: number) {
+  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
   }
 
