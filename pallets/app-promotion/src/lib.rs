@@ -608,6 +608,8 @@ pub mod pallet {
 			{
 				// Address handled in the last payout loop iteration (below)
 				let last_id = RefCell::new(None);
+				// Block number (as a part of the key) for which calculation was performed in the last payout loop iteration
+				let mut last_staked_calculated_block = Default::default();
 				// Reward balance for the address in the iteration
 				let income_acc = RefCell::new(BalanceOf::<T>::default());
 				// Staked balance for the address in the iteration (before stake is recalculated)
@@ -666,9 +668,22 @@ pub mod pallet {
 					// or just start handling the very first address. In the latter case last_id will be None and
 					// flush_stake will do nothing
 					if last_id.borrow().as_ref() != Some(&current_id) {
-						flush_stake()?;
-						*last_id.borrow_mut() = Some(current_id.clone());
-						stakers_number -= 1;
+						if stakers_number > 0 {
+							flush_stake()?;
+							*last_id.borrow_mut() = Some(current_id.clone());
+							stakers_number -= 1;
+						}
+						// Break out if we reached the address limit
+						else {
+							if let Some(staker) = &*last_id.borrow() {
+								// Save the last calculated record to pick up in the next extrinsic call
+								PreviousCalculatedRecord::<T>::set(Some((
+									staker.clone(),
+									last_staked_calculated_block,
+								)));
+							}
+							break;
+						};
 					};
 
 					// Increase accumulated reward for current address and update current staking record, i.e. (address, staked_block) -> amount
@@ -685,15 +700,7 @@ pub mod pallet {
 							&mut *income_acc.borrow_mut(),
 						);
 					}
-
-					// Break out if we reached the address limit
-					if stakers_number == 0 {
-						if storage_iterator.next().is_some() {
-							// Save the last calculated record to pick up in the next extrinsic call
-							PreviousCalculatedRecord::<T>::set(Some((current_id, staked_block)));
-						}
-						break;
-					}
+					last_staked_calculated_block = staked_block;
 				}
 				flush_stake()?;
 			}

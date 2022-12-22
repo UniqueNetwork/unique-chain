@@ -5549,7 +5549,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-app-promotion"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
