@@ -55,9 +55,7 @@ impl pallet_authorship::Config for Runtime {
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 30; // todo:collator 30 collator slots - 3 planned invulnerables
-	pub const MinCandidates: u32 = 1;
-	pub const MaxInvulnerables: u32 = 30;
+	pub const MaxCollators: u32 = 10;
 	pub const SlashRatio: Perbill = Perbill::from_percent(100);
 }
 
@@ -68,9 +66,7 @@ impl pallet_collator_selection::Config for Runtime {
 	type UpdateOrigin = EnsureRoot<AccountId>;
 	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
-	type MaxCandidates = MaxCandidates;
-	type MinCandidates = MinCandidates;
-	type MaxInvulnerables = MaxInvulnerables;
+	type MaxCollators = MaxCollators;
 	// todo:collator kick threshold should be in storage and configured only by root -- or rather UpdateOrigin
 	type SlashRatio = SlashRatio;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;

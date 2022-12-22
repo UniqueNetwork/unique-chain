@@ -45,9 +45,9 @@ pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 /// Minimum balance required to create or keep an account open.
 pub const EXISTENTIAL_DEPOSIT: u128 = 0;
 /// Amount of Balance reserved for candidate registration.
-pub const GENESIS_LICENSE_BOND: u128 = EXISTENTIAL_DEPOSIT;
+pub const GENESIS_LICENSE_BOND: u128 = 1_000_000_000_000 * UNIQUE;
 /// How long a periodic session lasts in blocks.
-pub const SESSION_LENGTH: BlockNumber = MINUTES;
+pub const SESSION_LENGTH: BlockNumber = HOURS;
 
 // Targeting 0.1 UNQ per transfer
 pub const WEIGHT_TO_FEE_COEFF: u32 = /*<weight2fee>*/175_199_920/*</weight2fee>*/;

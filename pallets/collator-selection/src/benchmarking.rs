@@ -130,7 +130,7 @@ benchmarks! {
 	where_clause { where T: pallet_authorship::Config + session::Config }
 
 	set_invulnerables {
-		let b in 1 .. T::MaxInvulnerables::get();
+		let b in 1 .. T::MaxCollators::get();
 		let new_invulnerables = register_validators::<T>(b);
 		let origin = T::UpdateOrigin::successful_origin();
 	}: {
@@ -142,16 +142,16 @@ benchmarks! {
 		assert_last_event::<T>(Event::NewInvulnerables{invulnerables: new_invulnerables}.into());
 	}
 
-	set_desired_candidates {
+	set_desired_collators {
 		let max: u32 = 999;
 		let origin = T::UpdateOrigin::successful_origin();
 	}: {
 		assert_ok!(
-			<CollatorSelection<T>>::set_desired_candidates(origin, max.clone())
+			<CollatorSelection<T>>::set_desired_collators(origin, max.clone())
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::NewDesiredCandidates{desired_candidates: max}.into());
+		assert_last_event::<T>(Event::NewDesiredCollators{desired_collators: max}.into());
 	}
 
 	set_license_bond {
@@ -169,10 +169,10 @@ benchmarks! {
 	// worse case is when we have all the max-candidate slots filled except one, and we fill that
 	// one.
 	register_as_candidate {
-		let c in 1 .. T::MaxCandidates::get();
+		let c in 1 .. T::MaxCollators::get();
 
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCandidates<T>>::put(c + 1);
+		<DesiredCollators<T>>::put(c + 1);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
@@ -194,9 +194,9 @@ benchmarks! {
 
 	// worse case is the last candidate leaving.
 	leave_intent {
-		let c in (T::MinCandidates::get() + 1) .. T::MaxCandidates::get();
+		let c in (T::MinCandidates::get() + 1) .. T::MaxCollators::get();
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCandidates<T>>::put(c);
+		<DesiredCollators<T>>::put(c);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
@@ -230,11 +230,11 @@ benchmarks! {
 
 	// worst case for new session.
 	new_session {
-		let r in 1 .. T::MaxCandidates::get();
-		let c in 1 .. T::MaxCandidates::get();
+		let r in 1 .. T::MaxCollators::get();
+		let c in 1 .. T::MaxCollators::get();
 
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCandidates<T>>::put(c);
+		<DesiredCollators<T>>::put(c);
 		frame_system::Pallet::<T>::set_block_number(0u32.into());
 
 		register_validators::<T>(c);

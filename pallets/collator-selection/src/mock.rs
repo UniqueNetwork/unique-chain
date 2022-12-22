@@ -206,9 +206,7 @@ ord_parameter_types! {
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 20;
-	pub const MaxInvulnerables: u32 = 20;
-	pub const MinCandidates: u32 = 1;
+	pub const MaxCollators: u32 = 20;
 	pub const MaxAuthorities: u32 = 100_000;
 	pub const SlashRatio: Perbill = Perbill::one();
 }
@@ -230,9 +228,7 @@ impl Config for Test {
 	type Currency = Balances;
 	type UpdateOrigin = EnsureSignedBy<RootAccount, u64>;
 	type PotId = PotId;
-	type MaxCandidates = MaxCandidates;
-	type MinCandidates = MinCandidates;
-	type MaxInvulnerables = MaxInvulnerables;
+	type MaxCollators = MaxCollators;
 	// type KickThreshold = Period;
 	type SlashRatio = SlashRatio;
 	type TreasuryAccountId = ();
@@ -263,9 +259,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		})
 		.collect::<Vec<_>>();
 	let collator_selection = collator_selection::GenesisConfig::<Test> {
-		desired_candidates: 2,
+		desired_collators: 5,
 		license_bond: 10,
-		kick_threshold: 1,
+		kick_threshold: 10,
 		invulnerables,
 	};
 	let session = pallet_session::GenesisConfig::<Test> { keys };

@@ -45,7 +45,7 @@ use sp_std::marker::PhantomData;
 // The weight info trait for `pallet_collator_selection`.
 pub trait WeightInfo {
 	fn set_invulnerables(_b: u32) -> Weight;
-	fn set_desired_candidates() -> Weight;
+	fn set_desired_collators() -> Weight;
 	fn set_license_bond() -> Weight;
 	fn register_as_candidate(_c: u32) -> Weight;
 	fn leave_intent(_c: u32) -> Weight;
@@ -62,7 +62,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(Weight::from_ref_time(68_000 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	fn set_desired_candidates() -> Weight {
+	fn set_desired_collators() -> Weight {
 		Weight::from_ref_time(16_363_000 as u64).saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	fn set_license_bond() -> Weight {
@@ -108,7 +108,7 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_ref_time(68_000 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	fn set_desired_candidates() -> Weight {
+	fn set_desired_collators() -> Weight {
 		Weight::from_ref_time(16_363_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

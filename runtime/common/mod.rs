@@ -192,7 +192,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 			};
 			use pallet_session::SessionManager;
 			use up_common::constants::GENESIS_LICENSE_BOND;
-			use crate::config::pallets::collator_selection::MaxInvulnerables;
+			use crate::config::pallets::collator_selection::MaxCollators;
 
 			let mut weight = <Runtime as frame_system::Config>::DbWeight::get().reads(1);
 
@@ -231,17 +231,17 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					})
 					.collect::<Vec<_>>();
 
-				let bounded_invulnerables = BoundedVec::<_, MaxInvulnerables>::try_from(
+				let bounded_invulnerables = BoundedVec::<_, MaxCollators>::try_from(
 					invulnerables
 						.iter()
 						.cloned()
 						.map(|(acc, _)| acc)
 						.collect::<Vec<_>>(),
 				)
-				.expect("Existing collators/invulnerables are more than MaxInvulnerables");
+				.expect("Existing collators/invulnerables are more than MaxCollators");
 
 				<pallet_collator_selection::Invulnerables<Runtime>>::put(bounded_invulnerables);
-				<pallet_collator_selection::DesiredCandidates<Runtime>>::put(0);
+				<pallet_collator_selection::DesiredCollators<Runtime>>::put(MaxCollators::get());
 				<pallet_collator_selection::LicenseBond<Runtime>>::put(GENESIS_LICENSE_BOND);
 
 				let keys = invulnerables
