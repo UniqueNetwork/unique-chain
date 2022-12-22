@@ -149,7 +149,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
   
   });
@@ -204,7 +204,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       const feeAssetItem = 0;
 
       balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
-      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, 'Unlimited');
 
       balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -277,7 +277,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     const feeItem = 1;
 
-    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, {Unlimited: null});
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, 'Unlimited');
     
     // the commission has been paid in parachain native token
     balanceOpalFinal = await helper.balance.getSubstrate(alice.address);
@@ -339,7 +339,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
   
     await helper.wait.newBlocks(3);
@@ -392,7 +392,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     const feeItem = 0;
 
-    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, 'Unlimited');
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
     console.log('[Opal -> Relay (Westend)] transaction fees: %s OPL',  helper.util.bigIntToDecimals(balanceBobAfter - balanceBobFinal));

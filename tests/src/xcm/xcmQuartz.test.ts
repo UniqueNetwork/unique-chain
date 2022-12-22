@@ -183,7 +183,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
   
   });
@@ -238,7 +238,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       const feeAssetItem = 0;
 
       balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
-      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, 'Unlimited');
 
       balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -310,7 +310,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     const feeItem = 1;
 
-    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, {Unlimited: null});
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, 'Unlimited');
     
     // the commission has been paid in parachain native token
     balanceQuartzFinal = await helper.balance.getSubstrate(alice.address);
@@ -370,7 +370,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
   
     await helper.wait.newBlocks(3);
@@ -425,7 +425,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     const feeItem = 0;
 
-    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, 'Unlimited');
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
     console.log('[Quartz -> Relay (Westend)] transaction fees: %s QTZ',  helper.util.bigIntToDecimals(balanceBobAfter - balanceBobFinal));
@@ -533,7 +533,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     const feeAssetItem = 0;
 
-    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
@@ -581,7 +581,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
         ForeignAsset: 0,
       };
 
-      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, {Unlimited: null});
+      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, 'Unlimited');
       balanceKaruraTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceQuartzForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -645,7 +645,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
         Token: 'KAR',
       };
 
-      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, {Unlimited: null});
+      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, 'Unlimited');
     });
 
     const maxWaitBlocks = 3;
@@ -858,7 +858,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     };
     const amount = TRANSFER_AMOUNT;
 
-    await helper.xTokens.transfer(randomAccountQuartz, currencyId, amount, dest, {Unlimited: null});
+    await helper.xTokens.transfer(randomAccountQuartz, currencyId, amount, dest, 'Unlimited');
 
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccountQuartz.address);
     expect(balanceQuartzTokenMiddle < balanceQuartzTokenInit).to.be.true;
@@ -912,7 +912,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
         },
       };
 
-      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, {Unlimited: null});
+      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, 'Unlimited');
 
       balanceMovrTokenFinal = await helper.balance.getEthereum(randomAccountMoonriver.address);
 

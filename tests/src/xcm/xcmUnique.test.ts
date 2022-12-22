@@ -183,7 +183,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
   
   });
@@ -238,7 +238,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       const feeAssetItem = 0;
 
       balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
-      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, 'Unlimited');
 
       balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -310,7 +310,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     const feeItem = 1;
 
-    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, {Unlimited: null});
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, 'Unlimited');
     
     // the commission has been paid in parachain native token
     balanceUniqueFinal = await helper.balance.getSubstrate(alice.address);
@@ -370,7 +370,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
   
     await helper.wait.newBlocks(3);
@@ -425,7 +425,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     const feeItem = 0;
 
-    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, 'Unlimited');
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
     console.log('[Unique -> Relay (Westend)] transaction fees: %s UNQ',  helper.util.bigIntToDecimals(balanceBobAfter - balanceBobFinal));
@@ -534,7 +534,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     const feeAssetItem = 0;
 
-    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, {Unlimited: null});
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
@@ -583,7 +583,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
         ForeignAsset: 0,
       };
 
-      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, {Unlimited: null});
+      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, 'Unlimited');
       balanceAcalaTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceUniqueForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -647,7 +647,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         Token: 'ACA',
       };
 
-      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, {Unlimited: null});
+      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, 'Unlimited');
     });
 
     const maxWaitBlocks = 3;
@@ -842,7 +842,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     };
     const amount = TRANSFER_AMOUNT;
 
-    await helper.xTokens.transfer(randomAccountUnique, currencyId, amount, dest, {Unlimited: null});
+    await helper.xTokens.transfer(randomAccountUnique, currencyId, amount, dest, 'Unlimited');
 
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccountUnique.address);
     expect(balanceUniqueTokenMiddle < balanceUniqueTokenInit).to.be.true;
