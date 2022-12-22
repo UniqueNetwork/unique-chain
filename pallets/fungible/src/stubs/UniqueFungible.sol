@@ -114,7 +114,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
-	function setCollectionSponsorCross(CrossAccount memory sponsor) public {
+	function setCollectionSponsorCross(CrossAddress memory sponsor) public {
 		require(false, stub_error);
 		sponsor;
 		dummy = 0;
@@ -152,10 +152,10 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (CrossAccount memory) {
+	function collectionSponsor() public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		dummy;
-		return CrossAccount(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Get current collection limits.
@@ -193,7 +193,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
-	function addCollectionAdminCross(CrossAccount memory newAdmin) public {
+	function addCollectionAdminCross(CrossAddress memory newAdmin) public {
 		require(false, stub_error);
 		newAdmin;
 		dummy = 0;
@@ -203,7 +203,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
-	function removeCollectionAdminCross(CrossAccount memory admin) public {
+	function removeCollectionAdminCross(CrossAddress memory admin) public {
 		require(false, stub_error);
 		admin;
 		dummy = 0;
@@ -289,7 +289,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User address to check.
 	/// @dev EVM selector for this function is: 0x91b6df49,
 	///  or in textual repr: allowlistedCross((address,uint256))
-	function allowlistedCross(CrossAccount memory user) public view returns (bool) {
+	function allowlistedCross(CrossAddress memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -312,7 +312,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
-	function addToCollectionAllowListCross(CrossAccount memory user) public {
+	function addToCollectionAllowListCross(CrossAddress memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -334,7 +334,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
-	function removeFromCollectionAllowListCross(CrossAccount memory user) public {
+	function removeFromCollectionAllowListCross(CrossAddress memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -370,7 +370,7 @@ contract Collection is Dummy, ERC165 {
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
-	function isOwnerOrAdminCross(CrossAccount memory user) public view returns (bool) {
+	function isOwnerOrAdminCross(CrossAddress memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -394,10 +394,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() public view returns (CrossAccount memory) {
+	function collectionOwner() public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		dummy;
-		return CrossAccount(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	// /// Changes collection owner to another account
@@ -418,10 +418,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() public view returns (CrossAccount[] memory) {
+	function collectionAdmins() public view returns (CrossAddress[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new CrossAccount[](0);
+		return new CrossAddress[](0);
 	}
 
 	/// Changes collection owner to another account
@@ -430,7 +430,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0x6496c497,
 	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
-	function changeCollectionOwnerCross(CrossAccount memory newOwner) public {
+	function changeCollectionOwnerCross(CrossAddress memory newOwner) public {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
@@ -438,7 +438,7 @@ contract Collection is Dummy, ERC165 {
 }
 
 /// @dev Cross account struct
-struct CrossAccount {
+struct CrossAddress {
 	address eth;
 	uint256 sub;
 }
@@ -516,7 +516,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 
 	/// @dev EVM selector for this function is: 0x269e6158,
 	///  or in textual repr: mintCross((address,uint256),uint256)
-	function mintCross(CrossAccount memory to, uint256 amount) public returns (bool) {
+	function mintCross(CrossAddress memory to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
 		amount;
@@ -526,7 +526,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(CrossAccount memory spender, uint256 amount) public returns (bool) {
+	function approveCross(CrossAddress memory spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
 		amount;
@@ -556,7 +556,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(CrossAccount memory from, uint256 amount) public returns (bool) {
+	function burnFromCross(CrossAddress memory from, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		amount;
@@ -577,7 +577,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(CrossAccount memory to, uint256 amount) public returns (bool) {
+	function transferCross(CrossAddress memory to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
 		amount;
@@ -588,8 +588,8 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		CrossAccount memory from,
-		CrossAccount memory to,
+		CrossAddress memory from,
+		CrossAddress memory to,
 		uint256 amount
 	) public returns (bool) {
 		require(false, stub_error);

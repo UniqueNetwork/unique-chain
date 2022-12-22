@@ -174,9 +174,9 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn sponsor(&self, contract_address: address) -> Result<pallet_common::eth::CrossAccount> {
+	fn sponsor(&self, contract_address: address) -> Result<pallet_common::eth::CrossAddress> {
 		Ok(
-			pallet_common::eth::CrossAccount::from_sub_cross_account::<T>(
+			pallet_common::eth::CrossAddress::from_sub_cross_account::<T>(
 				&Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?,
 			),
 		)

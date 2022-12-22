@@ -797,9 +797,9 @@ where
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
-	fn cross_owner_of(&self, token_id: uint256) -> Result<pallet_common::eth::CrossAccount> {
+	fn cross_owner_of(&self, token_id: uint256) -> Result<pallet_common::eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
-			.map(|o| pallet_common::eth::CrossAccount::from_sub_cross_account::<T>(&o))
+			.map(|o| pallet_common::eth::CrossAddress::from_sub_cross_account::<T>(&o))
 			.ok_or(Error::Revert("key too large".into()))
 	}
 
@@ -869,7 +869,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: pallet_common::eth::CrossAccount,
+		to: pallet_common::eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -897,8 +897,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: pallet_common::eth::CrossAccount,
-		to: pallet_common::eth::CrossAccount,
+		from: pallet_common::eth::CrossAddress,
+		to: pallet_common::eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -953,7 +953,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: pallet_common::eth::CrossAccount,
+		from: pallet_common::eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1090,7 +1090,7 @@ where
 	fn mint_cross(
 		&mut self,
 		caller: caller,
-		to: pallet_common::eth::CrossAccount,
+		to: pallet_common::eth::CrossAddress,
 		properties: Vec<pallet_common::eth::Property>,
 	) -> Result<uint256> {
 		let token_id = <TokensMinted<T>>::get(self.id)

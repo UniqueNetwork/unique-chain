@@ -19,7 +19,7 @@ export interface OptionUint {
   value: bigint,
 }
 
-export interface TEthCrossAccount {
+export interface CrossAddress {
   readonly eth: string,
   readonly sub: string | Uint8Array,
 }

@@ -244,7 +244,7 @@ where
 	fn set_collection_sponsor_cross(
 		&mut self,
 		caller: caller,
-		sponsor: eth::CrossAccount,
+		sponsor: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -284,13 +284,13 @@ where
 	/// Get current sponsor.
 	///
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn collection_sponsor(&self) -> Result<eth::CrossAccount> {
+	fn collection_sponsor(&self) -> Result<eth::CrossAddress> {
 		let sponsor = match self.collection.sponsorship.sponsor() {
 			Some(sponsor) => sponsor,
 			None => return Ok(Default::default()),
 		};
 
-		Ok(eth::CrossAccount::from_sub::<T>(&sponsor))
+		Ok(eth::CrossAddress::from_sub::<T>(&sponsor))
 	}
 
 	/// Get current collection limits.
@@ -376,7 +376,7 @@ where
 	fn add_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		new_admin: eth::CrossAccount,
+		new_admin: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
@@ -391,7 +391,7 @@ where
 	fn remove_collection_admin_cross(
 		&mut self,
 		caller: caller,
-		admin: eth::CrossAccount,
+		admin: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
@@ -539,7 +539,7 @@ where
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	fn allowlisted_cross(&self, user: eth::CrossAccount) -> Result<bool> {
+	fn allowlisted_cross(&self, user: eth::CrossAddress) -> Result<bool> {
 		let user = user.into_sub_cross_account::<T>()?;
 		Ok(Pallet::<T>::allowed(self.id, user))
 	}
@@ -563,7 +563,7 @@ where
 	fn add_to_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: eth::CrossAccount,
+		user: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -592,7 +592,7 @@ where
 	fn remove_from_collection_allow_list_cross(
 		&mut self,
 		caller: caller,
-		user: eth::CrossAccount,
+		user: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 
@@ -630,7 +630,7 @@ where
 	///
 	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
-	fn is_owner_or_admin_cross(&self, user: eth::CrossAccount) -> Result<bool> {
+	fn is_owner_or_admin_cross(&self, user: eth::CrossAddress) -> Result<bool> {
 		let user = user.into_sub_cross_account::<T>()?;
 		Ok(self.is_owner_or_admin(&user))
 	}
@@ -651,8 +651,8 @@ where
 	///
 	/// @return Tuble with sponsor address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_owner(&self) -> Result<eth::CrossAccount> {
-		Ok(eth::CrossAccount::from_sub_cross_account::<T>(
+	fn collection_owner(&self) -> Result<eth::CrossAddress> {
+		Ok(eth::CrossAddress::from_sub_cross_account::<T>(
 			&T::CrossAccountId::from_sub(self.owner.clone()),
 		))
 	}
@@ -675,9 +675,9 @@ where
 	///
 	/// @return Vector of tuples with admins address and his substrate mirror.
 	/// If address is canonical then substrate mirror is zero and vice versa.
-	fn collection_admins(&self) -> Result<Vec<eth::CrossAccount>> {
+	fn collection_admins(&self) -> Result<Vec<eth::CrossAddress>> {
 		let result = crate::IsAdmin::<T>::iter_prefix((self.id,))
-			.map(|(admin, _)| eth::CrossAccount::from_sub_cross_account::<T>(&admin))
+			.map(|(admin, _)| eth::CrossAddress::from_sub_cross_account::<T>(&admin))
 			.collect();
 		Ok(result)
 	}
@@ -689,7 +689,7 @@ where
 	fn change_collection_owner_cross(
 		&mut self,
 		caller: caller,
-		new_owner: eth::CrossAccount,
+		new_owner: eth::CrossAddress,
 	) -> Result<void> {
 		self.consume_store_writes(1)?;
 

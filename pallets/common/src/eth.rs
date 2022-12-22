@@ -118,13 +118,13 @@ impl From<Option<bool>> for OptionUint {
 
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
-pub struct CrossAccount {
+pub struct CrossAddress {
 	pub(crate) eth: address,
 	pub(crate) sub: uint256,
 }
 
-impl CrossAccount {
-	/// Converts `CrossAccountId` to [`CrossAccount`]
+impl CrossAddress {
+	/// Converts `CrossAccountId` to [`CrossAddress`]
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -139,7 +139,7 @@ impl CrossAccount {
 			}
 		}
 	}
-	/// Creates [`CrossAccount`] from substrate account
+	/// Creates [`CrossAddress`] from substrate account
 	pub fn from_sub<T>(account_id: &T::AccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -150,7 +150,7 @@ impl CrossAccount {
 			sub: uint256::from_big_endian(account_id.as_ref()),
 		}
 	}
-	/// Converts [`CrossAccount`] to `CrossAccountId`
+	/// Converts [`CrossAddress`] to `CrossAccountId`
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,

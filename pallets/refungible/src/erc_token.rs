@@ -224,7 +224,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: pallet_common::eth::CrossAccount,
+		from: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -250,7 +250,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		spender: pallet_common::eth::CrossAccount,
+		spender: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -280,7 +280,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: pallet_common::eth::CrossAccount,
+		to: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -303,8 +303,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: pallet_common::eth::CrossAccount,
-		to: pallet_common::eth::CrossAccount,
+		from: pallet_common::eth::CrossAddress,
+		to: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);

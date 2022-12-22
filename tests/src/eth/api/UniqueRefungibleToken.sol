@@ -39,7 +39,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(CrossAccount memory from, uint256 amount) external returns (bool);
+	function burnFromCross(CrossAddress memory from, uint256 amount) external returns (bool);
 
 	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
 	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
@@ -50,7 +50,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount of tokens to be spent.
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(CrossAccount memory spender, uint256 amount) external returns (bool);
+	function approveCross(CrossAddress memory spender, uint256 amount) external returns (bool);
 
 	/// @dev Function that changes total amount of the tokens.
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
@@ -64,7 +64,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount to be transferred.
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(CrossAccount memory to, uint256 amount) external returns (bool);
+	function transferCross(CrossAddress memory to, uint256 amount) external returns (bool);
 
 	/// @dev Transfer tokens from one address to another
 	/// @param from The address which you want to send tokens from
@@ -73,14 +73,14 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		CrossAccount memory from,
-		CrossAccount memory to,
+		CrossAddress memory from,
+		CrossAddress memory to,
 		uint256 amount
 	) external returns (bool);
 }
 
 /// @dev Cross account struct
-struct CrossAccount {
+struct CrossAddress {
 	address eth;
 	uint256 sub;
 }
