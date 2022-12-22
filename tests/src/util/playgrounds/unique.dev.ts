@@ -118,7 +118,16 @@ export class DevUniqueHelper extends UniqueHelper {
   }
 }
 
-export class DevRelayHelper extends RelayHelper {}
+export class DevRelayHelper extends RelayHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevRelayHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
 
 export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;

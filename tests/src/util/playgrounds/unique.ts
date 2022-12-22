@@ -2968,11 +2968,13 @@ export class XcmChainHelper extends ChainHelperBase {
 }
 
 export class RelayHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<RelayHelper>;
   xcm: XcmGroup<RelayHelper>;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger, options.helperBase ?? RelayHelper);
 
+    this.balance = new SubstrateBalanceGroup(this);
     this.xcm = new XcmGroup(this, 'xcmPallet');
   }
 }
