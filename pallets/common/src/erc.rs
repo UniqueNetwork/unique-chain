@@ -347,6 +347,10 @@ where
 	) -> Result<void> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
+		if !limit.has_value() {
+			return Err(Error::Revert("user can't disable limits".into()));
+		}
+
 		let caller = T::CrossAccountId::from_eth(caller);
 		<Pallet<T>>::update_limits(&caller, self, limit.try_into()?).map_err(dispatch_to_evm::<T>)
 	}

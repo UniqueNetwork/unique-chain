@@ -16,7 +16,6 @@ macro_rules! impl_abi_type {
 
 		impl AbiType for $ty {
 			const SIGNATURE: SignatureUnit = make_signature!(new fixed(stringify!($name)));
-			const FIELDS_COUNT: usize = 1;
 
 			fn is_dynamic() -> bool {
 				$dynamic
@@ -97,7 +96,6 @@ impl<T: AbiWrite> AbiWrite for &T {
 
 impl<T: AbiType> AbiType for &T {
 	const SIGNATURE: SignatureUnit = T::SIGNATURE;
-	const FIELDS_COUNT: usize = T::FIELDS_COUNT;
 
 	fn is_dynamic() -> bool {
 		T::is_dynamic()
@@ -127,7 +125,6 @@ impl<T: AbiType + AbiRead + sealed::CanBePlacedInVec> AbiRead for Vec<T> {
 
 impl<T: AbiType> AbiType for Vec<T> {
 	const SIGNATURE: SignatureUnit = make_signature!(new nameof(T::SIGNATURE) fixed("[]"));
-	const FIELDS_COUNT: usize = 1;
 
 	fn is_dynamic() -> bool {
 		true
@@ -203,7 +200,6 @@ macro_rules! impl_tuples {
                 shift_left(1)
                 fixed(")")
             );
-			const FIELDS_COUNT: usize = count!($($ident)*);
 
 			fn is_dynamic() -> bool {
 				false

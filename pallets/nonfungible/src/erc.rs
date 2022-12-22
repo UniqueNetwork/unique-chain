@@ -38,6 +38,7 @@ use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
+	eth,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -93,25 +94,21 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn set_token_property_permissions(
 		&mut self,
 		caller: caller,
-		permissions: Vec<pallet_common::eth::TokenPropertyPermission>,
+		permissions: Vec<eth::TokenPropertyPermission>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let perms = pallet_common::eth::TokenPropertyPermission::into_property_key_permissions(
-			permissions,
-		)?;
+		let perms = eth::TokenPropertyPermission::into_property_key_permissions(permissions)?;
 
 		<Pallet<T>>::set_token_property_permissions(self, &caller, perms)
 			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// @notice Get permissions for token properties.
-	fn token_property_permissions(
-		&self,
-	) -> Result<Vec<pallet_common::eth::TokenPropertyPermission>> {
+	fn token_property_permissions(&self) -> Result<Vec<eth::TokenPropertyPermission>> {
 		let perms = <Pallet<T>>::token_property_permission(self.id);
 		Ok(perms
 			.into_iter()
-			.map(pallet_common::eth::TokenPropertyPermission::from)
+			.map(eth::TokenPropertyPermission::from)
 			.collect())
 	}
 
@@ -159,7 +156,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		token_id: uint256,
-		properties: Vec<pallet_common::eth::Property>,
+		properties: Vec<eth::Property>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -170,7 +167,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		let properties = properties
 			.into_iter()
-			.map(pallet_common::eth::Property::try_into)
+			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 
 		<Pallet<T>>::set_token_properties(
@@ -753,9 +750,9 @@ where
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
-	fn cross_owner_of(&self, token_id: uint256) -> Result<pallet_common::eth::CrossAddress> {
+	fn cross_owner_of(&self, token_id: uint256) -> Result<eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
-			.map(|o| pallet_common::eth::CrossAddress::from_sub_cross_account::<T>(&o))
+			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
 			.ok_or(Error::Revert("key too large".into()))
 	}
 
@@ -764,11 +761,7 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn properties(
-		&self,
-		token_id: uint256,
-		keys: Vec<string>,
-	) -> Result<Vec<pallet_common::eth::Property>> {
+	fn properties(&self, token_id: uint256, keys: Vec<string>) -> Result<Vec<eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -784,7 +777,7 @@ where
 			if keys.is_empty() { None } else { Some(keys) },
 		)
 		.into_iter()
-		.map(pallet_common::eth::Property::try_from)
+		.map(eth::Property::try_from)
 		.collect::<Result<Vec<_>>>()
 	}
 
@@ -798,7 +791,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		approved: pallet_common::eth::CrossAddress,
+		approved: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -837,7 +830,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: pallet_common::eth::CrossAddress,
+		to: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -861,8 +854,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: pallet_common::eth::CrossAddress,
-		to: pallet_common::eth::CrossAddress,
+		from: eth::CrossAddress,
+		to: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -908,7 +901,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: pallet_common::eth::CrossAddress,
+		from: eth::CrossAddress,
 		token_id: uint256,
 	) -> Result<void> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1030,8 +1023,8 @@ where
 	fn mint_cross(
 		&mut self,
 		caller: caller,
-		to: pallet_common::eth::CrossAddress,
-		properties: Vec<pallet_common::eth::Property>,
+		to: eth::CrossAddress,
+		properties: Vec<eth::Property>,
 	) -> Result<uint256> {
 		let token_id = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -1041,7 +1034,7 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(pallet_common::eth::Property::try_into)
+			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?
 			.try_into()
 			.map_err(|_| Error::Revert(alloc::format!("too many properties")))?;

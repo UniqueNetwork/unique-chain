@@ -49,7 +49,7 @@ fn expand_struct(
 	let struct_from_tuple = struct_from_tuple(name, is_named_fields, field_names.clone());
 
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
-	let abi_type = impl_struct_abi_type(name, tuple_type.clone(), params_count);
+	let abi_type = impl_struct_abi_type(name, tuple_type.clone());
 	let abi_read = impl_struct_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
 	let abi_write = impl_struct_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
 	let solidity_type = impl_struct_solidity_type(name, field_types.clone(), params_count);
@@ -83,7 +83,7 @@ fn expand_enum(
 	let from = impl_enum_from_u8(name, enum_options.clone());
 	let solidity_option = impl_solidity_option(name, enum_options.clone());
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
-	let abi_type = impl_enum_abi_type(name, option_count);
+	let abi_type = impl_enum_abi_type(name);
 	let abi_read = impl_enum_abi_read(name);
 	let abi_write = impl_enum_abi_write(name);
 	let solidity_type = impl_enum_solidity_type(name);

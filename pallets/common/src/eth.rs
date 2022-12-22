@@ -264,16 +264,17 @@ impl CollectionLimit {
 			value: value.into(),
 		}
 	}
+
+	/// Whether the field contains a value.
+	pub fn has_value(&self) -> bool {
+		self.value.status
+	}
 }
 
 impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 	type Error = evm_coder::execution::Error;
 
 	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
-		if !self.value.status {
-			return Err(Self::Error::Revert("user can't disable limits".into()));
-		}
-
 		let value = self.value.value.try_into().map_err(|error| {
 			Self::Error::Revert(format!(
 				"can't convert value to u32 \"{}\" because: \"{error}\"",
@@ -433,17 +434,6 @@ impl TokenPropertyPermission {
 		let mut perms = Vec::new();
 
 		for TokenPropertyPermission { key, permissions } in permissions {
-			if permissions.len() > <TokenPermissionField as evm_coder::abi::AbiType>::FIELDS_COUNT {
-				return Err(alloc::format!(
-					"Actual number of fields {} for {}, which exceeds the maximum value of {}",
-					permissions.len(),
-					stringify!(EthTokenPermissions),
-					<TokenPermissionField as evm_coder::abi::AbiType>::FIELDS_COUNT
-				)
-				.as_str()
-				.into());
-			}
-
 			let token_permission = PropertyPermission::from_vec(permissions);
 
 			perms.push(up_data_structs::PropertyKeyPermission {
