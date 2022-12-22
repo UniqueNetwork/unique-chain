@@ -32,6 +32,7 @@ const statemineUrl = config.statemineUrl;
 const karuraUrl = config.karuraUrl;
 const moonriverUrl = config.moonriverUrl;
 
+const RELAY_DECIMALS = 12;
 const STATEMINE_DECIMALS = 12;
 const KARURA_DECIMALS = 12;
 
@@ -243,7 +244,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
       // common good parachain take commission in it native token
       console.log(
-        '[Quartz -> Statemine] transaction fees on Statemine: %s WND',
+        '[Statemine -> Quartz] transaction fees on Statemine: %s WND',
         helper.util.bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, STATEMINE_DECIMALS),
       );
       expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
@@ -260,11 +261,11 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     balanceQuartzAfter = await helper.balance.getSubstrate(alice.address);
 
     console.log(
-      '[Quartz -> Statemine] transaction fees on Quartz: %s USDT',
+      '[Statemine -> Quartz] transaction fees on Quartz: %s USDT',
       helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, USDT_ASSET_METADATA_DECIMALS),
     );
     console.log(
-      '[Quartz -> Statemine] transaction fees on Quartz: %s QTZ',
+      '[Statemine -> Quartz] transaction fees on Quartz: %s QTZ',
       helper.util.bigIntToDecimals(balanceQuartzAfter - balanceQuartzBefore),
     );    
     // commission has not paid in USDT token
@@ -313,6 +314,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     
     // the commission has been paid in parachain native token
     balanceQuartzFinal = await helper.balance.getSubstrate(alice.address);
+    console.log('[Quartz -> Statemine] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(balanceQuartzFinal - balanceQuartzAfter));
     expect(balanceQuartzAfter > balanceQuartzFinal).to.be.true;
 
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
@@ -377,6 +379,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
     const wndFeeOnQuartz = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
+    const wndDiffOnQuartz = balanceBobRelayTokenAfter - balanceBobRelayTokenBefore;
     console.log(
       '[Relay (Westend) -> Quartz] transaction fees: %s QTZ',
       helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
@@ -385,26 +388,29 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       '[Relay (Westend) -> Quartz] transaction fees: %s WND',
       helper.util.bigIntToDecimals(wndFeeOnQuartz, STATEMINE_DECIMALS),
     );
+    console.log('[Relay (Westend) -> Quartz] actually delivered: %s WND', wndDiffOnQuartz);
     expect(wndFeeOnQuartz == 0n, 'No incoming WND fees should be taken').to.be.true;
     expect(balanceBobBefore == balanceBobAfter, 'No incoming QTZ fees should be taken').to.be.true;
-    expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
   });
 
   itSub('Should connect and send Relay token back', async ({helper}) => {
+    let relayTokenBalanceBefore: bigint;
+    let relayTokenBalanceAfter: bigint;
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      relayTokenBalanceBefore = await helper.balance.getSubstrate(bob.address);
+    });
+
     const destination = {
       V1: {
         parents: 1,
-        interior: {X2: [
-          {
-            Parachain: STATEMINE_CHAIN,
-          },
-          {
+        interior: {
+          X1:{
             AccountId32: {
               network: 'Any',
               id: bob.addressRaw,
             },
           },
-        ]},
+        },
       },
     };
 
@@ -422,7 +428,16 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, {Unlimited: null});
 
     balanceBobFinal = await helper.balance.getSubstrate(bob.address);
-    console.log('[Relay (Westend) to Quartz] transaction fees: %s QTZ', balanceBobAfter - balanceBobFinal);
+    console.log('[Quartz -> Relay (Westend)] transaction fees: %s QTZ',  helper.util.bigIntToDecimals(balanceBobAfter - balanceBobFinal));
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.wait.newBlocks(10);
+      relayTokenBalanceAfter = await helper.balance.getSubstrate(bob.address);
+
+      const diff = relayTokenBalanceAfter - relayTokenBalanceBefore;
+      console.log('[Quartz -> Relay (Westend)] actually delivered: %s WND', helper.util.bigIntToDecimals(diff, RELAY_DECIMALS));
+      expect(diff > 0, 'Relay tokens was not delivered back').to.be.true;
+    });
   });
 });
 
