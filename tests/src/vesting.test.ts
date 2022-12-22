@@ -73,7 +73,7 @@ describe('Vesting', () => {
     expect(balanceRecepient.feeFrozen).to.eq(250n * nominal);
     expect(balanceRecepient.miscFrozen).to.eq(250n * nominal);
     expect(balanceRecepient.reserved).to.eq(0n);
-    
+
     // Wait first schedule ends and first part od second schedule:
     await helper.wait.forRelayBlockNumber(SCHEDULE_2_START + SCHEDULE_2_PERIOD);
     await helper.balance.claim(recepient);
@@ -84,7 +84,7 @@ describe('Vesting', () => {
     expect(balanceRecepient.feeFrozen).to.eq(100n * nominal);
     expect(balanceRecepient.miscFrozen).to.eq(100n * nominal);
     expect(balanceRecepient.reserved).to.eq(0n);
-    
+
     // Schedules list contain 1 vesting:
     schedule = await helper.balance.getVestingSchedules(recepient.address);
     expect(schedule).to.has.length(1);
@@ -100,7 +100,7 @@ describe('Vesting', () => {
     expect(balanceRecepient.feeFrozen).to.eq(0n);
     expect(balanceRecepient.miscFrozen).to.eq(0n);
     expect(balanceRecepient.reserved).to.eq(0n);
-    
+
     // check sender balance does not changed:
     balanceSender = await helper.balance.getSubstrateFull(sender.address);
     expect(balanceSender.free / nominal).to.eq(699n);

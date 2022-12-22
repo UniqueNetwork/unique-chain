@@ -1103,7 +1103,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
   async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
     const api = this.helper.getApi();
     const props = (await api.query.common.collectionProperties(collectionId)).toJSON();
-        
+
     return (props! as any).consumedSpace;
   }
 
@@ -2423,7 +2423,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   /**
    * Get schedule for recepient of vested transfer
    * @param address Substrate address of recipient
-   * @returns 
+   * @returns
    */
   async getVestingSchedules(address: TSubstrateAccount): Promise<{start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}[]> {
     const schedule = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])).toJSON();
@@ -2506,16 +2506,16 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
       : typeof key === 'bigint'
         ? hexToU8a(key.toString(16))
         : key;
-  
+
     if (ss58Format < 0 || ss58Format > 16383 || [46, 47].includes(ss58Format)) {
       throw new Error(`ss58Format is not valid, received ${typeof ss58Format} "${ss58Format}"`);
     }
-  
+
     const allowedDecodedLengths = [1, 2, 4, 8, 32, 33];
     if (!allowedDecodedLengths.includes(u8a.length)) {
       throw new Error(`key length is not valid, received ${u8a.length}, valid values are ${allowedDecodedLengths.join(', ')}`);
     }
-  
+
     const u8aPrefix = ss58Format < 64
       ? new Uint8Array([ss58Format])
       : new Uint8Array([
@@ -2524,7 +2524,7 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
       ]);
 
     const input = u8aConcat(u8aPrefix, u8a);
-  
+
     return base58Encode(u8aConcat(
       input,
       blake2AsU8a(input).subarray(0, [32, 33].includes(u8a.length) ? 2 : 1),
@@ -2556,7 +2556,7 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
     if (ethCrossAccount.sub === '0') {
       return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
     }
-    
+
     const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.sub));
     return {Substrate: ss58};
   }
@@ -3014,14 +3014,14 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
 
     executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
       const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
-      
+
       const mandatorySchedArgs = [
         this.blocksNum,
         this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
         this.options.priority ?? null,
         scheduledTx,
       ];
-      
+
       let schedArgs;
       let scheduleFn;
 
@@ -3241,7 +3241,7 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
     const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
-        
+
     return (props! as any).consumedSpace;
   }
 
@@ -3359,7 +3359,7 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
     const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
-        
+
     return (props! as any).consumedSpace;
   }
 

@@ -272,8 +272,8 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
 
     const types = ['NFT', 'Fungible', 'ReFungible'];
     await expect(helper.executeExtrinsic(
-      alice, 
-      'api.tx.unique.createMultipleItems', 
+      alice,
+      'api.tx.unique.createMultipleItems',
       [collectionId, {Substrate: alice.address}, types],
     )).to.be.rejectedWith(/nonfungible\.NotNonfungibleDataUsedToMintFungibleCollectionToken/);
   });

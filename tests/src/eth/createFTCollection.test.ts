@@ -94,7 +94,7 @@ describe('Create FT collection from EVM', () => {
     expect(await collectionHelpers
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
-    
+
     // check collectionOwner:
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
     const collectionOwner = await collectionEvm.methods.collectionOwner().call();
