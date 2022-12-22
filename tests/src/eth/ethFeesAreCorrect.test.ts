@@ -32,7 +32,7 @@ describe('Eth fees are correct', () => {
 
   itEth('web3 fees are the same as evm.call fees', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {});
-    
+
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);
     const aliceEth = helper.address.substrateToEth(alice.address);
@@ -41,7 +41,7 @@ describe('Eth fees are correct', () => {
     const {tokenId: tokenB} = await collection.mintToken(minter, {Ethereum: aliceEth});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const balanceBeforeWeb3Transfer = await helper.balance.getEthereum(owner);
     await contract.methods.transfer(receiver, tokenA).send({from: owner});
@@ -50,7 +50,7 @@ describe('Eth fees are correct', () => {
 
     const encodedCall = contract.methods.transfer(receiver, tokenB)
       .encodeABI();
-    
+
     const balanceBeforeEvmCall = await helper.balance.getSubstrate(alice.address);
     await helper.eth.sendEVM(
       alice,

@@ -48,7 +48,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
     await collection.mint(alice, 200n, {Substrate: alice.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const totalSupply = await contract.methods.totalSupply().call();
 
@@ -62,7 +62,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
     await collection.mint(alice, 200n, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const balance = await contract.methods.balanceOf(caller).call();
 
@@ -87,7 +87,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const spender = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     await collection.mint(alice, 200n, {Ethereum: contract.options.address});
 
@@ -123,7 +123,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
 
     await evmCollection.methods.approve(contract.options.address, 100).send({from: owner});
@@ -170,7 +170,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const receiver = await helper.eth.createAccountWithBalance(donor);
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'ft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     await collection.mint(alice, 200n, {Ethereum: contract.options.address});
 

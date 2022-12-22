@@ -25,13 +25,13 @@ describe('Helpers sanity check', () => {
       donor = await privateKey({filename: __filename});
     });
   });
-  
+
   itEth('Contract owner is recorded', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(await helper.ethNativeContract.contractHelpers(owner).methods.contractOwner(flipper.options.address).call()).to.be.equal(owner);
+    expect(await (await helper.ethNativeContract.contractHelpers(owner)).methods.contractOwner(flipper.options.address).call()).to.be.equal(owner);
   });
 
   itEth('Flipper is working', async ({helper}) => {

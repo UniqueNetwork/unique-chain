@@ -163,6 +163,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * inflation_start_relay_block: The relay chain block at which inflation should start
+		#[pallet::call_index(0)]
 		#[pallet::weight(0)]
 		pub fn start_inflation(
 			origin: OriginFor<T>,

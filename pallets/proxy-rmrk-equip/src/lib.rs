@@ -231,6 +231,7 @@ pub mod pallet {
 		/// - `symbol`: Arbitrary client-chosen symbol.
 		/// - `parts`: Array of Fixed and Slot Parts composing the Base,
 		/// confined in length by [`RmrkPartsLimit`](up_data_structs::RmrkPartsLimit).
+		#[pallet::call_index(0)]
 		#[pallet::weight(<SelfWeightOf<T>>::create_base(parts.len() as u32))]
 		pub fn create_base(
 			origin: OriginFor<T>,
@@ -309,6 +310,7 @@ pub mod pallet {
 		///   - `key`: Arbitrary BoundedString, defined by client.
 		///   - `value`: Arbitrary BoundedString, defined by client.
 		///   - `inherit`: Optional bool.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<SelfWeightOf<T>>::theme_add(theme.properties.len() as u32))]
 		pub fn theme_add(
 			origin: OriginFor<T>,
@@ -370,6 +372,7 @@ pub mod pallet {
 		/// - `base_id`: Base containing the Slot Part to be updated.
 		/// - `slot_id`: Slot Part whose Equippable List is being updated .
 		/// - `equippables`: List of equippables that will override the current Equippables list.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<SelfWeightOf<T>>::equippable())]
 		pub fn equippable(
 			origin: OriginFor<T>,

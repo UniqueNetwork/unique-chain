@@ -35,12 +35,42 @@ import {TCollectionMode} from '../../../util/playgrounds/types';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
+  gasPrice?: string;
 
   constructor(helper: EthUniqueHelper) {
     this.helper = helper;
   }
+  async getGasPrice() {
+    if (this.gasPrice)
+      return this.gasPrice;
+    this.gasPrice = await this.helper.getWeb3().eth.getGasPrice();
+    return this.gasPrice;
+  }
 }
 
+function unlimitedMoneyHack<C>(_contract: C): C {
+  const contract = _contract as any;
+  // Hack: fight against gasPrice override
+  for (const method in contract.methods) {
+    const _method = contract.methods[method];
+    contract.methods[method] = function (...args: any) {
+      const encodedCall = _method.call(this, ...args);
+      const _call = encodedCall.call;
+      encodedCall.call = function (...args: any) {
+        if (args.length === 0) {
+          return _call.call(this, {gasPrice: '0'});
+        }
+        // No support for callback/defaultBlock, they may be placed as first argument
+        if (typeof args[0] !== 'object')
+          throw new Error('only options are supported');
+        args[0].gasPrice = '0';
+        return _call.call(this, ...args);
+      };
+      return encodedCall;
+    };
+  }
+  return contract;
+}
 
 class ContractGroup extends EthGroupBase {
   async findImports(imports?: ContractImports[]){
@@ -81,7 +111,7 @@ class ContractGroup extends EthGroupBase {
       && compiled.errors.some(function(err: any) {
         return err.severity == 'error';
       });
-      
+
     if (hasErrors) {
       throw compiled.errors;
     }
@@ -104,25 +134,34 @@ class ContractGroup extends EthGroupBase {
       data: object,
       from: signer,
       gas: gas ?? this.helper.eth.DEFAULT_GAS,
+      gasPrice: await this.getGasPrice(),
     });
-    return await contract.deploy({data: object}).send({from: signer});
+    return unlimitedMoneyHack(await contract.deploy({data: object}).send({from: signer}));
   }
 
 }
 
 class NativeContractGroup extends EthGroupBase {
 
-  contractHelpers(caller: string): Contract {
+  async contractHelpers(caller: string): Promise<Contract> {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return unlimitedMoneyHack(new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {
+      from: caller,
+      gas: this.helper.eth.DEFAULT_GAS,
+      gasPrice: await this.getGasPrice(),
+    }));
   }
 
-  collectionHelpers(caller: string) {
+  async collectionHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {from: caller, gas: this.helper.eth.DEFAULT_GAS});
+    return unlimitedMoneyHack(new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {
+      from: caller,
+      gas: this.helper.eth.DEFAULT_GAS,
+      gasPrice: await this.getGasPrice(),
+    }));
   }
 
-  collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false): Contract {
+  async collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
     let abi = {
       'nft': nonFungibleAbi,
       'rft': refungibleAbi,
@@ -137,19 +176,27 @@ class NativeContractGroup extends EthGroupBase {
       abi = [...abi,...deprecated];
     }
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(abi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
+    return unlimitedMoneyHack(new web3.eth.Contract(abi as any, address, {
+      gas: this.helper.eth.DEFAULT_GAS,
+      gasPrice: await this.getGasPrice(),
+      ...(caller ? {from: caller} : {}),
+    }));
   }
 
-  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string, mergeDeprecated = false): Contract {
+  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string, mergeDeprecated = false) {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller, mergeDeprecated);
   }
 
-  rftToken(address: string, caller?: string): Contract {
+  async rftToken(address: string, caller?: string) {
     const web3 = this.helper.getWeb3();
-    return new web3.eth.Contract(refungibleTokenAbi as any, address, {gas: this.helper.eth.DEFAULT_GAS, ...(caller ? {from: caller} : {})});
+    return unlimitedMoneyHack(new web3.eth.Contract(refungibleTokenAbi as any, address, {
+      gas: this.helper.eth.DEFAULT_GAS,
+      gasPrice: await this.getGasPrice(),
+      ...(caller ? {from: caller} : {}),
+    }));
   }
 
-  rftTokenById(collectionId: number, tokenId: number, caller?: string): Contract {
+  rftTokenById(collectionId: number, tokenId: number, caller?: string) {
     return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
   }
 }
@@ -177,7 +224,7 @@ class EthGroup extends EthGroupBase {
   }
 
   async getCollectionCreationFee(signer: string) {
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
     return await collectionHelper.methods.collectionCreationFee().call();
   }
 
@@ -210,7 +257,7 @@ class EthGroup extends EthGroupBase {
 
   async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
     const functionName: string = this.createCollectionMethodName(mode);
 
     const functionParams = mode === 'ft' ? [name, decimals, description, tokenPrefix] : [name, description, tokenPrefix];
@@ -228,7 +275,7 @@ class EthGroup extends EthGroupBase {
   }
 
   async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
     const {collectionId, collectionAddress, events} = await this.createCollection('nft', signer, name, description, tokenPrefix);
 
@@ -246,7 +293,7 @@ class EthGroup extends EthGroupBase {
   }
 
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
     const {collectionId, collectionAddress, events} = await this.createCollection('rft', signer, name, description, tokenPrefix);
 
