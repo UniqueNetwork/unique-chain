@@ -18,7 +18,7 @@ use frame_support::{
 	traits::{Contains, Get, fungibles},
 	parameter_types,
 };
-use sp_runtime::traits::{Zero, Convert};
+use sp_runtime::traits::Convert;
 use xcm::v1::{Junction::*, MultiLocation, Junctions::*};
 use xcm::latest::MultiAsset;
 use xcm_builder::{FungiblesAdapter, ConvertedConcreteAssetId};
@@ -38,16 +38,16 @@ parameter_types! {
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
 }
 
-/// Allow checking in assets that have issuance > 0.
-pub struct NonZeroIssuance<AccountId, ForeignAssets>(PhantomData<(AccountId, ForeignAssets)>);
+/// No teleports are allowed
+pub struct NoTeleports<AccountId, ForeignAssets>(PhantomData<(AccountId, ForeignAssets)>);
 
 impl<AccountId, ForeignAssets> Contains<<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId>
-	for NonZeroIssuance<AccountId, ForeignAssets>
+	for NoTeleports<AccountId, ForeignAssets>
 where
 	ForeignAssets: fungibles::Inspect<AccountId>,
 {
-	fn contains(id: &<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
-		!ForeignAssets::total_issuance(*id).is_zero()
+	fn contains(_id: &<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
+		false
 	}
 }
 
@@ -132,9 +132,8 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
-	// We only want to allow teleports of known assets. We use non-zero issuance as an indication
-	// that this asset is known.
-	NonZeroIssuance<AccountId, ForeignAssets>,
+	// No teleports are allowed
+	NoTeleports<AccountId, ForeignAssets>,
 	// The account to use for tracking teleports.
 	CheckingAccount,
 >;
