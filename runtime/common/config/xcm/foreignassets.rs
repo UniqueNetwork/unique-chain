@@ -84,7 +84,7 @@ where
 			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => {
 				ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(foreign_asset_id))
 			}
-			_ => ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(0)),
+			_ => Err(()),
 		}
 	}
 
