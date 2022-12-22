@@ -16,7 +16,6 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '../util/index';
-import { CrossAccountId } from '../util/playgrounds/unique';
 import {itEth, expect} from './util';
 
 describe('evm nft collection sponsoring', () => {
@@ -102,14 +101,14 @@ describe('evm nft collection sponsoring', () => {
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.true;
 
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
-      let sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-      expect(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorTuple.sub))).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      let sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
+      expect(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorStruct.sub))).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
 
       await collectionEvm.methods.removeCollectionSponsor().send({from: owner});
 
-      sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-      expect(sponsorTuple.eth).to.be.eq('0x0000000000000000000000000000000000000000');
+      sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
+      expect(sponsorStruct.eth).to.be.eq('0x0000000000000000000000000000000000000000');
     }));
 
   [
@@ -337,8 +336,6 @@ describe('evm RFT collection sponsoring', () => {
   [
     'mintCross',
     'mintWithTokenURI',
-    'mintBulk',
-    'mintBulkWithTokenUri',
   ].map(testCase => 
     itEth(`[${testCase}] sponsors mint transactions`, async ({helper}) => {
       const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'spnr', permissions: {mintMode: true}, tokenPropertyPermissions: [
@@ -364,21 +361,12 @@ describe('evm RFT collection sponsoring', () => {
 
       let mintingResult;
       let tokenId;
-      const nextTokenId = await contract.methods.nextTokenId().call();
       switch (testCase) {
         case 'mintCross':
           mintingResult = await contract.methods.mintCross(minterCross, []).send();
           break;
         case 'mintWithTokenURI':
           mintingResult = await contract.methods.mintWithTokenURI(minter, 'Test URI').send();
-          tokenId = mintingResult.events.Transfer.returnValues.tokenId;
-          expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-          break;
-        case 'mintBulk':
-          mintingResult = await contract.methods.mintBulk(minter, [nextTokenId]).send();
-          break;
-        case 'mintBulkWithTokenUri':
-          mintingResult = await contract.methods.mintBulkWithTokenURI(minter, [[nextTokenId, 'Test URI']]).send();
           tokenId = mintingResult.events.Transfer.returnValues.tokenId;
           expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
           break;
@@ -419,8 +407,8 @@ describe('evm RFT collection sponsoring', () => {
   
       await collectionEvm.methods.removeCollectionSponsor().send({from: owner});
   
-      const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-      expect(sponsorTuple.eth).to.be.eq('0x0000000000000000000000000000000000000000');
+      const sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
+      expect(sponsorStruct.eth).to.be.eq('0x0000000000000000000000000000000000000000');
     }));
 
   [
@@ -524,9 +512,9 @@ describe('evm RFT collection sponsoring', () => {
       collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
-      const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
+      const sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
       const sponsorSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.ethToSubstrate(sponsor));
-      const actualSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorTuple.sub)));
+      const actualSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorStruct.sub)));
       expect(actualSubAddress).to.be.equal(sponsorSubAddress);
 
       const user = helper.eth.createAccount();
@@ -580,8 +568,8 @@ describe('evm RFT collection sponsoring', () => {
     collectionData = (await collectionSub.getData())!;
     expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(sponsor.address);
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
-    const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-    expect(BigInt(sponsorTuple.sub)).to.be.equal(BigInt('0x' + Buffer.from(sponsor.addressRaw).toString('hex')));
+    const sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
+    expect(BigInt(sponsorStruct.sub)).to.be.equal(BigInt('0x' + Buffer.from(sponsor.addressRaw).toString('hex')));
 
     const user = helper.eth.createAccount();
     const userCross = helper.ethCrossAccount.fromAddress(user);

@@ -233,9 +233,9 @@ mod erc721 {
 			| TokenContractAddress { .. } => None,
 
 			// Not sponsored
-			BurnFrom { .. } | BurnFromCross { .. } => None,
+			BurnFrom { .. } | BurnFromCross { .. } | MintBulk { .. } | MintBulkWithTokenUri { .. } => None,
 
-			MintCross { .. } | MintBulk { .. } | MintBulkWithTokenUri { .. } => {
+			MintCross { .. } => {
 				withdraw_create_item::<T>(
 					&collection,
 					&who,
