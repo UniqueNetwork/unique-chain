@@ -1,4 +1,4 @@
-use super::{TypeCollector, SolidityTypeName, SolidityType, StructCollect};
+use super::{TypeCollector, SolidityTypeName, SolidityTupleTy};
 use crate::{sealed, types::*};
 use core::fmt;
 use primitive_types::{U256, H160};
@@ -17,16 +17,6 @@ macro_rules! solidity_type_name {
 					write!(writer, $default)
 				}
             }
-
-			impl StructCollect for $ty {
-				fn name() -> String {
-					$name.to_string()
-				}
-
-				fn declaration() -> String {
-					String::default()
-				}
-			}
         )*
     };
 }
@@ -74,16 +64,6 @@ impl<T: SolidityTypeName + sealed::CanBePlacedInVec> SolidityTypeName for Vec<T>
 	}
 }
 
-impl<T: StructCollect + sealed::CanBePlacedInVec> StructCollect for Vec<T> {
-	fn name() -> String {
-		<T as StructCollect>::name() + "[]"
-	}
-
-	fn declaration() -> String {
-		unimplemented!("Vectors have not declarations.")
-	}
-}
-
 macro_rules! count {
     () => (0usize);
     ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
@@ -91,8 +71,8 @@ macro_rules! count {
 
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
-		impl<$($ident: SolidityTypeName + 'static),+> SolidityType for ($($ident,)+) {
-			fn names(tc: &TypeCollector) -> Vec<string> {
+		impl<$($ident: SolidityTypeName + 'static),+> SolidityTupleTy for ($($ident,)+) {
+			fn fields(tc: &TypeCollector) -> Vec<string> {
 				let mut collected = Vec::with_capacity(Self::len());
 				$({
 					let mut out = string::new();

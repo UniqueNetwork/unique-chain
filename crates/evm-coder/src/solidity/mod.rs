@@ -44,6 +44,7 @@ pub struct TypeCollector {
 	/// id ordering is required to perform topo-sort on the resulting data
 	structs: RefCell<BTreeMap<string, usize>>,
 	anonymous: RefCell<BTreeMap<Vec<string>, usize>>,
+	// generic: RefCell<BTreeMap<string, usize>>,
 	id: Cell<usize>,
 }
 impl TypeCollector {
@@ -59,8 +60,9 @@ impl TypeCollector {
 		self.id.set(v + 1);
 		v
 	}
-	pub fn collect_tuple<T: SolidityType>(&self) -> String {
-		let names = T::names(self);
+	/// Collect typle, deduplicating it by type, and returning generated name
+	pub fn collect_tuple<T: SolidityTupleTy>(&self) -> String {
+		let names = T::fields(self);
 		if let Some(id) = self.anonymous.borrow().get(&names).cloned() {
 			return format!("Tuple{}", id);
 		}
@@ -76,10 +78,11 @@ impl TypeCollector {
 		self.anonymous.borrow_mut().insert(names, id);
 		format!("Tuple{}", id)
 	}
-	pub fn collect_struct<T: StructCollect + SolidityType>(&self) -> String {
-		let _names = T::names(self);
-		self.collect(<T as StructCollect>::declaration());
-		<T as StructCollect>::name()
+	pub fn collect_struct<T: SolidityStructTy>(&self) -> String {
+		T::generate_solidity_interface(self)
+	}
+	pub fn collect_enum<T: SolidityEnumTy>(&self) -> String {
+		T::generate_solidity_interface(self)
 	}
 	pub fn finish(self) -> Vec<string> {
 		let mut data = self.structs.into_inner().into_iter().collect::<Vec<_>>();
@@ -418,5 +421,95 @@ impl<A: SolidityArguments> SolidityFunctions for SolidityEvent<A> {
 		write!(writer, "\tevent {}(", self.name)?;
 		self.args.solidity_name(writer, tc)?;
 		writeln!(writer, ");")
+	}
+}
+
+#[impl_for_tuples(0, 48)]
+impl SolidityItems for Tuple {
+	for_tuples!( where #( Tuple: SolidityItems ),* );
+
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		for_tuples!( #(
+            Tuple.solidity_name(writer, tc)?;
+        )* );
+		Ok(())
+	}
+}
+
+pub struct SolidityStructField<T> {
+	pub docs: &'static [&'static str],
+	pub name: &'static str,
+	pub ty: PhantomData<*const T>,
+}
+
+impl<T> SolidityItems for SolidityStructField<T>
+where
+	T: SolidityTypeName,
+{
+	fn solidity_name(&self, out: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		for doc in self.docs {
+			writeln!(out, "///{}", doc)?;
+		}
+		write!(out, "\t")?;
+		T::solidity_name(out, tc)?;
+		writeln!(out, " {};", self.name)?;
+		Ok(())
+	}
+}
+pub struct SolidityStruct<F> {
+	pub docs: &'static [&'static str],
+	// pub generics:
+	pub name: &'static str,
+	pub fields: F,
+}
+impl<F> SolidityStruct<F>
+where
+	F: SolidityItems,
+{
+	pub fn format(&self, out: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		for doc in self.docs {
+			writeln!(out, "///{}", doc)?;
+		}
+		writeln!(out, "struct {} {{", self.name)?;
+		self.fields.solidity_name(out, tc)?;
+		writeln!(out, "}}")?;
+		Ok(())
+	}
+}
+
+pub struct SolidityEnumVariant {
+	pub docs: &'static [&'static str],
+	pub name: &'static str,
+}
+impl SolidityItems for SolidityEnumVariant {
+	fn solidity_name(&self, out: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
+		for doc in self.docs {
+			writeln!(out, "///{}", doc)?;
+		}
+		write!(out, "\t{}", self.name)?;
+		Ok(())
+	}
+}
+pub struct SolidityEnum {
+	pub docs: &'static [&'static str],
+	pub name: &'static str,
+	pub fields: &'static [SolidityEnumVariant],
+}
+impl SolidityEnum {
+	pub fn format(&self, out: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		for doc in self.docs {
+			writeln!(out, "///{}", doc)?;
+		}
+		write!(out, "enum {} {{", self.name)?;
+		for (i, field) in self.fields.iter().enumerate() {
+			if i != 0 {
+				write!(out, ",")?;
+			}
+			writeln!(out)?;
+			field.solidity_name(out, tc)?;
+		}
+		writeln!(out)?;
+		writeln!(out, "}}")?;
+		Ok(())
 	}
 }

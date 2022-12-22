@@ -171,13 +171,13 @@ interface ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	function toggleAllowlist(address contractAddress, bool enabled) external;
 }
 
-/// @dev Ethereum representation of Optional value with CrossAddress.
+/// Ethereum representation of Optional value with CrossAddress.
 struct OptionCrossAddress {
 	bool status;
 	CrossAddress value;
 }
 
-/// @dev Cross account struct
+/// Cross account struct
 struct CrossAddress {
 	address eth;
 	uint256 sub;

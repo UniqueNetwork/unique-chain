@@ -79,7 +79,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	) external returns (bool);
 }
 
-/// @dev Cross account struct
+/// Cross account struct
 struct CrossAddress {
 	address eth;
 	uint256 sub;

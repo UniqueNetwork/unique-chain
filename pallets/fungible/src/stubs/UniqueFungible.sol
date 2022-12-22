@@ -437,67 +437,67 @@ contract Collection is Dummy, ERC165 {
 	}
 }
 
-/// @dev Cross account struct
+/// Cross account struct
 struct CrossAddress {
 	address eth;
 	uint256 sub;
 }
 
-/// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
 struct CollectionNestingPermission {
 	CollectionPermissionField field;
 	bool value;
 }
 
-/// @dev Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
 enum CollectionPermissionField {
-	/// @dev Owner of token can nest tokens under it.
+	/// Owner of token can nest tokens under it.
 	TokenOwner,
-	/// @dev Admin of token collection can nest tokens under token.
+	/// Admin of token collection can nest tokens under token.
 	CollectionAdmin
 }
 
-/// @dev Nested collections.
+/// Nested collections.
 struct CollectionNesting {
 	bool token_owner;
 	uint256[] ids;
 }
 
-/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 struct CollectionLimit {
 	CollectionLimitField field;
 	OptionUint value;
 }
 
-/// @dev Ethereum representation of Optional value with uint256.
+/// Ethereum representation of Optional value with uint256.
 struct OptionUint {
 	bool status;
 	uint256 value;
 }
 
-/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
 enum CollectionLimitField {
-	/// @dev How many tokens can a user have on one account.
+	/// How many tokens can a user have on one account.
 	AccountTokenOwnership,
-	/// @dev How many bytes of data are available for sponsorship.
+	/// How many bytes of data are available for sponsorship.
 	SponsoredDataSize,
-	/// @dev In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
 	SponsoredDataRateLimit,
-	/// @dev How many tokens can be mined into this collection.
+	/// How many tokens can be mined into this collection.
 	TokenLimit,
-	/// @dev Timeouts for transfer sponsoring.
+	/// Timeouts for transfer sponsoring.
 	SponsorTransferTimeout,
-	/// @dev Timeout for sponsoring an approval in passed blocks.
+	/// Timeout for sponsoring an approval in passed blocks.
 	SponsorApproveTimeout,
-	/// @dev Whether the collection owner of the collection can send tokens (which belong to other users).
+	/// Whether the collection owner of the collection can send tokens (which belong to other users).
 	OwnerCanTransfer,
-	/// @dev Can the collection owner burn other people's tokens.
+	/// Can the collection owner burn other people's tokens.
 	OwnerCanDestroy,
-	/// @dev Is it possible to send tokens from this collection between users.
+	/// Is it possible to send tokens from this collection between users.
 	TransferEnabled
 }
 
-/// @dev Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
 	string key;
 	bytes value;
