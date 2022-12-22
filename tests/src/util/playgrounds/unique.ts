@@ -2200,6 +2200,15 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
   }
 
   /**
+   * Get latest relay block
+   * @returns {number} relay block
+   */
+  async getRelayBlockNumber(): Promise<bigint> {
+    const blockNumber = (await this.helper.callRpc('api.query.parachainSystem.validationData')).toJSON().relayParentNumber;
+    return BigInt(blockNumber);
+  }
+
+  /**
    * Get account nonce
    * @param address substrate address
    * @example getNonce("5GrwvaEF5zXb26Fz...");
@@ -2256,6 +2265,11 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
     const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
     return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
+  }
+
+  async getLocked(address: TSubstrateAccount): Promise<[{id: string, amount: bigint, reason: string}]> {
+    const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
+    return locks.map((lock: any) => {return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons};});
   }
 }
 
@@ -2341,6 +2355,15 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 
   /**
+   * Get locked balances
+   * @param address substrate address
+   * @returns locked balances with reason via api.query.balances.locks
+   */
+  getLocked(address: TSubstrateAccount) {
+    return this.subBalanceGroup.getLocked(address);
+  }
+
+  /**
    * Get ethereum address balance
    * @param address ethereum address
    * @example getEthereum("0x9F0583DbB855d...")
@@ -2379,6 +2402,52 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     isSuccess = isSuccess && this.helper.address.normalizeSubstrate(to) === transfer.to;
     isSuccess = isSuccess && BigInt(amount) === transfer.amount;
     return isSuccess;
+  }
+
+  /**
+   * Transfer tokens with the unlock period
+   * @param signer signers Keyring
+   * @param address Substrate address of recipient
+   * @param schedule Schedule params
+   * @example vestedTransfer(signer, recepient.address, 20000, 100, 10, 50 * nominal); // total amount of vested tokens will be 100 * 50 = 5000
+   */
+  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: {start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}): Promise<void> {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, schedule]);
+    const event = result.result.events
+      .find(e => e.event.section === 'vesting' &&
+            e.event.method === 'VestingScheduleAdded' &&
+            e.event.data[0].toHuman() === signer.address);
+    if (!event) throw Error('Cannot find transfer in events');
+  }
+
+  /**
+   * Get schedule for recepient of vested transfer
+   * @param address Substrate address of recipient
+   * @returns 
+   */
+  async getVestingSchedules(address: TSubstrateAccount): Promise<{start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint}[]> {
+    const schedule = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])).toJSON();
+    return schedule.map((schedule: any) => {
+      return {
+        start: BigInt(schedule.start),
+        period: BigInt(schedule.period),
+        periodCount: BigInt(schedule.periodCount),
+        perPeriod: BigInt(schedule.perPeriod),
+      };
+    });
+  }
+
+  /**
+   * Claim vested tokens
+   * @param signer signers Keyring
+   */
+  async claim(signer: TSigner) {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.claim', []);
+    const event = result.result.events
+      .find(e => e.event.section === 'vesting' &&
+            e.event.method === 'Claimed' &&
+            e.event.data[0].toHuman() === signer.address);
+    if (!event) throw Error('Cannot find claim in events');
   }
 }
 

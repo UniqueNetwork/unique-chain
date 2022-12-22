@@ -598,12 +598,20 @@ pub mod pallet {
 			PreviousCalculatedRecord::<T>::set(None);
 
 			{
+				// Address handled in the last payout loop iteration (below)
 				let last_id = RefCell::new(None);
+				// Reward balance for the address in the iteration
 				let income_acc = RefCell::new(BalanceOf::<T>::default());
+				// Staked balance for the address in the iteration (before stake is recalculated)
 				let amount_acc = RefCell::new(BalanceOf::<T>::default());
 
-				// this closure is used to perform some of the actions if we break the loop because we reached the number of stakers for recalculation,
-				// but there were unrecalculated records in the storage.
+				// This closure is used to finalize handling single staker address in each of the two conditions: (1) when we break out of the payout
+				// loop because we reached the number of stakes for rewarding, (2) When all stakes by the single address are handled and the payout
+				// loop switches to handling the next staker address:
+				//   1. Transfer full reward amount to the payee
+				//   2. Lock the reward in staking lock
+				//   3. Update TotalStaked amount
+				//   4. Issue StakingRecalculation event
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
@@ -635,16 +643,27 @@ pub mod pallet {
 					Ok(())
 				};
 
+				// Reward payment loop. Should loop for no more than config.max_stakers_per_calculation
+				// iterations in one extrinsic call
+				//
+				// stakers_number - keeps the remaining number of iterations (staker addresses to handle)
+				// next_recalc_block_for_stake - is taken from the state and stores the starting relay block from which reward should be paid out
+				// income_acc - stores the reward amount to pay to the staker address (accumulates over all address stake records)
 				while let Some((
 					(current_id, staked_block),
 					(amount, next_recalc_block_for_stake),
 				)) = storage_iterator.next()
 				{
+					// last_id is not equal current_id when we switch to handling a new staker address
+					// or just start handling the very first address. In the latter case last_id will be None and
+					// flush_stake will do nothing
 					if last_id.borrow().as_ref() != Some(&current_id) {
 						flush_stake()?;
 						*last_id.borrow_mut() = Some(current_id.clone());
 						stakers_number -= 1;
 					};
+
+					// Increase accumulated reward for current address and update current staking record, i.e. (address, staked_block) -> amount
 					if current_recalc_block >= next_recalc_block_for_stake {
 						*amount_acc.borrow_mut() += amount;
 						Self::recalculate_and_insert_stake(
@@ -659,8 +678,10 @@ pub mod pallet {
 						);
 					}
 
+					// Break out if we reached the address limit
 					if stakers_number == 0 {
 						if storage_iterator.next().is_some() {
+							// Save the last calculated record to pick up in the next extrinsic call
 							PreviousCalculatedRecord::<T>::set(Some((current_id, staked_block)));
 						}
 						break;
@@ -834,6 +855,8 @@ impl<T: Config> Pallet<T> {
 		income - base
 	}
 
+	/// Get relay block number rounded down to multiples of config.recalculation_interval.
+	/// We need it to reward stakers in integer parts of recalculation_interval
 	fn get_current_recalc_block(
 		current_relay_block: T::BlockNumber,
 		config: &PalletConfiguration<T>,

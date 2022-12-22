@@ -56,7 +56,8 @@ describe('App promotion', () => {
   
       // Staker balance is: miscFrozen: 100, feeFrozen: 100, reserved: 0n...
       // ...so he can not transfer 900
-      expect (await helper.balance.getSubstrateFull(staker.address)).to.contain({miscFrozen: 100n * nominal, feeFrozen: 100n * nominal, reserved: 0n});
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.contain({miscFrozen: 100n * nominal, feeFrozen: 100n * nominal, reserved: 0n});
+      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: 100n * nominal, reasons: 'All'}]);
       await expect(helper.balance.transferToSubstrate(staker, recepient.address, 900n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
       
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(100n * nominal);
@@ -530,7 +531,7 @@ describe('App promotion', () => {
     });
   });
   
-  describe('rewards', () => {
+  describe('payoutStakers', () => {
     itSub('can not be called by non admin', async ({helper}) => {
       const nonAdmin = accounts.pop()!;
       await expect(helper.admin.payoutStakers(nonAdmin, 100)).to.be.rejectedWith('appPromotion.NoPermission');
@@ -569,8 +570,14 @@ describe('App promotion', () => {
       expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal));
   
       const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal));
-      expect(totalStakedPerBlock[1].amount).to.equal(calculateIncome(200n * nominal));
+      const income1 = calculateIncome(100n * nominal);
+      const income2 = calculateIncome(200n * nominal);
+      expect(totalStakedPerBlock[0].amount).to.equal(income1);
+      expect(totalStakedPerBlock[1].amount).to.equal(income2);
+
+      const stakerBalance = await helper.balance.getSubstrateFull(staker.address);
+      expect(stakerBalance).to.contain({miscFrozen: income1 + income2, feeFrozen: income1 + income2, reserved: 0n});
+      expect(stakerBalance.free / nominal).to.eq(999n);
     });
   
     itSub('shoud be paid for more than one period if payments was missed', async ({helper}) => {
