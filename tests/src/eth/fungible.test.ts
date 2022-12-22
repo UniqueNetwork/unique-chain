@@ -79,23 +79,40 @@ describe('Fungible: Plain calls', () => {
     expect(event.returnValues.value).to.equal('100');
   });
   
+  [
+    'substrate' as const,
+    'ethereum' as const,
+  ].map(testCase => {
+    itEth(`Can perform mintCross() for ${testCase} address`, async ({helper}) => {
+      // 1. Create receiver depending on the test case:
+      const receiverEth = helper.eth.createAccount();
+      const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
+      const receiverSub = owner;
+      const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(owner);
+
+      const ethOwner = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper.ft.mintCollection(alice);
+      await collection.addAdmin(alice, {Ethereum: ethOwner});
   
-  itEth('Can perform mintCross()', async ({helper}) => {
-    const receiverCross = helper.ethCrossAccount.fromKeyringPair(owner);
-    const ethOwner = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.ft.mintCollection(alice);
-    await collection.addAdmin(alice, {Ethereum: ethOwner});
+      const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', ethOwner);
+  
+      // 2. Mint tokens:
+      const result = await collectionEvm.methods.mintCross(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, 100).send();
+      
+      const event = result.events.Transfer;
+      expect(event.address).to.equal(collectionAddress);
+      expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+      expect(event.returnValues.to).to.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(receiverSub.address));
+      expect(event.returnValues.value).to.equal('100');
 
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', ethOwner);
-
-    const result = await contract.methods.mintCross(receiverCross, 100).send();
-    
-    const event = result.events.Transfer;
-    expect(event.address).to.equal(collectionAddress);
-    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.equal(helper.address.substrateToEth(owner.address));
-    expect(event.returnValues.value).to.equal('100');
+      // 3. Get balance depending on the test case:
+      let balance;
+      if (testCase === 'ethereum') balance = await collection.getBalance({Ethereum: receiverEth});
+      else if (testCase === 'substrate') balance = await collection.getBalance({Substrate: receiverSub.address});
+      // 3.1 Check balance:
+      expect(balance).to.eq(100n);
+    });
   });
 
   itEth('Can perform mintBulk()', async ({helper}) => {
@@ -168,6 +185,68 @@ describe('Fungible: Plain calls', () => {
       expect(+allowance).to.equal(100);
     }
   });
+
+  itEth('Can perform approveCross()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = helper.eth.createAccount();
+    const spenderSub = (await helper.arrange.createAccounts([1n], donor))[0];
+    const spenderCrossEth = helper.ethCrossAccount.fromAddress(spender);
+    const spenderCrossSub = helper.ethCrossAccount.fromKeyringPair(spenderSub);
+    
+
+    const collection = await helper.ft.mintCollection(alice);
+    await collection.mint(alice, 200n, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    {
+      const result = await contract.methods.approveCross(spenderCrossEth, 100).send({from: owner});
+      const event = result.events.Approval;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.owner).to.be.equal(owner);
+      expect(event.returnValues.spender).to.be.equal(spender);
+      expect(event.returnValues.value).to.be.equal('100');
+    }
+
+    {
+      const allowance = await contract.methods.allowance(owner, spender).call();
+      expect(+allowance).to.equal(100);
+    }
+    
+    
+    {
+      const result = await contract.methods.approveCross(spenderCrossSub, 100).send({from: owner});
+      const event = result.events.Approval;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.returnValues.owner).to.be.equal(owner);
+      expect(event.returnValues.spender).to.be.equal(helper.address.substrateToEth(spenderSub.address));
+      expect(event.returnValues.value).to.be.equal('100');
+    }
+
+    {
+      const allowance = await collection.getApprovedTokens({Ethereum: owner}, {Substrate: spenderSub.address});
+      expect(allowance).to.equal(100n);
+    }
+  
+    {
+      //TO-DO expect with future allowanceCross(owner, spenderCrossEth).call()
+    }
+  });
+
+  itEth('Non-owner and non admin cannot approveCross', async ({helper}) => {
+    const nonOwner = await helper.eth.createAccountWithBalance(donor);
+    const nonOwnerCross = helper.ethCrossAccount.fromAddress(nonOwner);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collection = await helper.ft.mintCollection(alice, {name: 'A', description: 'B', tokenPrefix: 'C'});
+    await collection.mint(alice, 100n, {Ethereum: owner});
+
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    await expect(collectionEvm.methods.approveCross(nonOwnerCross, 20).call({from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
+  });
+
 
   itEth('Can perform burnFromCross()', async ({helper}) => {
     const sender = await helper.eth.createAccountWithBalance(donor, 100n);

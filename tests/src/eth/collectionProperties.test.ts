@@ -26,27 +26,36 @@ describe('EVM collection properties', () => {
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice] = await _helper.arrange.createAccounts([20n], donor);
+      [alice] = await _helper.arrange.createAccounts([50n], donor);
     });
   });
 
   // Soft-deprecated: setCollectionProperty
   [
-    {method: 'setCollectionProperties', methodParams: [[{key: 'testKey1', value: Buffer.from('testValue1')}, {key: 'testKey2', value: Buffer.from('testValue2')}]], expectedProps: [{key: 'testKey1', value: 'testValue1'}, {key: 'testKey2', value: 'testValue2'}]}, 
-    {method: 'setCollectionProperty', methodParams: ['testKey', Buffer.from('testValue')], expectedProps: [{key: 'testKey', value: 'testValue'}]},
+    {method: 'setCollectionProperties', mode: 'nft' as const, methodParams: [[{key: 'testKey1', value: Buffer.from('testValue1')}, {key: 'testKey2', value: Buffer.from('testValue2')}]], expectedProps: [{key: 'testKey1', value: 'testValue1'}, {key: 'testKey2', value: 'testValue2'}]}, 
+    {method: 'setCollectionProperties', mode: 'rft' as const, methodParams: [[{key: 'testKey1', value: Buffer.from('testValue1')}, {key: 'testKey2', value: Buffer.from('testValue2')}]], expectedProps: [{key: 'testKey1', value: 'testValue1'}, {key: 'testKey2', value: 'testValue2'}]}, 
+    {method: 'setCollectionProperties', mode: 'ft' as const, methodParams: [[{key: 'testKey1', value: Buffer.from('testValue1')}, {key: 'testKey2', value: Buffer.from('testValue2')}]], expectedProps: [{key: 'testKey1', value: 'testValue1'}, {key: 'testKey2', value: 'testValue2'}]}, 
+    {method: 'setCollectionProperty', mode: 'nft' as const, methodParams: ['testKey', Buffer.from('testValue')], expectedProps: [{key: 'testKey', value: 'testValue'}]},
   ].map(testCase => 
-    itEth(`Collection properties can be set: ${testCase.method}`, async({helper}) => {
+    itEth.ifWithPallets(`Collection properties can be set: ${testCase.method}() for ${testCase.mode}`, testCase.mode === 'rft' ? [Pallets.ReFungible] : [], async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
-      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
+      const collection = await helper[testCase.mode].mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: []});
       await collection.addAdmin(alice, {Ethereum: caller});
-
+      
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'setCollectionProperty');
+      const collectionEvm = helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'setCollectionProperty');
 
-      await contract.methods[testCase.method](...testCase.methodParams).send({from: caller});
+      // collectionProperties returns an empty array if no properties: 
+      expect(await collectionEvm.methods.collectionProperties([]).call()).to.be.like([]);
+      expect(await collectionEvm.methods.collectionProperties(['NonExistingKey']).call()).to.be.like([]);
+
+      await collectionEvm.methods[testCase.method](...testCase.methodParams).send({from: caller});
 
       const raw = (await collection.getData())?.raw;
       expect(raw.properties).to.deep.equal(testCase.expectedProps);
+
+      // collectionProperties returns properties: 
+      expect(await collectionEvm.methods.collectionProperties([]).call()).to.be.like(testCase.expectedProps.map(prop => helper.ethProperty.property(prop.key, prop.value)));
     }));
 
   itEth('Cannot set invalid properties', async({helper}) => {
@@ -68,16 +77,18 @@ describe('EVM collection properties', () => {
 
   // Soft-deprecated: deleteCollectionProperty
   [
-    {method: 'deleteCollectionProperties', methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
-    {method: 'deleteCollectionProperty', methodParams: ['testKey1'], expectedProps: [{key: 'testKey2', value: 'testValue2'}, {key: 'testKey3', value: 'testValue3'}]}, 
+    {method: 'deleteCollectionProperties', mode: 'nft' as const, methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
+    {method: 'deleteCollectionProperties', mode: 'rft' as const, methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
+    {method: 'deleteCollectionProperties', mode: 'ft' as const, methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
+    {method: 'deleteCollectionProperty', mode: 'nft' as const, methodParams: ['testKey1'], expectedProps: [{key: 'testKey2', value: 'testValue2'}, {key: 'testKey3', value: 'testValue3'}]}, 
   ].map(testCase => 
-    itEth(`Collection properties can be deleted: ${testCase.method}()`, async({helper}) => {
+    itEth.ifWithPallets(`Collection properties can be deleted: ${testCase.method}() for ${testCase.mode}`, testCase.mode === 'rft' ? [Pallets.ReFungible] : [], async({helper}) => {
       const properties = [
         {key: 'testKey1', value: 'testValue1'},
         {key: 'testKey2', value: 'testValue2'},
         {key: 'testKey3', value: 'testValue3'}];
       const caller = await helper.eth.createAccountWithBalance(donor);
-      const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties});
+      const collection = await helper[testCase.mode].mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties});
   
       await collection.addAdmin(alice, {Ethereum: caller});
   
@@ -92,7 +103,6 @@ describe('EVM collection properties', () => {
       expect(raw.properties).to.deep.equal(testCase.expectedProps);
     }));
 
-  
   [
     {method: 'deleteCollectionProperties', methodParams: [['testKey2']]},
     {method: 'deleteCollectionProperty', methodParams: ['testKey2']},
@@ -207,82 +217,5 @@ describe('Supports ERC721Metadata', () => {
   
       await contract.methods.setProperties(tokenId2, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}]).send();
       expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI + SUFFIX);
-    }));
-});
-
-describe('EVM collection property', () => {
-  let donor: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
-    });
-  });
-
-  [
-    {case: 'nft' as const},
-    {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    {case: 'ft' as const},
-  ].map(testCase => 
-    itEth.ifWithPallets(`can set/read properties ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
-      const collection = await helper[testCase.case].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
-
-      const sender = await helper.eth.createAccountWithBalance(donor, 100n);
-      await collection.addAdmin(donor, {Ethereum: sender});
-  
-      const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(collectionAddress, testCase.case, sender);
-  
-      const keys = ['key0', 'key1'];
-  
-      const writeProperties = [
-        helper.ethProperty.property(keys[0], 'value0'),
-        helper.ethProperty.property(keys[1], 'value1'),
-      ];
-  
-      await contract.methods.setCollectionProperties(writeProperties).send();
-      const readProperties = await contract.methods.collectionProperties([keys[0], keys[1]]).call();
-      expect(readProperties).to.be.like(writeProperties);
-    }));
-
-  [
-    {case: 'nft' as const},
-    {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    {case: 'ft' as const},
-  ].map(testCase => 
-    itEth.ifWithPallets(`can delete properties ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
-      const collection = await helper[testCase.case].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
-
-      const sender = await helper.eth.createAccountWithBalance(donor, 100n);
-      await collection.addAdmin(donor, {Ethereum: sender});
-  
-      const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(collectionAddress, testCase.case, sender);
-  
-      const keys = ['key0', 'key1', 'key2', 'key3'];
-  
-      {
-        const writeProperties = [
-          helper.ethProperty.property(keys[0], 'value0'),
-          helper.ethProperty.property(keys[1], 'value1'),
-          helper.ethProperty.property(keys[2], 'value2'),
-          helper.ethProperty.property(keys[3], 'value3'),
-        ];
-  
-        await contract.methods.setCollectionProperties(writeProperties).send();
-        const readProperties = await contract.methods.collectionProperties([keys[0], keys[1], keys[2], keys[3]]).call();
-        expect(readProperties).to.be.like(writeProperties);
-      }
-  
-      {
-        const expectProperties = [
-          helper.ethProperty.property(keys[0], 'value0'),
-          helper.ethProperty.property(keys[1], 'value1'),
-        ];
-  
-        await contract.methods.deleteCollectionProperties([keys[2], keys[3]]).send();
-        const readProperties = await contract.methods.collectionProperties([]).call();
-        expect(readProperties).to.be.like(expectProperties);
-      }
     }));
 });

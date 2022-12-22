@@ -32,8 +32,12 @@ describe('Vesting', () => {
     // arrange
     const [sender, recepient] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const currentRelayBlock = await helper.chain.getRelayBlockNumber();
-    const schedule1 = {start: currentRelayBlock + 4n, period: 4n, periodCount: 2n, perPeriod: 50n * nominal};
-    const schedule2 = {start: currentRelayBlock + 8n, period: 8n, periodCount: 2n, perPeriod: 100n * nominal};
+    const SCHEDULE_1_PERIOD = 4n; // 6 blocks one period
+    const SCHEDULE_1_START = currentRelayBlock + 6n; // Block when 1 schedule starts
+    const SCHEDULE_2_PERIOD = 8n; // 12 blocks one period
+    const SCHEDULE_2_START = currentRelayBlock + 12n; // Block when 2 schedule starts
+    const schedule1 = {start: SCHEDULE_1_START, period: SCHEDULE_1_PERIOD, periodCount: 2n, perPeriod: 50n * nominal};
+    const schedule2 = {start: SCHEDULE_2_START, period: SCHEDULE_2_PERIOD, periodCount: 2n, perPeriod: 100n * nominal};
 
     // act
     await helper.balance.vestedTransfer(sender, recepient.address, schedule1);
@@ -59,20 +63,22 @@ describe('Vesting', () => {
     expect(schedule[0]).to.deep.eq(schedule1);
     expect(schedule[1]).to.deep.eq(schedule2);
 
-    await helper.wait.forRelayBlockNumber(currentRelayBlock + 8n);
+    // Wait first part available:
+    await helper.wait.forRelayBlockNumber(SCHEDULE_1_START + SCHEDULE_1_PERIOD);
     await helper.balance.claim(recepient);
 
-    // check recepient balance after claim (50 tokens claimed):
+    // check recepient balance after claim (50 tokens claimed, 250 left):
     balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free / nominal).to.eq(300n);
     expect(balanceRecepient.feeFrozen).to.eq(250n * nominal);
     expect(balanceRecepient.miscFrozen).to.eq(250n * nominal);
     expect(balanceRecepient.reserved).to.eq(0n);
     
-    await helper.wait.forRelayBlockNumber(currentRelayBlock + 16n);
+    // Wait first schedule ends and first part od second schedule:
+    await helper.wait.forRelayBlockNumber(SCHEDULE_2_START + SCHEDULE_2_PERIOD);
     await helper.balance.claim(recepient);
 
-    // check recepient balance after second claim (150 tokens claimed):
+    // check recepient balance after second claim (150 tokens claimed, 100 left):
     balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free / nominal).to.eq(300n);
     expect(balanceRecepient.feeFrozen).to.eq(100n * nominal);
@@ -84,10 +90,11 @@ describe('Vesting', () => {
     expect(schedule).to.has.length(1);
     expect(schedule[0]).to.deep.eq(schedule2);
 
-    await helper.wait.forRelayBlockNumber(currentRelayBlock + 24n);
+    // Wait 2 schedule ends:
+    await helper.wait.forRelayBlockNumber(SCHEDULE_2_START + SCHEDULE_2_PERIOD * 2n);
     await helper.balance.claim(recepient);
 
-    // check recepient balance after second claim (100 tokens claimed):
+    // check recepient balance after second claim (100 tokens claimed, 0 left):
     balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free / nominal).to.eq(300n);
     expect(balanceRecepient.feeFrozen).to.eq(0n);

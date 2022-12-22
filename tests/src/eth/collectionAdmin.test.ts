@@ -15,6 +15,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
+import {Pallets} from '../util';
 import {IEthCrossAccountId} from '../util/playgrounds/types';
 import {usingEthPlaygrounds, itEth} from './util';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev';
@@ -39,36 +40,52 @@ describe('Add collection admins', () => {
     });
   });
 
-  itEth('can add account admin by owner', async ({helper, privateKey}) => {
-    // arrange
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const adminSub = await privateKey('//admin2');
-    const adminEth = helper.eth.createAccount().toLowerCase();
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'ft' as const, requiredPallets: []},
+  ].map(testCase => {
+    itEth.ifWithPallets(`can add account admin by owner for ${testCase.mode}`, testCase.requiredPallets, async ({helper, privateKey}) => {
+      // arrange
+      const owner = await helper.eth.createAccountWithBalance(donor);
+      const adminSub = await privateKey('//admin2');
+      const adminEth = helper.eth.createAccount().toLowerCase();
+  
+      const adminDeprecated = helper.eth.createAccount().toLowerCase();
+      const adminCrossSub = helper.ethCrossAccount.fromKeyringPair(adminSub);
+      const adminCrossEth = helper.ethCrossAccount.fromAddress(adminEth);
+      
+      const {collectionAddress, collectionId} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, true);
 
-    const adminDeprecated = helper.eth.createAccount().toLowerCase();
-    const adminCrossSub = helper.ethCrossAccount.fromKeyringPair(adminSub);
-    const adminCrossEth = helper.ethCrossAccount.fromAddress(adminEth);
-        
-    const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
+      // Check isOwnerOrAdminCross returns false:
+      expect(await collectionEvm.methods.isOwnerOrAdminCross(adminCrossSub).call()).to.be.false;
+      expect(await collectionEvm.methods.isOwnerOrAdminCross(adminCrossEth).call()).to.be.false;
+      expect(await collectionEvm.methods.isOwnerOrAdminCross(helper.ethCrossAccount.fromAddress(adminDeprecated)).call()).to.be.false;
+      
+      // Soft-deprecated: can addCollectionAdmin 
+      await collectionEvm.methods.addCollectionAdmin(adminDeprecated).send();
+      // Can addCollectionAdminCross for substrate and ethereum address
+      await collectionEvm.methods.addCollectionAdminCross(adminCrossSub).send();
+      await collectionEvm.methods.addCollectionAdminCross(adminCrossEth).send();
+  
+      // 1. Expect api.rpc.unique.adminlist returns admins:
+      const adminListRpc = await helper.collection.getAdmins(collectionId);
+      expect(adminListRpc).to.has.length(3);
+      expect(adminListRpc).to.be.deep.contain.members([{Substrate: adminSub.address}, {Ethereum: adminEth}, {Ethereum: adminDeprecated}]);
+  
+      // 2. Expect methods.collectionAdmins == api.rpc.unique.adminlist
+      let adminListEth = await collectionEvm.methods.collectionAdmins().call();
+      adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
+        return helper.address.convertCrossAccountFromEthCrossAccount(element);
+      });
+      expect(adminListRpc).to.be.like(adminListEth);
 
-    // Soft-deprecated: can addCollectionAdmin 
-    await collectionEvm.methods.addCollectionAdmin(adminDeprecated).send();
-    // Can addCollectionAdminCross for substrate and ethereum address
-    await collectionEvm.methods.addCollectionAdminCross(adminCrossSub).send();
-    await collectionEvm.methods.addCollectionAdminCross(adminCrossEth).send();
-
-    // 1. Expect api.rpc.unique.adminlist returns admins:
-    const adminListRpc = await helper.collection.getAdmins(collectionId);
-    expect(adminListRpc).to.has.length(3);
-    expect(adminListRpc).to.be.deep.contain.members([{Substrate: adminSub.address}, {Ethereum: adminEth}, {Ethereum: adminDeprecated}]);
-
-    // 2. Expect methods.collectionAdmins == api.rpc.unique.adminlist
-    let adminListEth = await collectionEvm.methods.collectionAdmins().call();
-    adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
-      return helper.address.convertCrossAccountFromEthCrossAccount(element);
+      // 3. check isOwnerOrAdminCross returns true:
+      expect(await collectionEvm.methods.isOwnerOrAdminCross(adminCrossSub).call()).to.be.true;
+      expect(await collectionEvm.methods.isOwnerOrAdminCross(adminCrossEth).call()).to.be.true;
+      expect(await collectionEvm.methods.isOwnerOrAdminCross(helper.ethCrossAccount.fromAddress(adminDeprecated)).call()).to.be.true;
     });
-    expect(adminListRpc).to.be.like(adminListEth);
   });
 
   itEth('cross account admin can mint', async ({helper}) => {
