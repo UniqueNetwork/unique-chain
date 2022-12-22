@@ -82,7 +82,7 @@ describe('EVM collection properties', () => {
     {method: 'deleteCollectionProperties', mode: 'ft' as const, methodParams: [['testKey1', 'testKey2']], expectedProps: [{key: 'testKey3', value: 'testValue3'}]},
     {method: 'deleteCollectionProperty', mode: 'nft' as const, methodParams: ['testKey1'], expectedProps: [{key: 'testKey2', value: 'testValue2'}, {key: 'testKey3', value: 'testValue3'}]}, 
   ].map(testCase => 
-    itEth(`Collection properties can be deleted: ${testCase.method}() for ${testCase.mode}`, async({helper}) => {
+    itEth.ifWithPallets(`Collection properties can be deleted: ${testCase.method}() for ${testCase.mode}`, testCase.mode === 'rft' ? [Pallets.ReFungible] : [], async({helper}) => {
       const properties = [
         {key: 'testKey1', value: 'testValue1'},
         {key: 'testKey2', value: 'testValue2'},
@@ -103,7 +103,6 @@ describe('EVM collection properties', () => {
       expect(raw.properties).to.deep.equal(testCase.expectedProps);
     }));
 
-  
   [
     {method: 'deleteCollectionProperties', methodParams: [['testKey2']]},
     {method: 'deleteCollectionProperty', methodParams: ['testKey2']},
@@ -218,82 +217,5 @@ describe('Supports ERC721Metadata', () => {
   
       await contract.methods.setProperties(tokenId2, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}]).send();
       expect(await contract.methods.tokenURI(tokenId2).call()).to.equal(BASE_URI + SUFFIX);
-    }));
-});
-
-describe('EVM collection property', () => {
-  let donor: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
-    });
-  });
-
-  [
-    {case: 'nft' as const},
-    {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    {case: 'ft' as const},
-  ].map(testCase => 
-    itEth.ifWithPallets(`can set/read properties ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
-      const collection = await helper[testCase.case].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
-
-      const sender = await helper.eth.createAccountWithBalance(donor, 100n);
-      await collection.addAdmin(donor, {Ethereum: sender});
-  
-      const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(collectionAddress, testCase.case, sender);
-  
-      const keys = ['key0', 'key1'];
-  
-      const writeProperties = [
-        helper.ethProperty.property(keys[0], 'value0'),
-        helper.ethProperty.property(keys[1], 'value1'),
-      ];
-  
-      await contract.methods.setCollectionProperties(writeProperties).send();
-      const readProperties = await contract.methods.collectionProperties([keys[0], keys[1]]).call();
-      expect(readProperties).to.be.like(writeProperties);
-    }));
-
-  [
-    {case: 'nft' as const},
-    {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    {case: 'ft' as const},
-  ].map(testCase => 
-    itEth.ifWithPallets(`can delete properties ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
-      const collection = await helper[testCase.case].mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
-
-      const sender = await helper.eth.createAccountWithBalance(donor, 100n);
-      await collection.addAdmin(donor, {Ethereum: sender});
-  
-      const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(collectionAddress, testCase.case, sender);
-  
-      const keys = ['key0', 'key1', 'key2', 'key3'];
-  
-      {
-        const writeProperties = [
-          helper.ethProperty.property(keys[0], 'value0'),
-          helper.ethProperty.property(keys[1], 'value1'),
-          helper.ethProperty.property(keys[2], 'value2'),
-          helper.ethProperty.property(keys[3], 'value3'),
-        ];
-  
-        await contract.methods.setCollectionProperties(writeProperties).send();
-        const readProperties = await contract.methods.collectionProperties([keys[0], keys[1], keys[2], keys[3]]).call();
-        expect(readProperties).to.be.like(writeProperties);
-      }
-  
-      {
-        const expectedProperties = [
-          helper.ethProperty.property(keys[0], 'value0'),
-          helper.ethProperty.property(keys[1], 'value1'),
-        ];
-  
-        await contract.methods.deleteCollectionProperties([keys[2], keys[3]]).send();
-        const readProperties = await contract.methods.collectionProperties([]).call();
-        expect(readProperties).to.be.like(expectedProperties);
-      }
     }));
 });
