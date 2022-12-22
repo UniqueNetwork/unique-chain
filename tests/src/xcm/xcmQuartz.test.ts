@@ -376,17 +376,17 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     balanceBobAfter = await helper.balance.getSubstrate(bob.address);  
     balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
-    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
-    expect(wndFee > 0).to.be.true('westend fees should be greater than 0');
+    const wndFeeOnQuartz = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
     console.log(
       '[Relay (Westend) -> Quartz] transaction fees: %s QTZ',
       helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
     );
     console.log(
       '[Relay (Westend) -> Quartz] transaction fees: %s WND',
-      helper.util.bigIntToDecimals(wndFee, STATEMINE_DECIMALS),
+      helper.util.bigIntToDecimals(wndFeeOnQuartz, STATEMINE_DECIMALS),
     );
-    expect(balanceBobBefore == balanceBobAfter).to.be.true;
+    expect(wndFeeOnQuartz == 0n, 'No incoming WND fees should be taken').to.be.true;
+    expect(balanceBobBefore == balanceBobAfter, 'No incoming QTZ fees should be taken').to.be.true;
     expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
   });
 
@@ -522,7 +522,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     balanceQuartzTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const qtzFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
-    expect(qtzFees > 0n).to.be.true('qtz Fees should be greater than 0');
+    expect(qtzFees > 0n, 'Negative fees QTZ, looks like nothing was transferred').to.be.true;
     console.log('[Quartz -> Karura] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
@@ -579,7 +579,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       );
       console.log('[Karura -> Quartz] outcome %s QTZ', helper.util.bigIntToDecimals(qtzOutcomeTransfer));
 
-      expect(karFees > 0).to.be.true;
+      expect(karFees > 0, 'Negative fees KAR, looks like nothing was transferred').to.be.true;
       expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
@@ -833,7 +833,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
     const transactionFees = balanceQuartzTokenInit - balanceQuartzTokenMiddle - TRANSFER_AMOUNT;
     console.log('[Quartz -> Moonriver] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(transactionFees));
-    expect(transactionFees > 0).to.be.true;
+    expect(transactionFees > 0, 'Negative fees QTZ, looks like nothing was transferred').to.be.true;
 
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       await helper.wait.newBlocks(3);
@@ -886,7 +886,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
       const movrFees = balanceMovrTokenMiddle - balanceMovrTokenFinal;
       console.log('[Moonriver -> Quartz] transaction fees on Moonriver: %s MOVR', helper.util.bigIntToDecimals(movrFees));
-      expect(movrFees > 0).to.be.true;
+      expect(movrFees > 0, 'Negative fees MOVR, looks like nothing was transferred').to.be.true;
 
       const qtzRandomAccountAsset = await helper.assets.account(assetId, randomAccountMoonriver.address);
 
