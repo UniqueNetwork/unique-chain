@@ -30,7 +30,6 @@ use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
 	SponsoringRateLimit, SponsorshipState,
 };
-use alloc::format;
 
 use crate::{
 	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf, eth, weights::WeightInfo,
@@ -123,16 +122,7 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|property| {
-				let (key, value) = property.take_key_value();
-				let key = <Vec<u8>>::from(key)
-					.try_into()
-					.map_err(|_| "key too large")?;
-
-				let value = value.0.try_into().map_err(|_| "value too large")?;
-
-				Ok(Property { key, value })
-			})
+			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 
 		<Pallet<T>>::set_collection_properties(self, &caller, properties)
@@ -210,12 +200,7 @@ where
 
 		let properties = properties
 			.into_iter()
-			.map(|p| {
-				let key =
-					string::from_utf8(p.key.into()).map_err(|e| Error::Revert(format!("{}", e)))?;
-				let value = bytes(p.value.to_vec());
-				Ok(eth::Property::new(key, value))
-			})
+			.map(Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 		Ok(properties)
 	}

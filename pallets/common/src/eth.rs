@@ -175,13 +175,28 @@ pub struct Property {
 	value: evm_coder::types::bytes,
 }
 
-impl Property {
-	pub fn new(key: evm_coder::types::string, value: evm_coder::types::bytes) -> Self {
-		Self { key, value }
-	}
+impl TryFrom<up_data_structs::Property> for Property {
+	type Error = evm_coder::execution::Error;
 
-	pub fn take_key_value(self) -> (evm_coder::types::string, evm_coder::types::bytes) {
-		(self.key, self.value)
+	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
+		let key = evm_coder::types::string::from_utf8(from.key.into())
+			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
+		let value = evm_coder::types::bytes(from.value.to_vec());
+		Ok(Property { key, value })
+	}
+}
+
+impl TryInto<up_data_structs::Property> for Property {
+	type Error = evm_coder::execution::Error;
+
+	fn try_into(self) -> Result<up_data_structs::Property, Self::Error> {
+		let key = <Vec<u8>>::from(self.key)
+			.try_into()
+			.map_err(|_| "key too large")?;
+
+		let value = self.value.0.try_into().map_err(|_| "value too large")?;
+
+		Ok(up_data_structs::Property { key, value })
 	}
 }
 
