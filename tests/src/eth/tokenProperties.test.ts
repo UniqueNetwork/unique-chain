@@ -500,9 +500,9 @@ describe('EVM token properties negative', () => {
       // 1. Owner sets strict property-permissions:
       await collection.methods.setTokenPropertyPermissions([
         ['testKey', [
-          [EthTokenPermissions.Mutable, true], 
-          [EthTokenPermissions.TokenOwner, true], 
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true], 
+          [TokenPermissionField.TokenOwner, true], 
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
       ]).send({from: owner});
     
@@ -510,9 +510,9 @@ describe('EVM token properties negative', () => {
       for(const values of [[true, true, false], [true, false, false], [false, false, false]]) {
         await collection.methods.setTokenPropertyPermissions([
           ['testKey', [
-            [EthTokenPermissions.Mutable, values[0]], 
-            [EthTokenPermissions.TokenOwner, values[1]], 
-            [EthTokenPermissions.CollectionAdmin, values[2]]],
+            [TokenPermissionField.Mutable, values[0]], 
+            [TokenPermissionField.TokenOwner, values[1]], 
+            [TokenPermissionField.CollectionAdmin, values[2]]],
           ],
         ]).send({from: owner});
       }
@@ -536,9 +536,9 @@ describe('EVM token properties negative', () => {
       // 1. Owner sets strict property-permissions:
       await collection.methods.setTokenPropertyPermissions([
         ['testKey', [
-          [EthTokenPermissions.Mutable, false], 
-          [EthTokenPermissions.TokenOwner, false], 
-          [EthTokenPermissions.CollectionAdmin, false]],
+          [TokenPermissionField.Mutable, false], 
+          [TokenPermissionField.TokenOwner, false], 
+          [TokenPermissionField.CollectionAdmin, false]],
         ],
       ]).send({from: owner});
 
@@ -546,9 +546,9 @@ describe('EVM token properties negative', () => {
       for(const values of [[true, false, false], [false, true, false], [false, false, true]]) {
         await expect(collection.methods.setTokenPropertyPermissions([
           ['testKey', [
-            [EthTokenPermissions.Mutable, values[0]], 
-            [EthTokenPermissions.TokenOwner, values[1]], 
-            [EthTokenPermissions.CollectionAdmin, values[2]]],
+            [TokenPermissionField.Mutable, values[0]], 
+            [TokenPermissionField.TokenOwner, values[1]], 
+            [TokenPermissionField.CollectionAdmin, values[2]]],
           ],
         ]).call({from: owner})).to.be.rejectedWith('NoPermission');
       }
