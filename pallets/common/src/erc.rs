@@ -285,11 +285,11 @@ where
 		let limits = &self.collection.limits;
 
 		Ok(vec![
-			eth::CollectionLimit::from_opt_int(
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::AccountTokenOwnership,
 				limits.account_token_ownership_limit,
 			),
-			eth::CollectionLimit::from_opt_int(
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::SponsoredDataSize,
 				limits.sponsored_data_size,
 			),
@@ -297,7 +297,7 @@ where
 				.sponsored_data_rate_limit
 				.and_then(|limit| {
 					if let SponsoringRateLimit::Blocks(blocks) = limit {
-						Some(eth::CollectionLimit::from_int(
+						Some(eth::CollectionLimit::new::<u32>(
 							eth::CollectionLimitField::SponsoredDataRateLimit,
 							blocks,
 						))
@@ -305,31 +305,28 @@ where
 						None
 					}
 				})
-				.unwrap_or(eth::CollectionLimit::from_int(
+				.unwrap_or(eth::CollectionLimit::new::<u32>(
 					eth::CollectionLimitField::SponsoredDataRateLimit,
 					Default::default(),
 				)),
-			eth::CollectionLimit::from_opt_int(
-				eth::CollectionLimitField::TokenLimit,
-				limits.token_limit,
-			),
-			eth::CollectionLimit::from_opt_int(
+			eth::CollectionLimit::new(eth::CollectionLimitField::TokenLimit, limits.token_limit),
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::SponsorTransferTimeout,
 				limits.sponsor_transfer_timeout,
 			),
-			eth::CollectionLimit::from_opt_int(
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::SponsorApproveTimeout,
 				limits.sponsor_approve_timeout,
 			),
-			eth::CollectionLimit::from_opt_bool(
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::OwnerCanTransfer,
 				limits.owner_can_transfer,
 			),
-			eth::CollectionLimit::from_opt_bool(
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::OwnerCanDestroy,
 				limits.owner_can_destroy,
 			),
-			eth::CollectionLimit::from_opt_bool(
+			eth::CollectionLimit::new(
 				eth::CollectionLimitField::TransferEnabled,
 				limits.transfers_enabled,
 			),

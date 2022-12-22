@@ -97,17 +97,23 @@ impl From<Option<u32>> for OptionUint {
 	}
 }
 
+impl From<bool> for OptionUint {
+	fn from(value: bool) -> Self {
+		Self {
+			status: true,
+			value: if value {
+				uint256::from(1)
+			} else {
+				Default::default()
+			},
+		}
+	}
+}
+
 impl From<Option<bool>> for OptionUint {
 	fn from(value: Option<bool>) -> Self {
 		match value {
-			Some(value) => Self {
-				status: true,
-				value: if value {
-					uint256::from(1)
-				} else {
-					Default::default()
-				},
-			},
+			Some(value) => Self::from(value),
 			None => Self {
 				status: false,
 				value: Default::default(),
@@ -241,30 +247,16 @@ pub struct CollectionLimit {
 }
 
 impl CollectionLimit {
-	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and int value.
-	pub fn from_int(field: CollectionLimitField, value: u32) -> Self {
+	/// Create [`CollectionLimit`] from field and value.
+	pub fn new<T>(field: CollectionLimitField, value: T) -> Self
+	where
+		OptionUint: From<T>,
+	{
 		Self {
 			field,
 			value: value.into(),
 		}
 	}
-
-	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and optional int value.
-	pub fn from_opt_int(field: CollectionLimitField, value: Option<u32>) -> Self {
-		Self {
-			field,
-			value: value.into(),
-		}
-	}
-
-	/// Make [`CollectionLimit`] from [`CollectionLimitField`] and bool value.
-	pub fn from_opt_bool(field: CollectionLimitField, value: Option<bool>) -> Self {
-		Self {
-			field,
-			value: value.into(),
-		}
-	}
-
 	/// Whether the field contains a value.
 	pub fn has_value(&self) -> bool {
 		self.value.status
