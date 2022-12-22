@@ -31,42 +31,42 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
 
   itEth('NFT', async ({helper}) => {
     const owner =  await helper.eth.createAccountWithBalance(donor);
-    
+
     const {collectionAddress: nftCollectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
-    const nftCollection = helper.ethNativeContract.collection(nftCollectionAddress, 'nft', owner);
-    
+    const nftCollection = await helper.ethNativeContract.collection(nftCollectionAddress, 'nft', owner);
+
     expect((await nftCollection.methods.collectionHelperAddress().call())
       .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
   });
-  
+
   itEth.ifWithPallets('RFT ', [Pallets.ReFungible], async ({helper}) => {
     const owner =  await helper.eth.createAccountWithBalance(donor);
 
     const {collectionAddress: rftCollectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
 
-    const rftCollection = helper.ethNativeContract.collection(rftCollectionAddress, 'rft', owner);
+    const rftCollection = await helper.ethNativeContract.collection(rftCollectionAddress, 'rft', owner);
     expect((await rftCollection.methods.collectionHelperAddress().call())
       .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
   });
-  
+
   itEth('FT', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', 18, 'absolutely anything', 'ROC');
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
-    
+    const collection = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
     expect((await collection.methods.collectionHelperAddress().call())
       .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
   });
-  
+
   itEth('[collectionHelpers] convert collectionId into address', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionId = 7;
     const collectionAddress = helper.ethAddress.fromCollectionId(collectionId);
-    const helperContract = helper.ethNativeContract.collectionHelpers(owner);
-    
+    const helperContract = await helper.ethNativeContract.collectionHelpers(owner);
+
     expect(await helperContract.methods.collectionAddress(collectionId).call()).to.be.equal(collectionAddress);
     expect(parseInt(await helperContract.methods.collectionId(collectionAddress).call())).to.be.equal(collectionId);
   });
- 
+
 });

@@ -30,8 +30,8 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
-  
-  itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {  
+
+  itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {
     const bobCA = CrossAccountId.fromKeyring(bob);
     const charlieCA = CrossAccountId.fromKeyring(charlie);
 
@@ -52,7 +52,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     await collection.setLimits(alice, {ownerCanTransfer: true});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'ft', aliceProxy);
+    const contract = await helper.ethNativeContract.collection(address, 'ft', aliceProxy);
 
     await collection.mint(alice, 200n, {Ethereum: aliceProxy});
     await contract.methods.transfer(bobProxy, 50).send({from: aliceProxy});
@@ -73,10 +73,10 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
-  
+
   itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {
     const charlieEth = CrossAccountId.fromKeyring(charlie, 'Ethereum');
-    
+
     const collection = await helper.nft.mintCollection(alice);
     await collection.setLimits(alice, {ownerCanTransfer: true});
     const token = await collection.mintToken(alice);
@@ -93,7 +93,7 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
     await collection.setLimits(alice, {ownerCanTransfer: true});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', aliceProxy);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', aliceProxy);
 
     const token = await collection.mintToken(alice);
     await token.transfer(alice, {Ethereum: aliceProxy});
