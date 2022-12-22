@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
-import { CollectionLimits } from './util/playgrounds/types';
+import {CollectionLimits} from './util/playgrounds/types';
 
 const DECIMALS = 18;
 
@@ -32,6 +32,7 @@ describe('Create FT collection from EVM', () => {
     });
   });
   
+  // TODO move sponsorship tests to another file:
   // Soft-deprecated
   itEth('[eth] Set sponsorship', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
@@ -91,6 +92,11 @@ describe('Create FT collection from EVM', () => {
     expect(await helper.ethNativeContract.collectionHelpers(collectionAddress)
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
+    
+    // check collectionOwner:
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+    const collectionOwner = await collectionEvm.methods.collectionOwner().call();
+    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner));
   });
   
   itEth('destroyCollection', async ({helper}) => {

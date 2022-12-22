@@ -167,7 +167,6 @@ describe('NFT: Plain calls', () => {
     expect(event.returnValues.to).to.be.equal(receiver);
 
     expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-    console.log(await contract.methods.crossOwnerOf(tokenId).call());
     expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
     // TODO: this wont work right now, need release 919000 first
     // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
@@ -200,8 +199,7 @@ describe('NFT: Plain calls', () => {
             },
           };
         });
-    
-    
+
       const collection = await helper.nft.mintCollection(minter, {
         tokenPrefix: 'ethp',
         tokenPropertyPermissions: permissions,

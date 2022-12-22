@@ -62,6 +62,8 @@ describe('Add collection admins', () => {
       expect(await collectionEvm.methods.isOwnerOrAdminCross(adminCrossSub).call()).to.be.false;
       expect(await collectionEvm.methods.isOwnerOrAdminCross(adminCrossEth).call()).to.be.false;
       expect(await collectionEvm.methods.isOwnerOrAdminCross(helper.ethCrossAccount.fromAddress(adminDeprecated)).call()).to.be.false;
+      expect(await collectionEvm.methods.collectionAdmins().call()).to.be.like([]);
+
       
       // Soft-deprecated: can addCollectionAdmin 
       await collectionEvm.methods.addCollectionAdmin(adminDeprecated).send();

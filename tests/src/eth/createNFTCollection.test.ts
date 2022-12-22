@@ -132,6 +132,11 @@ describe('Create NFT collection from EVM', () => {
     expect(await helper.ethNativeContract.collectionHelpers(collectionAddress)
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
+
+    // check collectionOwner:
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+    const collectionOwner = await collectionEvm.methods.collectionOwner().call();
+    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner));
   });
 });
 
