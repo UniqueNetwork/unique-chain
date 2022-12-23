@@ -125,9 +125,9 @@ impl From<Option<bool>> for OptionUint {
 /// Ethereum representation of Optional value with CrossAddress.
 #[derive(Debug, Default, AbiCoder)]
 pub struct OptionCrossAddress {
-	/// Is address set
+	/// Whether or not this CrossAdress is valid and has meaning.
 	pub status: bool,
-	/// Address value
+	/// The underlying CrossAddress value. If the status is false, can be set to whatever.
 	pub value: CrossAddress,
 }
 
@@ -139,7 +139,7 @@ pub struct CrossAddress {
 }
 
 impl CrossAddress {
-	/// Converts `CrossAccountId` to [`CrossAddress`]
+	/// Converts `CrossAccountId` to [`CrossAddress`] to be correctly usable with Ethereum.
 	pub fn from_sub_cross_account<T>(cross_account_id: &T::CrossAccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -154,7 +154,7 @@ impl CrossAddress {
 			}
 		}
 	}
-	/// Creates [`CrossAddress`] from substrate account
+	/// Creates [`CrossAddress`] from Substrate account.
 	pub fn from_sub<T>(account_id: &T::AccountId) -> Self
 	where
 		T: pallet_evm::Config,
@@ -165,7 +165,7 @@ impl CrossAddress {
 			sub: uint256::from_big_endian(account_id.as_ref()),
 		}
 	}
-	/// Converts [`CrossAddress`] to `CrossAccountId`
+	/// Converts [`CrossAddress`] to `CrossAccountId`.
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,

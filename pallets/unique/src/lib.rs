@@ -91,7 +91,7 @@ use up_data_structs::{
 	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
 	CreateCollectionData, CreateItemExData, budget, Property, PropertyKey, PropertyKeyPermission,
 };
-use pallet_evm::{account::CrossAccountId};
+use pallet_evm::account::CrossAccountId;
 use pallet_common::{
 	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
 	dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,

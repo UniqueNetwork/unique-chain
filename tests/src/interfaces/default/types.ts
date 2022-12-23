@@ -1654,11 +1654,6 @@ export interface PalletRefungibleError extends Enum {
   readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RepartitionWhileNotOwningAllPieces' | 'RefungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
 }
 
-/** @name PalletRefungibleItemData */
-export interface PalletRefungibleItemData extends Struct {
-  readonly constData: Bytes;
-}
-
 /** @name PalletRmrkCoreCall */
 export interface PalletRmrkCoreCall extends Enum {
   readonly isCreateCollection: boolean;

@@ -3210,73 +3210,67 @@ export default {
     _enum: ['NotFungibleDataUsedToMintFungibleCollectionToken', 'FungibleItemsHaveNoId', 'FungibleItemsDontHaveData', 'FungibleDisallowsNesting', 'SettingPropertiesNotAllowed', 'SettingAllowanceForAllNotAllowed', 'FungibleTokensAreAlwaysValid']
   },
   /**
-   * Lookup417: pallet_refungible::ItemData
-   **/
-  PalletRefungibleItemData: {
-    constData: 'Bytes'
-  },
-  /**
-   * Lookup422: pallet_refungible::pallet::Error<T>
+   * Lookup420: pallet_refungible::pallet::Error<T>
    **/
   PalletRefungibleError: {
     _enum: ['NotRefungibleDataUsedToMintFungibleCollectionToken', 'WrongRefungiblePieces', 'RepartitionWhileNotOwningAllPieces', 'RefungibleDisallowsNesting', 'SettingPropertiesNotAllowed']
   },
   /**
-   * Lookup423: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup421: pallet_nonfungible::ItemData<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   PalletNonfungibleItemData: {
     owner: 'PalletEvmAccountBasicCrossAccountIdRepr'
   },
   /**
-   * Lookup425: up_data_structs::PropertyScope
+   * Lookup423: up_data_structs::PropertyScope
    **/
   UpDataStructsPropertyScope: {
     _enum: ['None', 'Rmrk']
   },
   /**
-   * Lookup427: pallet_nonfungible::pallet::Error<T>
+   * Lookup426: pallet_nonfungible::pallet::Error<T>
    **/
   PalletNonfungibleError: {
     _enum: ['NotNonfungibleDataUsedToMintFungibleCollectionToken', 'NonfungibleItemsHaveNoAmount', 'CantBurnNftWithChildren']
   },
   /**
-   * Lookup428: pallet_structure::pallet::Error<T>
+   * Lookup427: pallet_structure::pallet::Error<T>
    **/
   PalletStructureError: {
     _enum: ['OuroborosDetected', 'DepthLimit', 'BreadthLimit', 'TokenNotFound']
   },
   /**
-   * Lookup429: pallet_rmrk_core::pallet::Error<T>
+   * Lookup428: pallet_rmrk_core::pallet::Error<T>
    **/
   PalletRmrkCoreError: {
     _enum: ['CorruptedCollectionType', 'RmrkPropertyKeyIsTooLong', 'RmrkPropertyValueIsTooLong', 'RmrkPropertyIsNotFound', 'UnableToDecodeRmrkData', 'CollectionNotEmpty', 'NoAvailableCollectionId', 'NoAvailableNftId', 'CollectionUnknown', 'NoPermission', 'NonTransferable', 'CollectionFullOrLocked', 'ResourceDoesntExist', 'CannotSendToDescendentOrSelf', 'CannotAcceptNonOwnedNft', 'CannotRejectNonOwnedNft', 'CannotRejectNonPendingNft', 'ResourceNotPending', 'NoAvailableResourceId']
   },
   /**
-   * Lookup431: pallet_rmrk_equip::pallet::Error<T>
+   * Lookup430: pallet_rmrk_equip::pallet::Error<T>
    **/
   PalletRmrkEquipError: {
     _enum: ['PermissionError', 'NoAvailableBaseId', 'NoAvailablePartId', 'BaseDoesntExist', 'NeedsDefaultThemeFirst', 'PartDoesntExist', 'NoEquippableOnFixedPart']
   },
   /**
-   * Lookup437: pallet_app_promotion::pallet::Error<T>
+   * Lookup436: pallet_app_promotion::pallet::Error<T>
    **/
   PalletAppPromotionError: {
     _enum: ['AdminNotSet', 'NoPermission', 'NotSufficientFunds', 'PendingForBlockOverflow', 'SponsorNotSet', 'IncorrectLockedBalanceOperation']
   },
   /**
-   * Lookup438: pallet_foreign_assets::module::Error<T>
+   * Lookup437: pallet_foreign_assets::module::Error<T>
    **/
   PalletForeignAssetsModuleError: {
     _enum: ['BadLocation', 'MultiLocationExisted', 'AssetIdNotExists', 'AssetIdExisted']
   },
   /**
-   * Lookup440: pallet_evm::pallet::Error<T>
+   * Lookup439: pallet_evm::pallet::Error<T>
    **/
   PalletEvmError: {
     _enum: ['BalanceLow', 'FeeOverflow', 'PaymentOverflow', 'WithdrawFailed', 'GasPriceTooLow', 'InvalidNonce', 'GasLimitTooLow', 'GasLimitTooHigh', 'Undefined', 'Reentrancy', 'TransactionMustComeFromEOA']
   },
   /**
-   * Lookup443: fp_rpc::TransactionStatus
+   * Lookup442: fp_rpc::TransactionStatus
    **/
   FpRpcTransactionStatus: {
     transactionHash: 'H256',
@@ -3288,11 +3282,11 @@ export default {
     logsBloom: 'EthbloomBloom'
   },
   /**
-   * Lookup445: ethbloom::Bloom
+   * Lookup444: ethbloom::Bloom
    **/
   EthbloomBloom: '[u8;256]',
   /**
-   * Lookup447: ethereum::receipt::ReceiptV3
+   * Lookup446: ethereum::receipt::ReceiptV3
    **/
   EthereumReceiptReceiptV3: {
     _enum: {
@@ -3302,7 +3296,7 @@ export default {
     }
   },
   /**
-   * Lookup448: ethereum::receipt::EIP658ReceiptData
+   * Lookup447: ethereum::receipt::EIP658ReceiptData
    **/
   EthereumReceiptEip658ReceiptData: {
     statusCode: 'u8',
@@ -3311,7 +3305,7 @@ export default {
     logs: 'Vec<EthereumLog>'
   },
   /**
-   * Lookup449: ethereum::block::Block<ethereum::transaction::TransactionV2>
+   * Lookup448: ethereum::block::Block<ethereum::transaction::TransactionV2>
    **/
   EthereumBlock: {
     header: 'EthereumHeader',
@@ -3319,7 +3313,7 @@ export default {
     ommers: 'Vec<EthereumHeader>'
   },
   /**
-   * Lookup450: ethereum::header::Header
+   * Lookup449: ethereum::header::Header
    **/
   EthereumHeader: {
     parentHash: 'H256',
@@ -3339,23 +3333,23 @@ export default {
     nonce: 'EthereumTypesHashH64'
   },
   /**
-   * Lookup451: ethereum_types::hash::H64
+   * Lookup450: ethereum_types::hash::H64
    **/
   EthereumTypesHashH64: '[u8;8]',
   /**
-   * Lookup456: pallet_ethereum::pallet::Error<T>
+   * Lookup455: pallet_ethereum::pallet::Error<T>
    **/
   PalletEthereumError: {
     _enum: ['InvalidSignature', 'PreLogExists']
   },
   /**
-   * Lookup457: pallet_evm_coder_substrate::pallet::Error<T>
+   * Lookup456: pallet_evm_coder_substrate::pallet::Error<T>
    **/
   PalletEvmCoderSubstrateError: {
     _enum: ['OutOfGas', 'OutOfFund']
   },
   /**
-   * Lookup458: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
+   * Lookup457: up_data_structs::SponsorshipState<pallet_evm::account::BasicCrossAccountIdRepr<sp_core::crypto::AccountId32>>
    **/
   UpDataStructsSponsorshipStateBasicCrossAccountIdRepr: {
     _enum: {
@@ -3365,35 +3359,35 @@ export default {
     }
   },
   /**
-   * Lookup459: pallet_evm_contract_helpers::SponsoringModeT
+   * Lookup458: pallet_evm_contract_helpers::SponsoringModeT
    **/
   PalletEvmContractHelpersSponsoringModeT: {
     _enum: ['Disabled', 'Allowlisted', 'Generous']
   },
   /**
-   * Lookup465: pallet_evm_contract_helpers::pallet::Error<T>
+   * Lookup464: pallet_evm_contract_helpers::pallet::Error<T>
    **/
   PalletEvmContractHelpersError: {
     _enum: ['NoPermission', 'NoPendingSponsor', 'TooManyMethodsHaveSponsoredLimit']
   },
   /**
-   * Lookup466: pallet_evm_migration::pallet::Error<T>
+   * Lookup465: pallet_evm_migration::pallet::Error<T>
    **/
   PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating', 'BadEvent']
   },
   /**
-   * Lookup467: pallet_maintenance::pallet::Error<T>
+   * Lookup466: pallet_maintenance::pallet::Error<T>
    **/
   PalletMaintenanceError: 'Null',
   /**
-   * Lookup468: pallet_test_utils::pallet::Error<T>
+   * Lookup467: pallet_test_utils::pallet::Error<T>
    **/
   PalletTestUtilsError: {
     _enum: ['TestPalletDisabled', 'TriggerRollback']
   },
   /**
-   * Lookup470: sp_runtime::MultiSignature
+   * Lookup469: sp_runtime::MultiSignature
    **/
   SpRuntimeMultiSignature: {
     _enum: {
@@ -3403,51 +3397,51 @@ export default {
     }
   },
   /**
-   * Lookup471: sp_core::ed25519::Signature
+   * Lookup470: sp_core::ed25519::Signature
    **/
   SpCoreEd25519Signature: '[u8;64]',
   /**
-   * Lookup473: sp_core::sr25519::Signature
+   * Lookup472: sp_core::sr25519::Signature
    **/
   SpCoreSr25519Signature: '[u8;64]',
   /**
-   * Lookup474: sp_core::ecdsa::Signature
+   * Lookup473: sp_core::ecdsa::Signature
    **/
   SpCoreEcdsaSignature: '[u8;65]',
   /**
-   * Lookup477: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+   * Lookup476: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
    **/
   FrameSystemExtensionsCheckSpecVersion: 'Null',
   /**
-   * Lookup478: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+   * Lookup477: frame_system::extensions::check_tx_version::CheckTxVersion<T>
    **/
   FrameSystemExtensionsCheckTxVersion: 'Null',
   /**
-   * Lookup479: frame_system::extensions::check_genesis::CheckGenesis<T>
+   * Lookup478: frame_system::extensions::check_genesis::CheckGenesis<T>
    **/
   FrameSystemExtensionsCheckGenesis: 'Null',
   /**
-   * Lookup482: frame_system::extensions::check_nonce::CheckNonce<T>
+   * Lookup481: frame_system::extensions::check_nonce::CheckNonce<T>
    **/
   FrameSystemExtensionsCheckNonce: 'Compact<u32>',
   /**
-   * Lookup483: frame_system::extensions::check_weight::CheckWeight<T>
+   * Lookup482: frame_system::extensions::check_weight::CheckWeight<T>
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup484: opal_runtime::runtime_common::maintenance::CheckMaintenance
+   * Lookup483: opal_runtime::runtime_common::maintenance::CheckMaintenance
    **/
   OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
   /**
-   * Lookup485: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
+   * Lookup484: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup486: opal_runtime::Runtime
+   * Lookup485: opal_runtime::Runtime
    **/
   OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup487: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
+   * Lookup486: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };
