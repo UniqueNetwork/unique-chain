@@ -42,3 +42,6 @@ jobs:
 
   codestyle:
     uses: ./.github/workflows/codestyle.yml
+
+  polkadot-types:
+    uses: ./.github/workflows/polkadot-types.yml
