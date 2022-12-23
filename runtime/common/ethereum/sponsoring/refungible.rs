@@ -93,7 +93,7 @@ where
 			value,
 			..
 		} => {
-			let token_id: TokenId = token_id.try_into().ok()?;
+			let token_id = TokenId::try_from(token_id).ok()?;
 			withdraw_set_token_property::<T>(&collection, &who, &token_id, key.len() + value.len())
 		}
 	}
@@ -125,7 +125,7 @@ mod erc721 {
 	pub fn call_sponsor<T>(
 		call: ERC721Call<T>,
 		collection: CollectionHandle<T>,
-		who: &T::CrossAccountId,
+		_who: &T::CrossAccountId,
 	) -> Option<()>
 	where
 		T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
@@ -147,14 +147,13 @@ mod erc721 {
 			| SetApprovalForAll { .. } => None,
 
 			TransferFrom { token_id, from, .. } => {
-				let token_id: TokenId = token_id.try_into().ok()?;
+				let token_id = TokenId::try_from(token_id).ok()?;
 				let from = T::CrossAccountId::from_eth(from);
 				withdraw_transfer::<T>(&collection, &from, &token_id)
 			}
-			Approve { _token_id, .. } => {
-				let token_id: TokenId = _token_id.try_into().ok()?;
-				withdraw_approve::<T>(&collection, who.as_sub(), &token_id)
-			}
+
+			// Not supported
+			Approve { .. } => None,
 		}
 	}
 
@@ -241,7 +240,7 @@ mod erc721 {
 			| MintBulkWithTokenUri { .. } => None,
 
 			Transfer { token_id, .. } => {
-				let token_id: TokenId = token_id.try_into().ok()?;
+				let token_id = TokenId::try_from(token_id).ok()?;
 				withdraw_transfer::<T>(&collection, &who, &token_id)
 			}
 		}
