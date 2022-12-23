@@ -18,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x81172a75
+/// @dev the ERC-165 identifier for this interface is 0x2a14cfd1
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -114,7 +114,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
-	function setCollectionSponsorCross(EthCrossAccount memory sponsor) public {
+	function setCollectionSponsorCross(CrossAddress memory sponsor) public {
 		require(false, stub_error);
 		sponsor;
 		dummy = 0;
@@ -152,58 +152,31 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (EthCrossAccount memory) {
+	function collectionSponsor() public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		dummy;
-		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Get current collection limits.
 	///
-	/// @return Array of tuples (byte, bool, uint256) with limits and their values. Order of limits:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// Return `false` if a limit not set.
+	/// @return Array of collection limits
 	/// @dev EVM selector for this function is: 0xf63bc572,
 	///  or in textual repr: collectionLimits()
-	function collectionLimits() public view returns (Tuple23[] memory) {
+	function collectionLimits() public view returns (CollectionLimit[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple23[](0);
+		return new CollectionLimit[](0);
 	}
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param status enable\disable limit. Works only with `true`.
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x88150bd0,
-	///  or in textual repr: setCollectionLimit(uint8,bool,uint256)
-	function setCollectionLimit(
-		CollectionLimits limit,
-		bool status,
-		uint256 value
-	) public {
+	/// @param limit Some limit.
+	/// @dev EVM selector for this function is: 0x2316ee74,
+	///  or in textual repr: setCollectionLimit((uint8,(bool,uint256)))
+	function setCollectionLimit(CollectionLimit memory limit) public {
 		require(false, stub_error);
 		limit;
-		status;
-		value;
 		dummy = 0;
 	}
 
@@ -220,7 +193,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
-	function addCollectionAdminCross(EthCrossAccount memory newAdmin) public {
+	function addCollectionAdminCross(CrossAddress memory newAdmin) public {
 		require(false, stub_error);
 		newAdmin;
 		dummy = 0;
@@ -230,7 +203,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
-	function removeCollectionAdminCross(EthCrossAccount memory admin) public {
+	function removeCollectionAdminCross(CrossAddress memory admin) public {
 		require(false, stub_error);
 		admin;
 		dummy = 0;
@@ -284,19 +257,19 @@ contract Collection is Dummy, ERC165 {
 	/// Returns nesting for a collection
 	/// @dev EVM selector for this function is: 0x22d25bfe,
 	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() public view returns (Tuple29 memory) {
+	function collectionNestingRestrictedCollectionIds() public view returns (CollectionNesting memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple29(false, new uint256[](0));
+		return CollectionNesting(false, new uint256[](0));
 	}
 
 	/// Returns permissions for a collection
 	/// @dev EVM selector for this function is: 0x5b2eaf4b,
 	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() public view returns (Tuple32[] memory) {
+	function collectionNestingPermissions() public view returns (CollectionNestingPermission[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new Tuple32[](0);
+		return new CollectionNestingPermission[](0);
 	}
 
 	/// Set the collection access method.
@@ -316,7 +289,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User address to check.
 	/// @dev EVM selector for this function is: 0x91b6df49,
 	///  or in textual repr: allowlistedCross((address,uint256))
-	function allowlistedCross(EthCrossAccount memory user) public view returns (bool) {
+	function allowlistedCross(CrossAddress memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -339,7 +312,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
-	function addToCollectionAllowListCross(EthCrossAccount memory user) public {
+	function addToCollectionAllowListCross(CrossAddress memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -361,7 +334,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
-	function removeFromCollectionAllowListCross(EthCrossAccount memory user) public {
+	function removeFromCollectionAllowListCross(CrossAddress memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -397,7 +370,7 @@ contract Collection is Dummy, ERC165 {
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
-	function isOwnerOrAdminCross(EthCrossAccount memory user) public view returns (bool) {
+	function isOwnerOrAdminCross(CrossAddress memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -421,10 +394,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() public view returns (EthCrossAccount memory) {
+	function collectionOwner() public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		dummy;
-		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	// /// Changes collection owner to another account
@@ -445,10 +418,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() public view returns (EthCrossAccount[] memory) {
+	function collectionAdmins() public view returns (CrossAddress[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new EthCrossAccount[](0);
+		return new CrossAddress[](0);
 	}
 
 	/// Changes collection owner to another account
@@ -457,66 +430,74 @@ contract Collection is Dummy, ERC165 {
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0x6496c497,
 	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
-	function changeCollectionOwnerCross(EthCrossAccount memory newOwner) public {
+	function changeCollectionOwnerCross(CrossAddress memory newOwner) public {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
 	}
 }
 
-/// @dev Cross account struct
-struct EthCrossAccount {
+/// Cross account struct
+struct CrossAddress {
 	address eth;
 	uint256 sub;
 }
 
-enum CollectionPermissions {
-	CollectionAdmin,
-	TokenOwner
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+struct CollectionNestingPermission {
+	CollectionPermissionField field;
+	bool value;
 }
 
-/// @dev anonymous struct
-struct Tuple32 {
-	CollectionPermissions field_0;
-	bool field_1;
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
+enum CollectionPermissionField {
+	/// Owner of token can nest tokens under it.
+	TokenOwner,
+	/// Admin of token collection can nest tokens under token.
+	CollectionAdmin
 }
 
-/// @dev anonymous struct
-struct Tuple29 {
-	bool field_0;
-	uint256[] field_1;
+/// Nested collections.
+struct CollectionNesting {
+	bool token_owner;
+	uint256[] ids;
 }
 
-/// @dev [`CollectionLimits`](up_data_structs::CollectionLimits) representation for EVM.
-enum CollectionLimits {
-	/// @dev How many tokens can a user have on one account.
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+struct CollectionLimit {
+	CollectionLimitField field;
+	OptionUint value;
+}
+
+/// Ethereum representation of Optional value with uint256.
+struct OptionUint {
+	bool status;
+	uint256 value;
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
+enum CollectionLimitField {
+	/// How many tokens can a user have on one account.
 	AccountTokenOwnership,
-	/// @dev How many bytes of data are available for sponsorship.
+	/// How many bytes of data are available for sponsorship.
 	SponsoredDataSize,
-	/// @dev In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
 	SponsoredDataRateLimit,
-	/// @dev How many tokens can be mined into this collection.
+	/// How many tokens can be mined into this collection.
 	TokenLimit,
-	/// @dev Timeouts for transfer sponsoring.
+	/// Timeouts for transfer sponsoring.
 	SponsorTransferTimeout,
-	/// @dev Timeout for sponsoring an approval in passed blocks.
+	/// Timeout for sponsoring an approval in passed blocks.
 	SponsorApproveTimeout,
-	/// @dev Whether the collection owner of the collection can send tokens (which belong to other users).
+	/// Whether the collection owner of the collection can send tokens (which belong to other users).
 	OwnerCanTransfer,
-	/// @dev Can the collection owner burn other people's tokens.
+	/// Can the collection owner burn other people's tokens.
 	OwnerCanDestroy,
-	/// @dev Is it possible to send tokens from this collection between users.
+	/// Is it possible to send tokens from this collection between users.
 	TransferEnabled
 }
 
-/// @dev anonymous struct
-struct Tuple23 {
-	CollectionLimits field_0;
-	bool field_1;
-	uint256 field_2;
-}
-
-/// @dev Property struct
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
 	string key;
 	bytes value;
@@ -535,7 +516,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 
 	/// @dev EVM selector for this function is: 0x269e6158,
 	///  or in textual repr: mintCross((address,uint256),uint256)
-	function mintCross(EthCrossAccount memory to, uint256 amount) public returns (bool) {
+	function mintCross(CrossAddress memory to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
 		amount;
@@ -545,7 +526,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(EthCrossAccount memory spender, uint256 amount) public returns (bool) {
+	function approveCross(CrossAddress memory spender, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		spender;
 		amount;
@@ -575,7 +556,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amount The amount that will be burnt.
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(EthCrossAccount memory from, uint256 amount) public returns (bool) {
+	function burnFromCross(CrossAddress memory from, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		amount;
@@ -596,7 +577,7 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(EthCrossAccount memory to, uint256 amount) public returns (bool) {
+	function transferCross(CrossAddress memory to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		to;
 		amount;
@@ -607,8 +588,8 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		EthCrossAccount memory from,
-		EthCrossAccount memory to,
+		CrossAddress memory from,
+		CrossAddress memory to,
 		uint256 amount
 	) public returns (bool) {
 		require(false, stub_error);

@@ -2740,21 +2740,72 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     this.palletName = palletName;
   }
 
-  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, {Limited: weightLimit}], true);
+  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+  }
+
+  async teleportAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
+  }
+
+  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint) {
+    const destination = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            Parachain: destinationParaId,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: targetAccount,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V1: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: amount,
+          },
+        },
+      ],
+    };
+
+    const feeAssetItem = 0;
+
+    await this.teleportAssets(signer, destination, beneficiary, assets, feeAssetItem);
   }
 }
 
 class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
-  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: number) {
+  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transfer', [currencyId, amount, destination, destWeight], true);
   }
 
-  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: number) {
+  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
   }
 
-  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: number) {
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
   }
 }
@@ -2823,12 +2874,19 @@ class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
 }
 
 class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
-  async notePreimage(signer: TSigner, encodedProposal: string) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.notePreimage', [encodedProposal], true);
+  notePreimagePallet: string;
+
+  constructor(helper: MoonbeamHelper, options: {[key: string]: any} = {}) {
+    super(helper);
+    this.notePreimagePallet = options.notePreimagePallet;
   }
 
-  externalProposeMajority(proposalHash: string) {
-    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposalHash]);
+  async notePreimage(signer: TSigner, encodedProposal: string) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.notePreimagePallet}.notePreimage`, [encodedProposal], true);
+  }
+
+  externalProposeMajority(proposal: any) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposal]);
   }
 
   fastTrack(proposalHash: string, votingPeriod: number, delayPeriod: number) {
@@ -2857,7 +2915,7 @@ class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
   }
 
-  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: number, lengthBound: number) {
+  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
   }
 
@@ -2917,11 +2975,13 @@ export class XcmChainHelper extends ChainHelperBase {
 }
 
 export class RelayHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<RelayHelper>;
   xcm: XcmGroup<RelayHelper>;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger, options.helperBase ?? RelayHelper);
 
+    this.balance = new SubstrateBalanceGroup(this);
     this.xcm = new XcmGroup(this, 'xcmPallet');
   }
 }
@@ -2960,7 +3020,7 @@ export class MoonbeamHelper extends XcmChainHelper {
     this.assetManager = new MoonbeamAssetManagerGroup(this);
     this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
-    this.democracy = new MoonbeamDemocracyGroup(this);
+    this.democracy = new MoonbeamDemocracyGroup(this, options);
     this.collective = {
       council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
       techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),

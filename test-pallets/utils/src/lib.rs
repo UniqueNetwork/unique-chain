@@ -75,6 +75,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(10_000)]
 		pub fn enable(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -83,6 +84,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(10_000)]
 		pub fn set_test_value(origin: OriginFor<T>, value: u32) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin)?;
@@ -94,6 +96,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(10_000)]
 		pub fn set_test_value_and_rollback(origin: OriginFor<T>, value: u32) -> DispatchResult {
 			Self::set_test_value(origin, value)?;
@@ -103,6 +106,7 @@ pub mod pallet {
 			Err(<Error<T>>::TriggerRollback.into())
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(10_000)]
 		pub fn inc_test_value(origin: OriginFor<T>) -> DispatchResult {
 			Self::set_test_value(origin, <TestValue<T>>::get() + 1)
@@ -124,12 +128,14 @@ pub mod pallet {
 		// 	Ok(())
 		// }
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(100_000_000)]
 		pub fn just_take_fee(origin: OriginFor<T>) -> DispatchResult {
 			Self::ensure_origin_and_enabled(origin)?;
 			Ok(())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(10_000)]
 		pub fn batch_all(
 			origin: OriginFor<T>,

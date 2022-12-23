@@ -32,29 +32,29 @@ describe('Destroy Collection from EVM', function() {
     });
   });
 
-  testCases.map((testCase) => 
+  testCases.map((testCase) =>
     itEth.ifWithPallets(`Cannot burn non-owned or non-existing collection ${testCase.case}`, testCase.requiredPallets, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const signer = await helper.eth.createAccountWithBalance(donor);
-      
+
       const unexistedCollection = helper.ethAddress.fromCollectionId(1000000);
-      
-      const collectionHelpers = helper.ethNativeContract.collectionHelpers(signer);
+
+      const collectionHelpers = await helper.ethNativeContract.collectionHelpers(signer);
       const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, ...testCase.params as [string, string, string, number?]);
 
       // cannot burn collec
       await expect(collectionHelpers.methods
         .destroyCollection(collectionAddress)
         .send({from: signer})).to.be.rejected;
-      
+
       await expect(collectionHelpers.methods
         .destroyCollection(unexistedCollection)
         .send({from: signer})).to.be.rejected;
-      
+
       expect(await collectionHelpers.methods
         .isCollectionExist(unexistedCollection)
         .call()).to.be.false;
-      
+
       expect(await collectionHelpers.methods
         .isCollectionExist(collectionAddress)
         .call()).to.be.true;

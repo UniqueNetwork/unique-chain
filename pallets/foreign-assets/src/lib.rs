@@ -161,9 +161,7 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
-		Some(AssetIds::ForeignAssetId(
-			Pallet::<T>::location_to_currency_ids(multi_location).unwrap_or(0),
-		))
+		Pallet::<T>::location_to_currency_ids(multi_location).map(|id| AssetIds::ForeignAssetId(id))
 	}
 }
 
@@ -283,6 +281,7 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
 		pub fn register_foreign_asset(
 			origin: OriginFor<T>,
@@ -323,6 +322,7 @@ pub mod module {
 			Ok(())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_foreign_asset())]
 		pub fn update_foreign_asset(
 			origin: OriginFor<T>,

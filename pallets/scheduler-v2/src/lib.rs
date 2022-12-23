@@ -639,6 +639,7 @@ pub mod pallet {
 		///
 		/// Only `T::ScheduleOrigin` is allowed to schedule a task.
 		/// Only `T::PrioritySetOrigin` is allowed to set the task's priority.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule(
 			origin: OriginFor<T>,
@@ -667,6 +668,7 @@ pub mod pallet {
 		/// Cancel an anonymously scheduled task.
 		///
 		/// The `T::OriginPrivilegeCmp` decides whether the given origin is allowed to cancel the task or not.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::cancel(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel(origin: OriginFor<T>, when: T::BlockNumber, index: u32) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
@@ -679,6 +681,7 @@ pub mod pallet {
 		///
 		/// Only `T::ScheduleOrigin` is allowed to schedule a task.
 		/// Only `T::PrioritySetOrigin` is allowed to set the task's priority.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::schedule_named(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule_named(
 			origin: OriginFor<T>,
@@ -709,6 +712,7 @@ pub mod pallet {
 		/// Cancel a named scheduled task.
 		///
 		/// The `T::OriginPrivilegeCmp` decides whether the given origin is allowed to cancel the task or not.
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::cancel_named(T::MaxScheduledPerBlock::get()))]
 		pub fn cancel_named(origin: OriginFor<T>, id: TaskName) -> DispatchResult {
 			T::ScheduleOrigin::ensure_origin(origin.clone())?;
@@ -722,6 +726,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Same as [`schedule`].
 		/// # </weight>
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::schedule(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule_after(
 			origin: OriginFor<T>,
@@ -755,6 +760,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Same as [`schedule_named`](Self::schedule_named).
 		/// # </weight>
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::schedule_named(T::MaxScheduledPerBlock::get()))]
 		pub fn schedule_named_after(
 			origin: OriginFor<T>,
@@ -785,6 +791,7 @@ pub mod pallet {
 		/// Change a named task's priority.
 		///
 		/// Only the `T::PrioritySetOrigin` is allowed to change the task's priority.
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::change_named_priority(T::MaxScheduledPerBlock::get()))]
 		pub fn change_named_priority(
 			origin: OriginFor<T>,

@@ -6,13 +6,15 @@ import * as crypto from 'crypto';
 import {IKeyringPair} from '@polkadot/types/types/interfaces';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import chaiSubset from 'chai-subset';
 import {Context} from 'mocha';
 import config from '../config';
 import {ChainHelperBase} from './playgrounds/unique';
 import {ILogger} from './playgrounds/types';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper} from './playgrounds/unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper} from './playgrounds/unique.dev';
 
 chai.use(chaiAsPromised);
+chai.use(chaiSubset);
 export const expect = chai.expect;
 
 const getTestHash = (filename: string) => {
@@ -61,6 +63,14 @@ export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (se
 
 export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
+};
+
+export const usingStateminePlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
+};
+
+export const usingStatemintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
 };
 
 export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
