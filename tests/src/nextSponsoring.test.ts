@@ -39,7 +39,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
 
     // Check with Disabled sponsoring state
     expect(await token.getNextSponsored({Substrate: alice.address})).to.be.null;
-    
+
     // Check with Unconfirmed sponsoring state
     await collection.setSponsor(alice, bob.address);
     expect(await token.getNextSponsored({Substrate: alice.address})).to.be.null;
@@ -52,7 +52,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
     await token.transfer(alice, {Substrate: bob.address});
     expect(await token.getNextSponsored({Substrate: alice.address})).to.be.lessThanOrEqual(SPONSORING_TIMEOUT);
 
-    // Non-existing token 
+    // Non-existing token
     expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.null;
   });
 
@@ -65,7 +65,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
 
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
-    
+
     // Check with Confirmed sponsoring state
     expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.equal(0);
 
@@ -91,7 +91,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
     await token.transfer(alice, {Substrate: bob.address});
     expect(await token.getNextSponsored({Substrate: alice.address})).to.be.lessThanOrEqual(SPONSORING_TIMEOUT);
 
-    // Non-existing token 
+    // Non-existing token
     expect(await collection.getTokenNextSponsored(0, {Substrate: alice.address})).to.be.null;
   });
 });

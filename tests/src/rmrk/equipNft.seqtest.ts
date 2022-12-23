@@ -122,7 +122,7 @@ async function checkEquipStatus(
 describe.skip('integration test: Equip NFT', () => {
 
   let api: any;
-  
+
   before(async function () {
     api = await getApiConnection();
     await requirePallets(this, [Pallets.RmrkCore, Pallets.RmrkEquip]);

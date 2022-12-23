@@ -109,7 +109,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', () => 
     const txCreateMultipleItems = helper.getApi().tx.unique.createMultipleItems(uniqueCollectionId, normalizedAlice, [{NFT: {}}, {NFT: {}}]);
     await expect(executeTransaction(helper.getApi(), alice, txCreateMultipleItems), 'creating multiple')
       .to.be.rejectedWith(/common\.CollectionIsExternal/);
-  
+
     await expect(helper.nft.mintMultipleTokens(alice, uniqueCollectionId, [{owner: {Substrate: alice.address}}]), 'creating multiple ex')
       .to.be.rejectedWith(/common\.CollectionIsExternal/);
 
@@ -181,7 +181,7 @@ describe('Negative Integration Test: External Collections, Internal Ops', () => 
 
     await expect(helper.nft.removeSponsor(alice, uniqueCollectionId), 'removing sponsor')
       .to.be.rejectedWith(/common\.CollectionIsExternal/);
-    
+
     // Limits / permissions / transfers
 
     const txSetTransfers = helper.getApi().tx.unique.setTransfersEnabledFlag(uniqueCollectionId, true);

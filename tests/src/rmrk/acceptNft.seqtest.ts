@@ -15,11 +15,11 @@ describe('integration test: accept NFT', () => {
     api = await getApiConnection();
     await requirePallets(this, [Pallets.RmrkCore]);
   });
-  
-  
+
+
   const alice = '//Alice';
   const bob = '//Bob';
-  
+
   const createTestCollection = async (issuerUri: string) => {
     return await createCollection(
       api,

@@ -204,8 +204,8 @@ describe('Fungible: Plain calls', () => {
     // 2. Zero transfer allowed (EIP-20):
     await collectionEvm.methods.transfer(receiver, 0n).send({from: sender});
   });
-  
-  
+
+
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);

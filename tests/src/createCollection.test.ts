@@ -127,7 +127,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
     const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'A'.repeat(17)});
     await expect(mintCollectionTx()).to.be.rejectedWith('Verification Error');
   });
-  
+
   itSub('(!negative test!) fails when bad limits are set', async ({helper}) => {
     const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', limits: {tokenLimit: 0}});
     await expect(mintCollectionTx()).to.be.rejectedWith(/common\.CollectionTokenLimitExceeded/);

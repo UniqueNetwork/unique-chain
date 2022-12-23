@@ -30,7 +30,7 @@ describe('Matcher contract usage', () => {
   before(async () => {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-    }); 
+    });
   });
 
   beforeEach(async () => {
@@ -58,7 +58,7 @@ describe('Matcher contract usage', () => {
     const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
-    
+
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
@@ -117,7 +117,7 @@ describe('Matcher contract usage', () => {
     const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
-    
+
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
@@ -186,7 +186,7 @@ describe('Matcher contract usage', () => {
     const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
 
     await helper.balance.transferToSubstrate(donor, seller.address, 100_000_000_000_000_000_000n);
-    
+
     const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
     // Token is owned by seller initially

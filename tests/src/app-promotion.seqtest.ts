@@ -50,31 +50,31 @@ describe('App promotion', () => {
       await expect(helper.signTransaction(nonAdmin, api.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address}))).to.be.rejected;
       await expect(helper.signTransaction(nonAdmin, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: nonAdmin.address})))).to.be.rejected;
     });
-    
+
     itSub('can be any valid CrossAccountId', async ({helper}) => {
       // We are not going to set an eth address as a sponsor,
       // but we do want to check, it doesn't break anything;
       const api = helper.getApi();
       const [account] = await helper.arrange.createAccounts([10n], donor);
-      const ethAccount = helper.address.substrateToEth(account.address); 
+      const ethAccount = helper.address.substrateToEth(account.address);
       // Alice sets Ethereum address as a sudo. Then Substrate address back...
       await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Ethereum: ethAccount})))).to.be.fulfilled;
       await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})))).to.be.fulfilled;
-        
+
       // ...It doesn't break anything;
       const collection = await helper.nft.mintCollection(account, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       await expect(helper.signTransaction(account, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.rejected;
     });
-  
+
     itSub('can be reassigned', async ({helper}) => {
       const api = helper.getApi();
       const [oldAdmin, newAdmin, collectionOwner] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
-        
+
       await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: oldAdmin.address})))).to.be.fulfilled;
       await expect(helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: newAdmin.address})))).to.be.fulfilled;
       await expect(helper.signTransaction(oldAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.rejected;
-        
+
       await expect(helper.signTransaction(newAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.fulfilled;
     });
   });

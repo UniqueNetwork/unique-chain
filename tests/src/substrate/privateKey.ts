@@ -17,7 +17,7 @@
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 
-// WARNING: the WASM interface must be initialized before this function is called. 
+// WARNING: the WASM interface must be initialized before this function is called.
 // Use either `usingApi`, or `cryptoWaitReady` for consistency.
 export default function privateKey(account: string, ss58Format?: number): IKeyringPair {
   const keyring = new Keyring({ss58Format, type: 'sr25519'});

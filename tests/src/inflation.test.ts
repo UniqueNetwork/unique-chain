@@ -26,7 +26,7 @@ describe('integration test: Inflation', () => {
       superuser = await privateKey('//Alice');
     });
   });
-  
+
   itSub('First year inflation is 10%', async ({helper}) => {
     // Make sure non-sudo can't start inflation
     const [bob] = await helper.arrange.createAccounts([10n], superuser);

@@ -30,7 +30,7 @@ describe('evm collection sponsoring', () => {
       nominal = helper.balance.getOneTokenNominal();
     });
   });
-  
+
   itEth('sponsors mint transactions', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {tokenPrefix: 'spnr', permissions: {mintMode: true}});
     await collection.setSponsor(alice, alice.address);

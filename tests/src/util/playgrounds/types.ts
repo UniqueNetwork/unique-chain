@@ -26,7 +26,7 @@ export interface ITransactionResult {
 export interface ISubscribeBlockEventsData {
   number: number;
   hash: string;
-  timestamp: number; 
+  timestamp: number;
   events: IEvent[];
 }
 
@@ -56,7 +56,7 @@ export interface IApiListeners {
   connected?: (...args: any[]) => any;
   disconnected?: (...args: any[]) => any;
   error?: (...args: any[]) => any;
-  ready?: (...args: any[]) => any; 
+  ready?: (...args: any[]) => any;
   decorated?: (...args: any[]) => any;
 }
 

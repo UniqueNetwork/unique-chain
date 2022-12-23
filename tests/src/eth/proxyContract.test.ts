@@ -31,11 +31,11 @@ describe('EVM payable contracts', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const proxyContract = await deployProxyContract(helper, deployer);
-    
+
     const realContractV1 = await deployRealContractV1(helper, deployer);
     const realContractV1proxy = new helper.web3!.eth.Contract(realContractV1.options.jsonInterface, proxyContract.options.address, {from: caller, gas: helper.eth.DEFAULT_GAS});
     await proxyContract.methods.updateVersion(realContractV1.options.address).send();
-    
+
     await realContractV1proxy.methods.flip().send();
     await realContractV1proxy.methods.flip().send();
     await realContractV1proxy.methods.flip().send();
