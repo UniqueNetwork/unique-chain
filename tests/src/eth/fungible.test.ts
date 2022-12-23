@@ -108,7 +108,7 @@ describe('Fungible: Plain calls', () => {
     await collection.addAdmin(alice, {Ethereum: owner});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
     await contract.methods.mint(receiver, 100).send();
 
     const result = await contract.methods.burnFrom(receiver, 49).send({from: receiver});

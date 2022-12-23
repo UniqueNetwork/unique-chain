@@ -42,7 +42,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Set self sponsored events', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     const result = await helpers.methods.selfSponsoredEnable(flipper.options.address).send();
     const ethEvents = helper.eth.helper.eth.normalizeEvents(result.events);
@@ -112,7 +112,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Set sponsor event', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     const result = await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
@@ -155,7 +155,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Confirm sponsorship event', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await expect(helpers.methods.setSponsor(flipper.options.address, sponsor).send()).to.be.not.rejected;
@@ -199,7 +199,7 @@ describe('Sponsoring EVM contracts', () => {
 
   itEth('Get self sponsored sponsor', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.selfSponsoredEnable(flipper.options.address).send();
@@ -213,7 +213,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Get confirmed sponsor', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
@@ -228,7 +228,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Sponsor can be removed by the address that deployed the contract', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
@@ -258,7 +258,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Remove sponsor event', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
@@ -349,7 +349,7 @@ describe('Sponsoring EVM contracts', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const caller = helper.eth.createAccount();
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
@@ -375,7 +375,7 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Sponsoring is set, an address that has no UNQ can send a transaction and it works. Sponsor balance should not decrease (non-allowlisted)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccount();
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
@@ -399,7 +399,7 @@ describe('Sponsoring EVM contracts', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(owner);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
     await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});

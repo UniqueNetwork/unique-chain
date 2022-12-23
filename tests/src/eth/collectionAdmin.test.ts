@@ -39,7 +39,7 @@ describe('Add collection admins', () => {
   itEth('Add admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const newAdmin = helper.eth.createAccount();
 
@@ -52,7 +52,7 @@ describe('Add collection admins', () => {
   itEth.skip('Add substrate admin by owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
@@ -67,7 +67,7 @@ describe('Add collection admins', () => {
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const newAdmin = helper.eth.createAccount();
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.false;
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
     expect(await collectionEvm.methods.isOwnerOrAdmin(newAdmin).call()).to.be.true;
@@ -78,7 +78,7 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const admin = await helper.eth.createAccountWithBalance(donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
 
     const user = helper.eth.createAccount();
@@ -96,7 +96,7 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const notAdmin = await helper.eth.createAccountWithBalance(donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const user = helper.eth.createAccount();
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: notAdmin}))
@@ -111,7 +111,7 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const admin = await helper.eth.createAccountWithBalance(donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
 
     const [notAdmin] = await helper.arrange.createAccounts([10n], donor);
@@ -153,7 +153,7 @@ describe('Remove collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const newAdmin = helper.eth.createAccount();
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdmin(newAdmin).send();
 
     {
@@ -173,7 +173,7 @@ describe('Remove collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [newAdmin] = await helper.arrange.createAccounts([10n], donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(newAdmin.addressRaw).send();
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -190,7 +190,7 @@ describe('Remove collection admins', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const admin0 = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(admin0).send();
@@ -212,7 +212,7 @@ describe('Remove collection admins', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const admin = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(admin).send();
@@ -233,7 +233,7 @@ describe('Remove collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [adminSub] = await helper.arrange.createAccounts([10n], donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
     const adminEth = await helper.eth.createAccountWithBalance(donor);
     await collectionEvm.methods.addCollectionAdmin(adminEth).send();
@@ -253,7 +253,7 @@ describe('Remove collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const [adminSub] = await helper.arrange.createAccounts([10n], donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await collectionEvm.methods.addCollectionAdminSubstrate(adminSub.addressRaw).send();
     const notAdminEth = await helper.eth.createAccountWithBalance(donor);
 
@@ -280,7 +280,7 @@ describe('Change owner tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await collectionEvm.methods.changeCollectionOwner(newOwner).send();
 
@@ -292,7 +292,7 @@ describe('Change owner tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const cost = await recordEthFee(helper, owner, () => collectionEvm.methods.changeCollectionOwner(newOwner).send());
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);
@@ -302,7 +302,7 @@ describe('Change owner tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const newOwner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await expect(collectionEvm.methods.changeCollectionOwner(newOwner).send({from: newOwner})).to.be.rejected;
     expect(await collectionEvm.methods.isOwnerOrAdmin(newOwner).call()).to.be.false;
@@ -322,7 +322,7 @@ describe('Change substrate owner tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     expect(await collectionEvm.methods.isOwnerOrAdmin(owner).call()).to.be.true;
     expect(await collectionEvm.methods.isOwnerOrAdminSubstrate(newOwner.addressRaw).call()).to.be.false;

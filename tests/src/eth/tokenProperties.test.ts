@@ -35,7 +35,7 @@ describe('EVM token properties', () => {
       await collection.addAdmin(alice, {Ethereum: caller});
 
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-      const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+      const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
       await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
 
@@ -61,7 +61,7 @@ describe('EVM token properties', () => {
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     await contract.methods.setProperty(token.tokenId, 'testKey', Buffer.from('testValue')).send({from: caller});
 
@@ -87,7 +87,7 @@ describe('EVM token properties', () => {
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     await contract.methods.deleteProperty(token.tokenId, 'testKey').send({from: caller});
 

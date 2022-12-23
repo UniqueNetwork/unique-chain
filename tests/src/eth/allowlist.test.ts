@@ -79,7 +79,7 @@ describe('EVM collection allowlist', () => {
     const user = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
@@ -95,7 +95,7 @@ describe('EVM collection allowlist', () => {
   //   const user = donor;
 
   //   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+  //   const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
   //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
   //   await collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).send({from: owner});
@@ -111,7 +111,7 @@ describe('EVM collection allowlist', () => {
     const user = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     expect(await collectionEvm.methods.allowed(user).call({from: owner})).to.be.false;
     await expect(collectionEvm.methods.addToCollectionAllowList(user).call({from: notOwner})).to.be.rejectedWith('NoPermission');
@@ -130,7 +130,7 @@ describe('EVM collection allowlist', () => {
   //   const user = donor;
 
   //   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-  //   const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+  //   const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
   //   expect(await helper.collection.allowed(collectionId, {Substrate: user.address})).to.be.false;
   //   await expect(collectionEvm.methods.addToCollectionAllowListSubstrate(user.addressRaw).call({from: notOwner})).to.be.rejectedWith('NoPermission');

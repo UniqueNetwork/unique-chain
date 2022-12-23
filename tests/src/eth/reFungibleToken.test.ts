@@ -167,7 +167,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await contract.methods.approve(spender, 100).send();
 
@@ -204,7 +204,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     {
       const result = await contract.methods.transfer(receiver, 50).send({from: owner});
