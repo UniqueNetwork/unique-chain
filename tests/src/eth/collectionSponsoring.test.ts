@@ -40,7 +40,7 @@ describe('evm collection sponsoring', () => {
     expect(await helper.balance.getEthereum(minter)).to.equal(0n);
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', minter);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', minter);
 
     await collection.addToAllowList(alice, {Ethereum: minter});
 

@@ -38,7 +38,7 @@ describe('Refungible token: Information getting', () => {
     const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
 
-    const contract = helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
+    const contract = await helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
     const totalSupply = await contract.methods.totalSupply().call();
     expect(totalSupply).to.equal('200');
   });
@@ -48,7 +48,7 @@ describe('Refungible token: Information getting', () => {
     const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
 
-    const contract = helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
+    const contract = await helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
     const balance = await contract.methods.balanceOf(caller).call();
     expect(balance).to.equal('200');
   });
@@ -58,7 +58,7 @@ describe('Refungible token: Information getting', () => {
     const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
 
-    const contract = helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
+    const contract = await helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
     const decimals = await contract.methods.decimals().call();
     expect(decimals).to.equal('0');
   });
@@ -81,7 +81,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
     const receiver = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     const result = await contract.methods.mint(receiver).send();
 
@@ -142,7 +142,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     {
       const result = await contract.methods.approve(spender, 100).send({from: owner});
@@ -220,6 +220,7 @@ describe('Refungible: Plain calls', () => {
       expect(+balance).to.equal(150);
     }
 
+
     {
       const balance = await contract.methods.balanceOf(receiver).call();
       expect(+balance).to.equal(50);
@@ -237,14 +238,14 @@ describe('Refungible: Plain calls', () => {
       const rftOwner = await collection.mintToken(alice, 10n, {Ethereum: owner});
       const rftReceiver = await collection.mintToken(alice, 10n, {Ethereum: receiver});
       const tokenIdNonExist = 9999999;
-  
+
       const tokenAddress1 = helper.ethAddress.fromTokenId(collection.collectionId, rftOwner.tokenId);
       const tokenAddress2 = helper.ethAddress.fromTokenId(collection.collectionId, rftReceiver.tokenId);
       const tokenAddressNonExist = helper.ethAddress.fromTokenId(collection.collectionId, tokenIdNonExist);
-      const tokenEvmOwner = helper.ethNativeContract.rftToken(tokenAddress1, owner);
-      const tokenEvmReceiver = helper.ethNativeContract.rftToken(tokenAddress2, owner);
-      const tokenEvmNonExist = helper.ethNativeContract.rftToken(tokenAddressNonExist, owner);
-      
+      const tokenEvmOwner = await helper.ethNativeContract.rftToken(tokenAddress1, owner);
+      const tokenEvmReceiver = await helper.ethNativeContract.rftToken(tokenAddress2, owner);
+      const tokenEvmNonExist = await helper.ethNativeContract.rftToken(tokenAddressNonExist, owner);
+
       // 1. Can transfer zero amount (EIP-20):
       await tokenEvmOwner.methods[testCase](receiver, 0).send({from: owner});
       // 2. Cannot transfer non-owned token:
@@ -273,7 +274,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await contract.methods.repartition(200).send({from: owner});
     expect(+await contract.methods.balanceOf(owner).call()).to.be.equal(200);
@@ -298,7 +299,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const result = await contract.methods.repartition(200).send();
 
@@ -315,7 +316,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const result = await contract.methods.repartition(50).send();
     const event = result.events.Transfer;
@@ -329,12 +330,12 @@ describe('Refungible: Plain calls', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Devastation', '6', '6');
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     const result = await contract.methods.mint(caller).send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
     const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
-    const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, caller);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
@@ -374,7 +375,7 @@ describe('Refungible: Fees', () => {
     const {tokenId} = await collection.mintToken(alice, 100n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const cost = await helper.eth.recordCallFee(owner, () => contract.methods.approve(spender, 100).send({from: owner}));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
@@ -387,7 +388,7 @@ describe('Refungible: Fees', () => {
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await contract.methods.approve(spender, 100).send({from: owner});
 
@@ -402,7 +403,7 @@ describe('Refungible: Fees', () => {
     const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner});
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const cost = await helper.eth.recordCallFee(owner, () => contract.methods.transfer(receiver, 100).send({from: owner}));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
@@ -428,7 +429,7 @@ describe('Refungible: Substrate calls', () => {
     const token = await collection.mintToken(alice, 200n);
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress);
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -454,7 +455,7 @@ describe('Refungible: Substrate calls', () => {
     await token.approve(alice, {Substrate: bob.address}, 100n);
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress);
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -485,7 +486,7 @@ describe('Refungible: Substrate calls', () => {
     const token = await collection.mintToken(alice, 200n);
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
-    const contract = helper.ethNativeContract.rftToken(tokenAddress);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress);
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -519,13 +520,13 @@ describe('ERC 1633 implementation', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sands', '', 'GRAIN');
-    const collectionContract = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const collectionContract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     const result = await collectionContract.methods.mint(owner).send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
 
     const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
-    const tokenContract = helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     expect(await tokenContract.methods.parentToken().call()).to.be.equal(collectionAddress);
     expect(await tokenContract.methods.parentTokenId().call()).to.be.equal(tokenId);

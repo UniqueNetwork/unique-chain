@@ -128,7 +128,7 @@ describe('Integration Test: Maintenance Mode', () => {
     // Unable to mint an RFT when the MM is enabled
     await expect(rftCollection.mintToken(superuser))
       .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
-    
+
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
     expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
 
@@ -187,7 +187,7 @@ describe('Integration Test: Maintenance Mode', () => {
     // Schedule a transaction that should occur *during* the maintenance
     await nftDuringMM.scheduleAfter(scheduledIdDuringMM, blocksToWait)
       .transfer(bob, {Substrate: superuser.address});
-    
+
     // Schedule a transaction that should occur *after* the maintenance
     await nftDuringMM.scheduleAfter(scheduledIdBunkerThroughMM, blocksToWait * 2)
       .transfer(bob, {Substrate: superuser.address});
@@ -210,7 +210,7 @@ describe('Integration Test: Maintenance Mode', () => {
     // Scheduling works after the maintenance
     await nftAfterMM.scheduleAfter(scheduledIdAfterMM, blocksToWait)
       .transfer(bob, {Substrate: superuser.address});
-    
+
     await helper.wait.newBlocks(blocksToWait + 1);
 
     expect(await nftAfterMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
@@ -221,14 +221,14 @@ describe('Integration Test: Maintenance Mode', () => {
   itEth('Disallows Ethereum transactions to execute while in maintenance', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
-    
+
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'A', 'B', 'C', '');
 
     // Set maintenance mode
     await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.enable', []);
     expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
 
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const tokenId = await contract.methods.nextTokenId().call();
     expect(tokenId).to.be.equal('1');
 

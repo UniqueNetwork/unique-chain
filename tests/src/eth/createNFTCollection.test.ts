@@ -61,7 +61,7 @@ describe('Create NFT collection from EVM', () => {
 
     const collection = helper.nft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
-    
+
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
@@ -163,12 +163,14 @@ describe('Create NFT collection from EVM', () => {
   itEth('Collection address exist', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
-    expect(await helper.ethNativeContract.collectionHelpers(collectionAddressForNonexistentCollection)
+    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
+
+    expect(await collectionHelpers
       .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
       .to.be.false;
     
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Exister', 'absolutely anything', 'EVC');
-    expect(await helper.ethNativeContract.collectionHelpers(collectionAddress)
+    expect(await collectionHelpers
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
   });
@@ -187,7 +189,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
     {
       const MAX_NAME_LENGTH = 64;
       const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
@@ -221,7 +223,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
   
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
     await expect(collectionHelper.methods
       .createNFTCollection('Peasantry', 'absolutely anything', 'CVE')
       .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
@@ -231,7 +233,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const malfeasant = helper.eth.createAccount();
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Transgressed', 'absolutely anything', 'COR');
-    const malfeasantCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant);
+    const malfeasantCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant);
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
@@ -260,3 +262,4 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');
   });
 });
+

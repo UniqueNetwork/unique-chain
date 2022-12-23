@@ -66,7 +66,7 @@ describe('EVM collection properties', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'test', tokenPrefix: 'test', properties: [{key: 'testKey', value: 'testValue'}]});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const value = await contract.methods.collectionProperty('testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));

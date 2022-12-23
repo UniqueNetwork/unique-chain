@@ -105,12 +105,12 @@ describe('EVM token properties', () => {
         },
       }],
     });
-  
+
     const token = await collection.mintToken(alice);
     await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const value = await contract.methods.property(token.tokenId, 'testKey').call();
     expect(value).to.equal(helper.getWeb3().utils.toHex('testValue'));

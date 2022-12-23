@@ -36,7 +36,7 @@ describe('NFT: Information getting', () => {
 
     const caller = await helper.eth.createAccountWithBalance(donor);
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const totalSupply = await contract.methods.totalSupply().call();
 
     expect(totalSupply).to.equal('1');
@@ -50,7 +50,7 @@ describe('NFT: Information getting', () => {
     await collection.mintToken(alice, {Ethereum: caller});
     await collection.mintToken(alice, {Ethereum: caller});
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const balance = await contract.methods.balanceOf(caller).call();
 
     expect(balance).to.equal('3');
@@ -62,7 +62,7 @@ describe('NFT: Information getting', () => {
 
     const token = await collection.mintToken(alice, {Ethereum: caller});
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
 
     const owner = await contract.methods.ownerOf(token.tokenId).call();
 
@@ -73,7 +73,7 @@ describe('NFT: Information getting', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', tokenPrefix: 'TEST'});
     const caller = helper.eth.createAccount();
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
 
     expect(await contract.methods.name().call()).to.equal('test');
     expect(await contract.methods.symbol().call()).to.equal('TEST');
@@ -94,7 +94,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const receiver = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const result = await contract.methods.mint(receiver).send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
@@ -153,7 +153,7 @@ describe('NFT: Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', '6', '6', '');
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
@@ -181,7 +181,7 @@ describe('NFT: Plain calls', () => {
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     {
       const bulkSize = 3;
       const nextTokenId = await contract.methods.nextTokenId().call();
@@ -213,7 +213,7 @@ describe('NFT: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
 
     {
       const result = await contract.methods.burn(tokenId).send({from: caller});
@@ -234,7 +234,7 @@ describe('NFT: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
       const result = await contract.methods.approve(spender, tokenId).send({from: owner});
@@ -256,7 +256,7 @@ describe('NFT: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await contract.methods.approve(spender, tokenId).send({from: owner});
 
@@ -289,7 +289,7 @@ describe('NFT: Plain calls', () => {
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
       const result = await contract.methods.transfer(receiver, tokenId).send({from: owner});
@@ -319,7 +319,7 @@ describe('NFT: Plain calls', () => {
 
     const collection = await helper.nft.mintCollection(minter, {});
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', sender);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', sender);
 
     await collection.mintToken(minter, {Ethereum: sender});
     const nonSendersToken = await collection.mintToken(minter, {Ethereum: tokenOwner});
@@ -350,7 +350,7 @@ describe('NFT: Fees', () => {
     const collection = await helper.nft.mintCollection(alice, {});
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
     const cost = await helper.eth.recordCallFee(owner, () => contract.methods.approve(spender, tokenId).send({from: owner}));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
@@ -363,7 +363,7 @@ describe('NFT: Fees', () => {
     const collection = await helper.nft.mintCollection(alice, {});
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
     await contract.methods.approve(spender, tokenId).send({from: owner});
 
@@ -378,7 +378,7 @@ describe('NFT: Fees', () => {
     const collection = await helper.nft.mintCollection(alice, {});
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
     const cost = await helper.eth.recordCallFee(owner, () => contract.methods.transfer(receiver, tokenId).send({from: owner}));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
@@ -399,7 +399,7 @@ describe('NFT: Substrate calls', () => {
   itEth('Events emitted for mint()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -422,7 +422,7 @@ describe('NFT: Substrate calls', () => {
     const token = await collection.mintToken(alice);
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -447,7 +447,7 @@ describe('NFT: Substrate calls', () => {
     const token = await collection.mintToken(alice);
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -474,7 +474,7 @@ describe('NFT: Substrate calls', () => {
     await token.approve(alice, {Substrate: bob.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -499,7 +499,7 @@ describe('NFT: Substrate calls', () => {
     const token = await collection.mintToken(alice);
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const events: any = [];
     contract.events.allEvents((_: any, event: any) => {
@@ -549,7 +549,7 @@ describe('Common metadata', () => {
       },
     );
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const name = await contract.methods.name().call();
     expect(name).to.equal('oh River');
   });
@@ -574,7 +574,7 @@ describe('Common metadata', () => {
       },
     );
 
-    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
+    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
     const symbol = await contract.methods.symbol().call();
     expect(symbol).to.equal('CHANGE');
   });

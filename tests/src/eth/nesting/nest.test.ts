@@ -9,7 +9,7 @@ const createNestingCollection = async (
 ): Promise<{ collectionId: number, collectionAddress: string, contract: Contract }> => {
   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-  const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+  const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
   await contract.methods.setCollectionNesting(true).send({from: owner});
 
   return {collectionId, collectionAddress, contract};

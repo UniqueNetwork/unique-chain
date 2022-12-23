@@ -117,7 +117,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const token = await collection.mintToken(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
 
@@ -136,7 +136,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const token = await collection.mintToken(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const transferPrice = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS}));
 
@@ -156,7 +156,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const token = await collection.mintToken(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
 
