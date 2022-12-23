@@ -196,12 +196,6 @@ pub mod types {
 			self.len() == 0
 		}
 	}
-
-	#[derive(Debug, Default)]
-	pub struct Property {
-		pub key: string,
-		pub value: bytes,
-	}
 }
 
 /// Parseable EVM call, this trait should be implemented with [`solidity_interface`] macro

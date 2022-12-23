@@ -1,17 +1,6 @@
 use super::TypeCollector;
 use core::fmt;
 
-pub trait StructCollect: 'static {
-	/// Structure name.
-	fn name() -> String;
-	/// Structure declaration.
-	fn declaration() -> String;
-}
-
-pub trait SolidityEnum: 'static {
-	fn solidity_option(&self) -> &str;
-}
-
 pub trait SolidityTypeName: 'static {
 	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
 	/// "simple" types are stored inline, no `memory` modifier should be used in solidity
@@ -23,9 +12,16 @@ pub trait SolidityTypeName: 'static {
 	}
 }
 
-pub trait SolidityType {
-	fn names(tc: &TypeCollector) -> Vec<String>;
+pub trait SolidityTupleTy: 'static {
+	fn fields(tc: &TypeCollector) -> Vec<String>;
 	fn len() -> usize;
+}
+pub trait SolidityStructTy: 'static {
+	fn generate_solidity_interface(tc: &TypeCollector) -> String;
+}
+pub trait SolidityEnumTy: 'static {
+	fn generate_solidity_interface(tc: &TypeCollector) -> String;
+	fn solidity_option(&self) -> &str;
 }
 
 pub trait SolidityArguments {
@@ -45,4 +41,10 @@ pub trait SolidityFunctions {
 		writer: &mut impl fmt::Write,
 		tc: &TypeCollector,
 	) -> fmt::Result;
+}
+
+pub trait SolidityItems {
+	fn solidity_name(&self, writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result;
+	// For PhantomData fields
+	// fn is_void()
 }

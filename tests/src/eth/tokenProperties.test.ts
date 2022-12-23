@@ -20,7 +20,7 @@ import {itEth, usingEthPlaygrounds, expect} from './util';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 import {Pallets} from '../util';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
-import {EthTokenPermissions} from './util/playgrounds/types';
+import {TokenPermissionField} from './util/playgrounds/types';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
@@ -47,9 +47,9 @@ describe('EVM token properties', () => {
 
         await collection.methods.setTokenPropertyPermissions([
           ['testKey', [
-            [EthTokenPermissions.Mutable, mutable],
-            [EthTokenPermissions.TokenOwner, tokenOwner],
-            [EthTokenPermissions.CollectionAdmin, collectionAdmin]],
+            [TokenPermissionField.Mutable, mutable],
+            [TokenPermissionField.TokenOwner, tokenOwner],
+            [TokenPermissionField.CollectionAdmin, collectionAdmin]],
           ],
         ]).send({from: caller.eth});
 
@@ -60,9 +60,9 @@ describe('EVM token properties', () => {
 
         expect(await collection.methods.tokenPropertyPermissions().call({from: caller.eth})).to.be.like([
           ['testKey', [
-            [EthTokenPermissions.Mutable.toString(), mutable],
-            [EthTokenPermissions.TokenOwner.toString(), tokenOwner],
-            [EthTokenPermissions.CollectionAdmin.toString(), collectionAdmin]],
+            [TokenPermissionField.Mutable.toString(), mutable],
+            [TokenPermissionField.TokenOwner.toString(), tokenOwner],
+            [TokenPermissionField.CollectionAdmin.toString(), collectionAdmin]],
           ],
         ]);
       }
@@ -80,19 +80,19 @@ describe('EVM token properties', () => {
 
       await collection.methods.setTokenPropertyPermissions([
         ['testKey_0', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
         ['testKey_1', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, false],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, false],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
         ['testKey_2', [
-          [EthTokenPermissions.Mutable, false],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, false]],
+          [TokenPermissionField.Mutable, false],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, false]],
         ],
       ]).send({from: owner});
 
@@ -113,19 +113,19 @@ describe('EVM token properties', () => {
 
       expect(await collection.methods.tokenPropertyPermissions().call({from: owner})).to.be.like([
         ['testKey_0', [
-          [EthTokenPermissions.Mutable.toString(), true],
-          [EthTokenPermissions.TokenOwner.toString(), true],
-          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+          [TokenPermissionField.Mutable.toString(), true],
+          [TokenPermissionField.TokenOwner.toString(), true],
+          [TokenPermissionField.CollectionAdmin.toString(), true]],
         ],
         ['testKey_1', [
-          [EthTokenPermissions.Mutable.toString(), true],
-          [EthTokenPermissions.TokenOwner.toString(), false],
-          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+          [TokenPermissionField.Mutable.toString(), true],
+          [TokenPermissionField.TokenOwner.toString(), false],
+          [TokenPermissionField.CollectionAdmin.toString(), true]],
         ],
         ['testKey_2', [
-          [EthTokenPermissions.Mutable.toString(), false],
-          [EthTokenPermissions.TokenOwner.toString(), true],
-          [EthTokenPermissions.CollectionAdmin.toString(), false]],
+          [TokenPermissionField.Mutable.toString(), false],
+          [TokenPermissionField.TokenOwner.toString(), true],
+          [TokenPermissionField.CollectionAdmin.toString(), false]],
         ],
       ]);
     }));
@@ -144,19 +144,19 @@ describe('EVM token properties', () => {
 
       await collection.methods.setTokenPropertyPermissions([
         ['testKey_0', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
         ['testKey_1', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, false],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, false],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
         ['testKey_2', [
-          [EthTokenPermissions.Mutable, false],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, false]],
+          [TokenPermissionField.Mutable, false],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, false]],
         ],
       ]).send({from: caller.eth});
 
@@ -177,19 +177,19 @@ describe('EVM token properties', () => {
 
       expect(await collection.methods.tokenPropertyPermissions().call({from: caller.eth})).to.be.like([
         ['testKey_0', [
-          [EthTokenPermissions.Mutable.toString(), true],
-          [EthTokenPermissions.TokenOwner.toString(), true],
-          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+          [TokenPermissionField.Mutable.toString(), true],
+          [TokenPermissionField.TokenOwner.toString(), true],
+          [TokenPermissionField.CollectionAdmin.toString(), true]],
         ],
         ['testKey_1', [
-          [EthTokenPermissions.Mutable.toString(), true],
-          [EthTokenPermissions.TokenOwner.toString(), false],
-          [EthTokenPermissions.CollectionAdmin.toString(), true]],
+          [TokenPermissionField.Mutable.toString(), true],
+          [TokenPermissionField.TokenOwner.toString(), false],
+          [TokenPermissionField.CollectionAdmin.toString(), true]],
         ],
         ['testKey_2', [
-          [EthTokenPermissions.Mutable.toString(), false],
-          [EthTokenPermissions.TokenOwner.toString(), true],
-          [EthTokenPermissions.CollectionAdmin.toString(), false]],
+          [TokenPermissionField.Mutable.toString(), false],
+          [TokenPermissionField.TokenOwner.toString(), true],
+          [TokenPermissionField.CollectionAdmin.toString(), false]],
         ],
       ]);
 
@@ -460,9 +460,9 @@ describe('EVM token properties negative', () => {
 
       await expect(collection.methods.setTokenPropertyPermissions([
         ['testKey_0', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
       ]).call({from: caller})).to.be.rejectedWith('NoPermission');
     }));
@@ -480,9 +480,9 @@ describe('EVM token properties negative', () => {
       await expect(collection.methods.setTokenPropertyPermissions([
         // "Space" is invalid character
         ['testKey 0', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
       ]).call({from: owner})).to.be.rejectedWith('InvalidCharacterInPropertyKey');
     }));
@@ -500,9 +500,9 @@ describe('EVM token properties negative', () => {
       // 1. Owner sets strict property-permissions:
       await collection.methods.setTokenPropertyPermissions([
         ['testKey', [
-          [EthTokenPermissions.Mutable, true],
-          [EthTokenPermissions.TokenOwner, true],
-          [EthTokenPermissions.CollectionAdmin, true]],
+          [TokenPermissionField.Mutable, true],
+          [TokenPermissionField.TokenOwner, true],
+          [TokenPermissionField.CollectionAdmin, true]],
         ],
       ]).send({from: owner});
 
@@ -510,9 +510,9 @@ describe('EVM token properties negative', () => {
       for(const values of [[true, true, false], [true, false, false], [false, false, false]]) {
         await collection.methods.setTokenPropertyPermissions([
           ['testKey', [
-            [EthTokenPermissions.Mutable, values[0]],
-            [EthTokenPermissions.TokenOwner, values[1]],
-            [EthTokenPermissions.CollectionAdmin, values[2]]],
+            [TokenPermissionField.Mutable, values[0]],
+            [TokenPermissionField.TokenOwner, values[1]],
+            [TokenPermissionField.CollectionAdmin, values[2]]],
           ],
         ]).send({from: owner});
       }
@@ -536,9 +536,9 @@ describe('EVM token properties negative', () => {
       // 1. Owner sets strict property-permissions:
       await collection.methods.setTokenPropertyPermissions([
         ['testKey', [
-          [EthTokenPermissions.Mutable, false],
-          [EthTokenPermissions.TokenOwner, false],
-          [EthTokenPermissions.CollectionAdmin, false]],
+          [TokenPermissionField.Mutable, false],
+          [TokenPermissionField.TokenOwner, false],
+          [TokenPermissionField.CollectionAdmin, false]],
         ],
       ]).send({from: owner});
 
@@ -546,9 +546,9 @@ describe('EVM token properties negative', () => {
       for(const values of [[true, false, false], [false, true, false], [false, false, true]]) {
         await expect(collection.methods.setTokenPropertyPermissions([
           ['testKey', [
-            [EthTokenPermissions.Mutable, values[0]],
-            [EthTokenPermissions.TokenOwner, values[1]],
-            [EthTokenPermissions.CollectionAdmin, values[2]]],
+            [TokenPermissionField.Mutable, values[0]],
+            [TokenPermissionField.TokenOwner, values[1]],
+            [TokenPermissionField.CollectionAdmin, values[2]]],
           ],
         ]).call({from: owner})).to.be.rejectedWith('NoPermission');
       }
