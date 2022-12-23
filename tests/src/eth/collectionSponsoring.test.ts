@@ -101,11 +101,13 @@ describe('evm collection sponsoring', () => {
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.true;
 
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
+      let sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
+      expect(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorTuple.sub))).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
 
       await collectionEvm.methods.removeCollectionSponsor().send({from: owner});
 
-      const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
+      sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
       expect(sponsorTuple.eth).to.be.eq('0x0000000000000000000000000000000000000000');
     }));
 

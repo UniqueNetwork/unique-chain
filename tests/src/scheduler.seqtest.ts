@@ -47,7 +47,7 @@ describe('Scheduling token and balance transfers', () => {
     const token = await collection.mintToken(alice);
     const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const blocksBeforeExecution = 4;
-    
+
     await token.scheduleAfter(blocksBeforeExecution, {scheduledId})
       .transfer(alice, {Substrate: bob.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + blocksBeforeExecution + 1;
@@ -156,7 +156,7 @@ describe('Scheduling token and balance transfers', () => {
     const maxScheduledPerBlock = 50;
     let fillScheduledIds = new Array(maxScheduledPerBlock);
     let extraScheduledId = undefined;
-    
+
     if (scheduleKind == 'named') {
       const scheduledIds = helper.arrange.makeScheduledIds(maxScheduledPerBlock + 1);
       fillScheduledIds = scheduledIds.slice(0, maxScheduledPerBlock);
@@ -641,7 +641,7 @@ describe('Negative Test: Scheduling', () => {
     const balanceBefore = await helper.balance.getSubstrate(bob.address);
 
     const scheduled = helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId, priority: 42});
-    
+
     await expect(scheduled.balance.transferToSubstrate(alice, bob.address, amount))
       .to.be.rejectedWith(/BadOrigin/);
 
