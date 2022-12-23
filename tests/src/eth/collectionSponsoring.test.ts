@@ -357,7 +357,7 @@ describe('evm RFT collection sponsoring', () => {
       const contract = helper.ethNativeContract.collection(collectionAddress, 'rft', minter, true);
 
       await collection.addToAllowList(alice, {Ethereum: minter});
-      helper.collection.addAdmin(alice, collection.collectionId, {Ethereum: owner});
+      await collection.addAdmin(alice, {Ethereum: owner});
       const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
       await collectionHelpers.methods.makeCollectionERC721MetadataCompatible(collectionAddress, 'base/')
         .send();
