@@ -18,8 +18,8 @@ import {
   getEquippableList,
   getNft,
   getParts,
-  getResources, 
-  getResourcePriority, 
+  getResources,
+  getResourcePriority,
   getTheme,
   NftIdTuple,
 } from './fetch';
@@ -283,7 +283,7 @@ export async function mintNft(
   }
 
   expect(nft.metadata.toUtf8()).to.be.equal(metadata, 'Error: Invalid NFT metadata');
-    
+
   const nftResources = await getResources(api, collectionId, nftId);
   if (resources == null) {
     expect(nftResources, 'Error: Invalid NFT resources').to.be.empty;
@@ -319,7 +319,7 @@ export async function mintNft(
                 } else if (resource.slot && Object.prototype.hasOwnProperty.call(nftResource, 'Slot')) {
                   typedResource = resource.slot!;
                   typedNftResource = nftResource['Slot' as NftResourceKey]! as any;
-                  if (typedResource.slot != typedNftResource.slot && typedResource.slot != undefined 
+                  if (typedResource.slot != typedNftResource.slot && typedResource.slot != undefined
                         || typedResource.base != typedNftResource.base && typedResource.base != undefined) {
                     continue;
                   }
@@ -327,8 +327,8 @@ export async function mintNft(
                   continue;
                 }
 
-                if (typedResource.src != typedNftResource.src 
-                    || typedResource.metadata != typedNftResource.metadata 
+                if (typedResource.src != typedNftResource.src
+                    || typedResource.metadata != typedNftResource.metadata
                     || typedResource.thumb != typedNftResource.thumb
                     || typedResource.license != typedNftResource.license
                 ) {

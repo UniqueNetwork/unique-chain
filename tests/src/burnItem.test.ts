@@ -185,7 +185,7 @@ describe('Negative integration test: ext. burnItem():', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Coll', description: 'Desc', tokenPrefix: 'T'});
     const tokenAlice = await collection.mintToken(alice, {Substrate: alice.address});
     const tokenBob = await collection.mintToken(alice, {Substrate: bob.address});
-    
+
     // 1. Zero burn of own tokens allowed:
     await helper.executeExtrinsic(alice, 'api.tx.unique.burnItem', [collection.collectionId, tokenAlice.tokenId, 0]);
     // 2. Zero burn of non-owned tokens not allowed:

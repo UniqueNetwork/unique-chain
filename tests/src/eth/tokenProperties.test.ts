@@ -33,12 +33,12 @@ describe('EVM token properties', () => {
     for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
       const collection = await helper.nft.mintCollection(alice);
       await collection.addAdmin(alice, {Ethereum: caller});
-      
+
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = helper.ethNativeContract.collection(address, 'nft', caller);
-  
+
       await contract.methods.setTokenPropertyPermission('testKey', mutable, collectionAdmin, tokenOwner).send({from: caller});
-  
+
       expect(await collection.getPropertyPermissions()).to.be.deep.equal([{
         key: 'testKey',
         permission: {mutable, collectionAdmin, tokenOwner},
@@ -80,7 +80,7 @@ describe('EVM token properties', () => {
         },
       }],
     });
-    
+
     const token = await collection.mintToken(alice);
     await token.setProperties(alice, [{key: 'testKey', value: 'testValue'}]);
 

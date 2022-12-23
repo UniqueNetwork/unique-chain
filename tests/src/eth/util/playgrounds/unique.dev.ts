@@ -158,7 +158,7 @@ class NativeContractGroup extends EthGroupBase {
   }
 
   async collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
-    let abi = {
+    const abi = {
       'nft': nonFungibleAbi,
       'rft': refungibleAbi,
       'ft': fungibleAbi,

@@ -538,7 +538,7 @@ describe('Negative Integration Test approve(spender, collection_id, item_id, amo
     const approveTx = () => helper.rft.approveToken(alice, collectionId, 1, {Substrate: bob.address});
     await expect(approveTx()).to.be.rejected;
   });
-  
+
   itSub('[nft] Approve transfer of a token that does not exist', async ({helper}) => {
     const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const approveTx = () => helper.nft.approveToken(alice, collectionId, 2, {Substrate: bob.address});

@@ -577,7 +577,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       const unqRandomAccountAsset = await helper.assets.account(assetId, randomAccountMoonbeam.address);
 
       expect(unqRandomAccountAsset).to.be.null;
-      
+
       balanceForeignUnqTokenFinal = 0n;
 
       const unqOutcomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenFinal;

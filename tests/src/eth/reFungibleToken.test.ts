@@ -230,7 +230,7 @@ describe('Refungible: Plain calls', () => {
   [
     'transfer',
     // 'transferCross', // TODO
-  ].map(testCase => 
+  ].map(testCase =>
     itEth(`Cannot ${testCase}() non-owned token`, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = await helper.eth.createAccountWithBalance(donor);

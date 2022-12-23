@@ -6,7 +6,7 @@ import {mintNft, createCollection} from './util/tx';
 
 describe('integration test: get owned NFTs', () => {
   let api: any;
-  
+
   before(async function () {
     api = await getApiConnection();
     await requirePallets(this, [Pallets.RmrkCore]);

@@ -234,7 +234,7 @@ describe('integration test: add NFT resource', () => {
       license,
       thumb,
     );
-  
+
     await expectTxFailure(/rmrkCore\.NoAvailableNftId/, tx);
   });
 
@@ -266,7 +266,7 @@ describe('integration test: add NFT resource', () => {
       license,
       thumb,
     );
-  
+
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
@@ -297,7 +297,7 @@ describe('integration test: add NFT resource', () => {
       license,
       thumb,
     );
-    
+
     await expectTxFailure(/rmrkCore\.NoPermission/, tx);
   });
 
@@ -412,7 +412,7 @@ describe('integration test: add NFT resource', () => {
       collectionIdBob,
       'nft-metadata',
     );
-    
+
     const resourceId = await addNftBasicResource(
       api,
       bob,

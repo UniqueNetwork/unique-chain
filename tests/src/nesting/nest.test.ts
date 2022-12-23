@@ -36,7 +36,7 @@ describe('Integration Test: Composite nesting tests', () => {
     const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
     expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
-    
+
     // Create a token to be nested
     const newToken = await collection.mintToken(alice);
 
@@ -66,7 +66,7 @@ describe('Integration Test: Composite nesting tests', () => {
     // Create a nested token
     const tokenC = await collection.mintToken(alice, tokenA.nestingAccount());
     expect(await tokenC.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
-    
+
     // Transfer the nested token to another token
     await expect(tokenC.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount())).to.be.fulfilled;
     expect(await tokenC.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
@@ -76,7 +76,7 @@ describe('Integration Test: Composite nesting tests', () => {
   itSub('Checks token children', async ({helper}) => {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.ft.mintCollection(alice);
-    
+
     const targetToken = await collectionA.mintToken(alice);
     expect((await targetToken.getChildren()).length).to.be.equal(0, 'Children length check at creation');
 
@@ -108,7 +108,7 @@ describe('Integration Test: Composite nesting tests', () => {
       {tokenId: 0, collectionId: collectionB.collectionId},
     ], 'Children contents check at nesting #4 (from another collection)')
       .and.be.length(2, 'Children length check at nesting #4 (from another collection)');
-    
+
     // Move part of the fungible token inside token A deeper in the nesting tree
     await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
     expect(await targetToken.getChildren()).to.be.have.deep.members([

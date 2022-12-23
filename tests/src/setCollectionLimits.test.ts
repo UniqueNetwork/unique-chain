@@ -75,7 +75,7 @@ describe('setCollectionLimits positive', () => {
     await collection.setLimits(alice, collectionLimits);
 
     const collectionInfo1 = await collection.getEffectiveLimits();
-      
+
     expect(collectionInfo1.tokenLimit).to.be.equal(tokenLimit);
 
     await collection.setLimits(alice, collectionLimits);
@@ -108,7 +108,7 @@ describe('setCollectionLimits negative', () => {
       [alice, bob] = await helper.arrange.createAccounts([20n, 10n], donor);
     });
   });
-  
+
   itSub('execute setCollectionLimits for not exists collection', async ({helper}) => {
     const nonExistentCollectionId = (1 << 32) - 1;
     await expect(helper.collection.setLimits(
@@ -180,7 +180,7 @@ describe('setCollectionLimits negative', () => {
 
   itSub('Setting the higher token limit fails', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionLimits-Neg-4', tokenPrefix: 'SCL'});
-      
+
     const collectionLimits = {
       accountTokenOwnershipLimit: accountTokenOwnershipLimit,
       sponsoredMintSize: sponsoredDataSize,
