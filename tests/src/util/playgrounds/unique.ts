@@ -38,7 +38,7 @@ export class CrossAccountId implements ICrossAccountId {
   static withNormalizedSubstrate(address: TSubstrateAccount, ss58Format = 42): CrossAccountId {
     return new CrossAccountId({Substrate: CrossAccountId.normalizeSubstrateAddress(address, ss58Format)});
   }
-  
+
   withNormalizedSubstrate(ss58Format = 42): CrossAccountId {
     if (this.Substrate) return CrossAccountId.withNormalizedSubstrate(this.Substrate, ss58Format);
     return this;
@@ -61,7 +61,7 @@ export class CrossAccountId implements ICrossAccountId {
     if (this.Ethereum) return new CrossAccountId({Substrate: CrossAccountId.translateEthToSub(this.Ethereum, ss58Format)});
     return this;
   }
-  
+
   toLowerCase(): CrossAccountId {
     if (this.Substrate) this.Substrate = this.Substrate.toLowerCase();
     if (this.Ethereum) this.Ethereum = this.Ethereum.toLowerCase();
@@ -161,7 +161,7 @@ class UniqueUtil {
   }
 
   static extractTokensFromCreationResult(creationResult: ITransactionResult): {
-    success: boolean, 
+    success: boolean,
     tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
   } {
     if (creationResult.status !== this.transactionStatus.SUCCESS) {
@@ -185,7 +185,7 @@ class UniqueUtil {
   }
 
   static extractTokensFromBurnResult(burnResult: ITransactionResult): {
-    success: boolean, 
+    success: boolean,
     tokens: {collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint}[],
   } {
     if (burnResult.status !== this.transactionStatus.SUCCESS) {
@@ -256,7 +256,7 @@ class UniqueUtil {
   static bigIntToDecimals(number: bigint, decimals = 18) {
     const numberStr = number.toString();
     const dotPos = numberStr.length - decimals;
-  
+
     if (dotPos <= 0) {
       return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
     } else {
@@ -286,7 +286,7 @@ class UniqueEventHelper {
 
     return obj;
   }
-  
+
   private static extractData(data: any, type: any): any {
     if(!type) return data.toHuman();
     if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
@@ -906,7 +906,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
 
   /**
    * Check if user is in allow list.
-   * 
+   *
    * @param collectionId ID of collection
    * @param user Account to check
    * @example await getAdmins(1)
@@ -1016,7 +1016,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
 
   /**
    * Get collection properties.
-   * 
+   *
    * @param collectionId ID of collection
    * @param propertyKeys optionally filter the returned properties to only these keys
    * @example getProperties(1219, ['location', 'date', 'time', 'isParadise']);
@@ -1237,8 +1237,8 @@ class NFTnRFT extends CollectionGroup {
     if (tokenData === null || tokenData.owner === null) return null;
     const owner = {} as any;
     for (const key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate' 
-        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key]) 
+      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate'
+        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key])
         : tokenData.owner[key];
     }
     tokenData.normalizedOwner = CrossAccountId.fromLowerCaseKeys(owner);
@@ -1268,7 +1268,7 @@ class NFTnRFT extends CollectionGroup {
 
   /**
    * Get token property permissions.
-   * 
+   *
    * @param collectionId ID of collection
    * @param propertyKeys optionally filter the returned property permissions to only these keys
    * @example getPropertyPermissions(1219, ['location', 'date', 'time', 'isParadise']);
@@ -1300,7 +1300,7 @@ class NFTnRFT extends CollectionGroup {
 
   /**
    * Get properties, metadata assigned to a token.
-   * 
+   *
    * @param collectionId ID of collection
    * @param tokenId ID of token
    * @param propertyKeys optionally filter the returned properties to only these keys
@@ -2135,8 +2135,8 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
         };
       }
     });
-    const isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from 
-      && this.helper.address.normalizeSubstrate(address) === transfer.to 
+    const isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from
+      && this.helper.address.normalizeSubstrate(address) === transfer.to
       && BigInt(amount) === transfer.amount;
     return isSuccess;
   }
@@ -2184,8 +2184,8 @@ class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
         };
       }
     });
-    const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from 
-      && address === transfer.to 
+    const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from
+      && address === transfer.to
       && BigInt(amount) === transfer.amount;
     return isSuccess;
   }
@@ -2364,7 +2364,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
     const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
     return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => {
-      return { 
+      return {
         block: block.toBigInt(),
         amount: amount.toBigInt(),
       };

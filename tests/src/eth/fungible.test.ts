@@ -108,7 +108,7 @@ describe('Fungible: Plain calls', () => {
     await collection.addAdmin(alice, {Ethereum: owner});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
     await contract.methods.mint(receiver, 100).send();
 
     const result = await contract.methods.burnFrom(receiver, 49).send({from: receiver});
@@ -204,8 +204,8 @@ describe('Fungible: Plain calls', () => {
     // 2. Zero transfer allowed (EIP-20):
     await collectionEvm.methods.transfer(receiver, 0n).send({from: sender});
   });
-  
-  
+
+
   itEth('Can perform transfer()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);

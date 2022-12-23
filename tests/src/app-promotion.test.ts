@@ -527,7 +527,7 @@ describe('App promotion', () => {
       await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address], true)).to.be.rejectedWith('appPromotion.NoPermission');
     });
   });
-  
+
   describe('rewards', () => {
     itSub('can not be called by non admin', async ({helper}) => {
       const nonAdmin = accounts.pop()!;
@@ -565,7 +565,7 @@ describe('App promotion', () => {
   
       const payoutToStaker = (await helper.admin.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;
       expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal, 10n));
-  
+
       const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       expect(totalStakedPerBlock[0].amount).to.equal(calculateIncome(100n * nominal, 10n));
       expect(totalStakedPerBlock[1].amount).to.equal(calculateIncome(200n * nominal, 10n));
@@ -616,7 +616,7 @@ describe('App promotion', () => {
       await helper.admin.payoutStakers(palletAdmin, 100);
       [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       expect(stake.amount).to.equal(calculateIncome(100n * nominal, 10n));
-        
+
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
       await helper.admin.payoutStakers(palletAdmin, 100);
       [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});

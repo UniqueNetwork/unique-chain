@@ -83,7 +83,7 @@ class ContractGroup extends EthGroupBase {
     return this.deployByAbi(signer, compiledContract.abi, compiledContract.object);
   }
 
-  async deployByAbi(signer: string, abi: any, object: string): Promise<Contract> {
+  async deployByAbi(signer: string, abi: any, object: string, gas?: number): Promise<Contract> {
     const web3 = this.helper.getWeb3();
     const contract = new web3.eth.Contract(abi, undefined, {
       data: object,
@@ -198,7 +198,7 @@ class EthGroup extends EthGroupBase {
 
   async createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string}> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
-    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(signer);
+    const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
     const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
 

@@ -57,9 +57,9 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
     silentConsole.disable();
   }
 };
-  
+
 export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
-  (opts.only ? it.only : 
+  (opts.only ? it.only :
     opts.skip ? it.skip : it)(name, async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       if (opts.requiredPallets) {

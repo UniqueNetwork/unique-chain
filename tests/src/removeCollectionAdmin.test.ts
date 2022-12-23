@@ -94,7 +94,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
 
   itSub('Admin can\'t remove collection admin.', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-Neg-4', tokenPrefix: 'RCA'});
-    
+
     await collection.addAdmin(alice, {Substrate: bob.address});
     await collection.addAdmin(alice, {Substrate: charlie.address});
 

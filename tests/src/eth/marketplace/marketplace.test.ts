@@ -114,7 +114,7 @@ describe('Matcher contract usage', () => {
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const escrow = await helper.eth.createAccountWithBalance(donor);
     await matcher.methods.setEscrow(escrow).send({from: matcherOwner});
-    const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
+    const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
     

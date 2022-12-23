@@ -104,14 +104,14 @@ describe('Create RFT collection from EVM', () => {
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.true;
   });
-  
+
   itEth('Set sponsorship', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ENVY');
 
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const collection = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     await collection.methods.setCollectionSponsor(sponsor).send();
 
     let data = (await helper.rft.getData(collectionId))!;
@@ -119,7 +119,7 @@ describe('Create RFT collection from EVM', () => {
 
     await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
 
-    const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
+    const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
     data = (await helper.rft.getData(collectionId))!;
@@ -141,7 +141,7 @@ describe('Create RFT collection from EVM', () => {
       transfersEnabled: false,
     };
 
-    const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const collection = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     await collection.methods['setCollectionLimit(string,uint32)']('accountTokenOwnershipLimit', limits.accountTokenOwnershipLimit).send();
     await collection.methods['setCollectionLimit(string,uint32)']('sponsoredDataSize', limits.sponsoredDataSize).send();
     await collection.methods['setCollectionLimit(string,uint32)']('sponsoredDataRateLimit', limits.sponsoredDataRateLimit).send();
@@ -151,7 +151,7 @@ describe('Create RFT collection from EVM', () => {
     await collection.methods['setCollectionLimit(string,bool)']('ownerCanTransfer', limits.ownerCanTransfer).send();
     await collection.methods['setCollectionLimit(string,bool)']('ownerCanDestroy', limits.ownerCanDestroy).send();
     await collection.methods['setCollectionLimit(string,bool)']('transfersEnabled', limits.transfersEnabled).send();
-    
+
     const data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.limits.accountTokenOwnershipLimit).to.be.eq(limits.accountTokenOwnershipLimit);
     expect(data.raw.limits.sponsoredDataSize).to.be.eq(limits.sponsoredDataSize);
@@ -258,7 +258,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   itEth('(!negative test!) Set limits', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'ISNI');
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     await expect(collectionEvm.methods
       .setCollectionLimit('badLimit', 'true')
       .call()).to.be.rejectedWith('unknown boolean limit "badLimit"');

@@ -18,7 +18,7 @@ const globalSetup = async (): Promise<void> => {
           if (!result) Promise.reject();
         });
 
-      // 3. Set up App Promotion admin 
+      // 3. Set up App Promotion admin
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
@@ -72,7 +72,7 @@ const fundFilenames = async () => {
 
         if (aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
           tx.push(helper.executeExtrinsic(
-            alice, 
+            alice,
             'api.tx.balances.transfer',
             [account.address, DONOR_FUNDING * oneToken],
             true,
