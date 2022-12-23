@@ -11,7 +11,7 @@ members = [
     'runtime/unique',
     'runtime/tests',
 ]
-default-members = ['node/*', 'runtime/opal']
+default-members = ['node/*', 'client/*', 'runtime/opal']
 package.version = "0.9.36"
 
 [profile.release]

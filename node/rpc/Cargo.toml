@@ -55,6 +55,7 @@ uc-rpc = { path = "../../client/rpc" }
 up-rpc = { path = "../../primitives/rpc" }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc" }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
+up-pov-estimate-rpc = { path = "../../primitives/pov-estimate-rpc" }
 up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
 
 [dependencies.serde]
@@ -65,3 +66,4 @@ version = '1.0.130'
 default = []
 std = []
 unique-runtime = []
+pov-estimate = ['uc-rpc/pov-estimate']

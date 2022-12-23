@@ -23,6 +23,7 @@ pallet-evm-coder-substrate = { default-features = false, path = '../../pallets/e
 evm-coder = { default-features = false, path = '../../crates/evm-coder' }
 ethereum = { version = "0.14.0", default-features = false }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
+up-pov-estimate-rpc = { default-features = false, path = "../../primitives/pov-estimate-rpc" }
 
 serde = { version = "1.0.130", default-features = false }
 scale-info = { version = "2.0.1", default-features = false, features = [
@@ -39,6 +40,7 @@ std = [
     "fp-evm-mapping/std",
     "up-data-structs/std",
     "pallet-evm/std",
+    "up-pov-estimate-rpc/std",
 ]
 runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",

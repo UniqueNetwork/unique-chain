@@ -5362,6 +5362,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
  "xcm",
@@ -5806,6 +5807,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
+ "up-pov-estimate-rpc",
 ]
 
 [[package]]
@@ -8917,6 +8919,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
  "xcm",
@@ -12824,18 +12827,34 @@ version = "0.1.4"
 dependencies = [
  "anyhow",
  "app-promotion-rpc",
+ "frame-benchmarking",
  "jsonrpsee",
+ "opal-runtime",
  "pallet-common",
  "pallet-evm",
  "parity-scale-codec 3.2.1",
+ "quartz-runtime",
  "rmrk-rpc",
+ "sc-client-api",
+ "sc-executor",
+ "sc-rpc-api",
+ "sc-service",
  "sp-api",
  "sp-blockchain",
  "sp-core",
+ "sp-externalities",
+ "sp-keystore",
  "sp-rpc",
  "sp-runtime",
+ "sp-state-machine",
+ "sp-trie",
+ "trie-db",
+ "unique-runtime",
+ "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
+ "zstd",
 ]
 
 [[package]]
@@ -12978,10 +12997,12 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tokio",
  "try-runtime-cli",
+ "uc-rpc",
  "unique-rpc",
  "unique-runtime",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
 ]
 
@@ -13032,6 +13053,7 @@ dependencies = [
  "uc-rpc",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
 ]
 
@@ -13125,6 +13147,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
  "xcm",
@@ -13191,6 +13214,19 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "struct-versioning",
+]
+
+[[package]]
+name = "up-pov-estimate-rpc"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

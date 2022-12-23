@@ -8,10 +8,11 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId, TSigner} from './types';
+import {ICrossAccountId, IPovInfo, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
+import {spawnSync} from 'child_process';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -98,6 +99,7 @@ export class DevUniqueHelper extends UniqueHelper {
       rpc: {
         unique: defs.unique.rpc,
         appPromotion: defs.appPromotion.rpc,
+        povinfo: defs.povinfo.rpc,
         rmrk: defs.rmrk.rpc,
         eth: {
           feeHistory: {
@@ -115,6 +117,7 @@ export class DevUniqueHelper extends UniqueHelper {
     });
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
+    this.wsEndpoint = wsEndpoint;
   }
 }
 
@@ -320,6 +323,38 @@ class ArrangeGroup {
     balance -= await this.helper.balance.getSubstrate(address);
 
     return balance;
+  }
+
+  async calculatePoVInfo(txs: any[]): Promise<IPovInfo> {
+    const rawPovInfo = await this.helper.callRpc('api.rpc.povinfo.estimateExtrinsicPoV', [txs]);
+
+    const kvJson: {[key: string]: string} = {};
+
+    for (const kv of rawPovInfo.keyValues) {
+      kvJson[kv.key.toHex()] = kv.value.toHex();
+    }
+
+    const kvStr = JSON.stringify(kvJson);
+
+    const chainql = spawnSync(
+      'chainql', 
+      [
+        `--tla-code=data=${kvStr}`,
+        '-e', `function(data) cql.dump(cql.chain("${this.helper.getEndpoint()}").latest._meta, data, {omit_empty:true})`,
+      ],
+    );
+
+    if (!chainql.stdout) {
+      throw Error('unable to get an output from the `chainql`');
+    }
+
+    return {
+      proofSize: rawPovInfo.proofSize.toNumber(),
+      compactProofSize: rawPovInfo.compactProofSize.toNumber(),
+      compressedProofSize: rawPovInfo.compressedProofSize.toNumber(),
+      results: rawPovInfo.results,
+      kv: JSON.parse(chainql.stdout.toString()),
+    };
   }
 
   calculatePalletAddress(palletId: any) {

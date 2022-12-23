@@ -115,6 +115,7 @@ use up_data_structs::{
 	RmrkNftChild,
 	CollectionPermissions,
 };
+use up_pov_estimate_rpc::PovInfo;
 
 pub use pallet::*;
 use sp_core::H160;
@@ -881,6 +882,8 @@ pub mod pallet {
 				RmrkPartType,
 				RmrkBoundedTheme,
 				RmrkNftChild,
+				// PoV Estimate Info
+				PovInfo,
 			)>,
 		),
 		QueryKind = OptionQuery,
