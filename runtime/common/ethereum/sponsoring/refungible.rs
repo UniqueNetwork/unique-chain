@@ -233,15 +233,22 @@ mod erc721 {
 			| TokenContractAddress { .. } => None,
 
 			// Not sponsored
-			TransferCross { .. }
-			| TransferFromCross { .. }
 			| BurnFrom { .. }
-			| BurnFromCross { .. }
-			| MintCross { .. }
+			| BurnFromCross { .. } => None,
+			
+			MintCross { .. }
 			| MintBulk { .. }
-			| MintBulkWithTokenUri { .. } => None,
+			| MintBulkWithTokenUri { .. } => {
+				withdraw_create_item::<T>(
+					&collection,
+					&who,
+					&CreateItemData::NFT(CreateNftData::default()),
+				)
+			}
 
-			Transfer { token_id, .. } => {
+			TransferCross { token_id, .. }
+			| TransferFromCross { token_id, .. }
+			| Transfer { token_id, .. } => {
 				let token_id = TokenId::try_from(token_id).ok()?;
 				withdraw_transfer::<T>(&collection, &who, &token_id)
 			}
@@ -321,8 +328,8 @@ mod erc20 {
 
 	pub fn unique_extensions_call_sponsor<T>(
 		call: ERC20UniqueExtensionsCall<T>,
-		_token: RefungibleTokenHandle<T>,
-		_who: &T::CrossAccountId,
+		token: RefungibleTokenHandle<T>,
+		who: &T::CrossAccountId,
 	) -> Option<()>
 	where
 		T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
@@ -336,10 +343,20 @@ mod erc20 {
 			// Not sponsored
 			BurnFrom { .. }
 			| BurnFromCross { .. }
-			| ApproveCross { .. }
-			| TransferCross { .. }
-			| TransferFromCross { .. }
 			| Repartition { .. } => None,
+			
+			TransferCross { .. }
+			| TransferFromCross { .. } => {
+				let RefungibleTokenHandle(handle, token_id) = token;
+				let token_id = token_id.try_into().ok()?;
+				withdraw_transfer::<T>(&handle, &who, &token_id)
+			}
+
+			ApproveCross { .. } => {
+				let RefungibleTokenHandle(handle, token_id) = token;
+				let token_id = token_id.try_into().ok()?;
+				withdraw_approve::<T>(&handle, who.as_sub(), &token_id)
+			}
 		}
 	}
 }
