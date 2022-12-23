@@ -359,27 +359,6 @@ describe('evm RFT collection sponsoring', () => {
     });
   });
 
-  // TODO: Temprorary off. Need refactor
-  // itWeb3('Set substrate sponsor', async ({api, web3, privateKeyWrapper}) => {
-  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-  //   const collectionHelpers = evmCollectionHelpers(web3, owner);
-  //   let result = await collectionHelpers.methods.createRFTCollection('Sponsor collection', '1', '1').send();
-  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-  //   const sponsor = privateKeyWrapper('//Alice');
-  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-
-  //   expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
-  //   result = await collectionEvm.methods.setCollectionSponsorSubstrate(sponsor.addressRaw).send({from: owner});
-  //   expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.true;
-
-  //   const confirmTx = await api.tx.unique.confirmSponsorship(collectionId);
-  //   await submitTransactionAsync(sponsor, confirmTx);
-  //   expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
-
-  //   const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-  //   expect(bigIntToSub(api, BigInt(sponsorTuple[1]))).to.be.eq(sponsor.address);
-  // });
-
   [
     'setCollectionSponsorCross',
     'setCollectionSponsor', // Soft-deprecated
@@ -404,7 +383,7 @@ describe('evm RFT collection sponsoring', () => {
       await collectionEvm.methods.removeCollectionSponsor().send({from: owner});
   
       const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-      expect(sponsorTuple.field_0).to.be.eq('0x0000000000000000000000000000000000000000');
+      expect(sponsorTuple.eth).to.be.eq('0x0000000000000000000000000000000000000000');
     }));
 
   [
@@ -426,7 +405,8 @@ describe('evm RFT collection sponsoring', () => {
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
       expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
       // Account cannot confirm sponsorship if it is not set as a sponsor
-      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+      //await collectionEvm.methods.confirmCollectionSponsorship().call();
+      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
       
       // Sponsor can confirm sponsorship:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
@@ -481,62 +461,6 @@ describe('evm RFT collection sponsoring', () => {
       }
     }));
 
-  // TODO: Temprorary off. Need refactor
-  // itWeb3('Sponsoring collection from substrate address via access list', async ({api, web3, privateKeyWrapper}) => {
-  //   const owner = await createEthAccountWithBalance(api, web3, privateKeyWrapper);
-  //   const collectionHelpers = evmCollectionHelpers(web3, owner);
-  //   const result = await collectionHelpers.methods.createERC721MetadataCompatibleRFTCollection('Sponsor collection', '1', '1', '').send();
-  //   const {collectionIdAddress, collectionId} = await getCollectionAddressFromResult(api, result);
-  //   const sponsor = privateKeyWrapper('//Alice');
-  //   const collectionEvm = evmCollection(web3, owner, collectionIdAddress);
-
-  //   await collectionEvm.methods.setCollectionSponsorSubstrate(sponsor.addressRaw).send({from: owner});
-
-  //   const confirmTx = await api.tx.unique.confirmSponsorship(collectionId);
-  //   await submitTransactionAsync(sponsor, confirmTx);
-
-  //   const user = createEthAccount(web3);
-  //   const nextTokenId = await collectionEvm.methods.nextTokenId().call();
-  //   expect(nextTokenId).to.be.equal('1');
-
-  //   await collectionEvm.methods.setCollectionAccess(1 /*'AllowList'*/).send({from: owner});
-  //   await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-  //   await collectionEvm.methods.setCollectionMintMode(true).send({from: owner});
-
-  //   const ownerBalanceBefore = await ethBalanceViaSub(api, owner);
-  //   const sponsorBalanceBefore = (await getBalance(api, [sponsor.address]))[0];
-
-  //   {
-  //     const nextTokenId = await collectionEvm.methods.nextTokenId().call();
-  //     expect(nextTokenId).to.be.equal('1');
-  //     const result = await collectionEvm.methods.mintWithTokenURI(
-  //       user,
-  //       nextTokenId,
-  //       'Test URI',
-  //     ).send({from: user});
-  //     const events = normalizeEvents(result.events);
-
-  //     expect(events).to.be.deep.equal([
-  //       {
-  //         address: collectionIdAddress,
-  //         event: 'Transfer',
-  //         args: {
-  //           from: '0x0000000000000000000000000000000000000000',
-  //           to: user,
-  //           tokenId: nextTokenId,
-  //         },
-  //       },
-  //     ]);
-
-  //     const ownerBalanceAfter = await ethBalanceViaSub(api, owner);
-  //     const sponsorBalanceAfter = (await getBalance(api, [sponsor.address]))[0];
-
-  //     expect(await collectionEvm.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
-  //     expect(ownerBalanceBefore).to.be.eq(ownerBalanceAfter);
-  //     expect(sponsorBalanceBefore > sponsorBalanceAfter).to.be.true;
-  //   }
-  // });
-
   [
     'setCollectionSponsorCross',
     'setCollectionSponsor', // Soft-deprecated
@@ -554,7 +478,7 @@ describe('evm RFT collection sponsoring', () => {
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsor : sponsorCross).send();
       let collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
-      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
+      await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
   
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;
@@ -600,9 +524,12 @@ describe('evm RFT collection sponsoring', () => {
     const collectionSub = helper.rft.getCollectionObject(collectionId);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner, false);
     // Set collection sponsor:
+    expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
     await collectionEvm.methods.setCollectionSponsorCross(sponsorCross).send();
+    expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.true;
 
     await collectionSub.confirmSponsorship(sponsor);
+    expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
 
     const user = helper.eth.createAccount();
     const userCross = helper.ethCrossAccount.fromAddress(user);
@@ -615,10 +542,9 @@ describe('evm RFT collection sponsoring', () => {
     const tokenId = mintingResult.events.Transfer.returnValues.tokenId;
 
     const events = helper.eth.normalizeEvents(mintingResult.events);
-    const address = helper.ethAddress.fromCollectionId(collectionId);
 
     expect(events).to.deep.include({
-      address,
+      address: collectionAddress,
       event: 'Transfer',
       args: {
         from: '0x0000000000000000000000000000000000000000',
@@ -632,6 +558,62 @@ describe('evm RFT collection sponsoring', () => {
     expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
     const sponsorBalanceAfter = await helper.balance.getSubstrate(sponsor.address);
     expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
+  });
+
+  itEth('Sponsoring collection from substrate address via access list', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const user = helper.eth.createAccount();
+    const userCross =  helper.ethCrossAccount.fromAddress(user);
+    const sponsor = alice;
+    const sponsorCross = helper.ethCrossAccount.fromKeyringPair(sponsor);
+
+    const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner, false);
+
+    await collectionEvm.methods.setCollectionSponsorCross(sponsorCross).send({from: owner});
+
+    const collectionSub = helper.rft.getCollectionObject(collectionId);
+    await collectionSub.confirmSponsorship(sponsor);
+
+    const nextTokenId = await collectionEvm.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+
+    await collectionEvm.methods.setCollectionAccess(1 /*'AllowList'*/).send({from: owner});
+    
+    await collectionEvm.methods.addToCollectionAllowListCross(userCross).send({from: owner});
+    await collectionEvm.methods.setCollectionMintMode(true).send({from: owner});
+
+    const ownerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
+    const sponsorBalanceBefore = await helper.balance.getSubstrate(sponsor.address);
+
+    {
+      const nextTokenId = await collectionEvm.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      const mintingResult = await collectionEvm.methods.mintWithTokenURI(
+        user,
+        'Test URI',
+      ).send({from: user});
+
+      const events = helper.eth.normalizeEvents(mintingResult.events);
+      
+
+      expect(events).to.deep.include({
+        address: collectionAddress,
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: user,
+          tokenId: nextTokenId,
+        },
+      });
+
+      const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
+      const sponsorBalanceAfter = await helper.balance.getSubstrate(sponsor.address);
+
+      expect(await collectionEvm.methods.tokenURI(nextTokenId).call()).to.be.equal('Test URI');
+      expect(ownerBalanceBefore).to.be.eq(ownerBalanceAfter);
+      expect(sponsorBalanceBefore > sponsorBalanceAfter).to.be.true;
+    }
   });
 
   itEth('Can reassign collection sponsor', async ({helper}) => {

@@ -79,10 +79,11 @@ where
 
 	match call {
 		// Readonly
-		ERC165Call(_, _) | Property { .. } => None,
+		ERC165Call(_, _) | Property { .. } | TokenPropertyPermissions => None,
 
 		// Not sponsored
 		SetTokenPropertyPermission { .. }
+		| SetTokenPropertyPermissions { .. }
 		| SetProperties { .. }
 		| DeleteProperty { .. }
 		| DeleteProperties { .. } => None,
@@ -236,6 +237,7 @@ mod erc721 {
 			| TransferFromCross { .. }
 			| BurnFrom { .. }
 			| BurnFromCross { .. }
+			| MintCross { .. }
 			| MintBulk { .. }
 			| MintBulkWithTokenUri { .. } => None,
 
@@ -332,7 +334,12 @@ mod erc20 {
 			ERC165Call(_, _) => None,
 
 			// Not sponsored
-			BurnFrom { .. } | Repartition { .. } => None,
+			BurnFrom { .. }
+			| BurnFromCross { .. }
+			| ApproveCross { .. }
+			| TransferCross { .. }
+			| TransferFromCross { .. }
+			| Repartition { .. } => None,
 		}
 	}
 }

@@ -184,6 +184,9 @@ mod common {
 			| IsOwnerOrAdminCross { .. }
 			| CollectionOwner
 			| CollectionAdmins
+			| CollectionLimits
+			| CollectionNestingRestrictedIds
+			| CollectionNestingPermissions
 			| UniqueCollectionType => None,
 
 			// Not sponsored
@@ -207,9 +210,9 @@ mod common {
 			| DeleteCollectionProperties { .. }
 			| SetCollectionSponsor { .. }
 			| SetCollectionSponsorCross { .. }
+			| SetCollectionLimit { .. }
 			| ConfirmCollectionSponsorship
-			| RemoveCollectionSponsor
-			| SetIntLimit { .. } => None,
+			| RemoveCollectionSponsor => None,
 		}
 	}
 }
