@@ -525,7 +525,9 @@ describe('evm RFT collection sponsoring', () => {
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
       const sponsorTuple = await collectionEvm.methods.collectionSponsor().call({from: owner});
-      expect(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorTuple.sub))).to.be.equal(helper.address.ethToSubstrate(sponsor));
+      const sponsorSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.ethToSubstrate(sponsor));
+      const actualSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorTuple.sub)));
+      expect(actualSubAddress).to.be.equal(sponsorSubAddress);
 
       const user = helper.eth.createAccount();
       const userCross = helper.ethCrossAccount.fromAddress(user);
