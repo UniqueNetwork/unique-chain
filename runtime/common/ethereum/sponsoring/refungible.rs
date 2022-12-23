@@ -233,12 +233,9 @@ mod erc721 {
 			| TokenContractAddress { .. } => None,
 
 			// Not sponsored
-			| BurnFrom { .. }
-			| BurnFromCross { .. } => None,
-			
-			MintCross { .. }
-			| MintBulk { .. }
-			| MintBulkWithTokenUri { .. } => {
+			BurnFrom { .. } | BurnFromCross { .. } => None,
+
+			MintCross { .. } | MintBulk { .. } | MintBulkWithTokenUri { .. } => {
 				withdraw_create_item::<T>(
 					&collection,
 					&who,
@@ -341,12 +338,9 @@ mod erc20 {
 			ERC165Call(_, _) => None,
 
 			// Not sponsored
-			BurnFrom { .. }
-			| BurnFromCross { .. }
-			| Repartition { .. } => None,
-			
-			TransferCross { .. }
-			| TransferFromCross { .. } => {
+			BurnFrom { .. } | BurnFromCross { .. } | Repartition { .. } => None,
+
+			TransferCross { .. } | TransferFromCross { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;
 				let token_id = token_id.try_into().ok()?;
 				withdraw_transfer::<T>(&handle, &who, &token_id)
